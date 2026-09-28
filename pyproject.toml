@@ -69,4 +69,4 @@ exclude = ["app.test*", "agent_service.agents.*.tests*"]
 app = ["**/*.md", "**/*.yaml", "static/*.html"]
 "agent_service.agents.analysis" = ["agent_builders/*/prompt.md", "schemas/**/*.md"]
 
-"app.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]
+"agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]

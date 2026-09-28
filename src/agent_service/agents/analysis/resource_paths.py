@@ -1,5 +1,9 @@
-"""Analysis imports the original Workflow package; it owns no asset copies."""
-from app.workflow.paths import (
+"""Analysis resource access delegates to the unified Workflow package."""
+from agent_service.agents.analysis.workflow.paths import (
+    LEGACY_SKILL_PREFIX,
+    LEGACY_TOOL_PREFIX,
+    SKILL_SOURCE_PREFIXES,
+    TOOL_SOURCE_PREFIXES,
     RELOCATED_SKILL_PREFIX,
     RELOCATED_TOOL_PREFIX,
     SKILL_INDEX_PATH,
@@ -14,6 +18,8 @@ from app.workflow.paths import (
 )
 
 __all__ = [
+    "LEGACY_SKILL_PREFIX", "LEGACY_TOOL_PREFIX",
+    "SKILL_SOURCE_PREFIXES", "TOOL_SOURCE_PREFIXES",
     "RELOCATED_SKILL_PREFIX", "RELOCATED_TOOL_PREFIX", "SKILL_INDEX_PATH",
     "SKILL_SOURCE_PREFIX", "SKILLS_ROOT", "SOURCE_ROOT", "TOOL_REGISTRY_PATH",
     "TOOL_SOURCE_PREFIX", "TOOLS_ROOT", "WORKFLOW_ROOT", "resolve_tool_source",

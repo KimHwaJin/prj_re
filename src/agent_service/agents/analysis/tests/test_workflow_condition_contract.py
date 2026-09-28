@@ -72,7 +72,7 @@ class WorkflowConditionContractTests(unittest.TestCase):
         workflow_tool = document["workflow"]["steps"][0]["tools"][0]
         self.assertEqual(
             workflow_tool["tool_source"],
-            "app/workflow/tools/preprocessing/merge_data.py",
+            "agent_service/agents/analysis/workflow/tools/preprocessing/merge_data.py",
         )
         self.assertEqual(
             workflow_tool["returns"]["outputs"]["merged_data"]["selector"],

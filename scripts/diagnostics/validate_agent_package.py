@@ -21,17 +21,20 @@ installed = Path(temporary.name)
 with ZipFile(wheel) as archive:
     names = archive.namelist()
     assert not any('/tests/' in n or n.startswith('app/test/') for n in names)
-    assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/worker_past/')) for n in names)
+    assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/worker_past/', 'app/workflow/')) for n in names)
     assert not any(n.startswith(('agent_service/agents/analysis/prompts/', 'agent_service/agents/analysis/resources/')) for n in names)
-    assert 'app/workflow/workflows/workflow_lifecycle.md' in names
-    assert 'app/workflow/skills/generate_skill_index.py' in names
-    assert 'app/workflow/tools/generate_tool_registry.py' in names
+    assert 'agent_service/agents/analysis/workflow/workflows/workflow_lifecycle.md' in names
+    assert 'agent_service/agents/analysis/workflow/skills/generate_skill_index.py' in names
+    assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
     archive.extractall(installed)
 sys.path.insert(0, str(installed))
 
 import agent_service.agents.analysis.graph as graph_module
 from agent_service.agents.analysis.dependencies import create_llm_dependencies
-from agent_service.agents.analysis.resource_paths import TOOLS_ROOT, SKILL_INDEX_PATH, TOOL_REGISTRY_PATH
+from agent_service.agents.analysis.resource_paths import (
+    TOOLS_ROOT, SKILL_INDEX_PATH, TOOL_REGISTRY_PATH, SOURCE_ROOT,
+    TOOL_SOURCE_PREFIXES, resolve_tool_source,
+)
 from agent_config import load_agent_settings
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
@@ -42,6 +45,9 @@ import devtools.analysis.cli
 assert Path(graph_module.__file__).is_relative_to(installed)
 assert SKILL_INDEX_PATH.is_file() and TOOL_REGISTRY_PATH.is_file()
 assert (TOOLS_ROOT / 'eda/profile_data.py').is_file()
+assert SOURCE_ROOT == installed.resolve()
+for prefix in TOOL_SOURCE_PREFIXES:
+    assert resolve_tool_source(prefix + 'eda/profile_data.py', installed) == TOOLS_ROOT / 'eda/profile_data.py'
 roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
          'conditional_decider', 'faq', 'report_writer')
 for role in roles:
@@ -76,5 +82,5 @@ async def smoke():
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
-    'removed_agent_packages_in_wheel':False, 'original_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
+    'removed_agent_packages_in_wheel':False, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True}))

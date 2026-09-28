@@ -9,7 +9,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 
-from app.workflow.tools.preprocessing.split_dataset import split_dataset
+from agent_service.agents.analysis.workflow.tools.preprocessing.split_dataset import split_dataset
 
 
 class SplitDatasetTests(unittest.TestCase):

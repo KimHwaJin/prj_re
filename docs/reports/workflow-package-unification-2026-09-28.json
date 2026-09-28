@@ -1,0 +1,179 @@
+{
+  "baseline": "8c3e0b6",
+  "original_asset_baseline": "7d0cc53",
+  "branch": "feature/refactor-unify-analysis-workflow",
+  "focused_tests": {
+    "passed": 14
+  },
+  "offline_regression": {
+    "passed": 197,
+    "failed": 19,
+    "skipped": 39,
+    "excluded_existing_collection_error_files": 2,
+    "new_failures": 0,
+    "failure_names_and_normalized_messages_match_009": true
+  },
+  "package": {
+    "original_assets": 24,
+    "byte_identical_to_original": 22,
+    "source_root_only_changes": 2,
+    "wheel_matches_source": true,
+    "old_asset_copies_present": false,
+    "role_prompts": 7,
+    "production_builders_constructed": true,
+    "openapi_paths": 33,
+    "mock_execution_steps": 6
+  },
+  "direct_generators": {
+    "skills": 3,
+    "tools": 8,
+    "match_shipped_yaml": true
+  },
+  "external_services_called": false,
+  "assets": [
+    {
+      "original": "src/app/workflow/skills/data_io/data_load.md",
+      "current": "src/agent_service/agents/analysis/workflow/skills/data_io/data_load.md",
+      "original_bytes_unchanged": true,
+      "sha256": "0a0ae554a2402c982c9b24ffedf6e1aca037ae75e34438c452a6491e511ecaa5"
+    },
+    {
+      "original": "src/app/workflow/skills/eda/data_quality_check.md",
+      "current": "src/agent_service/agents/analysis/workflow/skills/eda/data_quality_check.md",
+      "original_bytes_unchanged": true,
+      "sha256": "8da9f7b6c3488f2a06ab6d8d38995a6e94c7f23f16296c231c5232612fb33cd5"
+    },
+    {
+      "original": "src/app/workflow/skills/eda/tmp/failure_analysis.md",
+      "current": "src/agent_service/agents/analysis/workflow/skills/eda/tmp/failure_analysis.md",
+      "original_bytes_unchanged": true,
+      "sha256": "58a8275f1e6fccdc9f36fd258da5dd8eff7f268911527c5b00e991a87f919dbd"
+    },
+    {
+      "original": "src/app/workflow/skills/eda/tmp/failure_group_comparison.md",
+      "current": "src/agent_service/agents/analysis/workflow/skills/eda/tmp/failure_group_comparison.md",
+      "original_bytes_unchanged": true,
+      "sha256": "f6b682fe5e7d7f48a74d4b4c66b9dedaaab95ad0821ee10fe063949b9f4a513a"
+    },
+    {
+      "original": "src/app/workflow/skills/generate_skill_index.py",
+      "current": "src/agent_service/agents/analysis/workflow/skills/generate_skill_index.py",
+      "original_bytes_unchanged": true,
+      "sha256": "7e0820f577aade30c43d6ca3dbb71bf5d8afe6cbb6948b956a95c372d02744c9"
+    },
+    {
+      "original": "src/app/workflow/skills/preprocessing/dataset_preparation.md",
+      "current": "src/agent_service/agents/analysis/workflow/skills/preprocessing/dataset_preparation.md",
+      "original_bytes_unchanged": true,
+      "sha256": "32c243134d47750a2707e51a6086572f9209c3f08b16fcc35bfd3e9d004c0fb9"
+    },
+    {
+      "original": "src/app/workflow/skills/skill_index.yaml",
+      "current": "src/agent_service/agents/analysis/workflow/skills/skill_index.yaml",
+      "original_bytes_unchanged": true,
+      "sha256": "582b610e0766741784adb624515205a9898513f925e68bfad62fe05de7257c4d"
+    },
+    {
+      "original": "src/app/workflow/tools/data_io/data_load.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/data_io/data_load.py",
+      "original_bytes_unchanged": true,
+      "sha256": "c448b733864d2940dda5fff7a89a7ea97c15f2fb2742f88d2e362ea78b05c127"
+    },
+    {
+      "original": "src/app/workflow/tools/data_io/extract_data.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/data_io/extract_data.py",
+      "original_bytes_unchanged": true,
+      "sha256": "5a9b88ae02a7ce3910fecfa645291b3e15ead3c7951af5b5daa4c5193984c224"
+    },
+    {
+      "original": "src/app/workflow/tools/data_io/tmp/extract_data2.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/data_io/tmp/extract_data2.py",
+      "original_bytes_unchanged": true,
+      "sha256": "66dfda11f2227bbbf9f67553daee9de33e6fc3818fd87a9d0d0f37b1e5899dbe"
+    },
+    {
+      "original": "src/app/workflow/tools/data_io/transform_nce.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/data_io/transform_nce.py",
+      "original_bytes_unchanged": true,
+      "sha256": "0a6694999c7df44ab36e637a777e40fd0f795200e324f2008e549bbc3a562024"
+    },
+    {
+      "original": "src/app/workflow/tools/data_io/transform_wt.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/data_io/transform_wt.py",
+      "original_bytes_unchanged": true,
+      "sha256": "8e69968b69a98a3ab10bac2f4b7440dbd6df3baa07df3eb814d74c41ac144bc5"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/compute_statistics.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/compute_statistics.py",
+      "original_bytes_unchanged": true,
+      "sha256": "24f617fb1db4fdfd2b45063327918ba9c2fd855f502eda7c7426b64a74e52bff"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/detect_outliers.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/detect_outliers.py",
+      "original_bytes_unchanged": true,
+      "sha256": "ed0c9536048e146dc3f98e8cee98486233b8be320800dc9522708c84b5860dca"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/profile_data.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/profile_data.py",
+      "original_bytes_unchanged": true,
+      "sha256": "0fbff6baa28750ea430aa0afa0e5cf4ed334891d56945e5fd0f96f1b4c2b6913"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/tmp/compute_failure_rate.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/tmp/compute_failure_rate.py",
+      "original_bytes_unchanged": true,
+      "sha256": "92d188a99f1fcfb0d3130588e50f6deea43985ecfe7eb5725ed6639e2b1eb46b"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/tmp/failure_rate_by_bin.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/tmp/failure_rate_by_bin.py",
+      "original_bytes_unchanged": true,
+      "sha256": "59384d0ed408650eee655f64f76ccd431d96ac1b843dfcd4052c483b8561aaf5"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/tmp/failure_rate_trend.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/tmp/failure_rate_trend.py",
+      "original_bytes_unchanged": true,
+      "sha256": "c39f4a75a6fda240a3f98b6e90758ad28b3634a0bbf1352c51203cd0f490df34"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/tmp/plot_failure_by_group.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/tmp/plot_failure_by_group.py",
+      "original_bytes_unchanged": true,
+      "sha256": "b4bb5a85bd51c457946898c9ef39afee7ff3de0b4cf04805074d0825929b786e"
+    },
+    {
+      "original": "src/app/workflow/tools/eda/tmp/plot_failure_distribution_by_feature.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/eda/tmp/plot_failure_distribution_by_feature.py",
+      "original_bytes_unchanged": true,
+      "sha256": "2be06b67d4cca3a6351e5adbd7cbfe079df4f46cb8bdf2ed53e46d128747ceef"
+    },
+    {
+      "original": "src/app/workflow/tools/generate_tool_registry.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py",
+      "original_bytes_unchanged": false,
+      "sha256": "55f9c5aa1fc46a38c736e16e31d3ae7f556f922f3d11b173f8b299381d8019ff"
+    },
+    {
+      "original": "src/app/workflow/tools/preprocessing/merge_data.py",
+      "current": "src/agent_service/agents/analysis/workflow/tools/preprocessing/merge_data.py",
+      "original_bytes_unchanged": true,
+      "sha256": "230ff51f97295304f938a06f06a4736a6a2cd9d891c0cc35c7a573292d785191"
+    },
+    {
+      "original": "src/app/workflow/tools/tool_registry.yaml",
+      "current": "src/agent_service/agents/analysis/workflow/tools/tool_registry.yaml",
+      "original_bytes_unchanged": false,
+      "sha256": "3d4cc73550b534c664e1976f77d7df1593ce5228342ce8af5153e9711df66a36"
+    },
+    {
+      "original": "src/app/workflow/workflows/workflow_lifecycle.md",
+      "current": "src/agent_service/agents/analysis/workflow/workflows/workflow_lifecycle.md",
+      "original_bytes_unchanged": true,
+      "sha256": "d6ecedd6ae926ac654f4bf45dc9765bed2510565ff4c54bbc2a9b927ae9578b6"
+    }
+  ]
+}

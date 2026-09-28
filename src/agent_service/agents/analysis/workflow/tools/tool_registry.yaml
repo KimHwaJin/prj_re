@@ -4,7 +4,7 @@ description: Python Tool 파일에서 AST로 추출한 함수 호출 정보다. 
 generation:
   method: python_ast
   llm_used: false
-  source_root: app/workflow/tools
+  source_root: agent_service/agents/analysis/workflow/tools
 tools:
   data_load:
     category: data_io

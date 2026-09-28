@@ -1,30 +1,30 @@
-"""Canonical Workflow asset paths and compatibility for persisted source names.
-
-app/workflow is the authoring and distribution package. Transient resource
-paths from refactors 005-008 remain readable, without duplicate asset copies.
-"""
+"""Canonical Workflow asset paths and aliases for persisted source names."""
 from importlib.resources import files
 from pathlib import Path
 
-WORKFLOW_ROOT = Path(str(files("app.workflow"))).resolve()
-SOURCE_ROOT = WORKFLOW_ROOT.parent.parent
+WORKFLOW_ROOT = Path(str(files("agent_service.agents.analysis.workflow"))).resolve()
+SOURCE_ROOT = WORKFLOW_ROOT.parents[3]
 SKILLS_ROOT = WORKFLOW_ROOT / "skills"
 TOOLS_ROOT = WORKFLOW_ROOT / "tools"
 SKILL_INDEX_PATH = SKILLS_ROOT / "skill_index.yaml"
 TOOL_REGISTRY_PATH = TOOLS_ROOT / "tool_registry.yaml"
-TOOL_SOURCE_PREFIX = "app/workflow/tools/"
-SKILL_SOURCE_PREFIX = "app/workflow/skills/"
+TOOL_SOURCE_PREFIX = "agent_service/agents/analysis/workflow/tools/"
+SKILL_SOURCE_PREFIX = "agent_service/agents/analysis/workflow/skills/"
+LEGACY_TOOL_PREFIX = "app/workflow/tools/"
+LEGACY_SKILL_PREFIX = "app/workflow/skills/"
 RELOCATED_TOOL_PREFIX = "agent_service/agents/analysis/resources/executor_tools/"
 RELOCATED_SKILL_PREFIX = "agent_service/agents/analysis/resources/skills/"
+TOOL_SOURCE_PREFIXES = (TOOL_SOURCE_PREFIX, LEGACY_TOOL_PREFIX, RELOCATED_TOOL_PREFIX)
+SKILL_SOURCE_PREFIXES = (SKILL_SOURCE_PREFIX, LEGACY_SKILL_PREFIX, RELOCATED_SKILL_PREFIX)
 
 
 def resolve_tool_source(source: str, project_root: Path) -> Path:
-    """Resolve both persisted prefixes to the single maintained Tool package.
+    """Resolve saved aliases to the single maintained Tool package.
 
     This preserves path lookup, not historical Tool contents or versions.
     Explicit local sources still stay inside their supplied project root.
     """
-    for prefix in (TOOL_SOURCE_PREFIX, RELOCATED_TOOL_PREFIX):
+    for prefix in TOOL_SOURCE_PREFIXES:
         if source.startswith(prefix):
             candidate = (TOOLS_ROOT / source[len(prefix):]).resolve()
             if not candidate.is_relative_to(TOOLS_ROOT.resolve()):

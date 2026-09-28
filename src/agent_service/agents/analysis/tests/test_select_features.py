@@ -6,7 +6,7 @@ import unittest
 
 import pandas as pd
 
-from app.workflow.tools.preprocessing.select_features import select_features
+from agent_service.agents.analysis.workflow.tools.preprocessing.select_features import select_features
 
 
 class SelectFeaturesTests(unittest.TestCase):

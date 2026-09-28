@@ -264,7 +264,7 @@ def build_registry(root: Path) -> dict[str, Any]:
         "generation": {
             "method": "python_ast",
             "llm_used": False,
-            "source_root": "app/workflow/tools",
+            "source_root": "agent_service/agents/analysis/workflow/tools",
         },
         "tools": tools,
     }

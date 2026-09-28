@@ -5,7 +5,7 @@ dtest 프로젝트 공유
 
 분석 Agent 구현은 `src/agent_service/agents/analysis/`로 이동했다. [Agent 개발·이관 안내](docs/agent-development/README.md)와 [서비스 구조 및 이행 상태](docs/architecture/service-layout.md)를 먼저 참고한다. 루트 `app.py` 실행은 유지하며 006에서 Agent·LLM 호출을 비동기로 전환했다. 008에서 역할별 선언과 독립 프롬프트를 `agent_builders/<role>/`에 배치했다. create_agent·미들웨어 통일은 후속이다. 공통 API/실행기의 패키지 분리와 HTTP·DB·파일 I/O 전체 전환은 후속 단계다.
 
-기존 Workflow 작업 영역은 [src/app/workflow/](src/app/workflow/README.md)에 유지한다. Skill·Executor Tool·Workflow 정책과 생성 스크립트는 기존 위치에서 수정하고, 새 Agent는 이 패키지를 참조한다.
+Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 
 현재 사용자용 API는 `X-User-Id` 문자열 헤더를 사용하며 Bearer UUID 및 공개 사용자 가입/이름 조회 방식은 제거했다. 먼저 DB 마이그레이션과 최초 관리자 초기화를 수행한다. [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 현재 계약으로 참고한다.
 

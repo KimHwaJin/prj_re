@@ -398,7 +398,7 @@ class WorkflowCompilerTests(unittest.TestCase):
         workflow = document["workflow"]
         self.assertEqual(workflow["execution_mode"], "static")
         profile_tool = workflow["steps"][0]["tools"][0]
-        self.assertEqual(profile_tool["tool_source"], "app/workflow/tools/eda/profile_data.py")
+        self.assertEqual(profile_tool["tool_source"], "agent_service/agents/analysis/workflow/tools/eda/profile_data.py")
         self.assertEqual(
             profile_tool["returns"]["outputs"]["profile"]["selector"],
             '["profile"]',

@@ -103,7 +103,7 @@ def required_data_load_steps(
             raise ValueError(
                 f"Unsupported data_type {data_type!r}; supported: {supported}"
             ) from error
-        transform_source = f"app/workflow/tools/data_io/{transform_name}.py"
+        transform_source = f"agent_service/agents/analysis/workflow/tools/data_io/{transform_name}.py"
         extracted_variable = f"extracted_data_{index}"
         variable = f"df_dataset_{index}"
         if data_mock:
@@ -113,7 +113,7 @@ def required_data_load_steps(
                     "id": step_id,
                     "order": index,
                     "skill": "data_load",
-                    "skill_source": "app/workflow/skills/data_io/data_load.md",
+                    "skill_source": "agent_service/agents/analysis/workflow/skills/data_io/data_load.md",
                     "depends_on": [],
                     "execution": "always",
                     "tools": [
@@ -122,7 +122,7 @@ def required_data_load_steps(
                             "order": 1,
                             "tool": "data_load",
                             "tool_origin": "registry",
-                            "tool_source": "app/workflow/tools/data_io/data_load.py",
+                            "tool_source": "agent_service/agents/analysis/workflow/tools/data_io/data_load.py",
                             "selection_reason": (
                                 f"DATA_MOCK is enabled; load the prepared wide "
                                 f"{dataset['role'].upper()} parquet directly."
@@ -152,7 +152,7 @@ def required_data_load_steps(
                 "id": step_id,
                 "order": index,
                 "skill": "data_load",
-                "skill_source": "app/workflow/skills/data_io/data_load.md",
+                "skill_source": "agent_service/agents/analysis/workflow/skills/data_io/data_load.md",
                 "depends_on": [],
                 "execution": "always",
                 "tools": [
@@ -161,7 +161,7 @@ def required_data_load_steps(
                         "order": 1,
                         "tool": "extract_data",
                         "tool_origin": "registry",
-                        "tool_source": "app/workflow/tools/data_io/extract_data.py",
+                        "tool_source": "agent_service/agents/analysis/workflow/tools/data_io/extract_data.py",
                         "selection_reason": (
                             f"Extract selected {dataset['role'].upper()} "
                             f"{dataset['data_type']} data."

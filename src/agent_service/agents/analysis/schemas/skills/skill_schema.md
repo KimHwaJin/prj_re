@@ -1,7 +1,7 @@
 # Skill 작성 스키마
 
-이 문서는 `app/workflow/skills/**/*.md`에 저장하는 Skill 문서의 작성 계약이다.
-완성된 예시는 `app/workflow/skills/modeling/predictive_modeling.md`를 참고한다.
+이 문서는 `agent_service/agents/analysis/workflow/skills/**/*.md`에 저장하는 Skill 문서의 작성 계약이다.
+완성된 예시는 `agent_service/agents/analysis/workflow/skills/modeling/predictive_modeling.md`를 참고한다.
 기계가 사용하는 정규화 스키마는 같은 디렉터리의 `skill_schema.json`에 정의되어 있다.
 
 ## 필수 작성 규칙

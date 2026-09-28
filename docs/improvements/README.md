@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-preserve-workflow-package` (008에서 분기, 베이스는 006까지 통합)
+현재 구현 브랜치: `feature/refactor-unify-analysis-workflow` (009에서 분기, 베이스는 006까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -26,7 +26,8 @@
 | 006 | Agent·LLM 비동기 호출·취소 전파 | LLM 경로 구현·검증 완료 / 전체 I/O 전환·배포 미완료 | 2026-09-28 | [변경·검증·제한](006-agent-async-llm.md) |
 | 007 | 불필요한 Azure 모델·설정 제거 | 구현·관련 테스트 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](007-remove-azure.md) |
 | 008 | 역할별 Agent 선언·독립 프롬프트 패키지 | 구현·오프라인/설치 검증 완료 / 미들웨어 통일 미구현 | 2026-09-28 | [변경·검증·제한](008-agent-builders-layout.md) |
-| 009 | 기존 app/workflow 유지보수 패키지 복원 | 구현·검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](009-preserve-workflow-package.md) |
+| 009 | 기존 app/workflow 유지보수 패키지 복원 | 구현·검증 완료 / 위치 해석은 010에서 정정 | 2026-09-28 | [변경·검증·제한](009-preserve-workflow-package.md) |
+| 010 | 분석 Workflow 처리 코드·기존 자산 패키지 통합 | 구현·검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](010-unify-analysis-workflow.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
@@ -44,7 +45,7 @@
 
 **공통 기준**
 
-- 사용자 요청에 따라 기존 작업자의 `src/app/workflow/skills`, `tools`, `workflows` 패키지는 원래 위치에 유지한다. Agent 구조를 바꾸더라도 핵심 자산을 다시 이동하거나 사본으로 분산하지 않는다.
+- 사용자 최종 확인에 따라 기존 skills·tools·workflows 하위 구성은 `src/agent_service/agents/analysis/workflow/`로 통합한다. 009의 app/workflow 경로 고정 해석은 정정한다. 자산은 한 곳에서 관리하고 저장된 이전 경로는 resolver로 호환한다.
 
 - [CRUD 최종 결정](../design/crud-final-decisions-2026-09-28.md): Message CUD 공개 API 제외, 미종료 작업이 있는 사용자 삭제 거절, 전체 작업에 같은 공개 run_id 유지, 문자열 공개 사용자 ID와 내부 UUID 연결을 확정했다. 사용자 등록 role은 admin/user를 선택한다. Project system_prompt를 유지하고 모든 Agent 실행에 추가하며 별도 project_memory를 프로젝트 내 세션들이 공유한다. 일반 사용자도 Workflow 승격 가능하며 Executor 실행 성공은 필수 조건이 아니다. 템플릿과 실제 실행 검증 상태를 분리한다. 초기 보고서의 미확정/권장 문구보다 이 결정을 우선하며 구현 완료 기록은 아니다.
 

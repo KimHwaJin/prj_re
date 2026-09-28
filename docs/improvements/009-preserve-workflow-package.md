@@ -1,5 +1,7 @@
 # 009 — 기존 app/workflow 유지보수 패키지 복원
 
+> 후속 정정: 사용자가 보존하려던 것은 하위 패키지 구성으로 확인되었다. 이 문서의 app/workflow 위치 고정 해석은 [010 통합 작업](010-unify-analysis-workflow.md)으로 대체한다. 아래 변경·검증 수치는 009 당시 기록이다.
+
 - 날짜: 2026-09-28
 - 브랜치: feature/refactor-preserve-workflow-package
 - 출발: feature/refactor-agent-builders / ab814f4 (007·008 포함, 베이스는 006까지 통합)
@@ -37,6 +39,6 @@ src/app/workflow는 기존 작업자가 계속 관리하는 핵심 업무 자산
 
 ## 유지보수 기준
 
-[기존 작업자 안내](../../src/app/workflow/README.md)를 기준으로 계속 작업한다. 이후 API·Agent 패키지 분리에서도 이 패키지를 다시 옮기지 않는다. 모델이 직접 호출하는 LangChain 도구와 Executor용 원본 Tool은 다른 영역이다.
+[기존 작업자 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 기준으로 계속 작업한다. 이후 API·Agent 패키지 분리에서도 이 패키지를 다시 옮기지 않는다. 모델이 직접 호출하는 LangChain 도구와 Executor용 원본 Tool은 다른 영역이다.
 
 저장된 소스 경로의 호환은 과거 Tool 버전 전체의 보존을 의미하지 않는다. 실제 운영 DB의 모든 장기 실행 checkpoint를 재검증한 것은 아니며, 제출된 payload를 새 경로로 재생성하지 않는다. 기존 공유 PV 산출물 경로는 유지한다.

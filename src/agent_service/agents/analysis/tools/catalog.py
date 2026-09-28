@@ -11,7 +11,7 @@ from langchain.tools import tool
 
 from agent_service.agents.analysis.resource_paths import (
     SKILLS_ROOT, SKILL_INDEX_PATH, TOOL_REGISTRY_PATH, TOOLS_ROOT,
-    TOOL_SOURCE_PREFIX, SKILL_SOURCE_PREFIX, RELOCATED_SKILL_PREFIX,
+    TOOL_SOURCE_PREFIX, SKILL_SOURCE_PREFIX, SKILL_SOURCE_PREFIXES,
 )
 MAX_FILE_SIZE = 200_000
 MAX_SKILL_DOCUMENTS = 20
@@ -105,8 +105,7 @@ def _resolve_skill_document(skill_name: str) -> tuple[str, Path]:
                 path,
                 Path(path).name,
                 Path(path).stem,
-                f"{SKILL_SOURCE_PREFIX}{path}",
-                f"{RELOCATED_SKILL_PREFIX}{path}",
+                *(prefix + path for prefix in SKILL_SOURCE_PREFIXES),
             }
         }
         matched = aliases.get(requested_name)
