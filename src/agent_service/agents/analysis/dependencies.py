@@ -26,7 +26,7 @@ from agent_service.agents.analysis.schemas.agents.workflow_generator_schema impo
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import ConditionalDecisionOutput
 from agent_service.agents.analysis.workflow.workflow_recommender import WorkflowRecommender
 from agent_service.agents.analysis.components.interfaces import (
-    InvokableAgent,
+    AsyncInvokableAgent,
     JsonMessageAgentAdapter,
     LabelOnlyLLMAgent,
     PlaceholderAgent,
@@ -37,15 +37,15 @@ from agent_service.agents.analysis.components.interfaces import (
 
 @dataclass(frozen=True)
 class AgentDependencies:
-    routing_agent: InvokableAgent
-    analysis_intent_agent: InvokableAgent
-    workflow_recommender: InvokableAgent
-    workflow_agent: InvokableAgent
-    faq_agent: InvokableAgent
-    file_lookup_agent: InvokableAgent
-    report_agent: InvokableAgent | None = None
-    conditional_decision_agent: InvokableAgent | None = None
-    skill_selector_agent: InvokableAgent | None = None
+    routing_agent: AsyncInvokableAgent
+    analysis_intent_agent: AsyncInvokableAgent
+    workflow_recommender: AsyncInvokableAgent
+    workflow_agent: AsyncInvokableAgent
+    faq_agent: AsyncInvokableAgent
+    file_lookup_agent: AsyncInvokableAgent
+    report_agent: AsyncInvokableAgent | None = None
+    conditional_decision_agent: AsyncInvokableAgent | None = None
+    skill_selector_agent: AsyncInvokableAgent | None = None
 
 
 def create_chat_model(settings: AgentSettings) -> Any:

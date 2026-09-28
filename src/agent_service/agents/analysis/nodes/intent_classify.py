@@ -3,21 +3,21 @@
 from __future__ import annotations
 
 from agent_config import ENABLED_ANALYSIS_INTENTS
-from agent_service.agents.analysis.components.interfaces import invoke_typed
+from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import AnalysisIntentOutput
 
 
 def make_classify_analysis_intent(deps: AgentDependencies):
-    def classify_analysis_intent(state: AnalysisWorkflowState) -> dict:
+    async def classify_analysis_intent(state: AnalysisWorkflowState) -> dict:
         if len(ENABLED_ANALYSIS_INTENTS) == 1:
             output = AnalysisIntentOutput(
                 intent=ENABLED_ANALYSIS_INTENTS[0],
                 reason="현재 활성화된 단일 분석 의도로 분류했습니다.",
             )
         else:
-            output = invoke_typed(
+            output = await ainvoke_typed(
                 deps.analysis_intent_agent,
                 {
                     "user_request": state["user_request"],

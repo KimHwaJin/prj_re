@@ -16,7 +16,7 @@ class WorkflowRecommender:
 
     calls: list[dict[str, Any]] = field(default_factory=list)
 
-    def invoke(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+    async def ainvoke(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         self.calls.append(payload)
         # TODO(INTEGRATION): 저장된 Workflow JSON 벡터 유사도 검색 연동
         return None

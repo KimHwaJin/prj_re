@@ -22,7 +22,7 @@ class DecisionAgent:
         self.decision = decision
         self.calls = []
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         self.calls.append(payload)
         candidate = payload["candidates"][0]
         return {
@@ -115,7 +115,7 @@ def _workflow() -> dict:
     )
 
 
-class AdaptiveExecutionMvpTests(unittest.TestCase):
+class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
     def test_raw_condition_result_is_paired_with_pending_candidate(self):
         workflow = _workflow()
         initial = build_notebook(workflow, project_root="src")
@@ -132,7 +132,7 @@ class AdaptiveExecutionMvpTests(unittest.TestCase):
         self.assertEqual(candidate["condition_tool_id"], "quality.profile_data")
         self.assertEqual(candidate["condition_tool_result"], raw_result)
 
-    def test_include_decision_generates_next_code_segment(self):
+    async def test_include_decision_generates_next_code_segment(self):
         workflow = _workflow()
         initial = build_notebook(workflow, project_root="src")
         pending = initial["workflow"]["pending_conditional_tool_id"]
@@ -155,7 +155,7 @@ class AdaptiveExecutionMvpTests(unittest.TestCase):
             "adaptive_runtime_decisions": {},
             "adaptive_decision_history": [],
         }
-        decision_update = make_decide_conditional_tools(deps)(state)
+        decision_update = await make_decide_conditional_tools(deps)(state)
         chat_summary = decision_update["messages"][0]["content"]
         self.assertIn("조건 Tool:", chat_summary)
         self.assertIn("조건 결과 요약:", chat_summary)
@@ -200,7 +200,7 @@ class AdaptiveExecutionMvpTests(unittest.TestCase):
         )
         self.assertIsNone(update["adaptive_pending_tool_id"])
 
-    def test_one_observation_resolves_consecutive_conditional_tools(self):
+    async def test_one_observation_resolves_consecutive_conditional_tools(self):
         data_argument = {
             "source": "step_output",
             "step_id": "load_data_1",
@@ -280,7 +280,7 @@ class AdaptiveExecutionMvpTests(unittest.TestCase):
                     conditional_decision_agent=decision_agent,
                 )
 
-                update = make_decide_conditional_tools(deps)(
+                update = await make_decide_conditional_tools(deps)(
                     {
                         "workflow": workflow,
                         "task_id": "task",

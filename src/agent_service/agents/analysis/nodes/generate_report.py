@@ -8,6 +8,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from agent_service.runtime.blocking import run_sync
 from agent_config import AgentSettings
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.state import AnalysisWorkflowState
@@ -335,7 +336,7 @@ def make_generate_report(
     settings: AgentSettings,
     submit_artifact=submit_execution_artifact,
 ):
-    def generate_report(state: AnalysisWorkflowState) -> dict:
+    async def generate_report(state: AnalysisWorkflowState) -> dict:
         if deps.report_agent is None:
             raise RuntimeError("report_agent dependency is required")
 
@@ -373,7 +374,7 @@ def make_generate_report(
             execution_id=execution_id,
             step_results=step_results,
         )
-        raw_report = deps.report_agent.invoke(request.model_dump(mode="json"))
+        raw_report = await deps.report_agent.ainvoke(request.model_dump(mode="json"))
         if isinstance(raw_report, dict):
             content = raw_report.get("content") or raw_report.get("answer")
         else:
@@ -385,7 +386,8 @@ def make_generate_report(
         workflow_id = str(
             (state.get("workflow") or {}).get("workflow", {}).get("id") or "workflow"
         )
-        artifact_request, staged_report_path = build_report_artifact_request(
+        artifact_request, staged_report_path = await run_sync(
+            build_report_artifact_request,
             settings,
             execution_id=str(execution_id),
             task_id=task_id,
@@ -393,7 +395,8 @@ def make_generate_report(
             content=report["content"],
         )
         if settings.executor_submit_enabled:
-            artifact_response = submit_artifact(
+            artifact_response = await run_sync(
+                submit_artifact,
                 settings, str(execution_id), artifact_request
             )
         else:
@@ -407,14 +410,15 @@ def make_generate_report(
         artifact_files = dict(state.get("artifact_files", {}))
         report_path = ""
         if settings.demo_artifacts_enabled:
-            run_dir = build_run_artifact_dir(
+            run_dir = await run_sync(
+                build_run_artifact_dir,
                 settings,
                 user_id=state["user_id"],
                 project_id=state["project_id"],
                 session_id=state["session_id"],
                 task_id=task_id,
             )
-            path = write_demo_json(run_dir / "analysis_report.json", report)
+            path = await run_sync(write_demo_json, run_dir / "analysis_report.json", report)
             report_path = str(path)
             artifact_files["analysis_report"] = report_path
         if staged_report_path:

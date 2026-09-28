@@ -6,9 +6,10 @@ from copy import deepcopy
 
 from pydantic import ValidationError
 
+from agent_service.runtime.blocking import run_sync
 from agent_config import AgentSettings
 from agent_service.agents.analysis.message_utils import as_message_content
-from agent_service.agents.analysis.components.interfaces import invoke_typed
+from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.workflow.data_load_steps import (
     merge_required_data_load_steps,
@@ -256,16 +257,17 @@ def _make_workflow_node(
     generation_mode: str,
     workflow_origin: str,
 ):
-    def workflow_node(state: AnalysisWorkflowState) -> dict:
+    async def workflow_node(state: AnalysisWorkflowState) -> dict:
         revision = state.get("workflow_revision", 0) + 1
         if revision > settings.max_workflow_revisions:
             raise RuntimeError("maximum workflow revision count exceeded")
 
-        required_steps = required_data_load_steps(
+        required_steps = await run_sync(
+            required_data_load_steps,
             state["data_selection"],
             data_mock=settings.data_mock,
         )
-        artifact_output_dir = build_workflow_output_dir(settings, state)
+        artifact_output_dir = await run_sync(build_workflow_output_dir, settings, state)
         workflow_context = {"output_dir": artifact_output_dir}
         request = WorkflowGenerationRequest(
             user_request=state["user_request"],
@@ -299,16 +301,16 @@ def _make_workflow_node(
                 "additional_information": request.additional_information,
                 "rejection_feedback": request.rejection_feedback,
             }
-            selection = invoke_typed(
+            selection = await ainvoke_typed(
                 deps.skill_selector_agent,
                 selector_payload,
                 SkillSelectionOutput,
             )
-            selected_skill_names = validate_skill_names(selection.skill_names)
+            selected_skill_names = await run_sync(validate_skill_names, selection.skill_names)
             selected_skill_names = [
                 name for name in selected_skill_names
                 if name != "data_load"
-            ]            
+            ]
             selected_roles = {
                 item["role"] for item in state["data_selection"]["datasets"]
             }
@@ -317,14 +319,16 @@ def _make_workflow_node(
                 and "dataset_preparation" not in selected_skill_names
             ):
                 selected_skill_names.append("dataset_preparation")
-                selected_skill_names = validate_skill_names(
+                selected_skill_names = await run_sync(
+                    validate_skill_names,
                     selected_skill_names
                 )
             # 상세 문서 조회 전에 최종 Skill 목록을 확인한다.
             if not selected_skill_names:
-                raise ValueError("분석에 사용할 Skill이 선택되지 않았습니다.")    
-                        
-            workflow_resources = read_skill_documents.invoke(
+                raise ValueError("분석에 사용할 Skill이 선택되지 않았습니다.")
+
+            workflow_resources = await run_sync(
+                read_skill_documents.invoke,
                 {"skill_names": selected_skill_names}
             )
 
@@ -352,7 +356,7 @@ def _make_workflow_node(
                             "workflow_resources": workflow_resources,
                         }
                     )
-                plan_output = invoke_typed(
+                plan_output = await ainvoke_typed(
                     deps.workflow_agent,
                     generation_payload,
                     WorkflowPlanOutput,
@@ -362,7 +366,8 @@ def _make_workflow_node(
                     **failed_plan["workflow"].get("context", {}),
                     **workflow_context,
                 }
-                generated_document = compile_workflow_plan(
+                generated_document = await run_sync(
+                    compile_workflow_plan,
                     failed_plan,
                     external_step_outputs={
                         (f"load_data_{index}", "data")
@@ -384,13 +389,14 @@ def _make_workflow_node(
                     generated_document,
                     state.get("additional_information", {}),
                 )
-                document = merge_required_data_load_steps(
+                document = await run_sync(
+                    merge_required_data_load_steps,
                     generated_document,
                     state["data_selection"],
                     data_mock=settings.data_mock,
                 )
-                normalize_skill_condition_contract(document)
-                validate_skill_condition_contract(document)
+                await run_sync(normalize_skill_condition_contract, document)
+                await run_sync(validate_skill_condition_contract, document)
                 _validate_data_load_contract(
                     document, state["data_selection"], required_steps
                 )

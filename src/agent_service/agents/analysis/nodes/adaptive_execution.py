@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import json
 
+from agent_service.runtime.blocking import run_sync
 from agent_config import AgentSettings
-from agent_service.agents.analysis.components.interfaces import invoke_typed
+from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.message_utils import as_message_content
 from agent_service.agents.analysis.state import AnalysisWorkflowState
@@ -69,7 +70,7 @@ def make_decide_conditional_tools(
 ):
     store = workflow_store or NullWorkflowStore()
 
-    def decide_conditional_tools(state: AnalysisWorkflowState) -> dict:
+    async def decide_conditional_tools(state: AnalysisWorkflowState) -> dict:
         agent = deps.conditional_decision_agent
         if agent is None:
             raise RuntimeError("conditional_decision_agent is not configured")
@@ -82,7 +83,8 @@ def make_decide_conditional_tools(
         decision_summaries: list[dict] = []
         while pending_tool_id:
             try:
-                payload = decision_payload(
+                payload = await run_sync(
+                    decision_payload,
                     state["workflow"],
                     pending_tool_id,
                     observations,
@@ -91,7 +93,7 @@ def make_decide_conditional_tools(
                 if "condition Tool result is missing" in str(exc):
                     break
                 raise
-            output = invoke_typed(agent, payload, ConditionalDecisionOutput)
+            output = await ainvoke_typed(agent, payload, ConditionalDecisionOutput)
             decisions = output.model_dump(mode="json")["decisions"]
             if [item["tool_id"] for item in decisions] != [pending_tool_id]:
                 raise ValueError(
@@ -113,7 +115,8 @@ def make_decide_conditional_tools(
                     "reason": decision.get("reason") or "이유 없음",
                 }
             )
-            preview = build_notebook(
+            preview = await run_sync(
+                build_notebook,
                 state["workflow"],
                 project_root=APP_SOURCE_ROOT,
                 job_id=state.get("task_id", ""),
@@ -144,7 +147,8 @@ def make_decide_conditional_tools(
             }
             for decision in new_decisions
         ]
-        store.record_adaptive_round(
+        await run_sync(
+            store.record_adaptive_round,
             execution_id=str(state.get("execution_id") or ""),
             decision_round=max(1, int(state.get("adaptive_round", 1))),
             changes=changes,

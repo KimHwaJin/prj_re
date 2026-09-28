@@ -33,7 +33,7 @@ def export_graph_mermaid(
 class _TopologyOnlyAgent:
     """Agent stub used only to compile graph topology for visualization."""
 
-    def invoke(self, payload: Any) -> Any:
+    async def ainvoke(self, payload: Any) -> Any:
         raise RuntimeError("Topology-only agents must not be invoked")
 
 

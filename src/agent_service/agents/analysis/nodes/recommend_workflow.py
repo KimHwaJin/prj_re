@@ -15,7 +15,7 @@ def make_recommend_workflow(
     deps: AgentDependencies,
     settings: AgentSettings,
 ):
-    def recommend_workflow(state: AnalysisWorkflowState) -> dict:
+    async def recommend_workflow(state: AnalysisWorkflowState) -> dict:
         request = {
             "user_request": state["user_request"],
             "analysis_intent": state["analysis_intent"],
@@ -23,7 +23,7 @@ def make_recommend_workflow(
             "data_selection": state["data_selection"],
         }
         raw_recommendation = (
-            deps.workflow_recommender.invoke(request)
+            await deps.workflow_recommender.ainvoke(request)
             if settings.workflow_recommendation_enabled
             else None
         )

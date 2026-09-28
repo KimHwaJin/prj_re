@@ -13,7 +13,7 @@ from agent_config import (
     LOCAL_MOCK_USER_ID,
     build_langgraph_thread_id,
 )
-from agent_service.agents.analysis.components.interfaces import invoke_typed
+from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import RequestContext, RoutingOutput
@@ -117,8 +117,8 @@ def ensure_analysis_task(state: AnalysisWorkflowState) -> dict:
 def make_route_user_request(deps: AgentDependencies):
     """Create a node that classifies the user's top-level route."""
 
-    def route_user_request(state: AnalysisWorkflowState) -> dict:
-        output = invoke_typed(
+    async def route_user_request(state: AnalysisWorkflowState) -> dict:
+        output = await ainvoke_typed(
             deps.routing_agent,
             {
                 "user_request": state["user_request"],

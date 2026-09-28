@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent_service.agents.analysis.components.interfaces import invoke_typed
+from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.message_utils import as_message_content
 from agent_service.agents.analysis.state import AnalysisWorkflowState
@@ -14,8 +14,8 @@ def _service_query(state: AnalysisWorkflowState) -> str:
 
 
 def make_faq_node(deps: AgentDependencies):
-    def faq_node(state: AnalysisWorkflowState) -> dict:
-        output = invoke_typed(
+    async def faq_node(state: AnalysisWorkflowState) -> dict:
+        output = await ainvoke_typed(
             deps.faq_agent,
             {"user_request": _service_query(state)},
             FaqOutput,
@@ -41,8 +41,8 @@ def make_faq_node(deps: AgentDependencies):
 
 
 def make_file_lookup_node(deps: AgentDependencies):
-    def file_lookup_node(state: AnalysisWorkflowState) -> dict:
-        output = invoke_typed(
+    async def file_lookup_node(state: AnalysisWorkflowState) -> dict:
+        output = await ainvoke_typed(
             deps.file_lookup_agent,
             {"user_request": _service_query(state)},
             PlaceholderResponse,

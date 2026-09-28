@@ -26,19 +26,20 @@ def _unwrap_json_code_fence(content: str) -> str:
     return content
 
 
-class InvokableAgent(Protocol):
-    def invoke(self, payload: Any) -> Any:
+class AsyncInvokableAgent(Protocol):
+    """Native async component contract; cancellation must propagate to callers."""
+    async def ainvoke(self, payload: Any) -> Any:
         ...
 
 
 @dataclass
 class JsonMessageAgentAdapter:
-    """Adapt a LangChain agent graph to the graph node's JSON invoke contract."""
+    """Adapt a LangChain agent graph to the node's asynchronous JSON contract."""
 
     agent: Any
 
-    def invoke(self, payload: Any) -> Any:
-        return self.agent.invoke(
+    async def ainvoke(self, payload: Any) -> Any:
+        return await self.agent.ainvoke(
             {
                 "messages": [
                     {
@@ -53,22 +54,22 @@ class JsonMessageAgentAdapter:
             },
             config={
                 "configurable": {
-                    # The outer service graph owns persistence. This inner
-                    # LLM agent is invoked synchronously and must not inherit
-                    # the outer AsyncPostgresSaver.
+                    # The outer service graph owns persistence. The inner
+                    # LLM agent is stateless and must not inherit the outer
+                    # graph checkpointer, even for asynchronous execution.
                     CONFIG_KEY_CHECKPOINTER: None,
                 }
             },
         )
 
 
-def invoke_typed(
-    agent: InvokableAgent,
+async def ainvoke_typed(
+    agent: AsyncInvokableAgent,
     payload: BaseModel | dict[str, Any],
     output_type: type[OutputT],
 ) -> OutputT:
     raw_payload = payload.model_dump(mode="json") if isinstance(payload, BaseModel) else payload
-    result = agent.invoke(raw_payload)
+    result = await agent.ainvoke(raw_payload)
     if isinstance(result, dict) and "structured_response" in result:
         result = result["structured_response"]
     elif isinstance(result, dict) and result.get("messages"):
@@ -99,7 +100,7 @@ class StructuredLLMAgent:
     method: str = "prompt_json"
     max_validation_attempts: int = 3
 
-    def invoke(self, payload: Any) -> BaseModel:
+    async def ainvoke(self, payload: Any) -> BaseModel:
         from langchain_core.messages import HumanMessage, SystemMessage
 
         if self.method == "provider_json_schema":
@@ -107,7 +108,7 @@ class StructuredLLMAgent:
                 self.output_type,
                 method="json_schema",
             )
-            return structured_model.invoke(
+            return await structured_model.ainvoke(
                 [
                     SystemMessage(content=self.system_prompt),
                     HumanMessage(
@@ -140,7 +141,7 @@ class StructuredLLMAgent:
         ]
         last_error: Exception | None = None
         for _ in range(self.max_validation_attempts):
-            response = self.model.invoke(messages)
+            response = await self.model.ainvoke(messages)
             content = getattr(response, "content", response)
             if not isinstance(content, str) or not content.strip():
                 last_error = ValueError(
@@ -181,7 +182,7 @@ class LabelOnlyLLMAgent:
     label_field: str
     allowed_labels: tuple[str, ...]
 
-    def invoke(self, payload: Any) -> BaseModel:
+    async def ainvoke(self, payload: Any) -> BaseModel:
         from langchain_core.messages import HumanMessage, SystemMessage
 
         labels = "\n".join(self.allowed_labels)
@@ -191,7 +192,7 @@ class LabelOnlyLLMAgent:
             "below. Return only the label, with no JSON, markdown, reason, or "
             f"other text.\n{labels}"
         )
-        response = self.model.invoke(
+        response = await self.model.ainvoke(
             [
                 SystemMessage(content=prompt),
                 HumanMessage(
@@ -222,7 +223,7 @@ class SimpleLLMAgent:
     model: Any
     system_prompt: str
 
-    def invoke(self, payload: Any) -> dict[str, str]:
+    async def ainvoke(self, payload: Any) -> dict[str, str]:
         from langchain_core.messages import HumanMessage, SystemMessage
 
         if not isinstance(payload, dict):
@@ -231,7 +232,7 @@ class SimpleLLMAgent:
         if not user_request:
             raise ValueError("user_request is required")
 
-        response = self.model.invoke(
+        response = await self.model.ainvoke(
             [
                 SystemMessage(content=self.system_prompt),
                 HumanMessage(content=user_request),
@@ -247,5 +248,5 @@ class SimpleLLMAgent:
 class PlaceholderAgent:
     message: str
 
-    def invoke(self, payload: Any) -> dict[str, str]:
+    async def ainvoke(self, payload: Any) -> dict[str, str]:
         return {"status": "placeholder", "message": self.message}

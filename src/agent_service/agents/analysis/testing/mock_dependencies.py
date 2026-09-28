@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-import time
+import asyncio
 from typing import Any, Callable
 
 from agent_config import AgentSettings
@@ -20,11 +20,10 @@ class ScriptedAgent:
     respond: Callable[[dict[str, Any]], dict[str, Any]]
     delay_ms: int
 
-    def invoke(self, payload: dict[str, Any]) -> dict[str, Any]:
-        # Graph runs synchronous nodes in its executor; this does not sleep the
-        # HTTP event loop. Optional latency also exposes executor/thread limits.
+    async def ainvoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # Mock latency follows the same cancellable async interface as the model.
         if self.delay_ms:
-            time.sleep(self.delay_ms / 1000)
+            await asyncio.sleep(self.delay_ms / 1000)
         return deepcopy(self.respond(payload))
 
 

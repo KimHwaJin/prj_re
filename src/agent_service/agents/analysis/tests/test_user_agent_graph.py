@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from langchain_core.messages import AIMessage
 from langgraph.types import Command
@@ -25,7 +25,7 @@ from agent_service.agents.analysis.components.interfaces import (
     LabelOnlyLLMAgent,
     SimpleLLMAgent,
     StructuredLLMAgent,
-    invoke_typed,
+    ainvoke_typed,
 )
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.components.workflow_generator import (
@@ -73,7 +73,7 @@ _TEST_ARTIFACTS = tempfile.TemporaryDirectory()
 
 
 class RoutingAgent:
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         request = payload["user_request"].lower()
         if payload.get("routing_context") == "workflow_rejected":
             if "reselect" in request or "다시 선택" in request:
@@ -94,7 +94,7 @@ class ConstantAgent:
         self.value = value
         self.calls = []
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         self.calls.append(payload)
         return self.value
 
@@ -140,7 +140,7 @@ class ReportAgent:
     def __init__(self):
         self.calls = []
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         self.calls.append(payload)
         return {
             "content": (
@@ -159,7 +159,7 @@ class WorkflowAgent:
     def __init__(self):
         self.calls = []
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         self.calls.append(payload)
         selection = payload["data_selection"]
         target = payload["additional_information"].get("target_column")
@@ -258,7 +258,7 @@ class PlanWorkflowAgent:
     def __init__(self):
         self.calls = []
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         self.calls.append(payload)
         target = payload["additional_information"].get("target_column")
         needs_input = target is None
@@ -333,8 +333,8 @@ class PlanWorkflowAgent:
 
 
 class ValidationRetryWorkflowAgent(PlanWorkflowAgent):
-    def invoke(self, payload):
-        document = super().invoke(payload)
+    async def ainvoke(self, payload):
+        document = await super().ainvoke(payload)
         if (
             payload["additional_information"].get("target_column")
             and payload.get("validation_feedback") is None
@@ -351,7 +351,7 @@ class PlaceholderAgent:
     def __init__(self, message):
         self.message = message
 
-    def invoke(self, payload):
+    async def ainvoke(self, payload):
         return {"status": "placeholder", "message": self.message}
 
 
@@ -359,7 +359,7 @@ class FakeChatModel:
     def __init__(self):
         self.calls = []
 
-    def invoke(self, messages):
+    async def ainvoke(self, messages):
         self.calls.append(messages)
         return AIMessage(content="간단한 FAQ 답변입니다.")
 
@@ -474,8 +474,8 @@ def analysis_context():
     }
 
 
-def recommended_workflow_response():
-    workflow = WorkflowAgent().invoke(
+async def recommended_workflow_response():
+    workflow = await WorkflowAgent().ainvoke(
         {
             "user_request": "Predict wafer failures",
             "analysis_context": analysis_context(),
@@ -499,10 +499,10 @@ def recommended_workflow_response():
     }
 
 
-def start_analysis(graph, session_id):
+async def start_analysis(graph, session_id):
     context = build_local_mock_request_context(session_id=session_id)
     config = {"configurable": {"thread_id": context["thread_id"]}}
-    result = graph.invoke(
+    result = await graph.ainvoke(
         {
             **context,
             "request_id": f"request-{session_id}",
@@ -512,13 +512,13 @@ def start_analysis(graph, session_id):
     )
     if interrupt_payload(result) != TEST_DATA_SELECTION:
         raise AssertionError("expected data_selection interrupt")
-    result = graph.invoke(Command(resume=data_selection()), config=config)
+    result = await graph.ainvoke(Command(resume=data_selection()), config=config)
     if interrupt_payload(result) != {"objective": "EDA"}:
         raise AssertionError("expected analysis_context interrupt")
     return config
 
 
-def select_candidate(graph, config, result, origin="generated"):
+async def select_candidate(graph, config, result, origin="generated"):
     payload = interrupt_payload(result)
     if payload.get("candidate_number") != 1:
         raise AssertionError("expected workflow_candidate_selection interrupt")
@@ -526,20 +526,20 @@ def select_candidate(graph, config, result, origin="generated"):
     candidate = next(
         item for item in candidates if item["origin"] == origin
     )
-    return graph.invoke(
+    return await graph.ainvoke(
         Command(resume={"selected_candidate_id": candidate["id"]}),
         config=config,
     )
 
 
-class UserAgentGraphTests(unittest.TestCase):
-    def test_nested_agent_does_not_inherit_outer_async_checkpointer(self):
-        nested = Mock()
-        nested.invoke.return_value = {"messages": []}
+class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
+    async def test_nested_agent_does_not_inherit_outer_async_checkpointer(self):
+        nested = Mock(ainvoke=AsyncMock())
+        nested.ainvoke.return_value = {"messages": []}
 
-        JsonMessageAgentAdapter(nested).invoke({"request": "test"})
+        await JsonMessageAgentAdapter(nested).ainvoke({"request": "test"})
 
-        config = nested.invoke.call_args.kwargs["config"]
+        config = nested.ainvoke.call_args.kwargs["config"]
         self.assertIsNone(
             config["configurable"]["__pregel_checkpointer"]
         )
@@ -690,20 +690,20 @@ class UserAgentGraphTests(unittest.TestCase):
             "mock",
         )
 
-    def test_graph_resumes_data_selection_from_agent_chat_response(self):
+    async def test_graph_resumes_data_selection_from_agent_chat_response(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         context = build_local_mock_request_context(
             session_id="agent-chat-hitl"
         )
         config = {"configurable": {"thread_id": context["thread_id"]}}
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {**context, "user_request": "불량 예측을 해줘"},
             config=config,
         )
 
         self.assertEqual(interrupt_payload(result), TEST_DATA_SELECTION)
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(resume={"decisions": [{"type": "approve"}]}),
             config=config,
         )
@@ -747,12 +747,12 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(messages[1]["type"], "ai")
         self.assertEqual(messages[2]["type"], "ai")
 
-    def test_graph_accepts_agent_chat_message_input(self):
+    async def test_graph_accepts_agent_chat_message_input(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         config = {"configurable": {"thread_id": "agent-chat-graph"}}
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {
                 "messages": [
                     {"role": "user", "content": "FAQ: 데이터 드리프트란?"}
@@ -800,9 +800,9 @@ class UserAgentGraphTests(unittest.TestCase):
             "agent_service/agents/analysis/resources/executor_tools/preprocessing/merge_data.py",
         )
 
-    def test_label_only_agent_builds_typed_output_without_json(self):
+    async def test_label_only_agent_builds_typed_output_without_json(self):
         model = FakeChatModel()
-        model.invoke = lambda messages: AIMessage(content="analysis")
+        model.ainvoke = AsyncMock(return_value=AIMessage(content="analysis"))
         agent = LabelOnlyLLMAgent(
             model=model,
             system_prompt="Classify the request.",
@@ -811,16 +811,16 @@ class UserAgentGraphTests(unittest.TestCase):
             allowed_labels=("analysis", "faq"),
         )
 
-        result = agent.invoke({"user_request": "불량 예측을 하고 싶어"})
+        result = await agent.ainvoke({"user_request": "불량 예측을 하고 싶어"})
 
         self.assertEqual(result.route, "analysis")
         self.assertIn("analysis", result.reason)
 
-    def test_label_only_agent_rejects_unexpected_text(self):
+    async def test_label_only_agent_rejects_unexpected_text(self):
         model = FakeChatModel()
-        model.invoke = lambda messages: AIMessage(
+        model.ainvoke = AsyncMock(return_value=AIMessage(
             content="The answer is analysis."
-        )
+        ))
         agent = LabelOnlyLLMAgent(
             model=model,
             system_prompt="Classify the request.",
@@ -830,10 +830,10 @@ class UserAgentGraphTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(ValueError, "Unexpected LLM label"):
-            agent.invoke({"user_request": "불량 예측을 하고 싶어"})
+            await agent.ainvoke({"user_request": "불량 예측을 하고 싶어"})
 
-    def test_data_load_merge_canonicalizes_local_tool_output_references(self):
-        document = WorkflowAgent().invoke(
+    async def test_data_load_merge_canonicalizes_local_tool_output_references(self):
+        document = await WorkflowAgent().ainvoke(
             {
                 "user_request": "EDA를 수행해줘",
                 "analysis_context": analysis_context(),
@@ -862,8 +862,8 @@ class UserAgentGraphTests(unittest.TestCase):
             "${workflow.inputs.target_column}",
         )
 
-    def test_workflow_generator_output_rejects_adaptive_without_conditional_tool(self):
-        document = WorkflowAgent().invoke(
+    async def test_workflow_generator_output_rejects_adaptive_without_conditional_tool(self):
+        document = await WorkflowAgent().ainvoke(
             {
                 "user_request": "EDA를 수행해줘",
                 "analysis_context": analysis_context(),
@@ -1002,7 +1002,7 @@ class UserAgentGraphTests(unittest.TestCase):
             ["join_columns"],
         )
 
-    def test_generate_report_matches_execution_events_to_steps(self):
+    async def test_generate_report_matches_execution_events_to_steps(self):
         report_agent = ReportAgent()
         artifact_calls = []
 
@@ -1022,7 +1022,7 @@ class UserAgentGraphTests(unittest.TestCase):
         )
         test_config = settings()
 
-        result = make_generate_report(
+        result = await make_generate_report(
             deps, test_config, submit_artifact=submit_artifact
         )(
             {
@@ -1090,7 +1090,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(artifact_calls[0][1]["source"]["type"], "INLINE")
         self.assertTrue(artifact_calls[0][1]["append_to_notebook"])
 
-    def test_cli_hides_internal_classification_messages_before_interrupt(self):
+    async def test_cli_hides_internal_classification_messages_before_interrupt(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         context = build_local_mock_request_context(
@@ -1100,7 +1100,7 @@ class UserAgentGraphTests(unittest.TestCase):
         output = io.StringIO()
 
         with redirect_stdout(output):
-            result, displayed = _stream_graph(
+            result, displayed = await _stream_graph(
                 graph,
                 {**context, "user_request": "불량 예측 분석"},
                 config=config,
@@ -1112,7 +1112,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertNotIn("[routing_agent]", output.getvalue())
         self.assertNotIn("[analysis_intent]", output.getvalue())
 
-    def test_workflow_generation_retries_with_validation_feedback(self):
+    async def test_workflow_generation_retries_with_validation_feedback(self):
         workflow_agent = ValidationRetryWorkflowAgent()
         skill_selector = ConstantAgent(
             {"skill_names": ["data_quality_check"]}
@@ -1122,13 +1122,13 @@ class UserAgentGraphTests(unittest.TestCase):
             skill_selector_agent=skill_selector,
         )
         graph = compiled_in_memory_graph(deps, settings())
-        config = start_analysis(graph, "validation-retry")
+        config = await start_analysis(graph, "validation-retry")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
-        result = select_candidate(graph, config, result)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
+        result = await select_candidate(graph, config, result)
         missing_payload = interrupt_payload(result)
         self.assertEqual(missing_payload, {"target_column": ""})
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(resume={"answers": {"target_column": "fail"}}),
             config=config,
         )
@@ -1186,7 +1186,7 @@ class UserAgentGraphTests(unittest.TestCase):
     def test_provider_workflow_agent_binds_json_schema(
         self, create_agent_mock
     ):
-        model = Mock()
+        model = Mock(ainvoke=AsyncMock())
         bound_model = object()
         model.bind.return_value = bound_model
 
@@ -1204,7 +1204,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertIn("JSON Schema", agent_kwargs["system_prompt"])
         self.assertEqual(agent_kwargs["tools"], [])
 
-    def test_invoke_typed_parses_last_ai_message_content(self):
+    async def test_ainvoke_typed_parses_last_ai_message_content(self):
         agent = ConstantAgent(
             {
                 "messages": [
@@ -1220,7 +1220,7 @@ class UserAgentGraphTests(unittest.TestCase):
             }
         )
 
-        result = make_classify_analysis_intent(
+        result = await make_classify_analysis_intent(
             AgentDependencies(
                 routing_agent=RoutingAgent(),
                 analysis_intent_agent=agent,
@@ -1235,7 +1235,7 @@ class UserAgentGraphTests(unittest.TestCase):
             result["analysis_intent"]["intent"], "failure_prediction"
         )
 
-    def test_invoke_typed_unwraps_single_json_code_fence(self):
+    async def test_ainvoke_typed_unwraps_single_json_code_fence(self):
         agent = ConstantAgent(
             {
                 "messages": [
@@ -1250,7 +1250,7 @@ class UserAgentGraphTests(unittest.TestCase):
             }
         )
 
-        result = invoke_typed(agent, {}, SkillSelectionOutput)
+        result = await ainvoke_typed(agent, {}, SkillSelectionOutput)
 
         self.assertEqual(result.skill_names, ["data_quality_check"])
 
@@ -1304,9 +1304,9 @@ class UserAgentGraphTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Skill Index"):
             validate_skill_names(["invented_skill"])
 
-    def test_prompt_json_agent_retries_pydantic_validation(self):
-        model = Mock()
-        model.invoke.side_effect = [
+    async def test_prompt_json_agent_retries_pydantic_validation(self):
+        model = Mock(ainvoke=AsyncMock())
+        model.ainvoke.side_effect = [
             AIMessage(content="not json"),
             AIMessage(content='{"skill_names":["data_quality_check"]}'),
         ]
@@ -1317,16 +1317,16 @@ class UserAgentGraphTests(unittest.TestCase):
             method="prompt_json",
         )
 
-        result = agent.invoke({"user_request": "profile data"})
+        result = await agent.ainvoke({"user_request": "profile data"})
 
         self.assertEqual(result.skill_names, ["data_quality_check"])
-        self.assertEqual(model.invoke.call_count, 2)
-        retry_messages = model.invoke.call_args.args[0]
+        self.assertEqual(model.ainvoke.call_count, 2)
+        retry_messages = model.ainvoke.call_args.args[0]
         self.assertIn("Validation error", retry_messages[-1].content)
 
-    def test_prompt_json_agent_accepts_single_json_code_fence_without_retry(self):
-        model = Mock()
-        model.invoke.return_value = AIMessage(
+    async def test_prompt_json_agent_accepts_single_json_code_fence_without_retry(self):
+        model = Mock(ainvoke=AsyncMock())
+        model.ainvoke.return_value = AIMessage(
             content=(
                 "```json\n"
                 '{"skill_names":["data_quality_check"]}\n'
@@ -1340,10 +1340,10 @@ class UserAgentGraphTests(unittest.TestCase):
             method="prompt_json",
         )
 
-        result = agent.invoke({"user_request": "profile data"})
+        result = await agent.ainvoke({"user_request": "profile data"})
 
         self.assertEqual(result.skill_names, ["data_quality_check"])
-        self.assertEqual(model.invoke.call_count, 1)
+        self.assertEqual(model.ainvoke.call_count, 1)
 
     def test_workflow_input_defaults_to_required_when_llm_omits_field(self):
         definition = InputDefinition.model_validate(
@@ -1356,7 +1356,7 @@ class UserAgentGraphTests(unittest.TestCase):
 
         self.assertTrue(definition.required)
 
-    def test_analysis_intent_respects_enabled_configuration(self):
+    async def test_analysis_intent_respects_enabled_configuration(self):
         deps, _, _ = dependencies()
         disabled_intent_agent = ConstantAgent(
             {"intent": "root_cause", "reason": "ambiguous request"}
@@ -1370,7 +1370,7 @@ class UserAgentGraphTests(unittest.TestCase):
             file_lookup_agent=deps.file_lookup_agent,
         )
 
-        result = make_classify_analysis_intent(deps)(
+        result = await make_classify_analysis_intent(deps)(
             {"user_request": "불량 원인을 분석해줘"}
         )
 
@@ -1380,14 +1380,14 @@ class UserAgentGraphTests(unittest.TestCase):
         expected_call_count = 0 if len(ENABLED_ANALYSIS_INTENTS) == 1 else 1
         self.assertEqual(len(disabled_intent_agent.calls), expected_call_count)
 
-    def test_simple_llm_agent_returns_plain_faq_answer(self):
+    async def test_simple_llm_agent_returns_plain_faq_answer(self):
         model = FakeChatModel()
         agent = SimpleLLMAgent(
             model=model,
             system_prompt="FAQ에 답변하세요.",
         )
 
-        result = agent.invoke({"user_request": "데이터 드리프트가 무엇인가요?"})
+        result = await agent.ainvoke({"user_request": "데이터 드리프트가 무엇인가요?"})
 
         self.assertEqual(result, {"answer": "간단한 FAQ 답변입니다."})
         self.assertEqual(model.calls[0][0].content, "FAQ에 답변하세요.")
@@ -1406,13 +1406,13 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertNotIn("run_id", first)
         self.assertNotIn("run_id", second)
 
-    def test_request_context_uses_session_as_thread_id(self):
+    async def test_request_context_uses_session_as_thread_id(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         context = build_local_mock_request_context(session_id="session-a")
         config = {"configurable": {"thread_id": context["thread_id"]}}
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {
                 **context,
                 "request_id": "request-session-thread",
@@ -1435,12 +1435,12 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertNotEqual(first["task_id"], "session-a")
         self.assertNotEqual(first["task_id"], second["task_id"])
 
-    def test_request_context_uses_agent_chat_fallbacks(self):
+    async def test_request_context_uses_agent_chat_fallbacks(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         config = {"configurable": {"thread_id": "missing-context"}}
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {
                 "request_id": "request-missing-context",
                 "user_request": "Predict wafer failures",
@@ -1452,7 +1452,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(result["project_id"], "mock-project-001")
         self.assertEqual(result["session_id"], "missing-context")
 
-    def test_mock_data_selection_shortcut(self):
+    async def test_mock_data_selection_shortcut(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         context = build_local_mock_request_context(
@@ -1460,7 +1460,7 @@ class UserAgentGraphTests(unittest.TestCase):
         )
         config = {"configurable": {"thread_id": context["thread_id"]}}
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {
                 **context,
                 "request_id": "request-mock-data-shortcut",
@@ -1470,7 +1470,7 @@ class UserAgentGraphTests(unittest.TestCase):
         )
         self.assertEqual(interrupt_payload(result), TEST_DATA_SELECTION)
 
-        result = graph.invoke(Command(resume="mock"), config=config)
+        result = await graph.ainvoke(Command(resume="mock"), config=config)
 
         self.assertEqual(interrupt_payload(result), {"objective": "EDA"})
         state = graph.get_state(config).values
@@ -1502,7 +1502,7 @@ class UserAgentGraphTests(unittest.TestCase):
             graph_to_mermaid(standalone_graph),
         )
 
-    def test_faq_and_file_lookup_return_to_conversation_hub(self):
+    async def test_faq_and_file_lookup_return_to_conversation_hub(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
         context = build_local_mock_request_context(
@@ -1510,7 +1510,7 @@ class UserAgentGraphTests(unittest.TestCase):
         )
         config = {"configurable": {"thread_id": context["thread_id"]}}
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             {
                 **context,
                 "request_id": "request-services",
@@ -1527,7 +1527,7 @@ class UserAgentGraphTests(unittest.TestCase):
             interrupt_payload(result)["kind"], "next_user_request"
         )
 
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(
                 resume={
                     "action": "continue",
@@ -1541,16 +1541,16 @@ class UserAgentGraphTests(unittest.TestCase):
             interrupt_payload(result)["kind"], "next_user_request"
         )
 
-        final = graph.invoke(
+        final = await graph.ainvoke(
             Command(resume={"action": "cancel"}),
             config=config,
         )
         self.assertEqual(final["final_response"]["status"], "cancelled")
 
-    def test_recommended_workflow_candidate_and_approve(self):
+    async def test_recommended_workflow_candidate_and_approve(self):
         deps, _, workflow_agent = dependencies(
             workflow_recommender=ConstantAgent(
-                recommended_workflow_response()
+                await recommended_workflow_response()
             )
         )
         executor_submitter = FakeExecutorSubmitter()
@@ -1561,9 +1561,9 @@ class UserAgentGraphTests(unittest.TestCase):
             submit_execution_start=executor_submitter,
             bindings=bindings,
         )
-        config = start_analysis(graph, "thread-recommended")
+        config = await start_analysis(graph, "thread-recommended")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
         candidate_payload = interrupt_payload(result)
         self.assertEqual(candidate_payload["candidate_number"], 1)
         candidates = result["workflow_candidates"]
@@ -1591,9 +1591,9 @@ class UserAgentGraphTests(unittest.TestCase):
             )["workflow"]["workflow"]["id"],
             "fixture_failure_prediction_v1",
         )
-        result = select_candidate(graph, config, result, origin="recommended")
+        result = await select_candidate(graph, config, result, origin="recommended")
         self.assertEqual(interrupt_payload(result), {"target_column": ""})
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(resume={"answers": {"target_column": "fail"}}),
             config=config,
         )
@@ -1712,7 +1712,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertIn("def transform_nce", final["notebook"]["cells"][1]["code"])
         self.assertIn("def transform_wt", final["notebook"]["cells"][3]["code"])
 
-    def test_selected_needs_input_workflow_writes_debug_artifact(self):
+    async def test_selected_needs_input_workflow_writes_debug_artifact(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             deps, _, _ = dependencies()
             graph = compiled_in_memory_graph(
@@ -1722,12 +1722,12 @@ class UserAgentGraphTests(unittest.TestCase):
                     artifacts_root=temporary_root,
                 ),
             )
-            config = start_analysis(graph, "needs-input-artifact-session")
-            result = graph.invoke(
+            config = await start_analysis(graph, "needs-input-artifact-session")
+            result = await graph.ainvoke(
                 Command(resume=analysis_context()),
                 config=config,
             )
-            result = select_candidate(graph, config, result)
+            result = await select_candidate(graph, config, result)
 
             artifact_path = Path(
                 result["artifact_files"]["selected_workflow_candidate"]
@@ -1745,7 +1745,7 @@ class UserAgentGraphTests(unittest.TestCase):
                 interrupt_payload(result), {"target_column": ""}
             )
 
-    def test_approved_run_writes_demo_json_artifacts(self):
+    async def test_approved_run_writes_demo_json_artifacts(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             deps, _, _ = dependencies()
             executor_submitter = FakeExecutorSubmitter()
@@ -1759,13 +1759,13 @@ class UserAgentGraphTests(unittest.TestCase):
                 submit_execution_start=executor_submitter,
                 bindings=bindings,
             )
-            config = start_analysis(graph, "artifact-session")
-            result = graph.invoke(
+            config = await start_analysis(graph, "artifact-session")
+            result = await graph.ainvoke(
                 Command(resume=analysis_context()),
                 config=config,
             )
-            result = select_candidate(graph, config, result)
-            result = graph.invoke(
+            result = await select_candidate(graph, config, result)
+            result = await graph.ainvoke(
                 Command(resume={"answers": {"target_column": "fail"}}),
                 config=config,
             )
@@ -1825,24 +1825,24 @@ class UserAgentGraphTests(unittest.TestCase):
             self.assertEqual(executor_submitter.calls[0]["payload"], executor_request)
             self.assertEqual(len(bindings.registrations), 1)
 
-    def test_generated_workflow_rejection_can_reselect_data(self):
+    async def test_generated_workflow_rejection_can_reselect_data(self):
         deps, _, _ = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
-        config = start_analysis(graph, "thread-reselect")
+        config = await start_analysis(graph, "thread-reselect")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
-        result = select_candidate(graph, config, result)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
+        result = await select_candidate(graph, config, result)
         self.assertEqual(
             interrupt_payload(result), {"target_column": ""}
         )
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(resume={"answers": {"target_column": "fail"}}),
             config=config,
         )
         self.assertEqual(
             interrupt_payload(result)["kind"], "workflow_approval"
         )
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(
                 resume={
                     "approved": False,
@@ -1857,24 +1857,24 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(result["workflow"], {})
         self.assertEqual(result["additional_information"], {})
 
-    def test_rejection_feedback_can_revise_generated_workflow(self):
+    async def test_rejection_feedback_can_revise_generated_workflow(self):
         deps, _, workflow_agent = dependencies()
         graph = compiled_in_memory_graph(deps, settings())
-        config = start_analysis(graph, "thread-revise")
+        config = await start_analysis(graph, "thread-revise")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
-        result = select_candidate(graph, config, result)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
+        result = await select_candidate(graph, config, result)
         self.assertEqual(
             interrupt_payload(result), {"target_column": ""}
         )
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(resume={"answers": {"target_column": "fail"}}),
             config=config,
         )
         self.assertEqual(
             interrupt_payload(result)["kind"], "workflow_approval"
         )
-        result = graph.invoke(
+        result = await graph.ainvoke(
             Command(
                 resume={
                     "approved": False,
@@ -1886,7 +1886,7 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(
             interrupt_payload(result)["candidate_number"], 1
         )
-        result = select_candidate(graph, config, result)
+        result = await select_candidate(graph, config, result)
         self.assertEqual(interrupt_payload(result)["kind"], "workflow_approval")
         # Initial candidate generation and rejection revision candidate generation.
         self.assertEqual(len(workflow_agent.calls), 2)
@@ -1895,15 +1895,15 @@ class UserAgentGraphTests(unittest.TestCase):
             "The modeling parameters should be revised.",
         )
 
-    def test_no_recommendation_routes_directly_to_generate(self):
+    async def test_no_recommendation_routes_directly_to_generate(self):
         deps, recommendation_agent, workflow_agent = dependencies()
         graph = compiled_in_memory_graph(
             deps,
             settings(recommendation_enabled=True),
         )
-        config = start_analysis(graph, "thread-no-match")
+        config = await start_analysis(graph, "thread-no-match")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
         self.assertEqual(
             interrupt_payload(result)["candidate_number"], 1
         )
@@ -1921,15 +1921,15 @@ class UserAgentGraphTests(unittest.TestCase):
         self.assertEqual(workflow_agent.calls[-1]["generation_mode"], "new")
         self.assertEqual(len(recommendation_agent.calls), 1)
 
-    def test_disabled_recommendation_skips_recommender(self):
+    async def test_disabled_recommendation_skips_recommender(self):
         deps, recommendation_service, workflow_agent = dependencies()
         graph = compiled_in_memory_graph(
             deps,
             settings(recommendation_enabled=False),
         )
-        config = start_analysis(graph, "thread-recommendation-disabled")
+        config = await start_analysis(graph, "thread-recommendation-disabled")
 
-        result = graph.invoke(Command(resume=analysis_context()), config=config)
+        result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
 
         self.assertFalse(
             result["recommendation"]["recommendation_available"]

@@ -14,10 +14,10 @@ class MarkdownReportAgent:
     model: Any
     system_prompt: str
 
-    def invoke(self, payload: Any) -> dict[str, str]:
+    async def ainvoke(self, payload: Any) -> dict[str, str]:
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        response = self.model.invoke(
+        response = await self.model.ainvoke(
             [
                 SystemMessage(content=self.system_prompt),
                 HumanMessage(

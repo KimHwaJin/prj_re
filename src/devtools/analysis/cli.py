@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import sys
 from contextlib import nullcontext
@@ -37,7 +38,7 @@ def _print_new_agent_messages(result: dict[str, Any], displayed: int) -> int:
     return len(messages)
 
 
-def _stream_graph(
+async def _stream_graph(
     graph: Any,
     graph_input: Any,
     *,
@@ -46,7 +47,7 @@ def _stream_graph(
 ) -> tuple[dict[str, Any], int]:
     """Run until completion/interrupt while printing each node's messages."""
     latest_state: dict[str, Any] = {}
-    for state in graph.stream(
+    async for state in graph.astream(
         graph_input,
         config=config,
         stream_mode="values",
@@ -59,9 +60,9 @@ def _stream_graph(
     return latest_state, displayed_messages
 
 
-def _existing_message_count(graph: Any, config: dict[str, Any]) -> int:
+async def _existing_message_count(graph: Any, config: dict[str, Any]) -> int:
     try:
-        snapshot = graph.get_state(config)
+        snapshot = await graph.aget_state(config)
     except Exception:
         return 0
     values = getattr(snapshot, "values", None) or {}
@@ -247,15 +248,15 @@ def _prompt_resume_value(payload: dict[str, Any]) -> Any:
     return _prompt_json()
 
 
-def _run_conversation(graph: Any, *, session_id: str) -> None:
+async def _run_conversation(graph: Any, *, session_id: str) -> None:
     context = build_local_mock_request_context(session_id=session_id)
     config = {"configurable": {"thread_id": context["thread_id"]}}
     request = input("\n질문을 입력하세요: ").strip()
     if not request:
         raise ValueError("질문을 입력해야 합니다.")
 
-    displayed_messages = _existing_message_count(graph, config)
-    result, displayed_messages = _stream_graph(
+    displayed_messages = await _existing_message_count(graph, config)
+    result, displayed_messages = await _stream_graph(
         graph,
         {**context, "user_request": request},
         config=config,
@@ -269,7 +270,7 @@ def _run_conversation(graph: Any, *, session_id: str) -> None:
         resume_value = _prompt_resume_value(
             _hitl_cli_payload(interrupts[0].value)
         )
-        result, displayed_messages = _stream_graph(
+        result, displayed_messages = await _stream_graph(
             graph,
             Command(resume=resume_value),
             config=config,
@@ -298,7 +299,10 @@ def main(argv: Sequence[str] | None = None) -> None:
         help="InMemorySaver 대신 PostgreSQL checkpointer 사용",
     )
     args = parser.parse_args(argv)
+    asyncio.run(_main(args))
 
+
+async def _main(args) -> None:
     settings = load_agent_settings()
     setup_phoenix(settings)
     try:
@@ -308,8 +312,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             if args.postgres
             else nullcontext(compiled_in_memory_graph(dependencies, settings))
         )
-        with graph_context as graph:
-            _run_conversation(graph, session_id=args.session_id)
+        async with graph_context as graph:
+            await _run_conversation(graph, session_id=args.session_id)
     finally:
         shutdown_phoenix()
 

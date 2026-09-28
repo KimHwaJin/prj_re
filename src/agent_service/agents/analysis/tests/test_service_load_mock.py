@@ -25,21 +25,22 @@ def action(state):
     return state['__interrupt__'][0].value['action_requests'][0]['name']
 
 
-def test_real_graph_reaches_approval_without_constructing_llm():
+@pytest.mark.asyncio
+async def test_real_graph_reaches_approval_without_constructing_llm():
     settings = mock_settings()
     with patch('agent_service.agents.analysis.dependencies.create_chat_model', side_effect=AssertionError('LLM must not be constructed')):
         deps = create_llm_dependencies(settings)
         graph = build_analysis_workflow_graph(deps, settings, checkpointer=InMemorySaver())
         session = str(uuid4())
         config = {'configurable': {'thread_id': session}}
-        state = graph.invoke({'user_request':'서비스 부하테스트', 'session_id':session,
+        state = await graph.ainvoke({'user_request':'서비스 부하테스트', 'session_id':session,
                               'user_id':str(uuid4()),'project_id':str(uuid4())}, config)
         assert action(state) == 'data_selection'
-        state = graph.invoke(Command(resume='mock'), config)
+        state = await graph.ainvoke(Command(resume='mock'), config)
         assert action(state) == 'analysis_context'
-        state = graph.invoke(Command(resume={'objective':'EDA'}), config)
+        state = await graph.ainvoke(Command(resume={'objective':'EDA'}), config)
         assert action(state) == 'workflow_candidate_selection'
-        state = graph.invoke(Command(resume={'candidate_number':1}), config)
+        state = await graph.ainvoke(Command(resume={'candidate_number':1}), config)
         assert action(state) == 'workflow_approval'
         assert state['user_request'] == '서비스 부하테스트'
         assert state['workflow']['workflow']['status'] == 'ready'
