@@ -12,7 +12,7 @@ from sqlalchemy import or_, select
 
 from config import settings
 from app.core.database import get_session_factory
-from app.core.execution_lifecycle import ExecutionNeedsRecovery, execution_health
+from app.core.execution_lifecycle import ExecutionNeedsRecovery, execution_health, protected_cleanup
 from app.core.execution_claim import ExecutionClaim, bind_execution_claim
 from app.core.enums import AgentRunStatus, TaskStatus
 from app.models.common.agent_run_model import AgentRunModel
@@ -102,7 +102,12 @@ async def execute_claimed(item: ClaimedRun) -> None:
     """요청 DB session과 분리된 session에서 이미 점유한 Graph Run을 실행합니다."""
 
     with bind_execution_claim(item.claim):
-        await _execute_claimed(item)
+        try:
+            await _execute_claimed(item)
+        except asyncio.CancelledError:
+            # Covers cancellation before RunService has installed its guards too.
+            execution_health.fail(item.claim.run_id, "worker_cancelled")
+            raise
 
 
 async def _execute_claimed(item: ClaimedRun) -> None:
@@ -125,12 +130,60 @@ async def _execute_claimed(item: ClaimedRun) -> None:
 
 
 async def run_forever() -> None:
-    """여러 Gaia Pod가 동시에 실행해도 SKIP LOCKED로 한 Pod만 Run을 점유합니다."""
+    """Bounded per-process dispatcher; PostgreSQL arbitrates cross-process claims.
 
+    Only one claim query is in flight, and only when a slot is available. An
+    owned claim/handoff cannot be interrupted between DB commit and task tracking.
+    """
+    limit = settings.agent_worker_concurrency
     interval = max(0.05, settings.agent_worker_poll_interval_seconds)
-    while True:
+    logger.info("agent_run_worker_started concurrency=%s poll_interval=%s", limit, interval)
+    active: set[asyncio.Task] = set()
+    claiming: asyncio.Task | None = None
+    stopping = False
+
+    async def claim_and_start() -> bool:
         item = await claim_one()
         if item is None:
-            await asyncio.sleep(interval)
-            continue
-        await execute_claimed(item)
+            return False
+        if stopping or not execution_health.healthy:
+            execution_health.fail(item.claim.run_id, "worker_stopped_after_claim")
+            return False
+        task = asyncio.create_task(execute_claimed(item), name=f"agent-run:{item.claim.run_id}")
+        active.add(task)
+        return True
+
+    async def drain() -> None:
+        # A commit in flight is allowed to settle; never silently lose its claim.
+        if claiming is not None:
+            await asyncio.gather(claiming, return_exceptions=True)
+        for task in active:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*active, return_exceptions=True)
+        active.clear()
+
+    try:
+        while True:
+            for task in list(active):
+                if task.done():
+                    active.remove(task)
+                    task.result()
+            if not execution_health.healthy:
+                raise ExecutionNeedsRecovery("Worker is unhealthy; no further claims allowed.")
+            if len(active) < limit:
+                claiming = asyncio.create_task(claim_and_start(), name="agent-run-claim")
+                claimed = await asyncio.shield(claiming)
+                claiming = None
+                if claimed:
+                    continue
+                timeout = interval
+            else:
+                timeout = None
+            if active:
+                await asyncio.wait(active, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
+            else:
+                await asyncio.sleep(interval)
+    finally:
+        stopping = True
+        await protected_cleanup(drain())

@@ -78,7 +78,15 @@ async def main(*, install_signals: bool = True) -> None:
             graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
             _validate_graph(graph)
             from app.services.agent_project_context import load_event_project_snapshot
-            deferred.bind(LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot))
+            from app.services.executor_completion import synchronize_executor_completion
+            adapter = LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot)
+
+            async def handle_event(context: EventContext) -> None:
+                await adapter(context)
+                # Also runs on receipt replay: graph and API DB commits are separate.
+                await synchronize_executor_completion(context, graph)
+
+            deferred.bind(handle_event)
             worker.add_readiness_check("agent-graph", deferred.ready)
             installed = _install_signal_handlers(worker) if install_signals else []
             try:

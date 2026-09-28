@@ -5,7 +5,7 @@ from typing import Any, Awaitable
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -180,7 +180,7 @@ class RunService:
         else:
             conditions.append(AgentRunModel.status == AgentRunStatus.INTERRUPTED)
         run = await db.scalar(select(AgentRunModel).where(*conditions).order_by(AgentRunModel.created_at.desc()))
-        if run is None:
+        if run is None or run.status != AgentRunStatus.INTERRUPTED:
             raise HTTPException(status_code=409, detail="No interrupted run exists to resume in this session.")
         return run
 
@@ -256,6 +256,12 @@ class RunService:
         execution_claim = current_execution_claim.get()
         if _execute_existing and execution_claim is None:
             raise ExecutionNeedsRecovery("Execution requires an immutable Worker claim.")
+        if not _execute_existing:
+            # Serialize admission only, without holding a session row that a
+            # finishing Run may need. DB unique indexes remain the final guard.
+            await db.execute(select(func.pg_advisory_xact_lock(
+                func.hashtextextended(f"run-admission:{session_id}", 0)
+            )))
         previous = await db.scalar(select(AgentRunModel).where(
             AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
         ))
@@ -282,6 +288,12 @@ class RunService:
             origin: AgentRunModel | None = None
             try:
                 if payload.command is None:
+                    unfinished = await db.scalar(select(TaskModel.task_id).where(
+                        TaskModel.session_id == session_id,
+                        TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
+                    ).limit(1))
+                    if unfinished is not None:
+                        raise HTTPException(status_code=409, detail="Session has an unfinished task; resume its requested input instead.")
                     # Queue 대기 중에도 동일 Session의 두 분석 요청이 들어오지 못하게 Task를 선점합니다.
                     task = TaskService.create_model(
                         session_id=session_id, idempotency_key=key, owner=owner
@@ -294,6 +306,16 @@ class RunService:
                     origin = await RunService._interrupted_run(
                         db, session_id, UUID(str(resume_id)) if resume_id else None
                     )
+                    if any(item.get("kind") == "EXECUTOR_EVENT" for item in (origin.interrupt or []) if isinstance(item, dict)):
+                        raise HTTPException(status_code=409, detail="Session is waiting for Executor; user resume is not allowed.")
+                    conflicting = select(TaskModel.task_id).where(
+                        TaskModel.session_id == session_id,
+                        TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
+                    )
+                    if origin.task_id is not None:
+                        conflicting = conflicting.where(TaskModel.task_id != origin.task_id)
+                    if await db.scalar(conflicting.limit(1)) is not None:
+                        raise HTTPException(status_code=409, detail="Another unfinished task owns this session.")
                     if origin.task_id is None:
                         # FAQ 등 Task 없는 checkpoint 재개도 durable queue를 거칩니다.
                         task = TaskService.create_model(

@@ -173,6 +173,7 @@ class ServiceSettings:
         return {
             "profile": self.profile,
             "agent_worker_enabled": self.api.agent_worker_enabled,
+            "agent_worker_concurrency": self.api.agent_worker_concurrency,
             "event_worker_enabled": self.event_worker_enabled,
             "settings_sources": dict(self.sources),
         }

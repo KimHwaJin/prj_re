@@ -2,14 +2,14 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-agent-flow-validation` (012, 베이스는 011/c13a541까지 통합)
+현재 구현 브랜치: `feature/refactor-run-concurrency` (013, 베이스는 012/fb89dbc까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
 
 2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005 구현·기록 commit `07c5a8f`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 코드 변경 없이 반영했으며 파생 브랜치는 보존했다. 원격 push는 수행하지 않았다. 이후 `856e008`에서 `feature/refactor-agent-async-llm`을 분기해 006을 구현·검증했다. 006 구현·검증·기록 commit `7b1ab0d`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 추가 코드 변경 없이 반영했고 파생 브랜치는 보존했다. 원격 push 및 배포는 수행하지 않았다.
 
-사용자 요청으로 007~011을 포함한 `c13a541`까지 `feature/refactor-base`에 fast-forward 병합했다. 충돌·추가 코드 변경 없이 반영했고 `feature/refactor-agent-flow-validation`을 분기해 012를 수행했다. 012 자체는 아직 베이스에 병합하지 않았다. 원격 push·배포는 수행하지 않았다.
+사용자 요청으로 007~011을 포함한 `c13a541`까지 `feature/refactor-base`에 fast-forward 병합했다. 충돌·추가 코드 변경 없이 반영했고 `feature/refactor-agent-flow-validation`을 분기해 012를 수행했다. 이후 사용자 요청으로 012의 `fb89dbc`까지 베이스에 fast-forward 병합하고 `feature/refactor-run-concurrency`를 분기해 013을 구현·검증했다. 013 자체는 아직 베이스에 병합하지 않았다. 원격 push·배포는 수행하지 않았다.
 
 **개선 항목을 하나씩 진행하고, 실제 작업을 끝낼 때 문제점·개선 내용·검증 결과를 기록한다. 설계나 예상 효과를 구현 완료로 표시하지 않는다.**
 
@@ -32,6 +32,7 @@
 | 010 | 분석 Workflow 처리 코드·기존 자산 패키지 통합 | 베이스 병합 완료 / 배포 미수행 | 2026-09-28 | [변경·검증·제한](010-unify-analysis-workflow.md) |
 | 011 | 역할별 create_agent·공통 문맥·프로젝트 prompt 미들웨어 | 베이스 병합 완료 / 메모리 저장·배포 미수행 | 2026-09-28 | [변경·검증·제한](011-agent-middleware.md) |
 | 012 | Agent 업무 흐름 회귀 정상화·동기 I/O 취소 수명 | 구현·오프라인/패키지 검증 완료 / 실제 DB·배포 미수행 | 2026-09-28 | [변경·검증·제한](012-agent-flow-validation.md) |
+| 013 | 프로세스별 Run 동시 실행·대기 세션 보호·Executor 완료 반영 | 구현·격리 PostgreSQL/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](013-run-concurrency.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

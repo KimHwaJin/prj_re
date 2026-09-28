@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/refactor-run-concurrency",
+  "base_commit": "fb89dbc",
+  "scope": "Controlled API/Run dispatcher comparison, not a production or 100-user load test",
+  "environment": {
+    "python": "3.11.15",
+    "postgres_image": "postgres:17-alpine",
+    "database": "disposable local identity_test",
+    "database_pool": "NullPool test fixture",
+    "deployment": "single Python test process; no Kubernetes or service deployment",
+    "external_llm": false,
+    "external_executor": false
+  },
+  "workload": {
+    "runs_per_case": 20,
+    "sessions_per_case": 20,
+    "arrival": "all Runs accepted before dispatcher starts",
+    "graph_stub": "one async wait of 100 ms then success; no multi-stage agent flow",
+    "dispatcher_poll_interval_seconds": 0.05,
+    "cancel_poll_interval_seconds": 0.05,
+    "completion_poll_interval_seconds": 0.01,
+    "timing_origin": "dispatcher launch, after API admission",
+    "timing_end": "all Run coroutines returned and DB statuses are success",
+    "repetitions": 1
+  },
+  "results": [
+    {
+      "slots": 1,
+      "runs": 20,
+      "mock_graph_wait_ms": 100,
+      "elapsed_s": 4.5887,
+      "runs_per_second": 4.358,
+      "peak_graph_calls": 1,
+      "mean_dispatch_to_graph_start_s": 2.2818,
+      "max_dispatch_to_graph_start_s": 4.4312
+    },
+    {
+      "slots": 2,
+      "runs": 20,
+      "mock_graph_wait_ms": 100,
+      "elapsed_s": 2.1998,
+      "runs_per_second": 9.092,
+      "peak_graph_calls": 2,
+      "mean_dispatch_to_graph_start_s": 1.0245,
+      "max_dispatch_to_graph_start_s": 2.0459
+    },
+    {
+      "slots": 4,
+      "runs": 20,
+      "mock_graph_wait_ms": 100,
+      "elapsed_s": 1.1368,
+      "runs_per_second": 17.594,
+      "peak_graph_calls": 4,
+      "mean_dispatch_to_graph_start_s": 0.5329,
+      "max_dispatch_to_graph_start_s": 0.9863
+    }
+  ],
+  "validation": {
+    "pytest_passed": 308,
+    "subtests_passed": 2,
+    "warnings": "Existing LangGraph durability-without-checkpointer warnings; no new warning type",
+    "skipped": 0,
+    "duration_seconds": 55.13,
+    "command": "PYTHONPATH=src DTEST_IDENTITY_TEST_DATABASE_URL=<isolated-test-db> DTEST_CONCURRENCY_REPORT=<output.json> python -m pytest src/app/test src/agent_service/agents/analysis/tests -q"
+  },
+  "limits": [
+    "No production concurrency recommendation follows from this microbenchmark.",
+    "Test DB uses NullPool; production pool saturation and aggregate replica connections were not measured.",
+    "Concurrent DB claims tested with independent sessions in one process, not separate Pods.",
+    "Executor completion projection uses controlled persisted graph snapshot, not an actual Redis/Executor end-to-end deployment.",
+    "No actual LLM, Executor, Kubernetes scaling, shared PV, or week-long wait was tested."
+  ]
+}

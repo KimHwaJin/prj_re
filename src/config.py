@@ -78,6 +78,8 @@ class Settings(BaseModel):
     # 별도 Pod 없이 서비스 bootstrap lifespan에서 durable DB queue를 소비합니다.
     agent_worker_enabled: bool = True
     agent_worker_poll_interval_seconds: float = 0.25
+    # Per process, not per Pod. YAML explicit value takes priority over env.
+    agent_worker_concurrency: int = Field(default=1, ge=1)
     # 최초 실행은 제외한 자동 재시도 횟수입니다. 3이면 총 최대 4회 실행합니다.
     agent_worker_max_retries: int = 3
     # 재시도 폭주를 막기 위한 지수 backoff의 시작/최대 대기 시간입니다.

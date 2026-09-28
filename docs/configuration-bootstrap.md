@@ -15,7 +15,7 @@ python app.py --config /mounted/config.yml
 
 `config.dev.yml` 예제는 API만 기동한다. Agent 실행을 시험하려면 `agent_worker_enabled`, `task_reconciler_enabled`를 YAML에서 켜고 DB 마이그레이션을 먼저 수행한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
 
-Docker 기본 CMD도 `python app.py`로 변경했다. 기존 Compose의 명시적 Uvicorn 명령과 다중 프로세스 설정은 남아 있다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 최종 Pod 단일 프로세스/제한된 동시 실행 구조는 다음 실행기 단계에서 적용한다.
+Docker 기본 CMD도 `python app.py`로 변경했다. 기존 Compose의 명시적 Uvicorn 명령과 다중 프로세스 설정은 남아 있다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 013에서 프로세스별 제한된 Run 동시 실행을 구현했다. 최종 Pod의 프로세스 수와 배포 명령은 별도 적용·검증이 필요하다.
 
 ## 우선순위
 
@@ -41,6 +41,23 @@ service:
 ```
 
 `service` 아래 그룹은 runtime/database/checkpoint/llm/executor/events/storage/diagnostics이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
+
+## Run 동시 실행 수
+
+`AGENT_WORKER_CONCURRENCY`는 **API Run 실행기 프로세스 하나가 동시에 처리할 그래프 호출 수**다. 기본값은 1이며 1 이상의 정수만 허용한다. 한 세션의 전체 대화나 장기 Executor 작업 수가 아니다. 다른 세션의 Run을 동시에 진행하며, HITL/Executor 대기로 그래프 호출이 반환되면 자리를 돌려준다. 같은 세션은 대기 중에도 새 입력이 제한되고, 사용자 HITL 응답만 resume할 수 있다. Executor 대기는 이벤트 Worker가 재개한다.
+
+```yaml
+service:
+  runtime:
+    agent_worker_enabled: true
+    agent_worker_concurrency: 4
+```
+
+4는 설정 예시이며 운영 권장값을 확정한 것이 아니다. 환경변수로 조정하려면 선택되는 YAML의 해당 키를 생략한 뒤 `AGENT_WORKER_CONCURRENCY=4`를 주입하고 재시작한다. YAML에 1이 명시되어 있으면 환경변수 4보다 우선한다. `--check-config` 출력에서 해석된 값을 확인할 수 있다.
+
+Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수는 대략 `프로세스별 설정 × API 프로세스 수 × Pod 수`다. Executor 이벤트 Worker의 실행량은 이 값에 포함되지 않는다. 따라서 이 설정은 전역 LLM/DB 사용량 제한이 아니다. DB 풀·LLM 한도와 실제 대기 시간/처리량을 함께 측정해 조절해야 한다. 기존 Docker 컨테이너 설정은 이번 작업에서 바꾸지 않았다.
+
+한 실행기의 queue 점유 조회는 한 번에 하나만 진행하며 자리가 없으면 새 Run을 미리 점유하지 않는다. 종료 시 점유 중인 요청과 실행 중인 자식 작업을 정리한다. 종료 확인/소유권이 불확실해지면 새 점유를 중단하고 기존 복구 필요 정책을 적용한다. 즉시 안전한 자동 재실행이나 강제 coroutine 종료를 제공하는 설정은 아니다. [013 검증 기록](improvements/013-run-concurrency.md)을 참고한다.
 
 ## LLM 설정
 

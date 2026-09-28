@@ -221,6 +221,9 @@ async def test_service_does_not_close_other_pools_while_graph_still_owned(monkey
 async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch, fail):
     import app.agent_worker.worker_main as entry
     import agent_service.runtime.langgraph.checkpointer as factory
+    import app.services.executor_completion as completion
+    projection = AsyncMock()
+    monkeypatch.setattr(completion, 'synchronize_executor_completion', projection)
     counts = {'pool_open': 0, 'pool_close': 0, 'build': 0, 'events': 0}
     @asynccontextmanager
     async def checkpointer(**_):
@@ -267,6 +270,7 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
     else:
         await entry.main(install_signals=False)
     assert counts == {'pool_open': 1, 'pool_close': 1, 'build': 1, 'events': 10}
+    assert projection.await_count == 10
 
 
 @pytest.mark.asyncio
