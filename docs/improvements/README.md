@@ -2,12 +2,12 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-bootstrap-config`
+현재 구현 브랜치: `feature/refactor-user-identity`
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
 
-2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 현재 002는 파생 브랜치에 있으며 기준 브랜치로 통합하거나 원격에 push하지 않았다.
+2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 002의 구현·기록 commit `c2d83e3`까지 기준 브랜치에 fast-forward 반영하고 003을 분기했다. 003은 파생 브랜치에 있으며 아직 기준 브랜치 통합/원격 push하지 않았다.
 
 **개선 항목을 하나씩 진행하고, 실제 작업을 끝낼 때 문제점·개선 내용·검증 결과를 기록한다. 설계나 예상 효과를 구현 완료로 표시하지 않는다.**
 
@@ -20,6 +20,7 @@
 | 000 | 개선 브랜치와 기록 환경 준비 | 완료 — 문서·환경 준비 | 2026-09-28 | [준비 결과](000-workspace-setup.md) |
 | 001 | 취소 감시 정리 중 Run 실행기 정체 | 착수 전 | — | [문제·방향](001-run-cleanup-stall.md) |
 | 002 | 기동·설정 기반 통합 | 로컬 기반 구현 완료 / 실제 Gaia 통합 검증 대기 | 2026-09-28 | [변경·검증·제한](002-bootstrap-configuration.md) |
+| 003 | 사용자 식별·역할·최초 관리자 | 구현·격리 PostgreSQL 검증 완료 / 배포 미수행 | 2026-09-28 | [변경·검증·제한](003-user-identity.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
