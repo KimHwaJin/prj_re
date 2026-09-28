@@ -1,0 +1,157 @@
+{
+  "baseline": "7d0cc53",
+  "moves": {
+    "src/app/agents/factory/agent_registry.py": "src/agent_service/agents/analysis/components/specs.py",
+    "src/app/agents/intent_classifier/intent_classifier_prompt.md": "src/agent_service/agents/analysis/prompts/intent_classifier_prompt.md",
+    "src/app/agents/intent_classifier/intent_classifier_prompt.py": "src/agent_service/agents/analysis/prompts/intent_classifier_prompt.py",
+    "src/app/agents/orchestration/agent_interfaces.py": "src/agent_service/agents/analysis/components/interfaces.py",
+    "src/app/agents/orchestration/dependencies.py": "src/agent_service/agents/analysis/dependencies.py",
+    "src/app/agents/orchestration/mock_dependencies.py": "src/agent_service/agents/analysis/testing/mock_dependencies.py",
+    "src/app/agents/report_writer/create_report_generator_agent.py": "src/agent_service/agents/analysis/components/report_writer.py",
+    "src/app/agents/report_writer/report_generator_prompt.md": "src/agent_service/agents/analysis/prompts/report_generator_prompt.md",
+    "src/app/agents/router/routing_agent_prompt.md": "src/agent_service/agents/analysis/prompts/routing_agent_prompt.md",
+    "src/app/agents/router/routing_agent_prompt.py": "src/agent_service/agents/analysis/prompts/routing_agent_prompt.py",
+    "src/app/agents/workflow_generator/conditional_decision_prompt.py": "src/agent_service/agents/analysis/prompts/conditional_decision_prompt.py",
+    "src/app/agents/workflow_generator/create_workflow_generator_agent.py": "src/agent_service/agents/analysis/components/workflow_generator.py",
+    "src/app/agents/workflow_generator/data_load_steps.py": "src/agent_service/agents/analysis/workflow/data_load_steps.py",
+    "src/app/agents/workflow_generator/skill_selector_prompt.py": "src/agent_service/agents/analysis/prompts/skill_selector_prompt.py",
+    "src/app/agents/workflow_generator/workflow_compiler.py": "src/agent_service/agents/analysis/workflow/workflow_compiler.py",
+    "src/app/agents/workflow_generator/workflow_generator_prompt.md": "src/agent_service/agents/analysis/prompts/workflow_generator_prompt.md",
+    "src/app/agents/workflow_generator/workflow_generator_prompt.py": "src/agent_service/agents/analysis/prompts/workflow_generator_prompt.py",
+    "src/app/agents/workflow_generator/workflow_generator_tools.py": "src/agent_service/agents/analysis/tools/catalog.py",
+    "src/app/agents/workflow_recommender/workflow_recommender_prompt.md": "src/agent_service/agents/analysis/prompts/workflow_recommender_prompt.md",
+    "src/app/graphs/builders/build_analysis_workflow_graph.py": "src/agent_service/agents/analysis/graph.py",
+    "src/app/graphs/checkpoint.py": "src/devtools/analysis/checkpoint.py",
+    "src/app/graphs/checkpointer_factory.py": "src/agent_service/runtime/langgraph/checkpointer.py",
+    "src/app/graphs/hitl_protocol.py": "src/agent_service/agents/analysis/hitl_protocol.py",
+    "src/app/graphs/message_utils.py": "src/agent_service/agents/analysis/message_utils.py",
+    "src/app/graphs/nodes/adaptive_execution.py": "src/agent_service/agents/analysis/nodes/adaptive_execution.py",
+    "src/app/graphs/nodes/adaptive_executor.py": "src/agent_service/agents/analysis/nodes/adaptive_executor.py",
+    "src/app/graphs/nodes/build_notebook_cell_code.py": "src/agent_service/agents/analysis/nodes/build_notebook_cell_code.py",
+    "src/app/graphs/nodes/demo_artifacts.py": "src/agent_service/agents/analysis/nodes/demo_artifacts.py",
+    "src/app/graphs/nodes/execution_results.py": "src/agent_service/agents/analysis/nodes/execution_results.py",
+    "src/app/graphs/nodes/executor_request.py": "src/agent_service/agents/analysis/nodes/executor_request.py",
+    "src/app/graphs/nodes/flow_control.py": "src/agent_service/agents/analysis/nodes/flow_control.py",
+    "src/app/graphs/nodes/generate_report.py": "src/agent_service/agents/analysis/nodes/generate_report.py",
+    "src/app/graphs/nodes/generate_workflow.py": "src/agent_service/agents/analysis/nodes/generate_workflow.py",
+    "src/app/graphs/nodes/hitl.py": "src/agent_service/agents/analysis/nodes/hitl.py",
+    "src/app/graphs/nodes/intent_classify.py": "src/agent_service/agents/analysis/nodes/intent_classify.py",
+    "src/app/graphs/nodes/recommend_workflow.py": "src/agent_service/agents/analysis/nodes/recommend_workflow.py",
+    "src/app/graphs/nodes/redis_execution_events.py": "src/agent_service/agents/analysis/nodes/redis_execution_events.py",
+    "src/app/graphs/nodes/routing.py": "src/agent_service/agents/analysis/nodes/routing.py",
+    "src/app/graphs/nodes/service_queries.py": "src/agent_service/agents/analysis/nodes/service_queries.py",
+    "src/app/graphs/routers/__init__.py": "src/agent_service/agents/analysis/routers/__init__.py",
+    "src/app/graphs/routers/orchestration_router.py": "src/agent_service/agents/analysis/routers/orchestration_router.py",
+    "src/app/graphs/state/analysis_workflow_state.py": "src/agent_service/agents/analysis/state.py",
+    "src/app/graphs/visualization.py": "src/devtools/analysis/visualization.py",
+    "src/app/schemas/agents/orchestration_schema.py": "src/agent_service/agents/analysis/schemas/agents/orchestration_schema.py",
+    "src/app/schemas/agents/report_generator_schema.py": "src/agent_service/agents/analysis/schemas/agents/report_generator_schema.py",
+    "src/app/schemas/agents/workflow_generator_schema.py": "src/agent_service/agents/analysis/schemas/agents/workflow_generator_schema.py",
+    "src/app/schemas/agents/workflow_recommender_schema.py": "src/agent_service/agents/analysis/schemas/agents/workflow_recommender_schema.py",
+    "src/app/schemas/skills/skill_format.py": "src/agent_service/agents/analysis/schemas/skills/skill_format.py",
+    "src/app/schemas/skills/skill_schema.md": "src/agent_service/agents/analysis/schemas/skills/skill_schema.md",
+    "src/app/schemas/tools/tool_registry_schema.md": "src/agent_service/agents/analysis/schemas/tools/tool_registry_schema.md",
+    "src/app/schemas/workflows/workflow_format.py": "src/agent_service/agents/analysis/schemas/workflows/workflow_format.py",
+    "src/app/schemas/workflows/workflow_plan_format.py": "src/agent_service/agents/analysis/schemas/workflows/workflow_plan_format.py",
+    "src/app/schemas/workflows/workflow_schema.md": "src/agent_service/agents/analysis/schemas/workflows/workflow_schema.md",
+    "src/app/workflow/skills/data_io/data_load.md": "src/agent_service/agents/analysis/resources/skills/data_io/data_load.md",
+    "src/app/workflow/skills/eda/data_quality_check.md": "src/agent_service/agents/analysis/resources/skills/eda/data_quality_check.md",
+    "src/app/workflow/skills/eda/tmp/failure_analysis.md": "src/agent_service/agents/analysis/resources/skills/eda/tmp/failure_analysis.md",
+    "src/app/workflow/skills/eda/tmp/failure_group_comparison.md": "src/agent_service/agents/analysis/resources/skills/eda/tmp/failure_group_comparison.md",
+    "src/app/workflow/skills/generate_skill_index.py": "src/devtools/analysis/generate_skill_index.py",
+    "src/app/workflow/skills/preprocessing/dataset_preparation.md": "src/agent_service/agents/analysis/resources/skills/preprocessing/dataset_preparation.md",
+    "src/app/workflow/skills/skill_index.yaml": "src/agent_service/agents/analysis/resources/catalogs/skill_index.yaml",
+    "src/app/workflow/tools/data_io/data_load.py": "src/agent_service/agents/analysis/resources/executor_tools/data_io/data_load.py",
+    "src/app/workflow/tools/data_io/extract_data.py": "src/agent_service/agents/analysis/resources/executor_tools/data_io/extract_data.py",
+    "src/app/workflow/tools/data_io/tmp/extract_data2.py": "src/agent_service/agents/analysis/resources/executor_tools/data_io/tmp/extract_data2.py",
+    "src/app/workflow/tools/data_io/transform_nce.py": "src/agent_service/agents/analysis/resources/executor_tools/data_io/transform_nce.py",
+    "src/app/workflow/tools/data_io/transform_wt.py": "src/agent_service/agents/analysis/resources/executor_tools/data_io/transform_wt.py",
+    "src/app/workflow/tools/eda/compute_statistics.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/compute_statistics.py",
+    "src/app/workflow/tools/eda/detect_outliers.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/detect_outliers.py",
+    "src/app/workflow/tools/eda/profile_data.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/profile_data.py",
+    "src/app/workflow/tools/eda/tmp/compute_failure_rate.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/tmp/compute_failure_rate.py",
+    "src/app/workflow/tools/eda/tmp/failure_rate_by_bin.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/tmp/failure_rate_by_bin.py",
+    "src/app/workflow/tools/eda/tmp/failure_rate_trend.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/tmp/failure_rate_trend.py",
+    "src/app/workflow/tools/eda/tmp/plot_failure_by_group.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/tmp/plot_failure_by_group.py",
+    "src/app/workflow/tools/eda/tmp/plot_failure_distribution_by_feature.py": "src/agent_service/agents/analysis/resources/executor_tools/eda/tmp/plot_failure_distribution_by_feature.py",
+    "src/app/workflow/tools/generate_tool_registry.py": "src/devtools/analysis/generate_tool_registry.py",
+    "src/app/workflow/tools/preprocessing/merge_data.py": "src/agent_service/agents/analysis/resources/executor_tools/preprocessing/merge_data.py",
+    "src/app/workflow/tools/tool_registry.yaml": "src/agent_service/agents/analysis/resources/catalogs/tool_registry.yaml",
+    "src/app/workflow/workflows/workflow_lifecycle.md": "docs/agent-development/analysis/workflow_lifecycle.md",
+    "src/app/services/workflow_recommender.py": "src/agent_service/agents/analysis/workflow/workflow_recommender.py",
+    "src/app/services/adaptive_workflow.py": "src/agent_service/agents/analysis/workflow/adaptive_workflow.py",
+    "src/app/services/rule_based_notebook_generator.py": "src/agent_service/agents/analysis/workflow/rule_based_notebook_generator.py",
+    "src/app/services/execution_notebook_reader.py": "src/agent_service/agents/analysis/workflow/execution_notebook_reader.py",
+    "src/app/services/demo_artifact_store.py": "src/agent_service/agents/analysis/artifacts.py",
+    "cli.py": "src/devtools/analysis/cli.py",
+    "src/app/test/test_adaptive_execution_mvp.py": "src/agent_service/agents/analysis/tests/test_adaptive_execution_mvp.py",
+    "src/app/test/test_workflow_compiler.py": "src/agent_service/agents/analysis/tests/test_workflow_compiler.py",
+    "src/app/test/test_mock_data_io.py": "src/agent_service/agents/analysis/tests/test_mock_data_io.py",
+    "src/app/test/test_split_dataset.py": "src/agent_service/agents/analysis/tests/test_split_dataset.py",
+    "src/app/test/test_service_load_mock.py": "src/agent_service/agents/analysis/tests/test_service_load_mock.py",
+    "src/app/test/test_workflow_condition_contract.py": "src/agent_service/agents/analysis/tests/test_workflow_condition_contract.py",
+    "src/app/test/test_user_agent_graph.py": "src/agent_service/agents/analysis/tests/test_user_agent_graph.py",
+    "src/app/test/test_select_features.py": "src/agent_service/agents/analysis/tests/test_select_features.py",
+    "src/app/test/test_executor_submit_toggle.py": "src/agent_service/agents/analysis/tests/test_executor_submit_toggle.py",
+    "src/app/test/test_adaptive_notebook_prefix.py": "src/agent_service/agents/analysis/tests/test_adaptive_notebook_prefix.py",
+    "src/app/test/test_execution_results.py": "src/agent_service/agents/analysis/tests/test_execution_results.py"
+  },
+  "deletions": {
+    "src/app/worker_past/__init__.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/config.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/consumer.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/contracts.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/dispatcher.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/guard.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/ingress.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/outbox.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/runtime.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/store.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/worker_past/telemetry.py": "No runtime/import/config entrypoint references; replaced by app.worker.",
+    "src/app/agents/factory/agent_factory.py": "No callers in source, entrypoints, configuration or tests; active dependencies construct adapters directly.",
+    "src/app/agents/router/create_routing_agent.py": "No callers in source, entrypoints, configuration or tests; active dependencies construct adapters directly.",
+    "src/app/agents/intent_classifier/create_intent_classifier_agent.py": "No callers in source, entrypoints, configuration or tests; active dependencies construct adapters directly.",
+    "src/app/agents/orchestration/__init__.py": "Old package re-exports; all consumers use new explicit modules.",
+    "src/app/graphs/__init__.py": "Unused package-level eager re-exports; replaced by side-effect-free package initializers."
+  },
+  "transitional_dependencies": {
+    "src/agent_service/agents/analysis/graph.py": [
+      "app.agent_worker.graph_boundary",
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/state.py": [
+      "app.agent_worker.graph_boundary"
+    ],
+    "src/agent_service/agents/analysis/nodes/execution_results.py": [
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/nodes/adaptive_execution.py": [
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/nodes/generate_workflow.py": [
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/nodes/generate_report.py": [
+      "app.services.executor_client",
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/nodes/adaptive_executor.py": [
+      "app.services.executor_client"
+    ],
+    "src/agent_service/agents/analysis/nodes/redis_execution_events.py": [
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/nodes/executor_request.py": [
+      "app.services.executor_client",
+      "app.services.workflow_persistence"
+    ],
+    "src/agent_service/agents/analysis/workflow/execution_notebook_reader.py": [
+      "app.services.execution_manifest_reader",
+      "app.services.executor_client"
+    ]
+  },
+  "retained_inactive": {
+    "resources/**/tmp/": "Not in generated catalog; some baseline tests expect these missing Skills. Business support decision required.",
+    "prompts/workflow_recommender_prompt.md": "Unused reference; active WorkflowRecommender returns None. Search implementation is not present."
+  }
+}

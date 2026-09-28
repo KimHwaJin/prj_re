@@ -1,0 +1,96 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-agent-layout",
+  "baseline_commit": "7d0cc53",
+  "environment": {
+    "python": "3.11.15",
+    "postgres": "17-alpine",
+    "database": "dedicated disposable localhost identity_test",
+    "external_llm_executor_redis_contacted": false,
+    "deployed": false,
+    "load_test": false
+  },
+  "before_offline": {
+    "total": 233,
+    "passed": 177,
+    "failed": 19,
+    "skipped": 37,
+    "failures": [
+      "AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+      "AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+      "AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+      "ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+      "UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+      "UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+      "UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+      "UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+      "UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+      "UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+      "UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+      "UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+      "UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+      "WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+      "WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+      "WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+      "WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+      "WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+      "WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+    ]
+  },
+  "after_with_postgres": {
+    "total": 238,
+    "passed": 219,
+    "failed": 19,
+    "skipped": 0,
+    "failures": [
+      "AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+      "AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+      "AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+      "ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+      "UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+      "UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+      "UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+      "UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+      "UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+      "UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+      "UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+      "UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+      "UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+      "WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+      "WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+      "WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+      "WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+      "WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+      "WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+    ]
+  },
+  "new_failures": [],
+  "new_resource_layout_tests": 5,
+  "graph_and_state_ast_unchanged_excluding_imports": true,
+  "wheel_smoke": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 33,
+    "mock_graph_execution_steps": 6,
+    "old_packages_in_wheel": false,
+    "tests_in_wheel": false,
+    "resources_present": true
+  },
+  "lockfile_offline_check": "passed",
+  "root_cli_help": "passed",
+  "root_app_check_config": "passed",
+  "excluded_existing_collection_errors": [
+    "test_select_features.py (missing select_features Tool)",
+    "test_split_dataset.py (missing split_dataset Tool)"
+  ],
+  "source_inventory": "../agent-development/analysis-layout-inventory.json",
+  "limits": [
+    "No async I/O/cancellation fix in this step",
+    "No business Agent registry/API selection yet",
+    "API/runtime/execution/integration package split incomplete",
+    "Old persisted Tool paths verified with in-memory HITL; not all historical PostgreSQL checkpoints or week-long Executor runs",
+    "Known 19 failures retained, not hidden or fixed by moving source"
+  ],
+  "implementation_commit": "9fcdb8c",
+  "disposable_postgres_removed": true
+}

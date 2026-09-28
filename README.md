@@ -3,6 +3,8 @@ dtest 프로젝트 공유
 
 ## 리팩토링 브랜치의 현재 실행 계약
 
+분석 Agent 구현은 `src/agent_service/agents/analysis/`로 이동했다. [Agent 개발·이관 안내](docs/agent-development/README.md)와 [서비스 구조 및 이행 상태](docs/architecture/service-layout.md)를 먼저 참고한다. 루트 `app.py` 실행은 유지하며 공통 API/실행기의 패키지 분리와 Agent 비동기 전환은 후속 단계다.
+
 현재 사용자용 API는 `X-User-Id` 문자열 헤더를 사용하며 Bearer UUID 및 공개 사용자 가입/이름 조회 방식은 제거했다. 먼저 DB 마이그레이션과 최초 관리자 초기화를 수행한다. [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 현재 계약으로 참고한다.
 
 아래의 기존 Docker·데모·Locust 안내는 이전 실행 환경 기록이다. 해당 클라이언트의 Bearer 및 자동 가입 흐름은 새 사용자 계약으로 아직 이관하지 않았으므로 이 브랜치에서 그대로 호환된다고 보지 않는다. 기존 실행 컨테이너는 변경하지 않았다.

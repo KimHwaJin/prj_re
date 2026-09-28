@@ -1,5 +1,7 @@
 # 여러 업무 Agent를 수용하는 API·공통 실행기 구조
 
+2026-09-28 구조 이행 업데이트: [현재 목표 구조와 005 구현 경계](../architecture/service-layout.md), [Agent 개발 안내](../agent-development/README.md)를 함께 참고한다. 공통 실행 조정 규칙의 위치를 `execution_service`로 명확히 했고 분석 Agent 패키지 이동을 먼저 수행했다. 아래 전체 설계를 구현 완료했다는 뜻은 아니다.
+
 작성일: 2026-09-28. 사용자 요구: API 서비스는 공통으로 유지하고 같은 레포에 업무 Agent를 추가하며 API 요청으로 실행할 Agent를 선택한다. Agent 개발 표준을 강제할 수 있다. 아래는 목표 설계이며 코드 이동·구현·마이그레이션을 수행한 결과가 아니다.
 
 **추가 확정:** 공개 run_id는 최초 요청부터 최종 완료까지 유지한다. 공통 Agent 실행 컨텍스트에 Project.system_prompt와 Agent가 관리하는 project_memory를 전달하여 같은 프로젝트의 다른 세션에서도 적용한다. 컨텍스트 버전·동시 갱신·프로젝트 격리와 Workflow 변환/승격 정책은 [최종 결정](crud-final-decisions-2026-09-28.md)을 따른다.
