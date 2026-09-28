@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from contextlib import suppress
 from datetime import timedelta
 from typing import Any, Awaitable
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
@@ -19,6 +18,10 @@ from app.core.enums import (
 )
 from config import settings
 from app.core.database import get_session_factory
+from app.core.execution_lifecycle import (
+    ExecutionNeedsRecovery, execution_health, finish_observer,
+    observe_termination, protected_cleanup, wait_for_stop,
+)
 from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.message_model import MessageModel
 from app.models.common.task_model import TaskModel
@@ -61,47 +64,69 @@ class RunService:
         return not isinstance(exc, HTTPException) or exc.status_code >= 500
 
     @staticmethod
-    async def _wait_for_cancellation(run_id: UUID) -> None:
+    async def _wait_for_cancellation(run_id: UUID, stop: asyncio.Event) -> bool:
         """별도 DB session으로 취소 요청을 감시해 다른 API worker의 요청도 감지합니다."""
         interval = max(0.05, settings.task_cancel_poll_interval_seconds)
-        while True:
-            async with get_session_factory()() as cancellation_db:
-                requested_at = await cancellation_db.scalar(
-                    select(AgentRunModel.cancel_requested_at).where(
-                        AgentRunModel.run_id == run_id
+        while not stop.is_set():
+            async with asyncio.timeout(settings.run_monitor_timeout_seconds):
+                async with get_session_factory()() as cancellation_db:
+                    requested_at = await cancellation_db.scalar(
+                        select(AgentRunModel.cancel_requested_at).where(
+                            AgentRunModel.run_id == run_id
+                        )
                     )
-                )
             if requested_at is not None:
-                return
-            await asyncio.sleep(interval)
+                return True
+            await wait_for_stop(stop, interval)
+        return False
 
     @staticmethod
     async def _run_cancellable(
         run_id: UUID,
         graph_awaitable: Awaitable[dict[str, Any]],
+        *,
+        observers: tuple[asyncio.Task, ...] = (),
     ) -> dict[str, Any]:
         """Graph와 DB cancel watcher를 경쟁시켜 실제 coroutine을 cooperative cancel합니다."""
-        graph_task = asyncio.create_task(graph_awaitable)
-        cancel_task = asyncio.create_task(RunService._wait_for_cancellation(run_id))
+        stop = asyncio.Event()
+        graph_task = asyncio.create_task(graph_awaitable, name=f"graph:{run_id}")
+        cancel_task = asyncio.create_task(RunService._wait_for_cancellation(run_id, stop), name=f"cancel-watch:{run_id}")
+
+        async def cleanup():
+            stop.set()
+            errors = []
+            try:
+                await observe_termination(graph_task, run_id=run_id, stage="graph_stop", cancel=True)
+            except ExecutionNeedsRecovery as exc:
+                errors.append(exc)
+            finally:
+                # Retrieve the exception even when cancellation/another observer
+                # won the race; the selected graph result is handled below.
+                await asyncio.gather(graph_task, return_exceptions=True)
+            try:
+                await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_stop")
+            except ExecutionNeedsRecovery as exc:
+                errors.append(exc)
+            if errors:
+                raise errors[0]
+
         try:
             done, _ = await asyncio.wait(
-                {graph_task, cancel_task},
+                {graph_task, cancel_task, *observers},
                 return_when=asyncio.FIRST_COMPLETED,
             )
+            for observer in observers:
+                if observer in done:
+                    execution_health.fail(run_id, f"observer_stopped:{observer.get_name()}")
+                    # Heartbeat/token consumer may only finish after graph stop.
+                    raise ExecutionNeedsRecovery("Execution observer stopped before the graph.")
             if cancel_task in done:
-                graph_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await graph_task
-                raise RunService.CancellationRequested
+                requested = await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_failed")
+                if requested:
+                    raise RunService.CancellationRequested
             return await graph_task
         finally:
-            if not graph_task.done():
-                graph_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await graph_task
-            cancel_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await cancel_task
+            await protected_cleanup(cleanup())
 
     @staticmethod
     @timed("run.lock_final_rows")
@@ -124,6 +149,8 @@ class RunService:
             .with_for_update()
             .execution_options(populate_existing=True)
         )
+        if task is not None and task.recovery_required:
+            raise ExecutionNeedsRecovery("Task requires recovery; late completion is rejected.")
         return run, task
 
     @staticmethod
@@ -234,6 +261,8 @@ class RunService:
             task = await db.get(TaskModel, run.task_id)
             if task is None:
                 raise RuntimeError(f"Queued Run has no Task: {run.run_id}")
+            if task.recovery_required:
+                raise ExecutionNeedsRecovery("Task requires recovery before execution.")
             origin = None
             if payload.command is not None:
                 resume_id = payload.metadata.get("resume_run_id") or payload.metadata.get("checkpoint_run_id")
@@ -369,7 +398,7 @@ class RunService:
         token_events.start()
         try:
             try:
-                async with TaskService.lease_heartbeat(task.task_id, task.lock_token):
+                async with TaskService.lease_heartbeat(task.task_id, task.lock_token, run_id=execution_run_id) as heartbeat:
                     if payload.command is not None:
                         state = await RunService._run_cancellable(
                             execution_run_id,
@@ -380,6 +409,7 @@ class RunService:
                                 command=payload.command,
                                 callbacks=[token_events],
                             ),
+                            observers=(heartbeat, token_events.consumer),
                         )
                     else:
                         if payload.input is None:
@@ -393,11 +423,21 @@ class RunService:
                                 trigger_message_id=run.trigger_message_id,
                                 callbacks=[token_events],
                             ),
+                            observers=(heartbeat, token_events.consumer),
                         )
             finally:
                 # 마지막 짧은 token buffer까지 terminal event 전에 durable store로 flush합니다.
                 with span("run.token_events_close"):
                     await token_events.close()
+        except (ExecutionNeedsRecovery, asyncio.CancelledError):
+            # No retry/terminal transition without confirmed execution ownership.
+            # The independent recorder remains able to mark a stuck live graph.
+            execution_health.fail(execution_run_id, "execution_interrupted_or_uncertain")
+            await db.rollback()
+            await TaskService.require_recovery(
+                db, run_id=execution_run_id, reason=execution_health.faults[str(execution_run_id)]
+            )
+            raise
         except RunService.CancellationRequested:
             # 취소 API가 기록한 요청을 다시 읽은 후에만 terminal 상태와 lock을 변경합니다.
             await db.rollback()
@@ -628,19 +668,30 @@ class RunService:
             select(TaskModel)
             .join(SessionModel, SessionModel.session_id == TaskModel.session_id)
             .where(TaskModel.task_id == task_id, SessionModel.user_id == user_id)
-            .with_for_update()
         )
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found.")
-        if task.status in TaskService.TERMINAL_STATUSES:
-            raise HTTPException(status_code=409, detail="Task is already terminal.")
-
         latest_run = await db.scalar(
             select(AgentRunModel)
             .where(AgentRunModel.task_id == task_id)
             .order_by(AgentRunModel.created_at.desc())
+            .limit(1)
             .with_for_update()
         )
+        # Same Run -> Task order as completion and recovery, avoiding an AB/BA
+        # deadlock with a cancellation request during cleanup.
+        task = await db.scalar(select(TaskModel).where(TaskModel.task_id == task_id)
+                               .with_for_update().execution_options(populate_existing=True))
+        if task is None:
+            raise HTTPException(status_code=404, detail="Task not found.")
+        current_run_id = await db.scalar(select(AgentRunModel.run_id).where(AgentRunModel.task_id == task_id)
+                                         .order_by(AgentRunModel.created_at.desc()).limit(1))
+        if current_run_id != (latest_run.run_id if latest_run is not None else None):
+            raise HTTPException(status_code=409, detail="Task execution changed; retry cancellation.")
+        if task.status in TaskService.TERMINAL_STATUSES:
+            raise HTTPException(status_code=409, detail="Task is already terminal.")
+        if task.recovery_required:
+            raise HTTPException(status_code=409, detail="Task requires recovery; termination has not been confirmed.")
         if task.status == TaskStatus.WAITING_INPUT or latest_run is None:
             TaskService.transition(task, TaskStatus.CANCELED)
             task.cancel_requested_at = utc_now()

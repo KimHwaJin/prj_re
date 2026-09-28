@@ -41,6 +41,7 @@ def _resource(task: TaskModel) -> TaskResource:
         lease_expires_at=task.lease_expires_at,
         cancel_requested_at=task.cancel_requested_at,
         failure_reason=task.failure_reason,
+        recovery_required=task.recovery_required,
         created_at=task.created_at,
         updated_at=task.updated_at,
         completed_at=task.completed_at,

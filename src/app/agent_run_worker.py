@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import socket
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from sqlalchemy import or_, select
 
 from config import settings
 from app.core.database import get_session_factory
+from app.core.execution_lifecycle import ExecutionNeedsRecovery, execution_health
 from app.core.enums import AgentRunStatus, TaskStatus
 from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.task_model import TaskModel
@@ -19,15 +21,23 @@ from app.services.task_service import TaskService
 from app.services.helpers import utc_now
 from app.core.run_diagnostics import run_trace, span
 
+logger = logging.getLogger(__name__)
+
 
 async def claim_one() -> tuple[UUID, UUID, UUID, RunCreate, str] | None:
     """pending Run 하나를 원자 점유하고 실행에 필요한 immutable 값만 반환합니다."""
 
+    if not execution_health.healthy:
+        raise ExecutionNeedsRecovery("Worker is unhealthy; claiming another Run is prohibited.")
     async with get_session_factory()() as db:
         run = await db.scalar(
             select(AgentRunModel)
             .where(
                 AgentRunModel.status == AgentRunStatus.PENDING,
+                ~select(TaskModel.task_id).where(
+                    TaskModel.task_id == AgentRunModel.task_id,
+                    TaskModel.recovery_required.is_(True),
+                ).exists(),
                 or_(
                     AgentRunModel.next_attempt_at.is_(None),
                     AgentRunModel.next_attempt_at <= utc_now(),
@@ -84,9 +94,13 @@ async def execute_claimed(item: tuple[UUID, UUID, UUID, RunCreate, str]) -> None
                     await RunService.create(
                         db, user_id, session_id, payload, key, _execute_existing=True
                     )
-        except Exception:
+        except ExecutionNeedsRecovery:
+            execution_health.fail(_run_id, "worker_requires_recovery")
+            raise
+        except Exception as exc:
             # RunService가 오류 상태/Task 잠금 해제를 DB에 먼저 기록합니다.
             # Worker loop 자체는 한 Run 실패 때문에 종료하지 않습니다.
+            logger.error("agent_run_failed run_id=%s error_type=%s", _run_id, type(exc).__name__)
             return
 
 

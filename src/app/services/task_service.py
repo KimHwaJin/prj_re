@@ -1,5 +1,5 @@
 import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from app.core.database import get_session_factory
+from app.core.execution_lifecycle import ExecutionNeedsRecovery, finish_observer, protected_cleanup, wait_for_stop
 from app.core.enums import TaskStatus
 from app.core.enums import AgentRunStatus
 from app.models.common.agent_run_model import AgentRunModel
@@ -47,7 +48,7 @@ class TaskService:
 
     @staticmethod
     def retry_delay_seconds(attempt_count: int) -> float:
-        """Graph 예외와 Worker 유실 복구가 동일한 지수 backoff 정책을 사용합니다."""
+        """종료가 확인된 Graph 예외의 재시도 backoff입니다. 소유권 불명 실행에는 적용하지 않습니다."""
         base = max(0.0, settings.agent_worker_retry_backoff_seconds)
         ceiling = max(base, settings.agent_worker_retry_max_backoff_seconds)
         return min(ceiling, base * (2 ** max(0, attempt_count - 1)))
@@ -70,6 +71,8 @@ class TaskService:
 
         waiting_input은 Job이 살아 있는 상태지만 실행 중이 아니므로 Session lease만 풉니다.
         """
+        if task.recovery_required:
+            raise ExecutionNeedsRecovery("Task requires recovery before transition.")
         task.status = status
         task.failure_reason = failure_reason
         if status in TaskService.TERMINAL_STATUSES:
@@ -80,6 +83,8 @@ class TaskService:
     @staticmethod
     def start_execution(task: TaskModel, *, owner: str) -> UUID:
         """waiting_input Task를 새 Run이 실행할 수 있도록 원자 잠금 상태로 되돌립니다."""
+        if task.recovery_required:
+            raise ExecutionNeedsRecovery("Task requires recovery before execution.")
         now = utc_now()
         token = uuid4()
         task.status = TaskStatus.RUNNING
@@ -104,6 +109,7 @@ class TaskService:
             update(TaskModel).where(
                 TaskModel.task_id == task_id,
                 TaskModel.lock_token == lock_token,
+                TaskModel.recovery_required.is_(False),
                 TaskModel.status.in_(TaskService.ACTIVE_STATUSES),
             ).values(heartbeat_at=now, lease_expires_at=now + timedelta(seconds=settings.task_lease_seconds))
         )
@@ -112,79 +118,90 @@ class TaskService:
 
     @staticmethod
     @asynccontextmanager
-    async def lease_heartbeat(task_id: UUID, lock_token: UUID):
+    async def lease_heartbeat(task_id: UUID, lock_token: UUID, *, run_id: UUID):
+        stop = asyncio.Event()
+
         async def loop() -> None:
-            while True:
-                await asyncio.sleep(max(1, settings.task_lease_seconds // 3))
-                async with get_session_factory()() as heartbeat_db:
-                    if not await TaskService.heartbeat(heartbeat_db, task_id=task_id, lock_token=lock_token):
-                        return
-        heartbeat_task = asyncio.create_task(loop())
+            while not stop.is_set():
+                await wait_for_stop(stop, max(1, settings.task_lease_seconds // 3))
+                if stop.is_set():
+                    return
+                async with asyncio.timeout(settings.run_monitor_timeout_seconds):
+                    async with get_session_factory()() as heartbeat_db:
+                        if not await TaskService.heartbeat(heartbeat_db, task_id=task_id, lock_token=lock_token):
+                            raise ExecutionNeedsRecovery("Execution lease is no longer owned.")
+
+        heartbeat_task = asyncio.create_task(loop(), name=f"lease-heartbeat:{run_id}")
         try:
-            yield
+            yield heartbeat_task
         finally:
-            heartbeat_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await heartbeat_task
+            stop.set()
+            await protected_cleanup(finish_observer(heartbeat_task, run_id=run_id, stage="heartbeat_stop"))
+
+    @staticmethod
+    def _mark_recovery(task: TaskModel, run: AgentRunModel | None, reason: str) -> None:
+        # Preserve the active status/session lock until the old writer is proven
+        # stopped. A lease timeout alone is not a checkpoint fencing mechanism.
+        if not task.recovery_required:
+            task.recovery_required = True
+            task.failure_reason = f"Execution requires recovery: {reason}"
+        if run is not None and (run.failure or {}).get("code") != "RUN_RECOVERY_REQUIRED":
+            run.failure = {"code": "RUN_RECOVERY_REQUIRED", "message": reason, "retry_scheduled": False}
+            run.next_attempt_at = None
+
+    @staticmethod
+    async def require_recovery(db: AsyncSession, *, run_id: UUID, reason: str) -> bool:
+        # Match completion/claim lock order: Run -> Task.
+        run = await db.scalar(select(AgentRunModel).where(AgentRunModel.run_id == run_id)
+                              .with_for_update().execution_options(populate_existing=True))
+        if run is None or run.status != AgentRunStatus.RUNNING:
+            await db.rollback()
+            return False
+        task = await db.scalar(select(TaskModel).where(TaskModel.task_id == run.task_id)
+                               .with_for_update().execution_options(populate_existing=True))
+        if task is None or task.status != TaskStatus.RUNNING:
+            await db.rollback()
+            return False
+        TaskService._mark_recovery(task, run, reason)
+        await db.commit()
+        return True
 
     @staticmethod
     async def reconcile_stale(db: AsyncSession, *, now: datetime | None = None, batch_size: int = 100) -> list[UUID]:
         cutoff = now or utc_now()
-        tasks = list((await db.scalars(
-            select(TaskModel).where(
-                TaskModel.status.in_(TaskService.ACTIVE_STATUSES),
-                TaskModel.lease_expires_at.is_not(None),
-                TaskModel.lease_expires_at < cutoff,
-            ).order_by(TaskModel.lease_expires_at).limit(batch_size).with_for_update(skip_locked=True)
+        stale = (
+            TaskModel.status == TaskStatus.RUNNING,
+            TaskModel.recovery_required.is_(False),
+            TaskModel.lease_expires_at.is_not(None),
+            TaskModel.lease_expires_at < cutoff,
+        )
+        # Queue waiting time is not an execution lease. Never expire PENDING.
+        runs = list((await db.scalars(
+            select(AgentRunModel).join(TaskModel, TaskModel.task_id == AgentRunModel.task_id)
+            .where(AgentRunModel.status == AgentRunStatus.RUNNING, *stale)
+            .order_by(TaskModel.lease_expires_at).limit(batch_size)
+            .with_for_update(of=AgentRunModel, skip_locked=True)
         )).all())
-        for task in tasks:
-            # Reconciler가 Task만 종료해 실행 이력이 running으로 남는 모순을 방지합니다.
-            run = await db.scalar(
-                select(AgentRunModel).where(
-                    AgentRunModel.task_id == task.task_id,
-                    AgentRunModel.status == AgentRunStatus.RUNNING,
-                ).order_by(AgentRunModel.created_at.desc()).with_for_update()
-            )
-            if run is not None:
-                if run.attempt_count <= max(0, settings.agent_worker_max_retries):
-                    # Worker/Pod가 사라져 lease가 만료돼도 남은 횟수가 있으면 durable queue로 복구합니다.
-                    delay = TaskService.retry_delay_seconds(run.attempt_count)
-                    run.status = AgentRunStatus.PENDING
-                    run.failure = {
-                        "message": "Task lease expired.",
-                        "retry_scheduled": True,
-                        "failed_attempt": run.attempt_count,
-                    }
-                    run.completed_at = None
-                    run.next_attempt_at = cutoff + timedelta(seconds=delay)
-                    task.status = TaskStatus.PENDING
-                    task.failure_reason = "Task lease expired; retry scheduled."
-                    task.lock_owner = "retry:reconciler"
-                    task.lock_token = None
-                    task.heartbeat_at = None
-                    task.lease_expires_at = None
-                    # 순환 import를 피하면서 기존 원자 sequence Event Store를 그대로 사용합니다.
-                    from app.services.task_event_service import TaskEventService
-
-                    await TaskEventService.append_for_run(
-                        db,
-                        run_id=run.run_id,
-                        event_type="task.retry_scheduled",
-                        payload={
-                            "status": "pending",
-                            "reason": "lease_expired",
-                            "failed_attempt": run.attempt_count,
-                            "max_retries": max(0, settings.agent_worker_max_retries),
-                            "delay_seconds": delay,
-                            "next_attempt_at": run.next_attempt_at.isoformat(),
-                            "failure": run.failure,
-                        },
-                        commit=False,
-                    )
-                    continue
-                run.status = AgentRunStatus.TIMEOUT
-                run.failure = {"message": "Task lease expired; retries exhausted."}
-                run.completed_at = cutoff
-            TaskService.transition(task, TaskStatus.TIMEOUT, failure_reason="Task lease expired.")
+        affected = []
+        for run in runs:
+            task = await db.scalar(select(TaskModel).where(TaskModel.task_id == run.task_id)
+                                   .with_for_update().execution_options(populate_existing=True))
+            # Heartbeat can extend the lease while we acquire the Task row lock.
+            if (task.status == TaskStatus.RUNNING and not task.recovery_required
+                    and task.lease_expires_at is not None and task.lease_expires_at < cutoff):
+                TaskService._mark_recovery(task, run, "lease_expired_owner_unconfirmed")
+                affected.append(task.task_id)
+        # Historical orphan Tasks must also retain their session lock. There is
+        # no running Run to acquire first for these rows.
+        orphaned = list((await db.scalars(
+            select(TaskModel).where(*stale, ~select(AgentRunModel.run_id).where(
+                AgentRunModel.task_id == TaskModel.task_id,
+                AgentRunModel.status == AgentRunStatus.RUNNING,
+            ).exists()).order_by(TaskModel.lease_expires_at)
+            .limit(max(0, batch_size - len(runs))).with_for_update(skip_locked=True)
+        )).all())
+        for task in orphaned:
+            TaskService._mark_recovery(task, None, "lease_expired_without_running_run")
+            affected.append(task.task_id)
         await db.commit()
-        return [task.task_id for task in tasks]
+        return affected

@@ -23,13 +23,14 @@ async def trial(extra_yield):
     watcher_ref = []
     graph_completed = []
 
-    async def watcher(_run_id):
+    async def watcher(_run_id, stop):
         watcher_ref.append(asyncio.current_task())
         ready.set()
         # AsyncAdaptedQueue.get uses asyncio.wait_for for pool_timeout.
         await greenlet_spawn(queue.get, True, 30)
         # Stand-in for the next iteration of the real cancellation polling loop.
-        await asyncio.sleep(60)
+        await stop.wait()
+        return False
 
     async def graph():
         await ready.wait()

@@ -10,6 +10,7 @@ from langchain_core.callbacks import AsyncCallbackHandler
 
 from config import settings
 from app.core.database import get_session_factory
+from app.core.execution_lifecycle import finish_observer, protected_cleanup
 from app.services.task_event_service import TaskEventService
 
 
@@ -22,9 +23,10 @@ class LLMTokenEventBuffer(AsyncCallbackHandler):
         self.queue: asyncio.Queue[tuple[str, str] | None] = asyncio.Queue()
         self.offsets: dict[str, int] = defaultdict(int)
         self.consumer: asyncio.Task | None = None
+        self.closed = False
 
     async def on_llm_new_token(self, token: str, *, run_id, **_kwargs) -> None:
-        if token:
+        if token and not self.closed:
             await self.queue.put((str(run_id), token))
 
     async def _append(self, llm_run_id: str, delta: str) -> None:
@@ -69,12 +71,15 @@ class LLMTokenEventBuffer(AsyncCallbackHandler):
                         pending[key].clear()
 
     def start(self) -> None:
+        if self.consumer is not None or self.closed:
+            raise RuntimeError("Token event buffer cannot be restarted.")
         self.consumer = asyncio.create_task(
             self._consume(), name=f"llm-token-events:{self.run_id}"
         )
 
     async def close(self) -> None:
-        await self.queue.put(None)
+        if not self.closed:
+            self.closed = True
+            self.queue.put_nowait(None)
         if self.consumer is not None:
-            await self.consumer
-
+            await protected_cleanup(finish_observer(self.consumer, run_id=self.run_id, stage="token_flush_stop"))

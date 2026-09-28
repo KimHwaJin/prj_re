@@ -89,6 +89,9 @@ class Settings(BaseModel):
     agent_worker_retry_max_backoff_seconds: float = 30.0
     # 실행 중 취소 요청을 다른 API worker에서도 감지하기 위한 DB polling 주기입니다.
     task_cancel_poll_interval_seconds: float = 0.25
+    # 정상 stop을 기다릴 시간 및 취소 후 종료를 관측할 시간을 각각 적용합니다.
+    run_cleanup_timeout_seconds: float = 5.0
+    run_monitor_timeout_seconds: float = 3.0
     # LangGraph HITL state를 API 재시작 뒤에도 재개하기 위한 비동기 PostgreSQL checkpoint입니다.
     graph_checkpointer: str = "postgres"
     checkpoint_db_uri: str = (
@@ -133,6 +136,7 @@ class Settings(BaseModel):
             "agent_worker_poll_interval_seconds", "task_cancel_poll_interval_seconds",
             "sse_poll_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
             "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
+            "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",
         ):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:

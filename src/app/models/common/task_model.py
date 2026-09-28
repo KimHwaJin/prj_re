@@ -64,6 +64,8 @@ class TaskModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # 이전 실행의 종료/쓰기 권한을 확인하기 전 자동 재실행·세션 해제를 금지합니다.
+    recovery_required: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="false")
 
     __table_args__ = (
         UniqueConstraint("session_id", "idempotency_key", name="uq_tasks_session_idempotency"),

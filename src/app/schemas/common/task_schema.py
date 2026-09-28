@@ -27,6 +27,7 @@ class TaskResource(BaseModel):
     lease_expires_at: datetime | None
     cancel_requested_at: datetime | None
     failure_reason: str | None
+    recovery_required: bool = False
     created_at: datetime
     updated_at: datetime
     completed_at: datetime | None

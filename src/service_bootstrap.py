@@ -35,7 +35,8 @@ class BackgroundRuntime:
 
     @property
     def ready(self) -> bool:
-        return self.started and all(not task.done() for task in self.tasks.values())
+        from app.core.execution_lifecycle import execution_health
+        return self.started and execution_health.healthy and all(not task.done() for task in self.tasks.values())
 
     def _observe(self, task: asyncio.Task) -> None:
         if not task.cancelled():
@@ -74,6 +75,13 @@ class BackgroundRuntime:
                 raise RuntimeError(f"Background shutdown deadline exceeded: {names}")
         # Retrieve errors without replacing the original request/startup error.
         await asyncio.gather(*self.tasks.values(), return_exceptions=True)
+        from app.core.execution_lifecycle import execution_health
+        recorders = list(execution_health.recorders)
+        if recorders:
+            _, unfinished = await asyncio.wait(recorders, timeout=self.timeout)
+            if unfinished:
+                raise RuntimeError("Recovery recording shutdown deadline exceeded")
+            await asyncio.gather(*recorders, return_exceptions=True)
         self.tasks.clear()
 
 
@@ -138,10 +146,11 @@ def attach_service(
                 log.info("service_started profile=%s", settings.profile)
                 yield state
             finally:
-                try:
-                    await background.stop()
-                finally:
-                    await close_resources()
+                # A timed-out background task may still be using these pools.
+                # Leave them owned until process termination rather than closing
+                # resources beneath a live graph.
+                await background.stop()
+                await close_resources()
 
     app.router.lifespan_context = combined_lifespan
     app.state.dtest_attached = True
@@ -192,6 +201,12 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     async def ready():
         healthy = app.state.service_runtime.ready
         return JSONResponse({"ready": healthy}, status_code=200 if healthy else 503)
+
+    @app.get("/service/live", tags=["health"])
+    async def live():
+        from app.core.execution_lifecycle import execution_health
+        healthy = execution_health.healthy
+        return JSONResponse({"healthy": healthy}, status_code=200 if healthy else 503)
 
     return app
 
