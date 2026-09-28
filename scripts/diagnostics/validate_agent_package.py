@@ -4,6 +4,7 @@ Unpacks into a disposable directory; no dependency install or external service
 calls. Existing interpreter dependencies must match the project lock.
 """
 import asyncio
+from importlib.resources import files
 import json
 from pathlib import Path
 import sys
@@ -21,6 +22,7 @@ with ZipFile(wheel) as archive:
     names = archive.namelist()
     assert not any('/tests/' in n or n.startswith('app/test/') for n in names)
     assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/workflow/', 'app/worker_past/')) for n in names)
+    assert not any(n.startswith('agent_service/agents/analysis/prompts/') for n in names)
     archive.extractall(installed)
 sys.path.insert(0, str(installed))
 
@@ -37,6 +39,18 @@ import devtools.analysis.cli
 assert Path(graph_module.__file__).is_relative_to(installed)
 assert SKILL_INDEX_PATH.is_file() and TOOL_REGISTRY_PATH.is_file()
 assert (TOOLS_ROOT / 'eda/profile_data.py').is_file()
+roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
+         'conditional_decider', 'faq', 'report_writer')
+for role in roles:
+    prompt = files(f'agent_service.agents.analysis.agent_builders.{role}').joinpath('prompt.md')
+    assert prompt.read_text(encoding='utf-8').strip()
+# Construction only: exercise every production builder without calling a model.
+production_settings = load_agent_settings({'MODEL_PROVIDER': 'openai_compatible',
+    'MODEL_NAME': 'package-smoke', 'MODEL_API_KEY': 'test-key',
+    'API_BASE_URL': 'http://llm.invalid/v1'})
+production_deps = create_llm_dependencies(production_settings)
+assert production_deps.report_agent is not None
+assert production_deps.skill_selector_agent is not None
 settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED':False,
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
@@ -59,4 +73,5 @@ async def smoke():
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
-    'old_packages_in_wheel':False, 'tests_in_wheel':False, 'resources_present':True}))
+    'old_packages_in_wheel':False, 'tests_in_wheel':False, 'resources_present':True,
+    'role_prompts_present':len(roles), 'production_builders_constructed':True}))

@@ -6,24 +6,29 @@ import json
 from typing import Any
 
 from langchain.agents import create_agent
-from agent_service.agents.analysis.components.specs import COMPONENT_SPECS, ComponentType
+from ...components.interfaces import JsonMessageAgentAdapter
+from ...schemas.workflows.workflow_plan_format import WorkflowPlanOutput
+from .._prompts import load_prompt
 
 
-def create_workflow_generator_agent(
+def build_agent(
     model: Any,
     *,
     structured_output_mode: str = "prompt_json",
 ):
-    """Create the Workflow Generator from its centralized registry spec."""
-    spec = COMPONENT_SPECS[ComponentType.WORKFLOW_GENERATOR]
-    system_prompt = spec.system_prompt
+    """Build the Workflow Agent; Skill documents are supplied by its graph node.
+
+    No catalog tool is exposed to the LLM. Middleware is added in the next
+    runtime-contract step, without changing the output contract here.
+    """
+    system_prompt = load_prompt(__package__)
     agent_kwargs = {
         "model": model,
         "tools": [],
         "system_prompt": system_prompt,
-        "name": spec.name,
+        "name": "workflow_generator_agent",
     }
-    schema = spec.response_format.model_json_schema()
+    schema = WorkflowPlanOutput.model_json_schema()
     agent_kwargs["system_prompt"] = (
         f"{system_prompt}\n\n"
         "Using the provided workflow_resources, return exactly one "
@@ -37,7 +42,7 @@ def create_workflow_generator_agent(
                 "type": "json_schema",
                 "json_schema": {
                     "strict": True,
-                    "name": spec.response_format.__name__,
+                    "name": WorkflowPlanOutput.__name__,
                     "schema": schema,
                 },
             }
@@ -46,7 +51,7 @@ def create_workflow_generator_agent(
         raise ValueError(
             f"Unsupported workflow structured output mode: {structured_output_mode!r}"
         )
-    return create_agent(**agent_kwargs)
+    return JsonMessageAgentAdapter(create_agent(**agent_kwargs))
 
 
-__all__ = ["create_workflow_generator_agent"]
+__all__ = ["build_agent"]

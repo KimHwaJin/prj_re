@@ -6,33 +6,17 @@ from dataclasses import dataclass
 from typing import Any
 
 from agent_config import AgentSettings
-from agent_service.agents.analysis.components.specs import COMPONENT_SPECS, ComponentType
-from agent_service.agents.analysis.components.workflow_generator import (
-    create_workflow_generator_agent,
+from agent_service.agents.analysis.agent_builders import (
+    conditional_decider,
+    faq,
+    intent_classifier,
+    report_writer,
+    routing,
+    skill_selector,
+    workflow_generator,
 )
-from agent_service.agents.analysis.components.report_writer import (
-    create_report_generator_agent,
-)
-from agent_service.agents.analysis.prompts.conditional_decision_prompt import (
-    CONDITIONAL_DECISION_PROMPT,
-)
-from agent_service.agents.analysis.prompts.skill_selector_prompt import (
-    SKILL_SELECTOR_PROMPT,
-)
-from agent_service.agents.analysis.tools.catalog import (
-    load_workflow_catalog_context,
-)
-from agent_service.agents.analysis.schemas.agents.workflow_generator_schema import SkillSelectionOutput
-from agent_service.agents.analysis.schemas.agents.orchestration_schema import ConditionalDecisionOutput
 from agent_service.agents.analysis.workflow.workflow_recommender import WorkflowRecommender
-from agent_service.agents.analysis.components.interfaces import (
-    AsyncInvokableAgent,
-    JsonMessageAgentAdapter,
-    LabelOnlyLLMAgent,
-    PlaceholderAgent,
-    SimpleLLMAgent,
-    StructuredLLMAgent,
-)
+from agent_service.agents.analysis.components.interfaces import AsyncInvokableAgent, PlaceholderAgent
 
 
 @dataclass(frozen=True)
@@ -82,65 +66,20 @@ def create_llm_dependencies(settings: AgentSettings) -> AgentDependencies:
 
         return create_mock_dependencies(settings)
     model = create_chat_model(settings)
-    routing_spec = COMPONENT_SPECS[ComponentType.ROUTING_AGENT]
-    analysis_intent_spec = COMPONENT_SPECS[
-        ComponentType.ANALYSIS_INTENT_CLASSIFIER
-    ]
     return AgentDependencies(
-        routing_agent=LabelOnlyLLMAgent(
-            model=model,
-            system_prompt=routing_spec.system_prompt,
-            output_type=routing_spec.response_format,
-            label_field="route",
-            allowed_labels=(
-                "analysis",
-                "faq",
-                "file_lookup",
-                "revise_workflow",
-                "reselect_data",
-                "cancel",
-            ),
-        ),
-        analysis_intent_agent=LabelOnlyLLMAgent(
-            model=model,
-            system_prompt=analysis_intent_spec.system_prompt,
-            output_type=analysis_intent_spec.response_format,
-            label_field="intent",
-            allowed_labels=(
-                "failure_prediction",
-                "root_cause",
-                "data_drift",
-            ),
-        ),
+        routing_agent=routing.build_agent(model),
+        analysis_intent_agent=intent_classifier.build_agent(model),
         workflow_recommender=WorkflowRecommender(),
-        skill_selector_agent=StructuredLLMAgent(
-            model=model,
-            system_prompt=(
-                f"{SKILL_SELECTOR_PROMPT}\n\n{load_workflow_catalog_context()}"
-            ),
-            output_type=SkillSelectionOutput,
-            method=settings.model_structured_output_mode,
+        skill_selector_agent=skill_selector.build_agent(
+            model, structured_output_mode=settings.model_structured_output_mode,
         ),
-        workflow_agent=JsonMessageAgentAdapter(
-            create_workflow_generator_agent(
-                model,
-                structured_output_mode=(
-                    settings.model_structured_output_mode
-                ),
-            )
+        workflow_agent=workflow_generator.build_agent(
+            model, structured_output_mode=settings.model_structured_output_mode,
         ),
-        faq_agent=SimpleLLMAgent(
-            model=model,
-            system_prompt="사용자의 FAQ 질문에 간결하고 정확하게 답변하세요.",
-        ),
-        file_lookup_agent=PlaceholderAgent(
-             "파일 조회는 현재 지원되지 않습니다."
-        ),
-        report_agent=create_report_generator_agent(model),
-        conditional_decision_agent=StructuredLLMAgent(
-            model=model,
-            system_prompt=CONDITIONAL_DECISION_PROMPT,
-            output_type=ConditionalDecisionOutput,
-            method=settings.model_structured_output_mode,
+        faq_agent=faq.build_agent(model),
+        file_lookup_agent=PlaceholderAgent("파일 조회는 현재 지원되지 않습니다."),
+        report_agent=report_writer.build_agent(model),
+        conditional_decision_agent=conditional_decider.build_agent(
+            model, structured_output_mode=settings.model_structured_output_mode,
         ),
     )

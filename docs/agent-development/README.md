@@ -1,17 +1,18 @@
 # Agent 개발 안내
 
-현재 구현 기준: `feature/refactor-agent-async-llm`, 개선 기록 006. 분석 Agent 패키지 이동과 LLM 비동기 호출은 완료했다. 공통 Agent registry/실행 계약 및 HTTP·DB·파일 I/O 전체 전환은 남아 있다.
+현재 구현 기준: `feature/refactor-agent-builders`, 개선 기록 008. 역할별 선언·독립 프롬프트 패키지를 구성했다. 007의 Azure 제거도 포함한다. 모든 구성요소의 create_agent 통일·공통 미들웨어·프로젝트 메모리·업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
-- [이동·삭제 목록](analysis-layout-inventory.json)
+- [005 당시 이동·삭제 목록](analysis-layout-inventory.json)
+- [008 역할별 선언·프롬프트 구조](../improvements/008-agent-builders-layout.md)
 - [변경·검증·남은 작업](../improvements/005-agent-package-layout.md)
 - [LLM 비동기 전환·취소 검증](../improvements/006-agent-async-llm.md)
 
 ## 지금 분석 Agent를 수정하는 방법
 
 1. `src/agent_service/agents/analysis/graph.py`에서 실행 흐름을 확인한다. 업무 상태는 `state.py`, 노드는 `nodes/`다.
-2. LLM 구성요소는 `components/`, 프롬프트는 `prompts/`, 의존성 조립은 `dependencies.py`에서 수정한다. `components/specs.py`는 분석 내부 구성요소의 명세다. API에서 선택할 업무 Agent registry가 아니다.
+2. 역할별 Agent는 `agent_builders/<role>/agent.py`의 `build_agent()`에서 수정한다. 기본 프롬프트는 같은 폴더의 `prompt.md`이며 내용이 같아도 다른 역할의 파일을 참조하거나 합치지 않는다. `dependencies.py`는 공유 모델과 각 builder의 결과를 연결한다. 기존 `components/specs.py`는 제거했다. 이 builder 패키지는 API에서 선택할 업무 Agent registry가 아니다.
 3. Workflow 해석·추천·코드 생성은 `workflow/`다. Agent가 읽는 카탈로그 도구는 `tools/catalog.py`, Executor로 보낼 Tool 소스는 `resources/executor_tools/`로 구분한다.
 4. `tests/`에서 업무 회귀를 실행한다. 서비스 상태·소유권·DB 테스트는 아직 `src/app/test/`에 있다.
 
@@ -29,6 +30,36 @@ PYTHONPATH=src python -m devtools.analysis.generate_tool_registry
 ```
 
 생성기 기본 출력은 패키지의 `resources/catalogs/`다. `--output`으로 임시 파일에 생성·비교할 수 있다. `tmp/`의 Skill/Tool은 기존과 동일하게 카탈로그 생성에서 제외된다. 예전 Skill/Tool의 누락으로 실패하는 테스트가 남아 있으므로 전체 테스트가 모두 통과한다고 해석하면 안 된다.
+
+## 역할별 선언 패키지
+
+```text
+analysis/
+  agent_builders/
+    routing/                 agent.py + prompt.md + __init__.py
+    intent_classifier/       agent.py + prompt.md + __init__.py
+    skill_selector/          agent.py + prompt.md + __init__.py
+    workflow_generator/      agent.py + prompt.md + __init__.py
+    conditional_decider/     agent.py + prompt.md + __init__.py
+    faq/                     agent.py + prompt.md + __init__.py
+    report_writer/           agent.py + prompt.md + __init__.py
+  tools/catalog.py           분석 업무의 공용 도구
+  schemas/                   그래프와 구성요소가 공유하는 업무 계약
+  components/interfaces.py   기존 응답 adapter; 미들웨어 통일 전 이행 경계
+  dependencies.py            공유 모델 → builder → 그래프 의존성 연결
+```
+
+builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 시점에 만들지 않는다. `build_agent(model, ...)`는 현재 그래프가 사용하는 async ainvoke 계약으로 반환한다. 역할마다 tools/미들웨어/출력 규격을 명시하는 공통 create_agent 구성으로 이행할 예정이다. **현재 Workflow 생성만 create_agent이고 다른 구성요소는 기존 비동기 adapter다. 폴더 이동을 미들웨어 구현 완료로 해석하지 않는다.**
+
+전용 스키마나 도구가 생기면 해당 역할 폴더에 추가한다. 여러 노드와 Agent가 쓰는 Workflow/승인/조건 결과 스키마는 공통 schemas에 유지했다. 공용 tools에 있다는 이유로 모든 Agent에 자동 제공하지 않는다. 현재 read_skill_documents는 graph 노드가 직접 호출하며 Workflow 모델에 제공하는 tools는 빈 목록이다. 이 정책을 바꾸는 것은 별도 동작 변경이다.
+
+여러 업무 Agent가 실제 공유하는 도구가 생길 때 agent_service/tools로 올린다. 현재는 분석 카탈로그만 확인되어 analysis/tools를 유지했고 빈 공용 패키지는 만들지 않았다. Executor용 Python 소스(resources/executor_tools)는 LLM에 제공할 LangChain Tool과 다른 개념이다.
+
+프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 기존 분류·JSON 지시문 및 Skill 카탈로그를 붙이는 로직은 008에서 그대로 유지했다. 프로젝트 system_prompt/project_memory의 런타임 주입은 별도 미들웨어의 책임이며 역할 기본 프롬프트 공유와 다르다.
+
+실제 LLM을 호출하지 않는 WorkflowRecommender와 file_lookup placeholder에는 가짜 builder나 prompt를 만들지 않는다. 기존 미사용 recommender prompt는 [참고 자료](reference-prompts/workflow_recommender_prompt.md)로 옮겼다.
+
+새 prompt가 wheel에 포함되는지 반드시 확인한다. 패키지 이동 후 로컬 build/에는 삭제한 소스가 남을 수 있으므로 깨끗한 빌드 디렉토리에서 빌드한다. `scripts/diagnostics/validate_agent_package.py`는 설치 파일만 사용해 7개 프롬프트, 실제 builder 조립, Mock 승인/재개를 검증한다.
 
 ## 개발 계약의 목표와 현재 이행 상태
 

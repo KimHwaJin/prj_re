@@ -4,6 +4,8 @@
 
 006 업데이트: 분석 구성요소/LLM 소비 노드는 비동기 호출로 전환했고 `runtime/blocking.py`에 혼합 노드용 임시 동기 작업 종료 경계를 추가했다. 아래 005 이행 경계의 전체 패키지 분리와 HTTP·DB·ArtifactStore 전환은 아직 남아 있다. [검증 기록](../improvements/006-agent-async-llm.md)을 참고한다.
 
+008 업데이트: 역할별 Agent 선언·프롬프트는 `agents/analysis/agent_builders/<role>/`로 모았다. 공통 도구와 역할 프롬프트는 별개 기준으로 관리한다. create_agent·공통 미들웨어를 표준으로 삼되 현재 모든 구성요소가 전환된 것은 아니다. [008 기록](../improvements/008-agent-builders-layout.md)을 참고한다.
+
 ## 목표
 
 ```text
@@ -18,10 +20,14 @@ src/
   agent_service/
     registry.py                    업무 Agent id·호환 버전 등록
     runtime/                       worker / scheduler / runner / supervision / langgraph
+    factory.py / models.py         create_agent 공통 조립·모델 선택 (후속)
+    middleware/ / memory/          공통 정책·프로젝트 메모리 (후속)
+    tools/                         업무 간 실제 공유 도구가 생길 때 추가
     integrations/                  llm / executor (HTTP·Redis 이벤트)
     agents/<id>/                   definition / graph / state / schemas / settings
-                                   dependencies / projection / nodes / components
-                                   prompts / workflow / tools / resources / tests
+                                   dependencies / projection / nodes / subgraphs
+                                   agent_builders/<role>/agent.py + prompt.md
+                                   workflow / tools / resources / tests
   service_contracts/               Agent·실행·context·저장/연계 port
   service_infrastructure/           configuration / persistence / resources
                                    artifacts / observability
@@ -61,10 +67,10 @@ docs/                              구조·개발 안내·개선 결과
 | src/agent_config.py | 중앙 설정 호환 유지 후 공통/분석 설정 스키마 분리 |
 | app의 일부 API/서비스가 분석 schema import | 공통 Workflow/Executor 계약과 업무 스키마 분리 |
 
-이 목록을 허용된 임시 의존성으로 보고, 새로운 Agent가 그대로 복제할 표준으로 삼지 않는다. 다음 단계는 이 경계의 I/O 비동기 전환·취소 종료 추적이며, 이후 공통 registry/접수/실행 경로 통합과 슬롯 동시성을 진행한다.
+이 목록을 허용된 임시 의존성으로 보고, 새로운 Agent가 그대로 복제할 표준으로 삼지 않는다. 008에서 역할 선언·프롬프트 구조를 먼저 정리했다. 다음 설계는 create_agent·미들웨어·State/Context/Store 연결이며 I/O 비동기 전환·취소 종료 추적과 공통 registry/접수/실행 경로 통합·슬롯 동시성도 남아 있다.
 
 ## 미사용 코드 판정
 
 import 검색뿐 아니라 루트/컨테이너/CLI/LangGraph 진입점, 카탈로그 및 파일 소스 로딩을 확인한다. 이번 삭제는 worker_past와 호출처 없는 팩토리/옛 패키지 재노출 코드에 한정했다. 등록된 Executor Tool은 import되지 않아도 Notebook 소스로 사용되므로 유지했다.
 
-`resources/**/tmp/`의 미등록 Skill/Tool과 `prompts/workflow_recommender_prompt.md`는 활성 호출 경로가 아니다. 일부 실패 테스트가 미등록 Skill을 기대하므로 업무 지원 범위를 결정하기 전에 임의로 삭제하거나 카탈로그에 승격하지 않았다. 현재 WorkflowRecommender는 실제 벡터 검색 구현이 아닌 빈 결과 placeholder다. 이 항목들의 정리 및 기존 실패 테스트 정상화는 Agent 업무 정합성 작업에 남긴다.
+`resources/**/tmp/`의 미등록 Skill/Tool은 활성 호출 경로가 아니다. 미사용 recommender prompt는 008에서 docs/agent-development/reference-prompts로 옮겨 설치 리소스에서 제외했다. 일부 실패 테스트가 미등록 Skill을 기대하므로 업무 지원 범위를 결정하기 전에 임의로 삭제하거나 카탈로그에 승격하지 않았다. 현재 WorkflowRecommender는 실제 벡터 검색 구현이 아닌 빈 결과 placeholder다. 이 항목들의 정리 및 기존 실패 테스트 정상화는 Agent 업무 정합성 작업에 남긴다.

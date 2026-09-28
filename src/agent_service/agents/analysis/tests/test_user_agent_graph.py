@@ -28,9 +28,7 @@ from agent_service.agents.analysis.components.interfaces import (
     ainvoke_typed,
 )
 from agent_service.agents.analysis.dependencies import AgentDependencies
-from agent_service.agents.analysis.components.workflow_generator import (
-    create_workflow_generator_agent,
-)
+from agent_service.agents.analysis.agent_builders.workflow_generator import build_agent
 from agent_service.agents.analysis.workflow.data_load_steps import (
     merge_required_data_load_steps,
 )
@@ -1159,7 +1157,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         )
 
     @patch(
-        "agent_service.agents.analysis.components.workflow_generator.create_agent"
+        "agent_service.agents.analysis.agent_builders.workflow_generator.agent.create_agent"
     )
     def test_workflow_agent_uses_structured_output_without_resource_tool(
         self, create_agent_mock
@@ -1167,11 +1165,11 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         expected_agent = object()
         create_agent_mock.return_value = expected_agent
 
-        actual_agent = create_workflow_generator_agent(object())
+        actual_agent = build_agent(object())
 
         system_prompt = create_agent_mock.call_args.kwargs["system_prompt"]
         tools = create_agent_mock.call_args.kwargs["tools"]
-        self.assertIs(actual_agent, expected_agent)
+        self.assertIs(actual_agent.agent, expected_agent)
         self.assertIn("workflow_resources", system_prompt)
         self.assertIn("JSON Schema", system_prompt)
         self.assertNotIn(
@@ -1181,7 +1179,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tools, [])
 
     @patch(
-        "agent_service.agents.analysis.components.workflow_generator.create_agent"
+        "agent_service.agents.analysis.agent_builders.workflow_generator.agent.create_agent"
     )
     def test_provider_workflow_agent_binds_json_schema(
         self, create_agent_mock
@@ -1190,7 +1188,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         bound_model = object()
         model.bind.return_value = bound_model
 
-        create_workflow_generator_agent(
+        build_agent(
             model,
             structured_output_mode="provider_json_schema",
         )

@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from agent_service.agents.analysis.resource_paths import PACKAGE_ROOT
+from .._prompts import load_prompt
 
 
 @dataclass
@@ -31,12 +31,11 @@ class MarkdownReportAgent:
         return {"content": content.strip()}
 
 
-def create_report_generator_agent(model: Any):
-    prompt_path = PACKAGE_ROOT / "prompts" / "report_generator_prompt.md"
+def build_agent(model: Any) -> MarkdownReportAgent:
     return MarkdownReportAgent(
         model=model,
-        system_prompt=prompt_path.read_text(encoding="utf-8"),
+        system_prompt=load_prompt(__package__),
     )
 
 
-__all__ = ["MarkdownReportAgent", "create_report_generator_agent"]
+__all__ = ["MarkdownReportAgent", "build_agent"]

@@ -1,0 +1,109 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-agent-builders",
+  "baseline_commit": "4021b96",
+  "scope": "role builder/prompt layout only; middleware and all-create_agent migration pending",
+  "prompt_bytes_preserved": true,
+  "prompts": [
+    {
+      "role": "routing",
+      "previous_source": "src/agent_service/agents/analysis/prompts/routing_agent_prompt.md",
+      "path": "src/agent_service/agents/analysis/agent_builders/routing/prompt.md",
+      "sha256": "168bed8e1a60e0da07c2c96213f9a122961cef935a1c2d9731ac923dc6ba5440",
+      "bytes": 1246
+    },
+    {
+      "role": "intent_classifier",
+      "previous_source": "src/agent_service/agents/analysis/prompts/intent_classifier_prompt.md",
+      "path": "src/agent_service/agents/analysis/agent_builders/intent_classifier/prompt.md",
+      "sha256": "4b3520a5761d4cb6546a7d71b8096711e6770aa168b5b2e450e701f6689cd83e",
+      "bytes": 281
+    },
+    {
+      "role": "workflow_generator",
+      "previous_source": "src/agent_service/agents/analysis/prompts/workflow_generator_prompt.md",
+      "path": "src/agent_service/agents/analysis/agent_builders/workflow_generator/prompt.md",
+      "sha256": "431384e51e9911ac21bdd8da64887913c2c3b94ac450995419cdcbab13893fa8",
+      "bytes": 6501
+    },
+    {
+      "role": "report_writer",
+      "previous_source": "src/agent_service/agents/analysis/prompts/report_generator_prompt.md",
+      "path": "src/agent_service/agents/analysis/agent_builders/report_writer/prompt.md",
+      "sha256": "ca694a6d66ff8df45899fb8b90a0760d2a29e6934f511df76e429f3f8199da6f",
+      "bytes": 921
+    },
+    {
+      "role": "skill_selector",
+      "previous_source": "src/agent_service/agents/analysis/prompts/skill_selector_prompt.py:SKILL_SELECTOR_PROMPT",
+      "path": "src/agent_service/agents/analysis/agent_builders/skill_selector/prompt.md",
+      "sha256": "c4f88064a708eb4c9e8d7e5494ef14e414c808b03f152cd8b85f9c174800005b",
+      "bytes": 467
+    },
+    {
+      "role": "conditional_decider",
+      "previous_source": "src/agent_service/agents/analysis/prompts/conditional_decision_prompt.py:CONDITIONAL_DECISION_PROMPT",
+      "path": "src/agent_service/agents/analysis/agent_builders/conditional_decider/prompt.md",
+      "sha256": "f054b57a4c77be83ee641c1d10a95fd74b8abbeacc1b4da5c2514e65b94e7c1b",
+      "bytes": 495
+    },
+    {
+      "role": "faq",
+      "previous_source": "src/agent_service/agents/analysis/dependencies.py:faq_agent.system_prompt",
+      "path": "src/agent_service/agents/analysis/agent_builders/faq/prompt.md",
+      "sha256": "ce5bdbd05cdffdc38c7f4c64b60d2d2f3dda20c7a8e9489c55009335b2391cfe",
+      "bytes": 69
+    }
+  ],
+  "regression_before": {
+    "passed": 193,
+    "failed": 19,
+    "skipped": 39
+  },
+  "regression_after": {
+    "passed": 193,
+    "failed": 19,
+    "skipped": 39
+  },
+  "new_failures": [],
+  "changed_failure_messages": [],
+  "existing_failures": [
+    "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+    "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+    "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+    "src.agent_service.agents.analysis.tests.test_executor_submit_toggle.ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+    "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+    "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+    "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+    "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+    "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+    "src.agent_service.agents.analysis.tests.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+    "src.agent_service.agents.analysis.tests.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+  ],
+  "excluded_existing_collection_errors": [
+    "test_select_features.py",
+    "test_split_dataset.py"
+  ],
+  "wheel_smoke": {
+    "fresh_build_directory": true,
+    "source_checkout_imported": false,
+    "api_openapi_paths": 33,
+    "mock_graph_execution_steps": 6,
+    "role_prompts": 7,
+    "prompt_hashes_match": true,
+    "production_builders_constructed": true,
+    "obsolete_prompt_package_present": false
+  },
+  "external_services_contacted": false,
+  "postgres_tests_rerun": false,
+  "deployed": false,
+  "build_note": "First wheel reused stale build/ files and failed old-package assertion; clean temporary build passed."
+}
