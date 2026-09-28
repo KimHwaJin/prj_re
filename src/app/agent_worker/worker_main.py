@@ -77,7 +77,8 @@ async def main(*, install_signals: bool = True) -> None:
         ) as checkpointer:
             graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
             _validate_graph(graph)
-            deferred.bind(LangGraphEventAdapter(graph))
+            from app.services.agent_project_context import load_event_project_snapshot
+            deferred.bind(LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot))
             worker.add_readiness_check("agent-graph", deferred.ready)
             installed = _install_signal_handlers(worker) if install_signals else []
             try:

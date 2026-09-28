@@ -12,8 +12,9 @@ from app.worker import DeferEvent, EventContext, IgnoreEvent, RejectEvent
 class LangGraphEventAdapter:
     """Resume only the Executor interrupt bound to this event."""
 
-    def __init__(self, graph: Any) -> None:
+    def __init__(self, graph: Any, *, project_context_loader=None) -> None:
         self.graph = graph
+        self.project_context_loader = project_context_loader
 
     async def __call__(self, context: EventContext) -> None:
         config = context.graph_config
@@ -39,9 +40,10 @@ class LangGraphEventAdapter:
                 and values.get("task_id") == context.task_id
                 and values.get("execution_id") == execution_id
             ):
-                await self.graph.ainvoke(
+                await self._invoke(
                     None,
                     config,
+                    values=values,
                     durability="sync",
                 )
             return
@@ -89,7 +91,7 @@ class LangGraphEventAdapter:
                 )
             elif pending != action:
                 raise DeferEvent("Another graph invocation needs recovery")
-            await self.graph.ainvoke(None, config, durability="sync")
+            await self._invoke(None, config, values=values, durability="sync")
         elif len(interrupts) == 1:
             boundary = interrupts[0]
             value = boundary.value
@@ -105,9 +107,10 @@ class LangGraphEventAdapter:
             last = values.get("ew_sequences", {}).get(execution_id, 0)
             if context.event.event_sequence <= last:
                 raise IgnoreEvent("Older execution sequence already applied")
-            await self.graph.ainvoke(
+            await self._invoke(
                 Command(resume={boundary.id: action}),
                 config,
+                values=values,
                 durability="sync",
             )
         elif not snapshot.next:
@@ -118,3 +121,9 @@ class LangGraphEventAdapter:
         after = await self.graph.aget_state(config)
         if after.values.get("ew_receipts", {}).get(command_id) != event_id:
             raise DeferEvent("Agent has not recorded the event receipt yet")
+
+    async def _invoke(self, value, config, *, values, durability):
+        if self.project_context_loader is not None and values and "project_system_prompt" not in values:
+            update = await self.project_context_loader(values)
+            await self.graph.aupdate_state(config, update)
+        return await self.graph.ainvoke(value, config, durability=durability)

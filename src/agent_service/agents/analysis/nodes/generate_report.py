@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+from agent_service.agents.analysis.context import context_from_state
+
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -374,7 +376,7 @@ def make_generate_report(
             execution_id=execution_id,
             step_results=step_results,
         )
-        raw_report = await deps.report_agent.ainvoke(request.model_dump(mode="json"))
+        raw_report = await deps.report_agent.ainvoke(request.model_dump(mode="json"), context=context_from_state(state))
         if isinstance(raw_report, dict):
             content = raw_report.get("content") or raw_report.get("answer")
         else:

@@ -1,10 +1,11 @@
 # Agent 개발 안내
 
-현재 구현 기준: `feature/refactor-unify-analysis-workflow`, 개선 기록 010. 역할별 선언·독립 프롬프트 패키지를 구성했다. 007의 Azure 제거도 포함한다. 모든 구성요소의 create_agent 통일·공통 미들웨어·프로젝트 메모리·업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다.
+현재 구현 기준: `feature/refactor-agent-middleware`, 개선 기록 011. 7개 실제 LLM 역할을 create_agent로 통일하고 공통 실행 문맥·프로젝트 system_prompt·JSON 검증 미들웨어를 적용했다. project_memory 자동 요약/저장, 모델 선택 registry, 업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다. [Agent 선언·문맥·미들웨어 가이드](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
 - [005 당시 이동·삭제 목록](analysis-layout-inventory.json)
+- [011 Agent 실행·미들웨어 통일](../improvements/011-agent-middleware.md)
 - [010 분석 Workflow 패키지 통합](../improvements/010-unify-analysis-workflow.md)
 - [009 기존 Workflow 작업 위치 복원](../improvements/009-preserve-workflow-package.md)
 - [008 역할별 선언·프롬프트 구조](../improvements/008-agent-builders-layout.md)
@@ -47,17 +48,17 @@ analysis/
     report_writer/           agent.py + prompt.md + __init__.py
   tools/catalog.py           분석 업무의 공용 도구
   schemas/                   그래프와 구성요소가 공유하는 업무 계약
-  components/interfaces.py   기존 응답 adapter; 미들웨어 통일 전 이행 경계
+  components/interfaces.py   async 호출 계약·Pydantic 결과 검증 (직접 LLM 어댑터 제거)
   dependencies.py            공유 모델 → builder → 그래프 의존성 연결
 ```
 
-builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 시점에 만들지 않는다. `build_agent(model, ...)`는 현재 그래프가 사용하는 async ainvoke 계약으로 반환한다. 역할마다 tools/미들웨어/출력 규격을 명시하는 공통 create_agent 구성으로 이행할 예정이다. **현재 Workflow 생성만 create_agent이고 다른 구성요소는 기존 비동기 adapter다. 폴더 이동을 미들웨어 구현 완료로 해석하지 않는다.**
+builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 시점에 만들지 않는다. 7개 역할 모두 공통 factory의 create_agent를 사용한다. 각 builder에 tools, middleware, 출력 규격을 명시하고 RoleAgent는 node payload/결과 변환만 담당한다. 공통 JSON 모드는 검증 미들웨어 또는 명시적인 ProviderStrategy를 사용한다.
 
 전용 스키마나 도구가 생기면 해당 역할 폴더에 추가한다. 여러 노드와 Agent가 쓰는 Workflow/승인/조건 결과 스키마는 공통 schemas에 유지했다. 공용 tools에 있다는 이유로 모든 Agent에 자동 제공하지 않는다. 현재 read_skill_documents는 graph 노드가 직접 호출하며 Workflow 모델에 제공하는 tools는 빈 목록이다. 이 정책을 바꾸는 것은 별도 동작 변경이다.
 
 여러 업무 Agent가 실제 공유하는 도구가 생길 때 agent_service/tools로 올린다. 현재는 분석 카탈로그만 확인되어 analysis/tools를 유지했고 빈 공용 패키지는 만들지 않았다. Executor용 Python 소스(src/agent_service/agents/analysis/workflow/tools)는 LLM에 제공할 LangChain Tool과 다른 개념이다.
 
-프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 기존 분류·JSON 지시문 및 Skill 카탈로그를 붙이는 로직은 008에서 그대로 유지했다. 프로젝트 system_prompt/project_memory의 런타임 주입은 별도 미들웨어의 책임이며 역할 기본 프롬프트 공유와 다르다.
+프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 역할별 기본 prompt.md 7개는 원문을 유지한다. 프로젝트 system_prompt는 ProjectPromptMiddleware가 각 모델 요청에 별도로 추가하며, project_memory 자동 요약/저장은 아직 구현하지 않았다.
 
 실제 LLM을 호출하지 않는 WorkflowRecommender와 file_lookup placeholder에는 가짜 builder나 prompt를 만들지 않는다. 기존 미사용 recommender prompt는 [참고 자료](reference-prompts/workflow_recommender_prompt.md)로 옮겼다.
 
@@ -72,8 +73,8 @@ builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 
 | Agent 등록 | id·호환 버전·스키마·factory를 코드 목록에 등록 | 미구현, 현재 분석 graph 직접 연결 |
 | 실행 | I/O 노드는 async, 모델은 실제 ainvoke, 순수 변환은 def 허용 | LLM·Mock 및 소비 노드 전환 완료, 다른 I/O는 이행 중 |
 | 설정 | settings 스키마만 선언, bootstrap이 중앙 설정 주입 | 중앙 resolver 완료, AgentSettings 세분화는 후속 |
-| LLM | 기본 모델/선택 모델을 서비스가 주입 | 현재 모델 factory 유지, 요청별 모델 고정은 후속 |
-| 프로젝트 문맥 | 모든 모델 호출에 system_prompt 적용, project_memory는 프로젝트 범위에서 읽기·갱신 | 공통 context/projection 경계 후속 |
+| LLM | 기본 모델/선택 모델을 서비스가 주입 | 기본 모델 factory 및 실제 모델명 context 제공, 요청별 모델 선택 registry는 후속 |
+| 프로젝트 문맥 | 모든 모델 호출에 system_prompt 적용, project_memory는 프로젝트 범위로 관리 | prompt snapshot·미들웨어 적용 완료, memory 접근 Protocol만 정의 |
 | 파일 | 주입된 ArtifactStore 사용, PV 산출물과 코드 리소스 구분 | artifacts.py의 기존 동기 저장 유지 |
 | Executor | 주입된 port를 사용하고 멱등성·접수 결과 보존 | 기존 클라이언트/Worker 경계 유지 |
 | 상태 | Agent별 JSON 상태, 공통 결과/대기 projection | 분석 상태만 이동, 공통 projection은 후속 |
@@ -85,8 +86,8 @@ builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 
 
 ```python
 class MyComponent:
-    async def ainvoke(self, payload):
-        response = await self.model.ainvoke(payload)
+    async def ainvoke(self, payload, *, context=None):
+        response = await self.role_agent.ainvoke(payload, context=context)
         return response
 
 result = await component.ainvoke(payload)
@@ -103,7 +104,7 @@ async for update in graph.astream(graph_input, config):
 
 ## checkpoint 및 리소스 호환
 
-- 이번 이동에서 graph의 노드 이름·edge·state 필드·thread 식별·HITL 응답 의미는 바꾸지 않았다.
+- 그래프 노드 이름·edge·thread 식별·HITL 응답 의미는 유지한다. 011에서 JSON 상태에 project_system_prompt/project_prompt_version snapshot 필드를 추가했다.
 - 010 이후 새 Workflow는 `agent_service/agents/analysis/workflow/{tools,skills}/...` 경로를 생성한다.
 - 기존 `app/workflow/{tools,skills}/...`와 005~008의 `agent_service/agents/analysis/resources/...` 저장 경로는 같은 원본 자산으로 연결한다. assets 사본이나 symlink를 두지 않는다.
 - 경로 호환은 과거 Tool 내용/버전의 보존을 뜻하지 않는다. 이미 생성된 Notebook 코드·Executor 제출 payload를 임의로 다시 생성하거나 멱등성 키를 바꾸면 안 된다.

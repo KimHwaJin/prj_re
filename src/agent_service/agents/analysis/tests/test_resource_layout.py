@@ -29,7 +29,7 @@ def test_catalog_generators_and_shipped_resources_agree():
     assert build_registry(TOOLS_ROOT) == yaml.safe_load(TOOL_REGISTRY_PATH.read_text())
     for entry in yaml.safe_load(TOOL_REGISTRY_PATH.read_text())['tools'].values():
         assert resolve_tool_source(TOOL_SOURCE_PREFIX + entry['source'], SOURCE_ROOT).is_file()
-    assert build_agent(object()).system_prompt.strip()
+    assert build_agent(object()).agent.checkpointer is False
 
 
 @pytest.mark.parametrize('prefix', TOOL_SOURCE_PREFIXES)

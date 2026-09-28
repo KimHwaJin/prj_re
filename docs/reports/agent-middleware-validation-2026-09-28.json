@@ -1,0 +1,59 @@
+{
+  "baseline": "3c828c1",
+  "branch": "feature/refactor-agent-middleware",
+  "offline_regression": {
+    "passed": 225,
+    "failed": 19,
+    "skipped": 39,
+    "new_failures": 0,
+    "normalized_failure_messages_match_baseline": true,
+    "excluded_existing_collection_errors": 2
+  },
+  "focused_tests": 53,
+  "role_agents": 7,
+  "json_modes": [
+    "prompt_json",
+    "provider_json_schema"
+  ],
+  "real_external_services_called": false,
+  "project_memory_persistence_implemented": false,
+  "request_model_registry_implemented": false,
+  "prompt_files_unchanged": [
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/conditional_decider/prompt.md",
+      "sha256": "f054b57a4c77be83ee641c1d10a95fd74b8abbeacc1b4da5c2514e65b94e7c1b"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/faq/prompt.md",
+      "sha256": "ce5bdbd05cdffdc38c7f4c64b60d2d2f3dda20c7a8e9489c55009335b2391cfe"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/intent_classifier/prompt.md",
+      "sha256": "4b3520a5761d4cb6546a7d71b8096711e6770aa168b5b2e450e701f6689cd83e"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/report_writer/prompt.md",
+      "sha256": "ca694a6d66ff8df45899fb8b90a0760d2a29e6934f511df76e429f3f8199da6f"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/routing/prompt.md",
+      "sha256": "168bed8e1a60e0da07c2c96213f9a122961cef935a1c2d9731ac923dc6ba5440"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/skill_selector/prompt.md",
+      "sha256": "c4f88064a708eb4c9e8d7e5494ef14e414c808b03f152cd8b85f9c174800005b"
+    },
+    {
+      "path": "src/agent_service/agents/analysis/agent_builders/workflow_generator/prompt.md",
+      "sha256": "431384e51e9911ac21bdd8da64887913c2c3b94ac450995419cdcbab13893fa8"
+    }
+  ],
+  "package": {
+    "source_checkout_imported": false,
+    "role_prompts_present": 7,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true,
+    "api_openapi_paths": 33,
+    "mock_graph_execution_steps": 6
+  }
+}

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+from agent_service.agents.analysis.context import context_from_state
+
 from agent_service.runtime.blocking import run_sync
 from agent_config import AgentSettings
 from agent_service.agents.analysis.components.interfaces import ainvoke_typed
@@ -93,7 +95,7 @@ def make_decide_conditional_tools(
                 if "condition Tool result is missing" in str(exc):
                     break
                 raise
-            output = await ainvoke_typed(agent, payload, ConditionalDecisionOutput)
+            output = await ainvoke_typed(agent, payload, ConditionalDecisionOutput, context=context_from_state(state))
             decisions = output.model_dump(mode="json")["decisions"]
             if [item["tool_id"] for item in decisions] != [pending_tool_id]:
                 raise ValueError(

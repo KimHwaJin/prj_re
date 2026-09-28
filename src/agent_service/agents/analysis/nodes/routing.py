@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from agent_service.agents.analysis.context import context_from_state
+
 from typing import Any
 from uuid import uuid4
 
@@ -126,6 +128,7 @@ def make_route_user_request(deps: AgentDependencies):
                 "approval_feedback": state.get("approval_feedback"),            
             },    
             RoutingOutput,
+            context=context_from_state(state),
         )
         
         if output.route not in ALLOWED_ROUTES[state["routing_context"]]:

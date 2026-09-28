@@ -25,6 +25,7 @@ from app.services.graph_crud_persistence import (
     astream_with_crud_message_persistence,
 )
 from app.services.graph_event_persistence import GraphPersistenceDispatcher
+from app.services.agent_project_context import load_project_snapshot, ensure_project_snapshot
 
 
 GRAPH_MESSAGE_SOURCE = "dtest-agent"
@@ -340,6 +341,7 @@ async def ainvoke_user_turn(
         trigger_message_id=trigger_message_id,
         request_id=request_id,
     )
+    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
     if graph is None:
         async with runtime.open_graph() as compiled:
             return await ainvoke_with_crud_message_persistence(
@@ -383,6 +385,7 @@ async def ainvoke_resume(
     run_id = agent_run_id or checkpoint_run_id
     if graph is None:
         async with runtime.open_graph() as compiled:
+            await ensure_project_snapshot(compiled, config, db=db, user_id=user_id, session_id=session_id)
             return await ainvoke_with_crud_message_persistence(
                 compiled,
                 graph_input,
@@ -392,6 +395,7 @@ async def ainvoke_resume(
                 dispatcher=dispatcher,
                 agent_run_id=run_id,
             )
+    await ensure_project_snapshot(graph, config, db=db, user_id=user_id, session_id=session_id)
     return await ainvoke_with_crud_message_persistence(
         graph,
         graph_input,
@@ -425,6 +429,7 @@ async def astream_user_turn(
         trigger_message_id=trigger_message_id,
         request_id=request_id,
     )
+    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
     if graph is None:
         async with runtime.open_graph() as compiled:
             async for state in astream_with_crud_message_persistence(

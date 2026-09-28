@@ -14,9 +14,12 @@ from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel
 
+from agent_service.factory import RoleAgent
+from agent_service.agents.analysis.tests.model_helpers import text_agent, structured_agent, label_agent
+
 from agent_config import load_agent_settings
 from agent_service.agents.analysis.components.interfaces import (
-    SimpleLLMAgent, StructuredLLMAgent, JsonMessageAgentAdapter, ainvoke_typed,
+    ainvoke_typed,
 )
 from agent_service.agents.analysis.dependencies import create_chat_model
 from agent_service.agents.analysis.nodes.service_queries import make_faq_node
@@ -82,13 +85,13 @@ async def test_cancel_during_real_faq_node_stops_model_before_run_returns(monkey
     class Model:
         def invoke(self, *_a, **_kw):
             raise AssertionError('sync model path used')
-        async def ainvoke(self, _messages):
+        async def ainvoke(self, _messages, *, context=None):
             entered.set()
             try:
                 await asyncio.Event().wait()
             finally:
                 closed.set()
-    node = make_faq_node(SimpleNamespace(faq_agent=SimpleLLMAgent(Model(), 'answer')))
+    node = make_faq_node(SimpleNamespace(faq_agent=text_agent(Model(), 'answer')))
     async def after(_state):
         submitted.append('submitted')
         return {}
@@ -104,14 +107,14 @@ async def test_two_sessions_enter_model_wait_concurrently():
     both_entered, release = asyncio.Event(), asyncio.Event()
     count = 0
     class Model:
-        async def ainvoke(self, _messages):
+        async def ainvoke(self, _messages, *, context=None):
             nonlocal count
             count += 1
             if count == 2:
                 both_entered.set()
             await release.wait()
             return AIMessage(content='ok')
-    agent = SimpleLLMAgent(Model(), 'answer')
+    agent = text_agent(Model(), 'answer')
     tasks = [asyncio.create_task(agent.ainvoke({'user_request':str(i)})) for i in range(2)]
     try:
         await asyncio.wait_for(both_entered.wait(), 1)
@@ -136,15 +139,25 @@ async def test_mock_delay_is_cancellable_without_late_response():
 @pytest.mark.asyncio
 async def test_validation_retry_does_not_swallow_cancellation():
     calls = []
+    entered = asyncio.Event()
+    closed = asyncio.Event()
     class Model:
-        async def ainvoke(self, _messages):
+        async def ainvoke(self, _messages, *, context=None):
             calls.append(1)
             if len(calls) == 1:
                 return AIMessage(content='invalid JSON')
-            raise asyncio.CancelledError
+            entered.set()
+            try:
+                await asyncio.Event().wait()
+            finally:
+                closed.set()
+    task = asyncio.create_task(structured_agent(Model(), 'answer', Answer).ainvoke({}))
+    await asyncio.wait_for(entered.wait(), 2)
+    task.cancel()
     with pytest.raises(asyncio.CancelledError):
-        await StructuredLLMAgent(Model(), 'answer', Answer).ainvoke({})
+        await task
     assert len(calls) == 2
+    assert closed.is_set()
 
 
 @pytest.mark.asyncio
@@ -173,7 +186,7 @@ async def test_configured_provider_uses_async_http_only(monkeypatch, mode):
                 'API_BASE_URL':'http://llm.invalid/v1', 'MODEL_API_KEY':'test-key', 'MODEL_MAX_RETRIES':'0'})
             model = create_chat_model(settings)
             if mode == 'cancel':
-                task = asyncio.create_task(SimpleLLMAgent(model, 'answer').ainvoke({'user_request':'test'}))
+                task = asyncio.create_task(text_agent(model, 'answer').ainvoke({'user_request':'test'}))
                 try:
                     await asyncio.wait_for(entered.wait(), 2)
                 finally:
@@ -182,11 +195,11 @@ async def test_configured_provider_uses_async_http_only(monkeypatch, mode):
                 assert task.cancelled()
                 assert closed.is_set()
             elif mode == 'plain':
-                result = await SimpleLLMAgent(model, 'answer').ainvoke({'user_request':'test'})
+                result = await text_agent(model, 'answer').ainvoke({'user_request':'test'})
                 assert 'ok' in result['answer']
             else:
-                agent = (JsonMessageAgentAdapter(create_agent(model=model, tools=[])) if mode == 'nested_agent'
-                         else StructuredLLMAgent(model, 'answer', Answer, method=mode))
+                agent = (RoleAgent(create_agent(model=model, tools=[], checkpointer=False)) if mode == 'nested_agent'
+                         else structured_agent(model, 'answer', Answer, method=mode))
                 assert (await ainvoke_typed(agent, {}, Answer)).answer == 'ok'
     assert len(calls) == 1
 

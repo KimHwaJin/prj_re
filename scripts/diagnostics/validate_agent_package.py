@@ -60,6 +60,13 @@ production_settings = load_agent_settings({'MODEL_PROVIDER': 'openai_compatible'
 production_deps = create_llm_dependencies(production_settings)
 assert production_deps.report_agent is not None
 assert production_deps.skill_selector_agent is not None
+from agent_service.factory import RoleAgent
+from agent_service.context import AgentContext
+for field in ('routing_agent', 'analysis_intent_agent', 'skill_selector_agent',
+              'workflow_agent', 'faq_agent', 'report_agent', 'conditional_decision_agent'):
+    role = getattr(production_deps, field)
+    assert isinstance(role, RoleAgent)
+    assert role.agent.checkpointer is False
 settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED':False,
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
@@ -83,4 +90,5 @@ async def smoke():
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
     'removed_agent_packages_in_wheel':False, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
-    'role_prompts_present':len(roles), 'production_builders_constructed':True}))
+    'role_prompts_present':len(roles), 'production_builders_constructed':True,
+    'create_agent_roles':7, 'role_checkpointers_disabled':True}))

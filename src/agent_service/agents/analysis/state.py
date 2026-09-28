@@ -14,6 +14,8 @@ class AnalysisWorkflowState(ExecutorBoundaryState, total=False):
     project_id: str
     session_id: str
     thread_id: str
+    project_system_prompt: str
+    project_prompt_version: int
     user_request: str
     action_query: str | None
     return_to: str

@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-unify-analysis-workflow` (009에서 분기, 베이스는 006까지 통합)
+현재 구현 브랜치: `feature/refactor-agent-middleware` (010에서 분기, 베이스는 006까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -28,6 +28,7 @@
 | 008 | 역할별 Agent 선언·독립 프롬프트 패키지 | 구현·오프라인/설치 검증 완료 / 미들웨어 통일 미구현 | 2026-09-28 | [변경·검증·제한](008-agent-builders-layout.md) |
 | 009 | 기존 app/workflow 유지보수 패키지 복원 | 구현·검증 완료 / 위치 해석은 010에서 정정 | 2026-09-28 | [변경·검증·제한](009-preserve-workflow-package.md) |
 | 010 | 분석 Workflow 처리 코드·기존 자산 패키지 통합 | 구현·검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](010-unify-analysis-workflow.md) |
+| 011 | 역할별 create_agent·공통 문맥·프로젝트 prompt 미들웨어 | 구현·오프라인 검증 완료 / 메모리 저장·배포 미수행 | 2026-09-28 | [변경·검증·제한](011-agent-middleware.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

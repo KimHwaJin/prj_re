@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from agent_service.agents.analysis.context import context_from_state
+
 from copy import deepcopy
 
 from pydantic import ValidationError
@@ -305,6 +307,7 @@ def _make_workflow_node(
                 deps.skill_selector_agent,
                 selector_payload,
                 SkillSelectionOutput,
+                context=context_from_state(state),
             )
             selected_skill_names = await run_sync(validate_skill_names, selection.skill_names)
             selected_skill_names = [
@@ -360,6 +363,7 @@ def _make_workflow_node(
                     deps.workflow_agent,
                     generation_payload,
                     WorkflowPlanOutput,
+                    context=context_from_state(state),
                 )
                 failed_plan = plan_output.model_dump(mode="json")
                 failed_plan["workflow"]["context"] = {

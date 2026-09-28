@@ -13,7 +13,7 @@ from sqlalchemy.engine import make_url
 
 from app.test.test_user_identity_postgres import database_url, harness
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from agent_service.agents.analysis.components.interfaces import JsonMessageAgentAdapter
+from agent_service.factory import RoleAgent
 from agent_service.agents.analysis.dependencies import create_llm_dependencies
 from agent_service.agents.analysis.graph import build_analysis_workflow_graph
 from agent_service.agents.analysis.tests.test_service_load_mock import mock_settings, action
@@ -55,7 +55,7 @@ async def test_nested_async_agent_does_not_use_outer_postgres_saver(harness, dat
     class State(TypedDict, total=False):
         answer: str
         approved: bool
-    inner = JsonMessageAgentAdapter(create_agent(model=Model(), tools=[]))
+    inner = RoleAgent(create_agent(model=Model(), tools=[], checkpointer=False))
     async def call_model(_state):
         result = await inner.ainvoke({'question':'test'})
         return {'answer':result['messages'][-1].content}

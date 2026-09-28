@@ -14,6 +14,9 @@ from unittest.mock import AsyncMock, Mock, patch
 from langchain_core.messages import AIMessage
 from langgraph.types import Command
 
+from agent_service.factory import RoleAgent
+from agent_service.agents.analysis.tests.model_helpers import text_agent, structured_agent, label_agent
+
 from agent_config import (
     ENABLED_ANALYSIS_INTENTS,
     TEST_DATA_SELECTION,
@@ -21,10 +24,6 @@ from agent_config import (
     load_agent_settings,
 )
 from agent_service.agents.analysis.components.interfaces import (
-    JsonMessageAgentAdapter,
-    LabelOnlyLLMAgent,
-    SimpleLLMAgent,
-    StructuredLLMAgent,
     ainvoke_typed,
 )
 from agent_service.agents.analysis.dependencies import AgentDependencies
@@ -71,7 +70,7 @@ _TEST_ARTIFACTS = tempfile.TemporaryDirectory()
 
 
 class RoutingAgent:
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         request = payload["user_request"].lower()
         if payload.get("routing_context") == "workflow_rejected":
             if "reselect" in request or "다시 선택" in request:
@@ -92,7 +91,7 @@ class ConstantAgent:
         self.value = value
         self.calls = []
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
         return self.value
 
@@ -138,7 +137,7 @@ class ReportAgent:
     def __init__(self):
         self.calls = []
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
         return {
             "content": (
@@ -157,7 +156,7 @@ class WorkflowAgent:
     def __init__(self):
         self.calls = []
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
         selection = payload["data_selection"]
         target = payload["additional_information"].get("target_column")
@@ -256,7 +255,7 @@ class PlanWorkflowAgent:
     def __init__(self):
         self.calls = []
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
         target = payload["additional_information"].get("target_column")
         needs_input = target is None
@@ -331,7 +330,7 @@ class PlanWorkflowAgent:
 
 
 class ValidationRetryWorkflowAgent(PlanWorkflowAgent):
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         document = await super().ainvoke(payload)
         if (
             payload["additional_information"].get("target_column")
@@ -349,7 +348,7 @@ class PlaceholderAgent:
     def __init__(self, message):
         self.message = message
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         return {"status": "placeholder", "message": self.message}
 
 
@@ -357,7 +356,7 @@ class FakeChatModel:
     def __init__(self):
         self.calls = []
 
-    async def ainvoke(self, messages):
+    async def ainvoke(self, messages, *, context=None):
         self.calls.append(messages)
         return AIMessage(content="간단한 FAQ 답변입니다.")
 
@@ -532,15 +531,8 @@ async def select_candidate(graph, config, result, origin="generated"):
 
 class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
     async def test_nested_agent_does_not_inherit_outer_async_checkpointer(self):
-        nested = Mock(ainvoke=AsyncMock())
-        nested.ainvoke.return_value = {"messages": []}
-
-        await JsonMessageAgentAdapter(nested).ainvoke({"request": "test"})
-
-        config = nested.ainvoke.call_args.kwargs["config"]
-        self.assertIsNone(
-            config["configurable"]["__pregel_checkpointer"]
-        )
+        inner = build_agent(object())
+        self.assertIs(inner.agent.checkpointer, False)
 
     def test_workflow_candidate_description_shows_execution_structure(self):
         description = _workflow_candidate_description(
@@ -801,7 +793,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
     async def test_label_only_agent_builds_typed_output_without_json(self):
         model = FakeChatModel()
         model.ainvoke = AsyncMock(return_value=AIMessage(content="analysis"))
-        agent = LabelOnlyLLMAgent(
+        agent = label_agent(
             model=model,
             system_prompt="Classify the request.",
             output_type=RoutingOutput,
@@ -819,7 +811,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         model.ainvoke = AsyncMock(return_value=AIMessage(
             content="The answer is analysis."
         ))
-        agent = LabelOnlyLLMAgent(
+        agent = label_agent(
             model=model,
             system_prompt="Classify the request.",
             output_type=RoutingOutput,
@@ -1157,7 +1149,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         )
 
     @patch(
-        "agent_service.agents.analysis.agent_builders.workflow_generator.agent.create_agent"
+        "agent_service.factory.create_agent"
     )
     def test_workflow_agent_uses_structured_output_without_resource_tool(
         self, create_agent_mock
@@ -1179,7 +1171,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tools, [])
 
     @patch(
-        "agent_service.agents.analysis.agent_builders.workflow_generator.agent.create_agent"
+        "agent_service.factory.create_agent"
     )
     def test_provider_workflow_agent_binds_json_schema(
         self, create_agent_mock
@@ -1193,13 +1185,11 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
             structured_output_mode="provider_json_schema",
         )
 
-        response_format = model.bind.call_args.kwargs["response_format"]
+        from langchain.agents.structured_output import ProviderStrategy
         agent_kwargs = create_agent_mock.call_args.kwargs
-        self.assertEqual(response_format["type"], "json_schema")
-        self.assertTrue(response_format["json_schema"]["strict"])
-        self.assertIs(agent_kwargs["model"], bound_model)
-        self.assertNotIn("response_format", agent_kwargs)
-        self.assertIn("JSON Schema", agent_kwargs["system_prompt"])
+        self.assertIsInstance(agent_kwargs["response_format"], ProviderStrategy)
+        self.assertIs(agent_kwargs["model"], model)
+        self.assertFalse(agent_kwargs["checkpointer"])
         self.assertEqual(agent_kwargs["tools"], [])
 
     async def test_ainvoke_typed_parses_last_ai_message_content(self):
@@ -1308,7 +1298,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
             AIMessage(content="not json"),
             AIMessage(content='{"skill_names":["data_quality_check"]}'),
         ]
-        agent = StructuredLLMAgent(
+        agent = structured_agent(
             model=model,
             system_prompt="Select Skills.",
             output_type=SkillSelectionOutput,
@@ -1331,7 +1321,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
                 "```"
             )
         )
-        agent = StructuredLLMAgent(
+        agent = structured_agent(
             model=model,
             system_prompt="Select Skills.",
             output_type=SkillSelectionOutput,
@@ -1380,7 +1370,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_simple_llm_agent_returns_plain_faq_answer(self):
         model = FakeChatModel()
-        agent = SimpleLLMAgent(
+        agent = text_agent(
             model=model,
             system_prompt="FAQ에 답변하세요.",
         )

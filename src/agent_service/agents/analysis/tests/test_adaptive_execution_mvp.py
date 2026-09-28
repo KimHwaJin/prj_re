@@ -22,7 +22,7 @@ class DecisionAgent:
         self.decision = decision
         self.calls = []
 
-    async def ainvoke(self, payload):
+    async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
         candidate = payload["candidates"][0]
         return {

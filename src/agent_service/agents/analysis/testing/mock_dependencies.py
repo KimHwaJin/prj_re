@@ -20,7 +20,7 @@ class ScriptedAgent:
     respond: Callable[[dict[str, Any]], dict[str, Any]]
     delay_ms: int
 
-    async def ainvoke(self, payload: dict[str, Any]) -> dict[str, Any]:
+    async def ainvoke(self, payload: dict[str, Any], *, context=None) -> dict[str, Any]:
         # Mock latency follows the same cancellable async interface as the model.
         if self.delay_ms:
             await asyncio.sleep(self.delay_ms / 1000)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from agent_service.agents.analysis.context import context_from_state
+
 from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.message_utils import as_message_content
@@ -19,6 +21,7 @@ def make_faq_node(deps: AgentDependencies):
             deps.faq_agent,
             {"user_request": _service_query(state)},
             FaqOutput,
+            context=context_from_state(state),
         )
         payload = output.model_dump(mode="json")
         # TODO(CRUD): 에이전트 메시지 POST
@@ -46,6 +49,7 @@ def make_file_lookup_node(deps: AgentDependencies):
             deps.file_lookup_agent,
             {"user_request": _service_query(state)},
             PlaceholderResponse,
+            context=context_from_state(state),
         )
         payload = output.model_dump(mode="json")
         # TODO(CRUD): 에이전트 메시지 POST

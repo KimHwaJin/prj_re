@@ -8,6 +8,8 @@
 
 010 업데이트: 기존 skills·tools·workflows 패키지 구성을 **src/agent_service/agents/analysis/workflow/** 아래로 통합한다. 009의 원래 경로 고정 해석을 정정했으며, 기존 Workflow 처리 모듈도 이 패키지에 유지한다. [010 기록](../improvements/010-unify-analysis-workflow.md).
 
+011 업데이트: 7개 LLM 역할이 공통 `agent_service/factory.py`의 create_agent를 사용한다. `context.py`와 `middleware/`를 구현했고 프로젝트 prompt snapshot을 사용자·Executor 재개에 연결했다. project_memory 저장/요약 및 모델 선택 registry는 후속이다. [011 기록](../improvements/011-agent-middleware.md).
+
 ## 목표
 
 ```text
@@ -22,8 +24,9 @@ src/
   agent_service/
     registry.py                    업무 Agent id·호환 버전 등록
     runtime/                       worker / scheduler / runner / supervision / langgraph
-    factory.py / models.py         create_agent 공통 조립·모델 선택 (후속)
-    middleware/ / memory/          공통 정책·프로젝트 메모리 (후속)
+    factory.py / context.py        create_agent 공통 조립·실행 문맥
+    middleware/                    프로젝트 prompt·JSON 검증 정책
+    memory/                        프로젝트 메모리 구현 (후속)
     tools/                         업무 간 실제 공유 도구가 생길 때 추가
     integrations/                  llm / executor (HTTP·Redis 이벤트)
     agents/<id>/                   definition / graph / state / schemas / settings
@@ -70,7 +73,7 @@ docs/                              구조·개발 안내·개선 결과
 | src/agent_config.py | 중앙 설정 호환 유지 후 공통/분석 설정 스키마 분리 |
 | app의 일부 API/서비스가 분석 schema import | 공통 Workflow/Executor 계약과 업무 스키마 분리 |
 
-이 목록을 허용된 임시 의존성으로 보고, 새로운 Agent가 그대로 복제할 표준으로 삼지 않는다. 008에서 역할 선언·프롬프트 구조를 먼저 정리했다. 다음 설계는 create_agent·미들웨어·State/Context/Store 연결이며 I/O 비동기 전환·취소 종료 추적과 공통 registry/접수/실행 경로 통합·슬롯 동시성도 남아 있다.
+이 목록을 허용된 임시 의존성으로 보고, 새로운 Agent가 그대로 복제할 표준으로 삼지 않는다. 008에서 역할 선언·프롬프트 구조를 먼저 정리했다. 011에서 create_agent·프로젝트 prompt 미들웨어·실행 context를 연결했다. 프로젝트 메모리 Store 구현과 모델 선택은 후속이며 I/O 비동기 전환·취소 종료 추적과 공통 registry/접수/실행 경로 통합·슬롯 동시성도 남아 있다.
 
 ## 미사용 코드 판정
 

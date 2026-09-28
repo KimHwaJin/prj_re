@@ -7,9 +7,10 @@
 | graph.py | 그래프 조립. 노드 이름/edge는 checkpoint 호환 경계 |
 | state.py | JSON으로 저장하는 분석 상태 |
 | nodes/, routers/ | 노드와 조건 분기. routers는 HTTP 라우터가 아님 |
+| context.py | 체크포인트의 프로젝트 prompt snapshot을 AgentContext로 변환 |
 | dependencies.py | 주입할 LLM 구성요소 생성. 현재 AgentSettings 호환 유지 |
 | agent_builders/ | 역할별 agent.py/build_agent 및 독립 prompt.md 7개 |
-| components/interfaces.py | 기존 비동기 호출·응답 adapter. 공통 create_agent/미들웨어로 이행 예정 |
+| components/interfaces.py | async 호출 계약·Pydantic 결과 검증. 직접 LLM 어댑터 제거 |
 | workflow/ | Workflow 컴파일·데이터 준비·조건 결정·코드 생성·결과 해석 |
 | schemas/ | 분석 입출력/Workflow/Skill 스키마 |
 | tools/catalog.py | Agent가 읽는 Skill/Tool 카탈로그 도구 |
@@ -23,8 +24,10 @@
 
 패키지 import만으로 모델·DB 풀·Worker를 생성하지 않는다. 모델을 만드는 함수와 실제 실행은 서비스 조립 또는 명시적 개발 실행에서 호출한다. 프롬프트·카탈로그는 읽기 전용 배포 리소스이고 생성 파일은 설정된 출력 경로/PV에 둔다.
 
-현재 `definition.py`, `projection.py`, 업무 Agent registry는 아직 구현하지 않았다. 006에서 구성요소·LLM 호출은 `await ainvoke()`로 전환했고 그래프 호출도 `ainvoke`/`astream`을 사용한다. HTTP·파일·Workflow DB 전체 전환은 남아 있으며, 이번에 비동기로 바꾼 혼합 노드의 기존 I/O만 `run_sync`로 종료를 추적한다. [개발 안내](../../../../../docs/agent-development/README.md)가 현재와 목표 계약을 구분한다.
+현재 `definition.py`, `projection.py`, 업무 Agent registry는 아직 구현하지 않았다. 006에서 구성요소·LLM 호출은 `await ainvoke()`로 전환했고 그래프 호출도 `ainvoke`/`astream`을 사용한다. HTTP·파일·Workflow DB 전체 전환은 남아 있으며, 이번에 비동기로 바꾼 혼합 노드의 기존 I/O만 `run_sync`로 종료를 추적한다. [개발 안내](../../../../docs/agent-development/README.md)가 현재와 목표 계약을 구분한다.
 
-008에서 역할별 선언과 프롬프트를 함께 배치했다. 프롬프트는 동일한 내용이어도 역할마다 별개 파일로 유지한다. tools/catalog.py는 분석 공용이며 모델에 자동 노출하지 않는다. 전체 create_agent 통일·미들웨어·메모리는 아직 구현하지 않았다.
+008에서 역할별 선언과 프롬프트를 함께 배치했다. 프롬프트는 동일한 내용이어도 역할마다 별개 파일로 유지한다. tools/catalog.py는 분석 공용이며 모델에 자동 노출하지 않는다. 011에서 7개 LLM 역할을 공통 create_agent로 통일하고 프로젝트 prompt/JSON 미들웨어를 적용했다. project_memory는 접근 계약만 정의했으며 자동 요약·저장은 후속이다.
 
 010에서 기존 app/workflow의 skills·tools·workflows를 이 패키지의 workflow/ 아래로 통합했다. [Workflow 유지보수 안내](workflow/README.md)에서 자산·생성기와 기존 처리 모듈의 역할을 확인한다.
+
+[Agent 실행 문맥·미들웨어 가이드](../../../../docs/agent-development/agent-runtime-contract.md)에서 역할 추가 방법과 snapshot/retry 경계를 확인한다.

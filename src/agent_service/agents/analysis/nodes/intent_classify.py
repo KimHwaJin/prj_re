@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from agent_service.agents.analysis.context import context_from_state
+
 from agent_config import ENABLED_ANALYSIS_INTENTS
 from agent_service.agents.analysis.components.interfaces import ainvoke_typed
 from agent_service.agents.analysis.dependencies import AgentDependencies
@@ -24,6 +26,7 @@ def make_classify_analysis_intent(deps: AgentDependencies):
                     "enabled_analysis_intents": ENABLED_ANALYSIS_INTENTS,
                 },
                 AnalysisIntentOutput,
+                context=context_from_state(state),
             )
             if output.intent not in ENABLED_ANALYSIS_INTENTS:
                 raise ValueError(
