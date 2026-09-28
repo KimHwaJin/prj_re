@@ -5,7 +5,7 @@
   },
   "env": ".env",
   "checkpointer": {
-    "path": "./src/app/graphs/checkpointer_factory.py:create_checkpointer"
+    "path": "./src/agent_service/runtime/langgraph/checkpointer.py:create_checkpointer"
   },
   "http": {
     "app": "./src/app/agent_worker/api_lifespan.py:app"

@@ -46,8 +46,8 @@ dependencies = [
 ]
 
 [project.scripts]
-dtest-agent = "cli:main"
-dtest-agent-api = "run:main"
+dtest-agent = "devtools.analysis.cli:main"
+dtest-agent-api = "service_bootstrap:main"
 
 [dependency-groups]
 dev = [
@@ -56,14 +56,15 @@ dev = [
 ]
 
 [tool.setuptools]
-package-dir = { "" = ".", app = "src/app" }
-py-modules = ["agent_config", "config", "cli", "run"]
+package-dir = { "" = "src" }
+py-modules = ["agent_config", "config", "service_settings", "event_worker_settings", "service_bootstrap", "bootstrap_admin", "main"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["app*"]
-exclude = ["app.test*"]
+include = ["app*", "agent_service*", "devtools*"]
+exclude = ["app.test*", "agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]
 app = ["**/*.md", "**/*.yaml", "static/*.html"]
+"agent_service.agents.analysis" = ["prompts/*.md", "schemas/**/*.md", "resources/**/*.md", "resources/**/*.yaml"]

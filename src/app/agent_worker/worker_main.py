@@ -58,7 +58,7 @@ def _install_signal_handlers(worker: ExecutorWorker) -> list[signal.Signals]:
 
 async def main(*, install_signals: bool = True) -> None:
     from service_settings import get_settings
-    from app.graphs.checkpointer_factory import create_checkpointer
+    from agent_service.runtime.langgraph.checkpointer import create_checkpointer
     service = get_settings()
     worker_settings = service.worker
     deferred = DeferredHandler()

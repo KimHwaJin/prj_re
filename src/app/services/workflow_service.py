@@ -13,7 +13,7 @@ from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.session_model import SessionModel
 from app.models.common.workflow_model import WorkflowModel, WorkflowTagModel
 from app.schemas.common.workflow_schema import WorkflowCandidateCreate, WorkflowClone, WorkflowUpdate
-from app.schemas.workflows.workflow_format import WorkflowDefinition, WorkflowStatus
+from agent_service.agents.analysis.schemas.workflows.workflow_format import WorkflowDefinition, WorkflowStatus
 from app.services.helpers import utc_now
 from app.services.workflow_file_store import WorkflowFileStore
 

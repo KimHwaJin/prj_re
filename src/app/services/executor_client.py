@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from agent_config import AgentSettings
-from app.schemas.agents.orchestration_schema import ExecutorSubmitResponse
+from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorSubmitResponse
 
 
 class ExecutorSubmitError(RuntimeError):

@@ -9,7 +9,7 @@ import sqlite3
 from uuid import NAMESPACE_URL, uuid5
 
 from fastapi import FastAPI, HTTPException
-from app.schemas.agents.orchestration_schema import ExecutorRequestBody, ExecutorSubmitResponse
+from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorRequestBody, ExecutorSubmitResponse
 
 app = FastAPI(title='Load-test Mock Executor')
 DB_PATH = Path(os.getenv('MOCK_EXECUTOR_DB', '/app/var/mock-executor.sqlite'))

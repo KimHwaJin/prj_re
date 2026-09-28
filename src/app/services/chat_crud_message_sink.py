@@ -16,7 +16,7 @@ from typing import Any, TYPE_CHECKING
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 if TYPE_CHECKING:
-    from app.graphs.state.analysis_workflow_state import AnalysisWorkflowState
+    from agent_service.agents.analysis.state import AnalysisWorkflowState
 else:
     AnalysisWorkflowState = dict
 

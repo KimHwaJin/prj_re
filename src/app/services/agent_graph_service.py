@@ -65,7 +65,7 @@ class AgentGraphRuntime:
 
     def _load_graph_inputs(self) -> tuple[Any, Any, str]:
         try:
-            from app.agents.orchestration.dependencies import create_llm_dependencies
+            from agent_service.agents.analysis.dependencies import create_llm_dependencies
         except ImportError as exc:
             raise RuntimeError(
                 f"Agent graph dependencies are not available: {exc}"
@@ -84,10 +84,10 @@ class AgentGraphRuntime:
             from langgraph.checkpoint.memory import InMemorySaver
 
             from app.agent_worker.api_bridge import ApiWorkerBridge
-            from app.graphs.builders.build_analysis_workflow_graph import (
+            from agent_service.agents.analysis.graph import (
                 build_analysis_workflow_graph,
             )
-            from app.graphs.checkpointer_factory import create_checkpointer
+            from agent_service.runtime.langgraph.checkpointer import create_checkpointer
             from app.services.workflow_persistence import workflow_store_from_environment
             from app.worker import Settings as WorkerSettings
         except ImportError as exc:

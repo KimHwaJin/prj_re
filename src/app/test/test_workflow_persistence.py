@@ -5,12 +5,12 @@ import tempfile
 from pathlib import Path
 
 from agent_config import load_agent_settings
-from app.graphs.nodes.generate_workflow import make_add_current_workflow_candidate
+from agent_service.agents.analysis.nodes.generate_workflow import make_add_current_workflow_candidate
 from app.services.workflow_persistence import (
     effective_workflow_snapshot,
     reusable_workflow_snapshot,
 )
-from app.graphs.nodes.generate_report import (
+from agent_service.agents.analysis.nodes.generate_report import (
     _compact_report_payload,
     _build_step_results_from_history,
     build_report_artifact_request,

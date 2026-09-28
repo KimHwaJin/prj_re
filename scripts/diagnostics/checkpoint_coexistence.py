@@ -20,7 +20,7 @@ from psycopg.conninfo import make_conninfo
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.services import agent_graph_service as svc
 from app.services.workflow_persistence import NullWorkflowStore
-from app.test.test_user_agent_graph import dependencies, settings as fixture_settings, interrupt_payload
+from agent_service.agents.analysis.tests.test_user_agent_graph import dependencies, settings as fixture_settings, interrupt_payload
 
 logging.disable(logging.CRITICAL)
 ROOT = Path(__file__).resolve().parents[2]
@@ -71,7 +71,7 @@ async def run_cases():
          patch.object(svc,'runtime',svc.AgentGraphRuntime()), \
          patch.object(svc,'load_agent_settings',side_effect=lambda:replace(fixture,checkpoint_db_uri=URLS[CONFIG['db']],checkpoint_setup_on_start=False)), \
          patch.object(svc,'ainvoke_with_crud_message_persistence',graph_only), \
-         patch('app.agents.orchestration.dependencies.create_llm_dependencies',return_value=dependencies()[0]), \
+         patch('agent_service.agents.analysis.dependencies.create_llm_dependencies',return_value=dependencies()[0]), \
          patch('app.agent_worker.api_bridge.ApiWorkerBridge',no_bridge), \
          patch('app.services.workflow_persistence.workflow_store_from_environment',return_value=NullWorkflowStore()):
         # Both databases already have all checkpoint tables before any request.

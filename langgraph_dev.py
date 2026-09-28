@@ -11,8 +11,8 @@ if str(SRC_ROOT) not in sys.path:
 
 from agent_config import load_agent_settings
 from app.agent_worker.api_bridge import get_api_worker_bridge
-from app.agents.orchestration.dependencies import create_llm_dependencies
-from app.graphs.builders.build_analysis_workflow_graph import (
+from agent_service.agents.analysis.dependencies import create_llm_dependencies
+from agent_service.agents.analysis.graph import (
     build_analysis_workflow_graph,
 )
 from app.services.workflow_persistence import workflow_store_from_environment

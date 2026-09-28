@@ -9,11 +9,11 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from agent_config import load_agent_settings
 from app.agent_worker.graph_provider import build_agent_graph
-from app.graphs.nodes.redis_execution_events import (
+from agent_service.agents.analysis.nodes.redis_execution_events import (
     apply_redis_execution_event,
     collect_final_execution_event,
 )
-from app.graphs.routers.orchestration_router import route_redis_execution_event
+from agent_service.agents.analysis.routers.orchestration_router import route_redis_execution_event
 
 
 class RedisExecutionBoundaryTests(unittest.TestCase):

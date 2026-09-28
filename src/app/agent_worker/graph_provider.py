@@ -6,8 +6,8 @@ from typing import Any
 
 from agent_config import load_agent_settings
 from app.agent_worker.graph_boundary import ExecutionBindings
-from app.agents.orchestration.dependencies import create_llm_dependencies
-from app.graphs.builders.build_analysis_workflow_graph import (
+from agent_service.agents.analysis.dependencies import create_llm_dependencies
+from agent_service.agents.analysis.graph import (
     build_analysis_workflow_graph,
 )
 from app.services.workflow_persistence import workflow_store_from_environment

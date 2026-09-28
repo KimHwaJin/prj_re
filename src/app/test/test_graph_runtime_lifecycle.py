@@ -220,7 +220,7 @@ async def test_service_does_not_close_other_pools_while_graph_still_owned(monkey
 @pytest.mark.parametrize('fail', [False, True])
 async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch, fail):
     import app.agent_worker.worker_main as entry
-    import app.graphs.checkpointer_factory as factory
+    import agent_service.runtime.langgraph.checkpointer as factory
     counts = {'pool_open': 0, 'pool_close': 0, 'build': 0, 'events': 0}
     @asynccontextmanager
     async def checkpointer(**_):

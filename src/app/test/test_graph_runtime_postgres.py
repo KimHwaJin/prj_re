@@ -18,7 +18,7 @@ import app.agent_run_worker as worker
 import app.services.run_service as runs
 from app.core.execution_lifecycle import ExecutionNeedsRecovery, execution_health
 from app.core.enums import AgentRunStatus, TaskStatus
-from app.graphs.checkpointer_factory import create_checkpointer
+from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from app.models.common.task_model import TaskModel
 from app.models.common.agent_run_model import AgentRunModel
 from app.services.agent_graph_service import AgentGraphRuntime
