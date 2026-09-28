@@ -59,9 +59,11 @@ service:
 
 ## 수명과 플랫폼 경계
 
-`create_app()`은 로컬 앱을 만들고 `create_app(platform_app=..., settings=...)`은 이미 조립된 FastAPI에 붙인다. `attach_service()`는 기존 앱/라우터 lifespan을 보존하면서 Worker 시작·종료와 공유 자원 정리를 합성한다. 두 번 붙이면 오류다. startup 실패 시 시작된 형제 작업을 정리하고, 종료에서는 모든 작업에 취소를 먼저 전달한 다음 제한 시간까지 기다린다. 기존 Run 내부 취소 정체 자체는 아직 수정하지 않았다. 종료 기한 초과는 오류로 드러내며, 취소를 무시하는 Python 코루틴을 강제 종료하는 기능은 아니다.
+`create_app()`은 로컬 앱을 만들고 `create_app(platform_app=..., settings=...)`은 이미 조립된 FastAPI에 붙인다. `attach_service()`는 기존 앱/라우터 lifespan을 보존하면서 Worker 시작·종료와 공유 자원 정리를 합성한다. 두 번 붙이면 오류다. startup 실패 시 시작된 형제 작업을 정리하고, 종료에서는 모든 작업에 취소를 먼저 전달한 다음 제한 시간까지 기다린다. Run 내부 종료 경로는 [001 개선](improvements/001-run-cleanup-stall.md)에서 stop 신호와 종료 기한 관찰로 변경했다. 종료가 확인되지 않은 background 작업이 있으면 서비스 공용 자원을 먼저 닫지 않는다. 종료 기한 초과는 오류로 드러내며, 취소를 무시하는 Python 코루틴을 강제 종료하는 기능은 아니다.
 
-`/health`는 기존 생존 확인, `/service/ready`는 소유한 background loop들의 생존 확인이다. loop가 죽으면 503으로 바뀐다. DB/Redis 접속이나 큐 처리 가능성을 종합 검증하는 준비 상태는 아직 아니다.
+`/health`는 기존 생존 확인이다. `/service/ready`는 소유한 background loop가 끝났거나 Run 종료/소유권 불확실성을 감지하면 503으로 바뀐다. 새 `/service/live`도 Run 건전성 실패를 503으로 노출한다. Kubernetes probe 연결은 배포 측에서 별도 검증해야 한다. DB/Redis 접속이나 큐 처리 가능성을 종합 검증하는 준비 상태는 아직 아니다.
+
+`run_cleanup_timeout_seconds`(기본 5초)는 정상 stop/취소 후 종료 관찰, `run_monitor_timeout_seconds`(기본 3초)는 취소 감시·heartbeat DB 작업에 적용한다. `service.runtime` YAML 또는 동일한 대문자 환경변수 이름으로 설정한다. LLM·Executor 작업 제한 시간이 아니다. 종료가 확인되지 않는 작업은 복구 필요 상태를 유지하며 자동 재실행되지 않는다. 자세한 운영 제한은 001 기록을 따른다.
 
 플랫폼의 앱·라우터·미들웨어·OpenAPI·계측 및 lifespan 설정이 끝난 **후**에 결합해야 한다. 이후 `GaiaService.main()`이 lifespan을 다시 덮어쓰면 안 된다. 실제 Gaia 원본이 없으므로 템플릿의 main 초기화 분리/계측 보존까지 검증한 상태는 아니다. 플랫폼 core는 수정하지 않았다.
 
