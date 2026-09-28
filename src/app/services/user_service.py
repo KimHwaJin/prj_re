@@ -1,151 +1,177 @@
-from uuid import UUID
-
-from fastapi import HTTPException, status
-from sqlalchemy import select, update
+"""User lifecycle with atomic default project creation and serialized role changes."""
+from fastapi import HTTPException
+from sqlalchemy import func, or_, select, text, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import DeleteYN, ProjectMemberRole
+from app.core.auth import Actor
+from app.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus, ProjectMemberRole, TaskStatus, UserRole
+from app.core.user_identity import normalize_user_id
+from app.models.common.agent_run_model import AgentRunModel
+from app.models.common.llm_run_model import LLMRunModel
 from app.models.common.message_model import MessageModel
-from app.models.common.project_model import (
-    ProjectMemberModel,
-    ProjectModel
-)
+from app.models.common.project_model import ProjectMemberModel, ProjectModel
 from app.models.common.session_model import SessionModel
+from app.models.common.task_model import TaskModel
 from app.models.common.user_model import UserModel
+from app.repositories.project_repository import ProjectRepository
 from app.repositories.user_repository import UserRepository
-from app.schemas.common.user_schema import UserCreate, UserUpdate
-from app.services.helpers import normalize_name, utc_now
+from app.schemas.common.user_schema import UserCreate, UserRead, UserUpdate
+from app.services.helpers import utc_now
+
+# User management is infrequent. Serialize it across processes, including initial
+# bootstrap, to make last-admin checks safe under concurrent transactions.
+USER_ADMIN_LOCK = 178521094
+TERMINAL_TASKS = (TaskStatus.SUCCESS, TaskStatus.ERROR, TaskStatus.TIMEOUT, TaskStatus.CANCELED)
 
 
 class UserService:
     @staticmethod
-    async def read_by_name(db: AsyncSession, user_name: str) -> UserModel:
-        """개발용 로그인에서 username을 내부 User UUID로 해석합니다."""
-        normalized = normalize_name(user_name)
-        if not normalized:
-            raise HTTPException(status_code=422, detail="user_name은 공백일 수 없습니다.")
-        user = await UserRepository.get_active_by_name(db, normalized)
+    async def _management_lock(db: AsyncSession):
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": USER_ADMIN_LOCK})
+
+    @staticmethod
+    async def _require_admin_locked(db: AsyncSession, actor: Actor):
+        await UserService._management_lock(db)
+        # Re-read after waiting: the request's original Actor can be stale.
+        user = await UserRepository.get_by_public_id(db, actor.public_user_id, active_only=True, for_update=True)
         if user is None:
-            raise HTTPException(status_code=404, detail="User를 찾을 수 없습니다.")
+            raise HTTPException(401, "A registered, active X-User-Id is required.")
+        if user.role != UserRole.ADMIN:
+            raise HTTPException(403, "Administrator role is required.")
+
+    @staticmethod
+    async def _target(db, public_id, *, for_update=False):
+        try:
+            public_id = normalize_user_id(public_id)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        user = await UserRepository.get_by_public_id(db, public_id, active_only=True, for_update=for_update)
+        if user is None:
+            raise HTTPException(404, "User not found.")
         return user
 
     @staticmethod
-    async def create(db: AsyncSession, payload: UserCreate) -> UserModel:
-        user_name = normalize_name(payload.user_name)
-        if not user_name:
-            raise HTTPException(status_code=422, detail="user_name은 공백일 수 없습니다.")
+    async def _resource(db, user) -> UserRead:
+        result = UserRead.model_validate(user)
+        project = await ProjectRepository.get_default(db, user_id=user.user_id)
+        return result.model_copy(update={"default_project_id": project.project_id if project else None})
 
-        if await UserRepository.get_active_by_name(db, user_name):
-            raise HTTPException(status_code=409, detail="이미 사용 중인 user_name입니다.")
-
-        user = UserModel(user_name=user_name, delete_yn=DeleteYN.N)
+    @staticmethod
+    async def _insert(db, payload: UserCreate):
+        # IDs remain reserved after soft deletion.
+        if await UserRepository.get_by_public_id(db, payload.user_id) is not None:
+            raise HTTPException(409, "user_id is already registered.")
+        user = UserModel(public_user_id=payload.user_id, user_name=payload.user_name,
+                         role=payload.role, delete_yn=DeleteYN.N)
         db.add(user)
         await db.flush()
-
-        # User 생성 시 default Project를 반드시 함께 생성합니다.
-        default_project = ProjectModel(
-            user_id=user.user_id,
-            project_name="default",
-            system_prompt="",
-            prompt_version=1,
-            is_default=True,
-            delete_yn=DeleteYN.N,
-        )
-        db.add(default_project)
+        project = ProjectModel(user_id=user.user_id, project_name="default", system_prompt="",
+                               prompt_version=1, is_default=True, delete_yn=DeleteYN.N)
+        db.add(project)
         await db.flush()
+        db.add(ProjectMemberModel(project_id=project.project_id, user_id=user.user_id,
+                                  member_role=ProjectMemberRole.OWNER))
+        return user
 
-        db.add(
-            ProjectMemberModel(
-                project_id=default_project.project_id,
-                user_id=user.user_id,
-                member_role=ProjectMemberRole.OWNER,
-            )
-        )
-
-        await db.commit()
+    @staticmethod
+    async def _finish(db, user):
+        await db.flush()
         await db.refresh(user)
-        return user
-
-    @staticmethod
-    async def read(db: AsyncSession, user_id: UUID) -> UserModel:
-        user = await UserRepository.get_active(db, user_id)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User를 찾을 수 없습니다.")
-        return user
-
-    @staticmethod
-    async def update(
-        db: AsyncSession,
-        user_id: UUID,
-        payload: UserUpdate,
-    ) -> UserModel:
-        user = await UserService.read(db, user_id)
-        user_name = normalize_name(payload.user_name)
-        if not user_name:
-            raise HTTPException(status_code=422, detail="user_name은 공백일 수 없습니다.")
-
-        duplicate = await UserRepository.get_active_by_name(db, user_name)
-        if duplicate is not None and duplicate.user_id != user_id:
-            raise HTTPException(status_code=409, detail="이미 사용 중인 user_name입니다.")
-
-        user.user_name = user_name
+        result = await UserService._resource(db, user)
         await db.commit()
-        await db.refresh(user)
-        return user
+        return result
 
     @staticmethod
-    async def delete(db: AsyncSession, user_id: UUID) -> None:
-        user = await UserService.read(db, user_id)
+    async def create(db: AsyncSession, actor: Actor, payload: UserCreate) -> UserRead:
+        await UserService._require_admin_locked(db, actor)
+        try:
+            user = await UserService._insert(db, payload)
+            return await UserService._finish(db, user)
+        except IntegrityError as exc:
+            await db.rollback()
+            if getattr(exc.orig, "sqlstate", None) == "23505":
+                raise HTTPException(409, "user_id is already registered.") from None
+            raise
+
+    @staticmethod
+    async def read(db: AsyncSession, actor: Actor, public_id: str) -> UserRead:
+        try:
+            public_id = normalize_user_id(public_id)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if actor.role != UserRole.ADMIN and actor.public_user_id != public_id:
+            raise HTTPException(404, "User not found.")
+        return await UserService._resource(db, await UserService._target(db, public_id))
+
+    @staticmethod
+    async def _protect_last_admin(db, target):
+        if target.role == UserRole.ADMIN:
+            count = await db.scalar(select(func.count()).select_from(UserModel).where(
+                UserModel.role == UserRole.ADMIN, UserModel.delete_yn == DeleteYN.N))
+            if count <= 1:
+                raise HTTPException(409, "The last active administrator cannot be removed or demoted.")
+
+    @staticmethod
+    async def update(db: AsyncSession, actor: Actor, public_id: str, payload: UserUpdate) -> UserRead:
+        await UserService._require_admin_locked(db, actor)
+        target = await UserService._target(db, public_id, for_update=True)
+        if payload.role is not None and payload.role != target.role:
+            await UserService._protect_last_admin(db, target)
+            target.role = payload.role
+        if payload.user_name is not None:
+            target.user_name = payload.user_name
+        return await UserService._finish(db, target)
+
+    @staticmethod
+    async def delete(db: AsyncSession, actor: Actor, public_id: str) -> None:
+        await UserService._require_admin_locked(db, actor)
+        # Exclusive user lock orders this transaction after all admitted business
+        # requests (FOR SHARE), then prevents new requests until deletion commits.
+        target = await UserService._target(db, public_id, for_update=True)
+        await UserService._protect_last_admin(db, target)
+        projects = select(ProjectModel.project_id).where(ProjectModel.user_id == target.user_id)
+        sessions = select(SessionModel.session_id).where(
+            or_(SessionModel.user_id == target.user_id, SessionModel.project_id.in_(projects)))
+        unfinished_task = await db.scalar(select(TaskModel.task_id).where(
+            TaskModel.session_id.in_(sessions), TaskModel.status.not_in(TERMINAL_TASKS)).limit(1))
+        # Old interrupted segments belonging to a completed Task are historical.
+        unfinished_run = await db.scalar(select(AgentRunModel.run_id).where(
+            AgentRunModel.session_id.in_(sessions),
+            or_(AgentRunModel.status.in_((AgentRunStatus.PENDING, AgentRunStatus.RUNNING)),
+                (AgentRunModel.status == AgentRunStatus.INTERRUPTED) & AgentRunModel.task_id.is_(None)),
+        ).limit(1))
+        unfinished_llm = await db.scalar(select(LLMRunModel.run_id).where(
+            LLMRunModel.session_id.in_(sessions),
+            LLMRunModel.status.in_((LLMRunStatus.QUEUED, LLMRunStatus.RUNNING))).limit(1))
+        if unfinished_task or unfinished_run or unfinished_llm:
+            raise HTTPException(409, "User has unfinished work; finish or cancel it before deletion.")
         now = utc_now()
-
-        project_ids = list(
-            (
-                await db.scalars(
-                    select(ProjectModel.project_id).where(
-                        ProjectModel.user_id == user_id,
-                        ProjectModel.delete_yn == DeleteYN.N,
-                    )
-                )
-            ).all()
-        )
-        session_ids = list(
-            (
-                await db.scalars(
-                    select(SessionModel.session_id).where(
-                        SessionModel.user_id == user_id,
-                        SessionModel.delete_yn == DeleteYN.N,
-                    )
-                )
-            ).all()
-        )
-
-        if session_ids:
-            await db.execute(
-                update(MessageModel)
-                .where(
-                    MessageModel.session_id.in_(session_ids),
-                    MessageModel.delete_yn == DeleteYN.N,
-                )
-                .values(delete_yn=DeleteYN.Y, deleted_at=now)
-            )
-            await db.execute(
-                update(SessionModel)
-                .where(SessionModel.session_id.in_(session_ids))
-                .values(
-                    delete_yn=DeleteYN.Y,
-                    deleted_at=now,
-                    current_leaf_message_id=None,
-                )
-            )
-
-        if project_ids:
-            await db.execute(
-                update(ProjectModel)
-                .where(ProjectModel.project_id.in_(project_ids))
-                .values(delete_yn=DeleteYN.Y, deleted_at=now)
-            )
-
-        user.delete_yn = DeleteYN.Y
-        user.deleted_at = now
+        await db.execute(update(MessageModel).where(
+            MessageModel.session_id.in_(sessions), MessageModel.delete_yn == DeleteYN.N
+        ).values(delete_yn=DeleteYN.Y, deleted_at=now))
+        await db.execute(update(SessionModel).where(
+            SessionModel.session_id.in_(sessions), SessionModel.delete_yn == DeleteYN.N
+        ).values(delete_yn=DeleteYN.Y, deleted_at=now, current_leaf_message_id=None))
+        await db.execute(update(ProjectModel).where(
+            ProjectModel.user_id == target.user_id, ProjectModel.delete_yn == DeleteYN.N
+        ).values(delete_yn=DeleteYN.Y, deleted_at=now))
+        target.delete_yn, target.deleted_at = DeleteYN.Y, now
         await db.commit()
 
+    @staticmethod
+    async def bootstrap_admin(db: AsyncSession, payload: UserCreate) -> UserRead:
+        if payload.role != UserRole.ADMIN:
+            raise ValueError("Bootstrap requires role=admin")
+        await UserService._management_lock(db)
+        existing = await UserRepository.get_by_public_id(db, payload.user_id, for_update=True)
+        if existing is not None:
+            if existing.delete_yn != DeleteYN.N or existing.role != UserRole.ADMIN:
+                raise HTTPException(409, "Bootstrap cannot promote or reactivate an existing account.")
+            result = await UserService._resource(db, existing)
+            await db.commit()
+            return result  # Idempotent: do not change the existing name or role.
+        if await db.scalar(select(UserModel.user_id).where(
+            UserModel.role == UserRole.ADMIN, UserModel.delete_yn == DeleteYN.N).limit(1)):
+            raise HTTPException(409, "An administrator already exists; use the administrator API.")
+        return await UserService._finish(db, await UserService._insert(db, payload))

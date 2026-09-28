@@ -6,6 +6,11 @@ class DeleteYN(StrEnum):
     Y = "Y"
 
 
+class UserRole(StrEnum):
+    ADMIN = "admin"
+    USER = "user"
+
+
 class ProjectMemberRole(StrEnum):
     OWNER = "owner"
     EDITOR = "editor"
@@ -62,4 +67,3 @@ class TaskStatus(StrEnum):
 def enum_values(enum_cls):
     """SQLAlchemy Enum이 member name이 아니라 실제 value를 저장하게 합니다."""
     return [member.value for member in enum_cls]
-
