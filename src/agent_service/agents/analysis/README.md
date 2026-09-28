@@ -23,4 +23,4 @@
 
 패키지 import만으로 모델·DB 풀·Worker를 생성하지 않는다. 모델을 만드는 함수와 실제 실행은 서비스 조립 또는 명시적 개발 실행에서 호출한다. 프롬프트·카탈로그는 읽기 전용 배포 리소스이고 생성 파일은 설정된 출력 경로/PV에 둔다.
 
-현재 `definition.py`, `projection.py`, 업무 Agent registry는 아직 구현하지 않았다. 동기 invoke·HTTP·파일·Workflow DB 접근도 다음 단계에서 전환한다. [개발 안내](../../../../docs/agent-development/README.md)가 현재와 목표 계약을 구분한다.
+현재 `definition.py`, `projection.py`, 업무 Agent registry는 아직 구현하지 않았다. 006에서 구성요소·LLM 호출은 `await ainvoke()`로 전환했고 그래프 호출도 `ainvoke`/`astream`을 사용한다. HTTP·파일·Workflow DB 전체 전환은 남아 있으며, 이번에 비동기로 바꾼 혼합 노드의 기존 I/O만 `run_sync`로 종료를 추적한다. [개발 안내](../../../../docs/agent-development/README.md)가 현재와 목표 계약을 구분한다.

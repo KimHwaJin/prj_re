@@ -2,12 +2,12 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 체크아웃: `feature/refactor-base` (005 통합 완료)
+현재 구현 브랜치: `feature/refactor-agent-async-llm` (베이스는 005까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
 
-2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005 구현·기록 commit `07c5a8f`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 코드 변경 없이 반영했으며 파생 브랜치는 보존했다. 원격 push는 수행하지 않았다.
+2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005 구현·기록 commit `07c5a8f`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 코드 변경 없이 반영했으며 파생 브랜치는 보존했다. 원격 push는 수행하지 않았다. 이후 `856e008`에서 `feature/refactor-agent-async-llm`을 분기해 006을 구현·검증했다. 006은 아직 베이스에 통합하지 않았다.
 
 **개선 항목을 하나씩 진행하고, 실제 작업을 끝낼 때 문제점·개선 내용·검증 결과를 기록한다. 설계나 예상 효과를 구현 완료로 표시하지 않는다.**
 
@@ -23,6 +23,7 @@
 | 003 | 사용자 식별·역할·최초 관리자 | 구현·격리 PostgreSQL 검증 완료 / 배포 미수행 | 2026-09-28 | [변경·검증·제한](003-user-identity.md) |
 | 004 | 그래프·체크포인트 자원 수명과 점유 토큰 | 구현·격리 PostgreSQL 검증 완료 / checkpoint fencing·배포 미완료 | 2026-09-28 | [변경·검증·제한](004-graph-resource-lifecycle.md) |
 | 005 | 분석 Agent 패키지 집약·리소스 경로 정리 | 1차 이동·검증 완료 / 비동기 전환·전체 구조 이행 미완료 | 2026-09-28 | [변경·검증·제한](005-agent-package-layout.md) |
+| 006 | Agent·LLM 비동기 호출·취소 전파 | LLM 경로 구현·검증 완료 / 전체 I/O 전환·배포 미완료 | 2026-09-28 | [변경·검증·제한](006-agent-async-llm.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

@@ -1,11 +1,12 @@
 # Agent 개발 안내
 
-현재 구현 기준: `feature/refactor-agent-layout`, 개선 기록 005. 분석 Agent의 패키지 이동 단계이며, 공통 Agent registry/실행 계약과 비동기 I/O 전환까지 완료한 상태가 아니다.
+현재 구현 기준: `feature/refactor-agent-async-llm`, 개선 기록 006. 분석 Agent 패키지 이동과 LLM 비동기 호출은 완료했다. 공통 Agent registry/실행 계약 및 HTTP·DB·파일 I/O 전체 전환은 남아 있다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
 - [이동·삭제 목록](analysis-layout-inventory.json)
 - [변경·검증·남은 작업](../improvements/005-agent-package-layout.md)
+- [LLM 비동기 전환·취소 검증](../improvements/006-agent-async-llm.md)
 
 ## 지금 분석 Agent를 수정하는 방법
 
@@ -36,7 +37,7 @@ PYTHONPATH=src python -m devtools.analysis.generate_tool_registry
 | 개발 항목 | 목표 계약 | 현재 상태 |
 |---|---|---|
 | Agent 등록 | id·호환 버전·스키마·factory를 코드 목록에 등록 | 미구현, 현재 분석 graph 직접 연결 |
-| 실행 | I/O 노드는 async, 모델은 실제 ainvoke, 순수 변환은 def 허용 | 동기 호출 다수 유지, 다음 작업 |
+| 실행 | I/O 노드는 async, 모델은 실제 ainvoke, 순수 변환은 def 허용 | LLM·Mock 및 소비 노드 전환 완료, 다른 I/O는 이행 중 |
 | 설정 | settings 스키마만 선언, bootstrap이 중앙 설정 주입 | 중앙 resolver 완료, AgentSettings 세분화는 후속 |
 | LLM | 기본 모델/선택 모델을 서비스가 주입 | 현재 모델 factory 유지, 요청별 모델 고정은 후속 |
 | 프로젝트 문맥 | 모든 모델 호출에 system_prompt 적용, project_memory는 프로젝트 범위에서 읽기·갱신 | 공통 context/projection 경계 후속 |
@@ -46,6 +47,26 @@ PYTHONPATH=src python -m devtools.analysis.generate_tool_registry
 | 자원 | Agent가 풀·Worker·lease·세션 잠금을 생성/변경하지 않음 | 기존 서비스 자원 수명 유지 |
 
 새 개발에서 API 라우터나 DB 풀을 Agent 패키지 안에 추가하지 않는다. `asyncio.create_task()`로 추적되지 않는 일을 남기거나, `async def` 안에서 동기 HTTP/LLM을 직접 호출하지 않는다. 기존 동기 부분은 이 규칙을 이미 충족한 코드가 아니라 이행 대상이다.
+
+## 006 이후 호출 방법
+
+```python
+class MyComponent:
+    async def ainvoke(self, payload):
+        response = await self.model.ainvoke(payload)
+        return response
+
+result = await component.ainvoke(payload)
+state = await graph.ainvoke(graph_input, config)
+async for update in graph.astream(graph_input, config):
+    ...
+```
+
+`InvokableAgent`/`invoke_typed` 대신 `AsyncInvokableAgent`/`await ainvoke_typed`를 사용한다. 동기 invoke fallback은 없다. 개발용 `compiled_postgres_graph`도 `async with`로 연다. CLI 최상위의 asyncio.run 외에는 노드/모델 내부에 새 event loop를 만들지 않는다.
+
+테스트 대역도 async ainvoke를 구현하고 AsyncMock을 사용한다. 지연은 asyncio.sleep이며 CancelledError를 잡아 정상 결과나 검증 재시도로 바꾸지 않는다. 임의의 모델은 ainvoke 메서드가 있어도 내부에서 sync fallback을 사용할 수 있으므로, 새 provider는 실제 비동기 전송과 취소 전파를 검증해야 한다.
+
+현재 혼합 노드에 사용한 `runtime.blocking.run_sync`는 기존 동기 작업의 이행용이다. 이벤트 루프 밖에서 실행하고 취소 후에도 실제 완료를 기다리지만 전용 ArtifactStore/비동기 DB/HTTP를 대체하는 최종 표준이 아니다. 사용하지 않는 다른 동기 노드까지 보호하지 않으며, 이미 시작한 외부 부작용을 되돌리지 않는다.
 
 ## checkpoint 및 리소스 호환
 

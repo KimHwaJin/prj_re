@@ -1,0 +1,106 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-agent-async-llm",
+  "baseline_commit": "856e008",
+  "implementation_commit": "a27433d",
+  "environment": {
+    "python": "3.11.15",
+    "postgres": "17-alpine",
+    "database": "dedicated disposable localhost identity_test",
+    "native_provider_test": "real LangChain ChatOpenAI/AzureChatOpenAI with HTTPX MockTransport; no external requests",
+    "external_llm_executor_redis_contacted": false,
+    "deployed": false,
+    "load_test": false,
+    "disposable_postgres_removed": true
+  },
+  "baseline": {
+    "total": 238,
+    "passed": 219,
+    "failed": 19,
+    "failures": [
+      "AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+      "AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+      "AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+      "ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+      "UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+      "UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+      "UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+      "UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+      "UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+      "UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+      "UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+      "UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+      "UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+      "WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+      "WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+      "WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+      "WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+      "WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+      "WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+    ]
+  },
+  "full_regression": {
+    "total": 256,
+    "passed": 237,
+    "failed": 19,
+    "failures": [
+      "AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+      "AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+      "AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+      "ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+      "UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+      "UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+      "UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+      "UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+      "UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+      "UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+      "UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+      "UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+      "UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+      "WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+      "WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+      "WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+      "WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+      "WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+      "WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+    ]
+  },
+  "new_tests": {
+    "offline": 16,
+    "postgres": 2
+  },
+  "new_failures": [],
+  "changed_baseline_failure_messages": [],
+  "wheel_smoke": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 33,
+    "mock_graph_execution_steps": 6,
+    "old_packages_in_wheel": false,
+    "tests_in_wheel": false,
+    "resources_present": true
+  },
+  "root_cli_help": "passed",
+  "verified": [
+    "native async provider plain/structured/nested calls",
+    "provider transport cancellation propagates",
+    "FAQ Run cancellation prevents downstream submission",
+    "mock delay cancellation prevents response generation",
+    "validation retry preserves CancelledError",
+    "mixed async node retains thread completion under repeated cancellation",
+    "analysis HITL resumes after PostgreSQL pool restart",
+    "nested async-only model works with outer AsyncPostgresSaver"
+  ],
+  "known_limits": [
+    "unmanaged synchronous graph node can still outlive graph cancellation (characterization test retained)",
+    "native HTTP/Workflow DB/ArtifactStore conversion incomplete",
+    "run_sync uses default executor, not a dedicated bounded ArtifactStore",
+    "no Worker slot increase",
+    "no guarantee of external server inference/execution cancellation",
+    "known 19 baseline failures and 2 excluded collection errors remain"
+  ],
+  "excluded_existing_collection_errors": [
+    "test_select_features.py",
+    "test_split_dataset.py"
+  ]
+}

@@ -2,6 +2,8 @@
 
 2026-09-28 확정 구조. 패키지 분리는 단일 Deployment·단일 컨테이너 Pod 안의 소스 책임 분리이며 별도 HTTP Agent 서버를 추가하는 계획이 아니다.
 
+006 업데이트: 분석 구성요소/LLM 소비 노드는 비동기 호출로 전환했고 `runtime/blocking.py`에 혼합 노드용 임시 동기 작업 종료 경계를 추가했다. 아래 005 이행 경계의 전체 패키지 분리와 HTTP·DB·ArtifactStore 전환은 아직 남아 있다. [검증 기록](../improvements/006-agent-async-llm.md)을 참고한다.
+
 ## 목표
 
 ```text
