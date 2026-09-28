@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-graph-lifecycle",
+  "baseline_commit": "a68e656",
+  "environment": {
+    "python": "3.11.15",
+    "postgres": "17",
+    "database": "disposable localhost identity_test",
+    "checkpoint_test": "actual LangGraph approval graph, AsyncPostgresSaver and psycopg pool",
+    "claim_tests": "actual CRUD/Worker/heartbeat with controlled graph functions",
+    "llm_executor_redis_contacted": false,
+    "load_test": false,
+    "deployed": false
+  },
+  "new_tests": {
+    "offline": 14,
+    "postgres": 6,
+    "failed": 0
+  },
+  "verified_resource_conditions": {
+    "concurrent_graph_borrowers": 20,
+    "graph_context_initializations": 1,
+    "postgres_checkpoint_threads": 20,
+    "checkpoint_pool_max_size": 2,
+    "connections_returned_during_hitl": true,
+    "pending_resume_after_runtime_restart": true,
+    "event_worker_test_events": 10,
+    "event_worker_graph_builds": 1,
+    "event_worker_pool_opens": 1
+  },
+  "full_regression": {
+    "total": 233,
+    "passed": 214,
+    "failed": 19,
+    "failures": [
+      "src.app.test.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+      "src.app.test.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+      "src.app.test.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+      "src.app.test.test_executor_submit_toggle.ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+      "src.app.test.test_user_agent_graph.UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+      "src.app.test.test_workflow_compiler.WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+      "src.app.test.test_workflow_compiler.WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+      "src.app.test.test_workflow_compiler.WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+      "src.app.test.test_workflow_compiler.WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+      "src.app.test.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+      "src.app.test.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_missing_external_condition_tool"
+    ],
+    "new_failures": [],
+    "resolved_failures": []
+  },
+  "excluded_collection_failures": [
+    "src/app/test/test_select_features.py",
+    "src/app/test/test_split_dataset.py"
+  ],
+  "implementation_commit": "3e19ee313941b38f01ba7e3f60429e985a9cce95"
+}

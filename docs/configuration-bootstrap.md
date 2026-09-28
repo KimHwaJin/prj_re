@@ -65,6 +65,10 @@ service:
 
 `run_cleanup_timeout_seconds`(기본 5초)는 정상 stop/취소 후 종료 관찰, `run_monitor_timeout_seconds`(기본 3초)는 취소 감시·heartbeat DB 작업에 적용한다. `service.runtime` YAML 또는 동일한 대문자 환경변수 이름으로 설정한다. LLM·Executor 작업 제한 시간이 아니다. 종료가 확인되지 않는 작업은 복구 필요 상태를 유지하며 자동 재실행되지 않는다. 자세한 운영 제한은 001 기록을 따른다.
 
+[004 개선](improvements/004-graph-resource-lifecycle.md)부터 API/Run 그래프의 checkpoint·binding 풀은 첫 사용에 한 번 열고 서비스 lifespan 동안 재사용한다. Executor 이벤트 그래프·checkpoint 풀도 이벤트마다 생성하지 않고 Worker lifespan 동안 유지한다. 양쪽 풀은 아직 별개이며, API SQLAlchemy 풀·동기 Workflow DB 접근까지 하나로 합친 것은 아니다. 풀 크기의 합과 Pod 수를 고려해 DB 연결 예산을 검증해야 한다.
+
+그래프를 사용하는 호출이 남아 있으면 `SHUTDOWN_TIMEOUT_SECONDS`까지 반환을 기다리고 새 사용은 거절한다. 반환이 확인되지 않으면 다른 서비스 풀도 먼저 닫지 않는다. HITL/Executor 대기로 그래프 호출이 반환된 상태는 자원 차용 중으로 세지 않으며, 대기 세션마다 checkpoint 연결을 하나씩 보유하지 않는다. 초기 그래프에 고정된 설정·의존성·catalog prompt 변경은 재시작으로 반영한다.
+
 플랫폼의 앱·라우터·미들웨어·OpenAPI·계측 및 lifespan 설정이 끝난 **후**에 결합해야 한다. 이후 `GaiaService.main()`이 lifespan을 다시 덮어쓰면 안 된다. 실제 Gaia 원본이 없으므로 템플릿의 main 초기화 분리/계측 보존까지 검증한 상태는 아니다. 플랫폼 core는 수정하지 않았다.
 
 ## 마이그레이션
