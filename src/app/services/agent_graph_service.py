@@ -10,12 +10,10 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 import logging
-import os
 from typing import Any, Mapping
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from pydantic import ValidationError
 
 from agent_config import build_langgraph_thread_id, load_agent_settings
 from config import settings
@@ -46,15 +44,9 @@ class AgentGraphRuntime:
         self._graph = graph
 
 
-    def _worker_settings(self, WorkerSettings: type[Any]) -> Any:
-        try:
-            return WorkerSettings()
-        except ValidationError:
-            return WorkerSettings(
-                database_url=settings.database_url.replace("+asyncpg", ""),
-                redis_url=settings.redis_url,
-                namespace="dtest-agent",
-            )
+    def _worker_settings(self, _legacy_type: type[Any] | None = None) -> Any:
+        from service_settings import get_settings
+        return get_settings().worker
 
     def _load_graph_inputs(self) -> tuple[Any, Any, str]:
         try:

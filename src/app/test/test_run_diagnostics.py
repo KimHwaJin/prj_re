@@ -8,6 +8,13 @@ import pytest
 from app.core.run_diagnostics import (
     graph_callbacks, instrument_async_methods, run_trace, span,
 )
+import service_settings
+
+
+@pytest.fixture(autouse=True)
+def isolated_config(monkeypatch):
+    # Environment changes below are made before the first settings read.
+    monkeypatch.setattr(service_settings, "_snapshot", None)
 
 
 def rows(folder):

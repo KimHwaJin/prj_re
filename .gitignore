@@ -222,7 +222,6 @@ __marimo__/
 
 
 # cconfig
-config.dev.yml
 
 # Private Docker development configuration
 .env.local

@@ -7,22 +7,11 @@ import logging
 import signal
 from typing import Any
 
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from app.agent_worker.graph_provider import build_agent_graph
 from app.agent_worker.langgraph_adapter import LangGraphEventAdapter
 from app.agent_worker.worker_hooks import build_handlers
-from app.worker import EventContext, ExecutorWorker, Settings
+from app.worker import EventContext, ExecutorWorker
 from app.worker.contracts import EventHandler
-
-logger=logging.getLogger(__name__)
-class HostSettings(BaseSettings):
-    """Only the host-specific setting needed by this entrypoint."""
-
-    model_config = SettingsConfigDict(env_prefix="AGENT_", extra="ignore")
-
-    checkpoint_database_url: str
 
 
 class DeferredHandler:
@@ -67,9 +56,11 @@ def _install_signal_handlers(worker: ExecutorWorker) -> list[signal.Signals]:
     return installed
 
 
-async def main() -> None:
-    worker_settings = Settings()
-    host_settings = HostSettings()
+async def main(*, install_signals: bool = True) -> None:
+    from service_settings import get_settings
+    from app.graphs.checkpointer_factory import create_checkpointer
+    service = get_settings()
+    worker_settings = service.worker
     deferred = DeferredHandler()
     handlers = build_handlers(deferred)
     if not handlers or any(
@@ -79,47 +70,21 @@ async def main() -> None:
         raise ValueError("build_handlers() must return valid handlers")
 
     async with ExecutorWorker(worker_settings, handlers) as worker:
-        # async with AsyncPostgresSaver.from_conn_string(
-        #     host_settings.checkpoint_database_url
-        # ) as checkpointer:
-        #     graph = build_agent_graph(
-        #         bindings=worker.bindings,
-        #         checkpointer=checkpointer,
-        #     )
-        #     _validate_graph(graph)
-        #     deferred.bind(LangGraphEventAdapter(graph))
-        #     worker.add_readiness_check("agent-graph", deferred.ready)
-        #     installed = _install_signal_handlers(worker)
-        async def resume_graph(context: EventContext)->None:
-            try:
-                checkpointer_cm = AsyncPostgresSaver.from_conn_string(
-                    host_settings.checkpoint_database_url
-                )
-                checkpointer=await checkpointer_cm.__aenter__()
-            except Exception:
-                logger.exception("Connection_Open_failed component"
-                                 "checkpoint_postgres")
-                raise
-            try:
-                # await worker.run()
-                graph= build_agent_graph(
-                    bindings=worker.bindings,
-                    checkpointer=checkpointer,
-                )
+        async def resume_graph(context: EventContext) -> None:
+            async with create_checkpointer(
+                database_url=service.agent.checkpoint_db_uri,
+                setup_on_start=service.agent.checkpoint_setup_on_start,
+            ) as checkpointer:
+                graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
                 _validate_graph(graph)
                 await LangGraphEventAdapter(graph)(context)
-            finally:
-                # loop = asyncio.get_running_loop()
-                # for signum in installed:
-                #     loop.remove_signal_handler(signum)
-                await checkpointer_cm.__aexit__(None,None,None)
         deferred.bind(resume_graph)
-        worker.add_readiness_check("agent-graph",deferred.ready)
-        installed=_install_signal_handlers(worker)
+        worker.add_readiness_check("agent-graph", deferred.ready)
+        installed = _install_signal_handlers(worker) if install_signals else []
         try:
             await worker.run()
         finally:
-            loop=asyncio.get_running_loop()
+            loop = asyncio.get_running_loop()
             for signum in installed:
                 loop.remove_signal_handler(signum)
 

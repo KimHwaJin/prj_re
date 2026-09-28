@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pandas as pd
 
 from agent_config import PROJECT_ROOT, TEST_DATA_SELECTION, load_agent_settings
+from service_settings import load_settings
 from app.workflow.tools.data_io.extract_data import extract_data
 from app.workflow.tools.data_io.transform_nce import transform_nce
 from app.workflow.tools.data_io.transform_wt import transform_wt
@@ -33,9 +34,9 @@ class MockDataIoTest(unittest.TestCase):
             "df_wt_symbol_wide_format.parquet",
         ):
             shutil.copyfile(PROJECT_ROOT / "mock_data" / filename, data_dir / filename)
-        self.mock_root = patch.dict(
-            "os.environ",
-            {"EXECUTOR_SHARED_INPUT_ROOT": self.temporary_root.name},
+        self.mock_root = patch(
+            "service_settings._snapshot",
+            load_settings(config={"MOCK_DATA_ROOT": self.temporary_root.name}, environ={}),
         )
         self.mock_root.start()
         real_read_parquet = pd.read_parquet

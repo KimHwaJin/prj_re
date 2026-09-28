@@ -1,11 +1,11 @@
 from pathlib import Path
+import math
 
-from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 
-class Settings(BaseSettings):
-    """환경변수 기반 애플리케이션 설정."""
+class Settings(BaseModel):
+    """API values; source selection belongs exclusively to service_settings."""
 
     app_name: str = "Chat CRUD API"
     api_v1_prefix: str = "/api/v1"
@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     # 단일 서버/로컬에서는 API lifespan과 함께 Reconciler를 실행합니다.
     # 운영에서 별도 Reconciler Deployment를 둘 때는 false로 끌 수 있습니다.
     task_reconciler_enabled: bool = True
-    # E05: 별도 Pod 없이 Gaia API Router lifespan 안에서 durable DB queue를 소비합니다.
+    # 별도 Pod 없이 서비스 bootstrap lifespan에서 durable DB queue를 소비합니다.
     agent_worker_enabled: bool = True
     agent_worker_poll_interval_seconds: float = 0.25
     # 최초 실행은 제외한 자동 재시도 횟수입니다. 3이면 총 최대 4회 실행합니다.
@@ -118,12 +118,40 @@ class Settings(BaseSettings):
     redis_host: str = "127.0.0.1:6379"
     redis_url: str = "redis://127.0.0.1:6379/0"
     redis_ping_timeout_seconds: float = 5.0
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore",
-    )
+    model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def validate_runtime_values(self):
+        if not 1 <= self.server_port <= 65535:
+            raise ValueError("server_port must be between 1 and 65535")
+        if self.database_pool_size < 1 or self.database_max_overflow < 0:
+            raise ValueError("database pool sizes must be bounded and non-negative")
+        if self.graph_checkpointer not in {"memory", "postgres"}:
+            raise ValueError("graph_checkpointer must be memory or postgres")
+        for name in (
+            "database_pool_timeout_seconds", "task_lease_seconds", "task_reconcile_interval_seconds",
+            "agent_worker_poll_interval_seconds", "task_cancel_poll_interval_seconds",
+            "sse_poll_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
+            "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
+        ):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        for name in ("agent_worker_max_retries", "llm_max_retries", "agent_worker_retry_backoff_seconds",
+                     "agent_worker_retry_max_backoff_seconds", "llm_retry_backoff_seconds"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"{name} must be finite and non-negative")
+        if self.sse_event_batch_size < 1:
+            raise ValueError("sse_event_batch_size must be positive")
+        return self
 
 
-settings = Settings()
+class _SettingsProxy:
+    """Compatibility for existing imports without reading files at import time."""
+
+    def __getattr__(self, name):
+        from service_settings import get_settings
+        return getattr(get_settings().api, name)
+
+settings = _SettingsProxy()

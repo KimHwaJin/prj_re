@@ -17,8 +17,8 @@ def mock_settings(**overrides):
     return load_agent_settings({
         'MODEL_PROVIDER': 'mock', 'EXECUTOR_SUBMIT_ENABLED': 'false',
         'DATA_MOCK': 'true', 'DEMO_ARTIFACTS_ENABLED': 'false',
-        'PHOENIX_CONFIG_PATH': '/nonexistent', **overrides,
-    }, dotenv_path=Path('/nonexistent'))
+        **overrides,
+    })
 
 
 def action(state):

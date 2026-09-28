@@ -63,8 +63,16 @@ def get_api_worker_bridge() -> ApiWorkerBridge:
     """Return the process-wide bridge shared by the graph and API lifespan."""
     global _api_worker_bridge
     if _api_worker_bridge is None:
-        _api_worker_bridge = ApiWorkerBridge(Settings(_env_file=".env"))
+        from service_settings import get_settings
+        _api_worker_bridge = ApiWorkerBridge(get_settings().worker)
     return _api_worker_bridge
+
+
+async def close_api_worker_bridge() -> None:
+    global _api_worker_bridge
+    bridge, _api_worker_bridge = _api_worker_bridge, None
+    if bridge is not None:
+        await bridge.__aexit__(None, None, None)
 
 
 __all__ = ["ApiWorkerBridge", "get_api_worker_bridge"]

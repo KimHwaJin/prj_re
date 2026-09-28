@@ -1,19 +1,15 @@
-"""Central configuration for the user-agent LangGraph application.
+"""Agent settings values and compatibility adapter for the central snapshot.
 
-Secrets are read from environment variables (or .env for local development)
-and are never committed here. The internal variable MODEL_API_KEY is
-intentionally preserved to match the deployment contract.
+Source loading belongs to service_settings. Explicit mappings support isolated
+graph tests without reading the process environment or local files.
 """
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 from uuid import uuid4
-
-import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -36,12 +32,8 @@ def resolve_mock_data_path(data_type: str) -> Path:
             f"Unsupported mock data_type {normalized_type!r}; "
             f"supported: {supported}"
         ) from error
-    mock_data_root = Path(
-        os.environ.get(
-            "MOCK_DATA_ROOT",
-            str(DEFAULT_MOCK_DATA_ROOT),
-        )
-    )
+    from service_settings import get_settings
+    mock_data_root = get_settings().mock_data_root
     return mock_data_root / "data" / filename
 
 
@@ -107,57 +99,15 @@ def build_local_mock_request_context(
     }
 
 
-def _load_dotenv(path: Path) -> None:
-    """Load a minimal KEY=VALUE dotenv file without another dependency."""
-    if not path.is_file():
-        return
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip("'\"")
-        if key:
-            os.environ.setdefault(key, value)
-
-
-def _find_key(value: Any, key: str) -> Any | None:
-    if isinstance(value, dict):
-        if key in value:
-            return value[key]
-        for child in value.values():
-            found = _find_key(child, key)
-            if found is not None:
-                return found
-    elif isinstance(value, list):
-        for child in value:
-            found = _find_key(child, key)
-            if found is not None:
-                return found
-    return None
-
-
-def _load_phoenix_endpoint(path: Path) -> str | None:
-    if not path.is_file():
-        return None
-    document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    endpoint = _find_key(document, "PHOENIX_ENDPOINT")
-    return str(endpoint) if endpoint else None
-
-
-def _load_phoenix_api_key(path: Path) -> str | None:
-    if not path.is_file():
-        return None
-    document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    api_key = _find_key(document, "PHOENIX_API_KEY")
-    return str(api_key) if api_key else None
-
-
 def _as_bool(value: str | None, default: bool) -> bool:
     if value is None:
         return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError("Invalid boolean setting")
 
 
 def _as_optional_bool(value: str | None) -> bool | None:
@@ -270,9 +220,21 @@ def load_agent_settings(
     *,
     dotenv_path: Path | None = None,
 ) -> AgentSettings:
-    """Load local/internal-network/Azure settings from one place."""
-    _load_dotenv(dotenv_path or PROJECT_ROOT / ".env")
-    env = dict(os.environ if environ is None else environ)
+    """Use the process snapshot, or parse an explicit isolated mapping for tests."""
+    if environ is None and dotenv_path is None:
+        from service_settings import get_settings
+        return get_settings().agent
+    if dotenv_path is not None:
+        from service_settings import read_local_env
+        env = read_local_env(dotenv_path)
+        env.update(environ or {})
+    else:
+        env = dict(environ)
+    return _agent_settings_from_mapping(env)
+
+
+def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
+    """Pure legacy value adapter; never reads environment, dotenv or YAML."""
 
     mock_delay_ms = int(env.get("MODEL_MOCK_DELAY_MS", "0"))
     if not 0 <= mock_delay_ms <= 60000:
@@ -286,17 +248,8 @@ def load_agent_settings(
     if not 0 < pool_timeout < float("inf"):
         raise ValueError("Checkpoint pool timeout must be finite and positive")
 
-    config_path = Path(
-        env.get("PHOENIX_CONFIG_PATH", str(PROJECT_ROOT / "config.dev.yml"))
-    )
-    if not config_path.is_absolute():
-        config_path = PROJECT_ROOT / config_path
-    phoenix_endpoint = env.get("PHOENIX_ENDPOINT") or _load_phoenix_endpoint(
-        config_path
-    )
-    phoenix_api_key = env.get("PHOENIX_API_KEY") or _load_phoenix_api_key(
-        config_path
-    )
+    phoenix_endpoint = env.get("PHOENIX_ENDPOINT")
+    phoenix_api_key = env.get("PHOENIX_API_KEY")
     azure_endpoint = env.get("AZURE_OPENAI_ENDPOINT")
     provider = env.get("MODEL_PROVIDER") or (
         "azure_openai" if azure_endpoint else "openai_compatible"

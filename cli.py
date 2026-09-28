@@ -12,8 +12,9 @@ from typing import Any, Sequence
 PROJECT_ROOT = Path(__file__).resolve().parent
 SRC_ROOT = PROJECT_ROOT / "src"
 for path in (PROJECT_ROOT, SRC_ROOT):
-    if str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+    if str(path) in sys.path:
+        sys.path.remove(str(path))
+    sys.path.insert(0, str(path))
 
 from langgraph.types import Command
 

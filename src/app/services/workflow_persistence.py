@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-import os
 from typing import Any, Protocol
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -307,12 +306,9 @@ class PostgresWorkflowStore:
 
 
 def workflow_store_from_environment() -> WorkflowStore:
-    """Build application persistence from the existing Worker database URL."""
-
-    database_url = (
-        os.environ.get("WORKFLOW_DATABASE_URL", "").strip()
-        or os.environ.get("EW_DATABASE_URL", "").strip()
-    )
+    """Compatibility name; values come from the central snapshot, not os.environ."""
+    from service_settings import get_settings
+    database_url = get_settings().workflow_database_url
     return PostgresWorkflowStore(database_url) if database_url else NullWorkflowStore()
 
 

@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import Connection, make_url, pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
+from service_settings import get_settings
 
 config = context.config
 if config.config_file_name:
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# Deliberately independent of Worker Settings: migration needs only a DB URL,
-# not Redis, an Agent, a handler registry, or LangGraph.
-raw_url = os.environ.get("EW_DATABASE_URL")
-if not raw_url:
-    raise RuntimeError("EW_DATABASE_URL is required for worker migrations")
+# Resolve the same target as running consumers. Loading settings performs no IO
+# to DB/Redis/LLM and does not start a Worker.
+raw_url = get_settings().worker.database_url
 url = make_url(raw_url)
 if url.drivername not in {"postgres", "postgresql", "postgresql+psycopg"}:
     raise ValueError("Worker migrations require PostgreSQL with psycopg")

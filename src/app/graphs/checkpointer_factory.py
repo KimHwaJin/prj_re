@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
@@ -28,10 +27,10 @@ async def create_checkpointer(
     settings = load_agent_settings()
     database_url = (
         database_url if database_url is not None
-        else os.environ.get("AGENT_CHECKPOINT_DATABASE_URL", "")
+        else settings.checkpoint_db_uri
     ).strip()
     if not database_url:
-        raise RuntimeError("AGENT_CHECKPOINT_DATABASE_URL is required")
+        raise RuntimeError("CHECKPOINT_DB_URI is required")
 
     min_size = settings.checkpoint_pool_min_size if min_size is None else min_size
     max_size = settings.checkpoint_pool_max_size if max_size is None else max_size

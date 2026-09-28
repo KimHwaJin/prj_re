@@ -68,3 +68,12 @@ async def get_db() -> AsyncIterator[AsyncSession]:
         except Exception:
             await db.rollback()
             raise
+
+
+async def close_database() -> None:
+    """Release the process engine at application shutdown, if it was used."""
+    global _engine, _session_factory
+    engine, _engine = _engine, None
+    _session_factory = None
+    if engine is not None:
+        await engine.dispose()

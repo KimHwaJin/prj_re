@@ -1,0 +1,8 @@
+# Local startup runs the API only; enable Workers explicitly for Agent execution.
+service:
+  runtime:
+    agent_worker_enabled: false
+    task_reconciler_enabled: false
+    event_worker_enabled: false
+  executor:
+    executor_submit_enabled: false

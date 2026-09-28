@@ -9,29 +9,38 @@ import psycopg
 from psycopg import sql
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from service_settings import get_settings
+
+
+def resolved_targets():
+    settings = get_settings()
+    return {
+        "DATABASE_URL": settings.api.database_url,
+        "CHECKPOINT_DB_URI": settings.agent.checkpoint_db_uri,
+        "EW_DATABASE_URL": settings.worker.database_url,
+        "WORKFLOW_DATABASE_URL": settings.workflow_database_url,
+    }
 
 
 def validate_local_targets():
     expected = {
         "DATABASE_URL": "chat_app",
         "CHECKPOINT_DB_URI": "agent",
-        "AGENT_CHECKPOINT_DATABASE_URL": "agent",
         "EW_DATABASE_URL": "agent",
         "WORKFLOW_DATABASE_URL": "agent",
     }
+    targets = resolved_targets()
     for name, database in expected.items():
-        parsed = urlsplit(os.environ[name])
+        parsed = urlsplit(targets[name] or "")
         if parsed.hostname != "postgres" or parsed.path != "/" + database:
             raise RuntimeError(f"{name} must point at the local Compose {database} database")
-    if os.environ["CHECKPOINT_DB_URI"] != os.environ["AGENT_CHECKPOINT_DATABASE_URL"]:
-        raise RuntimeError("API and event checkpoint settings must match")
 
 
 def provision_local_logins():
     """Keep the existing local volume, adding the credentials selected by .env."""
     credentials = {}
-    for key in ("DATABASE_URL", "CHECKPOINT_DB_URI", "AGENT_CHECKPOINT_DATABASE_URL", "EW_DATABASE_URL", "WORKFLOW_DATABASE_URL"):
-        parsed = urlsplit(os.environ[key])
+    for url in resolved_targets().values():
+        parsed = urlsplit(url)
         username, password = unquote(parsed.username), unquote(parsed.password)
         if username in credentials and credentials[username] != password:
             raise RuntimeError("Conflicting passwords for the same local PostgreSQL role")
@@ -47,7 +56,7 @@ def provision_local_logins():
 
 
 async def setup_checkpoint():
-    async with AsyncPostgresSaver.from_conn_string(os.environ["CHECKPOINT_DB_URI"]) as saver:
+    async with AsyncPostgresSaver.from_conn_string(get_settings().agent.checkpoint_db_uri) as saver:
         await saver.setup()
 
 

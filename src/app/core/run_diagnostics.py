@@ -13,15 +13,15 @@ from functools import wraps
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from service_settings import get_settings
 
 log = logging.getLogger(__name__)
 _current = ContextVar("run_diagnostic_trace", default=None)
 
 
 def enabled():
-    return bool(os.getenv("RUN_DIAGNOSTICS_DIR"))
+    return get_settings().diagnostics_dir is not None
 
 
 def utc():
@@ -56,7 +56,9 @@ class Trace:
 
     def emit(self, event, **fields):
         try:
-            folder = Path(os.environ["RUN_DIAGNOSTICS_DIR"])
+            folder = get_settings().diagnostics_dir
+            if folder is None:
+                return
             folder.mkdir(parents=True, exist_ok=True)
             row = {"at": utc(), "event": event, "pid": os.getpid(),
                    "run_id": self.run_id, "session_id": self.session_id, **fields}
@@ -123,7 +125,7 @@ def coroutine_stack(coro):
 
 
 async def watchdog(trace, owner):
-    threshold = max(1.0, float(os.getenv("RUN_DIAGNOSTICS_STALL_SECONDS", "5")))
+    threshold = get_settings().diagnostics_stall_seconds
     previous = time.perf_counter()
     last_dump = trace.start
     while True:

@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && \
     useradd --uid 10001 --gid app --create-home app
 
 COPY --from=dependencies /app/.venv /app/.venv
-COPY pyproject.toml uv.lock README.md cli.py run.py ./
+COPY pyproject.toml uv.lock README.md cli.py run.py app.py config*.yml ./
 COPY src ./src
 COPY migrations ./migrations
 COPY crud_migrations ./crud_migrations
@@ -45,4 +45,4 @@ LABEL org.opencontainers.image.revision=${SOURCE_REVISION}
 
 EXPOSE 8000 8011
 
-CMD ["python", "-m", "uvicorn", "main:app", "--app-dir", "/app/src", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "app.py"]

@@ -1,0 +1,8 @@
+# Supply DATABASE_URL and CHECKPOINT_DB_URI through deployment configuration.
+service:
+  runtime:
+    agent_worker_enabled: true
+    task_reconciler_enabled: true
+    event_worker_enabled: false
+  executor:
+    executor_submit_enabled: false
