@@ -1,0 +1,113 @@
+name: dtest-agent-local
+
+x-app: &app
+  image: dtest-agent:local-dev
+  env_file:
+    - .env
+  environment: &app-environment
+    DATABASE_URL: ${LOCAL_DATABASE_URL:?Run python3 scripts/local.py init}
+    CHECKPOINT_DB_URI: ${LOCAL_CHECKPOINT_DB_URI:?Run python3 scripts/local.py init}
+    AGENT_CHECKPOINT_DATABASE_URL: ${LOCAL_AGENT_CHECKPOINT_DATABASE_URL:?Run python3 scripts/local.py init}
+    EW_DATABASE_URL: ${LOCAL_EW_DATABASE_URL:?Run python3 scripts/local.py init}
+    WORKFLOW_DATABASE_URL: ${LOCAL_WORKFLOW_DATABASE_URL:?Run python3 scripts/local.py init}
+  volumes:
+    - artifacts:/app/var
+    - executor-inputs:/workspace/pv
+    - demo-artifacts:/app/demo_artifacts
+    - ${LOCAL_SHARED_INPUT_ROOT}:${LOCAL_SHARED_INPUT_ROOT}
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: dtest
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?Create .env.local with scripts/local.py}
+      POSTGRES_DB: chat_app
+    ports:
+      - "127.0.0.1:${LOCAL_POSTGRES_PORT:-15432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/local/init-databases.sql:/docker-entrypoint-initdb.d/01-agent.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U dtest -d chat_app"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    profiles: [local-redis]
+    image: redis:7.4-alpine
+    command: [redis-server, --appendonly, "yes"]
+    ports:
+      - "127.0.0.1:${LOCAL_REDIS_PORT:-16379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    environment:
+      <<: *app-environment
+      LOCAL_BOOTSTRAP_DATABASE_URL: postgresql://dtest:${LOCAL_POSTGRES_PASSWORD}@postgres:5432/postgres
+    command: [python, scripts/local/bootstrap.py]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    build:
+      context: .
+      args:
+        SOURCE_REVISION: ${LOCAL_SOURCE_REVISION:-working-tree}
+    command: [python, -m, uvicorn, "main:app", --app-dir, /app/src, --host, 0.0.0.0, --port, "8000", --workers, "${LOCAL_API_WORKERS:-4}"]
+    ports:
+      - "127.0.0.1:${LOCAL_API_PORT:-18000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      start_period: 15s
+      retries: 12
+    restart: unless-stopped
+
+  event-worker:
+    <<: *app
+    command: [python, -m, app.agent_worker.worker_main]
+    ports:
+      - "127.0.0.1:${LOCAL_EVENT_WORKER_PORT:-18011}:8011"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('EW_HEALTH_PORT', '8011') + '/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      start_period: 15s
+      retries: 12
+    stop_grace_period: 35s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  artifacts:
+  executor-inputs:
+  demo-artifacts:

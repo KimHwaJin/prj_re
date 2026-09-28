@@ -1,0 +1,62 @@
+{
+  "mode": "offline mocked-boundary probes; current behavior, not desired behavior",
+  "generated_at": "2026-09-28T07:46:58.225293+00:00",
+  "endpoint_count": 45,
+  "groups": {
+    "users": 5,
+    "projects": 5,
+    "sessions": 5,
+    "messages": 6,
+    "runs": 7,
+    "tasks": 6,
+    "workflows": 7,
+    "jupyter_servers": 3,
+    "redis": 1
+  },
+  "checks": [
+    {
+      "check": "user_routes_without_authorization",
+      "observed": {
+        "GET": 200,
+        "PATCH": 200,
+        "DELETE": 204
+      },
+      "scope": "Actual router with fake service/database; no deployed gateway tested."
+    },
+    {
+      "check": "active_user_uuid_as_bearer",
+      "observed": "accepted",
+      "scope": "Actual auth function, active-user repository stubbed."
+    },
+    {
+      "check": "public_message_schema_roles",
+      "observed": [
+        "user",
+        "system",
+        "assistant",
+        "agent",
+        "tool"
+      ]
+    },
+    {
+      "check": "sessionless_message_same_key_retry",
+      "observed": {
+        "sessions_created": 2,
+        "messages_created": 2
+      },
+      "scope": "Actual route and MessageService; session creation/storage are fakes."
+    },
+    {
+      "check": "existing_session_same_key_different_body",
+      "observed": "old message returned without conflict or new insert"
+    },
+    {
+      "check": "detail_response_projection",
+      "observed": {
+        "project_omits_sessions": true,
+        "session_omits_messages": true
+      },
+      "scope": "Actual response models; unbounded child queries separately confirmed by source review."
+    }
+  ]
+}

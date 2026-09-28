@@ -1,0 +1,362 @@
+[
+  {
+    "group": "users",
+    "method": "POST",
+    "path": "/api/v1/users",
+    "handler": "create_user",
+    "source": "src/app/api/v1/routes/users.py",
+    "line": 15
+  },
+  {
+    "group": "users",
+    "method": "GET",
+    "path": "/api/v1/users/by-name/{user_name}",
+    "handler": "read_user_by_name",
+    "source": "src/app/api/v1/routes/users.py",
+    "line": 21
+  },
+  {
+    "group": "users",
+    "method": "GET",
+    "path": "/api/v1/users/{user_id}",
+    "handler": "read_user",
+    "source": "src/app/api/v1/routes/users.py",
+    "line": 26
+  },
+  {
+    "group": "users",
+    "method": "PATCH",
+    "path": "/api/v1/users/{user_id}",
+    "handler": "update_user",
+    "source": "src/app/api/v1/routes/users.py",
+    "line": 31
+  },
+  {
+    "group": "users",
+    "method": "DELETE",
+    "path": "/api/v1/users/{user_id}",
+    "handler": "delete_user",
+    "source": "src/app/api/v1/routes/users.py",
+    "line": 40
+  },
+  {
+    "group": "projects",
+    "method": "POST",
+    "path": "/api/v1/projects",
+    "handler": "create_project",
+    "source": "src/app/api/v1/routes/projects.py",
+    "line": 21
+  },
+  {
+    "group": "projects",
+    "method": "GET",
+    "path": "/api/v1/projects",
+    "handler": "list_projects",
+    "source": "src/app/api/v1/routes/projects.py",
+    "line": 33
+  },
+  {
+    "group": "projects",
+    "method": "GET",
+    "path": "/api/v1/projects/{project_id}",
+    "handler": "read_project",
+    "source": "src/app/api/v1/routes/projects.py",
+    "line": 52
+  },
+  {
+    "group": "projects",
+    "method": "PATCH",
+    "path": "/api/v1/projects/{project_id}",
+    "handler": "update_project",
+    "source": "src/app/api/v1/routes/projects.py",
+    "line": 61
+  },
+  {
+    "group": "projects",
+    "method": "DELETE",
+    "path": "/api/v1/projects/{project_id}",
+    "handler": "delete_project",
+    "source": "src/app/api/v1/routes/projects.py",
+    "line": 72
+  },
+  {
+    "group": "sessions",
+    "method": "POST",
+    "path": "/api/v1/projects/{project_id}/sessions",
+    "handler": "create_session",
+    "source": "src/app/api/v1/routes/sessions.py",
+    "line": 36
+  },
+  {
+    "group": "sessions",
+    "method": "GET",
+    "path": "/api/v1/projects/{project_id}/sessions",
+    "handler": "list_project_sessions",
+    "source": "src/app/api/v1/routes/sessions.py",
+    "line": 49
+  },
+  {
+    "group": "sessions",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}",
+    "handler": "read_session",
+    "source": "src/app/api/v1/routes/sessions.py",
+    "line": 71
+  },
+  {
+    "group": "sessions",
+    "method": "PATCH",
+    "path": "/api/v1/sessions/{session_id}",
+    "handler": "update_session",
+    "source": "src/app/api/v1/routes/sessions.py",
+    "line": 82
+  },
+  {
+    "group": "sessions",
+    "method": "DELETE",
+    "path": "/api/v1/sessions/{session_id}",
+    "handler": "delete_session",
+    "source": "src/app/api/v1/routes/sessions.py",
+    "line": 94
+  },
+  {
+    "group": "messages",
+    "method": "POST",
+    "path": "/api/v1/messages",
+    "handler": "create_message_without_session",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 37
+  },
+  {
+    "group": "messages",
+    "method": "POST",
+    "path": "/api/v1/sessions/{session_id}/messages",
+    "handler": "create_message",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 78
+  },
+  {
+    "group": "messages",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/messages",
+    "handler": "list_messages",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 98
+  },
+  {
+    "group": "messages",
+    "method": "GET",
+    "path": "/api/v1/messages/{message_id}",
+    "handler": "read_message",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 125
+  },
+  {
+    "group": "messages",
+    "method": "PATCH",
+    "path": "/api/v1/messages/{message_id}",
+    "handler": "update_message",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 134
+  },
+  {
+    "group": "messages",
+    "method": "DELETE",
+    "path": "/api/v1/messages/{message_id}",
+    "handler": "delete_message",
+    "source": "src/app/api/v1/routes/messages.py",
+    "line": 146
+  },
+  {
+    "group": "runs",
+    "method": "POST",
+    "path": "/api/v1/sessions/{session_id}/runs",
+    "handler": "create_run",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 32
+  },
+  {
+    "group": "runs",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/runs",
+    "handler": "list_runs",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 47
+  },
+  {
+    "group": "runs",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/runs/{run_id}",
+    "handler": "read_run",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 54
+  },
+  {
+    "group": "runs",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/runs/{run_id}/logs",
+    "handler": "list_run_logs",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 62
+  },
+  {
+    "group": "runs",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/runs/{run_id}/join",
+    "handler": "join_run",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 82
+  },
+  {
+    "group": "runs",
+    "method": "POST",
+    "path": "/api/v1/sessions/{session_id}/runs/{run_id}/cancel",
+    "handler": "cancel_run",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 87
+  },
+  {
+    "group": "runs",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/runs/{run_id}/stream",
+    "handler": "stream_run",
+    "source": "src/app/api/v1/routes/runs.py",
+    "line": 92
+  },
+  {
+    "group": "tasks",
+    "method": "GET",
+    "path": "/api/v1/sessions/{session_id}/tasks",
+    "handler": "list_session_tasks",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 51
+  },
+  {
+    "group": "tasks",
+    "method": "GET",
+    "path": "/api/v1/tasks/{task_id}",
+    "handler": "read_task",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 89
+  },
+  {
+    "group": "tasks",
+    "method": "GET",
+    "path": "/api/v1/tasks/{task_id}/runs",
+    "handler": "list_task_runs",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 98
+  },
+  {
+    "group": "tasks",
+    "method": "POST",
+    "path": "/api/v1/tasks/{task_id}/resume",
+    "handler": "resume_task",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 113
+  },
+  {
+    "group": "tasks",
+    "method": "POST",
+    "path": "/api/v1/tasks/{task_id}/cancel",
+    "handler": "cancel_task",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 143
+  },
+  {
+    "group": "tasks",
+    "method": "GET",
+    "path": "/api/v1/tasks/{task_id}/stream",
+    "handler": "stream_task",
+    "source": "src/app/api/v1/routes/tasks.py",
+    "line": 153
+  },
+  {
+    "group": "workflows",
+    "method": "POST",
+    "path": "/api/v1/workflows",
+    "handler": "create_candidate",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 51
+  },
+  {
+    "group": "workflows",
+    "method": "GET",
+    "path": "/api/v1/workflows",
+    "handler": "list_workflows",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 56
+  },
+  {
+    "group": "workflows",
+    "method": "GET",
+    "path": "/api/v1/workflows/{workflow_id}",
+    "handler": "read_workflow",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 79
+  },
+  {
+    "group": "workflows",
+    "method": "PATCH",
+    "path": "/api/v1/workflows/{workflow_id}",
+    "handler": "update_workflow",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 84
+  },
+  {
+    "group": "workflows",
+    "method": "POST",
+    "path": "/api/v1/workflows/{workflow_id}/promote",
+    "handler": "promote_workflow",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 89
+  },
+  {
+    "group": "workflows",
+    "method": "POST",
+    "path": "/api/v1/workflows/{workflow_id}/clone",
+    "handler": "clone_workflow",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 94
+  },
+  {
+    "group": "workflows",
+    "method": "DELETE",
+    "path": "/api/v1/workflows/{workflow_id}",
+    "handler": "delete_workflow",
+    "source": "src/app/api/v1/routes/workflows.py",
+    "line": 99
+  },
+  {
+    "group": "jupyter_servers",
+    "method": "GET",
+    "path": "/api/v1/jupyter-servers",
+    "handler": "list_jupyter_servers",
+    "source": "src/app/api/v1/routes/jupyter_servers.py",
+    "line": 42
+  },
+  {
+    "group": "jupyter_servers",
+    "method": "GET",
+    "path": "/api/v1/jupyter-servers/{server_id}",
+    "handler": "read_jupyter_server",
+    "source": "src/app/api/v1/routes/jupyter_servers.py",
+    "line": 57
+  },
+  {
+    "group": "jupyter_servers",
+    "method": "POST",
+    "path": "/api/v1/jupyter-servers/{server_id}/health",
+    "handler": "check_jupyter_server_health",
+    "source": "src/app/api/v1/routes/jupyter_servers.py",
+    "line": 62
+  },
+  {
+    "group": "redis",
+    "method": "GET",
+    "path": "/api/v1/redis/ping",
+    "handler": "ping_redis",
+    "source": "src/app/api/v1/routes/redis.py",
+    "line": 16
+  }
+]

@@ -1,0 +1,5 @@
+name: dtest-agent-local
+
+include:
+  - path: ./compose.local.yaml
+    env_file: ./.env.local

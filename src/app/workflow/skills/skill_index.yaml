@@ -1,0 +1,105 @@
+schema_version: '2.0'
+index_type: skill_index
+description: Skill Markdown에서 규칙 기반으로 생성한 Workflow 탐색용 색인이다.
+skills:
+  data_load:
+    source: data_io/data_load.md
+    description: 사용자 데이터 선택 조건으로 원천 데이터를 추출하고 데이터 유형별 wide 분석 형식으로 변환하는 workflow step을 설계할 때 사용하는 skill.
+    capabilities:
+    - 사용자 선택 조건을 `extract_data`에 전달
+    - NCE 데이터를 `transform_nce`로 wide 형식 변환
+    - WT 데이터를 `transform_wt`로 wide 형식 변환
+    - DATA_MOCK=true`에서는 준비된 wide Parquet을 `data_load`로 직접 로드
+    - 변환한 데이터를 다음 Skill에 전달
+    limitations:
+    - 현재 로컬 환경에서는 mock wide Parquet을 사용
+    - 결합, 표본 추출, 품질 진단과 정제를 수행하지 않음
+    when_to_use:
+    - 분석할 NCE 또는 WT 데이터가 선택된 경우
+    not_for:
+    - 이미 메모리에 준비된 DataFrame만 사용하는 경우
+    typical_previous_skills: []
+    typical_next_skills:
+    - data_quality_check
+    tools:
+    - tool: extract_data
+      execution: always
+      condition: 데이터 선택 조건이 확정된 경우
+      condition_tool: 없음
+      role: 원천 데이터 추출
+    - tool: transform_nce
+      execution: always
+      condition: '`data_type=nce`'
+      condition_tool: 없음
+      role: NCE wide 데이터 생성
+    - tool: transform_wt
+      execution: always
+      condition: WT 계열 data type
+      condition_tool: 없음
+      role: WT wide 데이터 생성
+    - tool: data_load
+      execution: always
+      condition: '`DATA_MOCK=true`'
+      condition_tool: 없음
+      role: wide mock Parquet 직접 로드
+  data_quality_check:
+    source: eda/data_quality_check.md
+    description: 데이터 구조, 결측률, 기술 통계와 이상치 후보를 진단하는 workflow step을 설계할 때 사용하는 skill. profile_data, compute_statistics,
+      detect_outliers의 실행 여부와 진단 결과의 후속 전달을 결정한다.
+    capabilities:
+    - 데이터 행·열과 결측 상태 확인
+    - 컬럼별 기술 통계 계산
+    - 수치형 컬럼의 이상치 후보 진단
+    limitations:
+    - 원본 데이터를 변경하지 않음
+    - 이상치 후보를 자동 제거하지 않음
+    when_to_use:
+    - 데이터 로드 또는 준비 후 품질 상태를 진단할 때
+    - 정제 Tool 실행 여부의 근거가 필요할 때
+    not_for:
+    - 결측치 대체, 이상치 제거 또는 모델 학습
+    typical_previous_skills:
+    - data_load
+    typical_next_skills: []
+    tools:
+    - tool: profile_data
+      execution: always
+      condition: 입력 데이터가 준비된 경우
+      condition_tool: 없음
+      role: 기본 구조와 결측 상태 확인
+    - tool: compute_statistics
+      execution: always
+      condition: 입력 데이터가 준비된 경우
+      condition_tool: 없음
+      role: 기술 통계 계산
+    - tool: detect_outliers
+      execution: always
+      condition: 수치형 컬럼의 이상치 진단이 필요한 경우
+      condition_tool: 없음
+      role: 제거 전 이상치 후보 생성
+  dataset_preparation:
+    source: preprocessing/dataset_preparation.md
+    description: 여러 데이터셋을 결합하거나 분석용 표본을 만드는 workflow step을 설계할 때 사용하는 skill. merge_data와 sample_data의
+      선택, 실행 순서, 결합 키 확인과 다음 step으로 전달할 데이터 흐름을 결정한다.
+    capabilities:
+    - 공통 키를 사용한 데이터셋 결합
+    - 대용량 데이터의 분석용 표본 추출
+    - 다음 Skill에 전달할 단일 준비 데이터 구성
+    limitations:
+    - 결측치 대체, 이상치 제거와 feature 변환을 수행하지 않음
+    - 서로 연결된 X/Y 데이터를 독립적으로 표본 추출하면 정합성이 깨질 수 있음
+    when_to_use:
+    - 둘 이상의 입력 데이터를 하나로 결합해야 하는 경우
+    - 전체 데이터 대신 대표 표본으로 분석할 경우
+    not_for:
+    - 데이터 품질 진단, 정제 또는 모델 학습
+    typical_previous_skills:
+    - data_load
+    typical_next_skills:
+    - data_quality_check
+    tools:
+    - tool: merge_data
+      execution: always
+      condition: 둘 이상의 데이터셋을 공통 키로 결합해야 할 때
+      condition_tool: 없음
+      role: 단일 분석 데이터 생성

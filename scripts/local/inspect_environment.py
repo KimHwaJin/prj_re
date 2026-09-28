@@ -1,0 +1,29 @@
+"""Show actual local DB identities without printing connection credentials."""
+
+import json
+import os
+import socket
+from urllib.parse import urlsplit
+
+import psycopg
+from redis import Redis
+
+from agent_config import load_agent_settings
+from config import settings
+
+
+agent = load_agent_settings()
+for role, url in [
+    ("crud", settings.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)),
+    ("checkpoint", agent.checkpoint_db_uri),
+    ("workflow", os.environ["WORKFLOW_DATABASE_URL"]),
+]:
+    with psycopg.connect(url, connect_timeout=5) as conn:
+        row = conn.execute("SELECT current_database(), current_schema()").fetchone()
+    print(json.dumps({"role": role, "host": urlsplit(url).hostname, "database": row[0], "schema": row[1]}))
+with Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=5) as client:
+    assert client.ping()
+print(json.dumps({"worker_host": socket.gethostname(), "checkpointer": settings.graph_checkpointer,
+                  "redis": "ready", "redis_host": urlsplit(os.environ["REDIS_URL"]).hostname,
+                  "revision": os.environ.get("SOURCE_REVISION"),
+                  "executor_submit_enabled": agent.executor_submit_enabled}))
