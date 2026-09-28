@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config import settings
 from app.core.database import get_session_factory
 from app.core.execution_lifecycle import ExecutionNeedsRecovery, finish_observer, protected_cleanup, wait_for_stop
+from app.core.execution_claim import ExecutionClaim, current_execution_claim
 from app.core.enums import TaskStatus
 from app.core.enums import AgentRunStatus
 from app.models.common.agent_run_model import AgentRunModel
@@ -17,6 +18,24 @@ from app.services.helpers import utc_now
 
 
 class TaskService:
+    @staticmethod
+    def owns_execution(run: AgentRunModel, task: TaskModel | None, claim: ExecutionClaim) -> bool:
+        return bool(
+            task is not None and run.run_id == claim.run_id and run.task_id == claim.task_id
+            and task.task_id == claim.task_id and task.lock_token == claim.lock_token
+            and run.attempt_count == claim.attempt and run.status == AgentRunStatus.RUNNING
+            and task.status == TaskStatus.RUNNING
+        )
+
+    @staticmethod
+    def assert_execution_owner(run: AgentRunModel, task: TaskModel | None) -> None:
+        claim = current_execution_claim.get()
+        if claim is not None and (
+            not TaskService.owns_execution(run, task, claim)
+            or task.recovery_required or task.lease_expires_at is None or task.lease_expires_at <= utc_now()
+        ):
+            raise ExecutionNeedsRecovery("Execution claim is stale or expired.")
+
     @staticmethod
     async def attach_graph_task_for_run(
         db: AsyncSession,
@@ -160,6 +179,11 @@ class TaskService:
         task = await db.scalar(select(TaskModel).where(TaskModel.task_id == run.task_id)
                                .with_for_update().execution_options(populate_existing=True))
         if task is None or task.status != TaskStatus.RUNNING:
+            await db.rollback()
+            return False
+        claim = current_execution_claim.get()
+        if claim is not None and not TaskService.owns_execution(run, task, claim):
+            # A delayed old writer/recorder cannot quarantine a newer owner.
             await db.rollback()
             return False
         TaskService._mark_recovery(task, run, reason)

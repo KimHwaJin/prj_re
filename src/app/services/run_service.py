@@ -18,6 +18,7 @@ from app.core.enums import (
 )
 from config import settings
 from app.core.database import get_session_factory
+from app.core.execution_claim import current_execution_claim
 from app.core.execution_lifecycle import (
     ExecutionNeedsRecovery, execution_health, finish_observer,
     observe_termination, protected_cleanup, wait_for_stop,
@@ -151,6 +152,7 @@ class RunService:
         )
         if task is not None and task.recovery_required:
             raise ExecutionNeedsRecovery("Task requires recovery; late completion is rejected.")
+        TaskService.assert_execution_owner(run, task)
         return run, task
 
     @staticmethod
@@ -251,6 +253,9 @@ class RunService:
         ``_execute_existing=True``로 이미 점유한 Run을 실제 실행합니다.
         """
         session = await RunService._session(db, user_id, session_id)
+        execution_claim = current_execution_claim.get()
+        if _execute_existing and execution_claim is None:
+            raise ExecutionNeedsRecovery("Execution requires an immutable Worker claim.")
         previous = await db.scalar(select(AgentRunModel).where(
             AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
         ))
@@ -263,6 +268,7 @@ class RunService:
                 raise RuntimeError(f"Queued Run has no Task: {run.run_id}")
             if task.recovery_required:
                 raise ExecutionNeedsRecovery("Task requires recovery before execution.")
+            run, task = await RunService._lock_run_and_task(db, run.run_id)
             origin = None
             if payload.command is not None:
                 resume_id = payload.metadata.get("resume_run_id") or payload.metadata.get("checkpoint_run_id")
@@ -270,6 +276,8 @@ class RunService:
                     db, session_id, UUID(str(resume_id)) if resume_id else None
                 )
         else:
+            if _execute_existing:
+                raise ExecutionNeedsRecovery("Claimed Run no longer exists; do not enqueue a replacement.")
             owner = "queue:unclaimed"
             origin: AgentRunModel | None = None
             try:
@@ -398,7 +406,7 @@ class RunService:
         token_events.start()
         try:
             try:
-                async with TaskService.lease_heartbeat(task.task_id, task.lock_token, run_id=execution_run_id) as heartbeat:
+                async with TaskService.lease_heartbeat(execution_claim.task_id, execution_claim.lock_token, run_id=execution_run_id) as heartbeat:
                     if payload.command is not None:
                         state = await RunService._run_cancellable(
                             execution_run_id,

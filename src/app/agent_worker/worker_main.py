@@ -70,23 +70,22 @@ async def main(*, install_signals: bool = True) -> None:
         raise ValueError("build_handlers() must return valid handlers")
 
     async with ExecutorWorker(worker_settings, handlers) as worker:
-        async def resume_graph(context: EventContext) -> None:
-            async with create_checkpointer(
-                database_url=service.agent.checkpoint_db_uri,
-                setup_on_start=service.agent.checkpoint_setup_on_start,
-            ) as checkpointer:
-                graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
-                _validate_graph(graph)
-                await LangGraphEventAdapter(graph)(context)
-        deferred.bind(resume_graph)
-        worker.add_readiness_check("agent-graph", deferred.ready)
-        installed = _install_signal_handlers(worker) if install_signals else []
-        try:
-            await worker.run()
-        finally:
-            loop = asyncio.get_running_loop()
-            for signum in installed:
-                loop.remove_signal_handler(signum)
+        # Compile/open once per Worker lifespan, not once per Redis event.
+        async with create_checkpointer(
+            database_url=service.agent.checkpoint_db_uri,
+            setup_on_start=service.agent.checkpoint_setup_on_start,
+        ) as checkpointer:
+            graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
+            _validate_graph(graph)
+            deferred.bind(LangGraphEventAdapter(graph))
+            worker.add_readiness_check("agent-graph", deferred.ready)
+            installed = _install_signal_handlers(worker) if install_signals else []
+            try:
+                await worker.run()
+            finally:
+                loop = asyncio.get_running_loop()
+                for signum in installed:
+                    loop.remove_signal_handler(signum)
 
 
 def run_worker() -> None:

@@ -101,14 +101,23 @@ def _background_factories(settings: ServiceSettings) -> dict[str, Callable]:
 
 
 async def _close_resources() -> None:
-    from app.services.agent_graph_service import runtime
+    from app.services.agent_graph_service import GraphResourcesBusy, runtime
     from app.core.database import close_database
     from app.agent_worker.api_bridge import close_api_worker_bridge
-    # Every cleanup runs even if another fails.
+    # A live borrower still uses CRUD/bridge resources too. Preserve all of them
+    # if draining failed; ordinary close errors still run remaining cleanups.
+    try:
+        await runtime.shutdown()
+    except (GraphResourcesBusy, asyncio.CancelledError):
+        raise
+    except BaseException:
+        async with AsyncExitStack() as stack:
+            stack.push_async_callback(close_database)
+            stack.push_async_callback(close_api_worker_bridge)
+        raise
     async with AsyncExitStack() as stack:
         stack.push_async_callback(close_database)
         stack.push_async_callback(close_api_worker_bridge)
-        stack.push_async_callback(runtime.shutdown)
 
 
 def attach_service(
@@ -141,6 +150,8 @@ def attach_service(
     async def combined_lifespan(application):
         # Lifespan state returned by the platform is preserved for requests.
         async with previous_lifespan(application) as state:
+            from app.services.agent_graph_service import runtime
+            runtime.start()
             try:
                 await background.start()
                 log.info("service_started profile=%s", settings.profile)

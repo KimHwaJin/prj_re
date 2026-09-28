@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import socket
+from dataclasses import dataclass
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -12,6 +13,7 @@ from sqlalchemy import or_, select
 from config import settings
 from app.core.database import get_session_factory
 from app.core.execution_lifecycle import ExecutionNeedsRecovery, execution_health
+from app.core.execution_claim import ExecutionClaim, bind_execution_claim
 from app.core.enums import AgentRunStatus, TaskStatus
 from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.task_model import TaskModel
@@ -24,7 +26,16 @@ from app.core.run_diagnostics import run_trace, span
 logger = logging.getLogger(__name__)
 
 
-async def claim_one() -> tuple[UUID, UUID, UUID, RunCreate, str] | None:
+@dataclass(frozen=True)
+class ClaimedRun:
+    claim: ExecutionClaim
+    user_id: UUID
+    session_id: UUID
+    payload: RunCreate
+    key: str
+
+
+async def claim_one() -> ClaimedRun | None:
     """pending Run 하나를 원자 점유하고 실행에 필요한 immutable 값만 반환합니다."""
 
     if not execution_health.healthy:
@@ -70,6 +81,7 @@ async def claim_one() -> tuple[UUID, UUID, UUID, RunCreate, str] | None:
         run.attempt_count += 1
         run.next_attempt_at = None
         run.started_at = utc_now()
+        execution_claim = ExecutionClaim(run.run_id, task.task_id, task.lock_token, run.attempt_count)
         await db.commit()
         payload = RunCreate(
             input=run.input_json,
@@ -80,19 +92,27 @@ async def claim_one() -> tuple[UUID, UUID, UUID, RunCreate, str] | None:
             stream_resumable=run.stream_resumable,
             on_disconnect=run.on_disconnect,
         )
-        return run.run_id, user_id, run.session_id, payload, run.idempotency_key
+        return ClaimedRun(
+            execution_claim,
+            user_id, run.session_id, payload, run.idempotency_key,
+        )
 
 
-async def execute_claimed(item: tuple[UUID, UUID, UUID, RunCreate, str]) -> None:
+async def execute_claimed(item: ClaimedRun) -> None:
     """요청 DB session과 분리된 session에서 이미 점유한 Graph Run을 실행합니다."""
 
-    _run_id, user_id, session_id, payload, key = item
+    with bind_execution_claim(item.claim):
+        await _execute_claimed(item)
+
+
+async def _execute_claimed(item: ClaimedRun) -> None:
+    _run_id = item.claim.run_id
     async with get_session_factory()() as db:
         try:
-            async with run_trace(_run_id, session_id):
+            async with run_trace(_run_id, item.session_id):
                 with span("worker.execute"):
                     await RunService.create(
-                        db, user_id, session_id, payload, key, _execute_existing=True
+                        db, item.user_id, item.session_id, item.payload, item.key, _execute_existing=True
                     )
         except ExecutionNeedsRecovery:
             execution_health.fail(_run_id, "worker_requires_recovery")

@@ -106,6 +106,11 @@ def instrument_async_methods(instance, prefix, names):
 
 def observe_pool(pool, name):
     instrument_async_methods(pool, name, ("open", "close", "getconn", "putconn"))
+    return register_pool_trace(pool, name)
+
+
+def register_pool_trace(pool, name):
+    """Associate an existing shared pool with this Run without re-wrapping I/O."""
     trace = _current.get()
     if trace is not None:
         trace.pools[name] = pool.get_stats

@@ -17,7 +17,8 @@ from fastapi import HTTPException
 
 from agent_config import build_langgraph_thread_id, load_agent_settings
 from config import settings
-from app.core.run_diagnostics import graph_callbacks, span
+from app.core.run_diagnostics import graph_callbacks, register_pool_trace, span
+from app.core.execution_lifecycle import protected_cleanup
 from app.core.enums import AgentRunStatus
 from app.services.graph_crud_persistence import (
     ainvoke_with_crud_message_persistence,
@@ -30,17 +31,31 @@ GRAPH_MESSAGE_SOURCE = "dtest-agent"
 logger = logging.getLogger(__name__)
 
 
+class GraphResourcesBusy(RuntimeError):
+    """A borrower still owns graph resources; do not close dependent pools."""
+
+
 class AgentGraphRuntime:
-    """Build LangGraph instances for cached tests and per-call API execution."""
+    """One compiled graph/resource stack per application lifecycle/event loop.
+
+    Every invocation borrows through open_graph(). A borrow owns no database
+    connection: the shared checkpointer borrows connections for individual I/O.
+    """
 
     def __init__(self) -> None:
         self._graph: Any | None = None
         self._stack: AsyncExitStack | None = None
         self._init_lock = asyncio.Lock()
+        self._active = 0
+        self._drained = asyncio.Event()
+        self._drained.set()
+        self._closing = False
+        self._loop = None
+        self._observed_pools = ()
 
     def override_graph(self, graph: Any | None) -> None:
-        if self._stack is not None:
-            raise RuntimeError("await runtime.shutdown() before overriding the graph")
+        if self._stack is not None or self._active or self._closing:
+            raise RuntimeError("Shutdown and restart runtime before overriding the graph")
         self._graph = graph
 
 
@@ -113,6 +128,10 @@ class AgentGraphRuntime:
                         bindings=worker_bridge.bindings,
                         workflow_store=workflow_store_from_environment(),
                     )
+                self._observed_pools = (
+                    (worker_bridge.pool, "bridge_pool"),
+                    (graph_checkpointer.conn, "checkpoint_pool"),
+                )
                 yield graph
             return
 
@@ -130,48 +149,79 @@ class AgentGraphRuntime:
             f"got {checkpointer!r}"
         )
 
+    def start(self) -> None:
+        """Accept borrows for a new lifespan, without opening any connections."""
+        if self._active or self._stack is not None or self._init_lock.locked():
+            raise GraphResourcesBusy("Graph runtime still owns resources from another lifespan")
+        self._closing = False
+        self._loop = None
+        self._init_lock = asyncio.Lock()
+        self._drained = asyncio.Event()
+        self._drained.set()
+
+    def _check_loop(self):
+        loop = asyncio.get_running_loop()
+        if self._loop is not None and self._loop is not loop:
+            raise GraphResourcesBusy("Graph runtime cannot be shared across event loops")
+        self._loop = loop
+
+    async def _initialize(self):
+        stack = AsyncExitStack()
+        try:
+            graph = await stack.enter_async_context(self._graph_context())
+        except BaseException:
+            await stack.aclose()
+            raise
+        self._stack, self._graph = stack, graph
+
     @asynccontextmanager
     async def open_graph(self) -> AsyncIterator[Any]:
-        if self._graph is not None and self._stack is None:
-            yield self._graph
-            return
+        self._check_loop()
+        if self._closing:
+            raise GraphResourcesBusy("Graph runtime is shutting down")
         async with self._init_lock:
-            if self._stack is not None:
-                await self._stack.aclose()
-            self._stack = None
-            self._graph = None
+            if self._closing:
+                raise GraphResourcesBusy("Graph runtime is shutting down")
+            if self._graph is None:
+                # Caller cancellation cannot interrupt shared resource creation
+                # midway or make another caller initialize a second pool.
+                await protected_cleanup(self._initialize())
+            if self._closing:
+                raise GraphResourcesBusy("Graph runtime is shutting down")
+            graph = self._graph
+            for pool, name in self._observed_pools:
+                register_pool_trace(pool, name)
+            self._active += 1
+            self._drained.clear()
         try:
-            async with self._graph_context() as graph:
-                yield graph
-        except Exception:
-            logger.exception("agent_graph_invocation_failed component=run_execution")
-            raise
+            yield graph
+        finally:
+            # No await: repeated borrower cancellation cannot lose its release.
+            self._active -= 1
+            if not self._active:
+                self._drained.set()
 
-    async def get_graph(self) -> Any:
-        if self._graph is not None:
-            return self._graph
-        async with self._init_lock:
-            if self._graph is not None:
-                return self._graph
-
-            stack = AsyncExitStack()
-            await stack.__aenter__()
-            try:
-                graph_context = self._graph_context()
-                self._graph = await stack.enter_async_context(graph_context)
-            except BaseException:
-                await stack.aclose()
-                self._graph = None
-                raise
-            self._stack = stack
-            return self._graph
-
-    async def shutdown(self) -> None:
-        async with self._init_lock:
-            if self._stack is not None:
-                await self._stack.aclose()
-            self._stack = None
-            self._graph = None
+    async def shutdown(self, *, timeout: float | None = None) -> None:
+        from service_settings import get_settings
+        # A never-opened runtime is safe to stop from an API-only lifespan.
+        if self._loop is not None:
+            self._check_loop()
+        self._closing = True
+        timeout = get_settings().shutdown_timeout_seconds if timeout is None else timeout
+        try:
+            async with asyncio.timeout(timeout):
+                async with self._init_lock:
+                    await self._drained.wait()
+                    stack = self._stack
+                    if stack is not None:
+                        await protected_cleanup(stack.aclose())
+                    self._stack = self._graph = None
+                    self._observed_pools = ()
+                    self._loop = None
+        except TimeoutError as exc:
+            # Keep references and reject new borrows. A later shutdown can retry
+            # after existing borrowers release; never close underneath them.
+            raise GraphResourcesBusy("Graph shutdown deadline exceeded") from exc
 
 
 runtime = AgentGraphRuntime()
