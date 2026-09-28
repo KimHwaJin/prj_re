@@ -79,6 +79,10 @@ prompt_json은 tool calling이나 provider JSON Schema 지원을 강제하지 �
 
 고정된 LangGraph 1.2.11에서 외부 `durability="sync"`가 영속화 없는 내부 graph에 상속되면 `_put_checkpoint_fut` 예외가 발생한다. 공통 RoleAgent에서 공개 API의 `durability="async"`를 명시해 상속을 차단한다. 내부에 saver가 없으므로 저장 모드 자체는 효과가 없다는 라이브러리 경고가 발생할 수 있다. 외부 graph의 sync 저장 정책은 유지하며 전역 경고 억제나 라이브러리 내부 패치는 하지 않는다. 버전 업그레이드 시 Executor 재개 회귀를 유지하면서 이 우회를 재검토한다.
 
+## 동기 I/O가 남아 있는 노드
+
+012에서는 분석 graph의 동기 I/O 노드를 `add_io_node`로 등록한다. 기존 `run_sync`를 사용해 스레드 작업이 끝나기 전에 graph 취소가 완료되지 않도록 관리한다. async 노드 내부에서는 동기 I/O를 직접 호출하지 않는다. HTTP/DB/파일 구현의 native async 전환, 자원별 대기 기한과 동시성 예산은 후속이며, 이미 수행한 외부 작업의 롤백이나 강제 종료 후 복구를 보장하는 경계는 아니다. [검증·I/O 목록](../improvements/012-agent-flow-validation.md)을 참고한다.
+
 ## 다음 단계
 
 project_memory의 저장소·동시 갱신·근거·요약 정책과 실제 미들웨어 연결은 별도 구현한다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name으로 모델을 선택하고 재개 시 고정하는 registry도 후속이다. 현재는 주입된 기본 모델 정보를 전달한다.

@@ -1,0 +1,146 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-agent-flow-validation",
+  "base_merged_through": "c13a541",
+  "base_merge": "fast-forward, feature/refactor-base",
+  "baseline": {
+    "passed": 225,
+    "failed": 19,
+    "skipped": 39,
+    "collection_files_excluded": 2,
+    "failures": [
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_include_decision_generates_next_code_segment",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: data_cleaning_pipeline"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_one_observation_resolves_consecutive_conditional_tools",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: eda_analysis"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_adaptive_execution_mvp.AdaptiveExecutionMvpTests.test_raw_condition_result_is_paired_with_pending_candidate",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: data_cleaning_pipeline"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_executor_submit_toggle.ExecutorSubmitToggleTests.test_disabled_submit_writes_request_without_calling_executor",
+        "error": "AssertionError: False is not true"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_approved_run_writes_demo_json_artifacts",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_disabled_recommendation_skips_recommender",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_generated_workflow_rejection_can_reselect_data",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_no_recommendation_routes_directly_to_generate",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_recommended_workflow_candidate_and_approve",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_rejection_feedback_can_revise_generated_workflow",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_selected_needs_input_workflow_writes_debug_artifact",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_skill_selection_requires_unique_known_index_names",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: predictive_modeling"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_user_agent_graph.UserAgentGraphTests.test_workflow_generation_retries_with_validation_feedback",
+        "error": "RuntimeError: workflow generation failed validation after retries. Last validation error: 1 validation error for WorkflowPlanOutput"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: data_cleaning_pipeline"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_derives_adaptive_execution_and_condition_dependency",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: data_cleaning_pipeline"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_rejects_missing_external_condition_tool",
+        "error": "AssertionError: \"requires condition_tool data_quality_check\\.profile_data\" does not match \"Skill Index에 없는 Skill입니다: data_cleaning_pipeline\""
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_compiler.WorkflowCompilerTests.test_compiler_restores_registry_type_for_stringified_default",
+        "error": "ValueError: Skill Index에 없는 Skill입니다: failure_analysis"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_external_condition_tool_after_candidate",
+        "error": "AssertionError: ValueError not raised"
+      },
+      {
+        "test": "src.agent_service.agents.analysis.tests.test_workflow_condition_contract.WorkflowConditionContractTests.test_rejects_missing_external_condition_tool",
+        "error": "AssertionError: ValueError not raised"
+      }
+    ]
+  },
+  "cancellation_regression_before": {
+    "failed": 2,
+    "passed": 2,
+    "boundaries": [
+      "Executor submission",
+      "catalog persistence"
+    ]
+  },
+  "final": {
+    "passed": 251,
+    "failed": 0,
+    "skipped": 39,
+    "subtests_passed": 2,
+    "warnings": 42,
+    "collection_exclusions": [],
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python -m pytest src/app/test src/agent_service/agents/analysis/tests -q"
+  },
+  "focused": {
+    "passed": 60,
+    "failed": 0
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 33,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "unchanged": [
+    "workflow Skill/Tool assets",
+    "role prompts",
+    "graph node names and edges",
+    "public API and DB schema"
+  ],
+  "limits": [
+    "39 PostgreSQL-conditional tests not executed",
+    "External LLM/Executor/Redis/DB not contacted",
+    "Graph rebuild uses InMemorySaver, not a live Pod/PostgreSQL restart",
+    "Legacy I/O stays synchronous in tracked executor threads; native async ports and resource budgets remain pending",
+    "Cancellation can wait for slow DB/PV calls; external acceptance rollback and forced-crash recovery are not guaranteed",
+    "No load/performance claim; no deployment or remote push"
+  ],
+  "logs": {
+    "baseline": "/tmp/dtest-flow-before.log",
+    "regression_before": "/tmp/dtest-io-before.log",
+    "focused": "/tmp/dtest-io-after.log",
+    "full": "/tmp/dtest-flow-final.log",
+    "wheel_build": "/tmp/dtest-flow-build.log"
+  }
+}

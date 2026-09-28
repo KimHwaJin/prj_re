@@ -5,6 +5,8 @@ from __future__ import annotations
 import tempfile
 import unittest
 
+from agent_service.agents.analysis.tests.catalog_fixtures import conditional_catalog
+
 from agent_config import load_agent_settings
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.workflow.data_load_steps import merge_required_data_load_steps
@@ -48,7 +50,7 @@ def _workflow() -> dict:
             "id": "adaptive-mvp",
             "name": "Adaptive MVP",
             "description": "Test manual adaptive execution.",
-            "goal": "Conditionally impute missing values.",
+            "goal": "Conditionally inspect outliers.",
             "status": "ready",
             "input_schema": {},
             "inputs": {},
@@ -75,12 +77,12 @@ def _workflow() -> dict:
                 },
                 {
                     "id": "cleaning",
-                    "skill": "data_cleaning_pipeline",
+                    "skill": "test_conditional",
                     "depends_on": ["quality"],
                     "tools": [
                         {
-                            "tool": "impute_missing",
-                            "selection_reason": "Impute only if missing data exists.",
+                            "tool": "detect_outliers",
+                            "selection_reason": "Inspect outliers when the profile warrants it.",
                             "arguments": {"data": data_argument},
                         }
                     ],
@@ -89,8 +91,8 @@ def _workflow() -> dict:
             "outputs": {
                 "cleaned": {
                     "step_id": "cleaning",
-                    "tool": "impute_missing",
-                    "output": "imputed_data",
+                    "tool": "detect_outliers",
+                    "output": "outlier_report",
                 }
             },
         },
@@ -116,6 +118,9 @@ def _workflow() -> dict:
 
 
 class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.enterContext(conditional_catalog())
+
     def test_raw_condition_result_is_paired_with_pending_candidate(self):
         workflow = _workflow()
         initial = build_notebook(workflow, project_root="src")
@@ -195,7 +200,7 @@ class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
             "include",
         )
         self.assertIn(
-            "impute_missing",
+            "detect_outliers",
             [cell["tool"] for cell in update["notebook"]["cells"]],
         )
         self.assertIsNone(update["adaptive_pending_tool_id"])
@@ -222,7 +227,7 @@ class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
                 "steps": [
                     {
                         "id": "eda",
-                        "skill": "eda_analysis",
+                        "skill": "test_eda",
                         "depends_on": [],
                         "tools": [
                             {
@@ -232,18 +237,17 @@ class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
                             }
                             for name in (
                                 "compute_statistics",
-                                "histogram_eda",
-                                "boxplot_eda",
-                                "correlation_analysis",
+                                "profile_data",
+                                "detect_outliers",
                             )
                         ],
                     }
                 ],
                 "outputs": {
-                    "histograms": {
+                    "profile": {
                         "step_id": "eda",
-                        "tool": "histogram_eda",
-                        "output": "histogram_paths",
+                        "tool": "profile_data",
+                        "output": "profile",
                     }
                 },
             },
@@ -306,8 +310,8 @@ class AdaptiveExecutionMvpTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(
                     update["adaptive_runtime_decisions"],
                     {
-                        "eda.boxplot_eda": decision,
-                        "eda.correlation_analysis": decision,
+                        "eda.profile_data": decision,
+                        "eda.detect_outliers": decision,
                     },
                 )
 

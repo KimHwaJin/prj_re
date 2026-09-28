@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import unittest
 
+from agent_service.agents.analysis.tests.catalog_fixtures import conditional_catalog
+
 from agent_service.agents.analysis.tools.catalog import (
     canonicalize_registry_tool_sources,
     validate_skill_condition_contract,
@@ -24,8 +26,8 @@ def _cleaning_step(order: int = 2) -> dict:
     return {
         "id": "cleaning",
         "order": order,
-        "skill": "data_cleaning_pipeline",
-        "tools": [_tool("impute_missing", 1, execution="conditional")],
+        "skill": "test_conditional",
+        "tools": [{**_tool("detect_outliers", 1, execution="conditional"), "id": "cleaning_outliers"}],
     }
 
 
@@ -43,6 +45,9 @@ def _quality_step(order: int = 1) -> dict:
 
 
 class WorkflowConditionContractTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(conditional_catalog())
+
     def test_canonicalizes_registry_output_selector(self):
         document = {
             "workflow": {

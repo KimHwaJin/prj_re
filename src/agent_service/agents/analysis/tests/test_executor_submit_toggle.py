@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -117,7 +118,11 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             self.assertEqual(step["payload"]["type"], "PYTHON_EXECUTE")
             self.assertEqual(step["payload"]["source"]["type"], "PATH")
             self.assertEqual(len(step["payload"]["source"]["sha256"]), 64)
-            self.assertTrue(Path(step["payload"]["source"]["path"]).is_absolute())
+            source = step["payload"]["source"]
+            self.assertFalse(Path(source["path"]).is_absolute())
+            staged = Path(temporary_root) / source["path"]
+            self.assertEqual(staged.read_text(encoding="utf-8"), "result = 1\n")
+            self.assertEqual(hashlib.sha256(staged.read_bytes()).hexdigest(), source["sha256"])
             self.assertIn("d-test", Path(step["payload"]["source"]["path"]).parts)
 
     def test_inline_source_embeds_notebook_cell_code(self):

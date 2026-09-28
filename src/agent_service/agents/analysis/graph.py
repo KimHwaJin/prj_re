@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from langgraph.graph import END, START, StateGraph
 
 from agent_config import AgentSettings
+from agent_service.runtime.blocking import run_sync
 from app.agent_worker.graph_boundary import (
     ExecutionBindings,
     ExecutorBoundaryNodes,
@@ -115,6 +116,16 @@ def build_analysis_workflow_graph(
 ):
     """Compile a graph whose edges stay stable when agent internals change."""
     builder = StateGraph(AnalysisWorkflowState)
+
+    def add_io_node(name: str, node: Callable[[AnalysisWorkflowState], dict]) -> None:
+        # LangGraph offloads a plain def too, but cancellation can detach that
+        # thread from the run. Keep ownership until legacy I/O has settled.
+        # copy_context in run_sync preserves HITL resume context in the thread.
+        async def invoke(state: AnalysisWorkflowState) -> dict:
+            return await run_sync(node, state)
+
+        builder.add_node(name, invoke)
+
     selected_workflow_store = workflow_store or NullWorkflowStore()
     boundary = ExecutorBoundaryNodes(bindings)  # type: ignore[arg-type]
 
@@ -142,7 +153,7 @@ def build_analysis_workflow_graph(
     builder.add_node(
         "record_adaptive_executor_receipt", boundary.record_executor_receipt
     )
-    builder.add_node(
+    add_io_node(
         "collect_final_execution_event",
         make_collect_final_execution_event(selected_workflow_store),
     )
@@ -169,11 +180,11 @@ def build_analysis_workflow_graph(
     builder.add_node(
         "generate_workflow", make_generate_workflow(deps, settings)
     )
-    builder.add_node(
+    add_io_node(
         "add_generated_workflow_candidate",
         make_add_current_workflow_candidate(selected_workflow_store),
     )
-    builder.add_node(
+    add_io_node(
         "select_workflow_candidate", make_select_workflow_candidate(settings)
     )
     builder.add_node(
@@ -188,13 +199,13 @@ def build_analysis_workflow_graph(
     builder.add_node("workflow_unavailable", workflow_unavailable)
     builder.add_node("generate_report", make_generate_report(deps, settings))
     builder.add_node("skip_execution_report", skip_failed_execution_report)
-    builder.add_node(
+    add_io_node(
         "save_approved_workflow", make_save_approved_workflow(settings)
     )
-    builder.add_node(
+    add_io_node(
         "build_notebook_code", make_build_notebook_code(settings)
     )
-    builder.add_node(
+    add_io_node(
         "collect_adaptive_execution_results",
         make_collect_execution_results(
             settings,
@@ -207,7 +218,7 @@ def build_analysis_workflow_graph(
             ),
         ),
     )
-    builder.add_node(
+    add_io_node(
         "collect_static_execution_results",
         make_collect_execution_results(
             settings,
@@ -224,11 +235,11 @@ def build_analysis_workflow_graph(
         "decide_conditional_tools",
         make_decide_conditional_tools(deps, selected_workflow_store),
     )
-    builder.add_node(
+    add_io_node(
         "build_next_adaptive_code",
         make_build_next_adaptive_code(settings),
     )
-    builder.add_node(
+    add_io_node(
         "cancel_adaptive_execution",
         make_cancel_adaptive_execution(
             settings,
@@ -239,7 +250,7 @@ def build_analysis_workflow_graph(
             ),
         ),
     )
-    builder.add_node(
+    add_io_node(
         "build_executor_request",
         make_build_executor_request(
             settings,
@@ -251,7 +262,7 @@ def build_analysis_workflow_graph(
             ),
         ),
     )
-    builder.add_node(
+    add_io_node(
         "submit_adaptive_operation",
         make_submit_adaptive_operation(
             settings,
@@ -262,7 +273,7 @@ def build_analysis_workflow_graph(
             ),
         ),
     )
-    builder.add_node(
+    add_io_node(
         "finalize_adaptive_execution",
         make_finalize_adaptive_execution(
             settings,

@@ -2,12 +2,14 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-agent-middleware` (010에서 분기, 베이스는 006까지 통합)
+현재 구현 브랜치: `feature/refactor-agent-flow-validation` (012, 베이스는 011/c13a541까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
 
 2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005 구현·기록 commit `07c5a8f`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 코드 변경 없이 반영했으며 파생 브랜치는 보존했다. 원격 push는 수행하지 않았다. 이후 `856e008`에서 `feature/refactor-agent-async-llm`을 분기해 006을 구현·검증했다. 006 구현·검증·기록 commit `7b1ab0d`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 추가 코드 변경 없이 반영했고 파생 브랜치는 보존했다. 원격 push 및 배포는 수행하지 않았다.
+
+사용자 요청으로 007~011을 포함한 `c13a541`까지 `feature/refactor-base`에 fast-forward 병합했다. 충돌·추가 코드 변경 없이 반영했고 `feature/refactor-agent-flow-validation`을 분기해 012를 수행했다. 012 자체는 아직 베이스에 병합하지 않았다. 원격 push·배포는 수행하지 않았다.
 
 **개선 항목을 하나씩 진행하고, 실제 작업을 끝낼 때 문제점·개선 내용·검증 결과를 기록한다. 설계나 예상 효과를 구현 완료로 표시하지 않는다.**
 
@@ -24,11 +26,12 @@
 | 004 | 그래프·체크포인트 자원 수명과 점유 토큰 | 구현·격리 PostgreSQL 검증 완료 / checkpoint fencing·배포 미완료 | 2026-09-28 | [변경·검증·제한](004-graph-resource-lifecycle.md) |
 | 005 | 분석 Agent 패키지 집약·리소스 경로 정리 | 1차 이동·검증 완료 / 비동기 전환·전체 구조 이행 미완료 | 2026-09-28 | [변경·검증·제한](005-agent-package-layout.md) |
 | 006 | Agent·LLM 비동기 호출·취소 전파 | LLM 경로 구현·검증 완료 / 전체 I/O 전환·배포 미완료 | 2026-09-28 | [변경·검증·제한](006-agent-async-llm.md) |
-| 007 | 불필요한 Azure 모델·설정 제거 | 구현·관련 테스트 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](007-remove-azure.md) |
-| 008 | 역할별 Agent 선언·독립 프롬프트 패키지 | 구현·오프라인/설치 검증 완료 / 미들웨어 통일 미구현 | 2026-09-28 | [변경·검증·제한](008-agent-builders-layout.md) |
+| 007 | 불필요한 Azure 모델·설정 제거 | 베이스 병합 완료 / 배포 미수행 | 2026-09-28 | [변경·검증·제한](007-remove-azure.md) |
+| 008 | 역할별 Agent 선언·독립 프롬프트 패키지 | 베이스 병합 완료 / 미들웨어는 011에서 통일 | 2026-09-28 | [변경·검증·제한](008-agent-builders-layout.md) |
 | 009 | 기존 app/workflow 유지보수 패키지 복원 | 구현·검증 완료 / 위치 해석은 010에서 정정 | 2026-09-28 | [변경·검증·제한](009-preserve-workflow-package.md) |
-| 010 | 분석 Workflow 처리 코드·기존 자산 패키지 통합 | 구현·검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](010-unify-analysis-workflow.md) |
-| 011 | 역할별 create_agent·공통 문맥·프로젝트 prompt 미들웨어 | 구현·오프라인 검증 완료 / 메모리 저장·배포 미수행 | 2026-09-28 | [변경·검증·제한](011-agent-middleware.md) |
+| 010 | 분석 Workflow 처리 코드·기존 자산 패키지 통합 | 베이스 병합 완료 / 배포 미수행 | 2026-09-28 | [변경·검증·제한](010-unify-analysis-workflow.md) |
+| 011 | 역할별 create_agent·공통 문맥·프로젝트 prompt 미들웨어 | 베이스 병합 완료 / 메모리 저장·배포 미수행 | 2026-09-28 | [변경·검증·제한](011-agent-middleware.md) |
+| 012 | Agent 업무 흐름 회귀 정상화·동기 I/O 취소 수명 | 구현·오프라인/패키지 검증 완료 / 실제 DB·배포 미수행 | 2026-09-28 | [변경·검증·제한](012-agent-flow-validation.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

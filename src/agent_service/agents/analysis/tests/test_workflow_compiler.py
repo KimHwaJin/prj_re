@@ -3,6 +3,13 @@
 from __future__ import annotations
 
 import unittest
+from copy import deepcopy
+from unittest.mock import patch
+
+from agent_service.agents.analysis.tools import catalog
+from agent_service.agents.analysis.workflow import workflow_compiler
+
+from agent_service.agents.analysis.tests.catalog_fixtures import conditional_catalog
 
 from agent_service.agents.analysis.workflow.workflow_compiler import compile_workflow_plan
 from agent_service.agents.analysis.workflow.data_load_steps import (
@@ -53,6 +60,14 @@ def _base_workflow(steps: list[dict], outputs: dict) -> dict:
 
 
 class WorkflowCompilerTests(unittest.TestCase):
+    def setUp(self):
+        if self._testMethodName in {
+            "test_compiler_derives_adaptive_execution_and_condition_dependency",
+            "test_compiler_rejects_missing_external_condition_tool",
+            "test_compiled_adaptive_workflow_builds_initial_execution_prefix",
+        }:
+            self.enterContext(conditional_catalog())
+
     def test_large_data_tools_do_not_print_dataframe_results(self):
         for tool in ("extract_data", "transform_nce", "transform_wt"):
             self.assertEqual(_result_print_lines(tool, "result"), [])
@@ -255,66 +270,23 @@ class WorkflowCompilerTests(unittest.TestCase):
         self.assertIsNone(statistics_tool["arguments"]["columns"])
 
     def test_compiler_restores_registry_type_for_stringified_default(self):
+        # A synthetic numeric parameter isolates default normalization from the catalog.
+        outliers = _tool("detect_outliers")
+        outliers["arguments"]["z_threshold"] = {"source": "planner", "value": "3.0"}
         plan = _base_workflow(
-            [
-                {
-                    "id": "quality",
-                    "skill": "data_quality_check",
-                    "depends_on": [],
-                    "tools": [
-                        _tool("profile_data"),
-                        _tool("compute_statistics"),
-                        _tool("detect_outliers"),
-                    ],
-                },
-                {
-                    "id": "failure",
-                    "skill": "failure_analysis",
-                    "depends_on": ["quality"],
-                    "tools": [
-                        {
-                            "tool": "compute_failure_rate",
-                            "selection_reason": "Compute the requested failure rate.",
-                            "arguments": {
-                                "data": _data_argument(),
-                                "target_column": {
-                                    "source": "planner",
-                                    "value": "fail",
-                                },
-                                "positive_label": {
-                                    "source": "planner",
-                                    "value": "1",
-                                },
-                            },
-                        },
-                        {
-                            "tool": "plot_failure_distribution",
-                            "selection_reason": "Plot the requested failure distribution.",
-                            "arguments": {
-                                "data": _data_argument(),
-                                "target_column": {
-                                    "source": "planner",
-                                    "value": "fail",
-                                },
-                            },
-                        },
-                    ],
-                },
-            ],
-            {
-                "failure_rate": {
-                    "step_id": "failure",
-                    "tool": "compute_failure_rate",
-                    "output": "overall_rate",
-                }
-            },
+            [{"id": "quality", "skill": "data_quality_check", "depends_on": [],
+              "tools": [_tool("profile_data"), _tool("compute_statistics"), outliers]}],
+            {"outliers": {"step_id": "quality", "tool": "detect_outliers", "output": "outlier_report"}},
         )
-
-        document = compile_workflow_plan(plan)
-        failure_tool = document["workflow"]["steps"][1]["tools"][0]
-
-        self.assertEqual(failure_tool["arguments"]["positive_label"], 1)
-        self.assertIsInstance(failure_tool["arguments"]["positive_label"], int)
+        registry = deepcopy(catalog._load_tool_registry_document())
+        registry["tools"]["detect_outliers"]["inputs"]["z_threshold"] = {
+            "type": "float", "has_default": True, "default": 3.0,
+        }
+        with patch.object(workflow_compiler, "_load_tool_registry_document", return_value=registry):
+            document = compile_workflow_plan(plan)
+        threshold = document["workflow"]["steps"][0]["tools"][2]["arguments"]["z_threshold"]
+        self.assertEqual(threshold, 3.0)
+        self.assertIsInstance(threshold, float)
 
     def test_generated_tool_cell_omits_large_data_io_return_values(self):
         plan = _base_workflow(
@@ -420,12 +392,12 @@ class WorkflowCompilerTests(unittest.TestCase):
                 },
                 {
                     "id": "cleaning",
-                    "skill": "data_cleaning_pipeline",
+                    "skill": "test_conditional",
                     "depends_on": ["quality"],
                     "tools": [
                         {
-                            "tool": "impute_missing",
-                            "selection_reason": "Impute when profiling finds missing values.",
+                            "tool": "detect_outliers",
+                            "selection_reason": "Inspect outliers based on the profile.",
                             "arguments": {"data": _data_argument()},
                         }
                     ],
@@ -434,8 +406,8 @@ class WorkflowCompilerTests(unittest.TestCase):
             {
                 "cleaned_data": {
                     "step_id": "cleaning",
-                    "tool": "impute_missing",
-                    "output": "imputed_data",
+                    "tool": "detect_outliers",
+                    "output": "outlier_report",
                 }
             },
         )
@@ -454,12 +426,12 @@ class WorkflowCompilerTests(unittest.TestCase):
             [
                 {
                     "id": "cleaning",
-                    "skill": "data_cleaning_pipeline",
+                    "skill": "test_conditional",
                     "depends_on": [],
                     "tools": [
                         {
-                            "tool": "impute_missing",
-                            "selection_reason": "Conditional missing value cleanup.",
+                            "tool": "detect_outliers",
+                            "selection_reason": "Conditional outlier inspection.",
                             "arguments": {"data": _data_argument()},
                         }
                     ],
@@ -468,8 +440,8 @@ class WorkflowCompilerTests(unittest.TestCase):
             {
                 "cleaned_data": {
                     "step_id": "cleaning",
-                    "tool": "impute_missing",
-                    "output": "imputed_data",
+                    "tool": "detect_outliers",
+                    "output": "outlier_report",
                 }
             },
         )
@@ -535,12 +507,12 @@ class WorkflowCompilerTests(unittest.TestCase):
                 },
                 {
                     "id": "cleaning",
-                    "skill": "data_cleaning_pipeline",
+                    "skill": "test_conditional",
                     "depends_on": ["quality"],
                     "tools": [
                         {
-                            "tool": "impute_missing",
-                            "selection_reason": "Conditional missing value cleanup.",
+                            "tool": "detect_outliers",
+                            "selection_reason": "Conditional outlier inspection.",
                             "arguments": {"data": _data_argument()},
                         }
                     ],
@@ -549,8 +521,8 @@ class WorkflowCompilerTests(unittest.TestCase):
             {
                 "cleaned_data": {
                     "step_id": "cleaning",
-                    "tool": "impute_missing",
-                    "output": "imputed_data",
+                    "tool": "detect_outliers",
+                    "output": "outlier_report",
                 }
             },
         )

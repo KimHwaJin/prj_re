@@ -257,8 +257,6 @@ class PlanWorkflowAgent:
 
     async def ainvoke(self, payload, *, context=None):
         self.calls.append(payload)
-        target = payload["additional_information"].get("target_column")
-        needs_input = target is None
         data_argument = {
             "source": "step_output",
             "step_id": "load_data_1",
@@ -271,33 +269,11 @@ class PlanWorkflowAgent:
                 "name": "Test analysis workflow",
                 "description": "Offline orchestration test workflow.",
                 "goal": payload["user_request"],
-                "status": "needs_input" if needs_input else "ready",
-                "input_schema": {
-                    "target_column": {
-                        "type": "str",
-                        "required": True,
-                        "allow_llm_inference": False,
-                        "validation": [],
-                    }
-                },
-                "inputs": ({"target_column": target} if target else {}),
-                "input_provenance": {
-                    "target_column": {
-                        "source": "user_answer" if target else None,
-                        "confirmed": bool(target),
-                    }
-                },
-                "unresolved_inputs": (
-                    [
-                        {
-                            "name": "target_column",
-                            "question": "예측 대상 컬럼명을 입력해주세요.",
-                            "required_for": ["analysis"],
-                        }
-                    ]
-                    if needs_input
-                    else []
-                ),
+                "status": "ready",
+                "input_schema": {},
+                "inputs": {},
+                "input_provenance": {},
+                "unresolved_inputs": [],
                 "context": payload.get("workflow_context", {}),
                 "steps": [
                     {
@@ -332,10 +308,7 @@ class PlanWorkflowAgent:
 class ValidationRetryWorkflowAgent(PlanWorkflowAgent):
     async def ainvoke(self, payload, *, context=None):
         document = await super().ainvoke(payload)
-        if (
-            payload["additional_information"].get("target_column")
-            and payload.get("validation_feedback") is None
-        ):
+        if payload.get("validation_feedback") is None:
             tool = document["workflow"]["steps"][0]["tools"][0]
             tool["arguments"]["not_a_registry_input"] = {
                 "source": "planner",
@@ -1116,12 +1089,6 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
         result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
         result = await select_candidate(graph, config, result)
-        missing_payload = interrupt_payload(result)
-        self.assertEqual(missing_payload, {"target_column": ""})
-        result = await graph.ainvoke(
-            Command(resume={"answers": {"target_column": "fail"}}),
-            config=config,
-        )
 
         self.assertEqual(interrupt_payload(result)["kind"], "workflow_approval")
         approval_args = interrupt_payload(result)
@@ -1133,7 +1100,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
             ["approve", "reject"],
         )
         self.assertEqual(len(skill_selector.calls), 1)
-        self.assertEqual(len(workflow_agent.calls), 1)
+        self.assertEqual(len(workflow_agent.calls), 2)
         self.assertEqual(
             workflow_agent.calls[0]["selected_skill_names"],
             ["data_quality_check", "dataset_preparation"],
@@ -1143,10 +1110,9 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
             workflow_agent.calls[0]["workflow_resources"]["skills"],
         )
         self.assertEqual(result["workflow_status"], "ready")
-        self.assertEqual(
-            result["workflow"]["workflow"]["inputs"]["target_column"],
-            "fail",
-        )
+        self.assertEqual(result["workflow"]["workflow"]["inputs"], {})
+        self.assertIn("not_a_registry_input", workflow_agent.calls[1]["validation_feedback"])
+        self.assertIsNotNone(workflow_agent.calls[1]["previous_workflow"])
 
     @patch(
         "agent_service.factory.create_agent"
@@ -1282,12 +1248,12 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
     def test_skill_selection_requires_unique_known_index_names(self):
         selection = SkillSelectionOutput(
-            skill_names=["data_quality_check", "predictive_modeling"]
+            skill_names=["data_quality_check", "dataset_preparation"]
         )
 
         self.assertEqual(
             validate_skill_names(selection.skill_names),
-            ["data_quality_check", "predictive_modeling"],
+            ["data_quality_check", "dataset_preparation"],
         )
         with self.assertRaisesRegex(ValueError, "Skill Index"):
             validate_skill_names(["invented_skill"])
@@ -1602,11 +1568,8 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
             result["artifact_output_dir"],
         )
 
-        final = asyncio.run(
-            graph.ainvoke(
-                Command(resume={"approved": True}),
-                config=config,
-            )
+        final = await graph.ainvoke(
+            Command(resume={"approved": True}), config=config,
         )
         self.assertEqual(final["final_response"]["status"], "submitted_to_executor")
         self.assertNotIn("executor_request", final)
@@ -1702,10 +1665,13 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_selected_needs_input_workflow_writes_debug_artifact(self):
         with tempfile.TemporaryDirectory() as temporary_root:
-            deps, _, _ = dependencies()
+            deps, _, _ = dependencies(
+                workflow_recommender=ConstantAgent(await recommended_workflow_response())
+            )
             graph = compiled_in_memory_graph(
                 deps,
                 settings(
+                    recommendation_enabled=True,
                     artifacts_enabled=True,
                     artifacts_root=temporary_root,
                 ),
@@ -1715,7 +1681,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
                 Command(resume=analysis_context()),
                 config=config,
             )
-            result = await select_candidate(graph, config, result)
+            result = await select_candidate(graph, config, result, origin="recommended")
 
             artifact_path = Path(
                 result["artifact_files"]["selected_workflow_candidate"]
@@ -1753,15 +1719,8 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
                 config=config,
             )
             result = await select_candidate(graph, config, result)
-            result = await graph.ainvoke(
-                Command(resume={"answers": {"target_column": "fail"}}),
-                config=config,
-            )
-            final = asyncio.run(
-                graph.ainvoke(
-                    Command(resume={"approved": True}),
-                    config=config,
-                )
+            final = await graph.ainvoke(
+                Command(resume={"approved": True}), config=config,
             )
 
             run_dir = (
@@ -1821,13 +1780,6 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
         result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
         result = await select_candidate(graph, config, result)
         self.assertEqual(
-            interrupt_payload(result), {"target_column": ""}
-        )
-        result = await graph.ainvoke(
-            Command(resume={"answers": {"target_column": "fail"}}),
-            config=config,
-        )
-        self.assertEqual(
             interrupt_payload(result)["kind"], "workflow_approval"
         )
         result = await graph.ainvoke(
@@ -1852,13 +1804,6 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
         result = await graph.ainvoke(Command(resume=analysis_context()), config=config)
         result = await select_candidate(graph, config, result)
-        self.assertEqual(
-            interrupt_payload(result), {"target_column": ""}
-        )
-        result = await graph.ainvoke(
-            Command(resume={"answers": {"target_column": "fail"}}),
-            config=config,
-        )
         self.assertEqual(
             interrupt_payload(result)["kind"], "workflow_approval"
         )

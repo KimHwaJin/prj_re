@@ -1,10 +1,11 @@
 # Agent 개발 안내
 
-현재 구현 기준: `feature/refactor-agent-middleware`, 개선 기록 011. 7개 실제 LLM 역할을 create_agent로 통일하고 공통 실행 문맥·프로젝트 system_prompt·JSON 검증 미들웨어를 적용했다. project_memory 자동 요약/저장, 모델 선택 registry, 업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다. [Agent 선언·문맥·미들웨어 가이드](agent-runtime-contract.md)를 먼저 읽는다.
+현재 구현 기준: `feature/refactor-agent-flow-validation`, 개선 기록 012. 7개 실제 LLM 역할을 create_agent로 통일하고 공통 실행 문맥·프로젝트 system_prompt·JSON 검증 미들웨어를 적용했다. project_memory 자동 요약/저장, 모델 선택 registry, 업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다. [Agent 선언·문맥·미들웨어 가이드](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
 - [005 당시 이동·삭제 목록](analysis-layout-inventory.json)
+- [012 업무 흐름 회귀·I/O 취소 수명](../improvements/012-agent-flow-validation.md)
 - [011 Agent 실행·미들웨어 통일](../improvements/011-agent-middleware.md)
 - [010 분석 Workflow 패키지 통합](../improvements/010-unify-analysis-workflow.md)
 - [009 기존 Workflow 작업 위치 복원](../improvements/009-preserve-workflow-package.md)
@@ -80,7 +81,7 @@ builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 
 | 상태 | Agent별 JSON 상태, 공통 결과/대기 projection | 분석 상태만 이동, 공통 projection은 후속 |
 | 자원 | Agent가 풀·Worker·lease·세션 잠금을 생성/변경하지 않음 | 기존 서비스 자원 수명 유지 |
 
-새 개발에서 API 라우터나 DB 풀을 Agent 패키지 안에 추가하지 않는다. `asyncio.create_task()`로 추적되지 않는 일을 남기거나, `async def` 안에서 동기 HTTP/LLM을 직접 호출하지 않는다. 기존 동기 부분은 이 규칙을 이미 충족한 코드가 아니라 이행 대상이다.
+새 개발에서 API 라우터나 DB 풀을 Agent 패키지 안에 추가하지 않는다. `asyncio.create_task()`로 추적되지 않는 일을 남기거나, `async def` 안에서 동기 HTTP/LLM을 직접 호출하지 않는다. 기존 동기 I/O는 native async 전환 대상이다. 분석 graph에 연결할 때는 `add_io_node`로 등록하여 취소가 진행 중인 스레드 작업을 남긴 채 완료되지 않도록 한다. 순수 계산·상태 변환과 I/O 없는 interrupt는 일반 노드로 둘 수 있다. 이미 async인 노드에서는 동기 I/O를 직접 호출하지 않고 기존 `run_sync` 경계를 유지한다. 이 방식은 이벤트 루프 정지를 피하고 작업 수명을 관리하지만, 스레드 사용량·I/O 종료 시간의 상한을 보장하지는 않는다.
 
 ## 006 이후 호출 방법
 
