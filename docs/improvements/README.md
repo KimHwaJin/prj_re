@@ -2,12 +2,12 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-agent-layout`
+현재 체크아웃: `feature/refactor-base` (005 통합 완료)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
 
-2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005는 파생 브랜치에서 구현·검증했으며 아직 기준 브랜치 통합/원격 push하지 않았다.
+2026-09-28부터 독립 이력으로 작업한다. `feature/runtime-hardening`의 작업 파일을 보존하고 별도 worktree에 부모 없는 기준 commit `745a112738a6a4d272af8a993ef320417e96955e`를 만들었다. [고아 브랜치 기준 기록](refactor-branch-baseline.md)을 참고한다. 완료 항목은 파생 브랜치에서 검증·기록하고 기준 브랜치에 통합한 뒤 다음 항목 브랜치를 만든다. 004의 구현·기록 commit `7d0cc53`까지 기준 브랜치에 fast-forward 반영하고 `feature/refactor-agent-layout`을 분기했다. 005 구현·기록 commit `07c5a8f`까지 사용자 요청으로 `feature/refactor-base`에 fast-forward 통합했다. 충돌이나 코드 변경 없이 반영했으며 파생 브랜치는 보존했다. 원격 push는 수행하지 않았다.
 
 **개선 항목을 하나씩 진행하고, 실제 작업을 끝낼 때 문제점·개선 내용·검증 결과를 기록한다. 설계나 예상 효과를 구현 완료로 표시하지 않는다.**
 
