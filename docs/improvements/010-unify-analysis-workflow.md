@@ -51,3 +51,16 @@ python -I scripts/diagnostics/validate_agent_package.py /path/to/fresh-build.whl
 ## 남은 범위
 
 [Workflow 작업 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 기준으로 유지보수한다. 경로 호환은 과거 Tool 내용의 버전 보존이 아니며 운영 DB의 모든 장기 체크포인트를 검증한 것도 아니다. 이미 제출된 Executor payload를 재생성하지 않는다. create_agent 통일·미들웨어·project_memory 및 나머지 I/O 전환은 후속 작업이다.
+
+## 후속: 이동 전 위치의 로컬 잔여물 정리
+
+사용자의 추가 요청으로 같은 리팩토링 worktree에서 다음 잔여물을 삭제했다.
+
+- 원본 Python 소스가 없는 오래된 bytecode 79개.
+- 캐시 삭제 후 비어 있는 디렉토리 64개.
+- 이전 패키지의 소스 사본이 포함된 로컬 build/ 산출물 254개.
+- 이전 문서 경로의 안내 전용 파일 docs/agent-development/analysis/workflow_lifecycle.md. 정책 원문은 통합된 workflow/workflows/에 유지한다.
+
+src/app/workflow, src/app/agents, src/app/graphs, analysis/resources, analysis/prompts는 실제 파일시스템에서도 더 이상 존재하지 않음을 확인했다. Git에서 추적하지 않는 캐시·빌드 산출물 삭제는 다른 checkout에 전파되지 않는다. 원본 checkout과 실행 중인 컨테이너는 변경하지 않았다.
+
+현재 사용 중인 CLI 진입점, resource_paths 참조 모듈과 저장된 경로 resolver는 실행 코드이므로 유지한다. 이동 이력·검증 보고서도 보존한다. 소스 동작 변경이 없어 전체 테스트를 반복하지 않고 bytecode 생성을 끈 import·자산 경로 점검을 수행했다.
