@@ -148,9 +148,8 @@ async def test_validation_retry_does_not_swallow_cancellation():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('provider', ['openai_compatible', 'azure_openai'])
 @pytest.mark.parametrize('mode', ['plain', 'prompt_json', 'provider_json_schema', 'nested_agent', 'cancel'])
-async def test_configured_provider_uses_async_http_only(monkeypatch, provider, mode):
+async def test_configured_provider_uses_async_http_only(monkeypatch, mode):
     calls = []
     entered, closed = asyncio.Event(), asyncio.Event()
     async def handle(request):
@@ -167,14 +166,11 @@ async def test_configured_provider_uses_async_http_only(monkeypatch, provider, m
         raise AssertionError('synchronous HTTP transport used')
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as async_client:
         with httpx.Client(transport=httpx.MockTransport(no_sync)) as sync_client:
-            cls_name = 'AzureChatOpenAI' if provider == 'azure_openai' else 'ChatOpenAI'
-            real_class = getattr(langchain_openai, cls_name)
-            monkeypatch.setattr(langchain_openai, cls_name,
+            real_class = langchain_openai.ChatOpenAI
+            monkeypatch.setattr(langchain_openai, 'ChatOpenAI',
                 lambda **kwargs: real_class(http_async_client=async_client, http_client=sync_client, **kwargs))
-            settings = load_agent_settings({'MODEL_PROVIDER':provider, 'MODEL_NAME':'test',
-                'API_BASE_URL':'http://llm.invalid/v1', 'MODEL_API_KEY':'test-key', 'MODEL_MAX_RETRIES':'0',
-                'AZURE_OPENAI_ENDPOINT':'http://llm.invalid', 'AZURE_OPENAI_API_KEY':'test-key',
-                'AZURE_OPENAI_DEPLOYMENT':'test', 'AZURE_OPENAI_API_VERSION':'2024-02-01'})
+            settings = load_agent_settings({'MODEL_PROVIDER':'openai_compatible', 'MODEL_NAME':'test',
+                'API_BASE_URL':'http://llm.invalid/v1', 'MODEL_API_KEY':'test-key', 'MODEL_MAX_RETRIES':'0'})
             model = create_chat_model(settings)
             if mode == 'cancel':
                 task = asyncio.create_task(SimpleLLMAgent(model, 'answer').ainvoke({'user_request':'test'}))

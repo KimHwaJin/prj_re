@@ -28,7 +28,6 @@ ALIASES = {
     "MODEL_MAX_OUTPUT_TOKENS": ("LLM_MAX_OUTPUT_TOKENS",),
     "MODEL_ENABLE_THINKING": ("LLM_ENABLE_THINKING",),
     "MODEL_STRUCTURED_OUTPUT_MODE": ("LLM_STRUCTURED_OUTPUT_MODE",),
-    "AZURE_OPENAI_API_VERSION": ("LLM_API_VERSION",),
     "CHECKPOINT_DB_URI": ("AGENT_CHECKPOINT_DATABASE_URL",),
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
@@ -38,8 +37,7 @@ GROUPS = {"runtime", "database", "checkpoint", "llm", "executor", "events", "sto
 AGENT_KEYS = set("""
 APP_ENV MODEL_MOCK_DELAY_MS MODEL_TEMPERATURE MODEL_PROVIDER MODEL_NAME
 MODEL_API_KEY API_BASE_URL MODEL_TIMEOUT_SECONDS MODEL_MAX_RETRIES
-MODEL_ENABLE_THINKING MODEL_STRUCTURED_OUTPUT_MODE AZURE_OPENAI_API_KEY
-AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT AZURE_OPENAI_API_VERSION
+MODEL_ENABLE_THINKING MODEL_STRUCTURED_OUTPUT_MODE
 CHECKPOINT_DB_URI CHECKPOINT_SETUP_ON_START CHECKPOINT_POOL_MIN_SIZE
 CHECKPOINT_POOL_MAX_SIZE CHECKPOINT_POOL_TIMEOUT_SECONDS LANGGRAPH_STRICT_MSGPACK
 EXECUTOR_BASE_URL EXECUTOR_TLS_VERIFY EXECUTOR_RUNTIME_PROFILE
@@ -240,10 +238,7 @@ def load_settings(
         missing = {"DATABASE_URL", "CHECKPOINT_DB_URI"} - merged.keys()
         if missing:
             raise ConfigurationError("Deployment requires explicit " + ", ".join(sorted(missing)))
-    if "MODEL_PROVIDER" not in merged and merged.get("AZURE_OPENAI_ENDPOINT"):
-        merged["MODEL_PROVIDER"] = "azure_openai"
-        sources["MODEL_PROVIDER"] = "derived from Azure configuration"
-    if "MODEL_PROVIDER" in merged and merged["MODEL_PROVIDER"] not in {"mock", "openai_compatible", "azure_openai"}:
+    if "MODEL_PROVIDER" in merged and merged["MODEL_PROVIDER"] not in {"mock", "openai_compatible"}:
         raise ConfigurationError("Unsupported MODEL_PROVIDER")
     api_input = {name: merged[key] for name, key in api_fields.items() if key in merged}
     try:
@@ -256,8 +251,8 @@ def load_settings(
         merged.setdefault(key, getattr(api, name))
         sources.setdefault(key, "default")
     agent_env: dict[str, Any] = {}
-    optional = {"MODEL_API_KEY", "API_BASE_URL", "MODEL_ENABLE_THINKING", "AZURE_OPENAI_API_KEY",
-                "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "PHOENIX_ENDPOINT", "PHOENIX_API_KEY"}
+    optional = {"MODEL_API_KEY", "API_BASE_URL", "MODEL_ENABLE_THINKING",
+                "PHOENIX_ENDPOINT", "PHOENIX_API_KEY"}
     for key in AGENT_KEYS:
         if key not in merged:
             continue
@@ -269,7 +264,7 @@ def load_settings(
         agent = _agent_settings_from_mapping(agent_env)
     except (ValueError, TypeError, AttributeError):
         raise ConfigurationError("Invalid Agent settings; check types, enums and numeric bounds") from None
-    if agent.model_provider not in {"mock", "openai_compatible", "azure_openai"}:
+    if agent.model_provider not in {"mock", "openai_compatible"}:
         raise ConfigurationError("Unsupported MODEL_PROVIDER")
     if not 0 <= agent.workflow_similarity_score <= 1 or agent.max_workflow_revisions < 1:
         raise ConfigurationError("Invalid Workflow recommendation/revision settings")

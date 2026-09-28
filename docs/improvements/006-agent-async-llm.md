@@ -38,6 +38,8 @@ run_sync는 contextvars를 전달한 executor Future를 shield하고, 호출자�
 
 ## 검증
 
+아래는 006 완료 시점의 검증 기록이다. 이후 [007](007-remove-azure.md)에서 Azure 지원과 전용 테스트 5개를 제거했으며 당시 검증 수치는 보존한다.
+
 [검증 JSON](../reports/agent-async-llm-validation-2026-09-28.json)과 다음 테스트에 기록했다.
 
 - analysis/tests/test_async_llm.py: 16개. 기존 동기 스레드 문제 재현, 실제 FAQ 노드의 Run 취소 전파/후속 제출 차단, 두 호출의 동시 모델 대기, Mock 지연 취소, 구조화 출력 재시도 중 취소, 반복 취소를 받는 혼합 노드의 실제 작업 종료 및 context 전달.

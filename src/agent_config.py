@@ -133,10 +133,6 @@ class AgentSettings:
     model_timeout_seconds: float
     model_max_retries: int
     model_enable_thinking: bool | None
-    azure_openai_api_key: str | None
-    azure_openai_endpoint: str | None
-    azure_openai_api_version: str
-    azure_openai_deployment: str | None
     checkpoint_db_uri: str
     checkpoint_setup_on_start: bool
     checkpoint_pool_min_size: int
@@ -250,10 +246,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
 
     phoenix_endpoint = env.get("PHOENIX_ENDPOINT")
     phoenix_api_key = env.get("PHOENIX_API_KEY")
-    azure_endpoint = env.get("AZURE_OPENAI_ENDPOINT")
-    provider = env.get("MODEL_PROVIDER") or (
-        "azure_openai" if azure_endpoint else "openai_compatible"
-    )
+    provider = env.get("MODEL_PROVIDER") or "openai_compatible"
 
     demo_artifacts_root = Path(
         env.get("DEMO_ARTIFACTS_ROOT", str(PROJECT_ROOT / "demo_artifacts"))
@@ -316,12 +309,6 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         model_enable_thinking=_as_optional_bool(
             env.get("MODEL_ENABLE_THINKING")
         ),
-        azure_openai_api_key=env.get("AZURE_OPENAI_API_KEY"),
-        azure_openai_endpoint=azure_endpoint,
-        azure_openai_api_version=env.get(
-            "AZURE_OPENAI_API_VERSION", "2024-10-21"
-        ),
-        azure_openai_deployment=env.get("AZURE_OPENAI_DEPLOYMENT"),
         checkpoint_db_uri=env.get(
             "CHECKPOINT_DB_URI",
             "postgresql://postgres:postgres@localhost:5432/dtest_agent?sslmode=disable",

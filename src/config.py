@@ -42,10 +42,6 @@ class Settings(BaseModel):
         default="dummy",
         validation_alias=AliasChoices("MODEL_API_KEY", "LLM_API_KEY"),
     )
-    llm_api_version: str = Field(
-        default="2025-04-01-preview",
-        validation_alias=AliasChoices("AZURE_OPENAI_API_VERSION", "LLM_API_VERSION"),
-    )
     llm_timeout_seconds: float = Field(
         default=60.0,
         validation_alias=AliasChoices("MODEL_TIMEOUT_SECONDS", "LLM_TIMEOUT_SECONDS"),

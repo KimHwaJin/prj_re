@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 브랜치: `feature/refactor-base` (006까지 통합)
+현재 구현 브랜치: `feature/refactor-remove-azure` (베이스는 006까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -24,6 +24,7 @@
 | 004 | 그래프·체크포인트 자원 수명과 점유 토큰 | 구현·격리 PostgreSQL 검증 완료 / checkpoint fencing·배포 미완료 | 2026-09-28 | [변경·검증·제한](004-graph-resource-lifecycle.md) |
 | 005 | 분석 Agent 패키지 집약·리소스 경로 정리 | 1차 이동·검증 완료 / 비동기 전환·전체 구조 이행 미완료 | 2026-09-28 | [변경·검증·제한](005-agent-package-layout.md) |
 | 006 | Agent·LLM 비동기 호출·취소 전파 | LLM 경로 구현·검증 완료 / 전체 I/O 전환·배포 미완료 | 2026-09-28 | [변경·검증·제한](006-agent-async-llm.md) |
+| 007 | 불필요한 Azure 모델·설정 제거 | 구현·관련 테스트 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-28 | [변경·검증·제한](007-remove-azure.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

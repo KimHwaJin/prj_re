@@ -42,6 +42,12 @@ service:
 
 `service` 아래 그룹은 runtime/database/checkpoint/llm/executor/events/storage/diagnostics이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
 
+## LLM 설정
+
+`MODEL_PROVIDER`는 `openai_compatible`(기본값) 또는 부하테스트용 `mock`만 지원한다. 실제 모델은 `MODEL_NAME`, `API_BASE_URL`, `MODEL_API_KEY`로 선택한다. YAML에서는 `service.llm` 아래 같은 이름을 소문자로 사용할 수 있다. 모델별 timeout/retry/structured output 설정과 기존 설정 우선순위는 유지한다.
+
+007에서 Azure 지원을 제거했다. `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`, `LLM_API_VERSION`은 더 이상 설정으로 등록되지 않는다. YAML에 남아 있으면 unknown setting 오류로 시작을 거부하므로 삭제한다. 환경변수/명시적 로컬 dotenv에 남아 있는 미등록 키는 기존 로더 정책대로 무시하며 모델을 자동 선택하지 않는다. `MODEL_PROVIDER=azure_openai` 또는 동일한 `LLM_PROVIDER` 별칭 값은 지원하지 않는 provider 오류다.
+
 ## DB별 책임과 별칭
 
 | 설정 | 소비자 | 생략 시 |

@@ -49,24 +49,7 @@ class AgentDependencies:
 
 
 def create_chat_model(settings: AgentSettings) -> Any:
-    """Create either the local Azure model or internal OpenAI-compatible model."""
-    if settings.model_provider == "azure_openai":
-        from langchain_openai import AzureChatOpenAI
-
-        if not settings.azure_openai_api_key or not settings.azure_openai_endpoint:
-            raise ValueError(
-                "Azure testing requires AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT"
-            )
-        return AzureChatOpenAI(
-            api_key=settings.azure_openai_api_key,
-            azure_endpoint=settings.azure_openai_endpoint,
-            api_version=settings.azure_openai_api_version,
-            azure_deployment=settings.azure_openai_deployment or settings.model_name,
-            temperature=settings.model_temperature,
-            timeout=settings.model_timeout_seconds,
-            max_retries=settings.model_max_retries,
-        )
-
+    """Create the configured OpenAI-compatible model."""
     if settings.model_provider == "openai_compatible":
         from langchain_openai import ChatOpenAI
 
