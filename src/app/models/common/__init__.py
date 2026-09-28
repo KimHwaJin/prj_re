@@ -23,9 +23,12 @@ __all__ = [
     "AgentRunModel",
     "AgentRunLogModel",
     "TaskModel",
+    "SessionExecutionModel",
     "WorkflowModel",
     "WorkflowTagModel",
     "WorkflowEmbeddingModel",
     "WorkflowExecutionLogModel",
 ]
 
+
+from app.models.common.session_execution_model import SessionExecutionModel

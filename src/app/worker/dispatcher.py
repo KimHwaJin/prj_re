@@ -6,6 +6,8 @@ from uuid import UUID
 from psycopg import Error as DatabaseError
 from psycopg_pool import PoolTimeout
 from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
+from app.core.execution_lifecycle import ExecutionNeedsRecovery
 
 from app.worker.consumer import (
     AckDecision,
@@ -64,6 +66,8 @@ class Dispatcher:
                 return await self._dispatch(command_id, generation)
         except (
             DeferEvent,
+            ExecutionNeedsRecovery,
+            SQLAlchemyError,
             LeaseLostError,
             DatabaseError,
             PoolTimeout,
@@ -95,6 +99,8 @@ class Dispatcher:
             await handler(context)
         except (
             DeferEvent,
+            ExecutionNeedsRecovery,
+            SQLAlchemyError,
             LeaseLostError,
             DatabaseError,
             PoolTimeout,

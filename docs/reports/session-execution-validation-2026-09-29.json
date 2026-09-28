@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/refactor-session-ownership",
+  "parent_commit": "70e1c9b",
+  "base_branch_commit": "fb89dbc",
+  "validation": {
+    "passed": 325,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "duration_seconds": 60.95,
+    "new_tests": [
+      "test_session_failure_defers_without_incrementing_business_attempts[error0]",
+      "test_session_failure_defers_without_incrementing_business_attempts[error1]",
+      "test_session_failure_defers_without_incrementing_business_attempts[error2]",
+      "test_api_claim_excludes_fast_event_until_full_finalization",
+      "test_event_blocks_same_session_claim_without_blocking_other_sessions",
+      "test_duplicate_event_invocations_do_not_overlap",
+      "test_stale_heartbeat_never_authorizes_takeover",
+      "test_cancel_retains_owner_through_slow_cleanup_and_repeated_cancel",
+      "test_ownership_loss_stops_graph_and_cannot_release_replacement",
+      "test_event_cancel_during_acquire_waits_for_commit_then_quarantines",
+      "test_confirmed_event_exception_releases_owner_for_receipt_retry",
+      "test_redis_lease_loss_cannot_unlock_live_graph",
+      "test_waiting_graph_holds_no_db_connection",
+      "test_quarantined_session_rejects_new_api_input",
+      "test_monitor_database_failure_stops_graph_and_retains_token",
+      "test_legacy_running_or_recovery_task_blocks_event_without_owner_row",
+      "test_real_checkpoint_cannot_resume_before_owner_handoff"
+    ],
+    "migration": "CRUD upgrade to 20260929_0020, downgrade to 20260907_0017, upgrade head via disposable DB fixture",
+    "warning_type": "Existing durability-without-checkpointer warnings"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "database": "dedicated local identity_test",
+    "postgres_image": "postgres:17-alpine",
+    "connection_pool": "NullPool test fixture; real checkpointer test uses psycopg pool",
+    "redis_failure": "controlled mock client",
+    "llm": "mock/no external calls",
+    "executor": "no external calls",
+    "kubernetes": "not tested"
+  },
+  "package_validation": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "new_ownership_service_and_model_in_wheel": true,
+    "openapi_paths": 33,
+    "role_prompts": 7,
+    "mock_graph_execution_steps": 6
+  },
+  "limitations": [
+    "No forced takeover of a live owner is supported. Heartbeat age does not authorize ownership transfer.",
+    "No atomic per-checkpoint fencing across owner/checkpoint databases against administrative token replacement.",
+    "No automatic recovery/restart handoff for retained tokens.",
+    "Old and new workers must not coexist during initial migration.",
+    "Real Redis failures, real Executor, multi-Pod rollout and week-long execution were not tested.",
+    "No production throughput or latency improvement is claimed."
+  ],
+  "deployment": {
+    "existing_services_changed": false,
+    "base_merged": false,
+    "pushed": false,
+    "deployed": false
+  }
+}

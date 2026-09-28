@@ -17,6 +17,8 @@ from app.core.execution_claim import ExecutionClaim, bind_execution_claim
 from app.core.enums import AgentRunStatus, TaskStatus
 from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.task_model import TaskModel
+from app.models.common.session_execution_model import SessionExecutionModel
+from app.services.session_execution import SessionExecution, acquire, run_owned
 from app.schemas.common.run_schema import RunCreate
 from app.services.run_service import RunService
 from app.services.task_service import TaskService
@@ -45,6 +47,11 @@ async def claim_one() -> ClaimedRun | None:
             select(AgentRunModel)
             .where(
                 AgentRunModel.status == AgentRunStatus.PENDING,
+                ~select(SessionExecutionModel.session_id).where(
+                    SessionExecutionModel.session_id == AgentRunModel.session_id,
+                    or_(SessionExecutionModel.token.is_not(None),
+                        SessionExecutionModel.recovery_required.is_(True)),
+                ).exists(),
                 ~select(TaskModel.task_id).where(
                     TaskModel.task_id == AgentRunModel.task_id,
                     TaskModel.recovery_required.is_(True),
@@ -76,6 +83,9 @@ async def claim_one() -> ClaimedRun | None:
         user_id = UUID(str(metadata["requested_by_user_id"]))
         owner = f"gaia:{socket.gethostname()}"
         TaskService.start_execution(task, owner=owner)
+        if not await acquire(db, SessionExecution(run.session_id, task.lock_token, run.run_id, 'api_run')):
+            await db.rollback()
+            return None
         run.status = AgentRunStatus.RUNNING
         # row lock 안에서 증가하므로 여러 Pod가 같은 attempt 번호를 가질 수 없습니다.
         run.attempt_count += 1
@@ -103,7 +113,10 @@ async def execute_claimed(item: ClaimedRun) -> None:
 
     with bind_execution_claim(item.claim):
         try:
-            await _execute_claimed(item)
+            await run_owned(
+                SessionExecution(item.session_id, item.claim.lock_token, item.claim.run_id, 'api_run'),
+                lambda: _execute_claimed(item),
+            )
         except asyncio.CancelledError:
             # Covers cancellation before RunService has installed its guards too.
             execution_health.fail(item.claim.run_id, "worker_cancelled")

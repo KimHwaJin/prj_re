@@ -27,6 +27,7 @@ __all__ = [
     "LLMRunModel",
     "AgentRunLogModel",
     "TaskModel",
+    "SessionExecutionModel",
     "WorkflowModel",
     "WorkflowTagModel",
     "WorkflowEmbeddingModel",
@@ -35,3 +36,5 @@ __all__ = [
     "TaskEventModel",
 ]
 
+
+from app.models.common.session_execution_model import SessionExecutionModel

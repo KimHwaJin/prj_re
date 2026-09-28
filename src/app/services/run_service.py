@@ -287,6 +287,13 @@ class RunService:
             owner = "queue:unclaimed"
             origin: AgentRunModel | None = None
             try:
+                from app.models.common.session_execution_model import SessionExecutionModel
+                recovering = await db.scalar(select(SessionExecutionModel.session_id).where(
+                    SessionExecutionModel.session_id == session_id,
+                    SessionExecutionModel.recovery_required.is_(True),
+                ))
+                if recovering is not None:
+                    raise HTTPException(status_code=409, detail="Session execution requires recovery.")
                 if payload.command is None:
                     unfinished = await db.scalar(select(TaskModel.task_id).where(
                         TaskModel.session_id == session_id,

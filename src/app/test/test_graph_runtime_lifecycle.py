@@ -263,6 +263,9 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
     monkeypatch.setattr(entry, '_validate_graph', lambda _: None)
     monkeypatch.setattr(entry, 'build_handlers', lambda handler: {'test': handler})
     monkeypatch.setattr(entry, 'LangGraphEventAdapter', Adapter)
+    async def own(context, operation):
+        return await operation()
+    monkeypatch.setattr(entry, 'run_event_owned', own)
     monkeypatch.setattr(entry, 'ExecutorWorker', Worker)
     if fail:
         with pytest.raises(RuntimeError, match='worker failure'):

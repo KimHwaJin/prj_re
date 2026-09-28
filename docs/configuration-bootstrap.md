@@ -94,6 +94,12 @@ Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수
 
 플랫폼의 앱·라우터·미들웨어·OpenAPI·계측 및 lifespan 설정이 끝난 **후**에 결합해야 한다. 이후 `GaiaService.main()`이 lifespan을 다시 덮어쓰면 안 된다. 실제 Gaia 원본이 없으므로 템플릿의 main 초기화 분리/계측 보존까지 검증한 상태는 아니다. 플랫폼 core는 수정하지 않았다.
 
+## 공통 세션 실행 소유권
+
+014부터 API Run과 Executor 이벤트가 API `DATABASE_URL`의 `session_executions`를 공통으로 사용한다. 모든 실행자의 이 설정이 같은 DB를 가리켜야 한다. `EW_DATABASE_URL`의 이벤트 저장소, `CHECKPOINT_DB_URI`의 checkpoint 저장소는 기존 역할을 유지한다. 이벤트 Redis를 제거한 변경이 아니다.
+
+CRUD migration `20260929_0020`이 필요하다. 첫 적용에서는 이전 Worker를 배수·중지하고 새 코드로 전환해야 한다. 구 버전과 신 버전을 섞어 실행하는 rollout은 안전성을 보장하지 않는다. 실행 소유권은 heartbeat 만료만으로 자동 탈취하지 않으며, 강제 종료 후에는 기록이 남아 운영 복구가 필요할 수 있다. [014의 배포·복구 제한](improvements/014-session-execution-ownership.md)을 확인한다.
+
 ## 마이그레이션
 
 두 Alembic env와 로컬 bootstrap이 동일한 중앙 설정을 사용한다. 로컬 bootstrap은 YAML 우선순위까지 적용한 실제 대상이 Compose의 postgres/chat_app·agent인지 확인하고 나서만 초기화한다. 일반 서버 시작은 checkpoint DDL을 실행하지 않도록 예제에서 꺼 두었다. 기존 로컬 bootstrap은 checkpoint setup을 명시적으로 수행한다. 새 DB의 테이블 생성과 실제 업그레이드는 배포 준비 단계에서 별도 수행한다.

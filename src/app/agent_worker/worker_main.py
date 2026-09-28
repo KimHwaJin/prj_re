@@ -12,6 +12,8 @@ from app.agent_worker.langgraph_adapter import LangGraphEventAdapter
 from app.agent_worker.worker_hooks import build_handlers
 from app.worker import EventContext, ExecutorWorker
 from app.worker.contracts import EventHandler
+from app.services.session_execution import run_event_owned
+from app.core.execution_lifecycle import execution_health
 
 
 class DeferredHandler:
@@ -82,12 +84,17 @@ async def main(*, install_signals: bool = True) -> None:
             adapter = LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot)
 
             async def handle_event(context: EventContext) -> None:
-                await adapter(context)
-                # Also runs on receipt replay: graph and API DB commits are separate.
-                await synchronize_executor_completion(context, graph)
+                async def invoke_and_project():
+                    await adapter(context)
+                    # Receipt replay retries API projection after a separate graph commit.
+                    await synchronize_executor_completion(context, graph)
+                await run_event_owned(context, invoke_and_project)
 
             deferred.bind(handle_event)
             worker.add_readiness_check("agent-graph", deferred.ready)
+            async def execution_ready():
+                return execution_health.healthy
+            worker.add_readiness_check("session-execution", execution_ready)
             installed = _install_signal_handlers(worker) if install_signals else []
             try:
                 await worker.run()
