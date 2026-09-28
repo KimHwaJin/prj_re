@@ -6,6 +6,8 @@
 
 008 업데이트: 역할별 Agent 선언·프롬프트는 `agents/analysis/agent_builders/<role>/`로 모았다. 공통 도구와 역할 프롬프트는 별개 기준으로 관리한다. create_agent·공통 미들웨어를 표준으로 삼되 현재 모든 구성요소가 전환된 것은 아니다. [008 기록](../improvements/008-agent-builders-layout.md)을 참고한다.
 
+009 업데이트: 사용자 요청으로 **src/app/workflow/**를 기존 유지보수 패키지로 복원·고정한다. Agent 패키지 분리의 예외가 아니라 독립 업무 자산의 소유 경계다. 앞으로 API·Agent 코드를 이동하더라도 이 위치는 유지한다. [009 기록](../improvements/009-preserve-workflow-package.md).
+
 ## 목표
 
 ```text
@@ -15,6 +17,7 @@ src/
   routers/                         get_routers 등록 경계
   workflows/                       플랫폼 공개 호출 연계가 필요할 때만
   service_bootstrap.py              설정·풀·구현·수명 조립
+  app/workflow/                    skills / tools / workflows (기존 유지보수 위치)
   api_service/                     routes / schemas / dependencies / services
   execution_service/               commands / lifecycle / ownership / idempotency / recovery
   agent_service/
@@ -27,7 +30,7 @@ src/
     agents/<id>/                   definition / graph / state / schemas / settings
                                    dependencies / projection / nodes / subgraphs
                                    agent_builders/<role>/agent.py + prompt.md
-                                   workflow / tools / resources / tests
+                                   workflow / tools / tests (자산은 app/workflow 참조)
   service_contracts/               Agent·실행·context·저장/연계 port
   service_infrastructure/           configuration / persistence / resources
                                    artifacts / observability
@@ -51,7 +54,7 @@ docs/                              구조·개발 안내·개선 결과
 
 ## 005에서 실제 구현한 부분
 
-분석 업무 코드와 리소스는 `agent_service/agents/analysis/`로 집약했다. 체크포인트 풀 factory는 `agent_service/runtime/langgraph/checkpointer.py`, 개발용 직접 실행·시각화·카탈로그 생성은 `devtools/analysis/`다. 기존 API/Worker가 새 import를 사용하며 외부 HTTP 경로와 DB migration은 바꾸지 않았다.
+005 당시 분석 업무 코드와 리소스를 `agent_service/agents/analysis/`로 집약했다. 009에서 기존 Workflow 자산·색인·생성기·정책 문서는 `src/app/workflow/`로 복원했다. 체크포인트 풀 factory는 `agent_service/runtime/langgraph/checkpointer.py`, 개발용 직접 실행·시각화·카탈로그 생성은 `devtools/analysis/`다. 기존 API/Worker가 새 import를 사용하며 외부 HTTP 경로와 DB migration은 바꾸지 않았다.
 
 **목표 전체의 이행 완료는 아니다.** 다음 경계는 의도적으로 기존 동작을 유지했다.
 
@@ -73,4 +76,4 @@ docs/                              구조·개발 안내·개선 결과
 
 import 검색뿐 아니라 루트/컨테이너/CLI/LangGraph 진입점, 카탈로그 및 파일 소스 로딩을 확인한다. 이번 삭제는 worker_past와 호출처 없는 팩토리/옛 패키지 재노출 코드에 한정했다. 등록된 Executor Tool은 import되지 않아도 Notebook 소스로 사용되므로 유지했다.
 
-`resources/**/tmp/`의 미등록 Skill/Tool은 활성 호출 경로가 아니다. 미사용 recommender prompt는 008에서 docs/agent-development/reference-prompts로 옮겨 설치 리소스에서 제외했다. 일부 실패 테스트가 미등록 Skill을 기대하므로 업무 지원 범위를 결정하기 전에 임의로 삭제하거나 카탈로그에 승격하지 않았다. 현재 WorkflowRecommender는 실제 벡터 검색 구현이 아닌 빈 결과 placeholder다. 이 항목들의 정리 및 기존 실패 테스트 정상화는 Agent 업무 정합성 작업에 남긴다.
+`src/app/workflow/{skills,tools}/**/tmp/`의 미등록 Skill/Tool은 활성 호출 경로가 아니다. 미사용 recommender prompt는 008에서 docs/agent-development/reference-prompts로 옮겨 설치 리소스에서 제외했다. 일부 실패 테스트가 미등록 Skill을 기대하므로 업무 지원 범위를 결정하기 전에 임의로 삭제하거나 카탈로그에 승격하지 않았다. 현재 WorkflowRecommender는 실제 벡터 검색 구현이 아닌 빈 결과 placeholder다. 이 항목들의 정리 및 기존 실패 테스트 정상화는 Agent 업무 정합성 작업에 남긴다.

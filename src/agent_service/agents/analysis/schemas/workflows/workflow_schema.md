@@ -43,7 +43,7 @@ workflow:
         - id: split_dataset
           order: 1
           tool: split_dataset
-          tool_source: agent_service/agents/analysis/resources/executor_tools/preprocessing/split_dataset.py
+          tool_source: app/workflow/tools/preprocessing/split_dataset.py
           selection_reason: Prepare train/test data.
           execution: always
           condition: null
@@ -90,7 +90,7 @@ workflow:
         - id: eda_compute_statistics
           order: 1
           tool: compute_statistics
-          tool_source: agent_service/agents/analysis/resources/executor_tools/eda/compute_statistics.py
+          tool_source: app/workflow/tools/eda/compute_statistics.py
           selection_reason: Required condition evidence for optional EDA tools.
           execution: always
           condition: null
@@ -105,7 +105,7 @@ workflow:
         - id: eda_correlation_analysis
           order: 2
           tool: correlation_analysis
-          tool_source: agent_service/agents/analysis/resources/executor_tools/eda/correlation_analysis.py
+          tool_source: app/workflow/tools/eda/correlation_analysis.py
           selection_reason: Run only if numeric columns are sufficient.
           execution: conditional
           condition: null

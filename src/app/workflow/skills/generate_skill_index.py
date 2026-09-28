@@ -9,8 +9,6 @@ from typing import Any
 
 import yaml
 
-from agent_service.agents.analysis.resource_paths import SKILLS_ROOT, SKILL_INDEX_PATH
-
 
 SECTION_NAMES = (
     "capabilities",
@@ -181,10 +179,10 @@ def write_index(index: dict[str, Any], output: Path) -> None:
 
 
 def main() -> None:
-    root = SKILLS_ROOT
+    root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skills-dir", type=Path, default=root)
-    parser.add_argument("--output", type=Path, default=SKILL_INDEX_PATH)
+    parser.add_argument("--output", type=Path, default=root / "skill_index.yaml")
     arguments = parser.parse_args()
     index = build_index(arguments.skills_dir.resolve())
     write_index(index, arguments.output.resolve())
@@ -193,3 +191,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -387,7 +387,7 @@ def compile_workflow_plan(
                     "order": tool_order,
                     "tool": plan_tool.tool,
                     "tool_origin": "registry",
-                    "tool_source": f"agent_service/agents/analysis/resources/executor_tools/{source}",
+                    "tool_source": f"app/workflow/tools/{source}",
                     "selection_reason": plan_tool.selection_reason,
                     "execution": execution,
                     "condition": None,

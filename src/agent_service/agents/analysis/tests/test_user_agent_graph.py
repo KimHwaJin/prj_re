@@ -193,7 +193,7 @@ class WorkflowAgent:
                 "id": "profile_selected_data",
                 "order": 1,
                 "skill": "data_quality_check",
-                "skill_source": "agent_service/agents/analysis/resources/skills/eda/data_quality_check.md",
+                "skill_source": "app/workflow/skills/eda/data_quality_check.md",
                 "depends_on": [],
                 "execution": "always",
                 "tools": [
@@ -202,7 +202,7 @@ class WorkflowAgent:
                         "order": 1,
                         "tool": "profile_data",
                         "tool_origin": "registry",
-                        "tool_source": "agent_service/agents/analysis/resources/executor_tools/eda/profile_data.py",
+                        "tool_source": "app/workflow/tools/eda/profile_data.py",
                         "selection_reason": "Profile the selected analysis data.",
                         "execution": "always",
                         "arguments": {
@@ -795,7 +795,7 @@ class UserAgentGraphTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             document["workflow"]["steps"][0]["tools"][0]["tool_source"],
-            "agent_service/agents/analysis/resources/executor_tools/preprocessing/merge_data.py",
+            "app/workflow/tools/preprocessing/merge_data.py",
         )
 
     async def test_label_only_agent_builds_typed_output_without_json(self):

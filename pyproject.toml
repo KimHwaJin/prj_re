@@ -67,4 +67,6 @@ exclude = ["app.test*", "agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]
 app = ["**/*.md", "**/*.yaml", "static/*.html"]
-"agent_service.agents.analysis" = ["agent_builders/*/prompt.md", "schemas/**/*.md", "resources/**/*.md", "resources/**/*.yaml"]
+"agent_service.agents.analysis" = ["agent_builders/*/prompt.md", "schemas/**/*.md"]
+
+"app.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]

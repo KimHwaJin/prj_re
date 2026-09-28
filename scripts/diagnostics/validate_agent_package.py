@@ -21,8 +21,11 @@ installed = Path(temporary.name)
 with ZipFile(wheel) as archive:
     names = archive.namelist()
     assert not any('/tests/' in n or n.startswith('app/test/') for n in names)
-    assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/workflow/', 'app/worker_past/')) for n in names)
-    assert not any(n.startswith('agent_service/agents/analysis/prompts/') for n in names)
+    assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/worker_past/')) for n in names)
+    assert not any(n.startswith(('agent_service/agents/analysis/prompts/', 'agent_service/agents/analysis/resources/')) for n in names)
+    assert 'app/workflow/workflows/workflow_lifecycle.md' in names
+    assert 'app/workflow/skills/generate_skill_index.py' in names
+    assert 'app/workflow/tools/generate_tool_registry.py' in names
     archive.extractall(installed)
 sys.path.insert(0, str(installed))
 
@@ -73,5 +76,5 @@ async def smoke():
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
-    'old_packages_in_wheel':False, 'tests_in_wheel':False, 'resources_present':True,
+    'removed_agent_packages_in_wheel':False, 'original_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True}))

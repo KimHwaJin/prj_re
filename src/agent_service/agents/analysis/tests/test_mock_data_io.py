@@ -8,9 +8,9 @@ import pandas as pd
 
 from agent_config import PROJECT_ROOT, TEST_DATA_SELECTION, load_agent_settings
 from service_settings import load_settings
-from agent_service.agents.analysis.resources.executor_tools.data_io.extract_data import extract_data
-from agent_service.agents.analysis.resources.executor_tools.data_io.transform_nce import transform_nce
-from agent_service.agents.analysis.resources.executor_tools.data_io.transform_wt import transform_wt
+from app.workflow.tools.data_io.extract_data import extract_data
+from app.workflow.tools.data_io.transform_nce import transform_nce
+from app.workflow.tools.data_io.transform_wt import transform_wt
 from agent_service.agents.analysis.workflow.data_load_steps import required_data_load_steps
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import DataSelectionResponse
 

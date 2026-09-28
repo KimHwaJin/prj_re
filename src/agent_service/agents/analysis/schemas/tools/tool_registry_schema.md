@@ -1,13 +1,13 @@
 # Tool Registry 작성 스키마
 
-이 문서는 `agent_service/agents/analysis/resources/executor_tools/tool_registry.yaml`의 구조를 정의한다.
+이 문서는 `app/workflow/tools/tool_registry.yaml`의 구조를 정의한다.
 Registry는 Python Tool 파일에서 규칙 기반으로 생성하며, 함수 코드에서 확인되는 정보만 기록한다.
 
 ## 작성 원칙
 
 1. Registry에 등록된 Tool은 모두 Workflow에서 사용할 수 있다.
 2. Tool ID, Python 파일명과 `function_name`은 동일하다.
-3. `source`는 `agent_service/agents/analysis/resources/executor_tools` 기준 상대 경로다.
+3. `source`는 `app/workflow/tools` 기준 상대 경로다.
 4. 함수 모듈을 import하거나 실행하지 않고 Python AST로 읽는다.
 5. 함수 시그니처, 인자, 기본값, docstring, 반환 annotation과 고정 반환 key만 기록한다.
 6. 파일명과 같은 이름의 함수가 없는 Python 파일은 Registry에 등록하지 않는다.
@@ -22,7 +22,7 @@ description: Python Tool 파일에서 AST로 추출한 함수 호출 정보
 generation:
   method: python_ast
   llm_used: false
-  source_root: agent_service/agents/analysis/resources/executor_tools
+  source_root: app/workflow/tools
 
 tools:
   tool_name:

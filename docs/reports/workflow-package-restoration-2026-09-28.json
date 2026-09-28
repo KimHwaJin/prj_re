@@ -1,0 +1,131 @@
+{
+  "date": "2026-09-28",
+  "branch": "feature/refactor-preserve-workflow-package",
+  "baseline_commit": "ab814f4",
+  "original_asset_commit": "7d0cc53",
+  "original_files_restored": 24,
+  "source_and_wheel_match_original_bytes": true,
+  "files": [
+    {
+      "path": "src/app/workflow/skills/data_io/data_load.md",
+      "sha256": "0a0ae554a2402c982c9b24ffedf6e1aca037ae75e34438c452a6491e511ecaa5"
+    },
+    {
+      "path": "src/app/workflow/skills/eda/data_quality_check.md",
+      "sha256": "8da9f7b6c3488f2a06ab6d8d38995a6e94c7f23f16296c231c5232612fb33cd5"
+    },
+    {
+      "path": "src/app/workflow/skills/eda/tmp/failure_analysis.md",
+      "sha256": "58a8275f1e6fccdc9f36fd258da5dd8eff7f268911527c5b00e991a87f919dbd"
+    },
+    {
+      "path": "src/app/workflow/skills/eda/tmp/failure_group_comparison.md",
+      "sha256": "f6b682fe5e7d7f48a74d4b4c66b9dedaaab95ad0821ee10fe063949b9f4a513a"
+    },
+    {
+      "path": "src/app/workflow/skills/generate_skill_index.py",
+      "sha256": "7e0820f577aade30c43d6ca3dbb71bf5d8afe6cbb6948b956a95c372d02744c9"
+    },
+    {
+      "path": "src/app/workflow/skills/preprocessing/dataset_preparation.md",
+      "sha256": "32c243134d47750a2707e51a6086572f9209c3f08b16fcc35bfd3e9d004c0fb9"
+    },
+    {
+      "path": "src/app/workflow/skills/skill_index.yaml",
+      "sha256": "582b610e0766741784adb624515205a9898513f925e68bfad62fe05de7257c4d"
+    },
+    {
+      "path": "src/app/workflow/tools/data_io/data_load.py",
+      "sha256": "c448b733864d2940dda5fff7a89a7ea97c15f2fb2742f88d2e362ea78b05c127"
+    },
+    {
+      "path": "src/app/workflow/tools/data_io/extract_data.py",
+      "sha256": "5a9b88ae02a7ce3910fecfa645291b3e15ead3c7951af5b5daa4c5193984c224"
+    },
+    {
+      "path": "src/app/workflow/tools/data_io/tmp/extract_data2.py",
+      "sha256": "66dfda11f2227bbbf9f67553daee9de33e6fc3818fd87a9d0d0f37b1e5899dbe"
+    },
+    {
+      "path": "src/app/workflow/tools/data_io/transform_nce.py",
+      "sha256": "0a6694999c7df44ab36e637a777e40fd0f795200e324f2008e549bbc3a562024"
+    },
+    {
+      "path": "src/app/workflow/tools/data_io/transform_wt.py",
+      "sha256": "8e69968b69a98a3ab10bac2f4b7440dbd6df3baa07df3eb814d74c41ac144bc5"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/compute_statistics.py",
+      "sha256": "24f617fb1db4fdfd2b45063327918ba9c2fd855f502eda7c7426b64a74e52bff"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/detect_outliers.py",
+      "sha256": "ed0c9536048e146dc3f98e8cee98486233b8be320800dc9522708c84b5860dca"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/profile_data.py",
+      "sha256": "0fbff6baa28750ea430aa0afa0e5cf4ed334891d56945e5fd0f96f1b4c2b6913"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/tmp/compute_failure_rate.py",
+      "sha256": "92d188a99f1fcfb0d3130588e50f6deea43985ecfe7eb5725ed6639e2b1eb46b"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/tmp/failure_rate_by_bin.py",
+      "sha256": "59384d0ed408650eee655f64f76ccd431d96ac1b843dfcd4052c483b8561aaf5"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/tmp/failure_rate_trend.py",
+      "sha256": "c39f4a75a6fda240a3f98b6e90758ad28b3634a0bbf1352c51203cd0f490df34"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/tmp/plot_failure_by_group.py",
+      "sha256": "b4bb5a85bd51c457946898c9ef39afee7ff3de0b4cf04805074d0825929b786e"
+    },
+    {
+      "path": "src/app/workflow/tools/eda/tmp/plot_failure_distribution_by_feature.py",
+      "sha256": "2be06b67d4cca3a6351e5adbd7cbfe079df4f46cb8bdf2ed53e46d128747ceef"
+    },
+    {
+      "path": "src/app/workflow/tools/generate_tool_registry.py",
+      "sha256": "68f17fe5c85f52dc028e48574005c65bdeb027971182774d86fc77ef9cd62d56"
+    },
+    {
+      "path": "src/app/workflow/tools/preprocessing/merge_data.py",
+      "sha256": "230ff51f97295304f938a06f06a4736a6a2cd9d891c0cc35c7a573292d785191"
+    },
+    {
+      "path": "src/app/workflow/tools/tool_registry.yaml",
+      "sha256": "b00f4405f20a57e31b973a2c1526e27bc4a4563c09055d39472f311f68e43b00"
+    },
+    {
+      "path": "src/app/workflow/workflows/workflow_lifecycle.md",
+      "sha256": "d6ecedd6ae926ac654f4bf45dc9765bed2510565ff4c54bbc2a9b927ae9578b6"
+    }
+  ],
+  "regression": {
+    "passed": 193,
+    "failed": 19,
+    "skipped": 39,
+    "new_failures": 0,
+    "changed_failure_messages_after_uuid_and_prefix_normalization": 0,
+    "excluded_existing_collection_errors": [
+      "test_select_features.py",
+      "test_split_dataset.py"
+    ]
+  },
+  "focused_resource_and_mock_tests": 10,
+  "original_generator_commands": "passed; output YAML agrees with both maintained catalogs",
+  "wheel_smoke": {
+    "source_checkout_imported": false,
+    "original_workflow_package_present": true,
+    "transient_resource_copy_present": false,
+    "role_prompts": 7,
+    "production_builders_constructed": true,
+    "api_openapi_paths": 33,
+    "mock_execution_steps": 6
+  },
+  "external_services_contacted": false,
+  "postgres_tests_rerun": false,
+  "deployed": false
+}

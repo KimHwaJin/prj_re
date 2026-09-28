@@ -11,8 +11,6 @@ from typing import Any
 
 import yaml
 
-from agent_service.agents.analysis.resource_paths import TOOLS_ROOT, TOOL_REGISTRY_PATH
-
 
 class LiteralString(str):
     """YAML string rendered with the literal block style."""
@@ -266,7 +264,7 @@ def build_registry(root: Path) -> dict[str, Any]:
         "generation": {
             "method": "python_ast",
             "llm_used": False,
-            "source_root": "agent_service/agents/analysis/resources/executor_tools",
+            "source_root": "app/workflow/tools",
         },
         "tools": tools,
     }
@@ -289,13 +287,13 @@ def write_registry(registry: dict[str, Any], output: Path) -> None:
 
 
 def main() -> None:
-    root = TOOLS_ROOT
+    root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tools-dir", type=Path, default=root)
     parser.add_argument(
         "--output",
         type=Path,
-        default=TOOL_REGISTRY_PATH,
+        default=root / "tool_registry.yaml",
     )
     arguments = parser.parse_args()
     registry = build_registry(arguments.tools_dir.resolve())
