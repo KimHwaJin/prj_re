@@ -62,5 +62,7 @@
     "Model provider version changes behind unchanged identifiers are not detected"
   ],
   "deployed": false,
-  "pushed": false
+  "pushed": false,
+  "implementation_commit": "b99a686",
+  "temporary_database_removed": true
 }

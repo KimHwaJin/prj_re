@@ -2,7 +2,7 @@
 
 상태: 구현·전체 회귀·패키지 검증 완료 (2026-09-29)
 브랜치: `feature/run-model-selection`, 기준: `403c77d` (022 베이스 병합 완료)
-커밋: 구현 커밋 생성 후 기록에 연결한다. 원격 push·배포 미수행.
+구현·검증 커밋: `b99a686`. 원격 push·배포 미수행.
 
 ## 문제와 범위
 
@@ -78,3 +78,5 @@ python -m pytest src/app/test src/agent_service/agents/analysis/tests -q --disab
 [API·등록 설정·Agent 개발자 가이드](../run-model-selection.md)
 
 [검증 결과 요약](../reports/run-model-selection-validation-2026-09-29.json)
+
+검증에 사용한 임시 PostgreSQL 컨테이너/볼륨은 종료 후 제거했다. 기존 서비스는 변경하지 않았다.
