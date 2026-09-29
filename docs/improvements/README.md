@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-short-db-transactions` (016, 015/64ad96f에서 파생; 베이스는 012/fb89dbc까지 통합)
+현재 검증 브랜치: `feature/benchmark-short-db-transactions` (017, 016/4bb5c2f에서 파생; 베이스는 012/fb89dbc까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -36,6 +36,7 @@
 | 014 | API Run·Executor 이벤트 공통 세션 실행 소유권 | 구현·격리 PostgreSQL/패키지 검증 완료 / 자동 복구·배포 미수행 | 2026-09-29 | [변경·검증·제한](014-session-execution-ownership.md) |
 | 015 | 서비스 종료 시 새 점유 중단·현재 호출 drain | 구현·실제 SIGTERM/격리 PostgreSQL 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](015-graceful-shutdown.md) |
 | 016 | Agent 실행과 서비스 DB 트랜잭션 분리 | 구현·격리 PostgreSQL/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](016-short-db-transactions.md) |
+| 017 | DB 수명 변경 실제 HTTP·PostgreSQL A/B 부하 검증 | 80회 비교·원본·독립 검증 완료 / 운영 배포 미수행 | 2026-09-29 | [측정·결과·제한](017-db-scope-load-comparison.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

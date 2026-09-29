@@ -1,0 +1,8 @@
+{
+  "trials": 80,
+  "paired_cases": 20,
+  "scenario_attempts": 2852,
+  "http_requests": 145563,
+  "checked": "unique scenario count, nonnegative durations, graph concurrency cap, completed stage/run counts, terminal ownership and recovery flags",
+  "aggregation": "Nearest-rank percentiles pooled across repeat requests; duration/rate sums across repeats; min/max trial durations retained. Failure latency is excluded from success percentiles but error counts and censored scenarios are explicit."
+}

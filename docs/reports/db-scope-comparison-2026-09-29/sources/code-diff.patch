@@ -1,0 +1,391 @@
+diff --git a/src/app/core/database.py b/src/app/core/database.py
+index dc2aadc..c5743ce 100644
+--- a/src/app/core/database.py
++++ b/src/app/core/database.py
+@@ -1,4 +1,5 @@
+ from collections.abc import AsyncIterator
++from contextlib import asynccontextmanager
+ 
+ from sqlalchemy.ext.asyncio import (
+     AsyncEngine,
+@@ -77,3 +78,20 @@ async def close_database() -> None:
+     _session_factory = None
+     if engine is not None:
+         await engine.dispose()
++
++
++@asynccontextmanager
++async def short_session(session_factory=None) -> AsyncIterator[AsyncSession]:
++    """Own a DB-only unit of work; never span graph/HTTP/consumer waits.
++
++    Writers commit explicitly. Closing rolls back any remaining read/failed
++    transaction, including refreshes performed by existing CRUD services.
++    Observe close even when shutdown repeatedly cancels the caller.
++    """
++    from app.core.execution_lifecycle import protected_cleanup
++
++    db = (session_factory or get_session_factory())()
++    try:
++        yield db
++    finally:
++        await protected_cleanup(db.close())
+diff --git a/src/app/services/agent_graph_service.py b/src/app/services/agent_graph_service.py
+index 2d11293..598aa92 100644
+--- a/src/app/services/agent_graph_service.py
++++ b/src/app/services/agent_graph_service.py
+@@ -1,7 +1,8 @@
+ """API-boundary LangGraph runtime.
+ 
+-Graph nodes stay free of DB/CRUD calls. API handlers build graph_input here,
+-then persist UI messages through ``ainvoke_with_crud_message_persistence``.
++Graph nodes stay free of service DB/CRUD calls. The Worker passes plain
++execution values; this boundary loads project context and projects results in
++separate short sessions. Never pass an open caller session into graph execution.
+ """
+ 
+ from __future__ import annotations
+@@ -25,7 +26,7 @@ from app.services.graph_crud_persistence import (
+     astream_with_crud_message_persistence,
+ )
+ from app.services.graph_event_persistence import GraphPersistenceDispatcher
+-from app.services.agent_project_context import load_project_snapshot, ensure_project_snapshot
++from app.services.agent_project_context import read_project_snapshot, ensure_project_snapshot
+ 
+ 
+ GRAPH_MESSAGE_SOURCE = "dtest-agent"
+@@ -319,8 +320,8 @@ def graph_config(
+ 
+ 
+ async def ainvoke_user_turn(
+-    db: Any,
+     *,
++    session_factory: Any | None = None,
+     user_id: UUID,
+     project_id: UUID,
+     session_id: UUID,
+@@ -341,13 +342,16 @@ async def ainvoke_user_turn(
+         trigger_message_id=trigger_message_id,
+         request_id=request_id,
+     )
+-    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
++    graph_input.update(await read_project_snapshot(
++        user_id=user_id, session_id=session_id, project_id=project_id,
++        session_factory=session_factory,
++    ))
+     if graph is None:
+         async with runtime.open_graph() as compiled:
+             return await ainvoke_with_crud_message_persistence(
+                 compiled,
+                 graph_input,
+-                db=db,
++                session_factory=session_factory,
+                 user_id=user_id,
+                 config=graph_config(session_id, run_id, callbacks),
+                 dispatcher=dispatcher,
+@@ -357,7 +361,7 @@ async def ainvoke_user_turn(
+     return await ainvoke_with_crud_message_persistence(
+         graph,
+         graph_input,
+-        db=db,
++        session_factory=session_factory,
+         user_id=user_id,
+         config=graph_config(session_id, run_id, callbacks),
+         dispatcher=dispatcher,
+@@ -367,8 +371,8 @@ async def ainvoke_user_turn(
+ 
+ 
+ async def ainvoke_resume(
+-    db: Any,
+     *,
++    session_factory: Any | None = None,
+     user_id: UUID,
+     session_id: UUID,
+     checkpoint_run_id: UUID,
+@@ -385,21 +389,27 @@ async def ainvoke_resume(
+     run_id = agent_run_id or checkpoint_run_id
+     if graph is None:
+         async with runtime.open_graph() as compiled:
+-            await ensure_project_snapshot(compiled, config, db=db, user_id=user_id, session_id=session_id)
++            await ensure_project_snapshot(
++                compiled, config, session_factory=session_factory,
++                user_id=user_id, session_id=session_id,
++            )
+             return await ainvoke_with_crud_message_persistence(
+                 compiled,
+                 graph_input,
+-                db=db,
++                session_factory=session_factory,
+                 user_id=user_id,
+                 config=config,
+                 dispatcher=dispatcher,
+                 agent_run_id=run_id,
+             )
+-    await ensure_project_snapshot(graph, config, db=db, user_id=user_id, session_id=session_id)
++    await ensure_project_snapshot(
++        graph, config, session_factory=session_factory,
++        user_id=user_id, session_id=session_id,
++    )
+     return await ainvoke_with_crud_message_persistence(
+         graph,
+         graph_input,
+-        db=db,
++        session_factory=session_factory,
+         user_id=user_id,
+         config=config,
+         dispatcher=dispatcher,
+@@ -408,8 +418,8 @@ async def ainvoke_resume(
+ 
+ 
+ async def astream_user_turn(
+-    db: Any,
+     *,
++    session_factory: Any | None = None,
+     user_id: UUID,
+     project_id: UUID,
+     session_id: UUID,
+@@ -429,13 +439,16 @@ async def astream_user_turn(
+         trigger_message_id=trigger_message_id,
+         request_id=request_id,
+     )
+-    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
++    graph_input.update(await read_project_snapshot(
++        user_id=user_id, session_id=session_id, project_id=project_id,
++        session_factory=session_factory,
++    ))
+     if graph is None:
+         async with runtime.open_graph() as compiled:
+             async for state in astream_with_crud_message_persistence(
+                 compiled,
+                 graph_input,
+-                db=db,
++                session_factory=session_factory,
+                 user_id=user_id,
+                 config=graph_config(session_id, run_id),
+                 dispatcher=dispatcher,
+@@ -447,7 +460,7 @@ async def astream_user_turn(
+     async for state in astream_with_crud_message_persistence(
+         graph,
+         graph_input,
+-        db=db,
++        session_factory=session_factory,
+         user_id=user_id,
+         config=graph_config(session_id, run_id),
+         dispatcher=dispatcher,
+diff --git a/src/app/services/agent_project_context.py b/src/app/services/agent_project_context.py
+index 0e09b64..f4054e1 100644
+--- a/src/app/services/agent_project_context.py
++++ b/src/app/services/agent_project_context.py
+@@ -1,5 +1,6 @@
+ """Resolve authorized project instructions once per user turn or legacy backfill."""
+ from uuid import UUID
++from app.core.database import short_session
+ from sqlalchemy import select
+ from app.models.common.project_model import ProjectModel
+ from app.models.common.session_model import SessionModel
+@@ -16,17 +17,26 @@ async def load_project_snapshot(db, *, user_id, session_id, project_id=None):
+     return {"project_system_prompt": project.system_prompt or "", "project_prompt_version": project.prompt_version}
+ 
+ 
+-async def ensure_project_snapshot(graph, config, *, db, user_id, session_id):
++async def read_project_snapshot(*, user_id, session_id, project_id=None, session_factory=None):
++    """Return plain values and release the service connection before graph I/O."""
++    async with short_session(session_factory) as db:
++        return await load_project_snapshot(
++            db, user_id=user_id, session_id=session_id, project_id=project_id,
++        )
++
++
++async def ensure_project_snapshot(graph, config, *, user_id, session_id, session_factory=None):
+     snapshot = await graph.aget_state(config)
+     if snapshot.values and "project_system_prompt" not in snapshot.values:
+-        update = await load_project_snapshot(db, user_id=user_id, session_id=session_id,
+-            project_id=snapshot.values.get("project_id"))
++        update = await read_project_snapshot(
++            user_id=user_id, session_id=session_id,
++            project_id=snapshot.values.get("project_id"), session_factory=session_factory,
++        )
+         await graph.aupdate_state(config, update)
+ 
+ 
+ async def load_event_project_snapshot(values):
+-    # Old checkpoints only: release the session before resuming the graph.
+-    from app.core.database import get_session_factory
+-    async with get_session_factory()() as db:
+-        return await load_project_snapshot(db, user_id=values["user_id"],
+-            session_id=values["session_id"], project_id=values["project_id"])
++    return await read_project_snapshot(
++        user_id=values["user_id"], session_id=values["session_id"],
++        project_id=values["project_id"],
++    )
+diff --git a/src/app/services/graph_crud_persistence.py b/src/app/services/graph_crud_persistence.py
+index a9d3c75..1b548db 100644
+--- a/src/app/services/graph_crud_persistence.py
++++ b/src/app/services/graph_crud_persistence.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ from typing import Any, AsyncIterator
+ from uuid import UUID
+ from app.core.run_diagnostics import span
++from app.core.database import short_session
+ 
+ from app.services.graph_event_persistence import (
+     GraphPersistenceContext,
+@@ -32,7 +33,7 @@ async def astream_with_crud_message_persistence(
+     graph: Any,
+     graph_input: Any,
+     *,
+-    db: Any,
++    session_factory: Any | None = None,
+     user_id: UUID,
+     config: dict[str, Any],
+     stream_mode: str = "values",
+@@ -42,9 +43,9 @@ async def astream_with_crud_message_persistence(
+ ) -> AsyncIterator[dict[str, Any]]:
+     """Yield graph states while persisting newly emitted graph events.
+ 
+-    Keep the DB session outside graph state.  SQLAlchemy sessions are not
+-    checkpoint-serializable, while LangGraph state is expected to remain a
+-    JSON/msgpack-friendly domain state.
++    Open a short DB session for each projection and close it before yielding
++    or requesting the next graph state. Never hold it across model waits or
++    consumer backpressure.
+     """
+ 
+     persistence = dispatcher or GraphPersistenceDispatcher.default()
+@@ -55,20 +56,11 @@ async def astream_with_crud_message_persistence(
+         stream_mode=stream_mode,
+     ):
+         if isinstance(state, dict):
+-            await _link_graph_task(db, state, agent_run_id or state.get("run_id"))
+-            context = GraphPersistenceContext.from_state(
+-                state,
+-                user_id=user_id,
++            cursor = await _persist_state(
++                state, user_id=user_id, cursor=cursor, persistence=persistence,
++                session_factory=session_factory, agent_run_id=agent_run_id,
+                 trigger_message_id=trigger_message_id,
+-                agent_run_id=agent_run_id or state.get("run_id"),
+-            )
+-            result = await persistence.persist_state_delta(
+-                db,
+-                state,
+-                cursor,
+-                context=context,
+             )
+-            cursor = result.cursor
+         yield state
+ 
+ 
+@@ -76,7 +68,7 @@ async def ainvoke_with_crud_message_persistence(
+     graph: Any,
+     graph_input: Any,
+     *,
+-    db: Any,
++    session_factory: Any | None = None,
+     user_id: UUID,
+     config: dict[str, Any],
+     dispatcher: GraphPersistenceDispatcher | None = None,
+@@ -88,25 +80,36 @@ async def ainvoke_with_crud_message_persistence(
+     with span("graph.invoke"):
+         state = await graph.ainvoke(graph_input, config=config)
+     if isinstance(state, dict):
+-        with span("persistence.link_task"):
+-            await _link_graph_task(db, state, agent_run_id or state.get("run_id"))
+-        persistence = dispatcher or GraphPersistenceDispatcher.default()
+-        context = GraphPersistenceContext.from_state(
+-            state,
+-            user_id=user_id,
++        await _persist_state(
++            state, user_id=user_id, cursor=GraphPersistenceCursor(),
++            persistence=dispatcher or GraphPersistenceDispatcher.default(),
++            session_factory=session_factory, agent_run_id=agent_run_id,
+             trigger_message_id=trigger_message_id,
+-            agent_run_id=agent_run_id or state.get("run_id"),
+         )
+-        with span("persistence.state_delta"):
+-            await persistence.persist_state_delta(
+-                db,
+-                state,
+-                GraphPersistenceCursor(),
+-                context=context,
+-            )
+     return state
+ 
+ 
++async def _persist_state(
++    state, *, user_id, cursor, persistence, session_factory,
++    agent_run_id, trigger_message_id,
++):
++    # Graph execution and each yielded state own no service DB connection.
++    # Existing handlers have idempotent, individually committed writes; this
++    # scope does not imply atomicity across all graph events/checkpoints.
++    context = GraphPersistenceContext.from_state(
++        state, user_id=user_id, trigger_message_id=trigger_message_id,
++        agent_run_id=agent_run_id or state.get("run_id"),
++    )
++    async with short_session(session_factory) as db:
++        with span("persistence.link_task"):
++            await _link_graph_task(db, state, agent_run_id or state.get("run_id"))
++        with span("persistence.state_delta"):
++            result = await persistence.persist_state_delta(db, state, cursor, context=context)
++        # Flush any final relationship changes that a handler leaves pending.
++        await db.commit()
++        return result.cursor
++
++
+ __all__ = [
+     "ainvoke_with_crud_message_persistence",
+     "astream_with_crud_message_persistence",
+diff --git a/src/app/services/run_service.py b/src/app/services/run_service.py
+index 8b8d39b..2be2506 100644
+--- a/src/app/services/run_service.py
++++ b/src/app/services/run_service.py
+@@ -423,15 +423,23 @@ class RunService:
+         await db.refresh(task)
+         # rollback은 ORM 속성을 expire하므로 취소/오류 처리에 쓸 ID는 평범한 값으로 보존합니다.
+         execution_run_id = run.run_id
++        execution_task_id = task.task_id
++        execution_project_id = session.project_id
++        execution_checkpoint_id = task.checkpoint_run_id
++        execution_trigger_id = run.trigger_message_id
+         await TaskEventService.append(
+             db,
+             task_id=task.task_id,
+             run_id=execution_run_id,
+             event_type="task.started" if payload.command is None else "task.resumed",
+             payload={"status": TaskStatus.RUNNING.value},
++            commit=False,
+         )
++        # End preparation without refresh (which would autobegin a new read
++        # transaction). Only plain values cross the graph execution boundary.
++        await db.commit()
+ 
+-        token_events = LLMTokenEventBuffer(task_id=task.task_id, run_id=execution_run_id)
++        token_events = LLMTokenEventBuffer(task_id=execution_task_id, run_id=execution_run_id)
+         token_events.start()
+         try:
+             try:
+@@ -440,8 +448,8 @@ class RunService:
+                         state = await RunService._run_cancellable(
+                             execution_run_id,
+                             ainvoke_resume(
+-                                db, user_id=user_id, session_id=session_id,
+-                                checkpoint_run_id=task.checkpoint_run_id,
++                                user_id=user_id, session_id=session_id,
++                                checkpoint_run_id=execution_checkpoint_id,
+                                 agent_run_id=execution_run_id,
+                                 command=payload.command,
+                                 callbacks=[token_events],
+@@ -454,10 +462,10 @@ class RunService:
+                         state = await RunService._run_cancellable(
+                             execution_run_id,
+                             ainvoke_user_turn(
+-                                db, user_id=user_id, project_id=session.project_id,
+-                                session_id=session_id, run_id=run.run_id,
++                                user_id=user_id, project_id=execution_project_id,
++                                session_id=session_id, run_id=execution_run_id,
+                                 user_request=user_request_from_messages(payload.input.messages),
+-                                trigger_message_id=run.trigger_message_id,
++                                trigger_message_id=execution_trigger_id,
+                                 callbacks=[token_events],
+                             ),
+                             observers=(heartbeat, token_events.consumer),

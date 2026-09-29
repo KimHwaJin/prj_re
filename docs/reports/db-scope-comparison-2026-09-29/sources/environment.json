@@ -1,0 +1,35 @@
+{
+  "before_commit": "64ad96f053f538bae798257743945752cb148f38",
+  "after_commit": "4bb5c2fc3dcb4475525ff288eab8b0b887b37525",
+  "python": "3.11.15 (main, Jun 23 2026, 15:46:51) [Clang 22.1.3 ]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "packages": {
+    "fastapi": "0.141.1",
+    "uvicorn": "0.52.4",
+    "sqlalchemy": "2.0.52",
+    "asyncpg": "0.31.0",
+    "psycopg": "3.3.4",
+    "psycopg-pool": "3.3.1",
+    "langchain": "1.3.17",
+    "langgraph": "1.2.11",
+    "langgraph-checkpoint-postgres": "3.1.2",
+    "httpx": "0.28.1",
+    "pydantic": "2.13.4"
+  },
+  "database_image": "postgres:17",
+  "docker_engine_cpus": 14,
+  "docker_engine_memory_bytes": 16748445696,
+  "measured_server_processes": 1,
+  "dedicated_cpu_reservation": false,
+  "measurement_date": "2026-09-29",
+  "timezone": "Asia/Seoul",
+  "raw_inputs": [
+    "main final campaign, 60 trials",
+    "sensitivity campaign, 20 trials"
+  ],
+  "excluded": [
+    "pilot",
+    "shared HTTP pool preliminary run",
+    "HTTP client calibration"
+  ]
+}

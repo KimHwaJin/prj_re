@@ -1,0 +1,21 @@
+{
+  "counts": {
+    "blocks": 26,
+    "charts": 3,
+    "html": 0,
+    "metrics": 0,
+    "tables": 6
+  },
+  "html": "report.html",
+  "ok": true,
+  "title": "Agent DB 연결 수명 개선 — 직전·현재 버전 부하 비교",
+  "verification": "structural_only",
+  "browser_verification": "not_completed",
+  "browser_failures": [
+    "No bundled Chromium headless-shell available",
+    "Installed Chrome static chart extraction timed out at 11210ms and 26210ms",
+    "CUA disallowed file: URL; no workaround attempted"
+  ],
+  "primary_deliverable": "report.md",
+  "numeric_validation": "data/independent-validation.json"
+}

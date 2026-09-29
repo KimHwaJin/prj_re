@@ -1,0 +1,81 @@
+{
+  "assessment": "Share with caveats",
+  "trials": 80,
+  "paired_conditions": 20,
+  "scenario_attempts": 2852,
+  "http_requests": 145563,
+  "headline_spot_checks": [
+    {
+      "case": "flow-100",
+      "version": "after",
+      "worker_connection_seconds_per_run": 0.18058191572898066,
+      "background_crud_server_p95_ms": 109.18791708536446,
+      "scenario_mean_ms": 43354.69441399211
+    },
+    {
+      "case": "flow-100",
+      "version": "before",
+      "worker_connection_seconds_per_run": 0.300660751767864,
+      "background_crud_server_p95_ms": 156.31516696885228,
+      "scenario_mean_ms": 48412.84069083631
+    },
+    {
+      "case": "mixed-100",
+      "version": "after",
+      "worker_connection_seconds_per_run": 0.11029075365862809,
+      "background_crud_server_p95_ms": 42.8207500372082,
+      "scenario_mean_ms": 29410.855298498645
+    },
+    {
+      "case": "mixed-100",
+      "version": "before",
+      "worker_connection_seconds_per_run": 2.131206174416002,
+      "background_crud_server_p95_ms": 247.0694580115378,
+      "scenario_mean_ms": 30231.742584775202
+    }
+  ],
+  "model_run_join_misses": 0,
+  "negative_time_decomposition": [
+    {
+      "case": "flow-30",
+      "version": "after",
+      "repeat": 1,
+      "run_id": "4b50705a-3859-4f0c-bfbf-1b52d8531ebe",
+      "other_execution_ms": -6.791917230263351,
+      "observation_ms": 306.9216671289207
+    },
+    {
+      "case": "flow-30",
+      "version": "after",
+      "repeat": 1,
+      "run_id": "6bffa795-976b-4b6f-bec8-de817286320d",
+      "other_execution_ms": -2.8142918907254852,
+      "observation_ms": 549.6754578708413
+    },
+    {
+      "case": "flow-30",
+      "version": "after",
+      "repeat": 1,
+      "run_id": "7c695df8-d59f-4e06-beef-795067d985a1",
+      "other_execution_ms": 88.87599999999999,
+      "observation_ms": -35.43274998085168
+    }
+  ],
+  "decomposed_stages": 4360,
+  "time_decomposition_caveat": "Three sub-36ms negative residuals observed and retained. DB transaction-start wall timestamps and application monotonic timings have different boundaries; phase residuals are approximate, not exact tracing. Headline HTTP/pool timers are unaffected.",
+  "checks": [
+    "two distinct repeats for every version/condition",
+    "equal workload settings across A/B",
+    "all completion/error/request counts independently recalculated",
+    "all scenario means independently recalculated",
+    "100-user headline pool occupancy and p95 independently recalculated",
+    "Run/model/stage join coverage; small mixed-clock time residuals retained and disclosed",
+    "all 60 normal-condition trials completed with ownership returned"
+  ],
+  "caveats": [
+    "two repeats: small latency differences are not statistically established",
+    "016 incremental comparison, not all-refactor uplift",
+    "local burst load with mock LLM, no actual Executor or Kubernetes",
+    "checkpoint pool occupancy and database CPU not measured"
+  ]
+}

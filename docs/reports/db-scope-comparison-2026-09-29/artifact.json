@@ -1,0 +1,1292 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Agent DB 연결 수명 개선 — 직전·현재 버전 부하 비교",
+    "generatedAt": "2026-09-29T02:28:38.458277+00:00",
+    "description": "응답시간·연결 점유량·큐 대기·오류를 구분한 기술 검토",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Agent DB 연결 수명 개선 — 직전·현재 버전 부하 비교"
+      },
+      {
+        "id": "summary",
+        "type": "markdown",
+        "body": "## 결론: 연결 낭비는 줄었고, 전체 처리속도는 별도로 봐야 한다\n\n**이번 변경의 직접적인 성과는 LLM을 기다리는 동안 서비스 DB 연결을 계속 점유하던 경로를 제거한 것이다.** 100명 초기 Agent·CRUD 혼합 조건에서 Worker의 Run당 연결 점유량은 **2.131 → 0.110 connection-seconds**, **94.8% 감소**했다. 같은 조건의 백그라운드 CRUD 서버 p95는 **247.1 → 42.8ms**다.\n\n반면 전체 4단계 HITL 시나리오 평균은 **48.41 → 43.35초**다. 모델 대기·실행 자리 4개에 대한 큐 대기·폴링 발견 지연은 이 변경으로 없어지지 않는다. 따라서 연결 점유 감소율을 그대로 처리량 향상률이라고 말할 수 없다.\n\n연결을 4개로 제한하고 LLM 1회 대기를 5초로 늘린 민감도 실험에서는 **직전 0/20건, 현재 20/20건 완료**했다. 이 조건은 운영 권장값이 아니라 연결 고갈 시 동작을 비교하기 위한 경계 실험이다. 아래에 실패·미완료와 정상 조건을 분리했다.\n\n최종 분석은 **80회 실행, 2,852개 시나리오, 145,563건 HTTP 요청**을 포함한다. 실제 Kubernetes/실제 LLM 용량 검증은 아니다. 과거 다른 조건에서 측정한 17초 등의 수치와 직접 비교하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "scope",
+        "type": "markdown",
+        "body": "## 무엇을 같은 조건으로 비교했나\n\n비교 대상은 **64ad96f → 4bb5c2f**, 즉 전체 리팩터링 이전이 아니라 **DB 트랜잭션 수명 분리 한 항목의 전후**다. 두 버전 모두 이미 동시 실행·세션 소유권·종료 보호 기능을 가진 상태다.\n\n- 각 사용자 수 1·10·30·50·100명에서 별도 초기화한 DB·신규 단일 서버 프로세스로 실행했다. 조건별 before→after / after→before 두 번씩 측정했다.\n- 기본은 실행 자리 4개, 서비스 DB 연결 5개, overflow 0이다. 별도 PostgreSQL checkpoint 풀은 최대 4개다. 기존 배포 설정은 변경하지 않았다.\n- 실제 HTTP, FastAPI, API 인증·CRUD, PostgreSQL Run queue, Worker, 분석 그래프, 체크포인트, HITL을 실행했다. 기존 LLM Mock만 사용했고 Executor는 호출하지 않았다. Redis 소비자·별도 Workflow 카탈로그 DB 저장·산출물 생성은 제외했다.\n- 초기 혼합 부하는 LLM 1초/회, 전체 HITL은 0.1초/회다. 혼합 조건은 추가로 GET 프로젝트·POST 세션을 초당 20건(50:50) 제출했다.\n- 상태조회는 0.5초 간격, HITL 응답 전에는 0.2초 대기했다. 사용자는 독립 계정·독립 HTTP 풀을 사용한다. 한 번의 동시 burst이며 장시간 반복 운영을 재현한 것은 아니다.\n\n**p95는 성공 요청 100개 중 약 95개가 이 시간 이내에 끝났다는 뜻이다.** 실패 수는 따로 표시한다. **connection-seconds는 연결을 빌린 시간의 합**이다. 예를 들어 연결 4개를 각각 1초 빌리면 4 connection-seconds이며 DB CPU 4초를 뜻하지 않는다. 아래 지표는 서비스 DB 풀 기준이고 checkpoint 풀은 별도다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "connection",
+        "type": "markdown",
+        "body": "## 연결 점유 감소가 가장 명확한 개선이다\n\n100명에서 Run당 Worker 연결 점유량은 **2.131 → 0.110초**다. 그래프 처리에 불필요했던 모델 대기 구간이 빠졌다. 전체 서비스 풀의 반복당 누적 점유량도 **253.5 → 74.3 connection-seconds**로 바뀌었다.\n\n아래는 사용자 수별 Run당 점유량이다. Worker 지표에는 큐 조회·취소 감시·heartbeat도 포함한다. 현재도 DB 기록과 감시는 계속 수행하므로 0이 되어야 하는 값은 아니다. 물리 연결을 매번 새로 만드는 것이 아니라 기존 공용 풀에 빨리 반환한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "connection-comparison-block",
+        "type": "chart",
+        "chartId": "connection-comparison",
+        "layout": "full"
+      },
+      {
+        "id": "api",
+        "type": "markdown",
+        "body": "## 같은 Agent 대기 중에 CRUD가 쓸 수 있는 연결이 늘어난다\n\n100명 초기 혼합 조건의 백그라운드 CRUD 서버 p95는 **247.1 → 42.8ms**이고, 클라이언트 p95는 **248.4 → 45.7ms**다. 이 결과는 모델 처리속도 자체의 변화가 아니라 공유 DB 연결 경쟁이 달라진 결과로 해석해야 한다.\n\n연결이 충분하거나 사용자가 적으면 이미 대기가 짧아 차이가 작거나 반대로 흔들릴 수 있다. 두 번의 반복만으로 작은 차이의 통계적 유의성을 주장하지 않는다. 표의 정상 조건과 뒤의 고갈 조건을 함께 봐야 한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "crud-during-agent-block",
+        "type": "chart",
+        "chartId": "crud-during-agent",
+        "layout": "full"
+      },
+      {
+        "id": "mixed-table-block",
+        "type": "table",
+        "tableId": "mixed-table",
+        "layout": "full"
+      },
+      {
+        "id": "flow",
+        "type": "markdown",
+        "body": "## 실제 4단계 흐름에서는 큐와 저장 비용도 남는다\n\n초기 요청 → 데이터 선택 → 분석 목적 입력 → 워크플로우 후보 선택 → **워크플로우 승인 대기**까지 실행했다. 사용자당 Run은 4개이며 실제 Mock LLM 호출도 총 4회다. 이 조건의 LLM 설정은 0.1초/회다. 승인 응답을 보내거나 Executor를 제출한 테스트가 아니다.\n\n100명 평균 시나리오 완료시간은 **48.41 → 43.35초**, 성공 시나리오 p95는 **51.96 → 47.02초**다. 아래 표는 모든 사용자 수를 함께 보여준다. 빠른 Mock만 사용하면 남은 API·checkpoint·저장·큐 비용의 비중이 커진다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "flow-table-block",
+        "type": "table",
+        "tableId": "flow-table",
+        "layout": "full"
+      },
+      {
+        "id": "queue-headline",
+        "type": "markdown",
+        "body": "현재 100명 HITL 시나리오의 평균 **43.35초**를 사용자 기준으로 더하면, **큐 대기 39.20초**, 실제 Mock LLM **0.40초**, 기타 실행 **1.17초**, 단계별 관찰·HTTP **1.53초**다. 나머지 **1.05초**는 세션 생성과 단계 사이 사용자 대기 등의 단계 밖 시간이다.\n\n즉 현재 이 조건에서는 **전체 평균의 약 90.4%가 큐 대기**다. LLM 응답이 0.1초라고 해서 100명의 네 단계가 바로 끝나지는 않는다. 같은 네 실행 자리를 모든 세션이 나눠 쓴다. 이는 이번 조건에서 관측한 지연 구성이고 모든 사용자 수·실제 모델에서 같은 비율이라는 뜻은 아니다.\n\n큐는 기다린 장소이고 원인을 전부 설명하는 말은 아니다. 한 Run이 DB/결과 저장/감시 정리 등에 오래 걸리면 다음 Run이 자리를 얻는 시간도 늦어진다. 실행 자리 제한과 자리당 처리 비용을 같이 봐야 하며, 지금 수치만 보고 무조건 자리를 늘리는 결론은 내리지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "queue",
+        "type": "markdown",
+        "body": "## LLM이 빨라도 실행 자리를 기다리는 시간은 별개다\n\n다음 그림은 100명 전체 HITL의 **각 Run이 시작되기 전 큐 대기**다. 한 세션 전체가 자리를 계속 점유하는 구조는 아니지만, 매 단계마다 최대 4자리 중 하나를 얻어야 한다. 사용자가 많으면 짧은 그래프라도 이 대기가 합쳐진다.\n\n표의 ‘기타 실행’은 DB/체크포인트/그래프 관리/결과 저장/감시 정리 등을 모두 포함한다. SQL 실행시간만을 뜻하지 않는다. ‘관찰·HTTP’에는 0.5초 폴링으로 완료를 발견하기까지의 시간도 포함한다. 각각 동일 Run ID를 연결해 계산했으며 분위수끼리 빼지 않았다. **시간 분해는 근사치**다. DB의 transaction 시작 시각(now), 앱 wall clock, 모델 monotonic timer의 경계가 달라 전체에서 3건의 음수 잔여시간(최대 약 36ms)이 관측됐으며 값을 잘라내지 않고 원본에 보존했다. 초 단위 큐 대기와 달리 수십 ms 차이는 이 분해로 단정하지 않는다. ‘그래프 전체(참고)’는 그래프 ainvoke 자체의 시간으로 LLM을 이미 포함한다. 분해 항목에 다시 더하면 이중 계산이다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "queue-by-stage-block",
+        "type": "chart",
+        "chartId": "queue-by-stage",
+        "layout": "full"
+      },
+      {
+        "id": "stage-table-block",
+        "type": "table",
+        "tableId": "stage-table",
+        "layout": "full"
+      },
+      {
+        "id": "resource-details",
+        "type": "markdown",
+        "body": "## 남은 비용을 판단하기 위한 보조 계측\n\n다음은 100명 초기 혼합과 전체 HITL의 서비스 DB·프로세스 지표다. 풀 획득 시간은 연결 생성이 발생하면 그 비용도 포함하고, SQL 횟수는 상태조회·취소 감시·소유권 관리까지 포함한다. Run당 쿼리가 모두 그래프가 직접 수행한 쿼리라는 뜻은 아니다.\n\nCPU는 서버 단일 프로세스의 CPU seconds / 실험 seconds로 계산한 코어 사용량이다. DB 컨테이너 CPU·Pod CPU 제한·Kubernetes 자동 확장 지표와 같지 않다. 이벤트 루프 지연은 50ms sampler의 예정 시점 대비 초과 시간이며, 이 값 하나로 모든 동기 블로킹 부재를 입증하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "resource-table-block",
+        "type": "table",
+        "tableId": "resource-table",
+        "layout": "full"
+      },
+      {
+        "id": "crud-alone",
+        "type": "markdown",
+        "body": "## CRUD 자체를 최적화한 변경은 아니다\n\nCRUD만 수행하는 대조 실험은 사용자당 18건의 생성·조회·수정·삭제 요청을 보냈다. 100명 서버 p95는 **591.4 → 561.5ms**다. 이 경로의 업무 SQL은 이번 변경으로 바뀌지 않았다. 작은 증감은 두 번의 반복만으로 개선·회귀라고 단정하기 어렵다.\n\n이 대조군은 중요한 제한이다. 이번 변경이 없는 경로에서도 로컬 실행 편차가 존재하므로, Agent 조건의 작은 차이도 같은 기준으로 해석했다. 사용자가 늘면서 생기는 CRUD 자체의 연결 대기나 쿼리 비용까지 해결했다고 주장하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "crud-table-block",
+        "type": "table",
+        "tableId": "crud-table",
+        "layout": "full"
+      },
+      {
+        "id": "code",
+        "type": "markdown",
+        "body": "## 이전에 무엇이 문제였고 코드는 어떻게 바뀌었나\n\n**문제 1 — commit을 했어도 바로 이어진 refresh가 새 트랜잭션을 열었다.** `TaskEventService.append()`는 commit 뒤 refresh를 수행했다. Run 실행 준비에서 이 함수를 호출한 다음 그래프로 넘어가므로, 시작 이벤트는 저장됐어도 새 읽기 트랜잭션의 연결을 가진 채 모델을 기다릴 수 있었다.\n\n**문제 2 — 프로젝트 설정 조회와 그래프 실행이 같은 서비스 세션을 공유했다.** 초기 요청의 프로젝트 prompt 조회, 오래된 checkpoint의 prompt 보완 조회 뒤에 열린 세션을 `ainvoke`로 넘겼다. 스트리밍도 결과 저장에 사용한 세션을 다음 상태/소비자 대기까지 이어갔다.\n\n현재는 다음처럼 경계를 나눈다.\n\n1. 실행에 필요한 ID를 일반 값으로 보존하고, 시작 이벤트는 `commit=False`로 추가한 뒤 준비 트랜잭션을 명시적으로 commit한다. 그 뒤 refresh하지 않는다.\n2. 프로젝트 설정은 짧은 전용 세션에서 읽고 닫는다. 오래된 checkpoint의 `aupdate_state`보다 먼저 반환한다.\n3. 그래프 함수에는 열린 `db`를 전달하지 않는다. 기존 공용 풀을 사용하는 factory만 필요할 때 전달한다.\n4. 결과가 나오면 별도 짧은 세션에서 Task 연결·메시지·로그를 기록한다. 스트리밍은 이 세션을 닫은 뒤 yield/다음 상태 대기를 한다.\n5. 취소가 반복돼도 close/rollback 완료를 관찰한다. 최종 Run 상태 저장에서는 소유권과 취소 여부를 다시 확인한다.\n\n**세션 객체·연결 풀·실제 빌린 연결은 서로 다르다.** Worker의 coordinator 세션 객체는 남아 있어도 모델 대기 중 트랜잭션이 없으면 연결을 점유하지 않는다. 풀을 요청마다 새로 만드는 변경도 아니며, 같은 세션의 사용자 입력 제한을 푸는 변경도 아니다.",
+        "sourceId": "code"
+      },
+      {
+        "id": "sensitivity",
+        "type": "markdown",
+        "body": "## 연결 수와 LLM 지연을 바꾸면 무엇이 달라지나\n\n아래는 전체 조합을 전수 탐색한 결과가 아니라 원인을 확인하기 위한 선택된 민감도 조건이다. 모델이 느릴수록 예전 구조에서 빌린 연결이 오래 묶인다. 반대로 연결이 충분하면 응답시간 차이가 작아도 누적 점유량은 줄 수 있다. 실행 자리 1개 조건은 큐 처리 한도가 별도 문제임을 확인하기 위한 것이다.\n\n완료하지 못한 실험의 짧은 성공 평균을 정상 실험과 비교하지 않는다. 연결 고갈로 감시 작업이 실패하면 기존 소유권 보호가 복구 필요 상태를 유지할 수 있으며, 이를 무리하게 자동 재실행하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "sensitivity-table-block",
+        "type": "table",
+        "tableId": "sensitivity-table",
+        "layout": "full"
+      },
+      {
+        "id": "failure-mechanism",
+        "type": "markdown",
+        "body": "### 작은 풀에서 관측한 중단의 순서\n\n직전 버전의 연결 4개/실행 4자리 조건에서는 다음 순서가 실제 로그와 DB 상태에 남았다.\n\n1. Run들이 모델을 기다리는 동안 서비스 연결을 점유한다.\n2. 취소 감시가 조회용 연결을 요청하지만 풀에 여유가 없어 `QueuePool ... size 4 overflow 0 ... timeout 2.00`이 발생한다.\n3. `cancel_watch_failed`가 실행 건전성을 실패로 표시한다. 다른 진행 중 실행도 `session_execution_interrupted_or_uncertain`으로 보호되고, Worker는 새 Run 점유를 중단한다.\n4. 완료 여부가 불확실한 실행은 소유권을 유지한다. DB의 `running`은 그 시점에 LLM이 계속 실행 중이라는 증거가 아니다. 실제 그래프는 `CancelledError`로 반환했고, 상태는 복구가 필요한 채 남았다.\n5. 후속 pending Run이 시작되지 않아 45초 시나리오 기한을 넘겼다. 두 번 합쳐 직전 **0/20 완료**, 복구 필요 Task **8개**였다. 현재 동일 조건은 **20/20 완료**, 복구 필요 Task **0개**였다.\n\n**사용자가 cancel API를 호출한 실험이 아니다.** 일반 실행 중 취소 여부를 확인하는 감시가 DB 연결을 얻지 못한 것이다. 정상 HITL interrupt와도 다른 중단이다. 현재의 짧은 transaction은 이 실험에서 연결 고갈의 원인을 제거했고, 소유권 보호/자동 복구 정책 자체를 완화한 것은 아니다.\n\n직전 실패 실험은 Worker가 멈춘 뒤에도 상태조회·백그라운드 CRUD를 계속한다. 그때의 성공 요청 p95나 Run당 점유량이 낮아 보여도 정상 완료한 현재 버전보다 성능이 좋다는 뜻은 아니다. 미완료율·복구 상태가 우선이다. 상세 로그 발췌와 Run 상태는 data/failure-evidence.json에 보존했다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "fast-tradeoff",
+        "type": "markdown",
+        "body": "## 작은 빠른 요청에서는 오히려 비용이 늘어나는 구간도 있다\n\n10명·LLM 0.1초/회 조건의 사용자 평균은 **1.01 → 1.05초**, 마지막 사용자까지 끝나는 실험 시간은 **1.24 → 1.72초**였다. 마지막 완료시간만 보면 악화가 더 크게 보이므로 평균과 함께 표시했다.\n\n실제 Run 실행 평균은 **301.2 → 327.7ms**로 늘었다. 이 조건의 Worker SELECT 횟수는 반복당 **256 → 287회**였다. 새 저장 세션은 이전 ORM 세션에 있던 객체를 다시 조회하는 비용이 있으며, 소스 변경과 조회 증가가 같은 방향이다. 다만 쿼리별 attribution까지 계측한 것은 아니므로 증가한 모든 시간을 특정 SELECT 하나에 배분하지 않는다.\n\n완료 시각이 조금 뒤로 밀리면 0.5초 주기의 다음 상태조회에서야 완료를 발견할 수 있다. 이 실험에서도 현재 버전은 상태조회 횟수가 늘었다. 따라서 DB 연결을 적게 점유하게 만든 변경이 **모든 조건에서 더 빠르다는 뜻은 아니다.** 짧은 transaction 경계는 유지하면서 불필요한 재조회·개별 commit 비용을 줄이는 것이 후속 검토 방향이다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "limits",
+        "type": "markdown",
+        "body": "## 검증한 것과 아직 말할 수 없는 것\n\n**강하게 확인한 부분:** 같은 commit 차이·같은 Mock·실제 API/DB/Worker에서 연결 점유 구간이 제거됐고, 실제 체크포인트를 사용한 초기 호출과 HITL 흐름을 통과했다. 원본 요청·checkout/checkin·SQL·Run 상태를 보존해 지표를 재계산할 수 있다.\n\n**제한:** 조건별 반복은 2회다. 작은 시간 차이의 통계적 유의성, Kubernetes에서의 최대 수용 사용자, 실제 LLM 처리량, 일주일짜리 Executor 완료, 장시간 메모리 누수/soak는 검증하지 않았다. CPU·메모리가 전용 예약된 호스트도 아니다. 빠른 LLM 조건에서 DB/그래프 오버헤드가 더 두드러질 수 있다.\n\n**측정 오염을 보정했다:** 예비 공유 HTTP 연결 풀에서 클라이언트 지연이 서버보다 크게 나타나 사용자별 풀로 바꿨다. 예비 수치는 최종 비교에서 제외했다. 현재 보고서의 서버 시간과 클라이언트 시간은 같은 요청에서 별도로 기록했다.\n\n**원자성 문제와는 별개다:** 기존 CRUD handler의 개별 commit과 멱등 정책은 유지한다. checkpoint와 모든 CRUD 저장을 하나의 원자적 transaction으로 바꾼 것은 아니다. 기존 공개 API 계약·DB schema·운영 풀 크기를 바꾸지 않았다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "history",
+        "type": "markdown",
+        "body": "## 이번 결과와 이전 리팩터링의 관계\n\n다음은 이미 구현된 구조 변화다. 이번 부하 실험의 두 비교 버전 모두 001~015를 포함하므로, 아래 성과를 이번 A/B 개선율에 더하지 않는다. 이전 검증 기록과 이번 실측을 구분한다.\n\n| 영역 | 이전 문제 | 현재 구조 | 이번 보고서에서의 판정 |\n|---|---|---|---|\n| 실행 정리·취소 (001/012) | 감시 정리 또는 동기 I/O의 종료가 불확실하면 Run 진행이 막힐 수 있음 | 자식 작업 종료를 관찰하고 불확실 상태는 복구 필요로 보호 | 정상 부하의 완료 여부 관찰. 과거 버그 제거율의 A/B는 아님 |\n| 설정·기동 (002/007) | 여러 설정 진입점·불필요 Azure 설정 | 중앙 설정 snapshot, config > env > 기본값, Azure 제거 | 동일 설정으로 두 버전 주입. 실제 Gaia 원본 통합은 별도 |\n| 자원 수명 (004) | 그래프/체크포인터 자원을 호출마다 재조립하는 비용 | 프로세스 런타임 단위 수명·재사용 | 두 버전 공통. checkpoint 풀 점유 수치는 별도 미계측 |\n| Agent 구성·비동기 (005~012) | 역할·프롬프트·workflow 자산 분산, 동기 LLM 호출 | agent_service 업무 패키지, 역할별 create_agent·프롬프트, 공통 미들웨어·ainvoke 경로 | 실제 분석 그래프+Mock 경로 검증. 모든 파일 I/O의 native async 전환은 아님 |\n| 실행 자리 (013) | 실행기 하나가 현재 Run 반환까지 다음 Run을 시작하지 않음 | 프로세스당 제한된 여러 Run 동시 실행, 세션 입력 제한 유지 | 두 버전 모두 4자리. 슬롯 증가 효과를 016 성과로 계산하지 않음 |\n| 실행 소유권 (014) | API Run과 Executor 이벤트의 공통 실행 배제 경계 부족 | 공통 PostgreSQL 소유권, 불확실 종료 시 자동 탈취 금지 | 정상 실험의 소유권 반환 확인. 실제 Redis·Executor 동시 경합은 이번 범위 밖 |\n| 종료 처리 (015) | 종료 중 새 점유·기존 실행 정리의 순서 문제 | 새 점유 중지, 진행 중 호출 drain, 불확실 종료 보호 | 매 trial 프로세스 종료. 이번 측정은 Kubernetes rolling 검증이 아님 |\n| DB 수명 (016) | 열린 읽기 transaction이 모델/그래프 대기까지 연결 점유 | 조회·저장 각각 짧은 세션, 모델 대기 전에 풀 반환 | **이번에 같은 조건으로 직접 비교한 변경** |\n\n이전 016 구현 시 전체 회귀는 355 passed, 2 subtests passed였으며 기존 durability 경고 43개가 있었다. 이것은 당시 검증 기록이고 이번 80회 부하 실험을 355개의 새 테스트로 계산하지 않는다. 상세 변경·검증 기록은 docs/improvements/001~016에 보존돼 있다.\n\n현재도 다중 업무 Agent registry, project_memory의 실제 저장, 운영 복구 관리자 API, 실제 Gaia 템플릿·Kubernetes 검증 등은 별도 후속 범위다. 디렉터리 재배치나 경계 분리가 곧 이 기능들의 구현 완료를 뜻하지 않는다."
+      },
+      {
+        "id": "next",
+        "type": "markdown",
+        "body": "## 다음 작업은 전체 재작성보다 남은 비용을 분리하는 것이다\n\n1. **이번 연결 수명 개선은 유지한다.** 효과를 전체 응답시간만으로 평가하면 줄어든 DB 점유 여유를 놓친다. 운영에는 API p95/오류율과 함께 서비스 풀 점유·획득 시간·큐 대기를 관찰할 필요가 있다.\n2. **큐 대기는 실행 자리 수와 요청 유입량 문제로 따로 다룬다.** DB 연결 수가 충분하다는 확인 없이 자리만 늘리지 않는다. CPU 기반 자동 확장만으로 LLM 대기/큐 길이에 맞는 확장이 일어난다고 보장할 수 없다.\n3. **빠른 Mock에서도 남는 기타 실행 시간을 더 분해한다.** 결과 저장의 query/commit/refresh 횟수, 체크포인트 I/O, 상태 조회·취소 감시의 빈도를 우선 확인한다. 이번 결과만으로 특정 SQL 하나를 다음 병목이라고 확정하지 않는다.\n4. **실제 프론트 폴링/사용자 대기를 넣은 지속 부하를 후속 검증한다.** 이번 독립 burst의 수치로 운영 SLO나 최대 수용 인원을 확정하지 않는다.\n5. **운영 복구 관리자 API는 별도 후속 항목으로 유지한다.** 연결 점유 개선이 불확실 실행의 복구 절차를 대신하지 않는다.\n\n남은 질문은 실제 Pod 자원 제한에서의 적정 실행 자리/풀 조합, 사용 중인 프론트 조회 빈도, 실제 모델 응답 분포, 장시간 운영 시 큐 안정성이다. 이 보고서는 그 판단을 위한 전후 근거이며 현재 서비스의 모든 병목이 해결됐다는 판정은 아니다.",
+        "sourceId": "measurements"
+      }
+    ],
+    "charts": [
+      {
+        "id": "connection-comparison",
+        "title": "초기 혼합 부하의 Run당 서비스 DB 연결 점유",
+        "type": "bar",
+        "dataset": "mixed",
+        "sourceId": "measurements",
+        "layout": "full",
+        "encodings": {
+          "x": {
+            "field": "users_label",
+            "type": "ordinal",
+            "label": "비교 조건"
+          },
+          "y": {
+            "field": "worker_hold_seconds_per_run",
+            "type": "quantitative",
+            "label": "connection-seconds / Run"
+          },
+          "color": {
+            "field": "version",
+            "type": "nominal",
+            "label": "버전"
+          }
+        },
+        "yAxisTitle": "connection-seconds / Run",
+        "valueFormat": "number"
+      },
+      {
+        "id": "crud-during-agent",
+        "title": "Agent 실행 중 백그라운드 CRUD 서버 p95",
+        "type": "bar",
+        "dataset": "mixed",
+        "sourceId": "measurements",
+        "layout": "full",
+        "encodings": {
+          "x": {
+            "field": "users_label",
+            "type": "ordinal",
+            "label": "비교 조건"
+          },
+          "y": {
+            "field": "background_crud_server_p95_ms",
+            "type": "quantitative",
+            "label": "ms"
+          },
+          "color": {
+            "field": "version",
+            "type": "nominal",
+            "label": "버전"
+          }
+        },
+        "yAxisTitle": "ms",
+        "valueFormat": "number"
+      },
+      {
+        "id": "queue-by-stage",
+        "title": "100명 HITL의 단계별 평균 큐 대기",
+        "type": "bar",
+        "dataset": "stages100",
+        "sourceId": "measurements",
+        "layout": "full",
+        "encodings": {
+          "x": {
+            "field": "stage_label",
+            "type": "ordinal",
+            "label": "비교 조건"
+          },
+          "y": {
+            "field": "queue_seconds",
+            "type": "quantitative",
+            "label": "초 / Run"
+          },
+          "color": {
+            "field": "version",
+            "type": "nominal",
+            "label": "버전"
+          }
+        },
+        "yAxisTitle": "초 / Run",
+        "valueFormat": "number"
+      }
+    ],
+    "tables": [
+      {
+        "id": "mixed-table",
+        "title": "초기 혼합 부하: 서버 지연·큐 대기·완료율",
+        "dataset": "mixed-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "사용자",
+            "type": "number"
+          },
+          {
+            "field": "server_before",
+            "label": "직전 CRUD p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "server_after",
+            "label": "현재 CRUD p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "queue_before",
+            "label": "직전 큐 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "queue_after",
+            "label": "현재 큐 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "complete",
+            "label": "완료/시도",
+            "type": "text"
+          },
+          {
+            "field": "errors",
+            "label": "HTTP 오류",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "flow-table",
+        "title": "워크플로우 승인 대기까지의 완료시간과 처리량",
+        "dataset": "flow-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "사용자",
+            "type": "number"
+          },
+          {
+            "field": "mean_before",
+            "label": "직전 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "mean_after",
+            "label": "현재 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "p95_before",
+            "label": "직전 p95 초",
+            "type": "number"
+          },
+          {
+            "field": "p95_after",
+            "label": "현재 p95 초",
+            "type": "number"
+          },
+          {
+            "field": "rate_before",
+            "label": "직전 완료/초",
+            "type": "number"
+          },
+          {
+            "field": "rate_after",
+            "label": "현재 완료/초",
+            "type": "number"
+          },
+          {
+            "field": "complete",
+            "label": "완료/시도",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "stage-table",
+        "title": "100명 HITL의 단계 시간 분해(평균 초)",
+        "dataset": "stage-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "stage",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "stage",
+            "label": "단계",
+            "type": "text"
+          },
+          {
+            "field": "version",
+            "label": "버전",
+            "type": "text"
+          },
+          {
+            "field": "queue",
+            "label": "큐",
+            "type": "number"
+          },
+          {
+            "field": "model",
+            "label": "LLM",
+            "type": "number"
+          },
+          {
+            "field": "other",
+            "label": "기타 실행",
+            "type": "number"
+          },
+          {
+            "field": "graph",
+            "label": "그래프 전체(참고)",
+            "type": "number"
+          },
+          {
+            "field": "observation",
+            "label": "관찰·HTTP",
+            "type": "number"
+          },
+          {
+            "field": "client",
+            "label": "단계 전체",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "id": "resource-table",
+        "title": "100명 조건의 보조 계측",
+        "dataset": "resource-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "condition",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "condition",
+            "label": "조건",
+            "type": "text"
+          },
+          {
+            "field": "version",
+            "label": "버전",
+            "type": "text"
+          },
+          {
+            "field": "pool",
+            "label": "평균 점유 연결",
+            "type": "number"
+          },
+          {
+            "field": "acquire95",
+            "label": "연결 획득 p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "sql_per_run",
+            "label": "SQL/Run",
+            "type": "number"
+          },
+          {
+            "field": "sql95",
+            "label": "SQL p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "cpu",
+            "label": "CPU 코어",
+            "type": "number"
+          },
+          {
+            "field": "loop95",
+            "label": "루프 지연 p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "peak",
+            "label": "최대 동시 그래프",
+            "type": "number"
+          }
+        ]
+      },
+      {
+        "id": "crud-table",
+        "title": "CRUD 단독 대조군",
+        "dataset": "crud-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "사용자",
+            "type": "number"
+          },
+          {
+            "field": "before",
+            "label": "직전 서버 p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "after",
+            "label": "현재 서버 p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "client_before",
+            "label": "직전 클라이언트 p95",
+            "type": "number"
+          },
+          {
+            "field": "client_after",
+            "label": "현재 클라이언트 p95",
+            "type": "number"
+          },
+          {
+            "field": "elapsed_before",
+            "label": "직전 전체 초",
+            "type": "number"
+          },
+          {
+            "field": "elapsed_after",
+            "label": "현재 전체 초",
+            "type": "number"
+          },
+          {
+            "field": "errors",
+            "label": "HTTP 오류",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "sensitivity-table",
+        "title": "LLM 지연·풀·실행 자리 민감도",
+        "dataset": "sensitivity-table",
+        "sourceId": "measurements",
+        "layout": "full",
+        "density": "dense",
+        "defaultSort": {
+          "field": "condition",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "condition",
+            "label": "조건",
+            "type": "text"
+          },
+          {
+            "field": "version",
+            "label": "버전",
+            "type": "text"
+          },
+          {
+            "field": "users",
+            "label": "사용자",
+            "type": "number"
+          },
+          {
+            "field": "pool",
+            "label": "풀",
+            "type": "number"
+          },
+          {
+            "field": "slots",
+            "label": "자리",
+            "type": "number"
+          },
+          {
+            "field": "delay",
+            "label": "LLM 초/회",
+            "type": "number"
+          },
+          {
+            "field": "complete",
+            "label": "완료",
+            "type": "text"
+          },
+          {
+            "field": "errors",
+            "label": "HTTP 오류",
+            "type": "number"
+          },
+          {
+            "field": "recovery",
+            "label": "복구 필요 Task",
+            "type": "number"
+          },
+          {
+            "field": "hold",
+            "label": "Worker 연결초/Run",
+            "type": "number"
+          },
+          {
+            "field": "server95",
+            "label": "CRUD 서버 p95 ms",
+            "type": "number"
+          },
+          {
+            "field": "elapsed",
+            "label": "전체 초",
+            "type": "number"
+          }
+        ]
+      }
+    ],
+    "cards": [],
+    "sources": [
+      {
+        "id": "measurements",
+        "label": "격리된 로컬 HTTP·PostgreSQL A/B 측정 및 재현 가능한 집계",
+        "path": "data/summary.json",
+        "query": {
+          "engine": "PostgreSQL + Python instrumentation",
+          "language": "SQL + Python",
+          "description": "scripts/benchmarks/analyze_db_scope.py로 raw-trials.jsonl.gz의 요청·풀·Run 실측을 집계. 예비 측정 제외.",
+          "tables_used": [
+            "public.agent_runs",
+            "public.tasks",
+            "public.session_executions",
+            "public.messages",
+            "public.agent_run_logs"
+          ],
+          "filters": [
+            "before=64ad96f; after=4bb5c2f",
+            "조건별 AB/BA 2회",
+            "성공 응답 분위수와 실패 수 분리",
+            "실제 외부 LLM·Executor 호출 없음"
+          ],
+          "metric_definitions": [
+            "p95/p99=성공 요청의 pooled nearest-rank percentile",
+            "Worker connection-seconds/Run=worker checkout→checkin 누적초 / Run 행 수",
+            "queue_ms=started_at-created_at",
+            "execution_ms=(completed_at 또는 interrupted updated_at)-started_at",
+            "완료율=완료 시나리오 / 시도 시나리오"
+          ],
+          "sql": "-- Actual db_evidence() queries. These retrieve Run/status evidence only.\n-- HTTP/pool/model timers come from db_scope_server.py instrumentation;\n-- analyze_db_scope.py combines both sources. SQL alone does not produce timing percentiles.\nSELECT run_id,session_id,status,created_at,started_at,completed_at,updated_at,attempt_count,failure FROM agent_runs ORDER BY created_at;\nSELECT status,count(*) FROM agent_runs GROUP BY status;\nSELECT count(*) FROM tasks WHERE recovery_required;\nSELECT count(*) FROM session_executions WHERE token IS NOT NULL;\nSELECT count(*) FROM messages;\nSELECT count(*) FROM agent_run_logs;"
+        }
+      },
+      {
+        "id": "code",
+        "label": "016 변경 직전/직후 소스 비교",
+        "path": "sources/code-diff.patch"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-09-29T02:28:38.458277+00:00",
+    "datasets": {
+      "mixed": [
+        {
+          "worker_hold_seconds_per_run": 2.2894073590869084,
+          "background_crud_server_p95_ms": 20.98499983549118,
+          "users_label": "1명",
+          "version": "직전"
+        },
+        {
+          "worker_hold_seconds_per_run": 0.30517212813720107,
+          "background_crud_server_p95_ms": 23.40458403341472,
+          "users_label": "1명",
+          "version": "현재"
+        },
+        {
+          "worker_hold_seconds_per_run": 2.1664087876211853,
+          "background_crud_server_p95_ms": 35.70904186926782,
+          "users_label": "10명",
+          "version": "직전"
+        },
+        {
+          "worker_hold_seconds_per_run": 0.16122370368102565,
+          "background_crud_server_p95_ms": 25.710167130455375,
+          "users_label": "10명",
+          "version": "현재"
+        },
+        {
+          "worker_hold_seconds_per_run": 2.134505645224514,
+          "background_crud_server_p95_ms": 48.25141606852412,
+          "users_label": "30명",
+          "version": "직전"
+        },
+        {
+          "worker_hold_seconds_per_run": 0.14131784221778312,
+          "background_crud_server_p95_ms": 34.564957953989506,
+          "users_label": "30명",
+          "version": "현재"
+        },
+        {
+          "worker_hold_seconds_per_run": 2.1344218363333494,
+          "background_crud_server_p95_ms": 88.74087501317263,
+          "users_label": "50명",
+          "version": "직전"
+        },
+        {
+          "worker_hold_seconds_per_run": 0.12541207342641428,
+          "background_crud_server_p95_ms": 39.73616613075137,
+          "users_label": "50명",
+          "version": "현재"
+        },
+        {
+          "worker_hold_seconds_per_run": 2.131206174416002,
+          "background_crud_server_p95_ms": 247.0694580115378,
+          "users_label": "100명",
+          "version": "직전"
+        },
+        {
+          "worker_hold_seconds_per_run": 0.11029075365862809,
+          "background_crud_server_p95_ms": 42.8207500372082,
+          "users_label": "100명",
+          "version": "현재"
+        }
+      ],
+      "mixed-table": [
+        {
+          "users": 1,
+          "server_before": 21.0,
+          "server_after": 23.4,
+          "queue_before": 0.07,
+          "queue_after": 0.04,
+          "complete": "2/2 → 2/2",
+          "errors": "0 → 0"
+        },
+        {
+          "users": 10,
+          "server_before": 35.7,
+          "server_after": 25.7,
+          "queue_before": 1.81,
+          "queue_after": 1.83,
+          "complete": "20/20 → 20/20",
+          "errors": "0 → 0"
+        },
+        {
+          "users": 30,
+          "server_before": 48.3,
+          "server_after": 34.6,
+          "queue_before": 7.22,
+          "queue_after": 7.32,
+          "complete": "60/60 → 60/60",
+          "errors": "0 → 0"
+        },
+        {
+          "users": 50,
+          "server_before": 88.7,
+          "server_after": 39.7,
+          "queue_before": 12.73,
+          "queue_after": 12.76,
+          "complete": "100/100 → 100/100",
+          "errors": "0 → 0"
+        },
+        {
+          "users": 100,
+          "server_before": 247.1,
+          "server_after": 42.8,
+          "queue_before": 27.0,
+          "queue_after": 26.2,
+          "complete": "200/200 → 200/200",
+          "errors": "0 → 0"
+        }
+      ],
+      "flow-table": [
+        {
+          "users": 1,
+          "mean_before": 3.1,
+          "mean_after": 2.86,
+          "p95_before": 3.34,
+          "p95_after": 2.88,
+          "rate_before": 0.32,
+          "rate_after": 0.35,
+          "complete": "2/2 → 2/2"
+        },
+        {
+          "users": 10,
+          "mean_before": 3.77,
+          "mean_after": 3.86,
+          "p95_before": 4.03,
+          "p95_after": 4.41,
+          "rate_before": 2.48,
+          "rate_after": 2.25,
+          "complete": "20/20 → 20/20"
+        },
+        {
+          "users": 30,
+          "mean_before": 10.0,
+          "mean_after": 10.22,
+          "p95_before": 11.11,
+          "p95_after": 11.09,
+          "rate_before": 2.75,
+          "rate_after": 2.7,
+          "complete": "60/60 → 60/60"
+        },
+        {
+          "users": 50,
+          "mean_before": 18.25,
+          "mean_after": 17.08,
+          "p95_before": 20.62,
+          "p95_after": 18.69,
+          "rate_before": 2.5,
+          "rate_after": 2.63,
+          "complete": "100/100 → 100/100"
+        },
+        {
+          "users": 100,
+          "mean_before": 48.41,
+          "mean_after": 43.35,
+          "p95_before": 51.96,
+          "p95_after": 47.02,
+          "rate_before": 1.91,
+          "rate_after": 2.11,
+          "complete": "200/200 → 200/200"
+        }
+      ],
+      "stages100": [
+        {
+          "name": "flow-100",
+          "label": "before",
+          "stage": "data_selection",
+          "n": 200,
+          "queue_ms": 7586.06577,
+          "execution_ms": 493.883615,
+          "model_ms": 201.7913687368855,
+          "other_execution_ms": 292.09224626311453,
+          "graph_ms": 220.21862750756554,
+          "client_ms": 8733.855587493163,
+          "observation_and_http_ms": 653.9062024931625,
+          "stage_label": "1. 데이터 선택 대기",
+          "version": "직전",
+          "queue_seconds": 7.58606577
+        },
+        {
+          "name": "flow-100",
+          "label": "after",
+          "stage": "data_selection",
+          "n": 200,
+          "queue_ms": 6523.133915,
+          "execution_ms": 423.111175,
+          "model_ms": 201.42539458931424,
+          "other_execution_ms": 221.68578041068577,
+          "graph_ms": 223.12506371177733,
+          "client_ms": 7569.660477717407,
+          "observation_and_http_ms": 623.415387717407,
+          "stage_label": "1. 데이터 선택 대기",
+          "version": "현재",
+          "queue_seconds": 6.523133915000001
+        },
+        {
+          "name": "flow-100",
+          "label": "before",
+          "stage": "analysis_context",
+          "n": 200,
+          "queue_ms": 9365.544285,
+          "execution_ms": 192.981815,
+          "model_ms": 0.0,
+          "other_execution_ms": 192.981815,
+          "graph_ms": 16.151931872591376,
+          "client_ms": 9925.39443916292,
+          "observation_and_http_ms": 366.86833916291937,
+          "stage_label": "2. 분석 목적 대기",
+          "version": "직전",
+          "queue_seconds": 9.365544285
+        },
+        {
+          "name": "flow-100",
+          "label": "after",
+          "stage": "analysis_context",
+          "n": 200,
+          "queue_ms": 8815.688225,
+          "execution_ms": 210.46673,
+          "model_ms": 0.0,
+          "other_execution_ms": 210.46673,
+          "graph_ms": 19.824977688258514,
+          "client_ms": 9333.729878296144,
+          "observation_and_http_ms": 307.57492329614433,
+          "stage_label": "2. 분석 목적 대기",
+          "version": "현재",
+          "queue_seconds": 8.815688225
+        },
+        {
+          "name": "flow-100",
+          "label": "before",
+          "stage": "workflow_candidate_selection",
+          "n": 200,
+          "queue_ms": 12717.59554,
+          "execution_ms": 749.03984,
+          "model_ms": 201.52850088197738,
+          "other_execution_ms": 547.5113391180226,
+          "graph_ms": 234.4741741917096,
+          "client_ms": 13765.871468764963,
+          "observation_and_http_ms": 299.23608876496263,
+          "stage_label": "3. 후보 선택 대기",
+          "version": "직전",
+          "queue_seconds": 12.71759554
+        },
+        {
+          "name": "flow-100",
+          "label": "after",
+          "stage": "workflow_candidate_selection",
+          "n": 200,
+          "queue_ms": 11572.624025,
+          "execution_ms": 636.7874,
+          "model_ms": 201.59450371866114,
+          "other_execution_ms": 435.19289628133885,
+          "graph_ms": 242.36221232335083,
+          "client_ms": 12508.528008746216,
+          "observation_and_http_ms": 299.1165837462162,
+          "stage_label": "3. 후보 선택 대기",
+          "version": "현재",
+          "queue_seconds": 11.572624025
+        },
+        {
+          "name": "flow-100",
+          "label": "before",
+          "stage": "workflow_approval",
+          "n": 200,
+          "queue_ms": 14341.487855,
+          "execution_ms": 305.940955,
+          "model_ms": 0.0,
+          "other_execution_ms": 305.940955,
+          "graph_ms": 16.995899541070685,
+          "client_ms": 14959.923173571005,
+          "observation_and_http_ms": 312.49436357100547,
+          "stage_label": "4. 승인 대기",
+          "version": "직전",
+          "queue_seconds": 14.341487854999999
+        },
+        {
+          "name": "flow-100",
+          "label": "after",
+          "stage": "workflow_approval",
+          "n": 200,
+          "queue_ms": 12291.743365,
+          "execution_ms": 298.16731,
+          "model_ms": 0.0,
+          "other_execution_ms": 298.16731,
+          "graph_ms": 17.753236837452278,
+          "client_ms": 12888.59055252513,
+          "observation_and_http_ms": 298.67987752512914,
+          "stage_label": "4. 승인 대기",
+          "version": "현재",
+          "queue_seconds": 12.291743365
+        }
+      ],
+      "stage-table": [
+        {
+          "stage": "2. 분석 목적 대기",
+          "version": "현재",
+          "queue": 8.816,
+          "model": 0.0,
+          "other": 0.21,
+          "graph": 0.02,
+          "observation": 0.308,
+          "client": 9.334
+        },
+        {
+          "stage": "1. 데이터 선택 대기",
+          "version": "현재",
+          "queue": 6.523,
+          "model": 0.201,
+          "other": 0.222,
+          "graph": 0.223,
+          "observation": 0.623,
+          "client": 7.57
+        },
+        {
+          "stage": "4. 승인 대기",
+          "version": "현재",
+          "queue": 12.292,
+          "model": 0.0,
+          "other": 0.298,
+          "graph": 0.018,
+          "observation": 0.299,
+          "client": 12.889
+        },
+        {
+          "stage": "3. 후보 선택 대기",
+          "version": "현재",
+          "queue": 11.573,
+          "model": 0.202,
+          "other": 0.435,
+          "graph": 0.242,
+          "observation": 0.299,
+          "client": 12.509
+        },
+        {
+          "stage": "2. 분석 목적 대기",
+          "version": "직전",
+          "queue": 9.366,
+          "model": 0.0,
+          "other": 0.193,
+          "graph": 0.016,
+          "observation": 0.367,
+          "client": 9.925
+        },
+        {
+          "stage": "1. 데이터 선택 대기",
+          "version": "직전",
+          "queue": 7.586,
+          "model": 0.202,
+          "other": 0.292,
+          "graph": 0.22,
+          "observation": 0.654,
+          "client": 8.734
+        },
+        {
+          "stage": "4. 승인 대기",
+          "version": "직전",
+          "queue": 14.341,
+          "model": 0.0,
+          "other": 0.306,
+          "graph": 0.017,
+          "observation": 0.312,
+          "client": 14.96
+        },
+        {
+          "stage": "3. 후보 선택 대기",
+          "version": "직전",
+          "queue": 12.718,
+          "model": 0.202,
+          "other": 0.548,
+          "graph": 0.234,
+          "observation": 0.299,
+          "client": 13.766
+        }
+      ],
+      "resource-table": [
+        {
+          "condition": "mixed-100",
+          "version": "직전",
+          "pool": 4.78,
+          "acquire95": 209.33,
+          "sql_per_run": 274.2,
+          "sql95": 2.8,
+          "cpu": 0.36,
+          "loop95": 1.46,
+          "peak": 4
+        },
+        {
+          "condition": "mixed-100",
+          "version": "현재",
+          "pool": 1.9,
+          "acquire95": 47.73,
+          "sql_per_run": 279.4,
+          "sql95": 3.66,
+          "cpu": 0.361,
+          "loop95": 2.05,
+          "peak": 4
+        },
+        {
+          "condition": "flow-100",
+          "version": "직전",
+          "pool": 4.84,
+          "acquire95": 96.83,
+          "sql_per_run": 157.4,
+          "sql95": 3.52,
+          "cpu": 0.697,
+          "loop95": 1.01,
+          "peak": 4
+        },
+        {
+          "condition": "flow-100",
+          "version": "현재",
+          "pool": 4.37,
+          "acquire95": 56.04,
+          "sql_per_run": 152.8,
+          "sql95": 3.65,
+          "cpu": 0.73,
+          "loop95": 1.12,
+          "peak": 4
+        }
+      ],
+      "crud-table": [
+        {
+          "users": 1,
+          "before": 30.5,
+          "after": 21.6,
+          "client_before": 31.5,
+          "client_after": 22.4,
+          "elapsed_before": 0.6,
+          "elapsed_after": 0.53,
+          "errors": "0 → 0"
+        },
+        {
+          "users": 10,
+          "before": 47.3,
+          "after": 46.9,
+          "client_before": 48.6,
+          "client_after": 47.8,
+          "elapsed_before": 0.89,
+          "elapsed_after": 0.87,
+          "errors": "0 → 0"
+        },
+        {
+          "users": 30,
+          "before": 144.8,
+          "after": 196.3,
+          "client_before": 149.0,
+          "client_after": 197.5,
+          "elapsed_before": 1.9,
+          "elapsed_after": 2.21,
+          "errors": "0 → 0"
+        },
+        {
+          "users": 50,
+          "before": 278.2,
+          "after": 293.4,
+          "client_before": 279.1,
+          "client_after": 294.5,
+          "elapsed_before": 3.4,
+          "elapsed_after": 3.37,
+          "errors": "0 → 0"
+        },
+        {
+          "users": 100,
+          "before": 591.4,
+          "after": 561.5,
+          "client_before": 592.1,
+          "client_after": 563.2,
+          "elapsed_before": 6.56,
+          "elapsed_after": 6.34,
+          "errors": "0 → 0"
+        }
+      ],
+      "sensitivity-table": [
+        {
+          "condition": "fast-mixed10",
+          "version": "직전",
+          "users": 10,
+          "pool": 5,
+          "slots": 4,
+          "delay": 0.1,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.319,
+          "server95": 64.2,
+          "elapsed": 1.24
+        },
+        {
+          "condition": "fast-mixed10",
+          "version": "현재",
+          "users": 10,
+          "pool": 5,
+          "slots": 4,
+          "delay": 0.1,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.136,
+          "server95": 51.4,
+          "elapsed": 1.72
+        },
+        {
+          "condition": "slow-mixed10",
+          "version": "직전",
+          "users": 10,
+          "pool": 5,
+          "slots": 4,
+          "delay": 5.0,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 10.325,
+          "server95": 30.7,
+          "elapsed": 31.18
+        },
+        {
+          "condition": "slow-mixed10",
+          "version": "현재",
+          "users": 10,
+          "pool": 5,
+          "slots": 4,
+          "delay": 5.0,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.328,
+          "server95": 26.0,
+          "elapsed": 30.84
+        },
+        {
+          "condition": "tight-slow10",
+          "version": "직전",
+          "users": 10,
+          "pool": 4,
+          "slots": 4,
+          "delay": 5.0,
+          "complete": "0/20",
+          "errors": 1,
+          "recovery": 8,
+          "hold": 1.047,
+          "server95": 327.2,
+          "elapsed": 45.0
+        },
+        {
+          "condition": "tight-slow10",
+          "version": "현재",
+          "users": 10,
+          "pool": 4,
+          "slots": 4,
+          "delay": 5.0,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.36,
+          "server95": 26.2,
+          "elapsed": 31.03
+        },
+        {
+          "condition": "roomy-mixed100",
+          "version": "직전",
+          "users": 100,
+          "pool": 10,
+          "slots": 4,
+          "delay": 1.0,
+          "complete": "200/200",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 2.133,
+          "server95": 47.1,
+          "elapsed": 54.83
+        },
+        {
+          "condition": "roomy-mixed100",
+          "version": "현재",
+          "users": 100,
+          "pool": 10,
+          "slots": 4,
+          "delay": 1.0,
+          "complete": "200/200",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.117,
+          "server95": 36.0,
+          "elapsed": 54.93
+        },
+        {
+          "condition": "single-slot10",
+          "version": "직전",
+          "users": 10,
+          "pool": 5,
+          "slots": 1,
+          "delay": 1.0,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 2.125,
+          "server95": 24.6,
+          "elapsed": 21.4
+        },
+        {
+          "condition": "single-slot10",
+          "version": "현재",
+          "users": 10,
+          "pool": 5,
+          "slots": 1,
+          "delay": 1.0,
+          "complete": "20/20",
+          "errors": 0,
+          "recovery": 0,
+          "hold": 0.105,
+          "server95": 24.2,
+          "elapsed": 21.37
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "measurements",
+      "label": "격리된 로컬 HTTP·PostgreSQL A/B 측정 및 재현 가능한 집계",
+      "path": "data/summary.json",
+      "query": {
+        "engine": "PostgreSQL + Python instrumentation",
+        "language": "SQL + Python",
+        "description": "scripts/benchmarks/analyze_db_scope.py로 raw-trials.jsonl.gz의 요청·풀·Run 실측을 집계. 예비 측정 제외.",
+        "tables_used": [
+          "public.agent_runs",
+          "public.tasks",
+          "public.session_executions",
+          "public.messages",
+          "public.agent_run_logs"
+        ],
+        "filters": [
+          "before=64ad96f; after=4bb5c2f",
+          "조건별 AB/BA 2회",
+          "성공 응답 분위수와 실패 수 분리",
+          "실제 외부 LLM·Executor 호출 없음"
+        ],
+        "metric_definitions": [
+          "p95/p99=성공 요청의 pooled nearest-rank percentile",
+          "Worker connection-seconds/Run=worker checkout→checkin 누적초 / Run 행 수",
+          "queue_ms=started_at-created_at",
+          "execution_ms=(completed_at 또는 interrupted updated_at)-started_at",
+          "완료율=완료 시나리오 / 시도 시나리오"
+        ],
+        "sql": "-- Actual db_evidence() queries. These retrieve Run/status evidence only.\n-- HTTP/pool/model timers come from db_scope_server.py instrumentation;\n-- analyze_db_scope.py combines both sources. SQL alone does not produce timing percentiles.\nSELECT run_id,session_id,status,created_at,started_at,completed_at,updated_at,attempt_count,failure FROM agent_runs ORDER BY created_at;\nSELECT status,count(*) FROM agent_runs GROUP BY status;\nSELECT count(*) FROM tasks WHERE recovery_required;\nSELECT count(*) FROM session_executions WHERE token IS NOT NULL;\nSELECT count(*) FROM messages;\nSELECT count(*) FROM agent_run_logs;"
+      }
+    },
+    {
+      "id": "code",
+      "label": "016 변경 직전/직후 소스 비교",
+      "path": "sources/code-diff.patch"
+    }
+  ]
+}
