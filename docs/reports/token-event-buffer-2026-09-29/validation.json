@@ -53,5 +53,7 @@
     "no auto-retry/success after writer error or admission timeout"
   ],
   "deployment_performed": false,
-  "external_llm_executor_redis_calls": false
+  "external_llm_executor_redis_calls": false,
+  "implementation_commit": "30e583e",
+  "scratch_postgres_removed": true
 }

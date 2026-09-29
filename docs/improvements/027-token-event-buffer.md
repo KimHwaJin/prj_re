@@ -3,6 +3,8 @@
 - 날짜: 2026-09-29
 - 기준: `039d516` (026을 feature/refactor-base에 fast-forward 병합)
 - 브랜치: `feature/token-event-buffer`
+- 구현·검증 commit: `30e583e`
+- 검증 후 이번 작업의 일회용 PostgreSQL 컨테이너·볼륨 정리 완료.
 - 상태: 구현·격리 PostgreSQL/전체 회귀/오프라인 비교/패키지 검증 완료. 베이스 병합·push·배포 미수행.
 
 ## 문제와 범위
