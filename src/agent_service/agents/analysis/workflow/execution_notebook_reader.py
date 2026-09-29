@@ -7,10 +7,7 @@ from typing import Any, Callable
 from agent_config import AgentSettings
 from agent_service.runtime.blocking import run_sync, call_io
 from functools import partial
-from app.services.executor_client import (
-    get_execution_notebook,
-    get_execution_result,
-)
+from integrations.executor.client import get_execution_notebook, get_execution_result
 
 
 def _current_sequences(state: dict[str, Any]) -> list[int]:
@@ -225,9 +222,7 @@ async def read_current_operation_results(
             fetch_notebook=fetch_notebook,
         )
     if settings.executor_result_read_mode == "MANIFEST":
-        from app.services.execution_manifest_reader import (
-            read_current_operation_results_from_manifest,
-        )
+        from integrations.executor.manifest import read_current_operation_results_from_manifest
 
         return await run_sync(read_current_operation_results_from_manifest, settings, state)
     raise ValueError(

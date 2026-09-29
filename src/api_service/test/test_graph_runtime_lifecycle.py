@@ -1,0 +1,312 @@
+"""Graph resource ownership, independent of external model/DB/Redis services."""
+import asyncio
+from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock
+
+import pytest
+import service_settings
+from api_service.services.agent_graph_service import AgentGraphRuntime, GraphResourcesBusy
+
+
+@pytest.fixture(autouse=True)
+def settings(monkeypatch):
+    monkeypatch.setattr(service_settings, '_snapshot', None)
+    service_settings.configure(service_settings.load_settings(config={
+        'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False,
+        'EVENT_WORKER_ENABLED': False, 'SHUTDOWN_TIMEOUT_SECONDS': .2,
+    }, environ={}))
+
+
+def counted_runtime(monkeypatch):
+    runtime = AgentGraphRuntime()
+    counters = {'opened': 0, 'closed': 0}
+    graph = object()
+    @asynccontextmanager
+    async def context():
+        counters['opened'] += 1
+        try:
+            yield graph
+        finally:
+            counters['closed'] += 1
+    monkeypatch.setattr(runtime, '_graph_context', context)
+    return runtime, counters, graph
+
+
+@pytest.mark.asyncio
+async def test_sequential_borrows_build_once_and_close_at_shutdown(monkeypatch):
+    runtime, count, graph = counted_runtime(monkeypatch)
+    for _ in range(20):
+        async with runtime.open_graph() as value:
+            assert value is graph and count == {'opened': 1, 'closed': 0}
+    await runtime.shutdown()
+    await runtime.shutdown()
+    assert count == {'opened': 1, 'closed': 1}
+
+
+@pytest.mark.asyncio
+async def test_concurrent_borrows_do_not_replace_another_callers_resources(monkeypatch):
+    runtime, count, graph = counted_runtime(monkeypatch)
+    release, all_entered = asyncio.Event(), asyncio.Event()
+    entered = 0
+    async def invoke():
+        nonlocal entered
+        async with runtime.open_graph() as value:
+            entered += 1
+            if entered == 20:
+                all_entered.set()
+            await release.wait()
+            assert value is graph and count['closed'] == 0
+    owners = [asyncio.create_task(invoke()) for _ in range(20)]
+    try:
+        await asyncio.wait_for(all_entered.wait(), 1)
+        assert count['opened'] == 1
+    finally:
+        release.set()
+        await asyncio.gather(*owners)
+        await runtime.shutdown()
+    assert count['closed'] == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_initialization_closes_partial_resources_and_can_retry(monkeypatch):
+    runtime = AgentGraphRuntime()
+    count = {'attempt': 0, 'close': 0}
+    @asynccontextmanager
+    async def context():
+        count['attempt'] += 1
+        try:
+            if count['attempt'] == 1:
+                raise OSError('init failed')
+            yield 'graph'
+        finally:
+            count['close'] += 1
+    monkeypatch.setattr(runtime, '_graph_context', context)
+    with pytest.raises(OSError):
+        async with runtime.open_graph():
+            pytest.fail('unreachable')
+    assert count == {'attempt': 1, 'close': 1}
+    async with runtime.open_graph() as graph:
+        assert graph == 'graph'
+    await runtime.shutdown()
+    assert count == {'attempt': 2, 'close': 2}
+
+
+@pytest.mark.asyncio
+async def test_canceled_initializer_keeps_successful_resource_owned_until_shutdown(monkeypatch):
+    runtime = AgentGraphRuntime()
+    entered, release, closed = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    @asynccontextmanager
+    async def context():
+        entered.set()
+        await release.wait()
+        try:
+            yield 'graph'
+        finally:
+            closed.set()
+    monkeypatch.setattr(runtime, '_graph_context', context)
+    async def invoke():
+        async with runtime.open_graph():
+            pytest.fail('canceled borrower must not enter')
+    caller = asyncio.create_task(invoke())
+    await entered.wait()
+    caller.cancel()
+    await asyncio.sleep(0)
+    caller.cancel()
+    release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await caller
+    assert not closed.is_set()
+    async with runtime.open_graph() as graph:
+        assert graph == 'graph'
+    await runtime.shutdown()
+    assert closed.is_set()
+
+
+@pytest.mark.asyncio
+async def test_shutdown_drains_existing_borrow_and_rejects_new_ones(monkeypatch):
+    runtime, count, _ = counted_runtime(monkeypatch)
+    borrow = runtime.open_graph()
+    await borrow.__aenter__()
+    shutdown = asyncio.create_task(runtime.shutdown())
+    await asyncio.sleep(0)
+    assert not shutdown.done() and count['closed'] == 0
+    async with asyncio.timeout(.05):
+        with pytest.raises(GraphResourcesBusy):
+            async with runtime.open_graph():
+                pass
+    await borrow.__aexit__(None, None, None)
+    await shutdown
+    with pytest.raises(GraphResourcesBusy):
+        async with runtime.open_graph():
+            pass
+    assert count['closed'] == 1
+
+
+@pytest.mark.asyncio
+async def test_shutdown_timeout_retains_resources_and_allows_later_close(monkeypatch):
+    runtime, count, _ = counted_runtime(monkeypatch)
+    borrow = runtime.open_graph()
+    await borrow.__aenter__()
+    with pytest.raises(GraphResourcesBusy, match='deadline'):
+        await runtime.shutdown(timeout=.01)
+    assert count['closed'] == 0
+    with pytest.raises(GraphResourcesBusy):
+        async with runtime.open_graph():
+            pass
+    await borrow.__aexit__(None, None, None)
+    await runtime.shutdown()
+    assert count['closed'] == 1
+
+
+@pytest.mark.asyncio
+async def test_borrower_exception_or_cancel_does_not_dispose_shared_graph(monkeypatch):
+    runtime, count, _ = counted_runtime(monkeypatch)
+    for error in (ValueError('graph error'), asyncio.CancelledError()):
+        with pytest.raises(type(error)):
+            async with runtime.open_graph():
+                raise error
+        assert count == {'opened': 1, 'closed': 0}
+    await runtime.shutdown()
+    assert count['closed'] == 1
+
+
+@pytest.mark.asyncio
+async def test_cannot_reset_or_override_while_borrowed(monkeypatch):
+    runtime, _, _ = counted_runtime(monkeypatch)
+    async with runtime.open_graph():
+        with pytest.raises(GraphResourcesBusy):
+            runtime.start()
+        with pytest.raises(RuntimeError):
+            runtime.override_graph(object())
+    await runtime.shutdown()
+    runtime.start()
+    runtime.override_graph('test graph')
+    async with runtime.open_graph() as graph:
+        assert graph == 'test graph'
+    await runtime.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_event_loop_sharing_is_rejected(monkeypatch):
+    runtime, _, _ = counted_runtime(monkeypatch)
+    async with runtime.open_graph():
+        pass
+    async def other_loop():
+        with pytest.raises(RuntimeError, match='event loops'):
+            async with runtime.open_graph():
+                pass
+    await asyncio.to_thread(lambda: asyncio.run(other_loop()))
+    await runtime.shutdown()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('error', [GraphResourcesBusy('live borrower'), asyncio.CancelledError()])
+async def test_service_does_not_close_other_pools_while_graph_still_owned(monkeypatch, error):
+    from service_bootstrap import _close_resources
+    import api_service.core.database as database
+    import api_service.agent_worker.api_bridge as bridge
+    from api_service.services.agent_graph_service import runtime
+    monkeypatch.setattr(runtime, 'shutdown', AsyncMock(side_effect=error))
+    close_database, close_bridge = AsyncMock(), AsyncMock()
+    monkeypatch.setattr(database, 'close_database', close_database)
+    monkeypatch.setattr(bridge, 'close_api_worker_bridge', close_bridge)
+    with pytest.raises(type(error)):
+        await _close_resources()
+    close_database.assert_not_awaited()
+    close_bridge.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('fail', [False, True])
+async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch, fail):
+    import api_service.agent_worker.worker_main as entry
+    import agent_service.runtime.langgraph.checkpointer as factory
+    import api_service.services.executor_completion as completion
+    projection = AsyncMock()
+    monkeypatch.setattr(completion, 'synchronize_executor_completion', projection)
+    clients = []
+    counts = {'pool_open': 0, 'pool_close': 0, 'build': 0, 'events': 0}
+    @asynccontextmanager
+    async def checkpointer(**_):
+        counts['pool_open'] += 1
+        try:
+            yield 'checkpoint'
+        finally:
+            counts['pool_close'] += 1
+    def graph(**kwargs):
+        assert kwargs['checkpointer'] == 'checkpoint'
+        assert not kwargs['executor_client'].http.is_closed
+        clients.append(kwargs['executor_client'])
+        counts['build'] += 1
+        return object()
+    class Adapter:
+        def __init__(self, graph, *, project_context_loader, model_validator):
+            assert callable(model_validator)
+            assert callable(project_context_loader)
+            self.graph = graph
+        async def __call__(self, context):
+            assert counts['pool_open'] == 1 and counts['pool_close'] == 0
+            counts['events'] += 1
+    class Worker:
+        def __init__(self, settings, handlers):
+            self.handlers = handlers
+            self.bindings = object()
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *_):
+            assert counts['pool_close'] == 1
+            assert len(clients) == 1 and clients[0].http.is_closed
+        def add_readiness_check(self, *args):
+            pass
+        async def run(self):
+            for _ in range(10):
+                await self.handlers['test'](object())
+            if fail:
+                raise RuntimeError('worker failure')
+    monkeypatch.setattr(factory, 'create_checkpointer', checkpointer)
+    monkeypatch.setattr(entry, 'build_agent_graph', graph)
+    monkeypatch.setattr(entry, '_validate_graph', lambda _: None)
+    monkeypatch.setattr(entry, 'build_handlers', lambda handler: {'test': handler})
+    monkeypatch.setattr(entry, 'LangGraphEventAdapter', Adapter)
+    async def own(context, operation):
+        return await operation()
+    monkeypatch.setattr(entry, 'run_event_owned', own)
+    monkeypatch.setattr(entry, 'ExecutorWorker', Worker)
+    if fail:
+        with pytest.raises(RuntimeError, match='worker failure'):
+            await entry.main(install_signals=False)
+    else:
+        await entry.main(install_signals=False)
+    assert counts == {'pool_open': 1, 'pool_close': 1, 'build': 1, 'events': 10}
+    assert projection.await_count == 10
+
+
+@pytest.mark.asyncio
+async def test_shared_pool_visible_in_every_run_trace_without_double_wrapping(monkeypatch, tmp_path):
+    from dataclasses import replace
+    from service_runtime.diagnostics import observe_pool, run_trace
+    configured = service_settings.get_settings()
+    monkeypatch.setattr(service_settings, '_snapshot', replace(configured, diagnostics_dir=tmp_path))
+    class Pool:
+        async def open(self): pass
+        async def close(self): pass
+        async def getconn(self): return 'connection'
+        async def putconn(self, conn): pass
+        def get_stats(self): return {'pool_size': 1}
+    runtime = AgentGraphRuntime()
+    pool = Pool()
+    @asynccontextmanager
+    async def context():
+        observe_pool(pool, 'checkpoint_pool')
+        runtime._observed_pools = ((pool, 'checkpoint_pool'),)
+        yield pool
+    monkeypatch.setattr(runtime, '_graph_context', context)
+    try:
+        for index in range(2):
+            async with run_trace(f'run-{index}', f'session-{index}') as trace:
+                async with runtime.open_graph() as shared:
+                    await shared.getconn()
+                assert trace.pools['checkpoint_pool']() == {'pool_size': 1}
+                assert trace.totals['checkpoint_pool.getconn']['count'] == 1
+    finally:
+        await runtime.shutdown()

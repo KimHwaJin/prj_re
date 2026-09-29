@@ -9,17 +9,9 @@ from agent_service.runtime.blocking import run_sync, call_io
 from agent_service.agents.analysis.message_utils import as_message_content
 from agent_service.agents.analysis.nodes.executor_request import build_executor_steps
 from agent_service.agents.analysis.state import AnalysisWorkflowState
-from agent_service.agents.analysis.schemas.agents.orchestration_schema import (
-    ExecutorCancelRequestBody,
-    ExecutorContinueRequestBody,
-    ExecutorFinalizeRequestBody,
-)
+from service_contracts.executor import ExecutorCancelRequestBody, ExecutorContinueRequestBody, ExecutorFinalizeRequestBody
 from agent_service.agents.analysis.artifacts import build_run_artifact_dir, write_demo_json
-from app.services.executor_client import (
-    submit_execution_cancel,
-    submit_execution_continue,
-    submit_execution_finish,
-)
+from integrations.executor.client import submit_execution_cancel, submit_execution_continue, submit_execution_finish
 
 
 def _response_body(response: dict[str, Any]) -> dict[str, Any]:

@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 from agent_config import resolve_mock_data_path
-from agent_service.agents.analysis.schemas.workflows.workflow_format import WorkflowGeneratorOutput
+from service_contracts.workflow_definition import WorkflowGeneratorOutput
 
 
 LOCAL_TOOL_REF_RE = re.compile(

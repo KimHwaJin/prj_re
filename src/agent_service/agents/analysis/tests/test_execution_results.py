@@ -14,7 +14,7 @@ from agent_service.agents.analysis.workflow.execution_notebook_reader import (
     read_current_operation_results,
     read_current_operation_tool_results,
 )
-from app.services.execution_manifest_reader import _safe_resolve
+from integrations.executor.manifest import _safe_resolve
 from agent_service.agents.analysis.routers.orchestration_router import route_after_adaptive_results
 
 

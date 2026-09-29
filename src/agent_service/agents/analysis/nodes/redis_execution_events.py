@@ -5,11 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from agent_service.agents.analysis.state import AnalysisWorkflowState
-from app.services.workflow_persistence import (
-    NullWorkflowStore,
-    WorkflowStore,
-    effective_workflow_snapshot,
-)
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore, effective_workflow_snapshot
 
 
 def apply_redis_execution_event(state: AnalysisWorkflowState) -> dict[str, Any]:

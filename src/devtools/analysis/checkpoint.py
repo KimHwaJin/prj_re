@@ -14,7 +14,7 @@ from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.graph import (
     build_analysis_workflow_graph,
 )
-from app.services.workflow_persistence import workflow_store_from_environment
+from api_service.services.workflow_persistence import workflow_store_from_environment
 
 
 @asynccontextmanager
@@ -35,7 +35,7 @@ async def compiled_postgres_graph(
     # Lazy import keeps ordinary graph imports/tests independent of PostgreSQL.
     from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 
-    from app.services.executor_client import ExecutorClient
+    from integrations.executor.client import ExecutorClient
     async with ExecutorClient(settings) as executor_client, create_checkpointer(
         database_url=settings.checkpoint_db_uri,
         setup_on_start=settings.checkpoint_setup_on_start,

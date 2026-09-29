@@ -29,7 +29,7 @@ def inventory():
     result = []
     for name in ("users", "projects", "sessions", "messages", "runs", "tasks",
                  "workflows", "jupyter_servers", "redis"):
-        path = ROOT / f"src/app/api/v1/routes/{name}.py"
+        path = ROOT / f"src/api_service/api/v1/routes/{name}.py"
         tree = ast.parse(path.read_text())
         prefix = ""
         for node in tree.body:
@@ -56,15 +56,15 @@ async def probes():
     from fastapi import FastAPI, Response
     from fastapi.security import HTTPAuthorizationCredentials
     from fastapi.testclient import TestClient
-    from app.api.v1.routes import messages, users
-    from app.core.auth import get_current_user_id
-    from app.core.database import get_db
-    from app.core.enums import DeleteYN
-    from app.repositories.session_repository import SessionRepository
-    from app.repositories.user_repository import UserRepository
-    from app.schemas.common.message_schema import MessageCreate
-    from app.schemas.common.api_schema import ProjectResource, SessionResource
-    from app.services.session_service import SessionService
+    from api_service.api.v1.routes import messages, users
+    from api_service.core.auth import get_current_user_id
+    from api_service.core.database import get_db
+    from api_service.core.enums import DeleteYN
+    from api_service.repositories.session_repository import SessionRepository
+    from api_service.repositories.user_repository import UserRepository
+    from api_service.schemas.common.message_schema import MessageCreate
+    from api_service.schemas.common.api_schema import ProjectResource, SessionResource
+    from api_service.services.session_service import SessionService
 
     now, owner, project = datetime.now(timezone.utc), uuid4(), uuid4()
     results = []

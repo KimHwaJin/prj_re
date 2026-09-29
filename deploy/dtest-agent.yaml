@@ -207,7 +207,7 @@ spec:
         - name: worker
           image: dtest-agent:latest
           imagePullPolicy: IfNotPresent
-          command: ["python", "-m", "app.agent_worker.worker_main"]
+          command: ["python", "-m", "api_service.agent_worker.worker_main"]
           envFrom:
             - configMapRef:
                 name: dtest-agent-config

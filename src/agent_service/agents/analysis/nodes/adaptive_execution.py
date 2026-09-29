@@ -23,11 +23,7 @@ from agent_service.agents.analysis.workflow.rule_based_notebook_generator import
     build_notebook,
     write_cell_code_files,
 )
-from app.services.workflow_persistence import (
-    NullWorkflowStore,
-    WorkflowStore,
-    effective_workflow_snapshot,
-)
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore, effective_workflow_snapshot
 
 
 def _short_result_summary(result: dict) -> str:

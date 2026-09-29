@@ -18,13 +18,13 @@ from agent_service.agents.analysis.schemas.agents.report_generator_schema import
     ExecutionStepResult,
     ReportGenerationRequest,
 )
-from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorArtifactRequestBody
+from service_contracts.executor import ExecutorArtifactRequestBody
 from agent_service.agents.analysis.artifacts import (
     build_run_artifact_dir,
     write_demo_json,
 )
-from app.services.workflow_persistence import effective_workflow_snapshot
-from app.services.executor_client import submit_execution_artifact
+from service_contracts.workflow import effective_workflow_snapshot
+from integrations.executor.client import submit_execution_artifact
 
 
 _REPORT_OUTPUT_TEXT_LIMIT = 8_000

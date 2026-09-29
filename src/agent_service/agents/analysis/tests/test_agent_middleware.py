@@ -169,7 +169,7 @@ async def test_real_role_agents_keep_project_snapshot_across_hitl_and_rebuild(mo
 @pytest.mark.asyncio
 @pytest.mark.parametrize("legacy", [False, True])
 async def test_executor_backfill_keeps_interrupt_and_report_prompt(legacy):
-    from app.agent_worker.langgraph_adapter import LangGraphEventAdapter
+    from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
     from agent_service.agents.analysis.context import context_from_state
     from agent_service.agents.analysis.agent_builders import report_writer
     class State(TypedDict, total=False):

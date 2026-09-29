@@ -63,5 +63,7 @@ langgraph dev
 set -a
 source .env
 set +a
-PYTHONPATH=src ../.venv311/bin/python -m app.agent_worker.worker_main
+PYTHONPATH=src ../.venv311/bin/python -m api_service.agent_worker.worker_main
 ```
+
+현재 패키지 경계와 Agent 개발 위치는 [서비스 구조](docs/architecture/service-layout.md)를 참고하세요.

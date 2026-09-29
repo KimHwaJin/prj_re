@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from agent_service.agents.analysis.schemas.workflows.workflow_format import (
+from service_contracts.workflow_definition import (
     InputDefinition,
     InputProvenance,
     UnresolvedInput,

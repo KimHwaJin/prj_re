@@ -6,18 +6,12 @@ import asyncio
 from contextlib import AsyncExitStack, asynccontextmanager
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import Callable, Awaitable, Any
 from uuid import uuid4
 
 from fastapi import Request
 
-# Root app.py and src/app coexist during migration. Prefer the package.
-_SRC = str(Path(__file__).resolve().parent)
-if _SRC in sys.path:
-    sys.path.remove(_SRC)
-sys.path.insert(0, _SRC)
 
 from service_settings import ServiceSettings, configure, get_settings, load_settings
 
@@ -42,7 +36,7 @@ class BackgroundRuntime:
 
     @property
     def ready(self) -> bool:
-        from app.core.execution_lifecycle import execution_health
+        from api_service.core.execution_lifecycle import execution_health
         return self.started and not self.draining and execution_health.healthy and all(not task.done() for task in self.tasks.values())
 
     def _observe(self, task: asyncio.Task) -> None:
@@ -87,7 +81,7 @@ class BackgroundRuntime:
             self._stop_task.add_done_callback(self._observe)
 
     async def stop(self, *, graceful: bool = True) -> None:
-        from app.core.execution_lifecycle import protected_cleanup
+        from service_runtime.cleanup import protected_cleanup
         self.request_stop(graceful=graceful)
         task = self._stop_task
         async def join():
@@ -112,7 +106,7 @@ class BackgroundRuntime:
                 raise RuntimeError(f"Background shutdown deadline exceeded: {names}")
         # Retrieve errors without replacing the original request/startup error.
         await asyncio.gather(*self.tasks.values(), return_exceptions=True)
-        from app.core.execution_lifecycle import execution_health
+        from api_service.core.execution_lifecycle import execution_health
         recorders = list(execution_health.recorders)
         if recorders:
             _, unfinished = await asyncio.wait(recorders, timeout=max(0, self._cleanup_deadline - asyncio.get_running_loop().time()))
@@ -125,22 +119,22 @@ class BackgroundRuntime:
 def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event) -> dict[str, Callable]:
     factories: dict[str, Callable] = {}
     if settings.api.task_reconciler_enabled:
-        from app.task_lock_reconciler import run_forever as reconcile
+        from api_service.task_lock_reconciler import run_forever as reconcile
         factories["task-lock-reconciler"] = lambda: reconcile(stop_event=stop_event)
     if settings.api.agent_worker_enabled:
-        from app.agent_run_worker import run_forever
+        from api_service.agent_run_worker import run_forever
         factories["agent-run-worker"] = lambda: run_forever(stop_event=stop_event)
     if settings.event_worker_enabled:
-        from app.agent_worker.worker_main import main
+        from api_service.agent_worker.worker_main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
         factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event)
     return factories
 
 
 async def _close_resources() -> None:
-    from app.services.agent_graph_service import GraphResourcesBusy, runtime
-    from app.core.database import close_database
-    from app.agent_worker.api_bridge import close_api_worker_bridge
+    from api_service.services.agent_graph_service import GraphResourcesBusy, runtime
+    from api_service.core.database import close_database
+    from api_service.agent_worker.api_bridge import close_api_worker_bridge
     # A live borrower still uses CRUD/bridge resources too. Preserve all of them
     # if draining failed; ordinary close errors still run remaining cleanups.
     try:
@@ -174,7 +168,7 @@ def attach_service(
         raise RuntimeError("Service is already attached to this app")
     configure(settings)
     if router is None:
-        from app.api.v1.router import api_router
+        from api_service.api.v1.router import api_router
         router = api_router
     app.include_router(router, prefix=settings.api.api_v1_prefix)
     previous_lifespan = app.router.lifespan_context
@@ -189,7 +183,7 @@ def attach_service(
     async def combined_lifespan(application):
         # Lifespan state returned by the platform is preserved for requests.
         async with previous_lifespan(application) as state:
-            from app.services.agent_graph_service import runtime
+            from api_service.services.agent_graph_service import runtime
             runtime.start()
             try:
                 await background.start()
@@ -199,7 +193,7 @@ def attach_service(
                 # A timed-out background task may still be using these pools.
                 # Leave them owned until process termination rather than closing
                 # resources beneath a live graph.
-                from app.core.execution_lifecycle import protected_cleanup
+                from service_runtime.cleanup import protected_cleanup
                 async def shutdown():
                     await background.stop()
                     await close_resources()
@@ -220,7 +214,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
     settings = settings or get_settings()
     configure(settings)
-    from app.core.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
+    from api_service.core.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
 
     app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0")
     attach_service(app, settings)
@@ -248,7 +242,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
         @app.get("/demo", include_in_schema=False)
         async def demo():
-            return FileResponse(Path(__file__).parent / "app/static/demo.html")
+            return FileResponse(Path(__file__).parent / "api_service/static/demo.html")
 
     @app.get("/service/ready", tags=["health"])
     async def ready():
@@ -257,7 +251,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
     @app.get("/service/live", tags=["health"])
     async def live():
-        from app.core.execution_lifecycle import execution_health
+        from api_service.core.execution_lifecycle import execution_health
         healthy = execution_health.healthy
         return JSONResponse({"healthy": healthy}, status_code=200 if healthy else 503)
 

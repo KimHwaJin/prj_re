@@ -10,12 +10,12 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from agent_config import load_agent_settings
-from app.agent_worker.api_bridge import get_api_worker_bridge
+from api_service.agent_worker.api_bridge import get_api_worker_bridge
 from agent_service.agents.analysis.dependencies import create_llm_dependencies
 from agent_service.agents.analysis.graph import (
     build_analysis_workflow_graph,
 )
-from app.services.workflow_persistence import workflow_store_from_environment
+from api_service.services.workflow_persistence import workflow_store_from_environment
 
 
 settings = load_agent_settings()

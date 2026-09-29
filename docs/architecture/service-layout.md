@@ -1,82 +1,102 @@
-# 서비스 구조와 이행 경계
+# 현재 서비스 구조와 의존성 경계
 
-2026-09-28 확정 구조. 패키지 분리는 단일 Deployment·단일 컨테이너 Pod 안의 소스 책임 분리이며 별도 HTTP Agent 서버를 추가하는 계획이 아니다.
-
-006 업데이트: 분석 구성요소/LLM 소비 노드는 비동기 호출로 전환했고 `runtime/blocking.py`에 혼합 노드용 임시 동기 작업 종료 경계를 추가했다. 아래 005 이행 경계의 전체 패키지 분리와 HTTP·DB·ArtifactStore 전환은 아직 남아 있다. [검증 기록](../improvements/006-agent-async-llm.md)을 참고한다.
-
-008 업데이트: 역할별 Agent 선언·프롬프트는 `agents/analysis/agent_builders/<role>/`로 모았다. 공통 도구와 역할 프롬프트는 별개 기준으로 관리한다. create_agent·공통 미들웨어를 표준으로 삼되 현재 모든 구성요소가 전환된 것은 아니다. [008 기록](../improvements/008-agent-builders-layout.md)을 참고한다.
-
-010 업데이트: 기존 skills·tools·workflows 패키지 구성을 **src/agent_service/agents/analysis/workflow/** 아래로 통합한다. 009의 원래 경로 고정 해석을 정정했으며, 기존 Workflow 처리 모듈도 이 패키지에 유지한다. [010 기록](../improvements/010-unify-analysis-workflow.md).
-
-011 업데이트: 7개 LLM 역할이 공통 `agent_service/factory.py`의 create_agent를 사용한다. `context.py`와 `middleware/`를 구현했고 프로젝트 prompt snapshot을 사용자·Executor 재개에 연결했다. project_memory 저장/요약 및 모델 선택 registry는 후속이다. [011 기록](../improvements/011-agent-middleware.md).
-
-## 목표
+025 기준. 소스 책임을 분리하며 단일 Deployment·단일 컨테이너 Pod 전제를 유지한다.
+별도 Agent HTTP 서버나 Agent별 Worker·풀을 추가하지 않는다.
 
 ```text
-app.py / config*.yml / logger.yml / pyproject.toml
+app.py                          기존 루트 실행 진입점
 src/
-  common/ gaia/ lib/ middleware/    플랫폼 제공·연결 영역
-  routers/                         get_routers 등록 경계
-  workflows/                       플랫폼 공개 호출 연계가 필요할 때만
-  service_bootstrap.py              설정·풀·구현·수명 조립
-  api_service/                     routes / schemas / dependencies / services
-  execution_service/               commands / lifecycle / ownership / idempotency / recovery
+  service_bootstrap.py          FastAPI 연결·Worker 시작·자원 종료 조립
+  service_settings.py           config > env > 기본값 설정 snapshot
+  agent_config.py / config.py / event_worker_settings.py
+  api_service/
+    api/                        HTTP 라우터·권한·접수
+    schemas/ models/ repositories/
+    services/                   CRUD·Run 상태·소유권·DB 어댑터
+      agent_graph_service.py    API 실행 → 실제 분석 graph 조립 어댑터
+      workflow_persistence.py   WorkflowStore의 PostgreSQL 구현
+    agent_worker/               Executor 이벤트 → graph 재개 어댑터
+    worker/                     Redis 수신·Inbox/Outbox·dispatch
+    core/                       DB·인증·API 상태/복구 관리
+    test/                       API·DB·실행기 통합 테스트
   agent_service/
-    registry.py                    업무 Agent id·호환 버전 등록
-    runtime/                       worker / scheduler / runner / supervision / langgraph
-    factory.py / context.py        create_agent 공통 조립·실행 문맥
-    middleware/                    프로젝트 prompt·JSON 검증 정책
-    memory/                        프로젝트 메모리 구현 (후속)
-    tools/                         업무 간 실제 공유 도구가 생길 때 추가
-    integrations/                  llm / executor (HTTP·Redis 이벤트)
-    agents/<id>/                   definition / graph / state / schemas / settings
-                                   dependencies / projection / nodes / subgraphs
-                                   agent_builders/<role>/agent.py + prompt.md
-                                   workflow / tools / tests
-                                   workflow/{skills,tools,workflows} (분석 자산과 생성기)
-  service_contracts/               Agent·실행·context·저장/연계 port
-  service_infrastructure/           configuration / persistence / resources
-                                   artifacts / observability
-  devtools/                        개발용 CLI·시각화
-tests/                             서비스·통합·공통 Agent 계약 검증
-scripts/                           운영·진단·부하테스트
-docs/                              구조·개발 안내·개선 결과
+    factory.py context.py middleware/
+    runtime/
+      blocking.py               동기 작업의 취소/종료 수명 보호
+      executor_boundary.py      LangGraph Executor 대기·receipt 노드
+      langgraph/checkpointer.py 체크포인트 풀 수명
+    agents/analysis/
+      graph.py state.py nodes/ dependencies.py
+      agent_builders/<role>/agent.py + prompt.md
+      workflow/                 기존 Workflow 해석·컴파일 코드
+        skills/ tools/ workflows/
+      schemas/ tools/ testing/ tests/
+  service_contracts/
+    events.py                   Executor 이벤트 envelope·dispatch 계약
+    executor.py                 Executor HTTP 요청·접수 응답 스키마
+    executor_manifest.py        공유 PV 결과 manifest 스키마
+    executor_boundary.py        checkpoint 필드·ExecutionBindings Protocol
+    executor_transport.py       빌려 쓰는 비동기 HTTP transport Protocol
+    workflow.py                 WorkflowStore Protocol·순수 snapshot 함수
+    workflow_definition.py      API·Agent 공용 Workflow JSON 규격
+    execution.py                공통 복구 필요 예외
+  integrations/executor/
+    client.py                   HTTP·실패 분류·제출 부작용 추적
+    manifest.py                 공유 PV manifest 검증·읽기
+  service_runtime/
+    cleanup.py                  취소 중에도 소유 자원 정리
+    diagnostics.py              공유 실행 계측 context
+    model_selection.py          모델 catalog·고정 참조·재개 검증
+  devtools/                     기존 개발용 직접 실행 도구
+  routers/                      플랫폼 제공 라우터 영역(별도 통합 검증 필요)
 ```
 
-플랫폼 디렉터리는 실제 제공 템플릿을 연결할 때 유지한다. 현재 없는 Gaia 원본을 임의로 작성하지 않는다. `workflows/`의 플랫폼 객체와 분석 Agent가 생성하는 Workflow JSON은 다른 개념이다. 아직 구현이 없는 영역은 빈 패키지/가짜 인터페이스로 만들어 완료 표시하지 않는다.
+## 의존성 규칙
 
-## 의존성과 책임
+- Agent 운영 코드는 `app` 또는 `api_service`를 import하지 않는다. 저장소는
+  `WorkflowStore`, 실행 연결은 `ExecutionBindings`, HTTP 클라이언트는
+  `ExecutorTransport` 계약으로 전달받는다. 기존 함수형 테스트 어댑터 주입도 유지한다.
+- Agent는 공용 `integrations/executor` helper로 요청·결과를 처리할 수 있다.
+  이 계층은 API·Agent 구현을 import하지 않는다. 클라이언트를 노드 안에서 생성하지 않는다.
+- `service_contracts`, `service_runtime`, `integrations`는 API나 Agent 구현을
+  import하지 않는다. 설정 snapshot과 외부 라이브러리를 사용할 수 있다.
+- API 업무 서비스·라우터는 Agent 내부 graph/state/schema에 의존하지 않는다.
+  실제 graph 구성은 세 어댑터에만 남긴다: `services/agent_graph_service.py`,
+  `agent_worker/graph_provider.py`, `agent_worker/worker_main.py`.
+  이 조립 경계까지 제거하려고 아직 필요 없는 다중 Agent registry를 추가하지 않는다.
+- `WorkflowStore`의 PostgreSQL 구현은 API가 생성해 그래프에 주입한다.
+  Agent가 DB 구현을 import하거나 요청마다 새 설정을 읽어 저장소를 선택하지 않는다.
+  개발용 무저장 실행에는 `NullWorkflowStore`를 명시적으로 사용할 수 있다.
+- `cleanup.py`는 자원 종료만 담당한다. API의 `execution_lifecycle.py`는 DB 복구
+  표시와 실행 건강 상태를 관리한다. 둘을 중복 구현하지 않는다.
 
-- API는 HTTP·사용자 식별·접근 권한·관리 기능을 담당한다. Agent의 graph/node를 직접 import해 실행하지 않는 것이 목표다.
-- execution_service는 start/resume/cancel/외부 이벤트 접수와 세션 점유·상태 전이·멱등성·복구 규칙을 공유한다. SQL·HTTP 어댑터가 업무 규칙을 각자 복제하지 않는다.
-- runtime은 공통 queue에서 실행 자리를 확보하고 등록 Agent를 실행한다. 새 Agent마다 Worker와 풀을 추가하지 않는다.
-- 업무 Agent는 상태·업무 판단·프롬프트·Workflow 해석을 제공한다. LangGraph 세부 상태를 API의 공통 상태라고 가정하지 않는다.
-- contracts는 구현을 import하지 않는다. infrastructure는 주입되는 저장·자원 port를 구현하고 bootstrap이 실제 구현을 조립한다.
-- Executor integration은 외부 통신/이벤트를 담당한다. 어떤 실행을 재개할 수 있는지는 execution_service가 결정한다. Redis 이벤트 소비를 제거하거나 PostgreSQL만으로 대체하는 계획이 아니다.
-- 단일 세션 실행/WAITING_EXECUTOR 잠금과 다른 세션의 독립 실행 원칙은 소스 이동과 무관하게 유지한다.
+## Agent 개발자가 수정할 곳
 
-## 005에서 실제 구현한 부분
+1. 업무 순서·HITL·조건 분기는 `agents/analysis/graph.py`, `state.py`, `nodes/`.
+2. 역할별 모델·도구·미들웨어 선언과 독립 프롬프트는 `agent_builders/<role>/`.
+3. 기존 Workflow 개발은 **`agents/analysis/workflow/`**를 계속 사용한다.
+   skills·tools·workflows와 생성기는 이동하거나 복제하지 않았다.
+4. 공개 Workflow JSON 또는 Executor 규격 변경은 `service_contracts`에서
+   API·Agent·연동 소비자 영향을 함께 검토한다. 저장 구현 변경은 API 어댑터에서 한다.
+5. 계층 검증은 `src/api_service/test/test_package_boundaries.py`, 업무 회귀는
+   `src/agent_service/agents/analysis/tests`에서 실행한다.
 
-005 당시 분석 업무 코드와 리소스를 `agent_service/agents/analysis/`로 집약했다. 009에서 기존 Workflow 하위 패키지를 복원했고, 010에서 자산·색인·생성기·정책 문서를 `src/agent_service/agents/analysis/workflow/`로 통합했다. 체크포인트 풀 factory는 `agent_service/runtime/langgraph/checkpointer.py`, 개발용 직접 실행·시각화는 `devtools/analysis/`, 카탈로그 생성기는 분석의 `workflow/skills/` 및 `workflow/tools/`다. 기존 API/Worker가 새 import를 사용하며 외부 HTTP 경로와 DB migration은 바꾸지 않았다.
+## 실행·이전 경로
 
-**목표 전체의 이행 완료는 아니다.** 다음 경계는 의도적으로 기존 동작을 유지했다.
+- 기존 `python app.py`, `uvicorn main:app --app-dir src`, 배포 bootstrap 유지.
+- 독립 이벤트 Worker 모듈은 `python -m api_service.agent_worker.worker_main`.
+- Alembic ORM import·compose·배포 YAML·langgraph.json·wheel 설정을 새 경로로 갱신했다.
+- `src/app`와 이동한 기존 파일의 호환 shim은 남기지 않는다. 직접 import하거나
+  모듈 실행 명령을 별도로 관리하는 소비자는 새 경로로 변경해야 한다.
+- 과거 개선 보고서·이동 목록·고정된 과거 커밋 비교 도구의 경로는 당시 근거로 보존한다.
+- 그래프 node 이름·edge·state 필드, 공개 API, DB migration revision은 변경하지 않는다.
+  이번 범위의 이전 PostgreSQL HITL checkpoint 재개를 별도로 검증한다.
 
-| 현재 위치/참조 | 후속 목표 |
-|---|---|
-| app/api, app/services의 CRUD·Run 구현 | api_service 및 execution_service로 책임별 분리 |
-| app/agent_run_worker.py, app/core 실행 보호 | 공통 runtime 및 execution_service |
-| app/agent_worker, app/worker | 이벤트 integration·공통 접수·실행 adapter로 기능별 분리 |
-| app/services/executor_client.py | 비동기 Executor integration/port |
-| app/services/workflow_persistence.py | 업무 snapshot 변환과 비동기 저장 port/구현 분리 |
-| app/agent_worker/graph_boundary.py | 공통 외부 대기 계약과 LangGraph adapter 분리 |
-| 분석의 artifacts.py | ArtifactStore를 주입받는 업무 경로 정책 |
-| src/agent_config.py | 중앙 설정 호환 유지 후 공통/분석 설정 스키마 분리 |
-| app의 일부 API/서비스가 분석 schema import | 공통 Workflow/Executor 계약과 업무 스키마 분리 |
+## 남은 범위
 
-이 목록을 허용된 임시 의존성으로 보고, 새로운 Agent가 그대로 복제할 표준으로 삼지 않는다. 008에서 역할 선언·프롬프트 구조를 먼저 정리했다. 011에서 create_agent·프로젝트 prompt 미들웨어·실행 context를 연결했다. 프로젝트 메모리 Store 구현과 모델 선택은 후속이며 I/O 비동기 전환·취소 종료 추적과 공통 registry/접수/실행 경로 통합·슬롯 동시성도 남아 있다.
+실행 제어 서비스와 Worker는 현재 `api_service`의 내부 계층으로 유지한다.
+별도 `execution_service` 패키지, 다중 업무 Agent registry, project_memory 저장,
+관리자 복구 API, Message/Workflow 관리 정리는 이번에 구현하지 않는다.
 
-## 미사용 코드 판정
-
-import 검색뿐 아니라 루트/컨테이너/CLI/LangGraph 진입점, 카탈로그 및 파일 소스 로딩을 확인한다. 이번 삭제는 worker_past와 호출처 없는 팩토리/옛 패키지 재노출 코드에 한정했다. 등록된 Executor Tool은 import되지 않아도 Notebook 소스로 사용되므로 유지했다.
-
-`src/agent_service/agents/analysis/workflow/{skills,tools}/**/tmp/`의 미등록 Skill/Tool은 활성 호출 경로가 아니다. 미사용 recommender prompt는 008에서 docs/agent-development/reference-prompts로 옮겨 설치 리소스에서 제외했다. 일부 실패 테스트가 미등록 Skill을 기대하므로 업무 지원 범위를 결정하기 전에 임의로 삭제하거나 카탈로그에 승격하지 않았다. 현재 WorkflowRecommender는 실제 벡터 검색 구현이 아닌 빈 결과 placeholder다. 이 항목들의 정리 및 기존 실패 테스트 정상화는 Agent 업무 정합성 작업에 남긴다.
+HTTP는 native async이며 파일/PV와 Workflow DB 저장은 기존 `run_sync` 수명을 유지한다.
+제공 Gaia 템플릿 전체 기동·폐쇄망·Kubernetes·외부 Executor/Redis 배포 검증도 별도다.

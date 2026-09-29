@@ -11,13 +11,13 @@ from typing import Any
 from agent_config import AgentSettings
 from agent_service.runtime.blocking import run_sync, call_io
 from agent_service.agents.analysis.state import AnalysisWorkflowState
-from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorRequestBody
+from service_contracts.executor import ExecutorRequestBody
 from agent_service.agents.analysis.artifacts import (
     build_run_artifact_dir,
     write_demo_json,
 )
-from app.services.executor_client import submit_execution_start
-from app.services.workflow_persistence import NullWorkflowStore, WorkflowStore
+from integrations.executor.client import submit_execution_start
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore
 
 
 def _operation_mode(workflow_document: dict) -> str:

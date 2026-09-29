@@ -67,10 +67,10 @@ PYTHONPATH=src python -m bootstrap_admin --user-id admin-001 --user-name 관리�
 ## 검증 실행
 
 ```sh
-PYTHONPATH=src python -m pytest src/app/test/test_user_identity.py -q
+PYTHONPATH=src python -m pytest src/api_service/test/test_user_identity.py -q
 # 전용 일회성 localhost DB identity_test에서만 실행. public 스키마를 초기화한다.
 DTEST_IDENTITY_TEST_DATABASE_URL=postgresql+asyncpg://tester:password@127.0.0.1:TEST_PORT/identity_test \
-  PYTHONPATH=src python -m pytest src/app/test/test_user_identity_postgres.py -q
+  PYTHONPATH=src python -m pytest src/api_service/test/test_user_identity_postgres.py -q
 ```
 
 실제 테스트 결과와 남은 범위는 [003 기록](improvements/003-user-identity.md)을 참고한다.

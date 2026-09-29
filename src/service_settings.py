@@ -275,7 +275,7 @@ def load_settings(
         raise ConfigurationError("MODEL_CATALOG must be a non-empty mapping")
     if "DEFAULT_MODEL" in merged and not isinstance(merged["DEFAULT_MODEL"], str):
         raise ConfigurationError("DEFAULT_MODEL must be an alias")
-    from agent_service.model_selection import build_catalog, ModelSelectionError
+    from service_runtime.model_selection import build_catalog, ModelSelectionError
     try:
         agent = replace(agent, model_catalog=build_catalog(
             agent, merged.get("MODEL_CATALOG"), merged.get("DEFAULT_MODEL")))

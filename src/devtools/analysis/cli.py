@@ -15,7 +15,7 @@ from agent_config import build_local_mock_request_context, load_agent_settings
 from agent_service.agents.analysis.dependencies import create_llm_dependencies
 from devtools.analysis.checkpoint import compiled_in_memory_graph, compiled_postgres_graph
 from agent_service.agents.analysis.hitl_protocol import hitl_request_args
-from app.observability import setup_phoenix, shutdown_phoenix
+from api_service.observability import setup_phoenix, shutdown_phoenix
 
 
 def _print_json(value: Any) -> None:
@@ -307,7 +307,7 @@ async def _main(args) -> None:
     try:
         dependencies = create_llm_dependencies(settings)
         from contextlib import AsyncExitStack
-        from app.services.executor_client import ExecutorClient
+        from integrations.executor.client import ExecutorClient
         async with AsyncExitStack() as stack:
             if args.postgres:
                 graph = await stack.enter_async_context(compiled_postgres_graph(dependencies, settings))

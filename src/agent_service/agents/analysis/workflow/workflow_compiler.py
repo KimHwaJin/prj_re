@@ -13,7 +13,7 @@ from agent_service.agents.analysis.tools.catalog import (
     _load_tool_registry_document,
     validate_skill_condition_contract,
 )
-from agent_service.agents.analysis.schemas.workflows.workflow_format import (
+from service_contracts.workflow_definition import (
     InputDefinition,
     WorkflowGeneratorOutput,
 )

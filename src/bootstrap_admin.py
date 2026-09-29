@@ -1,26 +1,19 @@
 """One-time deployment command: PYTHONPATH=src python -m bootstrap_admin."""
 import argparse
-import asyncio
 from pathlib import Path
-import sys
+import asyncio
 
 from fastapi import HTTPException
 
 from service_settings import configure, load_settings
 
-# Until package separation, root app.py must not shadow the src/app package.
-_SRC = str(Path(__file__).resolve().parent)
-if _SRC in sys.path:
-    sys.path.remove(_SRC)
-sys.path.insert(0, _SRC)
-
 
 async def bootstrap(user_id: str, user_name: str):
-    from app.core.database import close_database, get_session_factory
-    from app.core.enums import UserRole
-    from app.schemas.common.user_schema import UserCreate
-    from app.services.user_service import UserService
-    import app.models.common  # Register FK models before ORM use.
+    from api_service.core.database import close_database, get_session_factory
+    from api_service.core.enums import UserRole
+    from api_service.schemas.common.user_schema import UserCreate
+    from api_service.services.user_service import UserService
+    import api_service.models.common  # Register FK models before ORM use.
     payload = UserCreate(user_id=user_id, user_name=user_name, role=UserRole.ADMIN)
     try:
         async with get_session_factory()() as db:

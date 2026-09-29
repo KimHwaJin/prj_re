@@ -90,7 +90,7 @@ services:
 
   event-worker:
     <<: *app
-    command: [python, -m, app.agent_worker.worker_main]
+    command: [python, -m, api_service.agent_worker.worker_main]
     ports:
       - "127.0.0.1:${LOCAL_EVENT_WORKER_PORT:-18011}:8011"
     depends_on:

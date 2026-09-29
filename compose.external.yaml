@@ -26,7 +26,7 @@ services:
     image: dtest-agent:local
     depends_on:
       - api
-    command: ["python", "-m", "app.agent_worker.worker_main"]
+    command: ["python", "-m", "api_service.agent_worker.worker_main"]
     env_file:
       - path: .env
         required: false

@@ -58,7 +58,7 @@ from agent_service.agents.analysis.nodes.hitl import (
 )
 from devtools.analysis.visualization import build_visualization_graph, graph_to_mermaid
 from agent_service.agents.analysis.workflow.workflow_recommender import WorkflowRecommender
-from agent_service.agents.analysis.schemas.workflows.workflow_format import (
+from service_contracts.workflow_definition import (
     InputDefinition,
     WorkflowGeneratorOutput,
 )

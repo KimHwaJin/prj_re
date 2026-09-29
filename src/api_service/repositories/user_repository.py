@@ -1,0 +1,39 @@
+from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from api_service.core.enums import DeleteYN
+from api_service.models.common.user_model import UserModel
+
+
+class UserRepository:
+    @staticmethod
+    async def get_active(db: AsyncSession, user_id: UUID, *, for_share: bool = False) -> UserModel | None:
+        query = select(UserModel).where(
+                UserModel.user_id == user_id,
+                UserModel.delete_yn == DeleteYN.N,
+            )
+        if for_share:
+            query = query.with_for_update(read=True)
+        return await db.scalar(query.execution_options(populate_existing=True))
+
+    @staticmethod
+    async def get_by_public_id(db: AsyncSession, public_id: str, *, active_only=False, for_update=False, for_share=False):
+        query = select(UserModel).where(UserModel.public_user_id == public_id)
+        if active_only:
+            query = query.where(UserModel.delete_yn == DeleteYN.N)
+        if for_update:
+            query = query.with_for_update()
+        elif for_share:
+            query = query.with_for_update(read=True)
+        return await db.scalar(query.execution_options(populate_existing=True))
+
+    @staticmethod
+    async def get_active_by_name(db: AsyncSession, user_name: str) -> UserModel | None:
+        return await db.scalar(
+            select(UserModel).where(
+                func.lower(UserModel.user_name) == user_name.lower(),
+                UserModel.delete_yn == DeleteYN.N,
+            )
+        )

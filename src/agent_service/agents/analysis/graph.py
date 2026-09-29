@@ -7,12 +7,10 @@ from typing import Any, Callable
 from langgraph.graph import END, START, StateGraph
 
 from agent_config import AgentSettings
+from service_contracts.executor_transport import ExecutorTransport
 from agent_service.runtime.blocking import run_sync
-from app.agent_worker.graph_boundary import (
-    ExecutionBindings,
-    ExecutorBoundaryNodes,
-    session_id_from,
-)
+from service_contracts.executor_boundary import ExecutionBindings
+from agent_service.runtime.executor_boundary import ExecutorBoundaryNodes, session_id_from
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.nodes.build_notebook_cell_code import make_build_notebook_code
 from agent_service.agents.analysis.nodes.adaptive_execution import (
@@ -80,7 +78,7 @@ from agent_service.agents.analysis.routers.orchestration_router import (
     route_workflow_status,
 )
 from agent_service.agents.analysis.state import AnalysisWorkflowState
-from app.services.workflow_persistence import NullWorkflowStore, WorkflowStore
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore
 
 
 def workflow_unavailable(state: AnalysisWorkflowState) -> dict:
@@ -106,7 +104,7 @@ def build_analysis_workflow_graph(
     settings: AgentSettings,
     *,
     checkpointer: Any | None = None,
-    executor_client: Any | None = None,
+    executor_client: ExecutorTransport | None = None,
     submit_execution_start: Any | None = None,
     submit_execution_continue: Any | None = None,
     submit_execution_finish: Any | None = None,
@@ -117,7 +115,7 @@ def build_analysis_workflow_graph(
 ):
     """Compile a graph whose edges stay stable when agent internals change."""
     from functools import partial
-    from app.services import executor_client as http
+    from integrations.executor import client as http
     from agent_service.agents.analysis.workflow.execution_notebook_reader import read_current_operation_results
     builder = StateGraph(AnalysisWorkflowState)
     submit_execution_start = submit_execution_start or partial(http.submit_execution_start, client=executor_client)

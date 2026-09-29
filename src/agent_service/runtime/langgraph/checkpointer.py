@@ -10,7 +10,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from agent_config import load_agent_settings
-from app.core.run_diagnostics import instrument_async_methods, observe_pool
+from service_runtime.diagnostics import instrument_async_methods, observe_pool
 
 logger = logging.getLogger(__name__)
 

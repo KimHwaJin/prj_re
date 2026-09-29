@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
 from sqlalchemy.util.queue import AsyncAdaptedQueue
 from sqlalchemy.util.concurrency import greenlet_spawn
-from app.services.run_service import RunService
+from api_service.services.run_service import RunService
 
 
 async def trial(extra_yield):

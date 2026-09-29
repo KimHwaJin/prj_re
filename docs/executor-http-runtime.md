@@ -87,6 +87,9 @@ API Run은 기존 `recovery_required`와 실행 소유권을 유지하고, 같�
 소유자가 수명을 관리한다.
 
 ```python
+from integrations.executor.client import ExecutorClient
+from agent_service.agents.analysis.graph import build_analysis_workflow_graph
+
 async with ExecutorClient(settings) as executor_client:
     graph = build_analysis_workflow_graph(
         deps, settings, checkpointer=saver,
@@ -104,3 +107,5 @@ submission_scope, API 상태 반영이 필요하면 기존 Run/이벤트 진입�
 실제 HTTP 구현은 native async이며 run_sync로 감싸지 않는다. 파일/PV staging,
 manifest 읽기, 기존 WorkflowStore 저장은 run_sync를 유지한다. 이 작업이 파일의
 원자적 쓰기나 DB 저장소 전체 비동기 전환까지 완료했다는 의미는 아니다.
+
+025에서 HTTP 구현은 `integrations/executor/client.py`, manifest 읽기는 `integrations/executor/manifest.py`로 이동했다. 요청·응답 스키마와 빌려 쓰는 transport 계약은 `service_contracts`에 있다. 런타임 소유권·요청 본문·실패 분류는 유지한다.

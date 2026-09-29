@@ -8,10 +8,10 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from config import settings
-from app.models.model_base import Base
+from api_service.models.model_base import Base
 
 # Register every mapped table on Base.metadata before autogenerate runs.
-import app.models.common  # noqa: F401,E402
+import api_service.models.common  # noqa: F401,E402
 
 
 config = context.config

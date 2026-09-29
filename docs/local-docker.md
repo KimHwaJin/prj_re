@@ -41,7 +41,7 @@ bootstrap은 로컬 host·DB를 검증하고 `.env`에 지정된 로그인 계�
 
 Redis는 `.env`의 `REDIS_URL`·`EW_REDIS_URL`을 사용한다. 로컬 Redis 서비스는 선택적 `local-redis` 프로필로 남겨두며 API에서 자동으로 사용하지 않는다. Executor 제출 여부도 `.env`의 `EXECUTOR_SUBMIT_ENABLED`를 따른다.
 
-`event-worker` 컨테이너 1개는 `python -m app.agent_worker.worker_main`으로 실행되어 Executor 이벤트를 수집하고 Agent를 재개한다. API와 같은 이미지·로컬 `agent` DB·checkpoint 설정을 사용한다. Executor 서버 자체를 추가로 기동하는 것은 아니다. API 컨테이너 안의 Run Worker 4개와 별개의 서비스다.
+`event-worker` 컨테이너 1개는 `python -m api_service.agent_worker.worker_main`으로 실행되어 Executor 이벤트를 수집하고 Agent를 재개한다. API와 같은 이미지·로컬 `agent` DB·checkpoint 설정을 사용한다. Executor 서버 자체를 추가로 기동하는 것은 아니다. API 컨테이너 안의 Run Worker 4개와 별개의 서비스다.
 
 사용자 선택에 따라 Redis 소비 그룹·명령 스트림·instance ID도 `.env` 그대로 사용한다. 현재 설정의 `dtest-agent:ingress`와 `dtest-agent:dispatch`는 외부 Redis의 기존 그룹이며, DB는 로컬이므로 다른 환경의 Worker와 메시지 소비를 나누게 된다. 로컬 DB에 없는 command가 전달되면 `Unknown command ID`로 처리될 수 있다. 이 구성을 독립된 이벤트 처리 환경으로 간주하지 않는다.
 

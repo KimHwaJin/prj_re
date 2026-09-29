@@ -13,9 +13,9 @@ from agent_service.agents.analysis.tests.test_user_agent_graph import (
     FakeExecutionBindings, FakeExecutorSubmitter, ReportAgent, analysis_context,
     dependencies, select_candidate, settings, start_analysis,
 )
-from app.agent_worker.langgraph_adapter import LangGraphEventAdapter
-from app.services.workflow_persistence import NullWorkflowStore
-from app.worker import EventContext, ExecutorEvent
+from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from service_contracts.workflow import NullWorkflowStore
+from api_service.worker import EventContext, ExecutorEvent
 
 
 @pytest.mark.asyncio
@@ -94,7 +94,7 @@ async def test_approval_to_executor_event_and_report_survives_rebuild(tmp_path, 
         uploads.append(payload)
         return {"status_code": 202, "body": {}}
 
-    monkeypatch.setattr("app.services.executor_client._post_json", upload)
+    monkeypatch.setattr("integrations.executor.client._post_json", upload)
 
     def build():
         return build_analysis_workflow_graph(

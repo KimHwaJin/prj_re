@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/api-agent-boundaries",
+  "base_commit": "26a9295",
+  "scope": "API/Agent import boundaries, shared contracts/runtime and Executor integration packages",
+  "full_suite": {
+    "passed": 566,
+    "subtests_passed": 2,
+    "warnings": 53,
+    "skipped": 0,
+    "failed": 0,
+    "duration_seconds": 201.98,
+    "command": "PYTHONPATH=src DTEST_IDENTITY_TEST_DATABASE_URL=<isolated local identity_test DSN> python -m pytest src/api_service/test src/agent_service/agents/analysis/tests -q --disable-warnings --maxfail=2"
+  },
+  "new_architecture_tests": 6,
+  "code_checks": {
+    "openapi_equal_to_26a9295": true,
+    "openapi_paths": 34,
+    "changed_python_files_compiled": 190,
+    "old_src_app_removed": true
+  },
+  "previous_commit_checkpoint": {
+    "postgres_checkpoint_resumed": true,
+    "graph_nodes_edges_unchanged": true,
+    "before_next": [
+      "select_workflow_candidate"
+    ],
+    "after_next": [],
+    "mock_execution_steps": 6
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "environment": {
+    "database": "isolated local PostgreSQL 17",
+    "databases": [
+      "identity_test",
+      "boundary_checkpoint_test"
+    ],
+    "llm": "mock",
+    "executor_external_called": false,
+    "redis_external_called": false,
+    "temporary_database_container_and_volume_removed": true
+  },
+  "initial_failure_fixed": "Restored pathlib.Path import needed by bootstrap_admin --config after removing obsolete sys.path precedence workaround",
+  "limitations": [
+    "No production speed or throughput claim",
+    "No new multi-Agent registry or execution_service package",
+    "Checkpoint transition verified for current analysis HITL snapshot, not arbitrary Python object persistence or every historical graph version",
+    "No external LLM/Executor/Redis/Kubernetes/Gaia integration test",
+    "Preexisting syntax error in provided src/routers/chat/router.py remains outside scope",
+    "External consumers of removed Python import paths must migrate"
+  ],
+  "deployment": "not deployed; not pushed; current feature not merged to base"
+}

@@ -1,6 +1,6 @@
 # Agent 개발 안내
 
-현재 구현 기준: `feature/refactor-agent-flow-validation`, 개선 기록 012. 7개 실제 LLM 역할을 create_agent로 통일하고 공통 실행 문맥·프로젝트 system_prompt·JSON 검증 미들웨어를 적용했다. project_memory 자동 요약/저장, 모델 선택 registry, 업무 registry 및 HTTP·DB·파일 I/O 전체 전환은 후속이다. [Agent 선언·문맥·미들웨어 가이드](agent-runtime-contract.md)를 먼저 읽는다.
+현재 구현 기준: 개선 기록 025. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory 자동 요약/저장과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
@@ -18,7 +18,7 @@
 1. `src/agent_service/agents/analysis/graph.py`에서 실행 흐름을 확인한다. 업무 상태는 `state.py`, 노드는 `nodes/`다.
 2. 역할별 Agent는 `agent_builders/<role>/agent.py`의 `build_agent()`에서 수정한다. 기본 프롬프트는 같은 폴더의 `prompt.md`이며 내용이 같아도 다른 역할의 파일을 참조하거나 합치지 않는다. `dependencies.py`는 공유 모델과 각 builder의 결과를 연결한다. 기존 `components/specs.py`는 제거했다. 이 builder 패키지는 API에서 선택할 업무 Agent registry가 아니다.
 3. **src/agent_service/agents/analysis/workflow/**에서 Workflow 관련 코드를 관리한다. 기존 skills/·tools/·workflows/ 하위 구조와 생성기를 유지하고, 같은 패키지의 Python 모듈에서 해석·컴파일·코드 생성을 담당한다. Agent가 호출하는 LangChain 카탈로그 도구는 analysis/tools/catalog.py다.
-4. `tests/`에서 업무 회귀를 실행한다. 서비스 상태·소유권·DB 테스트는 아직 `src/app/test/`에 있다.
+4. `tests/`에서 업무 회귀를 실행한다. 서비스 상태·소유권·DB 테스트는 `src/api_service/test/`에 있다.
 
 Python 3.11과 잠금파일 의존성을 사용한다. 설치 후 CLI는 `dtest-agent`, 소스 체크아웃에서는 `python cli.py --help`다. API는 기존대로 루트 `python app.py`로 실행한다. CLI는 개발용 그래프 직접 실행 도구이며 서비스의 durable queue/세션 소유권을 검증하는 도구가 아니다.
 

@@ -20,8 +20,9 @@ temporary = tempfile.TemporaryDirectory(prefix='dtest-layout-installed-')
 installed = Path(temporary.name)
 with ZipFile(wheel) as archive:
     names = archive.namelist()
-    assert not any('/tests/' in n or n.startswith('app/test/') for n in names)
-    assert not any(n.startswith(('app/agents/', 'app/graphs/', 'app/worker_past/', 'app/workflow/')) for n in names)
+    assert not any('/tests/' in n or n.startswith('api_service/test/') for n in names)
+    assert not any(n.startswith('app/') for n in names)
+    assert all(any(n.startswith(package + '/') for n in names) for package in ('api_service', 'agent_service', 'service_contracts', 'service_runtime', 'integrations'))
     assert not any(n.startswith(('agent_service/agents/analysis/prompts/', 'agent_service/agents/analysis/resources/')) for n in names)
     assert 'agent_service/agents/analysis/workflow/workflows/workflow_lifecycle.md' in names
     assert 'agent_service/agents/analysis/workflow/skills/generate_skill_index.py' in names

@@ -10,11 +10,7 @@ from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.workflow.execution_notebook_reader import (
     read_current_operation_results,
 )
-from app.services.workflow_persistence import (
-    NullWorkflowStore,
-    WorkflowStore,
-    effective_workflow_snapshot,
-)
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore, effective_workflow_snapshot
 
 
 def make_collect_execution_results(

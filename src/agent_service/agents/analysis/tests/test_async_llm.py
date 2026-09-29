@@ -25,7 +25,7 @@ from agent_service.agents.analysis.dependencies import create_chat_model
 from agent_service.agents.analysis.nodes.service_queries import make_faq_node
 from agent_service.agents.analysis.testing.mock_dependencies import ScriptedAgent
 from agent_service.runtime.blocking import run_sync
-from app.services.run_service import RunService
+from api_service.services.run_service import RunService
 
 
 class State(TypedDict, total=False):

@@ -62,11 +62,11 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["app*", "agent_service*", "devtools*"]
-exclude = ["app.test*", "agent_service.agents.*.tests*"]
+include = ["api_service*", "agent_service*", "service_contracts*", "service_runtime*", "integrations*", "devtools*"]
+exclude = ["api_service.test*", "agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]
-app = ["**/*.md", "**/*.yaml", "static/*.html"]
+api_service = ["**/*.md", "**/*.yaml", "static/*.html"]
 "agent_service.agents.analysis" = ["agent_builders/*/prompt.md", "schemas/**/*.md"]
 
 "agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]

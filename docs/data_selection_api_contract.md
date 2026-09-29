@@ -24,7 +24,7 @@
 ## 2. Pydantic 스키마
 
 데이터 선택 도메인 모델은
-`src/app/schemas/agents/orchestration_schema.py`에 정의된 모델을 사용한다.
+`src/api_service/schemas/agents/orchestration_schema.py`에 정의된 모델을 사용한다.
 
 ```python
 from datetime import date

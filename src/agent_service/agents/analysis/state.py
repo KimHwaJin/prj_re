@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from app.agent_worker.graph_boundary import ExecutorBoundaryState
+from service_contracts.executor_boundary import ExecutorBoundaryState
 from agent_service.agents.analysis.message_utils import append_messages_with_ids
 
 

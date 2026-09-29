@@ -31,3 +31,5 @@
 010에서 기존 app/workflow의 skills·tools·workflows를 이 패키지의 workflow/ 아래로 통합했다. [Workflow 유지보수 안내](workflow/README.md)에서 자산·생성기와 기존 처리 모듈의 역할을 확인한다.
 
 [Agent 실행 문맥·미들웨어 가이드](../../../../docs/agent-development/agent-runtime-contract.md)에서 역할 추가 방법과 snapshot/retry 경계를 확인한다.
+
+025: API 코드는 `api_service`, 공유 Executor/Workflow 규격은 `service_contracts`, HTTP·manifest 어댑터는 `integrations/executor`로 분리했다. `schemas/workflows/workflow_format.py`는 `service_contracts/workflow_definition.py`로 이동했으며 이전 파일은 제거했다. 업무 흐름·역할별 프롬프트·`workflow/{skills,tools,workflows}`는 그대로 유지한다. HTTP는 024의 native async 경로이며 파일/PV/WorkflowStore는 기존 소유권 보호 스레드 경계를 사용한다.

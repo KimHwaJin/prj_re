@@ -27,7 +27,7 @@ from agent_service.agents.analysis.tools.catalog import (
 )
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.artifacts import build_workflow_output_dir
-from app.services.workflow_persistence import NullWorkflowStore, WorkflowStore
+from service_contracts.workflow import NullWorkflowStore, WorkflowStore
 from agent_service.agents.analysis.schemas.agents.workflow_generator_schema import (
     SkillSelectionOutput,
     WorkflowGenerationRequest,
