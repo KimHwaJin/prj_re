@@ -1,0 +1,52 @@
+{
+  "source_commit": "ea871a1",
+  "date": "2026-09-29",
+  "cohorts": [
+    1,
+    10,
+    30,
+    50
+  ],
+  "scope": "Current runtime only; one API process; four slots; local 5s nonstreaming LLM; stop before workflow approval is submitted",
+  "raw_sanitization": "Home paths in diagnostic stacks replaced with <user-home>; timing and SQL fingerprints unchanged. No credentials or real users in source data.",
+  "files": [
+    {
+      "path": "flow-1-after-s4-r1/raw.json.gz",
+      "sha256": "8b5a06732872bfe027eff6af17f7f344c932e0559f24d6191a7014e4a6b1ee95",
+      "uncompressed_sha256": "62d75f4f944fe05bb93449b77750a8e1955c4da5712c6c79392c58fa013ba85b",
+      "bytes": 63811
+    },
+    {
+      "path": "flow-10-after-s4-r1/raw.json.gz",
+      "sha256": "1f0b02d42c7053ac293a8e63ffac51b294784eee6dd8b4e1f0911b8a7f19cc89",
+      "uncompressed_sha256": "0d8ed0a9c17f37aa9546d9cc66342bac561a05b657e79b40a71dd57f7462b71b",
+      "bytes": 456087
+    },
+    {
+      "path": "flow-30-after-s4-r1/raw.json.gz",
+      "sha256": "0a9b55a62bec05aea5cd2fde8844140bf6550167dc21cbffc6fa2cb1ff82cf5c",
+      "uncompressed_sha256": "d355b8e1ecd4e304291f1cdf086edcb8c54171c7fcda3ddb6bdabfd0c895d825",
+      "bytes": 1363567
+    },
+    {
+      "path": "flow-50-after-s4-r1/raw.json.gz",
+      "sha256": "a9309287bbe373142e611c798e8d4757fa70381d2f4e115495ee70fbb1d6fb1c",
+      "uncompressed_sha256": "3aa0dbe5ab4b6c169666e5aec82d6dc3ae34928fbe20553bb8bbba2c303620a3",
+      "bytes": 2308890
+    }
+  ],
+  "harness_smoke": {
+    "users": 1,
+    "elapsed_s": 24.304,
+    "status": "passed",
+    "models": 4,
+    "included_in_main_results": false,
+    "note": "Re-run after removing dead legacy harness branches; the intermediate failed startup was fixed before this smoke."
+  },
+  "html_qa": {
+    "validation": "passed",
+    "package": "passed",
+    "verification": "structural_only",
+    "reason": "No compatible installed Chromium found; no browser downloaded. Exact embedded payload and semantic fallback passed; interactive rendering/source dialogs/light-dark/narrow viewport not visually verified."
+  }
+}

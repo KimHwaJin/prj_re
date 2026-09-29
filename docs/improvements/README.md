@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/token-event-buffer` (027 구현·검증 완료, 베이스 미병합). 026의 `039d516`까지 베이스에 병합했다. 원격 push·배포 미수행.
+현재 작업 브랜치: `feature/runtime-latency-profile` (028 계측·검산·보고서 완료, 베이스 미병합). 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -47,6 +47,7 @@
 | 025 | API·Agent 패키지 경계 및 공통 규격·연동 분리 | 구현·격리 PostgreSQL/전체 회귀/체크포인트 재개/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](025-api-agent-boundaries.md) |
 | 026 | Run SSE 변경 알림·공유 조회 | 구현·격리 PostgreSQL/실제 HTTP 비교/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](026-run-sse-notifications.md) |
 | 027 | LLM 토큰 버퍼 상한·시간 기준 저장 | 구현·격리 PostgreSQL/전체 회귀/오프라인 비교/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](027-token-event-buffer.md) |
+| 028 | 현재 실행 경로 LLM·큐·내부 처리 지연 분해 | 1·10·30·50명 계측·원본 검산·보고서 완료 / 운영 코드 변경·배포 미수행 | 2026-09-29 | [측정·판단·다음 방향](028-runtime-latency-profile.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

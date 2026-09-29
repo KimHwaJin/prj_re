@@ -1,0 +1,2250 @@
+[
+  {
+    "users": 1,
+    "source_commit": "ea871a1",
+    "elapsed_s": 23.9624432080891,
+    "complete_users": 1,
+    "attempts": 4,
+    "model_calls": 4,
+    "stream_model_calls": 0,
+    "per_user": {
+      "llm_s": {
+        "mean": 20.069716001162305,
+        "p50": 20.069716001162305,
+        "p95": 20.069716001162305,
+        "max": 20.069716001162305
+      },
+      "projection_s": {
+        "mean": 0.6991661251522601,
+        "p50": 0.6991661251522601,
+        "p95": 0.6991661251522601,
+        "max": 0.6991661251522601
+      },
+      "init_s": {
+        "mean": 0.4260805817320943,
+        "p50": 0.4260805817320943,
+        "p95": 0.4260805817320943,
+        "max": 0.4260805817320943
+      },
+      "checkpoint_exclusive_s": {
+        "mean": 0.06748620606958866,
+        "p50": 0.06748620606958866,
+        "p95": 0.06748620606958866,
+        "max": 0.06748620606958866
+      },
+      "other_internal_s": {
+        "mean": 0.3270632098428905,
+        "p50": 0.3270632098428905,
+        "p95": 0.3270632098428905,
+        "max": 0.3270632098428905
+      },
+      "worker_s": {
+        "mean": 21.589512458769605,
+        "p50": 21.589512458769605,
+        "p95": 21.589512458769605,
+        "max": 21.589512458769605
+      },
+      "queue_s": {
+        "mean": 0.564985,
+        "p50": 0.564985,
+        "p95": 0.564985,
+        "max": 0.564985
+      },
+      "stage_s": {
+        "mean": 23.329666959820315,
+        "p50": 23.329666959820315,
+        "p95": 23.329666959820315,
+        "max": 23.329666959820315
+      },
+      "delivery_s": {
+        "mean": 1.1433497939724475,
+        "p50": 1.1433497939724475,
+        "p95": 1.1433497939724475,
+        "max": 1.1433497939724475
+      },
+      "admission_s": {
+        "mean": 0.3316740000154823,
+        "p50": 0.3316740000154823,
+        "p95": 0.3316740000154823,
+        "max": 0.3316740000154823
+      },
+      "model_calls": {
+        "mean": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "max": 4.0
+      },
+      "total_s": {
+        "mean": 23.96240020892583,
+        "p50": 23.96240020892583,
+        "p95": 23.96240020892583,
+        "max": 23.96240020892583
+      },
+      "internal_s": {
+        "mean": 1.519796457607299,
+        "p50": 1.519796457607299,
+        "p95": 1.519796457607299,
+        "max": 1.519796457607299
+      },
+      "outside_worker_queue_s": {
+        "mean": 1.8079027501562237,
+        "p50": 1.8079027501562237,
+        "p95": 1.8079027501562237,
+        "max": 1.8079027501562237
+      }
+    },
+    "stages": {
+      "data_selection": {
+        "llm_s": {
+          "mean": 10.057317501166835,
+          "p50": 10.057317501166835,
+          "p95": 10.057317501166835,
+          "max": 10.057317501166835
+        },
+        "projection_s": {
+          "mean": 0.08797216601669788,
+          "p50": 0.08797216601669788,
+          "p95": 0.08797216601669788,
+          "max": 0.08797216601669788
+        },
+        "init_s": {
+          "mean": 0.4260805817320943,
+          "p50": 0.4260805817320943,
+          "p95": 0.4260805817320943,
+          "max": 0.4260805817320943
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.02105328976176679,
+          "p50": 0.02105328976176679,
+          "p95": 0.02105328976176679,
+          "max": 0.02105328976176679
+        },
+        "other_internal_s": {
+          "mean": 0.11579175223596394,
+          "p50": 0.11579175223596394,
+          "p95": 0.11579175223596394,
+          "max": 0.11579175223596394
+        },
+        "worker_s": {
+          "mean": 10.70821537496522,
+          "p50": 10.70821537496522,
+          "p95": 10.70821537496522,
+          "max": 10.70821537496522
+        },
+        "queue_s": {
+          "mean": 0.07017799999999999,
+          "p50": 0.07017799999999999,
+          "p95": 0.07017799999999999,
+          "max": 0.07017799999999999
+        },
+        "stage_s": {
+          "mean": 11.240627083927393,
+          "p50": 11.240627083927393,
+          "p95": 11.240627083927393,
+          "max": 11.240627083927393
+        },
+        "delivery_s": {
+          "mean": 0.4589394589420408,
+          "p50": 0.4589394589420408,
+          "p95": 0.4589394589420408,
+          "max": 0.4589394589420408
+        },
+        "admission_s": {
+          "mean": 0.06322612497024238,
+          "p50": 0.06322612497024238,
+          "p95": 0.06322612497024238,
+          "max": 0.06322612497024238
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "analysis_context": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.027643125969916582,
+          "p50": 0.027643125969916582,
+          "p95": 0.027643125969916582,
+          "max": 0.027643125969916582
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.009708999190479517,
+          "p50": 0.009708999190479517,
+          "p95": 0.009708999190479517,
+          "max": 0.009708999190479517
+        },
+        "other_internal_s": {
+          "mean": 0.03540004091337323,
+          "p50": 0.03540004091337323,
+          "p95": 0.03540004091337323,
+          "max": 0.03540004091337323
+        },
+        "worker_s": {
+          "mean": 0.07275224989280105,
+          "p50": 0.07275224989280105,
+          "p95": 0.07275224989280105,
+          "max": 0.07275224989280105
+        },
+        "queue_s": {
+          "mean": 0.120563,
+          "p50": 0.120563,
+          "p95": 0.120563,
+          "max": 0.120563
+        },
+        "stage_s": {
+          "mean": 0.6115303339902312,
+          "p50": 0.6115303339902312,
+          "p95": 0.6115303339902312,
+          "max": 0.6115303339902312
+        },
+        "delivery_s": {
+          "mean": 0.4073012510780245,
+          "p50": 0.4073012510780245,
+          "p95": 0.4073012510780245,
+          "max": 0.4073012510780245
+        },
+        "admission_s": {
+          "mean": 0.0798937079962343,
+          "p50": 0.0798937079962343,
+          "p95": 0.0798937079962343,
+          "max": 0.0798937079962343
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "workflow_candidate_selection": {
+        "llm_s": {
+          "mean": 10.01239849999547,
+          "p50": 10.01239849999547,
+          "p95": 10.01239849999547,
+          "max": 10.01239849999547
+        },
+        "projection_s": {
+          "mean": 0.3951010419987142,
+          "p50": 0.3951010419987142,
+          "p95": 0.3951010419987142,
+          "max": 0.3951010419987142
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.02558979205787182,
+          "p50": 0.02558979205787182,
+          "p95": 0.02558979205787182,
+          "max": 0.02558979205787182
+        },
+        "other_internal_s": {
+          "mean": 0.08981895796023309,
+          "p50": 0.08981895796023309,
+          "p95": 0.08981895796023309,
+          "max": 0.08981895796023309
+        },
+        "worker_s": {
+          "mean": 10.522908333921805,
+          "p50": 10.522908333921805,
+          "p95": 10.522908333921805,
+          "max": 10.522908333921805
+        },
+        "queue_s": {
+          "mean": 0.175506,
+          "p50": 0.175506,
+          "p95": 0.175506,
+          "max": 0.175506
+        },
+        "stage_s": {
+          "mean": 10.832977707963437,
+          "p50": 10.832977707963437,
+          "p95": 10.832977707963437,
+          "max": 10.832977707963437
+        },
+        "delivery_s": {
+          "mean": 0.12796237505972385,
+          "p50": 0.12796237505972385,
+          "p95": 0.12796237505972385,
+          "max": 0.12796237505972385
+        },
+        "admission_s": {
+          "mean": 0.07527341693639755,
+          "p50": 0.07527341693639755,
+          "p95": 0.07527341693639755,
+          "max": 0.07527341693639755
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "workflow_approval": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.1884497911669314,
+          "p50": 0.1884497911669314,
+          "p95": 0.1884497911669314,
+          "max": 0.1884497911669314
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.011134125059470534,
+          "p50": 0.011134125059470534,
+          "p95": 0.011134125059470534,
+          "max": 0.011134125059470534
+        },
+        "other_internal_s": {
+          "mean": 0.08605245873332024,
+          "p50": 0.08605245873332024,
+          "p95": 0.08605245873332024,
+          "max": 0.08605245873332024
+        },
+        "worker_s": {
+          "mean": 0.2856364999897778,
+          "p50": 0.2856364999897778,
+          "p95": 0.2856364999897778,
+          "max": 0.2856364999897778
+        },
+        "queue_s": {
+          "mean": 0.198738,
+          "p50": 0.198738,
+          "p95": 0.198738,
+          "max": 0.198738
+        },
+        "stage_s": {
+          "mean": 0.6445318339392543,
+          "p50": 0.6445318339392543,
+          "p95": 0.6445318339392543,
+          "max": 0.6445318339392543
+        },
+        "delivery_s": {
+          "mean": 0.14914670889265835,
+          "p50": 0.14914670889265835,
+          "p95": 0.14914670889265835,
+          "max": 0.14914670889265835
+        },
+        "admission_s": {
+          "mean": 0.11328075011260808,
+          "p50": 0.11328075011260808,
+          "p95": 0.11328075011260808,
+          "max": 0.11328075011260808
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0,
+          "p95": 0,
+          "max": 0
+        }
+      }
+    },
+    "sql_by_actor": {
+      "crud": {
+        "count": 6,
+        "seconds": 0.01988429040648043
+      },
+      "run_post": {
+        "count": 115,
+        "seconds": 0.20686600054614246
+      },
+      "queue_claim": {
+        "count": 114,
+        "seconds": 0.4029440034646541
+      },
+      "run_sse": {
+        "count": 48,
+        "seconds": 0.1348402537405491
+      },
+      "worker": {
+        "count": 322,
+        "seconds": 0.6172237005084753
+      },
+      "cancel_watch": {
+        "count": 83,
+        "seconds": 0.2602944546379149
+      }
+    },
+    "sql_total": 688,
+    "top_sql": [
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.status = $1::agent_run_status AND NOT (EXISTS (SELECT session_executions.session_id FROM session_executions WHERE session_executions.session_id = agent_runs.session_id AND (session_executions.token IS NOT NULL OR session_executions.recovery_required IS true))) AND NOT (EXISTS (SELECT tasks.task_id FROM tasks WHERE tasks.task_id = agent_runs.task_id AND tasks.recovery_required IS true)) AND (agent_runs.next_attempt_at IS NULL OR agent_runs.next_attempt_at <= $2::TIMESTAMP WITH TIME ZONE) ORDER BY agent_runs.created_at, agent_runs.run_id LIMIT $3::INTEGER FOR UPDATE SKIP LOCKED",
+        "count": 98,
+        "seconds": 0.3643122965004295
+      },
+      {
+        "fingerprint": "SELECT agent_runs.cancel_requested_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 83,
+        "seconds": 0.2602944546379149
+      },
+      {
+        "fingerprint": "SELECT messages.message_id, messages.session_id, messages.message_type, messages.content, messages.content_text, messages.message_status, messages.client_request_id, messages.error_code, messages.error_message, messages.metadata, messages.sequence_no, messages.delete_yn, messages.created_at, messages.updated_at, messages.deleted_at FROM messages WHERE messages.session_id = $1::UUID AND messages.client_request_id = $2::UUID AND messages.delete_yn = $3::delete_yn",
+        "count": 12,
+        "seconds": 0.11819600104354322
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at FROM sessions WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "count": 68,
+        "seconds": 0.10094379470683634
+      },
+      {
+        "fingerprint": "UPDATE tasks SET last_event_sequence=(tasks.last_event_sequence + $1::BIGINT), updated_at=now() WHERE tasks.task_id = $2::UUID RETURNING tasks.last_event_sequence",
+        "count": 26,
+        "seconds": 0.05990283121354878
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id FROM sessions JOIN users ON users.user_id = sessions.user_id JOIN projects ON projects.project_id = sessions.project_id WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn AND users.delete_yn = $4::delete_yn AND projects.delete_yn = $5::delete_yn AND projects.user_id = $6::UUID",
+        "count": 12,
+        "seconds": 0.05468791793100536
+      },
+      {
+        "fingerprint": "INSERT INTO task_events (task_event_id, task_id, run_id, sequence, event_type, payload) VALUES ($1::UUID, $2::UUID, $3::UUID, $4::BIGINT, $5::VARCHAR, $6::JSONB) RETURNING task_events.created_at",
+        "count": 26,
+        "seconds": 0.04448058293201029
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id IN ($4::UUID)",
+        "count": 12,
+        "seconds": 0.03614766732789576
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id FROM agent_runs WHERE agent_runs.run_id = $4::UUID AND agent_runs.session_id = $5::UUID) AND agent_runs_1.session_id = $6::UUID",
+        "count": 11,
+        "seconds": 0.029143168358132243
+      },
+      {
+        "fingerprint": "SELECT messages.message_id, messages.session_id, messages.message_type, messages.content, messages.content_text, messages.message_status, messages.client_request_id, messages.error_code, messages.error_message, messages.metadata, messages.sequence_no, messages.delete_yn, messages.created_at, messages.updated_at, messages.deleted_at FROM messages WHERE messages.message_id = $1::UUID",
+        "count": 5,
+        "seconds": 0.02800003904849291
+      },
+      {
+        "fingerprint": "SELECT projects.project_id, projects.user_id, projects.project_name, projects.system_prompt, projects.prompt_version, projects.is_default, projects.delete_yn, projects.created_at, projects.updated_at, projects.deleted_at FROM projects WHERE projects.project_id IN ($3::UUID) AND projects.user_id = $1::UUID AND projects.delete_yn = $2::delete_yn",
+        "count": 20,
+        "seconds": 0.027754996437579393
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock_shared(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_shared_1",
+        "count": 20,
+        "seconds": 0.02712029218673706
+      },
+      {
+        "fingerprint": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID FOR UPDATE",
+        "count": 15,
+        "seconds": 0.02633420703932643
+      },
+      {
+        "fingerprint": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at FROM users WHERE users.user_id = $1::UUID AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "count": 20,
+        "seconds": 0.025668247370049357
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.run_id = $1::UUID AND agent_run_logs.event_key = $2::VARCHAR",
+        "count": 14,
+        "seconds": 0.024579415330663323
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_1",
+        "count": 19,
+        "seconds": 0.024488292168825865
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events WHERE task_events.task_event_id = $1::UUID",
+        "count": 14,
+        "seconds": 0.02352675050497055
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.log_id = $1::UUID",
+        "count": 14,
+        "seconds": 0.02247312292456627
+      },
+      {
+        "fingerprint": "INSERT INTO agent_run_logs (log_id, run_id, event_key, agent_name, node, event, kind, payload) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::JSONB) RETURNING agent_run_logs.created_at",
+        "count": 14,
+        "seconds": 0.0215490001719445
+      },
+      {
+        "fingerprint": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at FROM users WHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "count": 5,
+        "seconds": 0.021387250861153007
+      }
+    ],
+    "pool_acquire_ms": {
+      "mean": 0.4145318068343995,
+      "p50": 0.22145896218717098,
+      "p95": 1.5259580686688423,
+      "max": 4.390999907627702
+    },
+    "event_loop_lag_ms": {
+      "mean": 3.400978629059827,
+      "p50": 1.861666422337288,
+      "p95": 2.8466660063713736,
+      "max": 406.4328331500292
+    },
+    "peak_worker": 1,
+    "peak_graph": 1,
+    "slot_occupancy": 0.2252432303259622,
+    "commit_calls_by_actor": {
+      "crud": 1,
+      "run_post": 4,
+      "queue_claim": 4,
+      "worker": 61
+    },
+    "pool_wait_over_100ms": {
+      "total": 0,
+      "first_2s": 0
+    },
+    "peak_pool_checked_out": 2,
+    "cpu_seconds": 1.6486640000000001,
+    "rss_peak_bytes": 203816960,
+    "resource_events": [
+      {
+        "at": 1387503.135672,
+        "run_id": "b9865870-9e73-418c-ac85-94d7aa9a44e3",
+        "operation": "pool_construct",
+        "name": "pool-1"
+      },
+      {
+        "at": 1387503.142307,
+        "run_id": "b9865870-9e73-418c-ac85-94d7aa9a44e3",
+        "operation": "pool_open",
+        "name": "pool-1",
+        "ms": 6.616499973461032
+      },
+      {
+        "at": 1387503.142341541,
+        "run_id": "b9865870-9e73-418c-ac85-94d7aa9a44e3",
+        "operation": "pool_construct",
+        "name": "agent-checkpoint"
+      },
+      {
+        "at": 1387503.148306083,
+        "run_id": "b9865870-9e73-418c-ac85-94d7aa9a44e3",
+        "operation": "pool_open",
+        "name": "agent-checkpoint",
+        "ms": 5.94883318990469
+      },
+      {
+        "at": 1387503.179335583,
+        "run_id": "b9865870-9e73-418c-ac85-94d7aa9a44e3",
+        "operation": "graph_build",
+        "ms": 29.458832927048206
+      }
+    ],
+    "raw": "flow-1-after-s4-r1/raw.json.gz",
+    "checks": "all users, models, attempts, health, session release, and time partitions verified"
+  },
+  {
+    "users": 10,
+    "source_commit": "ea871a1",
+    "elapsed_s": 55.535547625040635,
+    "complete_users": 10,
+    "attempts": 40,
+    "model_calls": 40,
+    "stream_model_calls": 0,
+    "per_user": {
+      "llm_s": {
+        "mean": 20.030989879742265,
+        "p50": 20.019899417529814,
+        "p95": 20.093519458780065,
+        "max": 20.093519458780065
+      },
+      "projection_s": {
+        "mean": 0.5608733629807829,
+        "p50": 0.5593393546296284,
+        "p95": 0.6269003327470273,
+        "max": 0.6269003327470273
+      },
+      "init_s": {
+        "mean": 0.03594198739156127,
+        "p50": 0.0,
+        "p95": 0.3594198739156127,
+        "max": 0.3594198739156127
+      },
+      "checkpoint_exclusive_s": {
+        "mean": 0.09110394606832414,
+        "p50": 0.08661829342599958,
+        "p95": 0.13151045888662338,
+        "max": 0.13151045888662338
+      },
+      "other_internal_s": {
+        "mean": 0.3769459825474769,
+        "p50": 0.3005049542989582,
+        "p95": 0.7481578320730478,
+        "max": 0.7481578320730478
+      },
+      "worker_s": {
+        "mean": 21.095855350373313,
+        "p50": 21.02012237510644,
+        "p95": 21.49588408251293,
+        "max": 21.49588408251293
+      },
+      "queue_s": {
+        "mean": 25.1101212,
+        "p50": 21.4241155,
+        "p95": 32.695225,
+        "max": 32.695225
+      },
+      "stage_s": {
+        "mean": 47.50262325000949,
+        "p50": 43.53843708417844,
+        "p95": 54.891714291181415,
+        "max": 54.891714291181415
+      },
+      "delivery_s": {
+        "mean": 1.27274992542807,
+        "p50": 1.3458109787898138,
+        "p95": 1.4510905854403973,
+        "max": 1.4510905854403973
+      },
+      "admission_s": {
+        "mean": 0.4054587663151324,
+        "p50": 0.39295939507428557,
+        "p95": 0.46726670884527266,
+        "max": 0.46726670884527266
+      },
+      "model_calls": {
+        "mean": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "max": 4.0
+      },
+      "total_s": {
+        "mean": 48.145054758246985,
+        "p50": 44.17961806245148,
+        "p95": 55.534569000126794,
+        "max": 55.534569000126794
+      },
+      "internal_s": {
+        "mean": 1.064865470631048,
+        "p50": 0.9996895204531029,
+        "p95": 1.4023646237328649,
+        "max": 1.4023646237328649
+      },
+      "outside_worker_queue_s": {
+        "mean": 1.939078207873676,
+        "p50": 2.0159051244559816,
+        "p95": 2.120398372815984,
+        "max": 2.120398372815984
+      }
+    },
+    "stages": {
+      "data_selection": {
+        "llm_s": {
+          "mean": 10.019488762924448,
+          "p50": 10.008104583481327,
+          "p95": 10.07990450086072,
+          "max": 10.07990450086072
+        },
+        "projection_s": {
+          "mean": 0.09077666269149631,
+          "p50": 0.0912465003784746,
+          "p95": 0.10388225014321506,
+          "max": 0.10388225014321506
+        },
+        "init_s": {
+          "mean": 0.03594198739156127,
+          "p50": 0.0,
+          "p95": 0.3594198739156127,
+          "max": 0.3594198739156127
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.027717199944891035,
+          "p50": 0.025699624442495406,
+          "p95": 0.06147879222407937,
+          "max": 0.06147879222407937
+        },
+        "other_internal_s": {
+          "mean": 0.17993952857796103,
+          "p50": 0.08332870784215629,
+          "p95": 0.5287854583002627,
+          "max": 0.5287854583002627
+        },
+        "worker_s": {
+          "mean": 10.353864191612228,
+          "p50": 10.200031687505543,
+          "p95": 10.693445415934548,
+          "max": 10.693445415934548
+        },
+        "queue_s": {
+          "mean": 8.7748921,
+          "p50": 10.9704075,
+          "p95": 21.201119,
+          "max": 21.201119
+        },
+        "stage_s": {
+          "mean": 19.594460695935414,
+          "p50": 21.611846104613505,
+          "p95": 31.851516167167574,
+          "max": 31.851516167167574
+        },
+        "delivery_s": {
+          "mean": 0.45975212105549873,
+          "p50": 0.4395691251847893,
+          "p95": 0.54606579313986,
+          "max": 0.54606579313986
+        },
+        "admission_s": {
+          "mean": 0.1294178667012602,
+          "p50": 0.12872425047680736,
+          "p95": 0.13344749994575977,
+          "max": 0.13344749994575977
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "analysis_context": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.04385773739777506,
+          "p50": 0.0383712500333786,
+          "p95": 0.0693644171115011,
+          "max": 0.0693644171115011
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.01586354202590883,
+          "p50": 0.01200452062766999,
+          "p95": 0.030867625726386905,
+          "max": 0.030867625726386905
+        },
+        "other_internal_s": {
+          "mean": 0.06064476240426302,
+          "p50": 0.05173314537387341,
+          "p95": 0.0992491242941469,
+          "max": 0.0992491242941469
+        },
+        "worker_s": {
+          "mean": 0.12036608771886677,
+          "p50": 0.10070597962476313,
+          "p95": 0.19948120811022818,
+          "max": 0.19948120811022818
+        },
+        "queue_s": {
+          "mean": 6.1717105,
+          "p50": 9.6439025,
+          "p95": 10.992779,
+          "max": 10.992779
+        },
+        "stage_s": {
+          "mean": 6.647786883288063,
+          "p50": 10.169337166589685,
+          "p95": 11.526445582974702,
+          "max": 11.526445582974702
+        },
+        "delivery_s": {
+          "mean": 0.3495143627980724,
+          "p50": 0.4035974581493065,
+          "p95": 0.4291537497192621,
+          "max": 0.4291537497192621
+        },
+        "admission_s": {
+          "mean": 0.09580861637368798,
+          "p50": 0.09823256288655102,
+          "p95": 0.1195915408898145,
+          "max": 0.1195915408898145
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "workflow_candidate_selection": {
+        "llm_s": {
+          "mean": 10.011501116817817,
+          "p50": 10.009483291418292,
+          "p95": 10.019988250220194,
+          "max": 10.019988250220194
+        },
+        "projection_s": {
+          "mean": 0.23972008775454015,
+          "p50": 0.24363322905264795,
+          "p95": 0.2642040839418769,
+          "max": 0.2642040839418769
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.03361667080316692,
+          "p50": 0.03507783287204802,
+          "p95": 0.041273208102211356,
+          "max": 0.041273208102211356
+        },
+        "other_internal_s": {
+          "mean": 0.08631328719202429,
+          "p50": 0.08679022977594286,
+          "p95": 0.09983195876702666,
+          "max": 0.09983195876702666
+        },
+        "worker_s": {
+          "mean": 10.371151204360649,
+          "p50": 10.363343604491092,
+          "p95": 10.416234708856791,
+          "max": 10.416234708856791
+        },
+        "queue_s": {
+          "mean": 7.8035082,
+          "p50": 9.306693,
+          "p95": 19.027565,
+          "max": 19.027565
+        },
+        "stage_s": {
+          "mean": 18.466454962431452,
+          "p50": 19.99923574947752,
+          "p95": 29.709275583038107,
+          "max": 29.709275583038107
+        },
+        "delivery_s": {
+          "mean": 0.2877186665078625,
+          "p50": 0.2833143960451707,
+          "p95": 0.3126938750501722,
+          "max": 0.3126938750501722
+        },
+        "admission_s": {
+          "mean": 0.0911926707951352,
+          "p50": 0.08378647896461189,
+          "p95": 0.12738625006750226,
+          "max": 0.12738625006750226
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "workflow_approval": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.18651887513697146,
+          "p50": 0.1812198543921113,
+          "p95": 0.2291022918652743,
+          "max": 0.2291022918652743
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.01390653329435736,
+          "p50": 0.013130541075952351,
+          "p95": 0.01871916581876576,
+          "max": 0.01871916581876576
+        },
+        "other_internal_s": {
+          "mean": 0.05004840437322855,
+          "p50": 0.051490687765181065,
+          "p95": 0.056978750973939896,
+          "max": 0.056978750973939896
+        },
+        "worker_s": {
+          "mean": 0.25047386668156835,
+          "p50": 0.25095883349422365,
+          "p95": 0.2869337908923626,
+          "max": 0.2869337908923626
+        },
+        "queue_s": {
+          "mean": 2.3600104,
+          "p50": 0.3187895,
+          "p95": 9.973073000000001,
+          "max": 9.973073000000001
+        },
+        "stage_s": {
+          "mean": 2.7939207083545625,
+          "p50": 0.6130686876131222,
+          "p95": 10.505028708139434,
+          "max": 10.505028708139434
+        },
+        "delivery_s": {
+          "mean": 0.1757647750666365,
+          "p50": 0.19598670839332044,
+          "p95": 0.2875069589354098,
+          "max": 0.2875069589354098
+        },
+        "admission_s": {
+          "mean": 0.08903961244504899,
+          "p50": 0.08444822940509766,
+          "p95": 0.11479066614992917,
+          "max": 0.11479066614992917
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      }
+    },
+    "sql_by_actor": {
+      "crud": {
+        "count": 60,
+        "seconds": 0.23691249499097466
+      },
+      "run_post": {
+        "count": 1150,
+        "seconds": 3.1593093301635236
+      },
+      "run_sse": {
+        "count": 612,
+        "seconds": 2.8871532606426626
+      },
+      "queue_claim": {
+        "count": 219,
+        "seconds": 0.8214115407317877
+      },
+      "worker": {
+        "count": 3220,
+        "seconds": 6.390214944491163
+      },
+      "cancel_watch": {
+        "count": 819,
+        "seconds": 2.5091138766147196
+      }
+    },
+    "sql_total": 6080,
+    "top_sql": [
+      {
+        "fingerprint": "SELECT agent_runs.cancel_requested_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 819,
+        "seconds": 2.5091138766147196
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at FROM sessions WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "count": 680,
+        "seconds": 1.5164706220384687
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id FROM sessions JOIN users ON users.user_id = sessions.user_id JOIN projects ON projects.project_id = sessions.project_id WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn AND users.delete_yn = $4::delete_yn AND projects.delete_yn = $5::delete_yn AND projects.user_id = $6::UUID",
+        "count": 164,
+        "seconds": 1.2290068757720292
+      },
+      {
+        "fingerprint": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID FOR UPDATE",
+        "count": 150,
+        "seconds": 0.714188574347645
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id IN ($4::UUID)",
+        "count": 164,
+        "seconds": 0.708831129828468
+      },
+      {
+        "fingerprint": "INSERT INTO task_events (task_event_id, task_id, run_id, sequence, event_type, payload) VALUES ($1::UUID, $2::UUID, $3::UUID, $4::BIGINT, $5::VARCHAR, $6::JSONB) RETURNING task_events.created_at",
+        "count": 260,
+        "seconds": 0.5016927868127823
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id FROM agent_runs WHERE agent_runs.run_id = $4::UUID AND agent_runs.session_id = $5::UUID) AND agent_runs_1.session_id = $6::UUID",
+        "count": 110,
+        "seconds": 0.48644416593015194
+      },
+      {
+        "fingerprint": "UPDATE tasks SET last_event_sequence=(tasks.last_event_sequence + $1::BIGINT), updated_at=now() WHERE tasks.task_id = $2::UUID RETURNING tasks.last_event_sequence",
+        "count": 260,
+        "seconds": 0.4734314938541502
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.status = $1::agent_run_status AND NOT (EXISTS (SELECT session_executions.session_id FROM session_executions WHERE session_executions.session_id = agent_runs.session_id AND (session_executions.token IS NOT NULL OR session_executions.recovery_required IS true))) AND NOT (EXISTS (SELECT tasks.task_id FROM tasks WHERE tasks.task_id = agent_runs.task_id AND tasks.recovery_required IS true)) AND (agent_runs.next_attempt_at IS NULL OR agent_runs.next_attempt_at <= $2::TIMESTAMP WITH TIME ZONE) ORDER BY agent_runs.created_at, agent_runs.run_id LIMIT $3::INTEGER FOR UPDATE SKIP LOCKED",
+        "count": 59,
+        "seconds": 0.47262779413722456
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events JOIN agent_runs ON agent_runs.run_id = task_events.run_id WHERE agent_runs.public_run_id = $1::UUID AND task_events.sequence > $2::BIGINT ORDER BY task_events.sequence LIMIT $3::INTEGER",
+        "count": 164,
+        "seconds": 0.43892708141356707
+      },
+      {
+        "fingerprint": "UPDATE session_executions SET heartbeat_at=$1::TIMESTAMP WITH TIME ZONE WHERE session_executions.session_id = $2::UUID AND session_executions.token = $3::UUID AND session_executions.recovery_required IS false RETURNING session_executions.session_id",
+        "count": 40,
+        "seconds": 0.39147670823149383
+      },
+      {
+        "fingerprint": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at FROM users WHERE users.user_id = $1::UUID AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "count": 200,
+        "seconds": 0.37872195872478187
+      },
+      {
+        "fingerprint": "SELECT projects.project_id, projects.user_id, projects.project_name, projects.system_prompt, projects.prompt_version, projects.is_default, projects.delete_yn, projects.created_at, projects.updated_at, projects.deleted_at FROM projects WHERE projects.project_id IN ($3::UUID) AND projects.user_id = $1::UUID AND projects.delete_yn = $2::delete_yn",
+        "count": 200,
+        "seconds": 0.36292966501787305
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock_shared(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_shared_1",
+        "count": 200,
+        "seconds": 0.3459628748241812
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_1",
+        "count": 190,
+        "seconds": 0.3189734136685729
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 120,
+        "seconds": 0.30313349538482726
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.session_id = $1::UUID AND agent_runs.idempotency_key = $2::VARCHAR",
+        "count": 110,
+        "seconds": 0.2873460412956774
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events WHERE task_events.task_event_id = $1::UUID",
+        "count": 140,
+        "seconds": 0.2798548359423876
+      },
+      {
+        "fingerprint": "SELECT agent_runs.task_id FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 180,
+        "seconds": 0.26118375291116536
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.log_id = $1::UUID",
+        "count": 140,
+        "seconds": 0.258937960723415
+      }
+    ],
+    "pool_acquire_ms": {
+      "mean": 0.4289280531189837,
+      "p50": 0.1660624984651804,
+      "p95": 0.9461250156164169,
+      "max": 84.20883398503065
+    },
+    "event_loop_lag_ms": {
+      "mean": 1.9151818810389623,
+      "p50": 1.2575419154018108,
+      "p95": 2.44362498633563,
+      "max": 255.79704190604392
+    },
+    "peak_worker": 4,
+    "peak_graph": 4,
+    "slot_occupancy": 0.9496555023102591,
+    "commit_calls_by_actor": {
+      "crud": 10,
+      "run_post": 40,
+      "queue_claim": 40,
+      "worker": 610
+    },
+    "pool_wait_over_100ms": {
+      "total": 0,
+      "first_2s": 0
+    },
+    "peak_pool_checked_out": 10,
+    "cpu_seconds": 6.6590169999999995,
+    "rss_peak_bytes": 212566016,
+    "resource_events": [
+      {
+        "at": 1387531.611354958,
+        "run_id": "2356d887-7c85-4fd5-bfc8-61a83d6bd9e3",
+        "operation": "pool_construct",
+        "name": "pool-1"
+      },
+      {
+        "at": 1387531.621856875,
+        "run_id": "2356d887-7c85-4fd5-bfc8-61a83d6bd9e3",
+        "operation": "pool_open",
+        "name": "pool-1",
+        "ms": 10.481541976332664
+      },
+      {
+        "at": 1387531.621933708,
+        "run_id": "2356d887-7c85-4fd5-bfc8-61a83d6bd9e3",
+        "operation": "pool_construct",
+        "name": "agent-checkpoint"
+      },
+      {
+        "at": 1387531.628958666,
+        "run_id": "2356d887-7c85-4fd5-bfc8-61a83d6bd9e3",
+        "operation": "pool_open",
+        "name": "agent-checkpoint",
+        "ms": 7.00533390045166
+      },
+      {
+        "at": 1387531.716970833,
+        "run_id": "2356d887-7c85-4fd5-bfc8-61a83d6bd9e3",
+        "operation": "graph_build",
+        "ms": 83.72516697272658
+      }
+    ],
+    "raw": "flow-10-after-s4-r1/raw.json.gz",
+    "checks": "all users, models, attempts, health, session release, and time partitions verified"
+  },
+  {
+    "users": 30,
+    "source_commit": "ea871a1",
+    "elapsed_s": 162.22695049992763,
+    "complete_users": 30,
+    "attempts": 120,
+    "model_calls": 120,
+    "stream_model_calls": 0,
+    "per_user": {
+      "llm_s": {
+        "mean": 20.022083929227666,
+        "p50": 20.01783368748147,
+        "p95": 20.042250751052052,
+        "max": 20.084340957691893
+      },
+      "projection_s": {
+        "mean": 0.5205047428685551,
+        "p50": 0.5136519598308951,
+        "p95": 0.6033436669968069,
+        "max": 0.6230080837849528
+      },
+      "init_s": {
+        "mean": 0.014453826386791964,
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.43361479160375893
+      },
+      "checkpoint_exclusive_s": {
+        "mean": 0.0861032599505658,
+        "p50": 0.08257270930334926,
+        "p95": 0.1580285404343158,
+        "max": 0.18159945867955685
+      },
+      "other_internal_s": {
+        "mean": 0.301914052447925,
+        "p50": 0.26955152000300586,
+        "p95": 0.6027494568843395,
+        "max": 0.7646673319395632
+      },
+      "worker_s": {
+        "mean": 20.945059967956816,
+        "p50": 20.891666729468852,
+        "p95": 21.382095500128344,
+        "max": 21.711544041056186
+      },
+      "queue_s": {
+        "mean": 127.82351793333333,
+        "p50": 126.8379025,
+        "p95": 139.055213,
+        "max": 139.10043
+      },
+      "stage_s": {
+        "mean": 150.28952878206812,
+        "p50": 149.2498158745002,
+        "p95": 161.3623699171003,
+        "max": 161.4712971241679
+      },
+      "delivery_s": {
+        "mean": 1.4150438223887856,
+        "p50": 1.4322520421119407,
+        "p95": 1.5061055819969624,
+        "max": 1.5085560830775648
+      },
+      "admission_s": {
+        "mean": 0.6439316095706696,
+        "p50": 0.6424275413155556,
+        "p95": 0.7478623331990093,
+        "max": 0.8323440421372652
+      },
+      "model_calls": {
+        "mean": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "max": 4.0
+      },
+      "total_s": {
+        "mean": 150.99599309030455,
+        "p50": 149.9476162919309,
+        "p95": 162.2034819999244,
+        "max": 162.22472370788455
+      },
+      "internal_s": {
+        "mean": 0.9229760387291511,
+        "p50": 0.8746804797556251,
+        "p95": 1.3493216237984598,
+        "max": 1.627203083364293
+      },
+      "outside_worker_queue_s": {
+        "mean": 2.2274151890144003,
+        "p50": 2.2297041454889595,
+        "p95": 2.384113000167048,
+        "max": 2.409439040688511
+      }
+    },
+    "stages": {
+      "data_selection": {
+        "llm_s": {
+          "mean": 10.01176560135403,
+          "p50": 10.007560103549622,
+          "p95": 10.030499666929245,
+          "max": 10.066459625028074
+        },
+        "projection_s": {
+          "mean": 0.08925258890570452,
+          "p50": 0.08986812457442284,
+          "p95": 0.10746333282440901,
+          "max": 0.1100298329256475
+        },
+        "init_s": {
+          "mean": 0.014453826386791964,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.43361479160375893
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.026564716757275165,
+          "p50": 0.0210595631506294,
+          "p95": 0.04925374989397824,
+          "max": 0.12742166686803102
+        },
+        "other_internal_s": {
+          "mean": 0.11319528311335793,
+          "p50": 0.0815249162260443,
+          "p95": 0.39967720746062696,
+          "max": 0.5663607919123024
+        },
+        "worker_s": {
+          "mean": 10.255232055547337,
+          "p50": 10.20160920789931,
+          "p95": 10.744536125101149,
+          "max": 11.045299249934033
+        },
+        "queue_s": {
+          "mean": 34.43872493333333,
+          "p50": 31.784536,
+          "p95": 72.445876,
+          "max": 72.453042
+        },
+        "stage_s": {
+          "mean": 45.21969473193555,
+          "p50": 42.50118202099111,
+          "p95": 83.24776525003836,
+          "max": 83.35725191608071
+        },
+        "delivery_s": {
+          "mean": 0.4403789234968523,
+          "p50": 0.4414714580634609,
+          "p95": 0.4629746659193188,
+          "max": 0.4650772500317544
+        },
+        "admission_s": {
+          "mean": 0.3214222611937051,
+          "p50": 0.3232741665560752,
+          "p95": 0.4154407079331577,
+          "max": 0.5022278339602053
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "analysis_context": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.05806335986126214,
+          "p50": 0.04749995842576027,
+          "p95": 0.10732166608795524,
+          "max": 0.14654324995353818
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.018073576572351157,
+          "p50": 0.0139104591216892,
+          "p95": 0.028721292037516832,
+          "max": 0.09846766688860953
+        },
+        "other_internal_s": {
+          "mean": 0.07058623977936804,
+          "p50": 0.06333433231338859,
+          "p95": 0.18376170890405774,
+          "max": 0.18947104131802917
+        },
+        "worker_s": {
+          "mean": 0.1467232137375201,
+          "p50": 0.13188687490765005,
+          "p95": 0.2802327908575535,
+          "max": 0.2863716250285506
+        },
+        "queue_s": {
+          "mean": 33.3361834,
+          "p50": 31.2805845,
+          "p95": 63.926569,
+          "max": 63.937547
+        },
+        "stage_s": {
+          "mean": 33.87497411540244,
+          "p50": 31.805723395431414,
+          "p95": 64.46041587507352,
+          "max": 64.46506133303046
+        },
+        "delivery_s": {
+          "mean": 0.3912544487354656,
+          "p50": 0.4069179584039375,
+          "p95": 0.4778083749115467,
+          "max": 0.49279291625134647
+        },
+        "admission_s": {
+          "mean": 0.12664898609897743,
+          "p50": 0.10017116647213697,
+          "p95": 0.20625445898622274,
+          "max": 0.20639354106970131
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "workflow_candidate_selection": {
+        "llm_s": {
+          "mean": 10.010318327873636,
+          "p50": 10.009037333074957,
+          "p95": 10.018632124876603,
+          "max": 10.018767667002976
+        },
+        "projection_s": {
+          "mean": 0.21269469568505883,
+          "p50": 0.20944593811873347,
+          "p95": 0.23607899900525808,
+          "max": 0.23637349996715784
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.02779070692292104,
+          "p50": 0.02773560374043882,
+          "p95": 0.037480666069313884,
+          "max": 0.05200024996884167
+        },
+        "other_internal_s": {
+          "mean": 0.06874829039443284,
+          "p50": 0.06813422928098589,
+          "p95": 0.08305724919773638,
+          "max": 0.09988791728392243
+        },
+        "worker_s": {
+          "mean": 10.319552061155749,
+          "p50": 10.322349520865828,
+          "p95": 10.354813499841839,
+          "max": 10.362848165910691
+        },
+        "queue_s": {
+          "mean": 33.29274503333333,
+          "p50": 31.680543,
+          "p95": 69.341387,
+          "max": 69.363227
+        },
+        "stage_s": {
+          "mean": 43.93339176116667,
+          "p50": 42.32147866662126,
+          "p95": 79.95561658288352,
+          "max": 79.97639933414757
+        },
+        "delivery_s": {
+          "mean": 0.3137132806703448,
+          "p50": 0.3167263549985364,
+          "p95": 0.33875995804555714,
+          "max": 0.3424464170821011
+        },
+        "admission_s": {
+          "mean": 0.10711998742384216,
+          "p50": 0.09726281207986176,
+          "p95": 0.19174962514080107,
+          "max": 0.21030204207636416
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "workflow_approval": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.1604940984165296,
+          "p50": 0.15439656237140298,
+          "p95": 0.2614958749618381,
+          "max": 0.2615328331012279
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.013674259698018432,
+          "p50": 0.01264762447681278,
+          "p95": 0.02490075002424419,
+          "max": 0.029876915039494634
+        },
+        "other_internal_s": {
+          "mean": 0.0493842391607662,
+          "p50": 0.047456812928430736,
+          "p95": 0.06523450184613466,
+          "max": 0.07693558349274099
+        },
+        "worker_s": {
+          "mean": 0.2235526375162105,
+          "p50": 0.21620508353225887,
+          "p95": 0.353802541969344,
+          "max": 0.3566442921292037
+        },
+        "queue_s": {
+          "mean": 26.755864566666666,
+          "p50": 24.486684,
+          "p95": 61.594193,
+          "max": 61.604862
+        },
+        "stage_s": {
+          "mean": 27.26146817356348,
+          "p50": 25.0108431664994,
+          "p95": 62.11960104084574,
+          "max": 62.128540040925145
+        },
+        "delivery_s": {
+          "mean": 0.2696971694861228,
+          "p50": 0.3022762294858694,
+          "p95": 0.32564637507312,
+          "max": 0.32590312510728836
+        },
+        "admission_s": {
+          "mean": 0.08874037485414495,
+          "p50": 0.07864449999760836,
+          "p95": 0.16294116713106632,
+          "max": 0.17918508290313184
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      }
+    },
+    "sql_by_actor": {
+      "queue_claim": {
+        "count": 631,
+        "seconds": 1.7688446030952036
+      },
+      "crud": {
+        "count": 180,
+        "seconds": 0.6072430852800608
+      },
+      "run_post": {
+        "count": 3450,
+        "seconds": 10.316167713608593
+      },
+      "run_sse": {
+        "count": 2508,
+        "seconds": 9.402076642261818
+      },
+      "worker": {
+        "count": 9660,
+        "seconds": 16.514421654166654
+      },
+      "cancel_watch": {
+        "count": 2446,
+        "seconds": 7.404505823506042
+      }
+    },
+    "sql_total": 18875,
+    "top_sql": [
+      {
+        "fingerprint": "SELECT agent_runs.cancel_requested_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 2446,
+        "seconds": 7.404505823506042
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at FROM sessions WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "count": 2040,
+        "seconds": 4.292332975193858
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id IN ($4::UUID)",
+        "count": 716,
+        "seconds": 2.8443055285606533
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id FROM sessions JOIN users ON users.user_id = sessions.user_id JOIN projects ON projects.project_id = sessions.project_id WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn AND users.delete_yn = $4::delete_yn AND projects.delete_yn = $5::delete_yn AND projects.user_id = $6::UUID",
+        "count": 716,
+        "seconds": 2.7349165596533567
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events JOIN agent_runs ON agent_runs.run_id = task_events.run_id WHERE agent_runs.public_run_id = $1::UUID AND task_events.sequence > $2::BIGINT ORDER BY task_events.sequence LIMIT $3::INTEGER",
+        "count": 716,
+        "seconds": 2.4585770478006452
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id FROM agent_runs WHERE agent_runs.run_id = $4::UUID AND agent_runs.session_id = $5::UUID) AND agent_runs_1.session_id = $6::UUID",
+        "count": 330,
+        "seconds": 1.6579362063203007
+      },
+      {
+        "fingerprint": "INSERT INTO task_events (task_event_id, task_id, run_id, sequence, event_type, payload) VALUES ($1::UUID, $2::UUID, $3::UUID, $4::BIGINT, $5::VARCHAR, $6::JSONB) RETURNING task_events.created_at",
+        "count": 780,
+        "seconds": 1.465009327745065
+      },
+      {
+        "fingerprint": "UPDATE tasks SET last_event_sequence=(tasks.last_event_sequence + $1::BIGINT), updated_at=now() WHERE tasks.task_id = $2::UUID RETURNING tasks.last_event_sequence",
+        "count": 780,
+        "seconds": 1.4558922823052853
+      },
+      {
+        "fingerprint": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at FROM users WHERE users.user_id = $1::UUID AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "count": 600,
+        "seconds": 1.1155851350631565
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock_shared(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_shared_1",
+        "count": 600,
+        "seconds": 1.0778729219455272
+      },
+      {
+        "fingerprint": "SELECT projects.project_id, projects.user_id, projects.project_name, projects.system_prompt, projects.prompt_version, projects.is_default, projects.delete_yn, projects.created_at, projects.updated_at, projects.deleted_at FROM projects WHERE projects.project_id IN ($3::UUID) AND projects.user_id = $1::UUID AND projects.delete_yn = $2::delete_yn",
+        "count": 600,
+        "seconds": 1.0688672037795186
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 360,
+        "seconds": 1.057270040269941
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_1",
+        "count": 570,
+        "seconds": 0.9515226292423904
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.status = $1::agent_run_status AND NOT (EXISTS (SELECT session_executions.session_id FROM session_executions WHERE session_executions.session_id = agent_runs.session_id AND (session_executions.token IS NOT NULL OR session_executions.recovery_required IS true))) AND NOT (EXISTS (SELECT tasks.task_id FROM tasks WHERE tasks.task_id = agent_runs.task_id AND tasks.recovery_required IS true)) AND (agent_runs.next_attempt_at IS NULL OR agent_runs.next_attempt_at <= $2::TIMESTAMP WITH TIME ZONE) ORDER BY agent_runs.created_at, agent_runs.run_id LIMIT $3::INTEGER FOR UPDATE SKIP LOCKED",
+        "count": 151,
+        "seconds": 0.9340916173532605
+      },
+      {
+        "fingerprint": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID FOR UPDATE",
+        "count": 450,
+        "seconds": 0.906125383451581
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events WHERE task_events.task_event_id = $1::UUID",
+        "count": 420,
+        "seconds": 0.8056084911804646
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.log_id = $1::UUID",
+        "count": 420,
+        "seconds": 0.7713904697448015
+      },
+      {
+        "fingerprint": "UPDATE session_executions SET heartbeat_at=$1::TIMESTAMP WITH TIME ZONE WHERE session_executions.session_id = $2::UUID AND session_executions.token = $3::UUID AND session_executions.recovery_required IS false RETURNING session_executions.session_id",
+        "count": 120,
+        "seconds": 0.7394243255257607
+      },
+      {
+        "fingerprint": "SELECT agent_runs.task_id FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 540,
+        "seconds": 0.7312404979020357
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.session_id = $1::UUID AND agent_runs.idempotency_key = $2::VARCHAR",
+        "count": 330,
+        "seconds": 0.7310422083828598
+      }
+    ],
+    "pool_acquire_ms": {
+      "mean": 2.7293738864905346,
+      "p50": 0.19493803847581148,
+      "p95": 1.8312500324100256,
+      "max": 259.5268751028925
+    },
+    "event_loop_lag_ms": {
+      "mean": 2.0046635484029984,
+      "p50": 1.1677705682814066,
+      "p95": 2.616457967087621,
+      "max": 333.8623331859708
+    },
+    "peak_worker": 4,
+    "peak_graph": 4,
+    "slot_occupancy": 0.9683221516251469,
+    "commit_calls_by_actor": {
+      "crud": 30,
+      "run_post": 120,
+      "queue_claim": 120,
+      "worker": 1830
+    },
+    "pool_wait_over_100ms": {
+      "total": 53,
+      "first_2s": 53
+    },
+    "peak_pool_checked_out": 10,
+    "cpu_seconds": 23.314624000000002,
+    "rss_peak_bytes": 234192896,
+    "resource_events": [
+      {
+        "at": 1387592.843270916,
+        "run_id": "5dd4b8b6-288f-415f-bd54-47ff44dac6e7",
+        "operation": "pool_construct",
+        "name": "pool-1"
+      },
+      {
+        "at": 1387592.864340958,
+        "run_id": "5dd4b8b6-288f-415f-bd54-47ff44dac6e7",
+        "operation": "pool_open",
+        "name": "pool-1",
+        "ms": 21.04954095557332
+      },
+      {
+        "at": 1387592.864379041,
+        "run_id": "5dd4b8b6-288f-415f-bd54-47ff44dac6e7",
+        "operation": "pool_construct",
+        "name": "agent-checkpoint"
+      },
+      {
+        "at": 1387592.872320375,
+        "run_id": "5dd4b8b6-288f-415f-bd54-47ff44dac6e7",
+        "operation": "pool_open",
+        "name": "agent-checkpoint",
+        "ms": 7.923792116343975
+      },
+      {
+        "at": 1387592.906349875,
+        "run_id": "5dd4b8b6-288f-415f-bd54-47ff44dac6e7",
+        "operation": "graph_build",
+        "ms": 31.33670799434185
+      }
+    ],
+    "raw": "flow-30-after-s4-r1/raw.json.gz",
+    "checks": "all users, models, attempts, health, session release, and time partitions verified"
+  },
+  {
+    "users": 50,
+    "source_commit": "ea871a1",
+    "elapsed_s": 271.1203727920074,
+    "complete_users": 50,
+    "attempts": 200,
+    "model_calls": 200,
+    "stream_model_calls": 0,
+    "per_user": {
+      "llm_s": {
+        "mean": 20.02683311320841,
+        "p50": 20.01615348039195,
+        "p95": 20.093114376300946,
+        "max": 20.16276704147458
+      },
+      "projection_s": {
+        "mean": 0.5752223197836429,
+        "p50": 0.5460998113267124,
+        "p95": 0.7405587912071496,
+        "max": 0.7756534966174513
+      },
+      "init_s": {
+        "mean": 0.009239819156937302,
+        "p50": 0.0,
+        "p95": 0.0,
+        "max": 0.46199095784686506
+      },
+      "checkpoint_exclusive_s": {
+        "mean": 0.08963716723490506,
+        "p50": 0.08003285306040198,
+        "p95": 0.16477787354961038,
+        "max": 0.21793787484057248
+      },
+      "other_internal_s": {
+        "mean": 0.3759311081562191,
+        "p50": 0.27822835475672036,
+        "p95": 1.3427915421780199,
+        "max": 1.6188969190698117
+      },
+      "worker_s": {
+        "mean": 21.076863711518236,
+        "p50": 20.96162564586848,
+        "p95": 22.161391292931512,
+        "max": 22.50312146008946
+      },
+      "queue_s": {
+        "mean": 234.20034474,
+        "p50": 233.71788600000002,
+        "p95": 237.123247,
+        "max": 247.457353
+      },
+      "stage_s": {
+        "mean": 256.83712015332657,
+        "p50": 256.28763222822454,
+        "p95": 259.5137915420346,
+        "max": 270.15547416661866
+      },
+      "delivery_s": {
+        "mean": 1.3696458592498675,
+        "p50": 1.4096799369435757,
+        "p95": 1.5118012512102723,
+        "max": 1.5750666675157845
+      },
+      "admission_s": {
+        "mean": 0.8239924384234473,
+        "p50": 0.8335185209289193,
+        "p95": 1.0484245419502258,
+        "max": 1.252540333662182
+      },
+      "model_calls": {
+        "mean": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "max": 4.0
+      },
+      "total_s": {
+        "mean": 257.64997391921,
+        "p50": 257.06724987505004,
+        "p95": 260.5585718341172,
+        "max": 271.11774391680956
+      },
+      "internal_s": {
+        "mean": 1.0500305983098224,
+        "p50": 0.9344166251830757,
+        "p95": 2.0897416688967496,
+        "max": 2.434504708275199
+      },
+      "outside_worker_queue_s": {
+        "mean": 2.37276546769179,
+        "p50": 2.381542062567547,
+        "p95": 2.6716644580788227,
+        "max": 2.8688487096858353
+      }
+    },
+    "stages": {
+      "data_selection": {
+        "llm_s": {
+          "mean": 10.011658849082886,
+          "p50": 10.007811354356818,
+          "p95": 10.025396292097867,
+          "max": 10.079477959079668
+        },
+        "projection_s": {
+          "mean": 0.10400008744560182,
+          "p50": 0.08550624956842512,
+          "p95": 0.2123253329191357,
+          "max": 0.22426833282224834
+        },
+        "init_s": {
+          "mean": 0.009239819156937302,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.46199095784686506
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.026651492519304158,
+          "p50": 0.020968083874322474,
+          "p95": 0.05826641689054668,
+          "max": 0.11880812491290271
+        },
+        "other_internal_s": {
+          "mean": 0.16699548926670105,
+          "p50": 0.0845442705322057,
+          "p95": 1.0293080830015242,
+          "max": 1.397442917805165
+        },
+        "worker_s": {
+          "mean": 10.318545788270422,
+          "p50": 10.20537056250032,
+          "p95": 11.396846374962479,
+          "max": 11.681590124964714
+        },
+        "queue_s": {
+          "mean": 60.47358482,
+          "p50": 63.109055,
+          "p95": 113.948038,
+          "max": 123.987528
+        },
+        "stage_s": {
+          "mean": 71.40788689166773,
+          "p50": 73.96265241655055,
+          "p95": 124.79618362500332,
+          "max": 135.02000883291475
+        },
+        "delivery_s": {
+          "mean": 0.43715829180553556,
+          "p50": 0.4423255834262818,
+          "p95": 0.453213457018137,
+          "max": 0.4674217915162444
+        },
+        "admission_s": {
+          "mean": 0.5389454382983968,
+          "p50": 0.545649416395463,
+          "p95": 0.7971821250393987,
+          "max": 1.000201541930437
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "analysis_context": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.05551330916117877,
+          "p50": 0.053380166413262486,
+          "p95": 0.07070595817640424,
+          "max": 0.17315733386203647
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.015623784950003028,
+          "p50": 0.015322646824643016,
+          "p95": 0.025283541064709425,
+          "max": 0.028237833874300122
+        },
+        "other_internal_s": {
+          "mean": 0.0794046158902347,
+          "p50": 0.06902600103057921,
+          "p95": 0.1776197098661214,
+          "max": 0.18432624894194305
+        },
+        "worker_s": {
+          "mean": 0.15054176081903278,
+          "p50": 0.13984204200096428,
+          "p95": 0.25182033400051296,
+          "max": 0.27360925008542836
+        },
+        "queue_s": {
+          "mean": 60.0299602,
+          "p50": 62.442955999999995,
+          "p95": 112.326235,
+          "max": 117.901164
+        },
+        "stage_s": {
+          "mean": 60.563269806634636,
+          "p50": 62.97301964613143,
+          "p95": 112.851984082954,
+          "max": 118.41852954193018
+        },
+        "delivery_s": {
+          "mean": 0.38092599077615885,
+          "p50": 0.38684537552762777,
+          "p95": 0.41935175005346537,
+          "max": 0.47663124999962747
+        },
+        "admission_s": {
+          "mean": 0.10525206587277353,
+          "p50": 0.09520891646388918,
+          "p95": 0.20681041711941361,
+          "max": 0.21184975001960993
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "workflow_candidate_selection": {
+        "llm_s": {
+          "mean": 10.015174264125527,
+          "p50": 10.008865105104633,
+          "p95": 10.019459083909169,
+          "max": 10.153832124779
+        },
+        "projection_s": {
+          "mean": 0.23727146747056393,
+          "p50": 0.22125297889579087,
+          "p95": 0.36877637496218085,
+          "max": 0.42283845809288323
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.034085738114081325,
+          "p50": 0.027149749803356826,
+          "p95": 0.08541699894703925,
+          "max": 0.17454583407379687
+        },
+        "other_internal_s": {
+          "mean": 0.07610984117724001,
+          "p50": 0.06938658386934549,
+          "p95": 0.139049667166546,
+          "max": 0.19573891791515052
+        },
+        "worker_s": {
+          "mean": 10.362641349984333,
+          "p50": 10.328595770406537,
+          "p95": 10.489330958807841,
+          "max": 10.808712624944746
+        },
+        "queue_s": {
+          "mean": 59.22878332,
+          "p50": 59.175061,
+          "p95": 113.709653,
+          "max": 119.690207
+        },
+        "stage_s": {
+          "mean": 69.8811308183195,
+          "p50": 70.04635806242004,
+          "p95": 124.36001666705124,
+          "max": 130.32526629115455
+        },
+        "delivery_s": {
+          "mean": 0.28677624913863836,
+          "p50": 0.30378293711692095,
+          "p95": 0.34330716729164124,
+          "max": 0.4942980417981744
+        },
+        "admission_s": {
+          "mean": 0.09056299007963389,
+          "p50": 0.08197560394182801,
+          "p95": 0.1579302081372589,
+          "max": 0.19650458404794335
+        },
+        "model_calls": {
+          "mean": 2,
+          "p50": 2.0,
+          "p95": 2,
+          "max": 2
+        }
+      },
+      "workflow_approval": {
+        "llm_s": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        },
+        "projection_s": {
+          "mean": 0.17843745570629835,
+          "p50": 0.16028829163406044,
+          "p95": 0.3319065838586539,
+          "max": 0.3378557078540325
+        },
+        "init_s": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "max": 0.0
+        },
+        "checkpoint_exclusive_s": {
+          "mean": 0.013276151651516556,
+          "p50": 0.011652312008664012,
+          "p95": 0.024198916042223573,
+          "max": 0.02466162503696978
+        },
+        "other_internal_s": {
+          "mean": 0.05342116182204336,
+          "p50": 0.05124191683717072,
+          "p95": 0.07081608264707029,
+          "max": 0.08679758384823799
+        },
+        "worker_s": {
+          "mean": 0.24513481244444846,
+          "p50": 0.21800699934829026,
+          "p95": 0.39916433300822973,
+          "max": 0.4413866251707077
+        },
+        "queue_s": {
+          "mean": 54.468016399999996,
+          "p50": 54.570181500000004,
+          "p95": 107.981916,
+          "max": 113.858996
+        },
+        "stage_s": {
+          "mean": 54.98483263670467,
+          "p50": 55.102018999517895,
+          "p95": 108.51068716705777,
+          "max": 114.39447245793417
+        },
+        "delivery_s": {
+          "mean": 0.2647853275295347,
+          "p50": 0.2941311049507931,
+          "p95": 0.3253074577078223,
+          "max": 0.4380611670203507
+        },
+        "admission_s": {
+          "mean": 0.08923194417264313,
+          "p50": 0.08411306305788457,
+          "p95": 0.11193716689012945,
+          "max": 0.21597162494435906
+        },
+        "model_calls": {
+          "mean": 0,
+          "p50": 0.0,
+          "p95": 0,
+          "max": 0
+        }
+      }
+    },
+    "sql_by_actor": {
+      "crud": {
+        "count": 300,
+        "seconds": 1.0354108398314565
+      },
+      "run_post": {
+        "count": 5750,
+        "seconds": 16.184604244306684
+      },
+      "queue_claim": {
+        "count": 1048,
+        "seconds": 2.217516159405932
+      },
+      "run_sse": {
+        "count": 5193,
+        "seconds": 18.349997021490708
+      },
+      "worker": {
+        "count": 16100,
+        "seconds": 29.0957736633718
+      },
+      "cancel_watch": {
+        "count": 4094,
+        "seconds": 12.651450517121702
+      }
+    },
+    "sql_total": 32485,
+    "top_sql": [
+      {
+        "fingerprint": "SELECT agent_runs.cancel_requested_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 4094,
+        "seconds": 12.651450517121702
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at FROM sessions WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "count": 3400,
+        "seconds": 7.8406841869000345
+      },
+      {
+        "fingerprint": "SELECT sessions.session_id FROM sessions JOIN users ON users.user_id = sessions.user_id JOIN projects ON projects.project_id = sessions.project_id WHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn AND users.delete_yn = $4::delete_yn AND projects.delete_yn = $5::delete_yn AND projects.user_id = $6::UUID",
+        "count": 1531,
+        "seconds": 6.122538113268092
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id IN ($4::UUID)",
+        "count": 1531,
+        "seconds": 5.877988918451592
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events JOIN agent_runs ON agent_runs.run_id = task_events.run_id WHERE agent_runs.public_run_id = $1::UUID AND task_events.sequence > $2::BIGINT ORDER BY task_events.sequence LIMIT $3::INTEGER",
+        "count": 1531,
+        "seconds": 3.482983239693567
+      },
+      {
+        "fingerprint": "INSERT INTO task_events (task_event_id, task_id, run_id, sequence, event_type, payload) VALUES ($1::UUID, $2::UUID, $3::UUID, $4::BIGINT, $5::VARCHAR, $6::JSONB) RETURNING task_events.created_at",
+        "count": 1300,
+        "seconds": 2.5328472405672073
+      },
+      {
+        "fingerprint": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_1.metadata[$2::TEXT] AS model_selection, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 FROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id FROM agent_runs WHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC LIMIT $3::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id WHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id FROM agent_runs WHERE agent_runs.run_id = $4::UUID AND agent_runs.session_id = $5::UUID) AND agent_runs_1.session_id = $6::UUID",
+        "count": 550,
+        "seconds": 2.2218094600830227
+      },
+      {
+        "fingerprint": "UPDATE tasks SET last_event_sequence=(tasks.last_event_sequence + $1::BIGINT), updated_at=now() WHERE tasks.task_id = $2::UUID RETURNING tasks.last_event_sequence",
+        "count": 1300,
+        "seconds": 2.2092090314254165
+      },
+      {
+        "fingerprint": "SELECT projects.project_id, projects.user_id, projects.project_name, projects.system_prompt, projects.prompt_version, projects.is_default, projects.delete_yn, projects.created_at, projects.updated_at, projects.deleted_at FROM projects WHERE projects.project_id IN ($3::UUID) AND projects.user_id = $1::UUID AND projects.delete_yn = $2::delete_yn",
+        "count": 1000,
+        "seconds": 2.0214852907229215
+      },
+      {
+        "fingerprint": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at FROM users WHERE users.user_id = $1::UUID AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "count": 1000,
+        "seconds": 2.0117921011988074
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 600,
+        "seconds": 1.8351863361895084
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock_shared(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_shared_1",
+        "count": 1000,
+        "seconds": 1.7544567582663149
+      },
+      {
+        "fingerprint": "SELECT pg_advisory_xact_lock(hashtextextended($1::VARCHAR, $2::INTEGER)) AS pg_advisory_xact_lock_1",
+        "count": 950,
+        "seconds": 1.7143252233508974
+      },
+      {
+        "fingerprint": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.session_id = $1::UUID AND agent_runs.idempotency_key = $2::VARCHAR",
+        "count": 550,
+        "seconds": 1.546390704344958
+      },
+      {
+        "fingerprint": "SELECT agent_runs.task_id FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "count": 900,
+        "seconds": 1.463341253111139
+      },
+      {
+        "fingerprint": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID FOR UPDATE",
+        "count": 750,
+        "seconds": 1.432042075553909
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.log_id = $1::UUID",
+        "count": 700,
+        "seconds": 1.4290175260975957
+      },
+      {
+        "fingerprint": "SELECT task_events.task_event_id, task_events.task_id, task_events.run_id, task_events.sequence, task_events.event_type, task_events.payload, task_events.created_at FROM task_events WHERE task_events.task_event_id = $1::UUID",
+        "count": 700,
+        "seconds": 1.3488893683534116
+      },
+      {
+        "fingerprint": "SELECT agent_run_logs.log_id, agent_run_logs.run_id, agent_run_logs.event_key, agent_run_logs.agent_name, agent_run_logs.node, agent_run_logs.event, agent_run_logs.kind, agent_run_logs.payload, agent_run_logs.created_at FROM agent_run_logs WHERE agent_run_logs.run_id = $1::UUID AND agent_run_logs.event_key = $2::VARCHAR",
+        "count": 700,
+        "seconds": 1.3211997144389898
+      },
+      {
+        "fingerprint": "INSERT INTO agent_run_logs (log_id, run_id, event_key, agent_name, node, event, kind, payload) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::VARCHAR, $8::JSONB) RETURNING agent_run_logs.created_at",
+        "count": 700,
+        "seconds": 1.120847397716716
+      }
+    ],
+    "pool_acquire_ms": {
+      "mean": 6.1352750126887665,
+      "p50": 0.18250010907649994,
+      "p95": 1.7052080947905779,
+      "max": 772.91579102166
+    },
+    "event_loop_lag_ms": {
+      "mean": 2.0141892245339217,
+      "p50": 1.006125565618271,
+      "p95": 2.8409160207956976,
+      "max": 345.0724581256509
+    },
+    "peak_worker": 4,
+    "peak_graph": 4,
+    "slot_occupancy": 0.9717484292340304,
+    "commit_calls_by_actor": {
+      "crud": 50,
+      "run_post": 200,
+      "queue_claim": 200,
+      "worker": 3050
+    },
+    "pool_wait_over_100ms": {
+      "total": 201,
+      "first_2s": 200
+    },
+    "peak_pool_checked_out": 10,
+    "cpu_seconds": 45.669443,
+    "rss_peak_bytes": 254033920,
+    "resource_events": [
+      {
+        "at": 1387761.66602875,
+        "run_id": "990b637a-52a3-4cef-a1d1-f3d3bdc13a7e",
+        "operation": "pool_construct",
+        "name": "pool-1"
+      },
+      {
+        "at": 1387761.694899041,
+        "run_id": "990b637a-52a3-4cef-a1d1-f3d3bdc13a7e",
+        "operation": "pool_open",
+        "name": "pool-1",
+        "ms": 28.8504168856889
+      },
+      {
+        "at": 1387761.694936666,
+        "run_id": "990b637a-52a3-4cef-a1d1-f3d3bdc13a7e",
+        "operation": "pool_construct",
+        "name": "agent-checkpoint"
+      },
+      {
+        "at": 1387761.712964083,
+        "run_id": "990b637a-52a3-4cef-a1d1-f3d3bdc13a7e",
+        "operation": "pool_open",
+        "name": "agent-checkpoint",
+        "ms": 18.007665872573853
+      },
+      {
+        "at": 1387761.755649666,
+        "run_id": "990b637a-52a3-4cef-a1d1-f3d3bdc13a7e",
+        "operation": "graph_build",
+        "ms": 32.08029200322926
+      }
+    ],
+    "raw": "flow-50-after-s4-r1/raw.json.gz",
+    "checks": "all users, models, attempts, health, session release, and time partitions verified"
+  }
+]

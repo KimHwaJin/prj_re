@@ -1,0 +1,38 @@
+[
+  {
+    "users": 1,
+    "status": "passed",
+    "complete_users": 1,
+    "attempts": 4,
+    "model_calls": 4,
+    "worker_sql_per_user": 322,
+    "worker_commit_calls_per_user": 61
+  },
+  {
+    "users": 10,
+    "status": "passed",
+    "complete_users": 10,
+    "attempts": 40,
+    "model_calls": 40,
+    "worker_sql_per_user": 322,
+    "worker_commit_calls_per_user": 61
+  },
+  {
+    "users": 30,
+    "status": "passed",
+    "complete_users": 30,
+    "attempts": 120,
+    "model_calls": 120,
+    "worker_sql_per_user": 322,
+    "worker_commit_calls_per_user": 61
+  },
+  {
+    "users": 50,
+    "status": "passed",
+    "complete_users": 50,
+    "attempts": 200,
+    "model_calls": 200,
+    "worker_sql_per_user": 322,
+    "worker_commit_calls_per_user": 61
+  }
+]

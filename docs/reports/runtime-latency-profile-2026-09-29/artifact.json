@@ -1,0 +1,821 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Runtime Latency Profile",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Runtime Latency Profile"
+      },
+      {
+        "id": "summary",
+        "type": "markdown",
+        "body": "## 결론: 내부 최적화는 남았지만, 긴 대기의 주원인은 실행 슬롯 경쟁입니다\n\n**현재 코드에서 내부 처리 비용을 모두 없앴다고 볼 수는 없습니다.** 다만 이번 경로의 실제 Worker 처리 시간은 사용자당 약 21초이고, 그중 LLM 호출 4회가 약 20초입니다. 나머지 내부 처리는 평균 0.92~1.52초였습니다.\n\n50명이 동시에 시작하면 평균 완료 시간은 **257.65초**입니다. 그중 **234.20초는 네 번의 실행에 걸쳐 누적된 큐 대기**, LLM은 20.03초, 내부 처리는 1.05초입니다. 한 작업의 코드가 257초 동안 실행된 결과가 아닙니다.\n\n다음 내부 개선 후보는 메시지·로그·이벤트의 DB 저장 경로입니다. 다만 이 경로의 측정 비용은 약 0.52~0.70초/사용자입니다. 이를 줄이는 것이 수분짜리 대기를 없앨 것이라고 설명하면 안 됩니다. 이번 작업에서는 서비스 동작 코드를 변경하지 않았습니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "scope",
+        "type": "markdown",
+        "body": "## 같은 조건에서 사용자 수만 바꿨습니다\n\n현재 코드 한 버전, API 프로세스 1개, 실행 슬롯 4개, 로컬 PostgreSQL, LLM HTTP mock 호출당 5초로 측정했습니다. 각 사용자는 새 세션을 만들고 네 번의 Run 실행을 거쳐 **Workflow 승인 대기**에서 종료합니다. 실제 Executor·Redis는 사용하지 않았습니다.\n\n모든 표의 시간은 초이며, 별도 표기가 없으면 **한 사용자 전체 흐름의 평균**입니다. 1·10·30·50명이 각 한 번씩 동시에 시작한 배치입니다. 단계 사이 사용자 생각 시간은 0.2초씩 총 0.6초입니다. 상태 확인은 SSE를 사용했고 GET 반복 폴링은 없습니다.\n\n전체 시간 = DB에 기록된 큐 대기 + Worker 구간 안의 LLM + Worker 구간 안의 나머지 처리 + 구간 밖 잔여 시간입니다. 잔여 시간에는 세션 생성·접수 일부·사용자 생각 시간·SSE 수신 대기 등이 포함됩니다. 순수 CPU 시간으로 해석하면 안 됩니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "waiting",
+        "type": "markdown",
+        "body": "## 사용자 수가 늘 때 증가한 것은 대부분 큐 대기입니다\n\n막대의 합은 전체 흐름의 평균 시간입니다. LLM과 내부 처리 시간은 거의 유지됐고, 50명 조건에서 큐 대기가 전체의 **90.90%**를 차지했습니다. 50명 배치의 슬롯 점유율은 **97.17%**였습니다. 이는 CPU 사용률이 아니라, 준비된 4개 자리가 Worker 실행으로 채워져 있던 시간의 비율입니다.\n\n따라서 이번 측정은 사용 가능한 슬롯이 오래 비어 있어 지연된 상황과는 맞지 않습니다. 네 슬롯이 LLM 응답을 기다리는 동안 다음 실행이 대기열에 쌓입니다. 표의 P95는 단일 배치의 관측값이며 운영 SLA 추정치가 아닙니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "total-chart",
+        "type": "chart",
+        "chartId": "total"
+      },
+      {
+        "id": "total-table",
+        "type": "table",
+        "tableId": "total-values"
+      },
+      {
+        "id": "internal",
+        "type": "markdown",
+        "body": "## 내부 처리 중 가장 큰 분리 항목은 DB 저장입니다\n\n다음 막대는 **LLM·큐 대기를 제외한 Worker 내부 시간만** 확대해서 보여줍니다. 메시지·로그·이벤트 등을 서비스 DB로 반영하는 구간이 평균 0.52~0.70초였습니다. checkpoint 항목은 다른 구간과 겹치지 않는 관측 시간을 뜻하며, 백그라운드 저장 시간까지 전부 더한 값이 아닙니다.\n\n1명 조건의 초기화 비용 0.43초는 최초 그래프·공유 자원을 준비하는 비용입니다. 나머지 조건도 배치당 그래프는 한 번만 생성됐습니다. 여러 사용자 평균에서 이 값이 작아지는 것은 초기화 비용이 분산되기 때문이며, 코드가 달라진 성능 향상이 아닙니다.\n\n50명 조건의 내부 시간 1.05초는 Worker 시간의 약 4.98%입니다. 이를 전부 0으로 만드는 비현실적인 가정에서도 슬롯당 처리율 개선 여지는 약 5.2%입니다. 개별 DB 최적화의 실제 효과는 그보다 작고, 아직 A/B로 측정하지 않았습니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "internal-chart",
+        "type": "chart",
+        "chartId": "internal"
+      },
+      {
+        "id": "short-stage",
+        "type": "markdown",
+        "body": "## 0.15초짜리 재개도 60초를 기다렸습니다\n\n아래는 **50명 조건의 단계별 평균**입니다. LLM 호출은 단계별로 **2회 → 0회 → 2회 → 0회**입니다. 두 번째 단계는 실제 Worker 처리에 0.15초, 실행 시작을 기다리는 데 60.03초가 들었습니다. 마지막 단계도 처리 0.25초에 큐 대기 54.47초였습니다.\n\n짧은 재개 작업도 긴 LLM 작업과 같은 실행 슬롯을 기다립니다. 이는 대기 정책과 실행 동시성을 별도로 검토할 근거입니다. 이 측정만으로 resume 우선 처리나 동시성 증가가 최선이라고 확정할 수는 없습니다. 사용자별 공정성·LLM 한도·DB 사용량을 함께 검증해야 합니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "stage-table",
+        "type": "table",
+        "tableId": "stages"
+      },
+      {
+        "id": "db",
+        "type": "markdown",
+        "body": "## 반복 저장 비용과 순간적인 DB 풀 대기는 남아 있습니다\n\n서비스 DB 계측에서 Worker 경로는 사용자당 **SQL 322회, AsyncSession.commit 호출 61회**였습니다. commit 호출 수에는 실제 변경이 없는 호출도 포함될 수 있습니다. SQL 수치는 SQLAlchemy로 실행한 서비스 쿼리만 집계하며, psycopg 기반 checkpoint·bridge 쿼리는 제외합니다.\n\n소스의 로그 생성 경로는 로그 커밋·refresh 이후 이벤트 저장을 별도로 호출하고, 이벤트 저장은 다시 커밋·refresh합니다. 따라서 중복 조회와 트랜잭션 왕복을 줄일 후보가 있습니다. 단, 조회마다 권한·멱등성·이벤트 순서를 보장하는 책임이 있으므로 일괄 삭제해서는 안 됩니다.\n\n50명에서 DB 연결 획득 지연은 P95 약 1.70ms였지만 최대 772.92ms였습니다. 100ms 초과 201건 중 200건이 시작 후 2초 안에 발생했습니다. 초반 동시 접수의 순간 병목은 존재하며, 수분 단위로 지속되는 대기와는 구분해야 합니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "db-table",
+        "type": "table",
+        "tableId": "cost"
+      },
+      {
+        "id": "visibility",
+        "type": "markdown",
+        "body": "## 결과 수신 지연은 처리 시간과 별개입니다\n\nRun 최종 커밋 이후 클라이언트가 새 입력 대기 상태를 받기까지의 시간은 네 단계를 합해 평균 **1.14~1.42초**였습니다. 현재 SSE 변경 통지에는 0.5초 간격으로 변경을 모아 읽는 정책이 있습니다. 짧은 단계에서는 이 수신 지연의 비중이 큽니다.\n\n관측 지연에는 SSE 스케줄링·조회·전송·클라이언트 처리도 포함됩니다. 전부 0.5초 설정 탓이라고 단정하지 않았고, 간격 변경 A/B도 수행하지 않았습니다. 이 값을 줄이면 체감 반응은 좋아질 수 있지만 LLM 처리 용량이 늘어나는 것은 아닙니다. 위 전체 시간에 별도로 더해서는 안 됩니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "method",
+        "type": "markdown",
+        "body": "## 검증은 원본 타임라인을 기준으로 했습니다\n\n총 **91명, Run 실행 구간 364개, 모델 호출 364회**가 정상 완료됐습니다. 이때 전체 흐름은 승인 대기에서 멈추므로 DB의 실행 구간은 정상적인 interrupted 상태입니다. 재시도·오류·복구 필요 상태·남은 세션 실행 소유권은 없었습니다. 각 배치의 그래프 생성은 1회였고, 모든 모델 호출은 async였습니다.\n\nWorker 내부의 모델·DB 반영·초기화·checkpoint 구간은 겹치는 시간을 합집합으로 처리했습니다. 우선순위는 모델 → DB 반영 → 초기화 → checkpoint이며, 나머지는 기타 내부 처리로 남겼습니다. 병렬 SQL 시간의 합을 사용자 지연으로 더하지 않았습니다. 별도의 검산 스크립트로 원본 시간·호출 수·공개 Run과 실행 구간의 대응을 다시 확인했습니다.\n\nAPI 연결 풀은 준비 후 측정했고 그래프 최초 초기화는 포함했습니다. 진단 span과 SQL·이벤트 루프 샘플은 메모리에 수집했습니다. 이 계측 자체의 비용도 측정 결과에 포함됩니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "limits",
+        "type": "markdown",
+        "body": "## 이 결과로 운영 전체의 성능을 확정할 수는 없습니다\n\n각 조건은 한 번의 동시 시작 배치입니다. 지속 유입·장시간 soak·오류/취소·여러 Pod·실제 LLM rate limit·공유 PV·Executor 제출/완료 이벤트는 측정하지 않았습니다. 로컬 PostgreSQL의 짧은 네트워크 왕복이 실제 배포 DB 비용을 낮게 보이게 할 수 있습니다. 초기 코드와의 A/B 비교도 이번 범위가 아닙니다.\n\n현재 일반 Run 경로의 모델 HTTP 호출은 **비스트리밍**이었습니다. 따라서 직전 토큰 버퍼 개선의 성능 효과를 이 수치로 주장하지 않습니다. 이벤트 루프 지연의 P95는 약 2.4~2.8ms였지만 최대 0.26~0.41초의 순간 지연은 관측됐고, 최대 지연의 샘플 구간은 최초 의존성 로딩과 겹쳤습니다. 모든 동기 작업이 제거됐다는 뜻은 아닙니다.",
+        "sourceId": "profile"
+      },
+      {
+        "id": "next",
+        "type": "markdown",
+        "body": "## 다음은 저장 경로를 좁혀 개선하고 같은 조건으로 확인하는 것이 적절합니다\n\n1. **먼저 내부 저장 경로를 검토합니다.** 로그와 이벤트의 개별 커밋·중복 refresh·반복 식별 조회를 중심으로 불필요한 왕복을 줄일 수 있는지 확인합니다. 멱등성·이벤트 순서·오류 시 원자성을 유지해야 합니다.\n2. **변경 후 이 시나리오를 같은 조건으로 다시 측정합니다.** 전체 시간뿐 아니라 DB 반영 시간·SQL 수·커밋 호출 수가 줄었는지 확인합니다. 지금부터 수십 초 개선을 약속할 근거는 없습니다.\n3. **별도 항목으로 수신 지연과 짧은 재개 대기를 검토합니다.** 상태 변경의 즉시 통지, coalescing 간격, 스케줄링 공정성은 서로 다른 문제입니다. 접수 제한은 처리 시간을 줄이는 기능이 아니므로 이번 내부 개선의 대체 수단으로 삼지 않습니다.\n\n아직 필요한 확인은 실제 배포 DB의 왕복 시간, 현실적인 지속 유입량, 목표 응답시간입니다. 이 정보가 있어야 동시성 4가 적절한지와 후속 용량 정책을 결정할 수 있습니다."
+      }
+    ],
+    "charts": [
+      {
+        "id": "total",
+        "title": "사용자 수별 전체 시간 구성",
+        "type": "bar",
+        "dataset": "total-components",
+        "sourceId": "extract-total-components",
+        "valueFormat": "number",
+        "intent": "composition",
+        "question": "사용자 수가 늘 때 어느 시간이 증가하는가?",
+        "rationale": "Four discrete user cohorts; mutually exclusive duration components reconcile to the reported total. Full-width stacked bars show scale and composition.",
+        "encodings": {
+          "x": {
+            "field": "cohort",
+            "type": "ordinal",
+            "label": "동시 시작 사용자"
+          },
+          "y": {
+            "field": "seconds",
+            "type": "quantitative",
+            "label": "사용자당 평균 시간 (초)"
+          },
+          "color": {
+            "field": "component",
+            "type": "nominal",
+            "label": "시간 구간"
+          }
+        },
+        "palette": {
+          "kind": "categorical"
+        },
+        "legend": {
+          "position": "bottom"
+        },
+        "options": {
+          "grouping": "stacked"
+        }
+      },
+      {
+        "id": "internal",
+        "title": "LLM을 제외한 Worker 내부 시간",
+        "type": "bar",
+        "dataset": "internal-components",
+        "sourceId": "extract-internal-components",
+        "valueFormat": "number",
+        "intent": "composition",
+        "question": "내부 처리 중 어느 경로를 우선 검토할 것인가?",
+        "rationale": "Four discrete user cohorts; mutually exclusive duration components reconcile to the reported total. Full-width stacked bars show scale and composition.",
+        "encodings": {
+          "x": {
+            "field": "cohort",
+            "type": "ordinal",
+            "label": "동시 시작 사용자"
+          },
+          "y": {
+            "field": "seconds",
+            "type": "quantitative",
+            "label": "사용자당 평균 시간 (초)"
+          },
+          "color": {
+            "field": "component",
+            "type": "nominal",
+            "label": "시간 구간"
+          }
+        },
+        "palette": {
+          "kind": "categorical"
+        },
+        "legend": {
+          "position": "bottom"
+        },
+        "options": {
+          "grouping": "stacked"
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "total-values",
+        "title": "전체 흐름 시간 (초)",
+        "dataset": "users",
+        "sourceId": "extract-users",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "사용자",
+            "format": "number"
+          },
+          {
+            "field": "total_s",
+            "label": "평균 전체",
+            "format": "number"
+          },
+          {
+            "field": "queue_s",
+            "label": "큐 대기",
+            "format": "number"
+          },
+          {
+            "field": "llm_s",
+            "label": "LLM",
+            "format": "number"
+          },
+          {
+            "field": "internal_s",
+            "label": "내부 처리",
+            "format": "number"
+          },
+          {
+            "field": "outside_worker_queue_s",
+            "label": "구간 밖",
+            "format": "number"
+          },
+          {
+            "field": "p95_s",
+            "label": "전체 P95",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "stages",
+        "title": "50명 조건 단계별 시간 (초)",
+        "dataset": "stages",
+        "sourceId": "extract-stages",
+        "defaultSort": {
+          "field": "order",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "order",
+            "label": "순서",
+            "format": "number"
+          },
+          {
+            "field": "stage",
+            "label": "도달 지점",
+            "type": "text"
+          },
+          {
+            "field": "model_calls",
+            "label": "LLM 호출",
+            "format": "number"
+          },
+          {
+            "field": "stage_s",
+            "label": "체감 시간",
+            "format": "number"
+          },
+          {
+            "field": "queue_s",
+            "label": "큐 대기",
+            "format": "number"
+          },
+          {
+            "field": "worker_s",
+            "label": "실제 Worker",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "cost",
+        "title": "서비스 DB 비용과 순간 대기",
+        "dataset": "cost",
+        "sourceId": "extract-cost",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "사용자",
+            "format": "number"
+          },
+          {
+            "field": "service_sql",
+            "label": "서비스 SQL 합계",
+            "format": "number"
+          },
+          {
+            "field": "worker_sql_per_user",
+            "label": "Worker SQL/명",
+            "format": "number"
+          },
+          {
+            "field": "commit_calls_per_user",
+            "label": "commit 호출/명",
+            "format": "number"
+          },
+          {
+            "field": "pool_p95_ms",
+            "label": "풀 획득 P95 ms",
+            "format": "number"
+          },
+          {
+            "field": "pool_max_ms",
+            "label": "풀 획득 최대 ms",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "profile",
+        "label": "Current runtime ea871a1 · local 5-second LLM · measured September 29, 2026",
+        "path": "summary.json"
+      },
+      {
+        "id": "extract-users",
+        "label": "Local report dataset: users (from summary.json)",
+        "path": "report-datasets.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT json_extract(row_json, '$.users') AS \"users\", json_extract(row_json, '$.cohort') AS \"cohort\", json_extract(row_json, '$.slots') AS \"slots\", json_extract(row_json, '$.calls_per_user') AS \"calls_per_user\", json_extract(row_json, '$.total_s') AS \"total_s\", json_extract(row_json, '$.queue_s') AS \"queue_s\", json_extract(row_json, '$.llm_s') AS \"llm_s\", json_extract(row_json, '$.internal_s') AS \"internal_s\", json_extract(row_json, '$.outside_worker_queue_s') AS \"outside_worker_queue_s\", json_extract(row_json, '$.projection_s') AS \"projection_s\", json_extract(row_json, '$.init_s') AS \"init_s\", json_extract(row_json, '$.checkpoint_exclusive_s') AS \"checkpoint_exclusive_s\", json_extract(row_json, '$.other_internal_s') AS \"other_internal_s\", json_extract(row_json, '$.delivery_s') AS \"delivery_s\", json_extract(row_json, '$.p95_s') AS \"p95_s\", json_extract(row_json, '$.batch_s') AS \"batch_s\", json_extract(row_json, '$.occupancy') AS \"occupancy\" FROM main.report_rows WHERE dataset = 'users' ORDER BY position",
+          "description": "Exact report extraction from main.report_rows; staged from the verified Python summaries in summary.json. This is not a production database."
+        }
+      },
+      {
+        "id": "extract-stages",
+        "label": "Local report dataset: stages (from summary.json)",
+        "path": "report-datasets.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT json_extract(row_json, '$.order') AS \"order\", json_extract(row_json, '$.stage') AS \"stage\", json_extract(row_json, '$.stage_s') AS \"stage_s\", json_extract(row_json, '$.queue_s') AS \"queue_s\", json_extract(row_json, '$.worker_s') AS \"worker_s\", json_extract(row_json, '$.llm_s') AS \"llm_s\", json_extract(row_json, '$.model_calls') AS \"model_calls\", json_extract(row_json, '$.delivery_s') AS \"delivery_s\" FROM main.report_rows WHERE dataset = 'stages' ORDER BY position",
+          "description": "Exact report extraction from main.report_rows; staged from the verified Python summaries in summary.json. This is not a production database."
+        }
+      },
+      {
+        "id": "extract-cost",
+        "label": "Local report dataset: cost (from summary.json)",
+        "path": "report-datasets.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT json_extract(row_json, '$.users') AS \"users\", json_extract(row_json, '$.service_sql') AS \"service_sql\", json_extract(row_json, '$.worker_sql_per_user') AS \"worker_sql_per_user\", json_extract(row_json, '$.commit_calls_per_user') AS \"commit_calls_per_user\", json_extract(row_json, '$.pool_p95_ms') AS \"pool_p95_ms\", json_extract(row_json, '$.pool_max_ms') AS \"pool_max_ms\", json_extract(row_json, '$.lag_p95_ms') AS \"lag_p95_ms\" FROM main.report_rows WHERE dataset = 'cost' ORDER BY position",
+          "description": "Exact report extraction from main.report_rows; staged from the verified Python summaries in summary.json. This is not a production database."
+        }
+      },
+      {
+        "id": "extract-total-components",
+        "label": "Local report dataset: total-components (from summary.json)",
+        "path": "report-datasets.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT json_extract(row_json, '$.cohort') AS \"cohort\", json_extract(row_json, '$.users') AS \"users\", json_extract(row_json, '$.component') AS \"component\", json_extract(row_json, '$.seconds') AS \"seconds\", json_extract(row_json, '$.total_s') AS \"total_s\", json_extract(row_json, '$.slots') AS \"slots\", json_extract(row_json, '$.calls_per_user') AS \"calls_per_user\" FROM main.report_rows WHERE dataset = 'total-components' ORDER BY position",
+          "description": "Exact report extraction from main.report_rows; staged from the verified Python summaries in summary.json. This is not a production database."
+        }
+      },
+      {
+        "id": "extract-internal-components",
+        "label": "Local report dataset: internal-components (from summary.json)",
+        "path": "report-datasets.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "sql": "SELECT json_extract(row_json, '$.cohort') AS \"cohort\", json_extract(row_json, '$.users') AS \"users\", json_extract(row_json, '$.component') AS \"component\", json_extract(row_json, '$.seconds') AS \"seconds\", json_extract(row_json, '$.total_s') AS \"total_s\", json_extract(row_json, '$.slots') AS \"slots\", json_extract(row_json, '$.calls_per_user') AS \"calls_per_user\" FROM main.report_rows WHERE dataset = 'internal-components' ORDER BY position",
+          "description": "Exact report extraction from main.report_rows; staged from the verified Python summaries in summary.json. This is not a production database."
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "datasets": {
+      "users": [
+        {
+          "users": 1,
+          "cohort": "1명",
+          "slots": 4,
+          "calls_per_user": 4,
+          "total_s": 23.9624,
+          "queue_s": 0.565,
+          "llm_s": 20.0697,
+          "internal_s": 1.5198,
+          "outside_worker_queue_s": 1.8079,
+          "projection_s": 0.6992,
+          "init_s": 0.4261,
+          "checkpoint_exclusive_s": 0.0675,
+          "other_internal_s": 0.3271,
+          "delivery_s": 1.1433,
+          "p95_s": 23.9624,
+          "batch_s": 23.9624,
+          "occupancy": 0.2252432303259622
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "slots": 4,
+          "calls_per_user": 4,
+          "total_s": 48.1451,
+          "queue_s": 25.1101,
+          "llm_s": 20.031,
+          "internal_s": 1.0649,
+          "outside_worker_queue_s": 1.9391,
+          "projection_s": 0.5609,
+          "init_s": 0.0359,
+          "checkpoint_exclusive_s": 0.0911,
+          "other_internal_s": 0.3769,
+          "delivery_s": 1.2727,
+          "p95_s": 55.5346,
+          "batch_s": 55.5355,
+          "occupancy": 0.9496555023102591
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "slots": 4,
+          "calls_per_user": 4,
+          "total_s": 150.996,
+          "queue_s": 127.8235,
+          "llm_s": 20.0221,
+          "internal_s": 0.923,
+          "outside_worker_queue_s": 2.2274,
+          "projection_s": 0.5205,
+          "init_s": 0.0145,
+          "checkpoint_exclusive_s": 0.0861,
+          "other_internal_s": 0.3019,
+          "delivery_s": 1.415,
+          "p95_s": 162.2035,
+          "batch_s": 162.227,
+          "occupancy": 0.9683221516251469
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "slots": 4,
+          "calls_per_user": 4,
+          "total_s": 257.65,
+          "queue_s": 234.2003,
+          "llm_s": 20.0268,
+          "internal_s": 1.05,
+          "outside_worker_queue_s": 2.3728,
+          "projection_s": 0.5752,
+          "init_s": 0.0092,
+          "checkpoint_exclusive_s": 0.0896,
+          "other_internal_s": 0.3759,
+          "delivery_s": 1.3696,
+          "p95_s": 260.5586,
+          "batch_s": 271.1204,
+          "occupancy": 0.9717484292340304
+        }
+      ],
+      "stages": [
+        {
+          "order": 1,
+          "stage": "데이터 선택 대기까지",
+          "stage_s": 71.4079,
+          "queue_s": 60.4736,
+          "worker_s": 10.3185,
+          "llm_s": 10.0117,
+          "model_calls": 2,
+          "delivery_s": 0.4372
+        },
+        {
+          "order": 2,
+          "stage": "분석 목적 입력 대기까지",
+          "stage_s": 60.5633,
+          "queue_s": 60.03,
+          "worker_s": 0.1505,
+          "llm_s": 0,
+          "model_calls": 0,
+          "delivery_s": 0.3809
+        },
+        {
+          "order": 3,
+          "stage": "Workflow 후보 선택 대기까지",
+          "stage_s": 69.8811,
+          "queue_s": 59.2288,
+          "worker_s": 10.3626,
+          "llm_s": 10.0152,
+          "model_calls": 2,
+          "delivery_s": 0.2868
+        },
+        {
+          "order": 4,
+          "stage": "Workflow 승인 대기까지",
+          "stage_s": 54.9848,
+          "queue_s": 54.468,
+          "worker_s": 0.2451,
+          "llm_s": 0,
+          "model_calls": 0,
+          "delivery_s": 0.2648
+        }
+      ],
+      "cost": [
+        {
+          "users": 1,
+          "service_sql": 688,
+          "worker_sql_per_user": 322.0,
+          "commit_calls_per_user": 61.0,
+          "pool_p95_ms": 1.526,
+          "pool_max_ms": 4.391,
+          "lag_p95_ms": 2.847
+        },
+        {
+          "users": 10,
+          "service_sql": 6080,
+          "worker_sql_per_user": 322.0,
+          "commit_calls_per_user": 61.0,
+          "pool_p95_ms": 0.946,
+          "pool_max_ms": 84.209,
+          "lag_p95_ms": 2.444
+        },
+        {
+          "users": 30,
+          "service_sql": 18875,
+          "worker_sql_per_user": 322.0,
+          "commit_calls_per_user": 61.0,
+          "pool_p95_ms": 1.831,
+          "pool_max_ms": 259.527,
+          "lag_p95_ms": 2.616
+        },
+        {
+          "users": 50,
+          "service_sql": 32485,
+          "worker_sql_per_user": 322.0,
+          "commit_calls_per_user": 61.0,
+          "pool_p95_ms": 1.705,
+          "pool_max_ms": 772.916,
+          "lag_p95_ms": 2.841
+        }
+      ],
+      "total-components": [
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "큐 대기",
+          "seconds": 0.565,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "LLM",
+          "seconds": 20.0697,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "내부 처리",
+          "seconds": 1.5198,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "구간 밖 잔여",
+          "seconds": 1.8079,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "큐 대기",
+          "seconds": 25.1101,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "LLM",
+          "seconds": 20.031,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "내부 처리",
+          "seconds": 1.0649,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "구간 밖 잔여",
+          "seconds": 1.9391,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "큐 대기",
+          "seconds": 127.8235,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "LLM",
+          "seconds": 20.0221,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "내부 처리",
+          "seconds": 0.923,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "구간 밖 잔여",
+          "seconds": 2.2274,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "큐 대기",
+          "seconds": 234.2003,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "LLM",
+          "seconds": 20.0268,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "내부 처리",
+          "seconds": 1.05,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "구간 밖 잔여",
+          "seconds": 2.3728,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        }
+      ],
+      "internal-components": [
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "서비스 DB 반영",
+          "seconds": 0.6992,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "최초 자원 준비",
+          "seconds": 0.4261,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "checkpoint 비중첩",
+          "seconds": 0.0675,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "1명",
+          "users": 1,
+          "component": "기타 내부",
+          "seconds": 0.3271,
+          "total_s": 23.9624,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "서비스 DB 반영",
+          "seconds": 0.5609,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "최초 자원 준비",
+          "seconds": 0.0359,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "checkpoint 비중첩",
+          "seconds": 0.0911,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "10명",
+          "users": 10,
+          "component": "기타 내부",
+          "seconds": 0.3769,
+          "total_s": 48.1451,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "서비스 DB 반영",
+          "seconds": 0.5205,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "최초 자원 준비",
+          "seconds": 0.0145,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "checkpoint 비중첩",
+          "seconds": 0.0861,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "30명",
+          "users": 30,
+          "component": "기타 내부",
+          "seconds": 0.3019,
+          "total_s": 150.996,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "서비스 DB 반영",
+          "seconds": 0.5752,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "최초 자원 준비",
+          "seconds": 0.0092,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "checkpoint 비중첩",
+          "seconds": 0.0896,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        },
+        {
+          "cohort": "50명",
+          "users": 50,
+          "component": "기타 내부",
+          "seconds": 0.3759,
+          "total_s": 257.65,
+          "slots": 4,
+          "calls_per_user": 4
+        }
+      ]
+    }
+  }
+}
