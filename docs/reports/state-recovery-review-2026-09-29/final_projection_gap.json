@@ -1,0 +1,9 @@
+{
+  "checkpoint": "input_wait_stage_1",
+  "api_before_reconciler": "running",
+  "worker_claimable": false,
+  "process_healthy": true,
+  "session_execution_owner_released": true,
+  "reconciler_marks_recovery": true,
+  "reconciler_requeues": false
+}

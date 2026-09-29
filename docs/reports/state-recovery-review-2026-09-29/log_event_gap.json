@@ -1,0 +1,4 @@
+{
+  "log_rows": 1,
+  "agent_events_after_same_key_replay": 0
+}

@@ -1,0 +1,14 @@
+{
+  "user_resume_requests": 1,
+  "automatic_attempts": 2,
+  "answer1": {
+    "marker": "first-question-only",
+    "approved": true
+  },
+  "answer2": {
+    "marker": "first-question-only",
+    "approved": true
+  },
+  "final_run_status": "success",
+  "intermediate_checkpoint_wait_stage": 2
+}

@@ -1,0 +1,10 @@
+{
+  "child_exit_code": 17,
+  "durable_owner_retained": true,
+  "owner_recovery_flag": false,
+  "task_status": "waiting_input",
+  "task_recovery_flag": false,
+  "reconciler_affected": 0,
+  "api_status_after_reconciler": "waiting_executor",
+  "automatic_requeue": false
+}

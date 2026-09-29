@@ -1,0 +1,10 @@
+{
+  "child_exit_code": 17,
+  "durable_owner_retained": true,
+  "owner_recovery_flag": false,
+  "task_status": "running",
+  "task_recovery_flag": true,
+  "reconciler_affected": 1,
+  "api_status_after_reconciler": "recovery_required",
+  "automatic_requeue": false
+}
