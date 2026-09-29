@@ -1,4 +1,5 @@
 """Shared synchronous HTTP scenario for the bounded runner and Locust."""
+import os
 import random
 import time
 from datetime import datetime, timezone
@@ -13,10 +14,13 @@ STAGES = [
 
 
 def prepare_user(request):
-    user = request('POST', '/api/v1/users', json={'user_name': 'load-' + uuid4().hex})
-    headers = {'Authorization': 'Bearer ' + user['user_id']}
-    projects = request('GET', '/api/v1/projects', headers=headers)['items']
-    return headers, next(p['id'] for p in projects if p['is_default'])
+    admin = os.environ.get('DTEST_LOADTEST_ADMIN_USER_ID')
+    if not admin:
+        raise RuntimeError('Set DTEST_LOADTEST_ADMIN_USER_ID to an existing test administrator.')
+    public_id = 'load-' + uuid4().hex
+    user = request('POST', '/api/v1/users', headers={'X-User-Id': admin},
+                   json={'user_id': public_id, 'user_name': public_id, 'role': 'user'})
+    return {'X-User-Id': user['user_id']}, user['default_project_id']
 
 
 def execute(request, headers, project_id, *, record, timeout=120, poll_seconds=0.25, sleep=time.sleep, submit=False, observe_run=None):
@@ -25,15 +29,17 @@ def execute(request, headers, project_id, *, record, timeout=120, poll_seconds=0
     session = request('POST', f'/api/v1/projects/{project_id}/sessions', headers=headers,
                       json={'session_name': 'LLM mock load scenario'})['id']
     previous = None
+    resume_token = None
     runs = []
     execution_id = None
     stages = STAGES + ([('executor_submitted', {'approved': True})] if submit else [])
     for expected, command in stages:
         payload = ({'input': {'messages': [{'role': 'user', 'content': '불량 예측을 위한 서비스 부하테스트'}]}}
-                   if command is None else {'command': command, 'metadata': {'resume_run_id': previous}})
+                   if command is None else {'command': command, 'resume_token': resume_token})
         started = time.perf_counter()
         submitted_at = datetime.now(timezone.utc).isoformat()
-        run = request('POST', f'/api/v1/sessions/{session}/runs',
+        endpoint = f'/api/v1/sessions/{session}/runs' + (f'/{previous}/resume' if command is not None else '')
+        run = request('POST', endpoint,
                       headers={**headers, 'Idempotency-Key': str(uuid4())}, json=payload)
         run_id = run['id']
         path = f'/api/v1/sessions/{session}/runs/{run_id}'
@@ -56,7 +62,7 @@ def execute(request, headers, project_id, *, record, timeout=120, poll_seconds=0
                                client_elapsed_ms=(time.perf_counter() - started) * 1000)
             if observe_run is not None:
                 observe_run(observation)
-        if run['status'] != 'interrupted':
+        if run['status'] != ('waiting_executor' if expected == 'executor_submitted' else 'waiting_input'):
             raise RuntimeError(f'{session}/{run_id}: {run["status"]}: {run.get("failure")}')
         actions = [a.get('name') for i in run.get('interrupt') or [] for a in i.get('action_requests', [])]
         if expected == 'executor_submitted':
@@ -68,7 +74,10 @@ def execute(request, headers, project_id, *, record, timeout=120, poll_seconds=0
             raise RuntimeError(f'{session}/{run_id}: expected {expected}, received {actions}')
         record('RUN/' + expected, (time.perf_counter() - started) * 1000)
         runs.append(observation)
+        if previous is not None and previous != run_id:
+            raise RuntimeError('Public Run ID changed during resume')
         previous = run_id
+        resume_token = run.get('resume_token')
     elapsed = (time.perf_counter() - begin) * 1000
     record('SCENARIO/' + ('executor_submit' if submit else 'approval_wait'), elapsed)
     return {'session_id':session,'elapsed_ms':elapsed,'runs':runs,'execution_id':execution_id}

@@ -112,6 +112,7 @@ def test_submit_scenario_requires_execution_confirmation():
 
     for valid in (True, False):
         calls = []
+        public_id = str(uuid4())
         def request(method, path, **kwargs):
             calls.append((path, kwargs.get('json')))
             if path.endswith('/sessions'):
@@ -120,12 +121,14 @@ def test_submit_scenario_requires_execution_confirmation():
             interrupt = ({'kind': 'EXECUTOR_EVENT', 'execution_id': str(uuid4())} if valid else
                          {'action_requests': [{'name': 'workflow_approval'}]}) if index == 4 else {
                              'action_requests': [{'name': STAGES[index][0]}]}
-            return {'id': str(uuid4()), 'status': 'interrupted', 'interrupt': [interrupt]}
+            return {'id': public_id, 'status': 'waiting_executor' if index == 4 else 'waiting_input', 'resume_token': str(uuid4()), 'interrupt': [interrupt]}
         if valid:
             result = execute(request, {}, 'project', record=lambda *a: None, submit=True)
             assert result['execution_id']
             assert len(result['runs']) == 5
             assert calls[-1][1]['command'] == {'approved': True}
+            assert calls[-1][0].endswith(f'/runs/{public_id}/resume')
+            assert calls[-1][1]['resume_token']
         else:
             with pytest.raises(RuntimeError, match='not confirmed'):
                 execute(request, {}, 'project', record=lambda *a: None, submit=True)

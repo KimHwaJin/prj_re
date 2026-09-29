@@ -31,7 +31,16 @@ async def wait_for(predicate):
 
 
 async def post(h, session, body, key=None):
-    return await h.client.post(f'/api/v1/sessions/{session}/runs',
+    path = f'/api/v1/sessions/{session}/runs'
+    if 'command' in body:
+        target = body.get('metadata', {}).get('resume_run_id')
+        if target:
+            state = (await h.client.get(f'{path}/{target}', headers=headers(h.user['user_id']))).json()
+        else:
+            state = (await h.client.get(path, headers=headers(h.user['user_id']))).json()['items'][0]
+        path += f"/{state['id']}/resume"
+        body = {'command': body['command'], 'resume_token': target or state['resume_token'] or state['id']}
+    return await h.client.post(path,
         headers={**headers(h.user['user_id']), 'Idempotency-Key': key or str(uuid4())}, json=body)
 
 
@@ -175,12 +184,18 @@ async def test_dispatcher_bounded_workload_comparison(runtime, monkeypatch):
 @pytest.mark.asyncio
 async def test_old_taskless_resume_cannot_bypass_executor_wait(runtime, monkeypatch):
     h = runtime
-    # FAQ pauses have no analysis Task after RunService finalization.
+    # Explicitly reconstruct an old taskless FAQ row; new invocations retain Task history.
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(return_value={
         'routing_result':{'route':'faq'}, '__interrupt__':[SimpleNamespace(value={'kind':'NEXT_REQUEST'})],
     }))
     faq = await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
+    async with h.factory() as db:
+        old = await db.get(TaskModel, UUID(faq['task_id']))
+        # ORM relationships otherwise try to null roots before deletion.
+        from sqlalchemy import delete
+        await db.execute(delete(TaskModel).where(TaskModel.task_id == old.task_id))
+        await db.commit()
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(return_value={
         'routing_result':{'route':'analysis'}, '__interrupt__':[SimpleNamespace(value={'kind':'EXECUTOR_EVENT'})],
     }))

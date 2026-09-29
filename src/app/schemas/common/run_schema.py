@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.enums import AgentRunStatus
 from app.schemas.schema_base import ORMModel
@@ -66,3 +66,43 @@ class AgentRunLogResource(ORMModel):
     payload: dict[str, Any]
     created_at: datetime
 
+
+
+class RunStart(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    input: RunInput
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    multitask_strategy: Literal["reject"] = "reject"
+    stream_mode: list[Literal["messages", "updates", "values", "custom"]] = Field(default_factory=list)
+    stream_resumable: bool = True
+    on_disconnect: Literal["continue"] = "continue"
+
+
+class RunResume(BaseModel):
+    """Echo the current waiting_input token; a stale screen must not resume a later wait."""
+    model_config = ConfigDict(extra="forbid")
+    command: dict[str, Any] | str
+    resume_token: UUID
+
+
+class PublicRunResource(BaseModel):
+    id: UUID
+    session_id: UUID
+    status: Literal["pending", "running", "waiting_input", "waiting_executor",
+                    "success", "error", "timeout", "canceled", "recovery_required"]
+    resume_token: UUID | None = None
+    interrupt: list[dict[str, Any]] | None = None
+    failure: dict[str, Any] | None = None
+    result: dict[str, Any] | None = None
+    recovery_required: bool = False
+    # Compatibility diagnostics only: clients no longer need these to operate Runs.
+    checkpoint_run_id: UUID | None = None
+    task_id: UUID | None = None
+    attempt_count: int
+    next_attempt_at: datetime | None = None
+    cancel_reason: str | None = None
+    cancel_requested_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None = None
+    completed_at: datetime | None = None

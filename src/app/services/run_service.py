@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import hashlib
+import json
 from datetime import timedelta
 from typing import Any, Awaitable
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
@@ -238,6 +240,29 @@ class RunService:
             session.current_leaf_message_id = message.message_id
 
     @staticmethod
+    def request_digest(payload: RunCreate) -> str:
+        serialized = json.dumps(payload.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return hashlib.sha256(serialized.encode()).hexdigest()
+
+    @staticmethod
+    def validate_replay(previous: AgentRunModel, payload: RunCreate) -> None:
+        digest = (previous.metadata_json or {}).get("_request_digest")
+        if digest is None:
+            # Pre-migration resumes used a different public contract. Do not
+            # guess that an old key belongs to a newly tokenized command.
+            metadata = {k: v for k, v in (previous.metadata_json or {}).items()
+                        if k not in {"checkpoint_run_id", "requested_by_user_id", "_request_digest"}}
+            original = RunCreate(input=previous.input_json, command=previous.command_json,
+                                 metadata=metadata, multitask_strategy=previous.multitask_strategy,
+                                 stream_mode=previous.stream_mode, stream_resumable=previous.stream_resumable,
+                                 on_disconnect=previous.on_disconnect)
+            matches = previous.command_json is None and RunService.request_digest(original) == RunService.request_digest(payload)
+        else:
+            matches = digest == RunService.request_digest(payload)
+        if not matches:
+            raise HTTPException(status_code=409, detail="Idempotency-Key was already used for a different request.")
+
+    @staticmethod
     async def create(
         db: AsyncSession,
         user_id: UUID,
@@ -267,6 +292,7 @@ class RunService:
         ))
         if previous is not None:
             if not _execute_existing:
+                RunService.validate_replay(previous, payload)
                 return previous
             run = previous
             task = await db.get(TaskModel, run.task_id)
@@ -313,6 +339,11 @@ class RunService:
                     origin = await RunService._interrupted_run(
                         db, session_id, UUID(str(resume_id)) if resume_id else None
                     )
+                    latest_id = await db.scalar(select(AgentRunModel.run_id).where(
+                        AgentRunModel.public_run_id == origin.public_run_id
+                    ).order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
+                    if latest_id != origin.run_id:
+                        raise HTTPException(status_code=409, detail="Resume target is no longer the current interrupt.")
                     if any(item.get("kind") == "EXECUTOR_EVENT" for item in (origin.interrupt or []) if isinstance(item, dict)):
                         raise HTTPException(status_code=409, detail="Session is waiting for Executor; user resume is not allowed.")
                     conflicting = select(TaskModel.task_id).where(
@@ -352,15 +383,20 @@ class RunService:
                     AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
                 ))
                 if duplicate is not None:
+                    RunService.validate_replay(duplicate, payload)
                     return duplicate
                 raise HTTPException(status_code=409, detail="An active task already exists for this session.") from exc
 
             checkpoint_run_id = task.checkpoint_run_id or (origin.checkpoint_run_id if origin else None)
             metadata = dict(payload.metadata)
+            metadata["_request_digest"] = RunService.request_digest(payload)
             metadata["requested_by_user_id"] = str(user_id)
             if checkpoint_run_id is not None:
                 metadata["checkpoint_run_id"] = str(checkpoint_run_id)
+            invocation_id = uuid4()
             run = AgentRunModel(
+                run_id=invocation_id,
+                public_run_id=origin.public_run_id if origin else invocation_id,
                 session_id=session_id, task_id=task.task_id,
                 status=AgentRunStatus.PENDING,
                 input_json=payload.input.model_dump(mode="json") if payload.input else None,
@@ -390,7 +426,7 @@ class RunService:
                 run.trigger_message_id = trigger_message_uuid
                 task.trigger_message_id = trigger_message_uuid
             if task.root_run_id is None:
-                task.root_run_id = run.run_id
+                task.root_run_id = run.public_run_id
             if task.checkpoint_run_id is None:
                 task.checkpoint_run_id = run.run_id
                 run.metadata_json = {**(run.metadata_json or {}), "checkpoint_run_id": str(run.run_id)}
@@ -413,6 +449,7 @@ class RunService:
                     AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
                 ))
                 if duplicate is not None:
+                    RunService.validate_replay(duplicate, payload)
                     return duplicate
                 raise HTTPException(status_code=409, detail="An active task already exists for this session.") from exc
             await db.refresh(run)
@@ -602,22 +639,11 @@ class RunService:
                 (state.get("recommendation") or {}).get("recommendation") or {}
             ).get("workflow_id"),
         }
-        if route == "analysis":
-            task.trigger_type = "analysis"
-            if task is not None:
-                task_status = (
-                    TaskStatus.WAITING_INPUT
-                    if status == AgentRunStatus.INTERRUPTED
-                    else TaskStatus(status.value)
-                )
-                TaskService.transition(task, task_status)
-        else:
-            # FAQ/file lookup/cancel은 AgentRun/AgentLog는 남기되 분석 Task는 남기지 않습니다.
-            if task is not None:
-                run.task_id = None
-                await db.flush()
-                await db.delete(task)
-        if route == "analysis" and task is not None:
+        if task is not None:
+            task.trigger_type = route or task.trigger_type
+            task_status = TaskStatus.WAITING_INPUT if status == AgentRunStatus.INTERRUPTED else TaskStatus(status.value)
+            TaskService.transition(task, task_status)
+        if task is not None:
             task_event_status = (
                 TaskStatus.WAITING_INPUT.value
                 if run.status == AgentRunStatus.INTERRUPTED
@@ -737,10 +763,16 @@ class RunService:
             raise HTTPException(status_code=409, detail="Task is already terminal.")
         if task.recovery_required:
             raise HTTPException(status_code=409, detail="Task requires recovery; termination has not been confirmed.")
+        if latest_run is not None and task.status == TaskStatus.WAITING_INPUT and any(
+            item.get("kind") == "EXECUTOR_EVENT" for item in (latest_run.interrupt or [])
+        ):
+            raise HTTPException(status_code=409, detail="Executor cancellation is not supported; wait for its result.")
         if task.status == TaskStatus.WAITING_INPUT or latest_run is None:
             TaskService.transition(task, TaskStatus.CANCELED)
             task.cancel_requested_at = utc_now()
             if latest_run is not None:
+                latest_run.cancel_reason = reason
+                latest_run.cancel_requested_at = task.cancel_requested_at
                 await TaskEventService.append(
                     db, task_id=task_id, run_id=latest_run.run_id,
                     event_type="task.canceled",

@@ -64,7 +64,8 @@ async def rows(h, run_id):
         # recorder commit and combine old Run.failure with new Task guard.
         result = await db.execute(select(AgentRunModel, TaskModel)
             .join(TaskModel, TaskModel.task_id == AgentRunModel.task_id)
-            .where(AgentRunModel.run_id == UUID(str(run_id))))
+            .where(AgentRunModel.public_run_id == UUID(str(run_id)))
+            .order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
         return result.one()
 
 
@@ -305,7 +306,7 @@ async def test_hitl_resume_keeps_normal_lifecycle(runtime, monkeypatch):
     assert run.status == AgentRunStatus.INTERRUPTED and task.status == TaskStatus.WAITING_INPUT
     response = await h.client.post(f'/api/v1/tasks/{task.task_id}/resume',
         headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-        json={'command': {'resume': {'approved': True}}})
+        json={'command': {'resume': {'approved': True}}, 'resume_token': str(run.run_id)})
     assert response.status_code == 202, response.text
     resumed = response.json()
     await worker.execute_claimed(await worker.claim_one())

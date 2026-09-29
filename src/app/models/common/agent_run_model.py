@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Enum, ForeignKey, ForeignKeyConstraint, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,6 +19,13 @@ class AgentRunModel(Base):
     __tablename__ = "agent_runs"
 
     run_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    # Public identity is stable; run_id remains the private queue/claim identity.
+    public_run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("agent_runs.run_id", name="fk_agent_runs_public_run", ondelete="CASCADE",
+                   deferrable=True, initially="DEFERRED"),
+        nullable=False, default=lambda context: context.get_current_parameters()["run_id"],
+    )
     session_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("sessions.session_id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -80,6 +87,7 @@ class AgentRunModel(Base):
     interpreted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
+        Index("ix_agent_runs_public_latest", "public_run_id", "created_at", "run_id"),
         # E03-T03: 동일 요청 재전송은 DB에서 하나의 Run으로 수렴시킵니다.
         UniqueConstraint(
             "session_id",

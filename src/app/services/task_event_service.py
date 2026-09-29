@@ -93,3 +93,12 @@ class TaskEventService:
             .limit(limit)
         )).all())
 
+
+
+    @staticmethod
+    async def list_after_public_run(db: AsyncSession, *, run_id: UUID, sequence: int, limit: int):
+        return list((await db.scalars(
+            select(TaskEventModel).join(AgentRunModel, AgentRunModel.run_id == TaskEventModel.run_id)
+            .where(AgentRunModel.public_run_id == run_id, TaskEventModel.sequence > sequence)
+            .order_by(TaskEventModel.sequence).limit(limit)
+        )).all())

@@ -13,8 +13,9 @@ from app.core.database import get_db
 from app.models.common.agent_run_model import AgentRunModel
 from app.models.common.task_model import TaskModel
 from app.repositories.session_repository import SessionRepository
-from app.schemas.common.run_schema import RunCreate, RunResource
-from app.schemas.common.task_schema import TaskCancel, TaskResource, TaskResume
+from app.schemas.common.run_schema import RunResource, RunResume, PublicRunResource
+from app.services.public_run_service import PublicRunService
+from app.schemas.common.task_schema import TaskCancel, TaskResource
 from app.services.run_service import RunService
 from app.services.task_event_service import TaskEventService
 from config import settings
@@ -22,7 +23,7 @@ from app.core.database import get_session_factory
 from app.services.task_service import TaskService
 
 
-router = APIRouter(tags=["tasks"])
+router = APIRouter(tags=["tasks"], deprecated=True)
 
 
 def _resource(task: TaskModel) -> TaskResource:
@@ -110,10 +111,10 @@ async def list_task_runs(
     return [RunResource.model_validate(run) for run in runs]
 
 
-@router.post("/tasks/{task_id}/resume", response_model=RunResource, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/tasks/{task_id}/resume", response_model=PublicRunResource, status_code=status.HTTP_202_ACCEPTED)
 async def resume_task(
     task_id: UUID,
-    payload: TaskResume,
+    payload: RunResume,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
@@ -123,21 +124,10 @@ async def resume_task(
     if len(idempotency_key) > 255:
         raise HTTPException(status_code=422, detail="Idempotency-Key must not exceed 255 characters.")
     task = await _owned_task(db, user_id, task_id)
-    run = await RunService.create(
-        db,
-        user_id,
-        task.session_id,
-        RunCreate(
-            command=payload.command,
-            metadata={
-                **payload.metadata,
-                "resume_run_id": str(task.checkpoint_run_id),
-                "task_id": str(task.task_id),
-            },
-        ),
-        idempotency_key.strip(),
-    )
-    return RunResource.model_validate(run)
+    if task.root_run_id is None:
+        raise HTTPException(status_code=409, detail="Task has no public Run.")
+    return await PublicRunService.resume(db, user_id, task.session_id, task.root_run_id, payload, idempotency_key)
+
 
 
 @router.post("/tasks/{task_id}/cancel", response_model=TaskResource, status_code=status.HTTP_202_ACCEPTED)

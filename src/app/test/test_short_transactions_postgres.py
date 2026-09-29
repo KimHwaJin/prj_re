@@ -131,9 +131,10 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
         gate.entered.clear(); gate.ready.clear(); gate.release.clear()
         queued = []
         for sid in sessions:
-            response = await h.client.post(f'/api/v1/sessions/{sid}/runs',
+            state = (await h.client.get(f'/api/v1/sessions/{sid}/runs', headers=headers(h.user['user_id']))).json()['items'][0]
+            response = await h.client.post(f"/api/v1/sessions/{sid}/runs/{state['id']}/resume",
                 headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-                json={'command': {'approved': True}})
+                json={'command': {'approved': True}, 'resume_token': state['resume_token']})
             assert response.status_code == 202, response.text
             queued.append(response.json())
     jobs = [asyncio.create_task(execute_queued()) for _ in queued]

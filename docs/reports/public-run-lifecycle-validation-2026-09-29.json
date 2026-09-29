@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/public-run-lifecycle",
+  "base": "851786b",
+  "full_suite": {
+    "passed": 370,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "elapsed_seconds": 106.25,
+    "scope": "src; before final taskless cancel edge fix"
+  },
+  "final_focused": {
+    "passed": 18,
+    "elapsed_seconds": 23.76,
+    "scope": "public_run_postgres + public_run_migration_postgres; includes 15 overlapping full-suite tests and 3 added edge tests"
+  },
+  "package": {
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "role_prompts": 7,
+    "mock_graph_execution_steps": 6
+  },
+  "verification": [
+    "stable public ID across HITL",
+    "same-key concurrent replay deduplication",
+    "payload mismatch and stale-token rejection",
+    "cross-user and cross-run isolation",
+    "list pagination and old invocation aliases",
+    "real PostgreSQL checkpointer/runtime recreation",
+    "Executor success/failure/canceled projections",
+    "duplicate completion projection",
+    "Run cancel/resume race",
+    "durable SSE replay across invocations",
+    "single-connection SSE remains open through HITL",
+    "legacy taskless cancellation",
+    "0020 to 0021 backfill and downgrade retain old rows and identities",
+    "ambiguous migration rolls back"
+  ],
+  "limitations": [
+    "No actual external LLM, Executor or Redis",
+    "Runtime recreation, not OS process restart/Kubernetes rollout",
+    "No performance A/B",
+    "No one-week wait",
+    "No production migration",
+    "Mixed-version writers require draining before migration",
+    "No new remote cancellation/recovery API"
+  ],
+  "initial_full_failures": {
+    "passed": 367,
+    "failed": 2,
+    "causes": [
+      "old test expected interrupted instead of waiting_input/waiting_executor",
+      "old Task resume test omitted new resume_token"
+    ],
+    "resolved": true
+  }
+}
