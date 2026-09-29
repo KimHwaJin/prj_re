@@ -1,4 +1,6 @@
 """HTTP admission, queue retries, persistent HITL and Executor model continuity."""
+from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+
 from contextlib import asynccontextmanager
 from dataclasses import replace
 import json
@@ -174,8 +176,9 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
                     await deps.faq_agent.ainvoke({"user_request":"first"},context=context_from_state(s))
                     return {**s,"routing_result":{"route":"analysis"},"task_id":str(graph_task),"execution_id":str(execution),
                             "ew_pending":{"command_id":str(command)}}
+                @record_user_resume
                 async def approval(s):
-                    interrupt({"kind":"USER_APPROVAL"})
+                    user_interrupt({"kind":"USER_APPROVAL"})
                     await deps.faq_agent.ainvoke({"user_request":"after approval"},context=context_from_state(s))
                     return s
                 async def external(s):

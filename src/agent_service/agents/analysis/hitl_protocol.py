@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from langgraph.types import interrupt
+from agent_service.runtime.user_resume import user_interrupt as interrupt
 
 
 def build_hitl_request(

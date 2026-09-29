@@ -2,6 +2,8 @@
 
 Uses the guarded disposable identity_test DB. No external LLM/Executor/Redis.
 """
+from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+
 import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -232,10 +234,12 @@ async def test_real_checkpoint_two_hitl_restart_and_executor_projection(runtime,
     graph_task, execution, command_id, event_id=uuid4(),uuid4(),uuid4(),uuid4()
     async def start(s):
         return {**s,'routing_result':{'route':'analysis'},'task_id':str(graph_task),'execution_id':str(execution)}
+    @record_user_resume
     async def approval1(s):
-        return {**s,'answer1':interrupt({'kind':'USER_APPROVAL','stage':1})}
+        return {**s,'answer1':user_interrupt({'kind':'USER_APPROVAL','stage':1})}
+    @record_user_resume
     async def approval2(s):
-        return {**s,'answer2':interrupt({'kind':'USER_APPROVAL','stage':2})}
+        return {**s,'answer2':user_interrupt({'kind':'USER_APPROVAL','stage':2})}
     async def external(s):
         interrupt({'kind':'EXECUTOR_EVENT'})
         return {**s,'execution_status':outcome,'ew_receipts':{str(command_id):str(event_id)},'final_response':{'outcome':outcome}}

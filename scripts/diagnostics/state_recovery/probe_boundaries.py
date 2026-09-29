@@ -1,7 +1,8 @@
 """Characterize current failure windows; passing reproductions are NOT correctness tests.
 
 Run explicitly with a disposable local identity_test PostgreSQL. These probes
-assert the observed defects so an architectural review remains reproducible.
+assert the observed defects at review commit 9ebbc20. Run that commit to
+reproduce the original defects; later fixes intentionally invalidate these assertions.
 No production logic, LLM service or Executor service is changed/contacted.
 """
 import asyncio

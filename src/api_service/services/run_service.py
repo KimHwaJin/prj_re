@@ -22,6 +22,7 @@ from config import settings
 from api_service.core.database import get_session_factory
 from api_service.core.execution_claim import current_execution_claim
 from service_contracts.execution import ExecutionNeedsRecovery
+from service_contracts.user_resume import UserResumeNeedsRecovery
 from api_service.core.execution_lifecycle import execution_health, finish_observer, observe_termination, wait_for_stop
 from service_runtime.cleanup import protected_cleanup
 from api_service.models.common.agent_run_model import AgentRunModel
@@ -39,6 +40,7 @@ from api_service.services.agent_graph_service import (
 )
 from api_service.services.helpers import utc_now
 from api_service.services.task_service import TaskService
+from api_service.services.user_resume_service import ResumeProjectionError
 from api_service.services import resource_lifecycle as lifecycle
 from api_service.services.workflow_service import WorkflowService
 from api_service.services.task_event_service import TaskEventService
@@ -427,6 +429,12 @@ class RunService:
 
             checkpoint_run_id = task.checkpoint_run_id or (origin.checkpoint_run_id if origin else None)
             metadata = dict(payload.metadata)
+            # Internal recovery controls are never accepted from client metadata.
+            for field in ("_resume_target", "_resume_started", "_checkpoint_interrupt_id"):
+                metadata.pop(field, None)
+            if origin is not None:
+                metadata["_resume_target"] = (origin.metadata_json or {}).get("_checkpoint_interrupt_id")
+                metadata["_resume_started"] = False
             metadata["_model_selection"] = model_selection
             metadata["_request_digest"] = RunService.request_digest(payload)
             metadata["requested_by_user_id"] = str(user_id)
@@ -499,6 +507,8 @@ class RunService:
         await db.refresh(task)
         # rollback은 ORM 속성을 expire하므로 취소/오류 처리에 쓸 ID는 평범한 값으로 보존합니다.
         execution_model_selection = (run.metadata_json or {}).get("_model_selection")
+        execution_resume_target = (run.metadata_json or {}).get("_resume_target")
+        execution_resume_started = bool((run.metadata_json or {}).get("_resume_started"))
         execution_run_id = run.run_id
         execution_task_id = task.task_id
         execution_project_id = session.project_id
@@ -531,6 +541,8 @@ class RunService:
                                 checkpoint_run_id=execution_checkpoint_id,
                                 agent_run_id=execution_run_id,
                                 command=payload.command,
+                                resume_target=execution_resume_target,
+                                resume_started=execution_resume_started,
                                 callbacks=[token_events],
                                 model_selection=execution_model_selection,
                             ),
@@ -555,6 +567,17 @@ class RunService:
                 # 마지막 짧은 token buffer까지 terminal event 전에 durable store로 flush합니다.
                 with span("run.token_events_close"):
                     await token_events.close()
+            if payload.command is not None:
+                try:
+                    return await RunService._finalize_state(db, execution_run_id, user_id, state)
+                except ExecutionNeedsRecovery:
+                    raise
+                except Exception as exc:
+                    raise ResumeProjectionError("Durable user resume needs final state projection") from exc
+        except UserResumeNeedsRecovery as exc:
+            # The graph and observers have stopped. Quarantine this Task only;
+            # existing ownership-uncertain failures still poison the process below.
+            return await RunService._require_resume_recovery(db, execution_run_id, str(exc))
         except (ExecutionNeedsRecovery, asyncio.CancelledError):
             # No retry/terminal transition without confirmed execution ownership.
             # The independent recorder remains able to mark a stuck live graph.
@@ -587,14 +610,30 @@ class RunService:
             )
             from service_runtime.model_selection import ModelSelectionError
             failure = {
-                "code": "RUN_MODEL_UNAVAILABLE" if isinstance(exc, ModelSelectionError) else "AGENT_RUN_FAILED",
-                "stage": "graph_execution",
+                "code": ("RESUME_PROJECTION_FAILED" if isinstance(exc, ResumeProjectionError)
+                         else "RUN_MODEL_UNAVAILABLE" if isinstance(exc, ModelSelectionError) else "AGENT_RUN_FAILED"),
+                "stage": "state_projection" if isinstance(exc, ResumeProjectionError) else "graph_execution",
                 "exception_type": f"{type(exc).__module__}.{type(exc).__name__}",
                 "message": str(exc),
                 "error_id": error_id,
             }
             await db.rollback()
+            # A successful final commit releases the Task lease. Read its outcome
+            # before requiring that old lease again; session ownership is still held.
+            if payload.command is not None:
+                committed = await db.get(AgentRunModel, execution_run_id, populate_existing=True)
+                if committed is not None and (
+                    committed.status in RunService.TERMINAL_STATUSES
+                    or committed.status == AgentRunStatus.INTERRUPTED
+                ):
+                    return committed
             run, task = await RunService._lock_run_and_task(db, execution_run_id)
+            if payload.command is not None and (
+                run.attempt_count > max(0, settings.agent_worker_max_retries)
+                or ((run.metadata_json or {}).get("_resume_started") and not RunService._is_retryable(exc))
+            ):
+                return await RunService._require_resume_recovery(
+                    db, execution_run_id, "User resume cannot be safely retried or retry budget exhausted")
             if run.cancel_requested_at is not None:
                 # 취소와 Graph 예외가 경쟁하면 사용자가 먼저 요청한 취소를 최종 상태로 보존합니다.
                 RunService._finalize_canceled(run, task)
@@ -659,10 +698,33 @@ class RunService:
                 raise
             raise HTTPException(status_code=503 if isinstance(exc, RuntimeError) else 502, detail=f"Agent graph failed: {exc}") from exc
 
+        return await RunService._finalize_state(db, execution_run_id, user_id, state)
+
+    @staticmethod
+    async def _require_resume_recovery(db, run_id, reason):
+        try:
+            await db.rollback()
+            if not await TaskService.require_recovery(db, run_id=run_id, reason=reason):
+                raise ExecutionNeedsRecovery("Could not quarantine user resume")
+            run = await db.get(AgentRunModel, run_id, populate_existing=True)
+            if run is None:
+                raise ExecutionNeedsRecovery("Quarantined user resume disappeared")
+            return run
+        except ExecutionNeedsRecovery:
+            raise
+        except Exception as exc:
+            # Never release the owner if the durable Task guard was not verified.
+            raise ExecutionNeedsRecovery("Could not verify user resume quarantine") from exc
+
+    @staticmethod
+    async def _finalize_state(db, execution_run_id, user_id, state):
         status = run_status_from_state(state)
         route = (state.get("routing_result") or {}).get("route")
         # 완료 직전 row lock을 획득해 동시에 들어온 cancel 요청과 최종 상태를 직렬화합니다.
         run, task = await RunService._lock_run_and_task(db, execution_run_id)
+        boundaries = [getattr(item, "id", None) for item in state.get("__interrupt__", ())]
+        run.metadata_json = {**(run.metadata_json or {}),
+                             "_checkpoint_interrupt_id": boundaries[0] if len(boundaries) == 1 else None}
         if run.cancel_requested_at is not None:
             RunService._finalize_canceled(run, task)
             await TaskEventService.append_for_run(

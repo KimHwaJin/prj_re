@@ -26,7 +26,7 @@ from api_service.services.graph_crud_persistence import (
     astream_with_crud_message_persistence,
 )
 from api_service.services.graph_event_persistence import GraphPersistenceDispatcher
-from api_service.services.agent_project_context import read_project_snapshot, ensure_project_snapshot
+from api_service.services.agent_project_context import read_project_snapshot
 
 
 GRAPH_MESSAGE_SOURCE = "dtest-agent"
@@ -390,50 +390,27 @@ async def ainvoke_resume(
     checkpoint_run_id: UUID,
     agent_run_id: UUID | None = None,
     command: dict[str, Any] | str,
+    resume_target: str | None = None,
+    resume_started: bool = False,
     model_selection: dict[str, str] | None = None,
     dispatcher: GraphPersistenceDispatcher | None = None,
     graph: Any | None = None,
     callbacks: list[Any] | None = None,
 ) -> dict[str, Any]:
-    from langgraph.types import Command
+    from api_service.services.user_resume_service import resume_and_project
 
-    graph_input = Command(resume=command)
-    config = graph_config(session_id, checkpoint_run_id, callbacks)
-    run_id = agent_run_id or checkpoint_run_id
-    if graph is None:
-        async with runtime.open_graph() as compiled:
-            from service_runtime.model_selection import validate_checkpoint_selection
-            snapshot = await compiled.aget_state(config)
-            validate_checkpoint_selection(snapshot.values, model_selection)
-            await ensure_project_snapshot(
-                compiled, config, session_factory=session_factory, snapshot=snapshot,
-                user_id=user_id, session_id=session_id,
-            )
-            return await ainvoke_with_crud_message_persistence(
-                compiled,
-                graph_input,
-                session_factory=session_factory,
-                user_id=user_id,
-                config=config,
-                dispatcher=dispatcher,
-                agent_run_id=run_id,
-            )
-    from service_runtime.model_selection import validate_checkpoint_selection
-    snapshot = await graph.aget_state(config)
-    validate_checkpoint_selection(snapshot.values, model_selection)
-    await ensure_project_snapshot(
-        graph, config, session_factory=session_factory, snapshot=snapshot,
-        user_id=user_id, session_id=session_id,
-    )
-    return await ainvoke_with_crud_message_persistence(
-        graph,
-        graph_input,
-        session_factory=session_factory,
-        user_id=user_id,
-        config=config,
-        dispatcher=dispatcher,
-        agent_run_id=run_id,
-    )
+    async def invoke(compiled):
+        return await resume_and_project(
+            compiled, graph_config(session_id, checkpoint_run_id, callbacks),
+            user_id=user_id, run_id=agent_run_id, command=command,
+            target=resume_target, started=resume_started,
+            model_selection=model_selection, session_factory=session_factory,
+            dispatcher=dispatcher,
+        )
+    if graph is not None:
+        return await invoke(graph)
+    async with runtime.open_graph() as compiled:
+        return await invoke(compiled)
 
 
 async def astream_user_turn(

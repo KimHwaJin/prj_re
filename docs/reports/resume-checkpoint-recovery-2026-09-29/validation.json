@@ -1,0 +1,26 @@
+{
+  "base_commit": "9ebbc20",
+  "branch": "feature/resume-checkpoint-recovery",
+  "full_suite_before_final_local_quarantine": {
+    "passed": 614,
+    "subtests_passed": 2,
+    "warnings": 53,
+    "seconds": 234.88
+  },
+  "final_targeted_suite": {
+    "passed": 69,
+    "seconds": 58.36
+  },
+  "new_resume_postgres_cases": 13,
+  "new_actual_agent_case": 1,
+  "database": "disposable local PostgreSQL 17; removed after validation",
+  "external_services_contacted": false,
+  "deployed": false,
+  "sha256": {
+    "src/service_contracts/user_resume.py": "9d371bbebb94b873598b33d170f1ad01b4559acbbb276ead6d2e4256f9009e87",
+    "src/agent_service/runtime/user_resume.py": "6af6ebdaf372c911512599b59397ae60c81b7dd57d9dfd229e1f30935ef8dadb",
+    "src/api_service/services/user_resume_service.py": "1da3e9c85cc024a4e8036b0c0f18b9661fcde9310d8bc35087d8582c372486c8",
+    "src/api_service/services/run_service.py": "39fc199f22e8d86a6604689da68a31453cf75517b94bba51df37ce7a2b9d5222",
+    "src/api_service/test/test_user_resume_recovery_postgres.py": "82763bb1b650070f067c78e9f5b690966378a088af49e84327509208e927286e"
+  }
+}

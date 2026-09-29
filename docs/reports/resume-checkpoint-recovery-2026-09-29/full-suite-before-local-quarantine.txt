@@ -1,0 +1,21 @@
+...................................................................... [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 34%]
+........................................................................ [ 46%]
+........................................................................ [ 58%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 93%]
+........................................                                 [100%]
+=============================== warnings summary ===============================
+src/agent_service/agents/analysis/tests/test_agent_middleware.py: 29 warnings
+src/agent_service/agents/analysis/tests/test_async_llm.py: 8 warnings
+src/agent_service/agents/analysis/tests/test_user_agent_graph.py: 5 warnings
+src/api_service/test/test_async_llm_postgres.py: 1 warning
+src/api_service/test/test_model_selection.py: 7 warnings
+src/api_service/test/test_model_selection_postgres.py: 3 warnings
+  {VENV}/lib/python3.11/site-packages/langgraph/pregel/main.py:3230: UserWarning: `durability` has no effect when no checkpointer is present.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+614 passed, 53 warnings, 2 subtests passed in 234.88s (0:03:54)

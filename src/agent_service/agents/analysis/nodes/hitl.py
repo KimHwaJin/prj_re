@@ -10,6 +10,7 @@ from agent_config import (
     TEST_DATA_SELECTION_TRIGGER,
 )
 from agent_service.agents.analysis.hitl_protocol import request_human_input
+from agent_service.runtime.user_resume import record_user_resume
 from agent_service.agents.analysis.message_utils import as_message_content
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.artifacts import (
@@ -61,6 +62,7 @@ def _coerce_answers_by_input_schema(
     }
 
 
+@record_user_resume
 def wait_for_data_selection(state: AnalysisWorkflowState) -> dict:
     description = "분석에 사용할 X/Y 데이터를 선택해주세요."
     response = request_human_input(
@@ -82,6 +84,7 @@ def wait_for_data_selection(state: AnalysisWorkflowState) -> dict:
     }
 
 
+@record_user_resume
 def collect_analysis_context(state: AnalysisWorkflowState) -> dict:
     description = "선택한 데이터로 무엇을 분석하거나 확인하고 싶으신가요?"
     response = request_human_input(
@@ -103,6 +106,7 @@ def collect_analysis_context(state: AnalysisWorkflowState) -> dict:
     }
 
 
+@record_user_resume
 def collect_missing_information(state: AnalysisWorkflowState) -> dict:
     workflow = state["workflow"]["workflow"]
     input_schema = workflow.get("input_schema", {})
@@ -342,8 +346,9 @@ def make_select_workflow_candidate(settings: AgentSettings):
             "artifact_files": artifact_files,
         }
 
-    return select_workflow_candidate
+    return record_user_resume(select_workflow_candidate)
 
+@record_user_resume
 def review_workflow(state: AnalysisWorkflowState) -> dict:
     intro = "완성된 Workflow를 승인하거나 피드백과 함께 거절해주세요."
     description = _workflow_candidate_description(
@@ -421,6 +426,7 @@ def review_workflow(state: AnalysisWorkflowState) -> dict:
     return updates
 
 
+@record_user_resume
 def await_next_user_request(state: AnalysisWorkflowState) -> dict:
     description = "추가 요청을 입력하거나 대화를 종료해주세요."
     response = request_human_input(

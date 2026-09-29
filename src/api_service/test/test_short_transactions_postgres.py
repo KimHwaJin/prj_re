@@ -14,7 +14,7 @@ import pytest
 import pytest_asyncio
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
-from langgraph.types import interrupt
+from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 from sqlalchemy import event, select, text, update
 from sqlalchemy.exc import TimeoutError as PoolTimeout
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -99,8 +99,9 @@ def gated_graph(gate):
         return {**state, 'routing_result': {'route': 'analysis'},
                 'task_id': state.get('task_id') or str(uuid4()),
                 'messages': [{'role': 'assistant', 'name': 'faq', 'content': 'mock result'}]}
+    @record_user_resume
     async def approval(state):
-        answer = interrupt({'kind': 'USER_APPROVAL'})
+        answer = user_interrupt({'kind': 'USER_APPROVAL'})
         return {**state, 'approved': answer}
     return (StateGraph(dict).add_node('model', model).add_node('approval', approval)
             .add_node('after_approval', model).add_edge(START, 'model')
@@ -173,7 +174,7 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
 
 
 @pytest.mark.asyncio
-async def test_legacy_resume_releases_snapshot_before_checkpoint_update_and_invoke(small_pool):
+async def test_legacy_project_context_releases_snapshot_before_checkpoint_update(small_pool):
     h = small_pool
     async with h.factory() as db:
         session = await db.get(SessionModel, UUID(h.session_id))
@@ -190,9 +191,9 @@ async def test_legacy_resume_releases_snapshot_before_checkpoint_update_and_invo
         aupdate_state=AsyncMock(side_effect=checkpoint_io),
         ainvoke=AsyncMock(side_effect=checkpoint_io),
     )
-    await graphs.ainvoke_resume(user_id=uid, session_id=UUID(h.session_id), checkpoint_run_id=uuid4(),
-        command={'approved': True}, graph=graph, session_factory=h.factory,
-        dispatcher=GraphPersistenceDispatcher([]))
+    from api_service.services.agent_project_context import ensure_project_snapshot
+    await ensure_project_snapshot(graph, {}, user_id=uid, session_id=UUID(h.session_id),
+                                  session_factory=h.factory)
     graph.aupdate_state.assert_awaited_once()
     assert h.engine.pool.checkedout() == 0
 

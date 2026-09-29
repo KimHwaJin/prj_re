@@ -109,7 +109,7 @@ class PublicRunService:
     @staticmethod
     async def create(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunStart, key: str) -> PublicRunResource:
         payload = RunCreate(**payload.model_dump())
-        reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume", "_model_selection"}
+        reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume", "_model_selection", "_resume_target", "_resume_started", "_checkpoint_interrupt_id"}
         if reserved.intersection(payload.metadata):
             raise HTTPException(status_code=422, detail="Execution identity metadata is managed by the server.")
         invocation = await RunService.create(db, user_id, session_id, payload, key)

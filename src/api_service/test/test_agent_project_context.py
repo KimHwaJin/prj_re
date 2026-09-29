@@ -55,7 +55,7 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("existing", [None, "", "saved prompt"])
-async def test_resume_only_backfills_legacy_snapshot(monkeypatch, existing):
+async def test_project_context_helper_only_backfills_legacy_snapshot(monkeypatch, existing):
     user_id, session_id, run_id, project_id = [uuid4() for _ in range(4)]
     values = {"user_id": str(user_id), "session_id": str(session_id), "project_id": str(project_id)}
     from service_runtime.model_selection import current_catalog
@@ -64,11 +64,9 @@ async def test_resume_only_backfills_legacy_snapshot(monkeypatch, existing):
         values["project_system_prompt"] = existing
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=SimpleNamespace(values=values)), aupdate_state=AsyncMock())
     db = SimpleNamespace(close=AsyncMock(), scalar=AsyncMock(return_value=SimpleNamespace(system_prompt="new prompt", prompt_version=3)))
-    persist = AsyncMock(return_value={})
-    monkeypatch.setattr(service, "ainvoke_with_crud_message_persistence", persist)
-    await service.ainvoke_resume(session_factory=lambda: db, user_id=user_id, session_id=session_id, checkpoint_run_id=run_id,
-        command={"approved": True}, graph=graph)
-    persist.assert_awaited_once()
+    from api_service.services.agent_project_context import ensure_project_snapshot
+    await ensure_project_snapshot(graph, {}, session_factory=lambda: db,
+                                  user_id=user_id, session_id=session_id)
     if existing is None:
         db.scalar.assert_awaited_once()
         assert graph.aupdate_state.call_args.args[1]["project_system_prompt"] == "new prompt"

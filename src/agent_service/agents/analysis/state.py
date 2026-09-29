@@ -5,10 +5,11 @@ from __future__ import annotations
 from typing import Annotated, Any, Literal
 
 from service_contracts.executor_boundary import ExecutorBoundaryState
+from service_contracts.user_resume import UserResumeState
 from agent_service.agents.analysis.message_utils import append_messages_with_ids
 
 
-class AnalysisWorkflowState(ExecutorBoundaryState, total=False):
+class AnalysisWorkflowState(ExecutorBoundaryState, UserResumeState, total=False):
     model_selection: dict[str, str]
     request_id: str
     user_id: str
