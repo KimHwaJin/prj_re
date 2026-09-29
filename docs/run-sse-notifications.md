@@ -63,3 +63,7 @@ LISTEN은 세션 연결이 필요하며 운영 PostgreSQL/프록시 정책을 �
 루트 `app.py`의 서버는 SIGTERM을 받으면 HTTP drain 전에 SSE 구독을 깨워 종료한다.
 별도의 ASGI/플랫폼 launcher는 이 종료 hook을 연결하거나 유한한 HTTP 종료 기한을
 설정해야 한다. 무기한 SSE가 있는 서버에서는 lifespan 종료만 기다리는 것으로 충분하지 않다.
+
+SSE 앞단의 토큰 저장 주기·버퍼 상한·DB 저장 장애 정책은
+[027 토큰 이벤트 버퍼 기록](improvements/027-token-event-buffer.md)을 참고한다.
+토큰 저장 간격과 SSE 변경 알림 병합 간격은 별개다.

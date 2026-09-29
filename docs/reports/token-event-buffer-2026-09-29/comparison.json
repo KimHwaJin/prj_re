@@ -1,0 +1,142 @@
+{
+  "baseline": "039d516",
+  "method": "offline controlled writer, 3 trials each; no external services",
+  "limits": [
+    "not LLM latency, real SQL throughput, RSS or production capacity",
+    "after buffer limits are set to 64 bytes / 8 items to expose backpressure"
+  ],
+  "results": [
+    {
+      "version": "before",
+      "trial": 1,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 473.2233751565218,
+      "producer_duration_ms": 473.10395911335945,
+      "writes_before_producer_end": 0,
+      "total_writes": 1,
+      "content_exact": true
+    },
+    {
+      "version": "before",
+      "trial": 1,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 1000,
+      "admitted_utf8_bytes": 2000,
+      "producer_waited_for_capacity": false,
+      "content_exact": true
+    },
+    {
+      "version": "before",
+      "trial": 2,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 477.84666693769395,
+      "producer_duration_ms": 477.7321668807417,
+      "writes_before_producer_end": 0,
+      "total_writes": 1,
+      "content_exact": true
+    },
+    {
+      "version": "before",
+      "trial": 2,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 1000,
+      "admitted_utf8_bytes": 2000,
+      "producer_waited_for_capacity": false,
+      "content_exact": true
+    },
+    {
+      "version": "before",
+      "trial": 3,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 481.9701670203358,
+      "producer_duration_ms": 481.885707937181,
+      "writes_before_producer_end": 0,
+      "total_writes": 1,
+      "content_exact": true
+    },
+    {
+      "version": "before",
+      "trial": 3,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 1000,
+      "admitted_utf8_bytes": 2000,
+      "producer_waited_for_capacity": false,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 1,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 51.288750022649765,
+      "producer_duration_ms": 454.1016248986125,
+      "writes_before_producer_end": 8,
+      "total_writes": 9,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 1,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 8,
+      "admitted_utf8_bytes": 16,
+      "producer_waited_for_capacity": true,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 2,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 50.86891585960984,
+      "producer_duration_ms": 461.17145800963044,
+      "writes_before_producer_end": 8,
+      "total_writes": 9,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 2,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 8,
+      "admitted_utf8_bytes": 16,
+      "producer_waited_for_capacity": true,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 3,
+      "scenario": "continuous_tokens",
+      "configured_interval_ms": 50,
+      "first_write_ms": 50.67245801910758,
+      "producer_duration_ms": 454.59616696462035,
+      "writes_before_producer_end": 8,
+      "total_writes": 9,
+      "content_exact": true
+    },
+    {
+      "version": "after",
+      "trial": 3,
+      "scenario": "stalled_writer",
+      "offered_tokens": 1000,
+      "gate_ms": 100,
+      "admitted_uncommitted_tokens": 8,
+      "admitted_utf8_bytes": 16,
+      "producer_waited_for_capacity": true,
+      "content_exact": true
+    }
+  ]
+}

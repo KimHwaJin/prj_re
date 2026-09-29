@@ -109,7 +109,12 @@ class Settings(BaseModel):
     sse_heartbeat_seconds: float = 15.0
     sse_event_batch_size: int = 100
     llm_token_flush_interval_seconds: float = 0.2
-    llm_token_flush_characters: int = 256
+    llm_token_flush_characters: int = Field(default=256, ge=1)
+    # Per Run: queued + batched + writing payload, not process RSS.
+    llm_token_buffer_max_bytes: int = Field(default=262144, ge=4)
+    llm_token_buffer_max_items: int = Field(default=1024, ge=1)
+    llm_token_enqueue_timeout_seconds: float = 5.0
+    llm_token_write_timeout_seconds: float = 5.0
     # 로컬에서는 외부 Jupyter/executor가 없으므로 제출 직전 성공 응답으로 대체합니다.
     executor_submit_enabled: bool = False
     # executor 비활성 상태에서도 생성 코드 파일은 쓰기 가능한 로컬 경로에 보존합니다.
@@ -137,6 +142,7 @@ class Settings(BaseModel):
             "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
             "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
             "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",
+            "llm_token_flush_interval_seconds", "llm_token_enqueue_timeout_seconds", "llm_token_write_timeout_seconds",
         ):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:

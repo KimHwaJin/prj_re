@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-29",
+  "baseline_commit": "039d516",
+  "branch": "feature/token-event-buffer",
+  "full_regression": {
+    "passed": 603,
+    "subtests_passed": 2,
+    "warnings": 53,
+    "seconds": 213.35
+  },
+  "focused_unit_cleanup": {
+    "passed": 38,
+    "seconds": 2.51
+  },
+  "focused_postgres": {
+    "passed": 5,
+    "seconds": 5.59,
+    "rerun_on_final_code_in_full_regression": true
+  },
+  "changed_python_syntax_checks": 5,
+  "diff_check": "passed",
+  "new_migration": false,
+  "existing_migration_roundtrip": "passed",
+  "python": "3.11.15",
+  "langchain_core_version": "1.6.1",
+  "package_smoke": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "comparison": {
+    "source": "comparison.json",
+    "trials_per_scenario_per_version": 3,
+    "total_cases": 12,
+    "actual_llm_db_network_performance": false,
+    "content_exact_all_cases": true
+  },
+  "real_postgres_integration": [
+    "token commit before terminal event",
+    "Unicode character offsets per LLM run",
+    "public Run cursor replay",
+    "row lock backpressure",
+    "write timeout rollback",
+    "no auto-retry/success after writer error or admission timeout"
+  ],
+  "deployment_performed": false,
+  "external_llm_executor_redis_calls": false
+}
