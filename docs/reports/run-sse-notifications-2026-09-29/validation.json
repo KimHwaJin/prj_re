@@ -1,0 +1,62 @@
+{
+  "baseline_commit": "08a6809",
+  "branch": "feature/run-sse-notifications",
+  "date": "2026-09-29",
+  "full_regression": {
+    "passed": 578,
+    "subtests_passed": 2,
+    "warnings": 53,
+    "seconds": 210.7
+  },
+  "focused_regression": {
+    "passed": 25,
+    "seconds": 13.6
+  },
+  "migration_roundtrip": "passed",
+  "openapi": {
+    "paths": 34,
+    "unchanged_except_descriptions": true
+  },
+  "changed_python_syntax_checks": 8,
+  "package_smoke": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "benchmark": {
+    "connections": [
+      1,
+      10,
+      30,
+      50
+    ],
+    "scenarios": [
+      "distinct_runs",
+      "same_run_tabs"
+    ],
+    "trials_per_cell": 1,
+    "idle_window_seconds": 3,
+    "database_pool": "NullPool, same factory both versions",
+    "listener_after": 1,
+    "source_data": [
+      "before.json",
+      "after.json"
+    ],
+    "limits": [
+      "short idle observation, 15-second fallback still performs reads",
+      "not end-to-end Agent latency or production capacity",
+      "single process, local PostgreSQL, no production deployment"
+    ]
+  },
+  "deployment_performed": false,
+  "external_llm_executor_redis_calls": false
+}

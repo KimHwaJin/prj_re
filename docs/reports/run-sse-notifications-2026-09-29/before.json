@@ -1,0 +1,110 @@
+{
+  "source": "08a6809",
+  "method": "real loopback HTTP SSE, local PostgreSQL, LLM/Executor disabled; 3-second idle windows after warmup; SELECT count excludes handshake and commits; one trial per cell",
+  "results": [
+    {
+      "scenario": "distinct_runs",
+      "connections": 1,
+      "distinct_runs": 1,
+      "idle_transactions": 1,
+      "idle_seconds": 3.002085374901071,
+      "idle_selects": 15,
+      "idle_selects_per_second": 4.996526789480229,
+      "change_delivery_ms_mean": 182.76670877821743,
+      "change_delivery_ms_p95": 182.76670877821743,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 10,
+      "distinct_runs": 10,
+      "idle_transactions": 10,
+      "idle_seconds": 3.002168540842831,
+      "idle_selects": 140,
+      "idle_selects_per_second": 46.63295817519169,
+      "change_delivery_ms_mean": 303.3474585041404,
+      "change_delivery_ms_p95": 304.81225019320846,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 30,
+      "distinct_runs": 30,
+      "idle_transactions": 30,
+      "idle_seconds": 3.0019216251093894,
+      "idle_selects": 351,
+      "idle_selects_per_second": 116.9251045943645,
+      "change_delivery_ms_mean": 802.956087506997,
+      "change_delivery_ms_p95": 805.4381250403821,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 50,
+      "distinct_runs": 50,
+      "idle_transactions": 50,
+      "idle_seconds": 3.0003764999564737,
+      "idle_selects": 427,
+      "idle_selects_per_second": 142.31547274356885,
+      "change_delivery_ms_mean": 783.0273507069796,
+      "change_delivery_ms_p95": 792.1193328220397,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 1,
+      "distinct_runs": 1,
+      "idle_transactions": 1,
+      "idle_seconds": 3.002085833111778,
+      "idle_selects": 15,
+      "idle_selects_per_second": 4.996526026856441,
+      "change_delivery_ms_mean": 116.30408302880824,
+      "change_delivery_ms_p95": 116.30408302880824,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 10,
+      "distinct_runs": 1,
+      "idle_transactions": 10,
+      "idle_seconds": 3.000472833169624,
+      "idle_selects": 134,
+      "idle_selects_per_second": 44.65962781554191,
+      "change_delivery_ms_mean": 256.7195543088019,
+      "change_delivery_ms_p95": 260.27662493288517,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 30,
+      "distinct_runs": 1,
+      "idle_transactions": 30,
+      "idle_seconds": 3.0014582499861717,
+      "idle_selects": 340,
+      "idle_selects_per_second": 113.27827065446152,
+      "change_delivery_ms_mean": 891.4790406279886,
+      "change_delivery_ms_p95": 893.0152920074761,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 50,
+      "distinct_runs": 1,
+      "idle_transactions": 50,
+      "idle_seconds": 3.0020647500641644,
+      "idle_selects": 438,
+      "idle_selects_per_second": 145.8995846077732,
+      "change_delivery_ms_mean": 961.3613258721307,
+      "change_delivery_ms_p95": 970.5295420717448,
+      "listener_connections": 0,
+      "shared_subscriptions": null
+    }
+  ]
+}

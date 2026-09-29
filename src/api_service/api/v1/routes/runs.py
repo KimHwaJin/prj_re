@@ -1,6 +1,3 @@
-import asyncio
-import json
-import time
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
@@ -9,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Bundle
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import get_current_user_id
+from api_service.core.auth import get_current_user_id, get_stream_user_id
 from api_service.core.database import get_db
 from api_service.core.pagination import ListParams, fetch_page, list_params
 from api_service.models import AgentRunLogModel, AgentRunModel
@@ -22,8 +19,7 @@ from api_service.schemas.common.run_schema import (
     RunResume,
 )
 from api_service.services.run_service import RunService
-from api_service.services.public_run_service import PublicRunService, TERMINAL, project
-from api_service.services.task_event_service import TaskEventService
+from api_service.services.public_run_service import PublicRunService, project
 from config import settings
 from api_service.core.database import get_session_factory
 
@@ -120,10 +116,10 @@ async def stream_run(
     run_id: UUID,
     last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     # StreamingResponse가 열린 동안 인증/소유권 확인용 DB session을 붙잡지 않는다.
-    user_id: UUID = Depends(get_current_user_id, scope="function"),
+    user_id: UUID = Depends(get_stream_user_id, scope="function"),
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
-    """E05-T05: Last-Event-ID 다음 DB event를 재생하고 새 event를 polling합니다."""
+    """Replay durable events after Last-Event-ID, then wait for commit notifications."""
 
     public = await PublicRunService.read(db, user_id, session_id, run_id)
     try:
@@ -133,37 +129,22 @@ async def stream_run(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Last-Event-ID must be a non-negative integer.") from exc
 
-    async def event_generator():
-        sequence = initial_sequence
-        last_heartbeat = time.monotonic()
-        previous_state = None
-        while True:
-            if await request.is_disconnected():
-                return
-            async with get_session_factory()() as event_db:
-                state = await PublicRunService.read(event_db, user_id, session_id, public.id)
-                events = await TaskEventService.list_after_public_run(
-                    event_db,
-                    run_id=public.id,
-                    sequence=sequence,
-                    limit=settings.sse_event_batch_size,
-                )
-            for event in events:
-                sequence = event.sequence
-                data = json.dumps({**event.payload, "run_id": str(public.id)}, ensure_ascii=False, default=str, separators=(",", ":"))
-                yield f"id: {event.sequence}\nevent: {event.event_type}\ndata: {data}\n\n"
+    from api_service.services.run_stream_service import RunStreamHub, RunStreamResponse
+    application = getattr(request, 'app', None)
+    owned = application is None  # Direct adapter tests/development, outside ASGI.
+    hub = RunStreamHub(settings, session_factory=lambda: get_session_factory()()) if owned else application.state.run_stream_hub
 
-            signature = state.model_dump_json()
-            if signature != previous_state and len(events) < settings.sse_event_batch_size:
-                previous_state = signature
-                yield f"event: run.state\ndata: {signature}\n\n"
-            if state.status in TERMINAL and not events:
-                return
-            now = time.monotonic()
-            if now - last_heartbeat >= settings.sse_heartbeat_seconds:
-                yield ": heartbeat\n\n"
-                last_heartbeat = now
-            await asyncio.sleep(settings.sse_poll_interval_seconds)
+    if not owned:
+        return RunStreamResponse(hub, request, (user_id, session_id, public.id), initial_sequence)
+
+    async def event_generator():
+        try:
+            async with hub.subscribe(user_id, session_id, public.id) as entry:
+                async for chunk in hub.stream(request, entry, initial_sequence):
+                    yield chunk
+        finally:
+            if owned:
+                await hub.close()
 
     return StreamingResponse(
         event_generator(),

@@ -179,6 +179,10 @@ def attach_service(
         drain_timeout=settings.shutdown_drain_seconds,
     )
 
+    from api_service.services.run_stream_service import RunStreamHub
+    stream_hub = RunStreamHub(settings.api)
+    app.state.run_stream_hub = stream_hub
+
     @asynccontextmanager
     async def combined_lifespan(application):
         # Lifespan state returned by the platform is preserved for requests.
@@ -195,6 +199,7 @@ def attach_service(
                 # resources beneath a live graph.
                 from service_runtime.cleanup import protected_cleanup
                 async def shutdown():
+                    await stream_hub.close()
                     await background.stop()
                     await close_resources()
                 await protected_cleanup(shutdown())
@@ -264,6 +269,7 @@ def build_server(app, settings: ServiceSettings):
 
     class DrainServer(uvicorn.Server):
         def handle_exit(self, sig, frame):
+            app.state.run_stream_hub.begin_shutdown()
             app.state.service_runtime.request_stop()
             super().handle_exit(sig, frame)
 

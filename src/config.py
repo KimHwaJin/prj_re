@@ -102,8 +102,10 @@ class Settings(BaseModel):
     jupyter_health_timeout_seconds: float = 5.0
     # Fernet key. Token을 등록할 때 비어 있으면 503으로 거부해 평문 저장을 막습니다.
     jupyter_token_encryption_key: str = ""
-    # E05-T05: Redis 없이 DB Event Store를 조회하는 SSE polling 설정입니다.
+    # SSE: fast disconnect checks, commit notifications, slow reconciliation.
     sse_poll_interval_seconds: float = 0.5
+    sse_reconcile_interval_seconds: float = 15.0
+    sse_max_connections: int = 1000
     sse_heartbeat_seconds: float = 15.0
     sse_event_batch_size: int = 100
     llm_token_flush_interval_seconds: float = 0.2
@@ -132,7 +134,7 @@ class Settings(BaseModel):
         for name in (
             "database_pool_timeout_seconds", "task_lease_seconds", "task_reconcile_interval_seconds",
             "agent_worker_poll_interval_seconds", "task_cancel_poll_interval_seconds",
-            "sse_poll_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
+            "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
             "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
             "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",
         ):
@@ -144,6 +146,8 @@ class Settings(BaseModel):
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
                 raise ValueError(f"{name} must be finite and non-negative")
+        if self.sse_max_connections < 1:
+            raise ValueError("sse_max_connections must be positive")
         if self.sse_event_batch_size < 1:
             raise ValueError("sse_event_batch_size must be positive")
         return self

@@ -53,3 +53,11 @@ async def get_current_user_id(
     # Deletion takes an exclusive lock, so new admission cannot race past it.
     # Resolve and lock in a single query rather than repeating user lookups.
     return (await _resolve_actor(identity, db, for_share=True)).user_id
+
+
+async def get_stream_user_id(
+    identity: str | None = Security(user_id_header),
+    db: AsyncSession = Depends(get_db, scope="function"),
+) -> UUID:
+    """SSE authentication must release its nested DB dependency before streaming."""
+    return (await _resolve_actor(identity, db)).user_id

@@ -1,0 +1,110 @@
+{
+  "source": "feature/run-sse-notifications working tree",
+  "method": "real loopback HTTP SSE, local PostgreSQL, LLM/Executor disabled; 3-second idle windows after warmup; SELECT count excludes handshake and commits; one trial per cell",
+  "results": [
+    {
+      "scenario": "distinct_runs",
+      "connections": 1,
+      "distinct_runs": 1,
+      "idle_transactions": 0,
+      "idle_seconds": 3.000430125044659,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 46.163749881088734,
+      "change_delivery_ms_p95": 46.163749881088734,
+      "listener_connections": 1,
+      "shared_subscriptions": 1
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 10,
+      "distinct_runs": 10,
+      "idle_transactions": 0,
+      "idle_seconds": 3.0008580840658396,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 178.64591614343226,
+      "change_delivery_ms_p95": 181.57283286564052,
+      "listener_connections": 1,
+      "shared_subscriptions": 10
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 30,
+      "distinct_runs": 30,
+      "idle_transactions": 0,
+      "idle_seconds": 3.001191999996081,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 541.1661580515405,
+      "change_delivery_ms_p95": 544.6142081636935,
+      "listener_connections": 1,
+      "shared_subscriptions": 30
+    },
+    {
+      "scenario": "distinct_runs",
+      "connections": 50,
+      "distinct_runs": 50,
+      "idle_transactions": 0,
+      "idle_seconds": 3.0021350409369916,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 632.4943437147886,
+      "change_delivery_ms_p95": 635.7156247831881,
+      "listener_connections": 1,
+      "shared_subscriptions": 50
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 1,
+      "distinct_runs": 1,
+      "idle_transactions": 0,
+      "idle_seconds": 3.0021037908736616,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 37.21129195764661,
+      "change_delivery_ms_p95": 37.21129195764661,
+      "listener_connections": 1,
+      "shared_subscriptions": 1
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 10,
+      "distinct_runs": 1,
+      "idle_transactions": 0,
+      "idle_seconds": 3.0015475421678275,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 43.02394974511117,
+      "change_delivery_ms_p95": 43.36158302612603,
+      "listener_connections": 1,
+      "shared_subscriptions": 1
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 30,
+      "distinct_runs": 1,
+      "idle_transactions": 0,
+      "idle_seconds": 3.0020591670181602,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 32.15959852095693,
+      "change_delivery_ms_p95": 33.17812504246831,
+      "listener_connections": 1,
+      "shared_subscriptions": 1
+    },
+    {
+      "scenario": "same_run_tabs",
+      "connections": 50,
+      "distinct_runs": 1,
+      "idle_transactions": 0,
+      "idle_seconds": 3.002197042107582,
+      "idle_selects": 0,
+      "idle_selects_per_second": 0.0,
+      "change_delivery_ms_mean": 57.1628199564293,
+      "change_delivery_ms_p95": 59.2122080270201,
+      "listener_connections": 1,
+      "shared_subscriptions": 1
+    }
+  ]
+}
