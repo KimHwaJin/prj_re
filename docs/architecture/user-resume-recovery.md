@@ -22,7 +22,7 @@
 5. 호출 후 checkpoint를 다시 읽어 receipt와 다음 대기/종료 상태를 검증하고 서비스 DB에 반영한다.
 6. 이미 호출했지만 receipt가 없거나, receipt가 다르거나, 다음 노드가 실패한 상태면 자동 재실행하지 않는다. 중단이 확인된 호출은 `UserResumeNeedsRecovery`로 해당 Task만 복구 필요로 표시한다. Task 보호가 commit된 뒤 실행 점유를 반환하며, Task의 recovery flag가 API/이벤트 재진입을 계속 막는다. 다른 세션은 처리할 수 있다.
 
-서비스 반영 오류는 `RESUME_PROJECTION_FAILED`, `stage=state_projection`으로 기록하고 기존 큐/backoff 한도로 재시도한다. 최종 Run/Task/event transaction도 사용자 resume에서는 이 예외 처리 범위에 포함한다. 최종 commit이 실제 성공하고 응답만 유실되었다면 상태를 재조회해 중복 최종 이벤트를 추가하지 않는다. 이때 이미 해제된 Task lease를 다시 요구하지 않고, 아직 보유한 공통 세션 점유 아래 완료 사실을 확인한다.
+서비스 반영 오류는 `RESUME_PROJECTION_FAILED`, `stage=state_projection`으로 기록하고 기존 큐/backoff 한도로 재시도한다. 최종 Run/Task/event transaction도 이 예외 처리 범위에 포함한다. 031에서 최초 호출에도 같은 경계를 적용했다. 최종 commit이 실제 성공하고 응답만 유실되었다면 상태를 재조회해 중복 최종 이벤트를 추가하지 않는다. 이때 이미 해제된 Task lease를 다시 요구하지 않고, 아직 보유한 공통 세션 점유 아래 완료 사실을 확인한다.
 
 재시도 소진 시 resume를 단순 ERROR로 끝내고 세션을 새 입력에 열지 않는다. 복구 필요로 남긴다. Task 보호 저장/확인에 실패하거나 실행 종료·외부 제출이 불확실하면 기존 `ExecutionNeedsRecovery` 경로로 프로세스 추가 claim과 세션 점유 해제를 막는다. DB 전체 장애로 복구 표시 자체가 불가능하거나 프로세스가 죽은 경우의 자동 점유 복구까지 제공하는 것은 아니다.
 
@@ -59,4 +59,6 @@ DB schema migration은 없다. 기존 JSON metadata와 additive checkpoint state
 
 새 API와 새 Agent runtime을 함께 배포해야 한다. 구버전 Worker가 새 resume를 가져가면 새 보호 규약을 따르지 않으므로, **구·신 Worker 혼재 중 안전한 resume 처리는 이번에 보장하지 않는다.** 배포 시 실행 접수/Worker drain 및 버전 전환을 조율해야 한다. Kubernetes rollout 실증은 별도다.
 
-029의 R1과 사용자 resume에 해당하는 R2 경로를 수정했다. 최초 사용자 호출의 최종 반영 실패, 로그/이벤트 개별 commit(R3), 프로세스 강제 종료 owner 정리(R4/R5), 관리자 복구 API는 후속 범위다. receipt는 외부 호출을 포함한 전체 시스템의 exactly-once 보장을 의미하지 않는다.
+029의 R1과 사용자 resume에 해당하는 R2 경로를 수정했다. 최초 사용자 호출의 최종 반영 실패는 [031 최초 호출 복구 계약](initial-request-recovery.md)에서 처리했다. 로그/이벤트 개별 commit(R3), 프로세스 강제 종료 owner 정리(R4/R5), 관리자 복구 API는 후속 범위다. receipt는 외부 호출을 포함한 전체 시스템의 exactly-once 보장을 의미하지 않는다.
+
+031에서 snapshot 변환과 `GraphProjectionError`는 `api_service/services/graph_recovery.py`로 공통화했다. `UserResumeNeedsRecovery`는 공통 `InvocationNeedsRecovery`의 하위 예외이며, 세션 단위 보호와 프로세스 보호의 구분은 유지한다.

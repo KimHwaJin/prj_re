@@ -138,8 +138,16 @@ async def _execute_claimed(item: ClaimedRun) -> None:
             execution_health.fail(_run_id, "worker_requires_recovery")
             raise
         except Exception as exc:
-            # RunService가 오류 상태/Task 잠금 해제를 DB에 먼저 기록합니다.
-            # Worker loop 자체는 한 Run 실패 때문에 종료하지 않습니다.
+            # Verify the assumption that RunService recorded an outcome. A DB
+            # error in its error handler must not release an unaccounted owner.
+            try:
+                await db.rollback()
+                saved = await db.get(AgentRunModel, _run_id, populate_existing=True)
+                if saved is None or saved.status == AgentRunStatus.RUNNING:
+                    raise ExecutionNeedsRecovery("Worker has no durable invocation outcome")
+            except Exception as recovery_error:
+                execution_health.fail(_run_id, "worker_outcome_unverified")
+                raise ExecutionNeedsRecovery("Could not verify failed invocation outcome") from recovery_error
             logger.error("agent_run_failed run_id=%s error_type=%s", _run_id, type(exc).__name__)
             return
 

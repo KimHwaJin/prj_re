@@ -1,4 +1,5 @@
 """HTTP admission, queue retries, persistent HITL and Executor model continuity."""
+from agent_service.runtime.initial_request import record_initial_request
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 
 from contextlib import asynccontextmanager
@@ -172,6 +173,7 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
             monkeypatch.setattr(dependencies,"create_chat_model",model)
             def build(saver):
                 deps=dependencies.create_llm_dependencies(service_settings.get_settings().agent)
+                @record_initial_request
                 async def first(s):
                     await deps.faq_agent.ainvoke({"user_request":"first"},context=context_from_state(s))
                     return {**s,"routing_result":{"route":"analysis"},"task_id":str(graph_task),"execution_id":str(execution),

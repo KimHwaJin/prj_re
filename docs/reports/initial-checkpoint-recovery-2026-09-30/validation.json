@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-30",
+  "branch": "feature/initial-checkpoint-recovery",
+  "base_commit": "207869b",
+  "environment": {
+    "database": "temporary PostgreSQL 17, localhost:55233, identity_test",
+    "llm_executor": "mock/local test doubles",
+    "production_containers_changed": false,
+    "postgres_container_removed": true
+  },
+  "validation": {
+    "initial_targeted": {
+      "passed": 28,
+      "seconds": 33.15
+    },
+    "full_suite_before_final_timing_preservation": {
+      "passed": 633,
+      "warnings": 53,
+      "subtests_passed": 2,
+      "seconds": 252.58
+    },
+    "final_targeted": {
+      "passed": 37,
+      "seconds": 33.16
+    },
+    "final_change_after_full_suite": "Restore existing graph.invoke diagnostics span around initial graph invocation; no business/control-flow change. Final targeted tests and wheel rebuilt afterward.",
+    "wheel": "new modules match final source; test packages excluded"
+  },
+  "not_run": [
+    "performance A/B",
+    "external Executor/Redis integration",
+    "Kubernetes rollout",
+    "process hard-kill recovery"
+  ],
+  "source_sha256": {
+    "src/agent_service/agents/analysis/nodes/routing.py": "923d785c41fe59731b2f79ab3ad477518f4c008e672d8113af283021a5f3c008",
+    "src/agent_service/agents/analysis/state.py": "e9a568bba1eb1af9f6c0b34aebbc1ea334757148186d30ddbe342d465f500aac",
+    "src/agent_service/agents/analysis/tests/test_user_resume_receipt.py": "9cb90622633ff39ea7927330e50bc1be3c75e5e34bb5b5376548bfa6c9e87b11",
+    "src/agent_service/runtime/initial_request.py": "fc33f86739280482c71fec4d109ec2a0e9cef5cd2e74f2e6661539f33b8e5786",
+    "src/api_service/agent_run_worker.py": "80f99717acdac2c59604b1b0892bbf8f49803ae48c953945ae3e6b301bd48538",
+    "src/api_service/services/agent_graph_service.py": "42c8ff5cb3791839562ecf0aec60a2995614bdd5121577bc28a060a869190976",
+    "src/api_service/services/graph_crud_persistence.py": "0a57d3f6e01f1eb9d2d74bf2b6a6e5bcc6bb9c9ec1dee4f872e499254cf70d46",
+    "src/api_service/services/graph_recovery.py": "9eb301596cd2cd7e4c6d590409705f26921d9e872275f0969a16b909528225ab",
+    "src/api_service/services/initial_request_service.py": "3db435e9b5b60b57c0572911d522512ad0437884b7ef55594ab23cc435001157",
+    "src/api_service/services/public_run_service.py": "1782f6ce4a766455c1bd14e483f59fdb6b32a2556accc6e8c55ad765b8a249bf",
+    "src/api_service/services/run_service.py": "3c1292243ad5257755aa8a9fb23aac01c16482a37e330a4d7674c4a0feb9f02a",
+    "src/api_service/services/user_resume_service.py": "b095b2549adecace5f1f5028cee690e2ed8b8302cf67bf71c361054239d12cd0",
+    "src/api_service/test/test_agent_project_context.py": "6fdc306fbad9b0bc2b170819620e8828945d62684182d26292891ba7828e11ac",
+    "src/api_service/test/test_initial_request_recovery_postgres.py": "ee87c459099d14bfa58ce0519e22105913a39f6c4d56b75597846c3bf8f6105d",
+    "src/api_service/test/test_model_selection_postgres.py": "f47557653e7e1733d115b028ec7d6d991e5da98e59bdc9f83ca860a81bf38bf4",
+    "src/api_service/test/test_public_run_postgres.py": "691d3ea2fd67a73bc0912513292b6286cebbf30bbf04ec0e8495112cf5653ea8",
+    "src/api_service/test/test_short_transactions_postgres.py": "da9389ece4ac0cd25cc90d5ade9a7083854b3096728f3dd3db345516d3fa8b9c",
+    "src/api_service/test/test_user_resume_recovery_postgres.py": "59738a8b29b554fc93e302308e923216e126ad63e058af7aa3ace6289209cb3e",
+    "src/service_contracts/execution.py": "e98f0d78e3a115789e5a7aea692f51403e5e147635c220b5e5a7a8dd9195b518",
+    "src/service_contracts/initial_request.py": "4de732f64371ca09255f313103845cfbb88d384361c437b39006e49785464781",
+    "src/service_contracts/user_resume.py": "dffab777720a3f3e8cda4355ee51088a8642fd4b024cca2502c15bb681d582f1"
+  }
+}

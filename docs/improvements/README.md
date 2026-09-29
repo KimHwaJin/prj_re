@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/resume-checkpoint-recovery` (030 사용자 resume 복구 구현·검증·기록 완료). 028~030은 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
+현재 작업 브랜치: `feature/initial-checkpoint-recovery` (031 최초 호출 복구 구현·검증·기록 완료). 028~031은 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -50,6 +50,7 @@
 | 028 | 현재 실행 경로 LLM·큐·내부 처리 지연 분해 | 1·10·30·50명 계측·원본 검산·보고서 완료 / 운영 코드 변경·배포 미수행 | 2026-09-29 | [측정·판단·다음 방향](028-runtime-latency-profile.md) |
 | 029 | 상태 저장·재시도·프로세스 장애 복구 검토 | 격리 재현·기존 보호 장치 검증·보고서 완료 / 운영 결함 수정·배포 미수행 | 2026-09-29 | [검토·증거·다음 우선순위](029-state-recovery-review.md) |
 | 030 | 사용자 resume 입력 재사용 방지·checkpoint 기반 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-29 | [변경·검증·제한](030-resume-checkpoint-recovery.md) |
+| 031 | 최초 입력 재전달 방지·checkpoint 기반 결과 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [변경·검증·제한](031-initial-checkpoint-recovery.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

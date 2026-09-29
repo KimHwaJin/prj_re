@@ -6,7 +6,10 @@ import json
 from typing import Any, TypedDict
 
 
-class UserResumeNeedsRecovery(RuntimeError):
+from service_contracts.execution import InvocationNeedsRecovery
+
+
+class UserResumeNeedsRecovery(InvocationNeedsRecovery):
     """A stopped user invocation needs reconciliation; other sessions may run."""
 
 

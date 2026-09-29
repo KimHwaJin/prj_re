@@ -30,23 +30,28 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
     user_id, session_id, project_id, run_id = [uuid4() for _ in range(4)]
     db = SimpleNamespace(close=AsyncMock(), scalar=AsyncMock(return_value=SimpleNamespace(system_prompt="server project prompt", prompt_version=2)))
     received = []
-    async def invoke(graph, value, **kwargs):
+    from api_service.services import initial_request_service as initial
+    saved = SimpleNamespace(values={}, tasks=(), next=())
+    async def invoke(value, **kwargs):
         db.close.assert_awaited_once()
         received.append(value)
-        return value
+        saved.values = {**value, "initial_request_receipt": value["initial_request_identity"]}
+        return saved.values
+    graph = SimpleNamespace(aget_state=AsyncMock(return_value=saved), ainvoke=invoke)
+    monkeypatch.setattr(initial, "mark_started", AsyncMock())
+    monkeypatch.setattr(initial.projection, "persist_graph_state", AsyncMock(return_value={}))
     async def astream(graph, value, **kwargs):
         db.close.assert_awaited_once()
         received.append(value)
         yield value
-    monkeypatch.setattr(service, "ainvoke_with_crud_message_persistence", invoke)
     monkeypatch.setattr(service, "astream_with_crud_message_persistence", astream)
     args = dict(user_id=user_id, project_id=project_id, session_id=session_id, run_id=run_id,
-        user_request="hello", graph=object())
+        user_request="hello", graph=graph)
     if stream:
         async for _ in service.astream_user_turn(session_factory=lambda: db, **args):
             pass
     else:
-        await service.ainvoke_user_turn(session_factory=lambda: db, **args)
+        await service.ainvoke_user_turn(session_factory=lambda: db, initial_protocol=1, **args)
     assert received[0]["project_system_prompt"] == "server project prompt"
     assert received[0]["project_prompt_version"] == 2
     assert received[0]["user_request"] == "hello"

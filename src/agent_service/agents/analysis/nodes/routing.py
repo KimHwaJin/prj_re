@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from agent_service.agents.analysis.context import context_from_state
+from agent_service.runtime.initial_request import record_initial_request
 
 from typing import Any
 from uuid import uuid4
@@ -57,6 +58,7 @@ def _message_content(message: Any) -> str:
     return ""
 
 
+@record_initial_request
 def receive_request(
     state: AnalysisWorkflowState,
     config: RunnableConfig,

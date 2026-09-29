@@ -14,6 +14,8 @@ from langgraph.graph import StateGraph, START, END
 import service_settings
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 from service_contracts.user_resume import UserResumeState
+from service_contracts.initial_request import InitialRequestState
+from agent_service.runtime.initial_request import record_initial_request
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 import api_service.services.agent_graph_service as graphs
 import api_service.services.graph_crud_persistence as projection
@@ -30,7 +32,7 @@ from api_service.test.test_public_run_postgres import state, resume, execute
 pytestmark = pytest.mark.asyncio
 
 
-class State(UserResumeState, total=False):
+class State(UserResumeState, InitialRequestState, total=False):
     user_id: str
     project_id: str
     session_id: str
@@ -55,6 +57,7 @@ async def real_graph(runtime, monkeypatch):
         settings, api=settings.api.model_copy(update={'agent_worker_max_retries': 1})))
     calls = {'one': 0, 'two': 0, 'reject': False}
 
+    @record_initial_request
     async def start(s):
         return {'routing_result': {'route': 'analysis'}, 'task_id': str(uuid4())}
 

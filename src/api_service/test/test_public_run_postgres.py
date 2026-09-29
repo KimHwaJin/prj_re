@@ -2,6 +2,7 @@
 
 Uses the guarded disposable identity_test DB. No external LLM/Executor/Redis.
 """
+from agent_service.runtime.initial_request import record_initial_request
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 
 import asyncio
@@ -232,6 +233,7 @@ async def test_simple_completion_keeps_history_and_new_run_has_new_id(runtime, m
 async def test_real_checkpoint_two_hitl_restart_and_executor_projection(runtime, monkeypatch, outcome):
     h=runtime
     graph_task, execution, command_id, event_id=uuid4(),uuid4(),uuid4(),uuid4()
+    @record_initial_request
     async def start(s):
         return {**s,'routing_result':{'route':'analysis'},'task_id':str(graph_task),'execution_id':str(execution)}
     @record_user_resume

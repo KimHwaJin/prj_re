@@ -22,7 +22,6 @@ from service_runtime.diagnostics import graph_callbacks, register_pool_trace, sp
 from service_runtime.cleanup import protected_cleanup
 from api_service.core.enums import AgentRunStatus
 from api_service.services.graph_crud_persistence import (
-    ainvoke_with_crud_message_persistence,
     astream_with_crud_message_persistence,
 )
 from api_service.services.graph_event_persistence import GraphPersistenceDispatcher
@@ -337,6 +336,8 @@ async def ainvoke_user_turn(
     session_id: UUID,
     run_id: UUID,
     user_request: str,
+    initial_protocol: int | None = None,
+    initial_started: bool = False,
     trigger_message_id: UUID | str | None = None,
     request_id: str | None = None,
     model_selection: dict[str, str] | None = None,
@@ -354,32 +355,20 @@ async def ainvoke_user_turn(
         request_id=request_id,
         model_selection=model_selection,
     )
-    graph_input.update(await read_project_snapshot(
-        user_id=user_id, session_id=session_id, project_id=project_id,
-        session_factory=session_factory,
-    ))
-    if graph is None:
-        async with runtime.open_graph() as compiled:
-            return await ainvoke_with_crud_message_persistence(
-                compiled,
-                graph_input,
-                session_factory=session_factory,
-                user_id=user_id,
-                config=graph_config(session_id, run_id, callbacks),
-                dispatcher=dispatcher,
-                agent_run_id=run_id,
-                trigger_message_id=trigger_message_id,
-            )
-    return await ainvoke_with_crud_message_persistence(
-        graph,
-        graph_input,
-        session_factory=session_factory,
-        user_id=user_id,
-        config=graph_config(session_id, run_id, callbacks),
-        dispatcher=dispatcher,
-        agent_run_id=run_id,
-        trigger_message_id=trigger_message_id,
-    )
+    from api_service.services.initial_request_service import start_and_project
+
+    async def invoke(compiled):
+        return await start_and_project(
+            compiled, graph_config(session_id, run_id, callbacks), graph_input,
+            user_id=user_id, project_id=project_id, session_id=session_id, run_id=run_id,
+            protocol=initial_protocol, started=initial_started,
+            session_factory=session_factory, dispatcher=dispatcher,
+            trigger_message_id=trigger_message_id,
+        )
+    if graph is not None:
+        return await invoke(graph)
+    async with runtime.open_graph() as compiled:
+        return await invoke(compiled)
 
 
 async def ainvoke_resume(

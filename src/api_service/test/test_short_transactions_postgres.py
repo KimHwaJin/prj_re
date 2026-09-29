@@ -14,6 +14,7 @@ import pytest
 import pytest_asyncio
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
+from agent_service.runtime.initial_request import record_initial_request
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 from sqlalchemy import event, select, text, update
 from sqlalchemy.exc import TimeoutError as PoolTimeout
@@ -103,7 +104,7 @@ def gated_graph(gate):
     async def approval(state):
         answer = user_interrupt({'kind': 'USER_APPROVAL'})
         return {**state, 'approved': answer}
-    return (StateGraph(dict).add_node('model', model).add_node('approval', approval)
+    return (StateGraph(dict).add_node('model', record_initial_request(model)).add_node('approval', approval)
             .add_node('after_approval', model).add_edge(START, 'model')
             .add_edge('model', 'approval').add_edge('approval', 'after_approval')
             .add_edge('after_approval', END).compile(checkpointer=InMemorySaver()))

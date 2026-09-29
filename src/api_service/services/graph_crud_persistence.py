@@ -90,13 +90,13 @@ async def ainvoke_with_crud_message_persistence(
 
 
 async def persist_graph_state(state, *, user_id, session_factory=None,
-                              dispatcher=None, agent_run_id=None):
+                              dispatcher=None, agent_run_id=None, trigger_message_id=None):
     """Repair service projections from an already durable graph snapshot."""
     await _persist_state(
         state, user_id=user_id, cursor=GraphPersistenceCursor(),
         persistence=dispatcher or GraphPersistenceDispatcher.default(),
         session_factory=session_factory, agent_run_id=agent_run_id,
-        trigger_message_id=None,
+        trigger_message_id=trigger_message_id,
     )
     return state
 

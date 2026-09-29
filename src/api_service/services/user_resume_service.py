@@ -6,6 +6,7 @@ blindly resend it, even if the old interrupt is still visible.
 """
 from __future__ import annotations
 
+from api_service.services.graph_recovery import GraphProjectionError, snapshot_interrupts, checkpoint_state
 from sqlalchemy import select
 from langgraph.types import Command
 
@@ -19,22 +20,6 @@ from service_contracts.user_resume import UserResumeNeedsRecovery, resume_envelo
 from service_runtime.model_selection import validate_checkpoint_selection
 
 
-class ResumeProjectionError(RuntimeError):
-    """Graph progress is durable; only service projection may be retried."""
-
-
-def snapshot_interrupts(snapshot):
-    return [item for task in snapshot.tasks for item in task.interrupts]
-
-
-def checkpoint_state(snapshot):
-    """Never retain a stale __interrupt__ value from a root dict channel."""
-    state = dict(snapshot.values)
-    state.pop("__interrupt__", None)
-    interrupts = snapshot_interrupts(snapshot)
-    if interrupts:
-        state["__interrupt__"] = tuple(interrupts)
-    return state
 
 
 async def mark_started(*, run_id, identity, session_factory):
@@ -100,4 +85,4 @@ async def resume_and_project(graph, config, *, user_id, run_id, command,
     except (ExecutionNeedsRecovery, UserResumeNeedsRecovery):
         raise
     except Exception as exc:
-        raise ResumeProjectionError("Durable user resume needs service projection") from exc
+        raise GraphProjectionError("Durable user resume needs service projection") from exc
