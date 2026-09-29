@@ -178,7 +178,9 @@ async def test_legacy_resume_releases_snapshot_before_checkpoint_update_and_invo
     async with h.factory() as db:
         session = await db.get(SessionModel, UUID(h.session_id))
         uid, pid = session.user_id, session.project_id
-    values = {'session_id': h.session_id, 'project_id': str(pid)}
+    from agent_service.model_selection import current_catalog
+    values = {'session_id': h.session_id, 'project_id': str(pid),
+              'model_selection': current_catalog().select().model_dump()}
     async def checkpoint_io(*args, **kwargs):
         assert h.engine.pool.checkedout() == 0
         await crud_round(h)

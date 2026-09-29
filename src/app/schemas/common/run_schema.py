@@ -13,6 +13,7 @@ class RunInput(BaseModel):
 
 
 class RunCreate(BaseModel):
+    main_model_name: str | None = Field(default=None, min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9_.-]+$")
     input: RunInput | None = None
     # 대부분의 HITL은 JSON 객체지만 로컬 mock 데이터 선택은 "mock" 문자열을 사용합니다.
     command: dict[str, Any] | str | None = None
@@ -69,6 +70,7 @@ class AgentRunLogResource(ORMModel):
 
 
 class RunStart(BaseModel):
+    main_model_name: str | None = Field(default=None, min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9_.-]+$")
     model_config = ConfigDict(extra="forbid")
     input: RunInput
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -86,6 +88,8 @@ class RunResume(BaseModel):
 
 
 class PublicRunResource(BaseModel):
+    main_model_name: str | None = None
+    model_revision: str | None = None
     id: UUID
     session_id: UUID
     status: Literal["pending", "running", "waiting_input", "waiting_executor",

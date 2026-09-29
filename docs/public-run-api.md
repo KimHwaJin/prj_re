@@ -84,3 +84,9 @@ Executor에 이미 제출한 작업은 외부 취소 확인 계약을 구현하�
 4. 새 코드만 기동하고 알려진 기존 Run/대기 상태를 GET으로 검증한다. 구 코드와 신 코드의 혼합 writer 배포는 지원하지 않는다.
 
 기존 내부 Run/Task/메시지/log/체크포인트/Executor binding ID는 바꾸지 않는다. 체크포인트 테이블 migration은 추가하지 않는다. 0021 downgrade는 새 컬럼/인덱스/FK만 제거하며 기존 행을 합치거나 삭제하지 않는다. 외부 대기는 DB 행과 체크포인트에 보존되고 실행 슬롯/DB 연결을 유지하지 않는다.
+
+## Run별 모델 선택
+
+최초 접수의 `main_model_name`은 등록 별칭이며 생략 시 기본 모델이다. 응답의
+`main_model_name`/`model_revision`은 HITL과 Executor 이벤트 동안 고정된다.
+[등록 방법·재개·배포 정책](run-model-selection.md)을 참고한다.

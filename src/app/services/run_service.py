@@ -65,6 +65,9 @@ class RunService:
     @staticmethod
     def _is_retryable(exc: Exception) -> bool:
         """사용자 입력/상태 충돌인 4xx는 반복해도 같으므로 자동 재시도하지 않습니다."""
+        from agent_service.model_selection import ModelSelectionError
+        if isinstance(exc, ModelSelectionError):
+            return False
         return not isinstance(exc, HTTPException) or exc.status_code >= 500
 
     @staticmethod
@@ -241,8 +244,27 @@ class RunService:
             session.current_leaf_message_id = message.message_id
 
     @staticmethod
+    def select_model(name):
+        from agent_service.model_selection import current_catalog, ModelSelectionError
+        try:
+            return current_catalog().select(name).model_dump()
+        except ModelSelectionError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+
+    @staticmethod
+    def validate_model(reference):
+        from agent_service.model_selection import current_catalog, ModelSelectionError
+        try:
+            current_catalog().resolve(reference)
+        except ModelSelectionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from None
+
+    @staticmethod
     def request_digest(payload: RunCreate) -> str:
-        serialized = json.dumps(payload.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        data = payload.model_dump(mode="json")
+        if data["main_model_name"] is None:
+            del data["main_model_name"]  # Preserve idempotency hashes for old clients.
+        serialized = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         return hashlib.sha256(serialized.encode()).hexdigest()
 
     @staticmethod
@@ -323,6 +345,7 @@ class RunService:
                     ).limit(1))
                     if unfinished is not None:
                         raise HTTPException(status_code=409, detail="Session has an unfinished task; resume its requested input instead.")
+                    model_selection = RunService.select_model(payload.main_model_name)
                     # Queue 대기 중에도 동일 Session의 두 분석 요청이 들어오지 못하게 Task를 선점합니다.
                     task = TaskService.create_model(
                         session_id=session_id, idempotency_key=key, owner=owner
@@ -350,6 +373,9 @@ class RunService:
                         conflicting = conflicting.where(TaskModel.task_id != origin.task_id)
                     if await db.scalar(conflicting.limit(1)) is not None:
                         raise HTTPException(status_code=409, detail="Another unfinished task owns this session.")
+                    root = await db.get(AgentRunModel, origin.public_run_id)
+                    model_selection = (root.metadata_json or {}).get("_model_selection")
+                    RunService.validate_model(model_selection)
                     if origin.task_id is None:
                         # FAQ 등 Task 없는 checkpoint 재개도 durable queue를 거칩니다.
                         task = TaskService.create_model(
@@ -385,6 +411,7 @@ class RunService:
 
             checkpoint_run_id = task.checkpoint_run_id or (origin.checkpoint_run_id if origin else None)
             metadata = dict(payload.metadata)
+            metadata["_model_selection"] = model_selection
             metadata["_request_digest"] = RunService.request_digest(payload)
             metadata["requested_by_user_id"] = str(user_id)
             if checkpoint_run_id is not None:
@@ -455,6 +482,7 @@ class RunService:
         await db.refresh(run)
         await db.refresh(task)
         # rollback은 ORM 속성을 expire하므로 취소/오류 처리에 쓸 ID는 평범한 값으로 보존합니다.
+        execution_model_selection = (run.metadata_json or {}).get("_model_selection")
         execution_run_id = run.run_id
         execution_task_id = task.task_id
         execution_project_id = session.project_id
@@ -477,6 +505,8 @@ class RunService:
         try:
             try:
                 async with TaskService.lease_heartbeat(execution_claim.task_id, execution_claim.lock_token, run_id=execution_run_id) as heartbeat:
+                    from agent_service.model_selection import current_catalog
+                    current_catalog().resolve(execution_model_selection)
                     if payload.command is not None:
                         state = await RunService._run_cancellable(
                             execution_run_id,
@@ -486,6 +516,7 @@ class RunService:
                                 agent_run_id=execution_run_id,
                                 command=payload.command,
                                 callbacks=[token_events],
+                                model_selection=execution_model_selection,
                             ),
                             observers=(heartbeat, token_events.consumer),
                         )
@@ -500,6 +531,7 @@ class RunService:
                                 user_request=user_request_from_messages(payload.input.messages),
                                 trigger_message_id=execution_trigger_id,
                                 callbacks=[token_events],
+                                model_selection=execution_model_selection,
                             ),
                             observers=(heartbeat, token_events.consumer),
                         )
@@ -537,8 +569,9 @@ class RunService:
                 execution_run_id,
                 session_id,
             )
+            from agent_service.model_selection import ModelSelectionError
             failure = {
-                "code": "AGENT_RUN_FAILED",
+                "code": "RUN_MODEL_UNAVAILABLE" if isinstance(exc, ModelSelectionError) else "AGENT_RUN_FAILED",
                 "stage": "graph_execution",
                 "exception_type": f"{type(exc).__module__}.{type(exc).__name__}",
                 "message": str(exc),

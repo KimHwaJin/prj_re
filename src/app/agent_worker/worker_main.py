@@ -81,7 +81,9 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
             _validate_graph(graph)
             from app.services.agent_project_context import load_event_project_snapshot
             from app.services.executor_completion import synchronize_executor_completion
-            adapter = LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot)
+            from agent_service.model_selection import validate_checkpoint_selection
+            adapter = LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot,
+                                            model_validator=validate_checkpoint_selection)
 
             async def handle_event(context: EventContext) -> None:
                 async def invoke_and_project():

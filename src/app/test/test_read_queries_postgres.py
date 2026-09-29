@@ -110,7 +110,7 @@ async def test_http_read_measurements(harness, message_count):
         queries = report[name]['queries']
         for q in queries:
             if 'FROM agent_runs' in q['sql']:
-                assert len(q['columns']) <= 24
+                assert len(q['columns']) <= 25
                 assert not any(private in q['sql'] for private in
                     ('.input', '.command', '.request_payload', '.redis_result', '.idempotency_key'))
 

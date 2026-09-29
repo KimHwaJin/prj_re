@@ -38,6 +38,8 @@ def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
     terminal = status in TERMINAL
     times = [root.updated_at, latest.updated_at] + ([task.updated_at] if task else [])
     return PublicRunResource(
+        main_model_name=(root.model_selection or {}).get("name"),
+        model_revision=(root.model_selection or {}).get("revision"),
         id=root.run_id, session_id=root.session_id, status=status,
         resume_token=latest.run_id if status == "waiting_input" and not (task and task.cancel_requested_at) else None,
         interrupt=latest.interrupt if status in {"waiting_input", "waiting_executor"} else None,
@@ -62,11 +64,12 @@ class PublicRunService:
         latest_id = (select(Run.run_id).where(Run.public_run_id == root.run_id)
                      .order_by(Run.created_at.desc(), Run.run_id.desc()).limit(1).correlate(root).scalar_subquery())
         # Scalar bundles never populate/expire writable Run or Task ORM objects.
-        # Only the checkpoint reference is needed from the root metadata JSON.
+        # Fetch only checkpoint/model references from the root metadata JSON.
         statement = select(
             Bundle("root", root.run_id, root.session_id, root.created_at,
                    root.updated_at, root.started_at,
-                   root.metadata_json["checkpoint_run_id"].label("checkpoint_run_id")),
+                   root.metadata_json["checkpoint_run_id"].label("checkpoint_run_id"),
+                   root.metadata_json["_model_selection"].label("model_selection")),
             Bundle("latest", latest.run_id, latest.task_id, latest.status,
                    latest.interrupt, latest.failure, latest.agent_response,
                    latest.attempt_count, latest.next_attempt_at, latest.cancel_reason,
@@ -106,7 +109,7 @@ class PublicRunService:
     @staticmethod
     async def create(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunStart, key: str) -> PublicRunResource:
         payload = RunCreate(**payload.model_dump())
-        reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume"}
+        reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume", "_model_selection"}
         if reserved.intersection(payload.metadata):
             raise HTTPException(status_code=422, detail="Execution identity metadata is managed by the server.")
         invocation = await RunService.create(db, user_id, session_id, payload, key)

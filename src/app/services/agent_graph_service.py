@@ -288,10 +288,16 @@ def build_graph_input(
     user_request: str,
     trigger_message_id: UUID | str | None = None,
     request_id: str | None = None,
-) -> dict[str, str]:
+    model_selection: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    from agent_service.model_selection import current_catalog
+    if model_selection is None:
+        model_selection = current_catalog().select().model_dump()
+    current_catalog().resolve(model_selection)
     run_key = str(run_id)
     thread_id = build_langgraph_thread_id(str(session_id))
     graph_input = {
+        "model_selection": model_selection,
         "user_id": str(user_id),
         "project_id": str(project_id),
         "session_id": str(session_id),
@@ -329,6 +335,7 @@ async def ainvoke_user_turn(
     user_request: str,
     trigger_message_id: UUID | str | None = None,
     request_id: str | None = None,
+    model_selection: dict[str, str] | None = None,
     dispatcher: GraphPersistenceDispatcher | None = None,
     graph: Any | None = None,
     callbacks: list[Any] | None = None,
@@ -341,6 +348,7 @@ async def ainvoke_user_turn(
         user_request=user_request,
         trigger_message_id=trigger_message_id,
         request_id=request_id,
+        model_selection=model_selection,
     )
     graph_input.update(await read_project_snapshot(
         user_id=user_id, session_id=session_id, project_id=project_id,
@@ -378,6 +386,7 @@ async def ainvoke_resume(
     checkpoint_run_id: UUID,
     agent_run_id: UUID | None = None,
     command: dict[str, Any] | str,
+    model_selection: dict[str, str] | None = None,
     dispatcher: GraphPersistenceDispatcher | None = None,
     graph: Any | None = None,
     callbacks: list[Any] | None = None,
@@ -389,8 +398,11 @@ async def ainvoke_resume(
     run_id = agent_run_id or checkpoint_run_id
     if graph is None:
         async with runtime.open_graph() as compiled:
+            from agent_service.model_selection import validate_checkpoint_selection
+            snapshot = await compiled.aget_state(config)
+            validate_checkpoint_selection(snapshot.values, model_selection)
             await ensure_project_snapshot(
-                compiled, config, session_factory=session_factory,
+                compiled, config, session_factory=session_factory, snapshot=snapshot,
                 user_id=user_id, session_id=session_id,
             )
             return await ainvoke_with_crud_message_persistence(
@@ -402,8 +414,11 @@ async def ainvoke_resume(
                 dispatcher=dispatcher,
                 agent_run_id=run_id,
             )
+    from agent_service.model_selection import validate_checkpoint_selection
+    snapshot = await graph.aget_state(config)
+    validate_checkpoint_selection(snapshot.values, model_selection)
     await ensure_project_snapshot(
-        graph, config, session_factory=session_factory,
+        graph, config, session_factory=session_factory, snapshot=snapshot,
         user_id=user_id, session_id=session_id,
     )
     return await ainvoke_with_crud_message_persistence(
@@ -427,6 +442,7 @@ async def astream_user_turn(
     user_request: str,
     trigger_message_id: UUID | str | None = None,
     request_id: str | None = None,
+    model_selection: dict[str, str] | None = None,
     dispatcher: GraphPersistenceDispatcher | None = None,
     graph: Any | None = None,
 ):
@@ -438,6 +454,7 @@ async def astream_user_turn(
         user_request=user_request,
         trigger_message_id=trigger_message_id,
         request_id=request_id,
+        model_selection=model_selection,
     )
     graph_input.update(await read_project_snapshot(
         user_id=user_id, session_id=session_id, project_id=project_id,

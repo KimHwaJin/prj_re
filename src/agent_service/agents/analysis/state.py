@@ -9,6 +9,7 @@ from agent_service.agents.analysis.message_utils import append_messages_with_ids
 
 
 class AnalysisWorkflowState(ExecutorBoundaryState, total=False):
+    model_selection: dict[str, str]
     request_id: str
     user_id: str
     project_id: str

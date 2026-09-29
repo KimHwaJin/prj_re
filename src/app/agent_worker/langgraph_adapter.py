@@ -12,9 +12,10 @@ from app.worker import DeferEvent, EventContext, IgnoreEvent, RejectEvent
 class LangGraphEventAdapter:
     """Resume only the Executor interrupt bound to this event."""
 
-    def __init__(self, graph: Any, *, project_context_loader=None) -> None:
+    def __init__(self, graph: Any, *, project_context_loader=None, model_validator=None) -> None:
         self.graph = graph
         self.project_context_loader = project_context_loader
+        self.model_validator = model_validator
 
     async def __call__(self, context: EventContext) -> None:
         config = context.graph_config
@@ -85,6 +86,8 @@ class LangGraphEventAdapter:
                 and context.event.event_type == "execution.completed"
             )
             if recover_terminal_event:
+                if self.model_validator is not None:
+                    self.model_validator(values)
                 await self.graph.aupdate_state(
                     config,
                     {"ew_pending": action},
@@ -123,6 +126,8 @@ class LangGraphEventAdapter:
             raise DeferEvent("Agent has not recorded the event receipt yet")
 
     async def _invoke(self, value, config, *, values, durability):
+        if self.model_validator is not None:
+            self.model_validator(values)
         if self.project_context_loader is not None and values and "project_system_prompt" not in values:
             update = await self.project_context_loader(values)
             await self.graph.aupdate_state(config, update)

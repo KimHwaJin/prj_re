@@ -58,6 +58,8 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
 async def test_resume_only_backfills_legacy_snapshot(monkeypatch, existing):
     user_id, session_id, run_id, project_id = [uuid4() for _ in range(4)]
     values = {"user_id": str(user_id), "session_id": str(session_id), "project_id": str(project_id)}
+    from agent_service.model_selection import current_catalog
+    values["model_selection"] = current_catalog().select().model_dump()
     if existing is not None:
         values["project_system_prompt"] = existing
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=SimpleNamespace(values=values)), aupdate_state=AsyncMock())

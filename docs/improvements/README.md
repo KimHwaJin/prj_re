@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/task-diagnostics` (022 구현·검증 완료; 이번 항목 베이스 미병합). 021의 `43f950f`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
+현재 작업 브랜치: `feature/run-model-selection` (023 구현·검증 완료; 이번 항목 베이스 미병합). 022의 `403c77d`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -40,10 +40,9 @@
 | 018 | 최초 total_merge_v1 → 현재 전체 변경 영향·5초 LLM 부하 비교 | 1·10·30·50명 비교·원본 검산 완료 / 100명 사용자 요청 중단 | 2026-09-29 | [결과·변경별 영향](018-total-refactor-comparison.md) |
 | 019 | 공개 Run ID·재개·상태·이벤트 수명 통합 | 구현·격리 PostgreSQL/회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](019-public-run-lifecycle.md) |
 | 020 | CRUD 미종료 작업 보호·접수/삭제/이동 경합 | 구현·격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](020-crud-execution-guards.md) |
-
 | 021 | 목록·상태조회 불필요한 데이터 로딩 제거 | 구현·격리 PostgreSQL 계측/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](021-read-query-efficiency.md) |
-
 | 022 | Task 진단 조회·페이지 및 명령 Runs 통일 | 구현·격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](022-task-diagnostics.md) |
+| 023 | Run별 모델 선택·HITL/Executor 모델 고정 | 구현·격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](023-run-model-selection.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

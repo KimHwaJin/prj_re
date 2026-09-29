@@ -25,8 +25,9 @@ async def read_project_snapshot(*, user_id, session_id, project_id=None, session
         )
 
 
-async def ensure_project_snapshot(graph, config, *, user_id, session_id, session_factory=None):
-    snapshot = await graph.aget_state(config)
+async def ensure_project_snapshot(graph, config, *, user_id, session_id, session_factory=None, snapshot=None):
+    if snapshot is None:
+        snapshot = await graph.aget_state(config)
     if snapshot.values and "project_system_prompt" not in snapshot.values:
         update = await read_project_snapshot(
             user_id=user_id, session_id=session_id,

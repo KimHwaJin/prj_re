@@ -118,3 +118,11 @@ async for update in graph.astream(graph_input, config):
 ## 기존 Workflow 패키지 유지 원칙
 
 [analysis/workflow 작업 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 따른다. 사용자가 유지하려던 것은 skills·tools·workflows의 패키지 구성이다. 009의 app/workflow 위치 고정 해석은 010에서 정정했다. 원본 자산은 이 패키지 한 곳에서 관리하고, 005·009 기록은 당시 이력으로 보존한다.
+
+### Run별 LLM 선택
+
+역할 Agent 생성은 공통 dependencies 카탈로그 경로를 사용한다. 노드에서
+`context_from_state(state)`를 `ainvoke(..., context=...)`로 전달하면 Run에 고정된
+모델과 프로젝트 프롬프트를 함께 사용한다. 개별 노드에서 전역 기본 모델을
+새로 읽거나 모델 클라이언트를 생성하지 않는다.
+[API·설정·장기 Run 정책](../run-model-selection.md)을 참고한다.

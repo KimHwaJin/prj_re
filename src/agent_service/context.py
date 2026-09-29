@@ -17,4 +17,5 @@ class AgentContext:
     project_system_prompt: str = ""
     project_prompt_version: int | None = None
     model_name: str = ""
+    model_selection: dict[str, str] | None = None
     project_memory: ProjectMemory | None = field(default=None, repr=False, compare=False)

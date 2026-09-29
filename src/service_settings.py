@@ -5,7 +5,7 @@ from process environment and local files, which also makes tests deterministic.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from threading import RLock
 from types import MappingProxyType
@@ -53,6 +53,7 @@ PHOENIX_PROJECT_NAME PHOENIX_API_KEY MAX_WORKFLOW_REVISIONS
 WORKFLOW_RECOMMENDATION_ENABLED WORKFLOW_SIMILARITY_SCORE
 """.split())
 EXTRA_KEYS = {
+    "MODEL_CATALOG", "DEFAULT_MODEL",
     "WORKFLOW_DATABASE_URL", "WORKFLOW_PERSISTENCE_ENABLED", "MOCK_DATA_ROOT",
     "EVENT_WORKER_ENABLED", "SHUTDOWN_TIMEOUT_SECONDS", "RUN_DIAGNOSTICS_DIR",
     "RUN_DIAGNOSTICS_STALL_SECONDS", "SHUTDOWN_DRAIN_SECONDS",
@@ -268,6 +269,16 @@ def load_settings(
         agent = _agent_settings_from_mapping(agent_env)
     except (ValueError, TypeError, AttributeError):
         raise ConfigurationError("Invalid Agent settings; check types, enums and numeric bounds") from None
+    if "MODEL_CATALOG" in merged and merged["MODEL_CATALOG"] is None:
+        raise ConfigurationError("MODEL_CATALOG must be a non-empty mapping")
+    if "DEFAULT_MODEL" in merged and not isinstance(merged["DEFAULT_MODEL"], str):
+        raise ConfigurationError("DEFAULT_MODEL must be an alias")
+    from agent_service.model_selection import build_catalog, ModelSelectionError
+    try:
+        agent = replace(agent, model_catalog=build_catalog(
+            agent, merged.get("MODEL_CATALOG"), merged.get("DEFAULT_MODEL")))
+    except ModelSelectionError:
+        raise ConfigurationError("Invalid MODEL_CATALOG or DEFAULT_MODEL") from None
     if agent.model_provider not in {"mock", "openai_compatible"}:
         raise ConfigurationError("Unsupported MODEL_PROVIDER")
     if not 0 <= agent.workflow_similarity_score <= 1 or agent.max_workflow_revisions < 1:

@@ -6,7 +6,7 @@ graph tests without reading the process environment or local files.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 from uuid import uuid4
@@ -171,6 +171,7 @@ class AgentSettings:
     workflow_similarity_score: float
     model_structured_output_mode: str
     model_mock_delay_ms: int = 0
+    model_catalog: Any = field(default=None, repr=False, compare=False)
 
     @property
     def executor_executions_url(self) -> str:

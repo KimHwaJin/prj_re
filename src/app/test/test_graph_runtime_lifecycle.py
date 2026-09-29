@@ -237,7 +237,8 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
         counts['build'] += 1
         return object()
     class Adapter:
-        def __init__(self, graph, *, project_context_loader):
+        def __init__(self, graph, *, project_context_loader, model_validator):
+            assert callable(model_validator)
             assert callable(project_context_loader)
             self.graph = graph
         async def __call__(self, context):

@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/run-model-selection",
+  "base_commit": "403c77d",
+  "full_regression": {
+    "passed": 523,
+    "subtests_passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "warnings": 53,
+    "seconds": 189.73,
+    "command": "PYTHONPATH=src DTEST_IDENTITY_TEST_DATABASE_URL=<dedicated local identity_test DSN> python -m pytest src/app/test src/agent_service/agents/analysis/tests -q --disable-warnings"
+  },
+  "new_model_tests": {
+    "unit": 21,
+    "postgres_integration": 7
+  },
+  "targeted_models_and_short_transactions": {
+    "passed": 19,
+    "seconds": 18.56
+  },
+  "observed_model_continuity": {
+    "selected_alias": "beta",
+    "selected_model": "model-b",
+    "default_after_restart": "alpha",
+    "llm_request_models": [
+      "model-b",
+      "model-b",
+      "model-b"
+    ],
+    "stages": [
+      "initial",
+      "user_resume",
+      "executor_report"
+    ],
+    "runtime_recreations": 2,
+    "duplicate_event_added_llm_calls": 0
+  },
+  "environment": {
+    "database": "isolated PostgreSQL 17 / identity_test",
+    "api": "real ASGI app",
+    "llm": "real ChatOpenAI and create_agent with local httpx.MockTransport",
+    "executor_event": "local real adapter and session owner/completion projection, no external Executor or Redis"
+  },
+  "package": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "limitations": [
+    "No external LLM/Executor/Redis or Kubernetes validation",
+    "Existing unpinned paused Runs require explicit recovery",
+    "Model provider version changes behind unchanged identifiers are not detected"
+  ],
+  "deployed": false,
+  "pushed": false
+}

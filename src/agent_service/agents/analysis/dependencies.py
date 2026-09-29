@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any
 
 from agent_config import AgentSettings
@@ -61,6 +61,8 @@ def create_chat_model(settings: AgentSettings) -> Any:
 
 def create_llm_dependencies(settings: AgentSettings) -> AgentDependencies:
     """Create registered agents and inject them into the graph boundary."""
+    if settings.model_catalog is not None:
+        return _create_routed_dependencies(settings)
     if settings.model_provider == "mock":
         from agent_service.agents.analysis.testing.mock_dependencies import create_mock_dependencies
 
@@ -83,3 +85,38 @@ def create_llm_dependencies(settings: AgentSettings) -> AgentDependencies:
             model, structured_output_mode=settings.model_structured_output_mode,
         ),
     )
+
+
+@dataclass(frozen=True)
+class _SelectedRole:
+    role: str
+    catalog: Any
+    bundles: Any
+
+    async def ainvoke(self, payload, *, context=None):
+        reference = context.model_selection if context is not None else None
+        # Direct standalone graph usage can select the default. Service entry
+        # points require durable references before any continuation is invoked.
+        selected = self.catalog.select().model_dump() if reference is None else reference
+        self.catalog.resolve(selected)
+        agent = getattr(self.bundles[selected["name"]], self.role)
+        return await agent.ainvoke(payload, context=context)
+
+
+def _create_routed_dependencies(settings):
+    """One compiled graph; finite immutable role bundles per configured model.
+
+    No mutable global/current-model switch and no per-Run graph or DB pools.
+    Each bundle shares one chat model among all its create_agent roles.
+    """
+    from types import MappingProxyType
+    catalog = settings.model_catalog
+    bundles = MappingProxyType({name: create_llm_dependencies(spec.apply(settings))
+                                for name, spec in catalog.models.items()})
+    default = bundles[catalog.default]
+    fixed = {"workflow_recommender", "file_lookup_agent"}
+    return AgentDependencies(**{
+        item.name: (getattr(default, item.name) if item.name in fixed else
+                    _SelectedRole(item.name, catalog, bundles))
+        for item in fields(AgentDependencies)
+    })
