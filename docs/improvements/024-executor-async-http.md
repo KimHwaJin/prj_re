@@ -4,7 +4,7 @@
 - 브랜치: `feature/executor-async-http`
 - 기준: `009e996` (023까지 feature/refactor-base 병합 완료)
 - 상태: 구현·로컬 HTTP/격리 PostgreSQL/전체 회귀/패키지 검증 완료. 배포 미수행.
-- 커밋: 미커밋. 원격 push·배포 미수행.
+- 구현·검증 커밋: `cc490d5`. 현재 개선 브랜치는 베이스 미병합. 원격 push·배포 미수행.
 
 ## 문제와 범위
 

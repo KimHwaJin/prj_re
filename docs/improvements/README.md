@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/executor-async-http` (024 구현·검증 완료). 023 기록을 포함한 `009e996`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
+현재 작업 브랜치: `feature/executor-async-http` (024 구현·검증 완료, 구현 커밋 `cc490d5`, 베이스 미병합). 023 기록을 포함한 `009e996`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`

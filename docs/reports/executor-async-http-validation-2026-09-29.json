@@ -63,5 +63,6 @@
     "Connection limit is per graph runtime; preexisting event ingress reconciliation HTTP client and DB/LLM pools remain separate",
     "Preexisting syntax error in src/routers/chat/router.py:3 remains outside this change"
   ],
-  "deployment": "not deployed; not pushed; current feature not merged to base"
+  "deployment": "not deployed; not pushed; current feature not merged to base",
+  "implementation_commit": "cc490d5"
 }
