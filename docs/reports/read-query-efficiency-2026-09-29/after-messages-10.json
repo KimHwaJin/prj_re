@@ -1,0 +1,324 @@
+{
+  "project": {
+    "selects": 2,
+    "returned_rows": 2,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT projects.project_id, projects.user_id, projects.project_name, projects.system_prompt, projects.prompt_version, projects.is_default, projects.delete_yn, projects.created_at, projects.updated_at, projects.deleted_at \nFROM projects \nWHERE projects.project_id = $1::UUID AND projects.user_id = $2::UUID AND projects.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "project_id",
+          "user_id",
+          "project_name",
+          "system_prompt",
+          "prompt_version",
+          "is_default",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      }
+    ]
+  },
+  "session": {
+    "selects": 2,
+    "returned_rows": 2,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at \nFROM sessions \nWHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "session_id",
+          "project_id",
+          "user_id",
+          "session_name",
+          "current_leaf_message_id",
+          "settings",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      }
+    ]
+  },
+  "run": {
+    "selects": 3,
+    "returned_rows": 3,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at \nFROM sessions \nWHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "session_id",
+          "project_id",
+          "user_id",
+          "session_name",
+          "current_leaf_message_id",
+          "settings",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 \nFROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id \nFROM agent_runs \nWHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC \n LIMIT $2::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id \nWHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id \nFROM agent_runs \nWHERE agent_runs.run_id = $3::UUID AND agent_runs.session_id = $4::UUID) AND agent_runs_1.session_id = $5::UUID",
+        "rows": 1,
+        "columns": [
+          "run_id",
+          "session_id",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "checkpoint_run_id",
+          "run_id_1",
+          "task_id",
+          "status",
+          "interrupt",
+          "failure",
+          "agent_response",
+          "attempt_count",
+          "next_attempt_at",
+          "cancel_reason",
+          "cancel_requested_at",
+          "updated_at_1",
+          "completed_at",
+          "task_id_1",
+          "status_1",
+          "recovery_required",
+          "cancel_requested_at_1",
+          "updated_at_2",
+          "completed_at_1"
+        ]
+      }
+    ]
+  },
+  "run_alias": {
+    "selects": 3,
+    "returned_rows": 3,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at \nFROM sessions \nWHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "session_id",
+          "project_id",
+          "user_id",
+          "session_name",
+          "current_leaf_message_id",
+          "settings",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 \nFROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id \nFROM agent_runs \nWHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC \n LIMIT $2::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id \nWHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id = (SELECT agent_runs.public_run_id \nFROM agent_runs \nWHERE agent_runs.run_id = $3::UUID AND agent_runs.session_id = $4::UUID) AND agent_runs_1.session_id = $5::UUID",
+        "rows": 1,
+        "columns": [
+          "run_id",
+          "session_id",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "checkpoint_run_id",
+          "run_id_1",
+          "task_id",
+          "status",
+          "interrupt",
+          "failure",
+          "agent_response",
+          "attempt_count",
+          "next_attempt_at",
+          "cancel_reason",
+          "cancel_requested_at",
+          "updated_at_1",
+          "completed_at",
+          "task_id_1",
+          "status_1",
+          "recovery_required",
+          "cancel_requested_at_1",
+          "updated_at_2",
+          "completed_at_1"
+        ]
+      }
+    ]
+  },
+  "runs": {
+    "selects": 4,
+    "returned_rows": 23,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at \nFROM sessions \nWHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "session_id",
+          "project_id",
+          "user_id",
+          "session_name",
+          "current_leaf_message_id",
+          "settings",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT agent_runs.run_id, agent_runs.created_at \nFROM agent_runs \nWHERE agent_runs.session_id = $1::UUID AND agent_runs.public_run_id = agent_runs.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC \n LIMIT $2::INTEGER",
+        "rows": 11,
+        "columns": [
+          "run_id",
+          "created_at"
+        ]
+      },
+      {
+        "sql": "SELECT agent_runs_1.run_id, agent_runs_1.session_id, agent_runs_1.created_at, agent_runs_1.updated_at, agent_runs_1.started_at, agent_runs_1.metadata[$1::TEXT] AS checkpoint_run_id, agent_runs_2.run_id AS run_id_1, agent_runs_2.task_id, agent_runs_2.status, agent_runs_2.interrupt, agent_runs_2.failure, agent_runs_2.agent_response, agent_runs_2.attempt_count, agent_runs_2.next_attempt_at, agent_runs_2.cancel_reason, agent_runs_2.cancel_requested_at, agent_runs_2.updated_at AS updated_at_1, agent_runs_2.completed_at, tasks.task_id AS task_id_1, tasks.status AS status_1, tasks.recovery_required, tasks.cancel_requested_at AS cancel_requested_at_1, tasks.updated_at AS updated_at_2, tasks.completed_at AS completed_at_1 \nFROM agent_runs AS agent_runs_1 JOIN agent_runs AS agent_runs_2 ON agent_runs_2.run_id = (SELECT agent_runs.run_id \nFROM agent_runs \nWHERE agent_runs.public_run_id = agent_runs_1.run_id ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC \n LIMIT $2::INTEGER) LEFT OUTER JOIN tasks ON tasks.task_id = agent_runs_2.task_id \nWHERE agent_runs_1.public_run_id = agent_runs_1.run_id AND agent_runs_1.run_id IN ($3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID, $10::UUID, $11::UUID, $12::UUID)",
+        "rows": 10,
+        "columns": [
+          "run_id",
+          "session_id",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "checkpoint_run_id",
+          "run_id_1",
+          "task_id",
+          "status",
+          "interrupt",
+          "failure",
+          "agent_response",
+          "attempt_count",
+          "next_attempt_at",
+          "cancel_reason",
+          "cancel_requested_at",
+          "updated_at_1",
+          "completed_at",
+          "task_id_1",
+          "status_1",
+          "recovery_required",
+          "cancel_requested_at_1",
+          "updated_at_2",
+          "completed_at_1"
+        ]
+      }
+    ]
+  },
+  "runs_empty": {
+    "selects": 3,
+    "returned_rows": 2,
+    "queries": [
+      {
+        "sql": "SELECT users.user_id, users.user_name, users.public_user_id, users.role, users.delete_yn, users.created_at, users.updated_at, users.deleted_at \nFROM users \nWHERE users.public_user_id = $1::VARCHAR AND users.delete_yn = $2::delete_yn FOR SHARE",
+        "rows": 1,
+        "columns": [
+          "user_id",
+          "user_name",
+          "public_user_id",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT sessions.session_id, sessions.project_id, sessions.user_id, sessions.session_name, sessions.current_leaf_message_id, sessions.settings, sessions.delete_yn, sessions.created_at, sessions.updated_at, sessions.deleted_at \nFROM sessions \nWHERE sessions.session_id = $1::UUID AND sessions.user_id = $2::UUID AND sessions.delete_yn = $3::delete_yn",
+        "rows": 1,
+        "columns": [
+          "session_id",
+          "project_id",
+          "user_id",
+          "session_name",
+          "current_leaf_message_id",
+          "settings",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ]
+      },
+      {
+        "sql": "SELECT agent_runs.run_id, agent_runs.created_at \nFROM agent_runs \nWHERE agent_runs.session_id = $1::UUID AND agent_runs.public_run_id = agent_runs.run_id AND agent_runs.created_at >= $2::TIMESTAMP WITH TIME ZONE ORDER BY agent_runs.created_at DESC, agent_runs.run_id DESC \n LIMIT $3::INTEGER",
+        "rows": 0,
+        "columns": [
+          "run_id",
+          "created_at"
+        ]
+      }
+    ]
+  }
+}

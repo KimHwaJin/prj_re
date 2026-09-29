@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.orm import Bundle
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import get_current_user_id
@@ -62,7 +63,13 @@ async def resume_run(
 @router.get("/sessions/{session_id}/runs", response_model=Page[PublicRunResource])
 async def list_runs(session_id: UUID, params: ListParams = Depends(list_params), user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     await RunService._session(db, user_id, session_id)
-    items, page = await fetch_page(db, select(AgentRunModel).where(AgentRunModel.session_id == session_id, AgentRunModel.public_run_id == AgentRunModel.run_id), model=AgentRunModel, id_name="run_id", params=params)
+    # Page only IDs/timestamps; hydrate the selected public states in one query.
+    items, page = await fetch_page(
+        db, select(Bundle("run_page", AgentRunModel.run_id, AgentRunModel.created_at)).where(
+            AgentRunModel.session_id == session_id,
+            AgentRunModel.public_run_id == AgentRunModel.run_id,
+        ), model=AgentRunModel, id_name="run_id", params=params,
+    )
     snapshots = await PublicRunService.snapshots(db, [item.run_id for item in items])
     return {"items": [project(*snapshots[item.run_id]) for item in items], "page": page}
 

@@ -7,8 +7,9 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import Bundle, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.engine import Row
 
 from app.core.enums import AgentRunStatus
 from app.models.common.agent_run_model import AgentRunModel as Run
@@ -23,7 +24,7 @@ from app.services import resource_lifecycle as lifecycle
 TERMINAL = {"success", "error", "timeout", "canceled"}
 
 
-def project(root: Run, latest: Run, task: Task | None) -> PublicRunResource:
+def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
     status = latest.status.value
     if task and task.status in TaskService.TERMINAL_STATUSES:
         status = task.status.value
@@ -41,7 +42,7 @@ def project(root: Run, latest: Run, task: Task | None) -> PublicRunResource:
         resume_token=latest.run_id if status == "waiting_input" and not (task and task.cancel_requested_at) else None,
         interrupt=latest.interrupt if status in {"waiting_input", "waiting_executor"} else None,
         failure=latest.failure, result=latest.agent_response if terminal else None,
-        recovery_required=recovery, checkpoint_run_id=root.checkpoint_run_id,
+        recovery_required=recovery, checkpoint_run_id=UUID(str(root.checkpoint_run_id)) if root.checkpoint_run_id else root.run_id,
         task_id=latest.task_id, attempt_count=latest.attempt_count,
         next_attempt_at=latest.next_attempt_at, cancel_reason=latest.cancel_reason,
         cancel_requested_at=task.cancel_requested_at if task else latest.cancel_requested_at,
@@ -56,27 +57,51 @@ class PublicRunService:
         await lifecycle.lock_session(db, user_id, session_id)
 
     @staticmethod
-    async def snapshots(db: AsyncSession, ids: list[UUID]):
+    def _snapshot_query():
         root, latest = aliased(Run), aliased(Run)
         latest_id = (select(Run.run_id).where(Run.public_run_id == root.run_id)
                      .order_by(Run.created_at.desc(), Run.run_id.desc()).limit(1).correlate(root).scalar_subquery())
-        result = await db.execute(select(root, latest, Task).select_from(root)
-            .join(latest, latest.run_id == latest_id).outerjoin(Task, Task.task_id == latest.task_id)
-            .where(root.run_id.in_(ids), root.public_run_id == root.run_id)
-            .execution_options(populate_existing=True))
-        return {r.run_id: (r, invocation, task) for r, invocation, task in result.all()}
+        # Scalar bundles never populate/expire writable Run or Task ORM objects.
+        # Only the checkpoint reference is needed from the root metadata JSON.
+        statement = select(
+            Bundle("root", root.run_id, root.session_id, root.created_at,
+                   root.updated_at, root.started_at,
+                   root.metadata_json["checkpoint_run_id"].label("checkpoint_run_id")),
+            Bundle("latest", latest.run_id, latest.task_id, latest.status,
+                   latest.interrupt, latest.failure, latest.agent_response,
+                   latest.attempt_count, latest.next_attempt_at, latest.cancel_reason,
+                   latest.cancel_requested_at, latest.updated_at, latest.completed_at),
+            Bundle("task", Task.task_id, Task.status, Task.recovery_required,
+                   Task.cancel_requested_at, Task.updated_at, Task.completed_at),
+        ).select_from(root).join(latest, latest.run_id == latest_id).outerjoin(
+            Task, Task.task_id == latest.task_id,
+        ).where(root.public_run_id == root.run_id)
+        return statement, root
+
+    @staticmethod
+    async def snapshots(db: AsyncSession, ids: list[UUID]):
+        if not ids:
+            return {}
+        statement, root = PublicRunService._snapshot_query()
+        rows = await db.execute(statement.where(root.run_id.in_(ids)))
+        return {r.run_id: (r, invocation, task if task.task_id is not None else None)
+                for r, invocation, task in rows}
 
     @staticmethod
     async def read(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID) -> PublicRunResource:
         await RunService._session(db, user_id, session_id)
-        # Old invocation URLs remain read aliases, but always return canonical id.
-        canonical = await db.scalar(select(Run.public_run_id).where(Run.run_id == run_id, Run.session_id == session_id))
-        if canonical is None:
+        # Resolve legacy invocation aliases in the same statement snapshot.
+        canonical = select(Run.public_run_id).where(
+            Run.run_id == run_id, Run.session_id == session_id,
+        ).scalar_subquery()
+        statement, root = PublicRunService._snapshot_query()
+        row = (await db.execute(statement.where(
+            root.run_id == canonical, root.session_id == session_id,
+        ))).one_or_none()
+        if row is None:
             raise HTTPException(status_code=404, detail="Run not found.")
-        snapshots = await PublicRunService.snapshots(db, [canonical])
-        if canonical not in snapshots or snapshots[canonical][0].session_id != session_id:
-            raise HTTPException(status_code=404, detail="Run not found.")
-        return project(*snapshots[canonical])
+        r, invocation, task = row
+        return project(r, invocation, task if task.task_id is not None else None)
 
     @staticmethod
     async def create(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunStart, key: str) -> PublicRunResource:

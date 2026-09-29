@@ -1,11 +1,10 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import DeleteYN, ProjectMemberRole
-from app.models.common.message_model import MessageModel
 from app.models.common.project_model import (
     ProjectMemberModel,
     ProjectModel
@@ -16,9 +15,7 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.common.project_schema import (
     ProjectCreate,
     ProjectDeleteResult,
-    ProjectRead,
     ProjectUpdate,
-    SessionSummary,
 )
 from app.services.cascade_service import (
     soft_delete_messages_for_sessions,
@@ -92,56 +89,9 @@ class ProjectService:
         db: AsyncSession,
         user_id: UUID,
         project_id: UUID,
-    ) -> ProjectRead:
-        project = await ProjectService._require_project(db, user_id, project_id)
-
-        rows = (
-            await db.execute(
-                select(
-                    SessionModel,
-                    func.count(MessageModel.message_id).label("message_count"),
-                )
-                .outerjoin(
-                    MessageModel,
-                    (MessageModel.session_id == SessionModel.session_id)
-                    & (MessageModel.delete_yn == DeleteYN.N),
-                )
-                .where(
-                    SessionModel.project_id == project_id,
-                    SessionModel.user_id == user_id,
-                    SessionModel.delete_yn == DeleteYN.N,
-                )
-                .group_by(SessionModel.session_id)
-                .order_by(SessionModel.updated_at.desc())
-            )
-        ).all()
-
-        sessions = [
-            SessionSummary(
-                session_id=session.session_id,
-                session_name=session.session_name,
-                project_id=session.project_id,
-                user_id=session.user_id,
-                message_count=count,
-                created_at=session.created_at,
-                updated_at=session.updated_at,
-            )
-            for session, count in rows
-        ]
-
-        return ProjectRead(
-            project_id=project.project_id,
-            user_id=project.user_id,
-            project_name=project.project_name,
-            system_prompt=project.system_prompt,
-            prompt_version=project.prompt_version,
-            is_default=project.is_default,
-            delete_yn=project.delete_yn,
-            created_at=project.created_at,
-            updated_at=project.updated_at,
-            deleted_at=project.deleted_at,
-            sessions=sessions,
-        )
+    ) -> ProjectModel:
+        # Children are exposed through their own paginated endpoints.
+        return await ProjectService._require_project(db, user_id, project_id)
 
     @staticmethod
     async def update(

@@ -1,0 +1,287 @@
+{
+  "date": "2026-09-29",
+  "base": "5279ee5",
+  "branch": "feature/read-query-efficiency",
+  "conditions": {
+    "transport": "actual FastAPI routes via in-process httpx ASGI transport",
+    "database": "dedicated local PostgreSQL 17; migrated identity_test",
+    "sessions_in_project": 20,
+    "logical_runs": 25,
+    "invocations_per_run": 3,
+    "run_page_limit": 10,
+    "messages": [
+      10,
+      1000
+    ],
+    "message_text_bytes": 1024,
+    "private_run_json_fields": 5,
+    "private_run_json_value_bytes": 8192,
+    "external_llm_executor_redis": false,
+    "api_worker_background_tasks": false
+  },
+  "measurements": {
+    "10": {
+      "before": {
+        "project": {
+          "selects": 3,
+          "returned_rows": 22,
+          "selected_columns_per_query": [
+            8,
+            10,
+            11
+          ]
+        },
+        "session": {
+          "selects": 4,
+          "returned_rows": 13,
+          "selected_columns_per_query": [
+            8,
+            10,
+            10,
+            15
+          ]
+        },
+        "run": {
+          "selects": 4,
+          "returned_rows": 4,
+          "selected_columns_per_query": [
+            8,
+            10,
+            1,
+            90
+          ]
+        },
+        "run_alias": {
+          "selects": 4,
+          "returned_rows": 4,
+          "selected_columns_per_query": [
+            8,
+            10,
+            1,
+            90
+          ]
+        },
+        "runs": {
+          "selects": 4,
+          "returned_rows": 23,
+          "selected_columns_per_query": [
+            8,
+            10,
+            35,
+            90
+          ]
+        },
+        "runs_empty": {
+          "selects": 4,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10,
+            35,
+            90
+          ]
+        }
+      },
+      "after": {
+        "project": {
+          "selects": 2,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10
+          ]
+        },
+        "session": {
+          "selects": 2,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10
+          ]
+        },
+        "run": {
+          "selects": 3,
+          "returned_rows": 3,
+          "selected_columns_per_query": [
+            8,
+            10,
+            24
+          ]
+        },
+        "run_alias": {
+          "selects": 3,
+          "returned_rows": 3,
+          "selected_columns_per_query": [
+            8,
+            10,
+            24
+          ]
+        },
+        "runs": {
+          "selects": 4,
+          "returned_rows": 23,
+          "selected_columns_per_query": [
+            8,
+            10,
+            2,
+            24
+          ]
+        },
+        "runs_empty": {
+          "selects": 3,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10,
+            2
+          ]
+        }
+      }
+    },
+    "1000": {
+      "before": {
+        "project": {
+          "selects": 3,
+          "returned_rows": 22,
+          "selected_columns_per_query": [
+            8,
+            10,
+            11
+          ]
+        },
+        "session": {
+          "selects": 4,
+          "returned_rows": 1003,
+          "selected_columns_per_query": [
+            8,
+            10,
+            10,
+            15
+          ]
+        },
+        "run": {
+          "selects": 4,
+          "returned_rows": 4,
+          "selected_columns_per_query": [
+            8,
+            10,
+            1,
+            90
+          ]
+        },
+        "run_alias": {
+          "selects": 4,
+          "returned_rows": 4,
+          "selected_columns_per_query": [
+            8,
+            10,
+            1,
+            90
+          ]
+        },
+        "runs": {
+          "selects": 4,
+          "returned_rows": 23,
+          "selected_columns_per_query": [
+            8,
+            10,
+            35,
+            90
+          ]
+        },
+        "runs_empty": {
+          "selects": 4,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10,
+            35,
+            90
+          ]
+        }
+      },
+      "after": {
+        "project": {
+          "selects": 2,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10
+          ]
+        },
+        "session": {
+          "selects": 2,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10
+          ]
+        },
+        "run": {
+          "selects": 3,
+          "returned_rows": 3,
+          "selected_columns_per_query": [
+            8,
+            10,
+            24
+          ]
+        },
+        "run_alias": {
+          "selects": 3,
+          "returned_rows": 3,
+          "selected_columns_per_query": [
+            8,
+            10,
+            24
+          ]
+        },
+        "runs": {
+          "selects": 4,
+          "returned_rows": 23,
+          "selected_columns_per_query": [
+            8,
+            10,
+            2,
+            24
+          ]
+        },
+        "runs_empty": {
+          "selects": 3,
+          "returned_rows": 2,
+          "selected_columns_per_query": [
+            8,
+            10,
+            2
+          ]
+        }
+      }
+    }
+  },
+  "focused_tests": {
+    "passed": 103,
+    "seconds": 65.29
+  },
+  "full_tests": {
+    "passed": 459,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "seconds": 156.98,
+    "includes_focused_tests": true
+  },
+  "package": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "role_prompts": 7,
+    "mock_graph_steps": 6
+  },
+  "limitations": [
+    "SELECT counts include authentication and ownership queries; COMMIT/ROLLBACK are excluded",
+    "Returned rows count driver results, not database scan/aggregate input rows",
+    "Projection column counts are not transferred byte counts or latency ratios",
+    "No HTTP socket/concurrent load/replica/production latency measurement",
+    "Run responses still contain interrupt/failure/final result required by existing contract",
+    "Legacy logs/Tasks unbounded collections and message cursor semantics are deferred"
+  ]
+}

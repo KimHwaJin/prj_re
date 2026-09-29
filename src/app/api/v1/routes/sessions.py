@@ -73,8 +73,7 @@ async def read_session(
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    session = await _owned_session(db, user_id, session_id)
-    result = await SessionService.read(db, user_id, session.project_id, session_id)
+    result = await SessionService.read(db, user_id, session_id)
     return SessionResource.model_validate(result)
 
 

@@ -1,19 +1,15 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import DeleteYN
-from app.models.common.message_model import MessageModel
 from app.models.common.session_model import SessionModel
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.session_repository import SessionRepository
-from app.schemas.common.message_schema import MessageRead
 from app.schemas.common.session_schema import (
     SessionCreate,
     SessionDeleteResult,
-    SessionRead,
     SessionUpdate,
 )
 from app.services.cascade_service import (
@@ -78,47 +74,14 @@ class SessionService:
         return session
 
     @staticmethod
-    async def read(
-        db: AsyncSession,
-        user_id: UUID,
-        project_id: UUID,
-        session_id: UUID,
-    ) -> SessionRead:
-        session = await SessionRepository.get_active(
-            db,
-            user_id=user_id,
-            project_id=project_id,
-            session_id=session_id,
+    async def read(db: AsyncSession, user_id: UUID, session_id: UUID) -> SessionModel:
+        session = await SessionRepository.get_active_by_user(
+            db, user_id=user_id, session_id=session_id,
         )
         if session is None:
-            raise HTTPException(status_code=404, detail="Session을 찾을 수 없습니다.")
-
-        messages = list(
-            (
-                await db.scalars(
-                    select(MessageModel)
-                    .where(
-                        MessageModel.session_id == session_id,
-                        MessageModel.delete_yn == DeleteYN.N,
-                    )
-                    .order_by(MessageModel.sequence_no.asc())
-                )
-            ).all()
-        )
-
-        return SessionRead(
-            session_id=session.session_id,
-            session_name=session.session_name,
-            project_id=session.project_id,
-            user_id=session.user_id,
-            current_leaf_message_id=session.current_leaf_message_id,
-            settings=session.settings,
-            delete_yn=session.delete_yn,
-            created_at=session.created_at,
-            updated_at=session.updated_at,
-            deleted_at=session.deleted_at,
-            messages=[MessageRead.model_validate(item) for item in messages],
-        )
+            raise HTTPException(status_code=404, detail="Session not found.")
+        # Message history is only loaded by the paginated messages endpoint.
+        return session
 
     @staticmethod
     async def update(
