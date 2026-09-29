@@ -58,5 +58,7 @@
     ]
   },
   "deployment_performed": false,
-  "external_llm_executor_redis_calls": false
+  "external_llm_executor_redis_calls": false,
+  "implementation_commit": "9c51953",
+  "scratch_postgres_removed": true
 }
