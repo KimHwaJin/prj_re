@@ -1,5 +1,6 @@
 """Resolve authorized project instructions once per user turn or legacy backfill."""
 from uuid import UUID
+from app.core.database import short_session
 from sqlalchemy import select
 from app.models.common.project_model import ProjectModel
 from app.models.common.session_model import SessionModel
@@ -16,17 +17,26 @@ async def load_project_snapshot(db, *, user_id, session_id, project_id=None):
     return {"project_system_prompt": project.system_prompt or "", "project_prompt_version": project.prompt_version}
 
 
-async def ensure_project_snapshot(graph, config, *, db, user_id, session_id):
+async def read_project_snapshot(*, user_id, session_id, project_id=None, session_factory=None):
+    """Return plain values and release the service connection before graph I/O."""
+    async with short_session(session_factory) as db:
+        return await load_project_snapshot(
+            db, user_id=user_id, session_id=session_id, project_id=project_id,
+        )
+
+
+async def ensure_project_snapshot(graph, config, *, user_id, session_id, session_factory=None):
     snapshot = await graph.aget_state(config)
     if snapshot.values and "project_system_prompt" not in snapshot.values:
-        update = await load_project_snapshot(db, user_id=user_id, session_id=session_id,
-            project_id=snapshot.values.get("project_id"))
+        update = await read_project_snapshot(
+            user_id=user_id, session_id=session_id,
+            project_id=snapshot.values.get("project_id"), session_factory=session_factory,
+        )
         await graph.aupdate_state(config, update)
 
 
 async def load_event_project_snapshot(values):
-    # Old checkpoints only: release the session before resuming the graph.
-    from app.core.database import get_session_factory
-    async with get_session_factory()() as db:
-        return await load_project_snapshot(db, user_id=values["user_id"],
-            session_id=values["session_id"], project_id=values["project_id"])
+    return await read_project_snapshot(
+        user_id=values["user_id"], session_id=values["session_id"],
+        project_id=values["project_id"],
+    )

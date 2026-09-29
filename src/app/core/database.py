@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -77,3 +78,20 @@ async def close_database() -> None:
     _session_factory = None
     if engine is not None:
         await engine.dispose()
+
+
+@asynccontextmanager
+async def short_session(session_factory=None) -> AsyncIterator[AsyncSession]:
+    """Own a DB-only unit of work; never span graph/HTTP/consumer waits.
+
+    Writers commit explicitly. Closing rolls back any remaining read/failed
+    transaction, including refreshes performed by existing CRUD services.
+    Observe close even when shutdown repeatedly cancels the caller.
+    """
+    from app.core.execution_lifecycle import protected_cleanup
+
+    db = (session_factory or get_session_factory())()
+    try:
+        yield db
+    finally:
+        await protected_cleanup(db.close())

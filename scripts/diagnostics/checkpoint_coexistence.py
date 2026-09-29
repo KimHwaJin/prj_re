@@ -40,9 +40,9 @@ async def graph_only(graph, graph_input, **kwargs):
 
 async def invoke(thread, first=False):
     if first:
-        return await svc.ainvoke_user_turn(None,user_id=uuid4(),project_id=uuid4(),session_id=thread,
+        return await svc.ainvoke_user_turn(user_id=uuid4(),project_id=uuid4(),session_id=thread,
                                            run_id=uuid4(),user_request='Predict wafer failures')
-    return await svc.ainvoke_resume(None,user_id=uuid4(),session_id=thread,
+    return await svc.ainvoke_resume(user_id=uuid4(),session_id=thread,
                                     checkpoint_run_id=uuid4(),agent_run_id=uuid4(),command='mock')
 
 

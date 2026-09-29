@@ -423,15 +423,23 @@ class RunService:
         await db.refresh(task)
         # rollback은 ORM 속성을 expire하므로 취소/오류 처리에 쓸 ID는 평범한 값으로 보존합니다.
         execution_run_id = run.run_id
+        execution_task_id = task.task_id
+        execution_project_id = session.project_id
+        execution_checkpoint_id = task.checkpoint_run_id
+        execution_trigger_id = run.trigger_message_id
         await TaskEventService.append(
             db,
             task_id=task.task_id,
             run_id=execution_run_id,
             event_type="task.started" if payload.command is None else "task.resumed",
             payload={"status": TaskStatus.RUNNING.value},
+            commit=False,
         )
+        # End preparation without refresh (which would autobegin a new read
+        # transaction). Only plain values cross the graph execution boundary.
+        await db.commit()
 
-        token_events = LLMTokenEventBuffer(task_id=task.task_id, run_id=execution_run_id)
+        token_events = LLMTokenEventBuffer(task_id=execution_task_id, run_id=execution_run_id)
         token_events.start()
         try:
             try:
@@ -440,8 +448,8 @@ class RunService:
                         state = await RunService._run_cancellable(
                             execution_run_id,
                             ainvoke_resume(
-                                db, user_id=user_id, session_id=session_id,
-                                checkpoint_run_id=task.checkpoint_run_id,
+                                user_id=user_id, session_id=session_id,
+                                checkpoint_run_id=execution_checkpoint_id,
                                 agent_run_id=execution_run_id,
                                 command=payload.command,
                                 callbacks=[token_events],
@@ -454,10 +462,10 @@ class RunService:
                         state = await RunService._run_cancellable(
                             execution_run_id,
                             ainvoke_user_turn(
-                                db, user_id=user_id, project_id=session.project_id,
-                                session_id=session_id, run_id=run.run_id,
+                                user_id=user_id, project_id=execution_project_id,
+                                session_id=session_id, run_id=execution_run_id,
                                 user_request=user_request_from_messages(payload.input.messages),
-                                trigger_message_id=run.trigger_message_id,
+                                trigger_message_id=execution_trigger_id,
                                 callbacks=[token_events],
                             ),
                             observers=(heartbeat, token_events.consumer),

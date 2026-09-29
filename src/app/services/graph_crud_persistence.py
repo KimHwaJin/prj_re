@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, AsyncIterator
 from uuid import UUID
 from app.core.run_diagnostics import span
+from app.core.database import short_session
 
 from app.services.graph_event_persistence import (
     GraphPersistenceContext,
@@ -32,7 +33,7 @@ async def astream_with_crud_message_persistence(
     graph: Any,
     graph_input: Any,
     *,
-    db: Any,
+    session_factory: Any | None = None,
     user_id: UUID,
     config: dict[str, Any],
     stream_mode: str = "values",
@@ -42,9 +43,9 @@ async def astream_with_crud_message_persistence(
 ) -> AsyncIterator[dict[str, Any]]:
     """Yield graph states while persisting newly emitted graph events.
 
-    Keep the DB session outside graph state.  SQLAlchemy sessions are not
-    checkpoint-serializable, while LangGraph state is expected to remain a
-    JSON/msgpack-friendly domain state.
+    Open a short DB session for each projection and close it before yielding
+    or requesting the next graph state. Never hold it across model waits or
+    consumer backpressure.
     """
 
     persistence = dispatcher or GraphPersistenceDispatcher.default()
@@ -55,20 +56,11 @@ async def astream_with_crud_message_persistence(
         stream_mode=stream_mode,
     ):
         if isinstance(state, dict):
-            await _link_graph_task(db, state, agent_run_id or state.get("run_id"))
-            context = GraphPersistenceContext.from_state(
-                state,
-                user_id=user_id,
+            cursor = await _persist_state(
+                state, user_id=user_id, cursor=cursor, persistence=persistence,
+                session_factory=session_factory, agent_run_id=agent_run_id,
                 trigger_message_id=trigger_message_id,
-                agent_run_id=agent_run_id or state.get("run_id"),
             )
-            result = await persistence.persist_state_delta(
-                db,
-                state,
-                cursor,
-                context=context,
-            )
-            cursor = result.cursor
         yield state
 
 
@@ -76,7 +68,7 @@ async def ainvoke_with_crud_message_persistence(
     graph: Any,
     graph_input: Any,
     *,
-    db: Any,
+    session_factory: Any | None = None,
     user_id: UUID,
     config: dict[str, Any],
     dispatcher: GraphPersistenceDispatcher | None = None,
@@ -88,23 +80,34 @@ async def ainvoke_with_crud_message_persistence(
     with span("graph.invoke"):
         state = await graph.ainvoke(graph_input, config=config)
     if isinstance(state, dict):
+        await _persist_state(
+            state, user_id=user_id, cursor=GraphPersistenceCursor(),
+            persistence=dispatcher or GraphPersistenceDispatcher.default(),
+            session_factory=session_factory, agent_run_id=agent_run_id,
+            trigger_message_id=trigger_message_id,
+        )
+    return state
+
+
+async def _persist_state(
+    state, *, user_id, cursor, persistence, session_factory,
+    agent_run_id, trigger_message_id,
+):
+    # Graph execution and each yielded state own no service DB connection.
+    # Existing handlers have idempotent, individually committed writes; this
+    # scope does not imply atomicity across all graph events/checkpoints.
+    context = GraphPersistenceContext.from_state(
+        state, user_id=user_id, trigger_message_id=trigger_message_id,
+        agent_run_id=agent_run_id or state.get("run_id"),
+    )
+    async with short_session(session_factory) as db:
         with span("persistence.link_task"):
             await _link_graph_task(db, state, agent_run_id or state.get("run_id"))
-        persistence = dispatcher or GraphPersistenceDispatcher.default()
-        context = GraphPersistenceContext.from_state(
-            state,
-            user_id=user_id,
-            trigger_message_id=trigger_message_id,
-            agent_run_id=agent_run_id or state.get("run_id"),
-        )
         with span("persistence.state_delta"):
-            await persistence.persist_state_delta(
-                db,
-                state,
-                GraphPersistenceCursor(),
-                context=context,
-            )
-    return state
+            result = await persistence.persist_state_delta(db, state, cursor, context=context)
+        # Flush any final relationship changes that a handler leaves pending.
+        await db.commit()
+        return result.cursor
 
 
 __all__ = [

@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/refactor-short-db-transactions",
+  "parent_commit": "64ad96f",
+  "base_branch_commit": "fb89dbc",
+  "validation": {
+    "passed": 355,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "duration_seconds": 82.8,
+    "focused_passed": 27,
+    "focused_duration_seconds": 35.99,
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src DTEST_IDENTITY_TEST_DATABASE_URL=<disposable-local-identity_test> python -m pytest src -q",
+    "new_tests": [
+      "test_control_open_read_transaction_exhausts_single_connection",
+      "test_two_runs_share_one_connection_and_crud_works_during_model_wait[False]",
+      "test_two_runs_share_one_connection_and_crud_works_during_model_wait[True]",
+      "test_legacy_resume_releases_snapshot_before_checkpoint_update_and_invoke",
+      "test_stream_projection_releases_before_next_state_and_rolls_back_failure[False]",
+      "test_stream_projection_releases_before_next_state_and_rolls_back_failure[True]",
+      "test_snapshot_access_error_returns_connection",
+      "test_cancel_api_remains_usable_with_one_connection_while_graph_waits",
+      "test_repeated_cancel_waits_for_projection_rollback_and_returns_connection",
+      "test_dispatcher_fills_slots_without_retaining_connections[1]",
+      "test_dispatcher_fills_slots_without_retaining_connections[2]",
+      "test_dispatcher_fills_slots_without_retaining_connections[4]"
+    ],
+    "warnings_description": "Existing LangGraph durability-without-checkpointer warnings"
+  },
+  "initial_regression_attempt": {
+    "passed": 351,
+    "failed": 1,
+    "reason": "100ms benchmark asserted peak == slots; 20 runs completed successfully but 4 slots observed peak 2.",
+    "resolution": "Benchmark verifies upper bound. New gated dispatcher tests independently prove saturation at 1, 2, 4 slots with one DB connection."
+  },
+  "environment": {
+    "python": "3.11.15",
+    "postgres_image": "postgres:17",
+    "database": "disposable local identity_test",
+    "sqlalchemy_pool_size": 1,
+    "sqlalchemy_max_overflow": 0,
+    "sqlalchemy_pool_timeout_seconds": 0.3,
+    "model_wait": "Gated async nodes in real LangGraph; two waiting runs held for at least 0.4s while real CRUD APIs execute.",
+    "focused_checkpoint": "InMemorySaver; existing real PostgreSQL saver tests also run in full suite",
+    "executor": "no external API calls",
+    "temporary_database_removed": true
+  },
+  "evidence": [
+    "An intentionally held SELECT transaction causes a second checkout to time out at pool_size=1.",
+    "Two real queued Runs pass initial and HITL resume paths while CRUD C/R/U/D and Run GET use the same one-slot pool.",
+    "Actual cancel API works during gated graph execution and finalizes canceled without requiring recovery.",
+    "Task graph identity, messages and run logs persist; same-session new Run remains rejected.",
+    "Legacy prompt read closes before checkpoint update/invoke; stream projections close before next graph state and slow consumer.",
+    "Projection exception rolls back uncommitted writes; repeated cancellation waits for close/rollback and returns the connection.",
+    "Dispatcher fills 1, 2, 4 slots while the extra Run stays pending, then drains without claiming it."
+  ],
+  "package_validation": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "openapi_paths": 33,
+    "role_prompts": 7,
+    "mock_graph_execution_steps": 6
+  },
+  "limitations": [
+    "Not a production pool size recommendation or a throughput/latency benchmark.",
+    "No global DB connection cap across replicas; existing pools/settings unchanged.",
+    "CRUD handler commits remain individually durable; no new atomicity across checkpoint and projection.",
+    "Recovery admin API deferred; uncertain-execution ownership protections remain.",
+    "No external LLM/Executor/Kubernetes load test; historical checkpoint_coexistence diagnostic not executed."
+  ],
+  "deployment": {
+    "schema_changed": false,
+    "settings_added": false,
+    "existing_services_changed": false,
+    "base_merged": false,
+    "pushed": false,
+    "deployed": false
+  }
+}

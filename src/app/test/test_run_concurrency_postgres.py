@@ -159,7 +159,11 @@ async def test_dispatcher_bounded_workload_comparison(runtime, monkeypatch):
         finally:
             dispatcher.cancel(); await asyncio.gather(dispatcher,return_exceptions=True)
         elapsed=time.perf_counter()-begun
-        assert peak<=slots and peak==slots and len(starts)==20
+        # A 100ms call may finish before sequential DB claims fill every slot.
+        # This benchmark checks the upper bound, not deterministic saturation.
+        # test_dispatcher_fills_slots_without_retaining_connections gates calls
+        # until the configured capacity is actually reached.
+        assert 1 <= peak <= slots and len(starts) == 20
         results.append({'slots':slots,'runs':20,'mock_graph_wait_ms':100,'elapsed_s':round(elapsed,4),
                         'runs_per_second':round(20/elapsed,3),'peak_graph_calls':peak,
                         'mean_dispatch_to_graph_start_s':round(sum(starts)/20,4),

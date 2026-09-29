@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-graceful-shutdown` (015, 014/feba2d2에서 파생; 베이스는 012/fb89dbc까지 통합)
+현재 구현 브랜치: `feature/refactor-short-db-transactions` (016, 015/64ad96f에서 파생; 베이스는 012/fb89dbc까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -35,6 +35,7 @@
 | 013 | 프로세스별 Run 동시 실행·대기 세션 보호·Executor 완료 반영 | 구현·격리 PostgreSQL/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](013-run-concurrency.md) |
 | 014 | API Run·Executor 이벤트 공통 세션 실행 소유권 | 구현·격리 PostgreSQL/패키지 검증 완료 / 자동 복구·배포 미수행 | 2026-09-29 | [변경·검증·제한](014-session-execution-ownership.md) |
 | 015 | 서비스 종료 시 새 점유 중단·현재 호출 drain | 구현·실제 SIGTERM/격리 PostgreSQL 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](015-graceful-shutdown.md) |
+| 016 | Agent 실행과 서비스 DB 트랜잭션 분리 | 구현·격리 PostgreSQL/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](016-short-db-transactions.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
@@ -51,6 +52,8 @@
 상태: `착수 전` → `진행 중` → `검증 대기` 또는 `완료`. 중단·보류는 사유와 재개 조건을 기록한다. `완료`가 배포 완료를 뜻하지는 않으므로 코드·검증·배포 상태를 따로 적는다.
 
 **공통 기준**
+
+- 2026-09-29 사용자 결정: 실행 종료가 불확실한 세션의 운영 복구는 관리자 API로 제공한다. 복구 CLI 구현은 추진하지 않는다. 관리자 API 구현은 구조 개선 이후 후속으로 보류하며, 그 전까지 기존 소유권 토큰·recovery_required 보호를 유지한다. 운영 배포 전에 복구 절차/API를 갖추고 검증해야 한다.
 
 - 사용자 최종 확인에 따라 기존 skills·tools·workflows 하위 구성은 `src/agent_service/agents/analysis/workflow/`로 통합한다. 009의 app/workflow 경로 고정 해석은 정정한다. 자산은 한 곳에서 관리하고 저장된 이전 경로는 resolver로 호환한다.
 

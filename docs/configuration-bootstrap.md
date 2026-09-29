@@ -120,3 +120,11 @@ PYTHONPATH=src python -m alembic -c alembic.ini upgrade head --sql
 ```
 
 `worker_past`, `workflow/tools/data_io/tmp/extract_data2.py`, 독립 부하테스트 도구는 이번 서비스 설정 통합 범위에 포함하지 않는다. source/Docker 실행을 검증 대상으로 삼았으며 기존 wheel packaging 구조는 후속 패키지 분리 때 정비한다.
+
+## 그래프 실행과 서비스 DB 연결
+
+Run 실행 준비·결과 저장은 짧은 서비스 DB 트랜잭션으로 처리한다. 실행 준비의 시작 이벤트 commit 후에는 refresh로 새 트랜잭션을 열지 않는다. `ainvoke_user_turn`·`ainvoke_resume`·`astream_user_turn`은 열린 `db`를 받지 않고 일반 실행 값만 받는다. 테스트/별도 조립에서 필요한 경우 `session_factory=`를 주입할 수 있으며, 기본값은 기존 프로세스 공용 SQLAlchemy 풀을 사용한다.
+
+프로젝트 설정 조회와 각 그래프 상태 투영은 `short_session`으로 별도 세션을 열고 닫는다. 이는 새 풀/연결을 매번 생성하는 방식이 아니다. 세션이 필요한 순간 공용 풀에서 연결을 빌리고, 그래프 실행·checkpoint 접근·스트림 소비자 대기 전에는 반납한다. 체크포인터와 Executor bridge의 기존 풀은 별개로 유지한다. heartbeat/취소 감시도 필요한 순간에는 짧게 서비스 DB를 사용한다.
+
+이 변경은 동일 세션의 업무 잠금을 해제하지 않는다. 모델 대기 중 연결 반환과 세션 입력 허용은 서로 다른 문제다. 새 설정이나 DB migration은 필요하지 않다. 연결 1개 테스트는 회귀 검증 조건이며 운영 풀 크기 권장값은 아니다.

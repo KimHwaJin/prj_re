@@ -1,7 +1,8 @@
 """API-boundary LangGraph runtime.
 
-Graph nodes stay free of DB/CRUD calls. API handlers build graph_input here,
-then persist UI messages through ``ainvoke_with_crud_message_persistence``.
+Graph nodes stay free of service DB/CRUD calls. The Worker passes plain
+execution values; this boundary loads project context and projects results in
+separate short sessions. Never pass an open caller session into graph execution.
 """
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ from app.services.graph_crud_persistence import (
     astream_with_crud_message_persistence,
 )
 from app.services.graph_event_persistence import GraphPersistenceDispatcher
-from app.services.agent_project_context import load_project_snapshot, ensure_project_snapshot
+from app.services.agent_project_context import read_project_snapshot, ensure_project_snapshot
 
 
 GRAPH_MESSAGE_SOURCE = "dtest-agent"
@@ -319,8 +320,8 @@ def graph_config(
 
 
 async def ainvoke_user_turn(
-    db: Any,
     *,
+    session_factory: Any | None = None,
     user_id: UUID,
     project_id: UUID,
     session_id: UUID,
@@ -341,13 +342,16 @@ async def ainvoke_user_turn(
         trigger_message_id=trigger_message_id,
         request_id=request_id,
     )
-    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
+    graph_input.update(await read_project_snapshot(
+        user_id=user_id, session_id=session_id, project_id=project_id,
+        session_factory=session_factory,
+    ))
     if graph is None:
         async with runtime.open_graph() as compiled:
             return await ainvoke_with_crud_message_persistence(
                 compiled,
                 graph_input,
-                db=db,
+                session_factory=session_factory,
                 user_id=user_id,
                 config=graph_config(session_id, run_id, callbacks),
                 dispatcher=dispatcher,
@@ -357,7 +361,7 @@ async def ainvoke_user_turn(
     return await ainvoke_with_crud_message_persistence(
         graph,
         graph_input,
-        db=db,
+        session_factory=session_factory,
         user_id=user_id,
         config=graph_config(session_id, run_id, callbacks),
         dispatcher=dispatcher,
@@ -367,8 +371,8 @@ async def ainvoke_user_turn(
 
 
 async def ainvoke_resume(
-    db: Any,
     *,
+    session_factory: Any | None = None,
     user_id: UUID,
     session_id: UUID,
     checkpoint_run_id: UUID,
@@ -385,21 +389,27 @@ async def ainvoke_resume(
     run_id = agent_run_id or checkpoint_run_id
     if graph is None:
         async with runtime.open_graph() as compiled:
-            await ensure_project_snapshot(compiled, config, db=db, user_id=user_id, session_id=session_id)
+            await ensure_project_snapshot(
+                compiled, config, session_factory=session_factory,
+                user_id=user_id, session_id=session_id,
+            )
             return await ainvoke_with_crud_message_persistence(
                 compiled,
                 graph_input,
-                db=db,
+                session_factory=session_factory,
                 user_id=user_id,
                 config=config,
                 dispatcher=dispatcher,
                 agent_run_id=run_id,
             )
-    await ensure_project_snapshot(graph, config, db=db, user_id=user_id, session_id=session_id)
+    await ensure_project_snapshot(
+        graph, config, session_factory=session_factory,
+        user_id=user_id, session_id=session_id,
+    )
     return await ainvoke_with_crud_message_persistence(
         graph,
         graph_input,
-        db=db,
+        session_factory=session_factory,
         user_id=user_id,
         config=config,
         dispatcher=dispatcher,
@@ -408,8 +418,8 @@ async def ainvoke_resume(
 
 
 async def astream_user_turn(
-    db: Any,
     *,
+    session_factory: Any | None = None,
     user_id: UUID,
     project_id: UUID,
     session_id: UUID,
@@ -429,13 +439,16 @@ async def astream_user_turn(
         trigger_message_id=trigger_message_id,
         request_id=request_id,
     )
-    graph_input.update(await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id))
+    graph_input.update(await read_project_snapshot(
+        user_id=user_id, session_id=session_id, project_id=project_id,
+        session_factory=session_factory,
+    ))
     if graph is None:
         async with runtime.open_graph() as compiled:
             async for state in astream_with_crud_message_persistence(
                 compiled,
                 graph_input,
-                db=db,
+                session_factory=session_factory,
                 user_id=user_id,
                 config=graph_config(session_id, run_id),
                 dispatcher=dispatcher,
@@ -447,7 +460,7 @@ async def astream_user_turn(
     async for state in astream_with_crud_message_persistence(
         graph,
         graph_input,
-        db=db,
+        session_factory=session_factory,
         user_id=user_id,
         config=graph_config(session_id, run_id),
         dispatcher=dispatcher,
