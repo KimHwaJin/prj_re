@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/task-diagnostics",
+  "base": "43f950f",
+  "existing_regressions": {
+    "passed": 101,
+    "seconds": 63.01
+  },
+  "new_focused_tests": {
+    "passed": 36,
+    "seconds": 27.03
+  },
+  "full_tests": {
+    "passed": 495,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "seconds": 182.41,
+    "includes_focused_tests": true
+  },
+  "package": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "openapi_paths": 34,
+    "role_prompts": 7,
+    "mock_graph_steps": 6
+  },
+  "http_select_counts_including_auth": {
+    "task_detail": 2,
+    "task_list": 3,
+    "invocation_list": 3
+  },
+  "long_history": {
+    "invocations": 205,
+    "limit": 200,
+    "pages": [
+      200,
+      5
+    ]
+  },
+  "owner_heartbeat_age_test_days": 8,
+  "removed_commands": [
+    "task resume",
+    "task cancel",
+    "task stream"
+  ],
+  "admin_read_routes_added": 3,
+  "message_cud_changed": false,
+  "migration_added": false,
+  "configuration_added": false,
+  "external_services_called": false,
+  "deployed": false,
+  "limitations": [
+    "API response contract changes require client migration",
+    "legacy internal demo not migrated",
+    "no liveness guarantee from heartbeat",
+    "no administrator recovery commands",
+    "no production/multi-Pod/load validation"
+  ]
+}

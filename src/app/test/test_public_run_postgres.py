@@ -171,8 +171,8 @@ async def test_cancel_and_session_lock_by_public_state(runtime, monkeypatch, sta
         assert after['status']==stage and after['completed_at'] is None
         body={'input':{'messages':[{'role':'user','content':'blocked'}]}}
         assert (await h.client.post(path(h), headers={**headers(h.user['user_id']), 'Idempotency-Key':'blocked'},json=body)).status_code==409
-        # Deprecated Task cancel cannot bypass the external wait guard.
-        assert (await h.client.post(f"/api/v1/tasks/{first['task_id']}/cancel",headers=headers(h.user['user_id']),json={})).status_code==409
+        # Removed Task commands cannot bypass the Run external-wait guard.
+        assert (await h.client.post(f"/api/v1/tasks/{first['task_id']}/cancel",headers=headers(h.user['user_id']),json={})).status_code==404
 
 
 @pytest.mark.asyncio

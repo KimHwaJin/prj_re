@@ -72,6 +72,12 @@ settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED'
 app = create_app(settings)
 paths = app.openapi()['paths']
 assert any(p.endswith('/runs') for p in paths)
+assert '/api/v1/tasks/{task_id}' in paths
+assert '/api/v1/admin/tasks/{task_id}' in paths
+for suffix in ('resume', 'cancel', 'stream'):
+    assert '/api/v1/tasks/{task_id}/' + suffix not in paths
+    assert '/api/v1/sessions/{session_id}/runs/{run_id}/' + suffix in paths
+
 agent_settings = load_agent_settings({'MODEL_PROVIDER':'mock', 'DATA_MOCK':'true',
     'DEMO_ARTIFACTS_ENABLED':'false', 'EXECUTOR_SUBMIT_ENABLED':'false', 'EXECUTOR_SOURCE_TYPE':'INLINE'})
 

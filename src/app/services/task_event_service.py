@@ -11,7 +11,7 @@ from app.models.common.agent_run_model import AgentRunModel
 
 
 class TaskEventService:
-    """Task SSE event의 원자적 append와 cursor 이후 조회만 담당합니다."""
+    """Task에 저장하는 durable event의 append와 공개 Run SSE 조회를 담당합니다."""
 
     @staticmethod
     async def append(
@@ -69,31 +69,6 @@ class TaskEventService:
             payload=payload,
             commit=commit,
         )
-
-    @staticmethod
-    async def list_after(
-        db: AsyncSession, *, run_id: UUID, sequence: int, limit: int
-    ) -> list[TaskEventModel]:
-        return list((await db.scalars(
-            select(TaskEventModel)
-            .where(TaskEventModel.run_id == run_id, TaskEventModel.sequence > sequence)
-            .order_by(TaskEventModel.sequence)
-            .limit(limit)
-        )).all())
-
-    @staticmethod
-    async def list_after_task(
-        db: AsyncSession, *, task_id: UUID, sequence: int, limit: int
-    ) -> list[TaskEventModel]:
-        """HITL resume Run이 바뀌어도 Task 전체 event sequence를 이어서 반환합니다."""
-        return list((await db.scalars(
-            select(TaskEventModel)
-            .where(TaskEventModel.task_id == task_id, TaskEventModel.sequence > sequence)
-            .order_by(TaskEventModel.sequence)
-            .limit(limit)
-        )).all())
-
-
 
     @staticmethod
     async def list_after_public_run(db: AsyncSession, *, run_id: UUID, sequence: int, limit: int):

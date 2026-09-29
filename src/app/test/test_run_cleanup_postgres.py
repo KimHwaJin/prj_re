@@ -165,11 +165,11 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
             json={'input': {'messages': [{'role': 'user', 'content': 'second'}]}})
         assert response.status_code == 409
         response = await h.client.get(f'/api/v1/sessions/{h.session_id}/tasks', headers=headers(h.user['user_id']))
-        assert response.status_code == 200 and response.json()[0]['recovery_required'] is True
+        assert response.status_code == 200 and response.json()['items'][0]['recovery_required'] is True
         async with h.factory() as db:
             with pytest.raises(ExecutionNeedsRecovery):
                 await RunService._lock_run_and_task(db, UUID(queued['id']))
-        response = await h.client.post(f'/api/v1/tasks/{task.task_id}/cancel',
+        response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["id"]}/cancel',
             headers=headers(h.user['user_id']), json={})
         assert response.status_code == 409
         with pytest.raises(ExecutionNeedsRecovery):
@@ -304,7 +304,7 @@ async def test_hitl_resume_keeps_normal_lifecycle(runtime, monkeypatch):
     await worker.execute_claimed(await worker.claim_one())
     run, task = await rows(h, queued['id'])
     assert run.status == AgentRunStatus.INTERRUPTED and task.status == TaskStatus.WAITING_INPUT
-    response = await h.client.post(f'/api/v1/tasks/{task.task_id}/resume',
+    response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["id"]}/resume',
         headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
         json={'command': {'resume': {'approved': True}}, 'resume_token': str(run.run_id)})
     assert response.status_code == 202, response.text

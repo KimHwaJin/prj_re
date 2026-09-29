@@ -1,44 +1,68 @@
+"""Read-only operational diagnostics; user execution commands belong to Runs."""
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
-from typing import Any
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel, ConfigDict, Field
+from app.core.enums import AgentRunStatus, TaskStatus
 
-from app.core.enums import TaskStatus
+
+class SessionExecutionResource(BaseModel):
+    ownership_held: bool
+    owner_kind: str | None = None
+    owner_id: UUID | None = None
+    owner_process: str | None = None
+    acquired_at: datetime | None = None
+    heartbeat_at: datetime | None = Field(default=None, description="Last recorded heartbeat, not proof of liveness or termination.")
+    recovery_required: bool = False
+    recovery_reason: str | None = None
+
+
+class SessionWorkResource(BaseModel):
+    resources_active: bool
+    has_unfinished_work: bool
+    can_start_new_run: bool = Field(description="Conservative snapshot for a fresh input, not HITL resume or a reservation; POST rechecks admission.")
+    blocking_reasons: list[Literal["resources_inactive", "unfinished_task", "unfinished_run", "unfinished_llm", "execution_held_or_uncertain"]]
+    execution: SessionExecutionResource
 
 
 class TaskResource(BaseModel):
-    """Session lock 관찰용 응답. lock_token은 보안상 API에 노출하지 않습니다."""
-
-    model_config = ConfigDict(from_attributes=True)
-
     task_id: UUID
+    public_run_id: UUID | None
     graph_task_id: UUID | None
     root_run_id: UUID | None
     checkpoint_run_id: UUID | None
     session_id: UUID
     trigger_message_id: UUID | None
     trigger_type: str
-    status: TaskStatus
-    is_active: bool
-    lock_owner: str | None
+    status: TaskStatus = Field(description="Internal Task state; waiting_input can also represent Executor waiting. Use public Run status for UI.")
+    is_unfinished: bool
+    lock_owner: str | None = Field(description="Task lease owner; current graph ownership is session_work.execution.")
     heartbeat_at: datetime | None
     lease_expires_at: datetime | None
     cancel_requested_at: datetime | None
     failure_reason: str | None
-    recovery_required: bool = False
+    recovery_required: bool
     created_at: datetime
     updated_at: datetime
     completed_at: datetime | None
+    observed_at: datetime
+    session_work: SessionWorkResource
 
 
-class TaskResume(BaseModel):
-    """waiting_input Task를 같은 장기 Job 안에서 재개하는 입력입니다."""
-
-    command: dict[str, Any] | str
-    metadata: dict[str, Any] = Field(default_factory=dict)
-
-
-class TaskCancel(BaseModel):
-    reason: str | None = Field(default=None, max_length=1000)
+class TaskInvocationResource(BaseModel):
+    invocation_id: UUID = Field(description="Internal execution segment ID, not the stable public Run ID.")
+    public_run_id: UUID
+    task_id: UUID
+    session_id: UUID
+    status: AgentRunStatus
+    attempt_count: int
+    next_attempt_at: datetime | None
+    cancel_requested_at: datetime | None
+    cancel_reason: str | None
+    failure: dict | None
+    created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None

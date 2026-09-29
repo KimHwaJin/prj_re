@@ -1,6 +1,6 @@
 # 공개 Run API 계약
 
-019 구현 · 2026-09-29
+019 구현 / 022 Task 진단 계약 반영 · 2026-09-29
 
 `run_id`(응답 필드 `id`)는 최초 접수부터 여러 HITL과 Executor 최종 결과까지 유지한다. 내부 `agent_runs.run_id`는 실행 구간 ID이며, 공개 ID는 `agent_runs.public_run_id`다. 초기 구간에서는 두 값이 같다. 프론트는 `task_id`나 `checkpoint_run_id`로 재개 대상을 조립하지 않는다.
 
@@ -66,13 +66,13 @@
 
 `POST .../runs/R/cancel`은 최신 내부 구간/Task에 적용한다. 실행 중이면 실제 중단 확인까지 상태·세션 보호를 유지한다. 사용자 응답 대기 중 취소는 즉시 종료하며 반복 취소는 같은 canceled 상태를 반환한다.
 
-Executor에 이미 제출한 작업은 외부 취소 확인 계약을 구현하지 않았으므로 cancel에 409를 반환한다. 로컬 Task만 취소하여 외부 작업이 살아 있는 세션을 해제하지 않는다. 이 제한은 deprecated Task cancel에도 동일하다.
+Executor에 이미 제출한 작업은 외부 취소 확인 계약을 구현하지 않았으므로 cancel에 409를 반환한다. 로컬 Task만 취소하여 외부 작업이 살아 있는 세션을 해제하지 않는다. Task cancel 경로는 022에서 제거했으며 취소는 이 Run 경로만 사용한다.
 
 ## 기존 클라이언트 변경
 
 - `POST .../runs`의 command/metadata.resume_run_id 재개 방식은 종료한다. `/runs/R/resume`과 `resume_token`으로 바꾼다.
 - 공개 상태 `interrupted` 검사는 `waiting_input`/`waiting_executor`로 분리한다.
-- Tasks 라우트는 deprecated로 남겨 둔다. Task resume도 동일한 token을 받아 공통 공개 Run 접수 경로를 사용한다. Tasks 전체 삭제/공개 API 정리는 다음 작업이다.
+- Task GET은 [진단 API](task-diagnostics-api.md)로 유지한다. Task resume/cancel/stream은 제거되어 404이며 Runs로 통일한다. Task 목록·내부 구간 이력은 cursor Page 응답이고, 내부 invocation_id와 공개 public_run_id를 구분한다. 관리자 진단은 별도 /admin 경로다.
 - 현재 공유 부하 시나리오 `scripts/loadtest/scenario.py`는 새 계약을 사용한다. 사전 생성된 테스트 관리자를 `DTEST_LOADTEST_ADMIN_USER_ID`로 지정한다. 과거 진단/벤치마크는 저장된 정확한 이전 commit을 비교하는 자료이므로 일괄 치환하지 않는다.
 - 내부 데모 UI의 전면 연계 수정은 이번 범위가 아니다.
 

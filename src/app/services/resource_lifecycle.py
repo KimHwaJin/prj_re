@@ -63,24 +63,38 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
     return session
 
 
-async def require_idle(db: AsyncSession, session_ids, *, resource: str) -> None:
-    """Check one MVCC snapshot without waiting on Worker Run/Task row locks.
+def unfinished_work_conditions(*, session_ids=None, session_id=None):
+    """Shared predicates for mutation guards and read-only diagnostics.
 
-    Caller must own the admission barrier (or exclusive user/project deletion
-    barrier) until mutation commits. A SELECT alone is not a race-safe guard.
+    session_id can be an outer SQL column. Keep each inner table local so the
+    EXISTS expressions also work when diagnostics join Task/owner themselves.
     """
-    busy_task = select(TaskModel.task_id).where(TaskModel.session_id.in_(session_ids), or_(
-        TaskModel.status.not_in(TERMINAL_TASKS), TaskModel.recovery_required.is_(True),
-    )).exists()
-    busy_run = select(AgentRunModel.run_id).where(AgentRunModel.session_id.in_(session_ids), or_(
-        AgentRunModel.status.in_((AgentRunStatus.PENDING, AgentRunStatus.RUNNING)),
-        (AgentRunModel.status == AgentRunStatus.INTERRUPTED) & AgentRunModel.task_id.is_(None),
-    )).exists()
-    busy_llm = select(LLMRunModel.run_id).where(LLMRunModel.session_id.in_(session_ids),
-        LLMRunModel.status.in_((LLMRunStatus.QUEUED, LLMRunStatus.RUNNING))).exists()
-    busy_owner = select(SessionExecutionModel.session_id).where(
-        SessionExecutionModel.session_id.in_(session_ids), or_(
+    def matches(column):
+        return column == session_id if session_id is not None else column.in_(session_ids)
+
+    def exists(model, *conditions):
+        return select(1).select_from(model).where(
+            matches(model.session_id), *conditions,
+        ).correlate_except(model).exists()
+
+    return {
+        "unfinished_task": exists(TaskModel, or_(
+            TaskModel.status.not_in(TERMINAL_TASKS), TaskModel.recovery_required.is_(True),
+        )),
+        "unfinished_run": exists(AgentRunModel, or_(
+            AgentRunModel.status.in_((AgentRunStatus.PENDING, AgentRunStatus.RUNNING)),
+            (AgentRunModel.status == AgentRunStatus.INTERRUPTED) & AgentRunModel.task_id.is_(None),
+        )),
+        "unfinished_llm": exists(LLMRunModel,
+            LLMRunModel.status.in_((LLMRunStatus.QUEUED, LLMRunStatus.RUNNING))),
+        "execution_held_or_uncertain": exists(SessionExecutionModel, or_(
             SessionExecutionModel.token.is_not(None), SessionExecutionModel.recovery_required.is_(True),
-        )).exists()
-    if await db.scalar(select(or_(busy_task, busy_run, busy_llm, busy_owner))):
+        )),
+    }
+
+
+async def require_idle(db: AsyncSession, session_ids, *, resource: str) -> None:
+    """Caller owns admission/deletion barriers until mutation commits."""
+    conditions = unfinished_work_conditions(session_ids=session_ids)
+    if await db.scalar(select(or_(*conditions.values()))):
         raise HTTPException(409, f"{resource} has unfinished work; finish or cancel it before deletion or moving.")
