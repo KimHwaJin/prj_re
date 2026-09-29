@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 구현 브랜치: `feature/refactor-session-ownership` (014, 013/70e1c9b에서 파생; 베이스는 012/fb89dbc까지 통합)
+현재 구현 브랜치: `feature/refactor-graceful-shutdown` (015, 014/feba2d2에서 파생; 베이스는 012/fb89dbc까지 통합)
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -34,6 +34,7 @@
 | 012 | Agent 업무 흐름 회귀 정상화·동기 I/O 취소 수명 | 구현·오프라인/패키지 검증 완료 / 실제 DB·배포 미수행 | 2026-09-28 | [변경·검증·제한](012-agent-flow-validation.md) |
 | 013 | 프로세스별 Run 동시 실행·대기 세션 보호·Executor 완료 반영 | 구현·격리 PostgreSQL/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](013-run-concurrency.md) |
 | 014 | API Run·Executor 이벤트 공통 세션 실행 소유권 | 구현·격리 PostgreSQL/패키지 검증 완료 / 자동 복구·배포 미수행 | 2026-09-29 | [변경·검증·제한](014-session-execution-ownership.md) |
+| 015 | 서비스 종료 시 새 점유 중단·현재 호출 drain | 구현·실제 SIGTERM/격리 PostgreSQL 검증 완료 / 배포 미수행 | 2026-09-29 | [변경·검증·제한](015-graceful-shutdown.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

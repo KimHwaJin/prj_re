@@ -27,16 +27,23 @@ log = logging.getLogger(__name__)
 class BackgroundRuntime:
     """Owns background loops once per application lifespan, not per router."""
 
-    def __init__(self, factories: dict[str, Callable[[], Awaitable[Any]]], timeout: float):
+    def __init__(self, factories: dict[str, Callable[[], Awaitable[Any]]], timeout: float, *,
+                 stop_event: asyncio.Event | None = None, drain_timeout: float = 0):
         self.factories = factories
         self.timeout = timeout
+        self.stop_event = stop_event if stop_event is not None else asyncio.Event()
+        self.drain_timeout = drain_timeout
+        self.draining = False
+        self._cleanup_deadline: float | None = None
+        self._drain_deadline: float | None = None
+        self._stop_task: asyncio.Task | None = None
         self.tasks: dict[str, asyncio.Task] = {}
         self.started = False
 
     @property
     def ready(self) -> bool:
         from app.core.execution_lifecycle import execution_health
-        return self.started and execution_health.healthy and all(not task.done() for task in self.tasks.values())
+        return self.started and not self.draining and execution_health.healthy and all(not task.done() for task in self.tasks.values())
 
     def _observe(self, task: asyncio.Task) -> None:
         if not task.cancelled():
@@ -48,7 +55,7 @@ class BackgroundRuntime:
                 log.error("background_loop_exited name=%s", task.get_name())
 
     async def start(self) -> None:
-        if self.started or self.tasks:
+        if self.started or self.tasks or self.draining:
             raise RuntimeError("Background runtime has already started")
         try:
             for name, factory in self.factories.items():
@@ -60,16 +67,46 @@ class BackgroundRuntime:
             if not self.ready:
                 raise RuntimeError("A background loop exited during startup")
         except BaseException:
-            await self.stop()
+            await self.stop(graceful=False)
             raise
 
-    async def stop(self) -> None:
+    def request_stop(self, *, graceful: bool = True) -> None:
+        """Start one shutdown clock, including when called by the server signal hook."""
+        now = asyncio.get_running_loop().time()
+        if not self.draining:
+            self.draining = True
+            self._drain_deadline = now + (self.drain_timeout if graceful else 0)
+            log.info("service_draining grace_seconds=%s", self.drain_timeout if graceful else 0)
+        elif not graceful:
+            self._drain_deadline = now
         self.started = False
+        self.stop_event.set()
+        if self._stop_task is None or (self._stop_task.done() and
+                (self._stop_task.cancelled() or self._stop_task.exception() is not None)):
+            self._stop_task = asyncio.create_task(self._stop(), name="service-owned-shutdown")
+            self._stop_task.add_done_callback(self._observe)
+
+    async def stop(self, *, graceful: bool = True) -> None:
+        from app.core.execution_lifecycle import protected_cleanup
+        self.request_stop(graceful=graceful)
+        task = self._stop_task
+        async def join():
+            await asyncio.shield(task)
+        await protected_cleanup(join())
+
+    async def _stop(self) -> None:
         pending = [task for task in self.tasks.values() if not task.done()]
-        for task in pending:
-            task.cancel()
         if pending:
-            _, unfinished = await asyncio.wait(pending, timeout=self.timeout)
+            remaining = max(0, self._drain_deadline - asyncio.get_running_loop().time())
+            _, pending = await asyncio.wait(pending, timeout=remaining)
+        if self._cleanup_deadline is None:
+            self._cleanup_deadline = asyncio.get_running_loop().time() + self.timeout
+        for task in pending:
+            if not task.cancelling():
+                task.cancel()
+        if pending:
+            log.info("service_drain_expired cancelling_workers=%s", len(pending))
+            _, unfinished = await asyncio.wait(pending, timeout=max(0, self._cleanup_deadline - asyncio.get_running_loop().time()))
             if unfinished:
                 names = ", ".join(sorted(task.get_name() for task in unfinished))
                 raise RuntimeError(f"Background shutdown deadline exceeded: {names}")
@@ -78,25 +115,25 @@ class BackgroundRuntime:
         from app.core.execution_lifecycle import execution_health
         recorders = list(execution_health.recorders)
         if recorders:
-            _, unfinished = await asyncio.wait(recorders, timeout=self.timeout)
+            _, unfinished = await asyncio.wait(recorders, timeout=max(0, self._cleanup_deadline - asyncio.get_running_loop().time()))
             if unfinished:
                 raise RuntimeError("Recovery recording shutdown deadline exceeded")
             await asyncio.gather(*recorders, return_exceptions=True)
         self.tasks.clear()
 
 
-def _background_factories(settings: ServiceSettings) -> dict[str, Callable]:
+def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event) -> dict[str, Callable]:
     factories: dict[str, Callable] = {}
     if settings.api.task_reconciler_enabled:
-        from app.task_lock_reconciler import run_forever
-        factories["task-lock-reconciler"] = run_forever
+        from app.task_lock_reconciler import run_forever as reconcile
+        factories["task-lock-reconciler"] = lambda: reconcile(stop_event=stop_event)
     if settings.api.agent_worker_enabled:
         from app.agent_run_worker import run_forever
-        factories["agent-run-worker"] = run_forever
+        factories["agent-run-worker"] = lambda: run_forever(stop_event=stop_event)
     if settings.event_worker_enabled:
         from app.agent_worker.worker_main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
-        factories["executor-event-worker"] = lambda: main(install_signals=False)
+        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event)
     return factories
 
 
@@ -141,9 +178,11 @@ def attach_service(
         router = api_router
     app.include_router(router, prefix=settings.api.api_v1_prefix)
     previous_lifespan = app.router.lifespan_context
+    stop_event = asyncio.Event()
     background = BackgroundRuntime(
-        _background_factories(settings) if background_factories is None else background_factories,
-        settings.shutdown_timeout_seconds,
+        _background_factories(settings, stop_event) if background_factories is None else background_factories,
+        settings.shutdown_timeout_seconds, stop_event=stop_event,
+        drain_timeout=settings.shutdown_drain_seconds,
     )
 
     @asynccontextmanager
@@ -160,8 +199,11 @@ def attach_service(
                 # A timed-out background task may still be using these pools.
                 # Leave them owned until process termination rather than closing
                 # resources beneath a live graph.
-                await background.stop()
-                await close_resources()
+                from app.core.execution_lifecycle import protected_cleanup
+                async def shutdown():
+                    await background.stop()
+                    await close_resources()
+                await protected_cleanup(shutdown())
 
     app.router.lifespan_context = combined_lifespan
     app.state.dtest_attached = True
@@ -222,6 +264,21 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     return app
 
 
+def build_server(app, settings: ServiceSettings):
+    """Root launcher: notify Workers at SIGTERM, before HTTP connection drain."""
+    import uvicorn
+
+    class DrainServer(uvicorn.Server):
+        def handle_exit(self, sig, frame):
+            app.state.service_runtime.request_stop()
+            super().handle_exit(sig, frame)
+
+    return DrainServer(uvicorn.Config(
+        app, host=settings.api.server_host, port=settings.api.server_port,
+        log_config=None, timeout_graceful_shutdown=settings.shutdown_timeout_seconds,
+    ))
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Start the DTest API and configured Workers")
     parser.add_argument("--env", choices=("dev", "stg", "prd"))
@@ -236,5 +293,4 @@ def main(argv: list[str] | None = None) -> None:
     if settings.api.server_reload:
         parser.error("server_reload is not supported by this single-process bootstrap")
     logging.basicConfig(level=logging.INFO)
-    import uvicorn
-    uvicorn.run(create_app(settings), host=settings.api.server_host, port=settings.api.server_port, log_config=None)
+    build_server(create_app(settings), settings).run()

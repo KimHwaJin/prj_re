@@ -58,7 +58,7 @@ def _install_signal_handlers(worker: ExecutorWorker) -> list[signal.Signals]:
     return installed
 
 
-async def main(*, install_signals: bool = True) -> None:
+async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None = None) -> None:
     from service_settings import get_settings
     from agent_service.runtime.langgraph.checkpointer import create_checkpointer
     service = get_settings()
@@ -97,7 +97,10 @@ async def main(*, install_signals: bool = True) -> None:
             worker.add_readiness_check("session-execution", execution_ready)
             installed = _install_signal_handlers(worker) if install_signals else []
             try:
-                await worker.run()
+                if stop_event is None:
+                    await worker.run()
+                else:
+                    await worker.run(stop_event=stop_event)
             finally:
                 loop = asyncio.get_running_loop()
                 for signum in installed:

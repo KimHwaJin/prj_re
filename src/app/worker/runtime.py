@@ -11,6 +11,7 @@ from prometheus_client import generate_latest
 from psycopg_pool import AsyncConnectionPool
 from redis.asyncio import Redis
 
+from app.core.execution_lifecycle import protected_cleanup
 from app.worker.config import Settings
 from app.worker.consumer import (
     RedisStreamConsumer,
@@ -160,15 +161,21 @@ class ExecutorWorker:
             raise ValueError(f"Duplicate readiness check: {name}")
         self._readiness_checks[name] = check
 
-    async def run(self) -> None:
+    async def run(self, *, stop_event: asyncio.Event | None = None) -> None:
         if self._running:
             raise RuntimeError("Worker already running")
+        if stop_event is not None and stop_event.is_set():
+            self.request_stop()
         if self._stop.is_set():
             return
         self._running = True
         server = None
         tasks: list[asyncio.Task] = []
         stopper = asyncio.create_task(self._stop.wait())
+        async def relay_stop():
+            await stop_event.wait()
+            self.request_stop()
+        external_stop = asyncio.create_task(relay_stop()) if stop_event is not None else None
         try:
             if self.settings.health_port:
                 server = await asyncio.start_server(
@@ -192,21 +199,26 @@ class ExecutorWorker:
                     await task
                     if not self._stop.is_set():
                         raise RuntimeError("Worker loop stopped unexpectedly")
+            # Embedded mode shares the service's single drain deadline. Standalone
+            # mode retains its existing EW_SHUTDOWN_SECONDS grace period.
+            await asyncio.gather(*(c.shutdown(
+                None if stop_event is not None else self.settings.shutdown_seconds
+            ) for c in self.consumers))
         finally:
-            self.request_stop()
-            await asyncio.gather(
-                *(
-                    c.shutdown(self.settings.shutdown_seconds)
-                    for c in self.consumers
-                )
-            )
-            for task in [*tasks, stopper]:
-                task.cancel()
-            await asyncio.gather(*tasks, stopper, return_exceptions=True)
-            if server is not None:
-                server.close()
-                await server.wait_closed()
-            self._running = False
+            async def cleanup():
+                self.request_stop()
+                owned = [*tasks, stopper]
+                if external_stop is not None:
+                    owned.append(external_stop)
+                for task in owned:
+                    if not task.done() and not task.cancelling():
+                        task.cancel()
+                await asyncio.gather(*owned, return_exceptions=True)
+                if server is not None:
+                    server.close()
+                    await server.wait_closed()
+                self._running = False
+            await protected_cleanup(cleanup())
 
     async def _loop(
         self,

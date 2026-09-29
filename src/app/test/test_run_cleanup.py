@@ -26,7 +26,7 @@ async def isolated(monkeypatch):
     monkeypatch.setattr(service_settings, '_snapshot', None)
     service_settings.configure(service_settings.load_settings(config={
         'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False,
-        'EVENT_WORKER_ENABLED': False, 'RUN_CLEANUP_TIMEOUT_SECONDS': .05, 'SHUTDOWN_TIMEOUT_SECONDS': .02,
+        'EVENT_WORKER_ENABLED': False, 'RUN_CLEANUP_TIMEOUT_SECONDS': .05, 'SHUTDOWN_DRAIN_SECONDS': 0, 'SHUTDOWN_TIMEOUT_SECONDS': .02,
         'RUN_MONITOR_TIMEOUT_SECONDS': .1, 'TASK_LEASE_SECONDS': 3,
     }, environ={}))
     monkeypatch.setattr(execution_health, 'faults', {})

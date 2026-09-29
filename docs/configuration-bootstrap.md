@@ -82,7 +82,7 @@ Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수
 
 ## 수명과 플랫폼 경계
 
-`create_app()`은 로컬 앱을 만들고 `create_app(platform_app=..., settings=...)`은 이미 조립된 FastAPI에 붙인다. `attach_service()`는 기존 앱/라우터 lifespan을 보존하면서 Worker 시작·종료와 공유 자원 정리를 합성한다. 두 번 붙이면 오류다. startup 실패 시 시작된 형제 작업을 정리하고, 종료에서는 모든 작업에 취소를 먼저 전달한 다음 제한 시간까지 기다린다. Run 내부 종료 경로는 [001 개선](improvements/001-run-cleanup-stall.md)에서 stop 신호와 종료 기한 관찰로 변경했다. 종료가 확인되지 않은 background 작업이 있으면 서비스 공용 자원을 먼저 닫지 않는다. 종료 기한 초과는 오류로 드러내며, 취소를 무시하는 Python 코루틴을 강제 종료하는 기능은 아니다.
+`create_app()`은 로컬 앱을 만들고 `create_app(platform_app=..., settings=...)`은 이미 조립된 FastAPI에 붙인다. `attach_service()`는 기존 앱/라우터 lifespan을 보존하면서 Worker 시작·종료와 공유 자원 정리를 합성한다. 두 번 붙이면 오류다. startup 실패 시 시작된 형제 작업을 정리한다. 015부터 정상 종료는 새 점유를 중단하고 현재 호출에 유예 시간을 준 뒤, 남은 작업만 취소한다. Run 내부 종료 경로는 [001 개선](improvements/001-run-cleanup-stall.md)에서 stop 신호와 종료 기한 관찰로 변경했다. 종료가 확인되지 않은 background 작업이 있으면 서비스 공용 자원을 먼저 닫지 않는다. 종료 기한 초과는 오류로 드러내며, 취소를 무시하는 Python 코루틴을 강제 종료하는 기능은 아니다.
 
 `/health`는 기존 생존 확인이다. `/service/ready`는 소유한 background loop가 끝났거나 Run 종료/소유권 불확실성을 감지하면 503으로 바뀐다. 새 `/service/live`도 Run 건전성 실패를 503으로 노출한다. Kubernetes probe 연결은 배포 측에서 별도 검증해야 한다. DB/Redis 접속이나 큐 처리 가능성을 종합 검증하는 준비 상태는 아직 아니다.
 
@@ -93,6 +93,14 @@ Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수
 그래프를 사용하는 호출이 남아 있으면 `SHUTDOWN_TIMEOUT_SECONDS`까지 반환을 기다리고 새 사용은 거절한다. 반환이 확인되지 않으면 다른 서비스 풀도 먼저 닫지 않는다. HITL/Executor 대기로 그래프 호출이 반환된 상태는 자원 차용 중으로 세지 않으며, 대기 세션마다 checkpoint 연결을 하나씩 보유하지 않는다. 초기 그래프에 고정된 설정·의존성·catalog prompt 변경은 재시작으로 반영한다.
 
 플랫폼의 앱·라우터·미들웨어·OpenAPI·계측 및 lifespan 설정이 끝난 **후**에 결합해야 한다. 이후 `GaiaService.main()`이 lifespan을 다시 덮어쓰면 안 된다. 실제 Gaia 원본이 없으므로 템플릿의 main 초기화 분리/계측 보존까지 검증한 상태는 아니다. 플랫폼 core는 수정하지 않았다.
+
+## 정상 종료 유예
+
+`SHUTDOWN_DRAIN_SECONDS`(기본 20초)는 현재 호출의 정상 완료 유예, `SHUTDOWN_TIMEOUT_SECONDS`(기본 25초)는 취소 후 정리 관찰 시간이다. `service.runtime` YAML 또는 같은 대문자 환경변수로 설정한다. drain은 0도 허용하며 YAML의 명시값이 환경변수보다 우선한다. 두 값은 `--check-config`에 표시된다.
+
+루트 `python app.py`는 SIGTERM을 받는 즉시 readiness를 내리고 API Run/이벤트 Worker의 새 점유를 중단한다. 이미 시작된 호출의 heartbeat/소유권은 유지하다 정상 반환 후 해제한다. HITL·Executor 대기로 반환하면 더 기다리지 않는다. 유예 초과 시 취소·복구 필요 정책을 적용하며, 정리 기한도 넘기면 실행 중인 작업 아래에서 풀을 먼저 닫지 않는다.
+
+직접 `uvicorn main:app`을 쓰면 lifespan에서 drain은 적용되지만 SIGTERM 즉시 Worker에 알리는 루트 launcher hook은 적용되지 않는다. 플랫폼의 별도 launcher도 같은 hook 연결이 필요하다. 기존 Compose·실행 중인 컨테이너는 변경하지 않았다. 플랫폼의 종료 예산과 자원 정리 여유를 함께 확인해야 하며, 기본값을 운영 확정값으로 보지 않는다. [015의 검증·진입점 제한](improvements/015-graceful-shutdown.md)을 참고한다.
 
 ## 공통 세션 실행 소유권
 

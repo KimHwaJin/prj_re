@@ -55,7 +55,7 @@ WORKFLOW_RECOMMENDATION_ENABLED WORKFLOW_SIMILARITY_SCORE
 EXTRA_KEYS = {
     "WORKFLOW_DATABASE_URL", "WORKFLOW_PERSISTENCE_ENABLED", "MOCK_DATA_ROOT",
     "EVENT_WORKER_ENABLED", "SHUTDOWN_TIMEOUT_SECONDS", "RUN_DIAGNOSTICS_DIR",
-    "RUN_DIAGNOSTICS_STALL_SECONDS",
+    "RUN_DIAGNOSTICS_STALL_SECONDS", "SHUTDOWN_DRAIN_SECONDS",
 }
 
 
@@ -164,6 +164,7 @@ class ServiceSettings:
     workflow_database_url: str | None = field(repr=False)
     mock_data_root: Path
     shutdown_timeout_seconds: float
+    shutdown_drain_seconds: float
     diagnostics_dir: Path | None
     diagnostics_stall_seconds: float
     sources: Mapping[str, str]
@@ -175,6 +176,8 @@ class ServiceSettings:
             "agent_worker_enabled": self.api.agent_worker_enabled,
             "agent_worker_concurrency": self.api.agent_worker_concurrency,
             "event_worker_enabled": self.event_worker_enabled,
+            "shutdown_drain_seconds": self.shutdown_drain_seconds,
+            "shutdown_timeout_seconds": self.shutdown_timeout_seconds,
             "settings_sources": dict(self.sources),
         }
 
@@ -301,8 +304,9 @@ def load_settings(
         workflow_url = _postgres_url(workflow_url, "WORKFLOW_DATABASE_URL")
     try:
         shutdown = float(merged.get("SHUTDOWN_TIMEOUT_SECONDS", 25))
+        drain = float(merged.get("SHUTDOWN_DRAIN_SECONDS", 20))
         stall = float(merged.get("RUN_DIAGNOSTICS_STALL_SECONDS", 5))
-        if not 0 < shutdown < float("inf") or not 1 <= stall < float("inf"):
+        if not 0 < shutdown < float("inf") or not 1 <= stall < float("inf") or not 0 <= drain < float("inf"):
             raise ValueError()
     except (ValueError, TypeError):
         raise ConfigurationError("Invalid shutdown/diagnostics timeout") from None
@@ -317,7 +321,7 @@ def load_settings(
         event_worker_enabled=_boolean(merged.get("EVENT_WORKER_ENABLED", False), "EVENT_WORKER_ENABLED"),
         workflow_database_url=workflow_url if workflow_enabled else None,
         mock_data_root=Path(mock_root),
-        shutdown_timeout_seconds=shutdown,
+        shutdown_timeout_seconds=shutdown, shutdown_drain_seconds=drain,
         diagnostics_dir=Path(merged["RUN_DIAGNOSTICS_DIR"]) if merged.get("RUN_DIAGNOSTICS_DIR") else None,
         diagnostics_stall_seconds=stall, sources=MappingProxyType(sources),
     )

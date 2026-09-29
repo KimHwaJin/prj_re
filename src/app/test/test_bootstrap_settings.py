@@ -28,7 +28,7 @@ def isolated_snapshot(monkeypatch):
 
 
 def local_settings(**values):
-    return load_settings(config={"AGENT_WORKER_ENABLED": False, "TASK_RECONCILER_ENABLED": False, **values}, environ={})
+    return load_settings(config={"AGENT_WORKER_ENABLED": False, "TASK_RECONCILER_ENABLED": False, "SHUTDOWN_DRAIN_SECONDS": 0, **values}, environ={})
 
 
 def test_config_wins_per_field_and_preserves_false_zero(monkeypatch):

@@ -1,0 +1,71 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/refactor-graceful-shutdown",
+  "parent_commit": "feba2d2",
+  "base_branch_commit": "fb89dbc",
+  "validation": {
+    "passed": 343,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "duration_seconds": 67.85,
+    "new_tests": [
+      "test_stop_is_cooperative_and_repeated_stop_keeps_deadlines",
+      "test_repeated_cancellation_of_stop_caller_does_not_abandon_owned_work",
+      "test_deadline_cancels_only_after_grace",
+      "test_invalid_drain_settings_rejected[-1]",
+      "test_invalid_drain_settings_rejected[bad]",
+      "test_invalid_drain_settings_rejected[nan]",
+      "test_invalid_drain_settings_rejected[inf]",
+      "test_drain_settings_precedence_and_zero",
+      "test_redis_stop_finishes_active_handler_and_ack_without_next_read",
+      "test_redis_forced_cancel_preserves_handler_cleanup_under_repeated_cancel",
+      "test_executor_runtime_uses_service_stop_without_early_handler_cancel",
+      "test_root_server_real_sigterm_drains_before_resource_close[False]",
+      "test_root_server_real_sigterm_drains_before_resource_close[True]",
+      "test_drain_finishes_active_runs_releases_owners_and_leaves_queue[None]",
+      "test_drain_finishes_active_runs_releases_owners_and_leaves_queue[USER_APPROVAL]",
+      "test_drain_finishes_active_runs_releases_owners_and_leaves_queue[EXECUTOR_EVENT]",
+      "test_deadline_exceeded_retains_recovery_ownership",
+      "test_stop_during_committing_claim_finishes_owned_call_normally"
+    ],
+    "warnings_description": "Existing LangGraph durability-without-checkpointer warnings"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "postgres_image": "postgres:17-alpine",
+    "database": "disposable local identity_test",
+    "signals": "real SIGTERM, single and repeated, to separate Uvicorn server subprocesses on temporary ports",
+    "redis": "real consumer/runtime code with controlled client",
+    "llm": "graph stub / offline mocks",
+    "executor": "no external API calls"
+  },
+  "shutdown_settings": {
+    "new": "SHUTDOWN_DRAIN_SECONDS",
+    "default_drain_seconds": 20,
+    "existing_cleanup_setting": "SHUTDOWN_TIMEOUT_SECONDS",
+    "default_cleanup_seconds": 25,
+    "semantics": "first stop fixes the drain deadline; repeated stop does not extend drain/cleanup deadlines"
+  },
+  "package_validation": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "openapi_paths": 33,
+    "role_prompts": 7,
+    "mock_graph_execution_steps": 6
+  },
+  "limitations": [
+    "Real Kubernetes rollout, SIGKILL/node failure and platform template integration not tested.",
+    "Direct uvicorn main:app does not use the root launcher early signal hook; drain still applies at lifespan shutdown.",
+    "No automatic recovery after an unconfirmed termination.",
+    "Actual Redis server failures, LLM/Executor calls and production shutdown budget not validated.",
+    "No workload throughput/latency improvement claimed."
+  ],
+  "deployment": {
+    "existing_services_changed": false,
+    "manifests_changed": false,
+    "base_merged": false,
+    "pushed": false,
+    "deployed": false
+  }
+}

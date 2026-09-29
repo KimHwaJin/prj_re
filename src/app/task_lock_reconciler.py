@@ -21,12 +21,14 @@ async def reconcile_once() -> int:
         return len(recovered)
 
 
-async def run_forever() -> None:
+async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
     """E03-T06: 설정된 주기로 stale lease를 감지합니다."""
 
-    while True:
+    from app.core.execution_lifecycle import wait_for_stop
+    stop_event = stop_event if stop_event is not None else asyncio.Event()
+    while not stop_event.is_set():
         await reconcile_once()
-        await asyncio.sleep(settings.task_reconcile_interval_seconds)
+        await wait_for_stop(stop_event, settings.task_reconcile_interval_seconds)
 
 
 def main() -> None:

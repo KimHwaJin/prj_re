@@ -142,7 +142,7 @@ async def _execute_claimed(item: ClaimedRun) -> None:
             return
 
 
-async def run_forever() -> None:
+async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
     """Bounded per-process dispatcher; PostgreSQL arbitrates cross-process claims.
 
     Only one claim query is in flight, and only when a slot is available. An
@@ -154,6 +154,8 @@ async def run_forever() -> None:
     active: set[asyncio.Task] = set()
     claiming: asyncio.Task | None = None
     stopping = False
+    stop_event = stop_event if stop_event is not None else asyncio.Event()
+    stop_waiter = asyncio.create_task(stop_event.wait(), name="agent-run-stop")
 
     async def claim_and_start() -> bool:
         item = await claim_one()
@@ -175,9 +177,11 @@ async def run_forever() -> None:
                 task.cancel()
         await asyncio.gather(*active, return_exceptions=True)
         active.clear()
+        stop_waiter.cancel()
+        await asyncio.gather(stop_waiter, return_exceptions=True)
 
     try:
-        while True:
+        while not stop_event.is_set():
             for task in list(active):
                 if task.done():
                     active.remove(task)
@@ -194,9 +198,15 @@ async def run_forever() -> None:
             else:
                 timeout = None
             if active:
-                await asyncio.wait(active, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
+                await asyncio.wait(active | {stop_waiter}, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
             else:
-                await asyncio.sleep(interval)
+                await asyncio.wait({stop_waiter}, timeout=interval)
+        # Cooperative stop: keep claims/heartbeats alive until calls return.
+        # The service coordinator cancels us only after its drain deadline.
+        if active:
+            await asyncio.wait(active)
+            for task in active:
+                task.result()
     finally:
         stopping = True
         await protected_cleanup(drain())

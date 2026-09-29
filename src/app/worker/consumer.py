@@ -17,6 +17,8 @@ from redis.exceptions import ResponseError
 
 from app.worker.redis_streams import claim_pending_page
 
+from app.core.execution_lifecycle import protected_cleanup
+
 logger = logging.getLogger(__name__)
 
 _RENEW_LOCK_SCRIPT = """
@@ -242,24 +244,26 @@ class RedisStreamConsumer:
                 if externally_cancelled or not self._stop_requested.is_set():
                     raise
         finally:
-            tasks = tuple(self._slot_tasks)
-            for task in tasks:
-                if not task.done() and not task.cancelling():
-                    task.cancel()
-            if tasks:
-                await asyncio.gather(*tasks, return_exceptions=True)
-            self._slot_tasks.clear()
-            self._slot_health.clear()
-            self._running = False
-            self._stopped.set()
+            async def cleanup():
+                tasks = tuple(self._slot_tasks)
+                for task in tasks:
+                    if not task.done() and not task.cancelling():
+                        task.cancel()
+                if tasks:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                self._slot_tasks.clear()
+                self._slot_health.clear()
+                self._running = False
+                self._stopped.set()
+            await protected_cleanup(cleanup())
 
     def request_stop(self) -> None:
         """Permanently stop taking new messages after handlers finish."""
         self._stop_requested.set()
 
-    async def shutdown(self, grace_period_seconds: float = 30) -> None:
+    async def shutdown(self, grace_period_seconds: float | None = 30) -> None:
         """Drain active handlers, then cancel slots after the grace period."""
-        if grace_period_seconds < 0:
+        if grace_period_seconds is not None and grace_period_seconds < 0:
             raise ValueError("grace_period_seconds cannot be negative")
         self.request_stop()
         tasks = tuple(self._slot_tasks)
@@ -409,6 +413,8 @@ class RedisStreamConsumer:
                             ),
                         )
                     retry_delay = self._retry_initial_seconds
+                if self._stop_requested.is_set():
+                    return
                 # Read new work between bounded recovery pages. A large PEL
                 # must not starve messages which have never been delivered.
                 messages = await self._redis.xreadgroup(
@@ -504,14 +510,12 @@ class RedisStreamConsumer:
                 raise error
             raise StreamLeaseLostError(message.message_id)
         finally:
-            for task in (heartbeat, handler_task):
-                if not task.done() and not task.cancelling():
-                    task.cancel()
-            await asyncio.gather(
-                heartbeat,
-                handler_task,
-                return_exceptions=True,
-            )
+            async def cleanup():
+                for task in (heartbeat, handler_task):
+                    if not task.done() and not task.cancelling():
+                        task.cancel()
+                await asyncio.gather(heartbeat, handler_task, return_exceptions=True)
+            await protected_cleanup(cleanup())
 
     async def _renew_lease(
         self,
