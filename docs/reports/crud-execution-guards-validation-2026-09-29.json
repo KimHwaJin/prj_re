@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/crud-execution-guards",
+  "base": "d20872f",
+  "full_suite": {
+    "passed": 442,
+    "subtests_passed": 2,
+    "skipped": 0,
+    "warnings": 43,
+    "seconds": 142.47
+  },
+  "final_focused": {
+    "passed": 73,
+    "seconds": 35.22,
+    "overlaps_full_suite": 69,
+    "additional_edge_cases": 4
+  },
+  "package": {
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "role_prompts_present": 7,
+    "mock_graph_execution_steps": 6
+  },
+  "controlled_races": [
+    "Run admission versus session deletion, project deletion and move in both orders",
+    "project deletion versus session creation and incoming move",
+    "session creation commits before project children enumeration",
+    "opposite moves",
+    "move-out versus source project deletion",
+    "shared project admits different sessions concurrently",
+    "Executor owner versus deletion",
+    "parent deletion versus Message insert/update",
+    "HITL resume versus move"
+  ],
+  "database": "dedicated local PostgreSQL identity_test; separate connections, READ COMMITTED; blocking verified with pg_stat_activity and pg_blocking_pids",
+  "migration_added": false,
+  "configuration_added": false,
+  "external_llm_executor_redis_called": false,
+  "production_deployed": false,
+  "limitations": [
+    "no Kubernetes multi-Pod rollout validation",
+    "all writers must follow same admission barrier; no mixed-version guarantee",
+    "no throughput A/B or bulk-delete optimization",
+    "remote Executor cancellation and administrator recovery remain deferred",
+    "Message CUD and Tasks API removal remain deferred"
+  ]
+}

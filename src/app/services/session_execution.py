@@ -15,11 +15,14 @@ import socket
 from uuid import UUID, uuid4
 
 from sqlalchemy import or_, select, update
+from fastapi import HTTPException
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core import database
 from app.core.enums import TaskStatus
 from app.models.common.task_model import TaskModel
+from app.models.common.session_model import SessionModel
+from app.services import resource_lifecycle as lifecycle
 from app.core.execution_lifecycle import (
     ExecutionNeedsRecovery, execution_health, observe_termination, protected_cleanup,
     wait_for_stop,
@@ -144,6 +147,14 @@ async def run_event_owned(context, operation: Callable[[], Awaitable]):
     async def acquire_owner():
         nonlocal acquired
         async with database.get_session_factory()() as db:
+            api_session = await db.get(SessionModel, owner.session_id)
+            if api_session is not None:
+                try:
+                    await lifecycle.lock_session(db, api_session.user_id, owner.session_id)
+                except HTTPException as exc:
+                    raise DeferEvent("API resources are inactive or changed during event admission") from exc
+            # Standalone graph sessions without API resources still participate
+            # in the existing persistent session ownership protocol.
             busy_task = await db.scalar(select(TaskModel.task_id).where(
                 TaskModel.session_id == owner.session_id,
                 or_(TaskModel.status.in_([TaskStatus.PENDING, TaskStatus.RUNNING]),

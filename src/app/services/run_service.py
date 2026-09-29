@@ -7,7 +7,7 @@ from typing import Any, Awaitable
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +40,7 @@ from app.services.agent_graph_service import (
 )
 from app.services.helpers import utc_now
 from app.services.task_service import TaskService
+from app.services import resource_lifecycle as lifecycle
 from app.services.workflow_service import WorkflowService
 from app.services.task_event_service import TaskEventService
 from app.services.llm_token_event_service import LLMTokenEventBuffer
@@ -277,16 +278,11 @@ class RunService:
         일반 API 호출은 pending Run을 commit하고 즉시 반환합니다. Router lifespan Worker만
         ``_execute_existing=True``로 이미 점유한 Run을 실제 실행합니다.
         """
-        session = await RunService._session(db, user_id, session_id)
+        session = (await RunService._session(db, user_id, session_id) if _execute_existing
+                   else await lifecycle.lock_session(db, user_id, session_id))
         execution_claim = current_execution_claim.get()
         if _execute_existing and execution_claim is None:
             raise ExecutionNeedsRecovery("Execution requires an immutable Worker claim.")
-        if not _execute_existing:
-            # Serialize admission only, without holding a session row that a
-            # finishing Run may need. DB unique indexes remain the final guard.
-            await db.execute(select(func.pg_advisory_xact_lock(
-                func.hashtextextended(f"run-admission:{session_id}", 0)
-            )))
         previous = await db.scalar(select(AgentRunModel).where(
             AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
         ))

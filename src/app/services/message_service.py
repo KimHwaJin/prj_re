@@ -17,6 +17,7 @@ from app.schemas.common.message_schema import (
     MessageUpdate,
 )
 from app.services.helpers import make_session_name, utc_now
+from app.services import resource_lifecycle as lifecycle
 
 
 class MessageService:
@@ -39,6 +40,7 @@ class MessageService:
                 status_code=422,
                 detail="MessageService requires an existing session_id.",
             )
+        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=project_id)
         session = await SessionRepository.get_active_by_user(
             db,
             user_id=user_id,
@@ -138,6 +140,10 @@ class MessageService:
         if message is None:
             raise HTTPException(status_code=404, detail="Message를 찾을 수 없습니다.")
 
+        await lifecycle.lock_session(db, user_id, message.session_id)
+        message = await MessageRepository.get_owned_active(db, user_id=user_id, message_id=message_id)
+        if message is None:
+            raise HTTPException(404, "Message not found.")
         message.content_text = payload.content_text
         message.content = MessageService._normalize_content(payload.content, payload.content_text)
 
@@ -159,6 +165,7 @@ class MessageService:
         if root is None:
             raise HTTPException(status_code=404, detail="Message를 찾을 수 없습니다.")
 
+        await lifecycle.lock_session(db, user_id, root.session_id)
         session = await SessionRepository.get_active_by_user(
             db,
             user_id=user_id,

@@ -6,7 +6,7 @@ Task. Workers still claim invocation IDs; checkpoints keep their original IDs.
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,7 @@ from app.schemas.common.run_schema import PublicRunResource, RunCreate, RunResum
 from app.services.run_service import RunService
 from app.services.task_service import TaskService
 from app.services.helpers import utc_now
+from app.services import resource_lifecycle as lifecycle
 
 
 TERMINAL = {"success", "error", "timeout", "canceled"}
@@ -51,8 +52,8 @@ def project(root: Run, latest: Run, task: Task | None) -> PublicRunResource:
 
 class PublicRunService:
     @staticmethod
-    async def admission_lock(db: AsyncSession, session_id: UUID) -> None:
-        await db.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(f"run-admission:{session_id}", 0))))
+    async def admission_lock(db: AsyncSession, user_id: UUID, session_id: UUID) -> None:
+        await lifecycle.lock_session(db, user_id, session_id)
 
     @staticmethod
     async def snapshots(db: AsyncSession, ids: list[UUID]):
@@ -89,7 +90,7 @@ class PublicRunService:
     @staticmethod
     async def resume(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID, payload: RunResume, key: str) -> PublicRunResource:
         await RunService._session(db, user_id, session_id)
-        await PublicRunService.admission_lock(db, session_id)
+        await PublicRunService.admission_lock(db, user_id, session_id)
         current = await PublicRunService.read(db, user_id, session_id, run_id)
         command = RunCreate(command=payload.command, metadata={
             "resume_run_id": str(payload.resume_token), "_public_resume": str(current.id),
@@ -108,7 +109,7 @@ class PublicRunService:
     @staticmethod
     async def cancel(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID, payload: RunCancel) -> PublicRunResource:
         await RunService._session(db, user_id, session_id)
-        await PublicRunService.admission_lock(db, session_id)
+        await PublicRunService.admission_lock(db, user_id, session_id)
         current = await PublicRunService.read(db, user_id, session_id, run_id)
         if current.status in TERMINAL:
             if current.status == "canceled":

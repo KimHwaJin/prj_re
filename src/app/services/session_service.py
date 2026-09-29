@@ -9,7 +9,6 @@ from app.models.common.message_model import MessageModel
 from app.models.common.session_model import SessionModel
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.session_repository import SessionRepository
-from app.repositories.user_repository import UserRepository
 from app.schemas.common.message_schema import MessageRead
 from app.schemas.common.session_schema import (
     SessionCreate,
@@ -22,16 +21,10 @@ from app.services.cascade_service import (
     soft_delete_sessions
 )
 from app.services.helpers import normalize_name
+from app.services import resource_lifecycle as lifecycle
 
 
 class SessionService:
-    @staticmethod
-    async def _require_user(db: AsyncSession, user_id: UUID):
-        user = await UserRepository.get_active(db, user_id)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User를 찾을 수 없습니다.")
-        return user
-
     @staticmethod
     async def _require_project(db: AsyncSession, user_id: UUID, project_id: UUID):
         project = await ProjectRepository.get_owned_active(
@@ -52,8 +45,7 @@ class SessionService:
         session_name: str | None = None,
         settings: dict | None = None,
     ) -> SessionModel:
-        await SessionService._require_user(db, user_id)
-        await SessionService._require_project(db, user_id, project_id)
+        await lifecycle.lock_projects(db, user_id, [project_id])
 
         name = normalize_name(session_name or "") or "새 대화"
         session = SessionModel(
@@ -136,6 +128,10 @@ class SessionService:
         session_id: UUID,
         payload: SessionUpdate,
     ) -> SessionModel:
+        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=current_project_id,
+                                     target_project_id=payload.target_project_id)
+        if payload.target_project_id is not None and payload.target_project_id != current_project_id:
+            await lifecycle.require_idle(db, [session_id], resource="Session")
         session = await SessionRepository.get_active(
             db,
             user_id=user_id,
@@ -167,6 +163,8 @@ class SessionService:
         project_id: UUID,
         session_id: UUID,
     ) -> SessionDeleteResult:
+        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=project_id)
+        await lifecycle.require_idle(db, [session_id], resource="Session")
         session = await SessionRepository.get_active(
             db,
             user_id=user_id,

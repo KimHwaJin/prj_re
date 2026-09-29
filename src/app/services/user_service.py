@@ -5,24 +5,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import Actor
-from app.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus, ProjectMemberRole, TaskStatus, UserRole
+from app.core.enums import DeleteYN, ProjectMemberRole, UserRole
 from app.core.user_identity import normalize_user_id
-from app.models.common.agent_run_model import AgentRunModel
-from app.models.common.llm_run_model import LLMRunModel
 from app.models.common.message_model import MessageModel
 from app.models.common.project_model import ProjectMemberModel, ProjectModel
 from app.models.common.session_model import SessionModel
-from app.models.common.task_model import TaskModel
 from app.models.common.user_model import UserModel
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.common.user_schema import UserCreate, UserRead, UserUpdate
 from app.services.helpers import utc_now
+from app.services import resource_lifecycle as lifecycle
 
 # User management is infrequent. Serialize it across processes, including initial
 # bootstrap, to make last-admin checks safe under concurrent transactions.
 USER_ADMIN_LOCK = 178521094
-TERMINAL_TASKS = (TaskStatus.SUCCESS, TaskStatus.ERROR, TaskStatus.TIMEOUT, TaskStatus.CANCELED)
 
 
 class UserService:
@@ -133,19 +130,7 @@ class UserService:
         projects = select(ProjectModel.project_id).where(ProjectModel.user_id == target.user_id)
         sessions = select(SessionModel.session_id).where(
             or_(SessionModel.user_id == target.user_id, SessionModel.project_id.in_(projects)))
-        unfinished_task = await db.scalar(select(TaskModel.task_id).where(
-            TaskModel.session_id.in_(sessions), TaskModel.status.not_in(TERMINAL_TASKS)).limit(1))
-        # Old interrupted segments belonging to a completed Task are historical.
-        unfinished_run = await db.scalar(select(AgentRunModel.run_id).where(
-            AgentRunModel.session_id.in_(sessions),
-            or_(AgentRunModel.status.in_((AgentRunStatus.PENDING, AgentRunStatus.RUNNING)),
-                (AgentRunModel.status == AgentRunStatus.INTERRUPTED) & AgentRunModel.task_id.is_(None)),
-        ).limit(1))
-        unfinished_llm = await db.scalar(select(LLMRunModel.run_id).where(
-            LLMRunModel.session_id.in_(sessions),
-            LLMRunModel.status.in_((LLMRunStatus.QUEUED, LLMRunStatus.RUNNING))).limit(1))
-        if unfinished_task or unfinished_run or unfinished_llm:
-            raise HTTPException(409, "User has unfinished work; finish or cancel it before deletion.")
+        await lifecycle.require_idle(db, sessions, resource="User")
         now = utc_now()
         await db.execute(update(MessageModel).where(
             MessageModel.session_id.in_(sessions), MessageModel.delete_yn == DeleteYN.N
