@@ -1,0 +1,21 @@
+{
+  "completed_trials": 8,
+  "completed_user_scenarios": 182,
+  "http_requests": 136898,
+  "http_errors": 0,
+  "stopped_by_user": {
+    "users": 100,
+    "included_in_statistics": false
+  },
+  "not_run": [
+    "current 1-slot control",
+    "CRUD-only matrix"
+  ],
+  "temporary_api_and_model_processes_remaining": 0,
+  "temporary_postgresql_container_removed": true,
+  "figures_visually_checked": [
+    "flow-latency.png",
+    "flow-breakdown-50.png"
+  ],
+  "application_code_changed_in_this_benchmark": false
+}

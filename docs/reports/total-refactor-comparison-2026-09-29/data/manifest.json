@@ -1,0 +1,154 @@
+[
+  {
+    "trial": "flow-1-after-s4-r1",
+    "path": "raw/flow-1-after-s4-r1.json.gz",
+    "raw_sha256": "9f3e9fd40f928d18fcb325301876c95aa7cd0303e2ad2a27369999521cd3fca5",
+    "gzip_sha256": "95320a29e7e76c6517fa08f7e387bc223d0be1b295ecaf154902c5549cf6384c",
+    "bytes": 105826,
+    "shutdown": {
+      "api": {
+        "seconds": 0.18782108300365508,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.13747466588392854,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-1-before-s1-r1",
+    "path": "raw/flow-1-before-s1-r1.json.gz",
+    "raw_sha256": "e944527decbe619ed8f20e94a205d2c6bfe5010aaa35d6e4d1efc7f3b80ad142",
+    "gzip_sha256": "1b51e47352d14f77b3e01c45bae367901d9418932aff58a658d9ad8eedd7432a",
+    "bytes": 91231,
+    "shutdown": {
+      "api": {
+        "seconds": 0.18657454079948366,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.1842088750563562,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-10-after-s4-r1",
+    "path": "raw/flow-10-after-s4-r1.json.gz",
+    "raw_sha256": "8ba0268a066c8a26dfa429218939b9acc5cd5eb84a6418e69cbc9e06ef36361b",
+    "gzip_sha256": "cda12d5843c8ee71d952be1a27df8b499b09af805c0adca5692a092dd690fc64",
+    "bytes": 331080,
+    "shutdown": {
+      "api": {
+        "seconds": 0.224792790831998,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.13143966696225107,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-10-before-s1-r1",
+    "path": "raw/flow-10-before-s1-r1.json.gz",
+    "raw_sha256": "41007c6da04a2dc38f90839ee09385ce5d8fa103443bbe775ad9b23535aa4648",
+    "gzip_sha256": "7a5e4bb918144ea3f8c24f9bbc8a9e6727a5eabaded856ce3ac7afeac6643c79",
+    "bytes": 918916,
+    "shutdown": {
+      "api": {
+        "seconds": 0.12201837496832013,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.2525775411631912,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-30-after-s4-r1",
+    "path": "raw/flow-30-after-s4-r1.json.gz",
+    "raw_sha256": "a8705e0b1266e48eb34fe70aa6a04111873bad564ce7013ac51cf0000c9b4cc4",
+    "gzip_sha256": "4febd3cf4d38cb69f351a70bfb593f3149d54e85d96740abfc62d6db5cdb64a5",
+    "bytes": 1267131,
+    "shutdown": {
+      "api": {
+        "seconds": 0.25482462509535253,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.1400507919024676,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-30-before-s1-r1",
+    "path": "raw/flow-30-before-s1-r1.json.gz",
+    "raw_sha256": "4c1343c5efc21d364c6b5aae5c7c5a0b335c17bc8395706c22055b1c115960bb",
+    "gzip_sha256": "bf94c569f4aae00f3a964d032c2e00326c3868c3b3c298911c8f393cc45893bc",
+    "bytes": 4038596,
+    "shutdown": {
+      "api": {
+        "seconds": 0.1930706249549985,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.24018779094330966,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-50-after-s4-r1",
+    "path": "raw/flow-50-after-s4-r1.json.gz",
+    "raw_sha256": "5a3ecaba45b40f5223535a93ce8905dc186c3a85e2cf5041e44684687a97ddb9",
+    "gzip_sha256": "efd73f165910c25e28152a3822597feb5c5a29ccffbb456cdec6381ee06ca0b8",
+    "bytes": 2630849,
+    "shutdown": {
+      "api": {
+        "seconds": 0.252813917119056,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.14188150013796985,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  },
+  {
+    "trial": "flow-50-before-s1-r1",
+    "path": "raw/flow-50-before-s1-r1.json.gz",
+    "raw_sha256": "7eb0840dc2ba92e9712b19d2fdb40ac80924ad983907c04bd7b93389e66e6eee",
+    "gzip_sha256": "fe5cb7ab128d7d6e144f00effd478e79e31a58006f50204b0f94c2b8ccdf554e",
+    "bytes": 8812068,
+    "shutdown": {
+      "api": {
+        "seconds": 0.19584037503227592,
+        "forced_kill": false,
+        "returncode": -15
+      },
+      "model": {
+        "seconds": 0.25267287506721914,
+        "forced_kill": false,
+        "returncode": -15
+      }
+    }
+  }
+]

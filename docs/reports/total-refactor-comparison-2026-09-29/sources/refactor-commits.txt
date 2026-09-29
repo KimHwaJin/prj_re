@@ -1,0 +1,25 @@
+5df9b0e7976be6f1516822ab919db9802a904693 refactor: centralize service settings and application lifecycle
+c2d83e3e21e779dd34ce0f0c4f9e667836066bf6 docs: record bootstrap refactor verification and remaining work
+c8945e9c27b4102721997eb1abfd59b389a2c24d feat: add header user identity and administrator lifecycle
+eaab388e6c0dcc6850240731aa5a0e1a68df6960 docs: record user identity migration and concurrency verification
+7365a662499691c9a8c1c73bcb2cc55a1e91d605 fix: supervise run cleanup and quarantine uncertain execution ownership
+a68e65623676fdd155a825286d263b48f30d1c94 docs: record run cleanup verification and recovery limitations
+3e19ee313941b38f01ba7e3f60429e985a9cce95 refactor: reuse graph resources and bind immutable execution claims
+7d0cc530ce8f5a1dc339827973cb26b4c82d16a7 docs: record graph resource lifecycle verification and ownership limits
+9fcdb8c6ca79e837e4e6830db9e9e49708b0493b refactor: isolate analysis agent code and packaged resources
+07c5a8f5b9f0ae18dd0df84f8d3beac3a978a016 docs: record agent layout migration and developer handoff
+856e00806128ab9a4bac19e8bb7cffc9f7a72eb4 docs: record completed refactors merged into base
+a27433de74065f92b669701a36bf442a8fb860aa refactor: await native async LLM calls across analysis graph
+7b1ab0d8b8ec599555a183548491e8b1432192cf docs: record async LLM validation and remaining I/O boundaries
+236d335115c47ca3c81ab97af2fe980c52b17a1d docs: record async LLM refactor merged into base
+4021b967356b1ce03e23e0ea56cef60b528488c9 refactor: remove unused Azure LLM support and settings
+ab814f49f8a41c40b16de09dcd1894d0f74e0a5b refactor: colocate role agent builders and independent prompts
+8c3e0b6d18a7f9b6500e87240a32c138ef2b612b refactor: restore original app workflow authoring package
+fe49b73d8a06a866b7e22884db0d000837a70b2a refactor: unify analysis workflow code and legacy assets
+3c828c1f060c423d6da383711bca401dd75d7e87 chore: remove relocation leftovers and record local cleanup
+c13a54174c418b9ef59efea2f05c7853a680ec3f refactor: unify role agents and project context middleware
+fb89dbc93bf3bd8219576ef839b6f29a577ade28 fix: retain graph ownership during blocking I/O cancellation
+70e1c9b0244a6f3a3a80ac3389b02a454c205471 feat: bound concurrent run execution and preserve waiting sessions
+feba2d2f987367d16792bd8ed9057d054f9beb95 feat: unify graph session ownership across runs and executor events
+64ad96f053f538bae798257743945752cb148f38 feat: drain active executions before shutdown cancellation
+4bb5c2fc3dcb4475525ff288eab8b0b887b37525 refactor: release service DB connections across graph execution

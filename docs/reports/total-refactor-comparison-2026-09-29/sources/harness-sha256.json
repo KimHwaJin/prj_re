@@ -1,0 +1,9 @@
+{
+  "scripts/benchmarks/total_refactor/run.py": "6d3a697e285dc6f4e714a4d322e083269057578c0886d082e22d4df55f2e6d62",
+  "scripts/benchmarks/total_refactor/server.py": "c9ca7d741cd561b716d5040d2b6f33032885f9305704937f1007d1064f9ded91",
+  "scripts/benchmarks/total_refactor/plot.py": "824ab05a3adf5c8b653efefe55f4ce73ef6d6a7e831bb651f758ea4a72614f00",
+  "scripts/benchmarks/total_refactor/mock_llm.py": "40eaf8be6e2620127f985fde88cbd79cd1fa511b2e98312183d3bb68f6653d64",
+  "scripts/benchmarks/total_refactor/verify.py": "d4e49f23a2d633db32f9be94d7b9f72bb0adec801bbb887fbe459c22bbb40a31",
+  "scripts/benchmarks/total_refactor/report.py": "923298ea637ec596b782d1d339ddcd2962b86416e754d291806d0e0a5976d77f",
+  "scripts/benchmarks/total_refactor/analyze.py": "f21d425e557fd209da1bf9b2e9b380e4bd54543b54214703565bbe0ae28f3ef8"
+}

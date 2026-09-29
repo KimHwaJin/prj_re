@@ -1,0 +1,272 @@
+ app.py                                             |   79 +-
+ pyproject.toml                                     |   15 +-
+ src/.DS_Store                                      |  Bin 6148 -> 0 bytes
+ src/agent_config.py                                |  124 +-
+ src/agent_service/__init__.py                      |    1 +
+ src/agent_service/agents/__init__.py               |    1 +
+ src/agent_service/agents/analysis/README.md        |   33 +
+ src/agent_service/agents/analysis/__init__.py      |    1 +
+ .../agents/analysis/agent_builders/__init__.py     |    1 +
+ .../agents/analysis/agent_builders/_prompts.py     |    6 +
+ .../agent_builders/conditional_decider/__init__.py |    3 +
+ .../agent_builders/conditional_decider/agent.py    |   18 +
+ .../agent_builders/conditional_decider/prompt.md}  |    5 +-
+ .../agents/analysis/agent_builders/faq/__init__.py |    3 +
+ .../agents/analysis/agent_builders/faq/agent.py    |   15 +
+ .../agents/analysis/agent_builders/faq/prompt.md   |    1 +
+ .../agent_builders/intent_classifier/__init__.py   |    3 +
+ .../agent_builders/intent_classifier/agent.py      |   18 +
+ .../agent_builders/intent_classifier/prompt.md}    |    0
+ .../agent_builders/report_writer/__init__.py       |    3 +
+ .../analysis/agent_builders/report_writer/agent.py |   15 +
+ .../agent_builders/report_writer/prompt.md}        |    0
+ .../analysis/agent_builders/routing/__init__.py    |    3 +
+ .../analysis/agent_builders/routing/agent.py       |   18 +
+ .../analysis/agent_builders/routing/prompt.md}     |    0
+ .../agent_builders/skill_selector/__init__.py      |    3 +
+ .../agent_builders/skill_selector/agent.py         |   19 +
+ .../agent_builders/skill_selector/prompt.md}       |    9 +-
+ .../agent_builders/workflow_generator/__init__.py  |    3 +
+ .../agent_builders/workflow_generator/agent.py     |   18 +
+ .../agent_builders/workflow_generator/prompt.md}   |   43 +-
+ .../agents/analysis/artifacts.py}                  |    6 +-
+ .../agents/analysis/components/__init__.py         |    1 +
+ .../agents/analysis/components/interfaces.py       |   46 +
+ src/agent_service/agents/analysis/context.py       |   11 +
+ src/agent_service/agents/analysis/dependencies.py  |   85 ++
+ .../agents/analysis/graph.py}                      |   73 +-
+ .../agents/analysis}/hitl_protocol.py              |    0
+ .../agents/analysis}/message_utils.py              |    0
+ .../agents/analysis/nodes/__init__.py              |    1 +
+ .../agents/analysis}/nodes/adaptive_execution.py   |   32 +-
+ .../agents/analysis}/nodes/adaptive_executor.py    |   10 +-
+ .../analysis}/nodes/build_notebook_cell_code.py    |   12 +-
+ .../agents/analysis}/nodes/demo_artifacts.py       |    4 +-
+ .../agents/analysis}/nodes/execution_results.py    |    4 +-
+ .../agents/analysis}/nodes/executor_request.py     |    6 +-
+ .../agents/analysis}/nodes/flow_control.py         |    4 +-
+ .../agents/analysis}/nodes/generate_report.py      |   28 +-
+ .../agents/analysis}/nodes/generate_workflow.py    |   60 +-
+ .../agents/analysis}/nodes/hitl.py                 |   10 +-
+ .../agents/analysis}/nodes/intent_classify.py      |   15 +-
+ .../agents/analysis}/nodes/recommend_workflow.py   |   12 +-
+ .../analysis}/nodes/redis_execution_events.py      |    2 +-
+ .../agents/analysis}/nodes/routing.py              |   15 +-
+ .../agents/analysis}/nodes/service_queries.py      |   22 +-
+ .../agents/analysis/resource_paths.py              |   26 +
+ .../agents/analysis}/routers/__init__.py           |    0
+ .../analysis}/routers/orchestration_router.py      |    4 +-
+ .../agents/analysis/schemas/__init__.py            |    1 +
+ .../agents/analysis/schemas/agents/__init__.py     |    1 +
+ .../schemas/agents/orchestration_schema.py         |    0
+ .../schemas/agents/report_generator_schema.py      |    0
+ .../schemas/agents/workflow_generator_schema.py    |    0
+ .../schemas/agents/workflow_recommender_schema.py  |    0
+ .../agents/analysis/schemas/skills/__init__.py     |    1 +
+ .../analysis}/schemas/skills/skill_format.py       |    0
+ .../analysis}/schemas/skills/skill_schema.md       |    4 +-
+ .../agents/analysis/schemas/tools/__init__.py      |    1 +
+ .../schemas/tools/tool_registry_schema.md          |    6 +-
+ .../agents/analysis/schemas/workflows/__init__.py  |    1 +
+ .../analysis}/schemas/workflows/workflow_format.py |    0
+ .../schemas/workflows/workflow_plan_format.py      |   20 +-
+ .../analysis}/schemas/workflows/workflow_schema.md |    6 +-
+ .../agents/analysis/state.py}                      |    4 +-
+ .../agents/analysis/testing/__init__.py            |    1 +
+ .../agents/analysis/testing/mock_dependencies.py   |   75 ++
+ .../agents/analysis/tests/__init__.py              |    1 +
+ .../agents/analysis/tests/catalog_fixtures.py      |   35 +
+ .../agents/analysis/tests/model_helpers.py         |   31 +
+ .../analysis/tests}/test_adaptive_execution_mvp.py |   60 +-
+ .../tests}/test_adaptive_notebook_prefix.py        |    2 +-
+ .../agents/analysis/tests/test_agent_middleware.py |  203 ++++
+ .../agents/analysis/tests/test_async_llm.py        |  239 ++++
+ .../analysis/tests}/test_execution_results.py      |    6 +-
+ .../analysis/tests}/test_executor_submit_toggle.py |   11 +-
+ .../agents/analysis/tests/test_flow_lifecycle.py   |  143 +++
+ .../agents/analysis/tests}/test_mock_data_io.py    |   17 +-
+ .../agents/analysis/tests/test_resource_layout.py  |   77 ++
+ .../analysis/tests/test_service_load_mock.py       |  131 ++
+ .../agents/analysis/tests/test_shipped_catalog.py  |   24 +
+ .../analysis/tests}/test_user_agent_graph.py       |  401 +++----
+ .../analysis/tests}/test_workflow_compiler.py      |  174 +--
+ .../tests}/test_workflow_condition_contract.py     |   13 +-
+ .../agents/analysis/tools/__init__.py              |    1 +
+ .../agents/analysis/tools/catalog.py}              |   22 +-
+ .../agents/analysis/workflow/README.md             |   36 +
+ .../agents/analysis/workflow/__init__.py           |    1 +
+ .../agents/analysis/workflow}/adaptive_workflow.py |    2 +-
+ .../agents/analysis/workflow}/data_load_steps.py   |   12 +-
+ .../workflow}/execution_notebook_reader.py         |    0
+ .../agents/analysis/workflow/paths.py              |   37 +
+ .../workflow}/rule_based_notebook_generator.py     |   11 +-
+ .../agents/analysis/workflow/skills/__init__.py    |    1 +
+ .../analysis/workflow/skills/data_io/__init__.py   |    1 +
+ .../analysis}/workflow/skills/data_io/data_load.md |    1 -
+ .../analysis/workflow/skills/eda/__init__.py       |    1 +
+ .../workflow/skills/eda/data_quality_check.md      |    4 +-
+ .../analysis/workflow/skills/eda/tmp/__init__.py   |    1 +
+ .../workflow/skills/eda/tmp/failure_analysis.md    |    0
+ .../skills/eda/tmp/failure_group_comparison.md     |    0
+ .../workflow/skills/generate_skill_index.py        |    0
+ .../workflow/skills/preprocessing/__init__.py      |    1 +
+ .../skills/preprocessing/dataset_preparation.md    |    5 +-
+ .../analysis/workflow/skills/skill_index.yaml      |  105 ++
+ .../agents/analysis/workflow/tools/__init__.py     |    1 +
+ .../analysis/workflow/tools/data_io/__init__.py    |    1 +
+ .../analysis}/workflow/tools/data_io/data_load.py  |    0
+ .../workflow/tools/data_io/extract_data.py         |    0
+ .../workflow/tools/data_io/tmp/__init__.py         |    1 +
+ .../workflow/tools/data_io/tmp/extract_data2.py    |    0
+ .../workflow/tools/data_io/transform_nce.py        |    0
+ .../workflow/tools/data_io/transform_wt.py         |    0
+ .../agents/analysis/workflow/tools/eda/__init__.py |    1 +
+ .../workflow/tools/eda/compute_statistics.py       |    0
+ .../workflow/tools/eda/detect_outliers.py          |    0
+ .../analysis}/workflow/tools/eda/profile_data.py   |    0
+ .../analysis/workflow/tools/eda/tmp/__init__.py    |    1 +
+ .../workflow/tools/eda/tmp/compute_failure_rate.py |    0
+ .../workflow/tools/eda/tmp/failure_rate_by_bin.py  |    0
+ .../workflow/tools/eda/tmp/failure_rate_trend.py   |    0
+ .../tools/eda/tmp/plot_failure_by_group.py         |    0
+ .../tmp/plot_failure_distribution_by_feature.py    |    0
+ .../workflow/tools/generate_tool_registry.py       |    2 +-
+ .../workflow/tools/preprocessing/__init__.py       |    1 +
+ .../workflow/tools/preprocessing/merge_data.py     |    2 +-
+ .../analysis/workflow/tools/tool_registry.yaml     |  392 ++++++
+ .../agents/analysis/workflow}/workflow_compiler.py |    8 +-
+ .../analysis/workflow}/workflow_recommender.py     |    2 +-
+ .../agents/analysis/workflow/workflows/__init__.py |    1 +
+ .../workflow/workflows/workflow_lifecycle.md       |    0
+ src/agent_service/context.py                       |   20 +
+ src/agent_service/factory.py                       |  122 ++
+ src/agent_service/middleware/__init__.py           |    5 +
+ src/agent_service/middleware/project_prompt.py     |   20 +
+ src/agent_service/middleware/prompt_json.py        |   45 +
+ src/agent_service/runtime/__init__.py              |    1 +
+ src/agent_service/runtime/blocking.py              |   38 +
+ src/agent_service/runtime/langgraph/__init__.py    |    1 +
+ .../runtime/langgraph/checkpointer.py}             |    8 +-
+ src/app/.DS_Store                                  |  Bin 8196 -> 0 bytes
+ src/app/agent_run_worker.py                        |  141 ++-
+ src/app/agent_worker/api_bridge.py                 |   29 +-
+ src/app/agent_worker/graph_provider.py             |    4 +-
+ src/app/agent_worker/langgraph_adapter.py          |   17 +-
+ src/app/agent_worker/worker_main.py                |   97 +-
+ src/app/agents/factory/agent_factory.py            |   22 -
+ src/app/agents/factory/agent_registry.py           |   47 -
+ .../create_intent_classifier_agent.py              |   24 -
+ .../intent_classifier/intent_classifier_prompt.py  |   10 -
+ src/app/agents/orchestration/__init__.py           |    5 -
+ src/app/agents/orchestration/agent_interfaces.py   |  251 ----
+ src/app/agents/orchestration/dependencies.py       |  159 ---
+ .../report_writer/create_report_generator_agent.py |   41 -
+ src/app/agents/router/create_routing_agent.py      |   24 -
+ src/app/agents/router/routing_agent_prompt.py      |   10 -
+ .../create_workflow_generator_agent.py             |   52 -
+ .../workflow_generator_prompt.py                   |    8 -
+ .../workflow_recommender_prompt.md                 |   11 -
+ src/app/api/v1/router.py                           |   40 +-
+ src/app/api/v1/routes/tasks.py                     |    1 +
+ src/app/api/v1/routes/users.py                     |   39 +-
+ src/app/core/auth.py                               |   68 +-
+ src/app/core/database.py                           |   29 +
+ src/app/core/enums.py                              |    6 +-
+ src/app/core/execution_claim.py                    |   29 +
+ src/app/core/execution_lifecycle.py                |  118 ++
+ src/app/core/run_diagnostics.py                    |  240 ++++
+ src/app/core/user_identity.py                      |   11 +
+ src/app/graphs/__init__.py                         |   36 -
+ src/app/models/__init__.py                         |    3 +
+ src/app/models/common/__init__.py                  |    3 +
+ src/app/models/common/session_execution_model.py   |   24 +
+ src/app/models/common/task_model.py                |    2 +
+ src/app/models/common/user_model.py                |   16 +-
+ src/app/repositories/user_repository.py            |   21 +-
+ src/app/schemas/common/task_schema.py              |    1 +
+ src/app/schemas/common/user_schema.py              |   36 +-
+ src/app/services/agent_graph_service.py            |  233 ++--
+ src/app/services/agent_project_context.py          |   42 +
+ src/app/services/chat_crud_message_sink.py         |    2 +-
+ src/app/services/executor_client.py                |    2 +-
+ src/app/services/executor_completion.py            |   73 ++
+ src/app/services/graph_crud_persistence.py         |   67 +-
+ src/app/services/llm_token_event_service.py        |   13 +-
+ src/app/services/run_service.py                    |  180 ++-
+ src/app/services/session_execution.py              |  169 +++
+ src/app/services/task_service.py                   |  179 +--
+ src/app/services/user_service.py                   |  266 +++--
+ src/app/services/workflow_persistence.py           |   10 +-
+ src/app/services/workflow_service.py               |    2 +-
+ src/app/task_lock_reconciler.py                    |   28 +-
+ src/app/test/test_agent_project_context.py         |   91 ++
+ src/app/test/test_async_llm_postgres.py            |   71 ++
+ src/app/test/test_bootstrap_settings.py            |  341 ++++++
+ src/app/test/test_graceful_shutdown.py             |  210 ++++
+ src/app/test/test_graceful_shutdown_postgres.py    |  119 ++
+ src/app/test/test_graph_runtime_lifecycle.py       |  307 +++++
+ src/app/test/test_graph_runtime_postgres.py        |  196 +++
+ src/app/test/test_redis_execution_boundary.py      |    4 +-
+ src/app/test/test_run_cleanup.py                   |  277 +++++
+ src/app/test/test_run_cleanup_postgres.py          |  315 +++++
+ src/app/test/test_run_concurrency.py               |  152 +++
+ src/app/test/test_run_concurrency_postgres.py      |  190 +++
+ src/app/test/test_run_diagnostics.py               |  108 ++
+ src/app/test/test_select_features.py               |   58 -
+ src/app/test/test_session_execution_dispatch.py    |   32 +
+ src/app/test/test_session_execution_postgres.py    |  333 ++++++
+ src/app/test/test_short_transactions_postgres.py   |  341 ++++++
+ src/app/test/test_split_dataset.py                 |   84 --
+ src/app/test/test_user_identity.py                 |   45 +
+ src/app/test/test_user_identity_postgres.py        |  407 +++++++
+ src/app/test/test_workflow_persistence.py          |    4 +-
+ src/app/worker/config.py                           |  120 +-
+ src/app/worker/consumer.py                         |   44 +-
+ src/app/worker/dispatcher.py                       |    6 +
+ src/app/worker/runtime.py                          |   42 +-
+ src/app/worker_past/__init__.py                    |   21 -
+ src/app/worker_past/consumer.py                    |  748 ------------
+ src/app/worker_past/contracts.py                   |   56 -
+ src/app/worker_past/dispatcher.py                  |  124 --
+ src/app/worker_past/guard.py                       |   94 --
+ src/app/worker_past/ingress.py                     |  114 --
+ src/app/worker_past/outbox.py                      |   51 -
+ src/app/worker_past/runtime.py                     |  308 -----
+ src/app/worker_past/store.py                       |  405 -------
+ src/app/worker_past/telemetry.py                   |   63 -
+ src/app/workflow/skills/eda/eda_analysis.md        |   45 -
+ src/app/workflow/skills/eda/failure_analysis.md    |   45 -
+ .../skills/eda/failure_group_comparison.md         |   50 -
+ .../skills/modeling/predictive_modeling.md         |   42 -
+ .../skills/preprocessing/data_cleaning_pipeline.md |   46 -
+ src/app/workflow/skills/skill_index.yaml           |  295 -----
+ src/app/workflow/tools/eda/boxplot_eda.py          |  132 --
+ .../workflow/tools/eda/compare_failure_normal.py   |  138 ---
+ src/app/workflow/tools/eda/correlation_analysis.py |  212 ----
+ src/app/workflow/tools/eda/histogram_eda.py        |  163 ---
+ .../tools/eda/plot_failure_distribution.py         |  133 ---
+ src/app/workflow/tools/eda/target_correlation.py   |  159 ---
+ src/app/workflow/tools/modeling/evaluate_model.py  |   25 -
+ .../workflow/tools/modeling/train_classifier.py    |   25 -
+ .../workflow/tools/modeling/train_regression.py    |    0
+ src/app/workflow/tools/modeling/train_xgboost.py   |  177 ---
+ src/app/workflow/tools/modeling/tune_model.py      |   31 -
+ .../workflow/tools/preprocessing/impute_missing.py |  204 ----
+ .../tools/preprocessing/remove_outliers.py         |   63 -
+ .../workflow/tools/preprocessing/sample_data.py    |  126 --
+ .../tools/preprocessing/select_features.py         |  206 ----
+ .../workflow/tools/preprocessing/split_dataset.py  |  234 ----
+ src/app/workflow/tools/tool_registry.yaml          | 1259 --------------------
+ src/app/workflow/tools/tool_registry_past.yaml     |  598 ----------
+ src/bootstrap_admin.py                             |   53 +
+ src/config.py                                      |   62 +-
+ src/devtools/__init__.py                           |    1 +
+ src/devtools/analysis/__init__.py                  |    1 +
+ .../graphs => devtools/analysis}/checkpoint.py     |   33 +-
+ src/devtools/analysis/cli.py                       |  325 +++++
+ .../graphs => devtools/analysis}/visualization.py  |    6 +-
+ .../config.py => event_worker_settings.py}         |   17 +-
+ src/main.py                                        |   63 +-
+ src/service_bootstrap.py                           |  296 +++++
+ src/service_settings.py                            |  349 ++++++
+ 271 files changed, 9147 insertions(+), 8843 deletions(-)

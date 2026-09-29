@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "trial": "flow-1-after-s4-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-1-before-s1-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-10-after-s4-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-10-before-s1-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-30-after-s4-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-30-before-s1-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-50-after-s4-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    },
+    {
+      "trial": "flow-50-before-s1-r1",
+      "scenario_count_matches_users": true,
+      "unique_users": true,
+      "expected_stages_for_completed": true,
+      "slot_limit": true,
+      "model_delay_at_least_5s": true,
+      "exact_four_calls_per_user": true,
+      "exact_four_runs_per_user": true
+    }
+  ]
+}
