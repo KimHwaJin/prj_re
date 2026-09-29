@@ -62,5 +62,6 @@
     "Preexisting syntax error in provided src/routers/chat/router.py remains outside scope",
     "External consumers of removed Python import paths must migrate"
   ],
-  "deployment": "not deployed; not pushed; current feature not merged to base"
+  "deployment": "not deployed; not pushed; current feature not merged to base",
+  "implementation_commit": "8f45ebb"
 }
