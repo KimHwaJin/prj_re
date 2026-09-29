@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from agent_config import AgentSettings
+from agent_service.runtime.blocking import run_sync, call_io
 from agent_service.agents.analysis.message_utils import as_message_content
 from agent_service.agents.analysis.nodes.executor_request import build_executor_steps
 from agent_service.agents.analysis.state import AnalysisWorkflowState
@@ -34,7 +35,7 @@ def make_submit_adaptive_operation(
     settings: AgentSettings,
     submit_continue=submit_execution_continue,
 ):
-    def submit_adaptive_operation(state: AnalysisWorkflowState) -> dict:
+    async def submit_adaptive_operation(state: AnalysisWorkflowState) -> dict:
         execution_id = str(state.get("execution_id") or "")
         if settings.executor_submit_enabled and not execution_id:
             raise RuntimeError("adaptive Operation requires execution_id")
@@ -43,7 +44,7 @@ def make_submit_adaptive_operation(
         if not cells:
             raise RuntimeError("adaptive Operation requires generated code cells")
         sequence_start = int(state.get("executor_next_sequence", 0))
-        steps = build_executor_steps(
+        steps = await run_sync(build_executor_steps,
             settings,
             task_id=state["task_id"],
             notebook_cells=cells,
@@ -61,14 +62,14 @@ def make_submit_adaptive_operation(
 
         artifact_files = dict(state.get("artifact_files", {}))
         if settings.demo_artifacts_enabled:
-            run_dir = build_run_artifact_dir(
+            run_dir = await run_sync(build_run_artifact_dir,
                 settings,
                 user_id=state["user_id"],
                 project_id=state["project_id"],
                 session_id=state["session_id"],
                 task_id=state["task_id"],
             )
-            path = write_demo_json(
+            path = await run_sync(write_demo_json,
                 run_dir / f"executor_operation_{operation_number}_request.json",
                 payload,
             )
@@ -77,7 +78,7 @@ def make_submit_adaptive_operation(
             artifact_files["executor_operation_requests"] = requests
 
         response = (
-            submit_continue(settings, execution_id, payload)
+            await call_io(submit_continue, settings, execution_id, payload)
             if settings.executor_submit_enabled
             else _skipped_response("EXECUTOR_SUBMIT_ENABLED=false")
         )
@@ -125,7 +126,7 @@ def make_finalize_adaptive_execution(
     settings: AgentSettings,
     submit_finish=submit_execution_finish,
 ):
-    def finalize_adaptive_execution(state: AnalysisWorkflowState) -> dict:
+    async def finalize_adaptive_execution(state: AnalysisWorkflowState) -> dict:
         execution_id = str(state.get("execution_id") or "")
         if settings.executor_submit_enabled and not execution_id:
             raise RuntimeError("adaptive finalize requires execution_id")
@@ -137,18 +138,18 @@ def make_finalize_adaptive_execution(
 
         artifact_files = dict(state.get("artifact_files", {}))
         if settings.demo_artifacts_enabled:
-            run_dir = build_run_artifact_dir(
+            run_dir = await run_sync(build_run_artifact_dir,
                 settings,
                 user_id=state["user_id"],
                 project_id=state["project_id"],
                 session_id=state["session_id"],
                 task_id=state["task_id"],
             )
-            path = write_demo_json(run_dir / "executor_finalize_request.json", payload)
+            path = await run_sync(write_demo_json, run_dir / "executor_finalize_request.json", payload)
             artifact_files["executor_finalize_request"] = str(path)
 
         response = (
-            submit_finish(settings, execution_id, payload)
+            await call_io(submit_finish, settings, execution_id, payload)
             if settings.executor_submit_enabled
             else _skipped_response("EXECUTOR_SUBMIT_ENABLED=false")
         )
@@ -185,7 +186,7 @@ def make_cancel_adaptive_execution(
     settings: AgentSettings,
     submit_cancel=submit_execution_cancel,
 ):
-    def cancel_adaptive_execution(state: AnalysisWorkflowState) -> dict:
+    async def cancel_adaptive_execution(state: AnalysisWorkflowState) -> dict:
         execution_id = str(state.get("execution_id") or "")
         if settings.executor_submit_enabled and not execution_id:
             raise RuntimeError("adaptive cancel requires execution_id")
@@ -204,7 +205,7 @@ def make_cancel_adaptive_execution(
             actor={"type": "AGENT", "id": state["task_id"]},
         ).model_dump(mode="json", exclude_none=True)
         response = (
-            submit_cancel(settings, execution_id, payload)
+            await call_io(submit_cancel, settings, execution_id, payload)
             if settings.executor_submit_enabled
             else _skipped_response("EXECUTOR_SUBMIT_ENABLED=false")
         )

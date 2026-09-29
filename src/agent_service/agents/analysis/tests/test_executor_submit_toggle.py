@@ -16,8 +16,8 @@ from agent_service.agents.analysis.nodes.adaptive_executor import (
 )
 
 
-class ExecutorSubmitToggleTests(unittest.TestCase):
-    def test_failed_adaptive_execution_is_cancelled_with_error_reason(self):
+class ExecutorSubmitToggleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_failed_adaptive_execution_is_cancelled_with_error_reason(self):
         calls = []
 
         def submit_cancel(_settings, execution_id, payload):
@@ -31,7 +31,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
                 "DEMO_ARTIFACTS_ENABLED": "false",
             }
         )
-        update = make_cancel_adaptive_execution(
+        update = await make_cancel_adaptive_execution(
             settings,
             submit_cancel=submit_cancel,
         )(
@@ -56,7 +56,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
         self.assertEqual(update["executor_wait_phase"], "execution_completed")
         self.assertEqual(update["execution_status"], "CANCEL_REQUESTED")
 
-    def test_disabled_submit_writes_request_without_calling_executor(self):
+    async def test_disabled_submit_writes_request_without_calling_executor(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             cell_path = Path(temporary_root) / "001_test.py"
             cell_path.write_text("result = 1\n", encoding="utf-8")
@@ -77,7 +77,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
                 settings,
                 submit_start=unexpected_submit,
             )
-            result = node(
+            result = await node(
                 {
                     "user_id": "user",
                     "project_id": "project",
@@ -125,7 +125,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256(staged.read_bytes()).hexdigest(), source["sha256"])
             self.assertIn("d-test", Path(step["payload"]["source"]["path"]).parts)
 
-    def test_inline_source_embeds_notebook_cell_code(self):
+    async def test_inline_source_embeds_notebook_cell_code(self):
         settings = load_agent_settings(
             {
                 "MODEL_NAME": "test-model",
@@ -135,7 +135,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             }
         )
         node = make_build_executor_request(settings)
-        result = node(
+        result = await node(
             {
                 "user_id": "user",
                 "project_id": "project",
@@ -174,7 +174,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             },
         )
 
-    def test_adaptive_initial_request_contains_entire_generated_prefix(self):
+    async def test_adaptive_initial_request_contains_entire_generated_prefix(self):
         calls = []
 
         def submit(_settings, payload):
@@ -215,7 +215,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             }
             for index in range(3)
         ]
-        result = make_build_executor_request(settings, submit_start=submit)(
+        result = await make_build_executor_request(settings, submit_start=submit)(
             {
                 "user_id": "user",
                 "project_id": "project",
@@ -234,7 +234,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
         self.assertEqual(result["executor_next_sequence"], 3)
         self.assertEqual(result["executor_state_version"], 1)
 
-    def test_adaptive_followup_and_finalize_use_latest_version(self):
+    async def test_adaptive_followup_and_finalize_use_latest_version(self):
         operation_calls = []
         finalize_calls = []
 
@@ -295,7 +295,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
             },
             "artifact_files": {},
         }
-        update = make_submit_adaptive_operation(
+        update = await make_submit_adaptive_operation(
             settings,
             submit_continue=submit_continue,
         )(state)
@@ -306,7 +306,7 @@ class ExecutorSubmitToggleTests(unittest.TestCase):
         self.assertEqual(update["executor_state_version"], 5)
 
         finalize_state = {**state, **update, "executor_state_version": 6}
-        final = make_finalize_adaptive_execution(
+        final = await make_finalize_adaptive_execution(
             settings,
             submit_finish=submit_finish,
         )(finalize_state)

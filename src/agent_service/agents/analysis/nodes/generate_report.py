@@ -10,7 +10,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from agent_service.runtime.blocking import run_sync
+from agent_service.runtime.blocking import run_sync, call_io
 from agent_config import AgentSettings
 from agent_service.agents.analysis.dependencies import AgentDependencies
 from agent_service.agents.analysis.state import AnalysisWorkflowState
@@ -397,7 +397,7 @@ def make_generate_report(
             content=report["content"],
         )
         if settings.executor_submit_enabled:
-            artifact_response = await run_sync(
+            artifact_response = await call_io(
                 submit_artifact,
                 settings, str(execution_id), artifact_request
             )

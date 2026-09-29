@@ -36,3 +36,13 @@ async def run_sync(function: Callable[P, T], *args: P.args, **kwargs: P.kwargs) 
     if cancelled:
         raise asyncio.CancelledError
     return result
+
+
+async def call_io(function, *args, **kwargs):
+    """Invoke an async port or retain lifetime of a legacy sync adapter."""
+    import inspect
+    target = function if inspect.isfunction(function) else getattr(function, "__call__", function)
+    if inspect.iscoroutinefunction(function) or inspect.iscoroutinefunction(target):
+        return await function(*args, **kwargs)
+    result = await run_sync(function, *args, **kwargs)
+    return await result if inspect.isawaitable(result) else result

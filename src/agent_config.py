@@ -170,6 +170,10 @@ class AgentSettings:
     workflow_recommendation_enabled: bool
     workflow_similarity_score: float
     model_structured_output_mode: str
+    executor_http_max_connections: int = 8
+    executor_http_connect_timeout_seconds: float = 5
+    executor_http_pool_timeout_seconds: float = 5
+    executor_http_max_response_bytes: int = 16 * 1024 * 1024
     model_mock_delay_ms: int = 0
     model_catalog: Any = field(default=None, repr=False, compare=False)
 
@@ -232,6 +236,16 @@ def load_agent_settings(
 
 def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     """Pure legacy value adapter; never reads environment, dotenv or YAML."""
+
+    for key, default in {
+        "EXECUTOR_HTTP_MAX_CONNECTIONS": 8,
+        "EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS": 5,
+        "EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS": 5,
+        "EXECUTOR_HTTP_MAX_RESPONSE_BYTES": 16 * 1024 * 1024,
+    }.items():
+        value = float(env.get(key, default))
+        if not 0 < value < float("inf"):
+            raise ValueError("Invalid Executor HTTP limit")
 
     mock_delay_ms = int(env.get("MODEL_MOCK_DELAY_MS", "0"))
     if not 0 <= mock_delay_ms <= 60000:
@@ -376,6 +390,10 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         executor_report_append_to_notebook=_as_bool(
             env.get("EXECUTOR_REPORT_APPEND_TO_NOTEBOOK"), True
         ),
+        executor_http_max_connections=int(env.get("EXECUTOR_HTTP_MAX_CONNECTIONS", 8)),
+        executor_http_connect_timeout_seconds=float(env.get("EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS", 5)),
+        executor_http_pool_timeout_seconds=float(env.get("EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS", 5)),
+        executor_http_max_response_bytes=int(env.get("EXECUTOR_HTTP_MAX_RESPONSE_BYTES", 16 * 1024 * 1024)),
         executor_timeout_seconds=float(env.get("EXECUTOR_TIMEOUT_SECONDS", "30")),
         executor_operation_timeout_seconds=executor_operation_timeout_seconds,
         executor_operation_wait_timeout_seconds=(

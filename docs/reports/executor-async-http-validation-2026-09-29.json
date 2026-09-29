@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-29",
+  "branch": "feature/executor-async-http",
+  "base_commit": "009e996",
+  "scope": "Executor graph HTTP async transport, client lifetime, uncertain submission guards",
+  "environment": {
+    "http": "local real HTTP/1.1 server",
+    "database": "isolated local PostgreSQL 17 identity_test",
+    "external_executor_called": false,
+    "external_llm_called": false,
+    "redis_delivery_tested": false,
+    "temporary_database_removed": true
+  },
+  "full_suite": {
+    "command": "PYTHONPATH=src DTEST_IDENTITY_TEST_DATABASE_URL=<isolated-local-test-db> python -m pytest src/app/test src/agent_service/agents/analysis/tests -q --disable-warnings --maxfail=2",
+    "passed": 560,
+    "subtests_passed": 2,
+    "warnings": 53,
+    "duration_seconds": 196.09
+  },
+  "new_tests": {
+    "http_configuration_graph": 30,
+    "postgres_api_worker": 7
+  },
+  "focused_suite": {
+    "passed": 44,
+    "duration_seconds": 1.67,
+    "included_in_full_suite": true
+  },
+  "wheel_validation": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 6,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 7,
+    "production_builders_constructed": true,
+    "create_agent_roles": 7,
+    "role_checkpointers_disabled": true
+  },
+  "observations": {
+    "sequential_requests": 8,
+    "sequential_tcp_connections": 1,
+    "bounded_concurrency_requests": 6,
+    "configured_connection_limit": 2,
+    "observed_peak_requests": 2,
+    "observed_connections": 2,
+    "automatic_reposts_after_lost_receipt": 0,
+    "explicit_identical_replay_requests": 2,
+    "explicit_identical_replay_remote_jobs": 1
+  },
+  "checks": {
+    "changed_python_files_compile": 23,
+    "git_diff_check": "passed"
+  },
+  "limitations": [
+    "Not a throughput or production latency benchmark",
+    "Actual Executor/TLS/proxy, Redis delivery, Kubernetes and Gaia template integration not validated",
+    "No automated ambiguous-submission recovery or durable outbox",
+    "Connection limit is per graph runtime; preexisting event ingress reconciliation HTTP client and DB/LLM pools remain separate",
+    "Preexisting syntax error in src/routers/chat/router.py:3 remains outside this change"
+  ],
+  "deployment": "not deployed; not pushed; current feature not merged to base"
+}

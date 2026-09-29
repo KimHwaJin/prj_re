@@ -85,6 +85,9 @@ prompt_json은 tool calling이나 provider JSON Schema 지원을 강제하지 �
 
 ## 다음 단계
 
-project_memory의 저장소·동시 갱신·근거·요약 정책과 실제 미들웨어 연결은 별도 구현한다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name으로 모델을 선택하고 재개 시 고정하는 registry도 후속이다. 현재는 주입된 기본 모델 정보를 전달한다.
+project_memory의 저장소·동시 갱신·근거·요약 정책과 실제 미들웨어 연결은 별도 구현한다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name 선택과 재개 모델 고정은 023에서 구현했다. [모델 선택 계약](../run-model-selection.md)을 따른다.
 
 공식 API 참고: [미들웨어](https://docs.langchain.com/oss/python/langchain/middleware/custom), [구조화 출력](https://docs.langchain.com/oss/python/langchain/structured-output), [create_agent](https://reference.langchain.com/python/langchain/agents/factory/create_agent).
+
+024에서는 Executor HTTP를 runtime 소유 AsyncClient로 전환했다. 파일/PV/WorkflowStore는
+기존 run_sync 경계에 남는다. [HTTP 호출·불확실 제출 계약](../executor-http-runtime.md)을 따른다.

@@ -66,6 +66,11 @@ class RunService:
     def _is_retryable(exc: Exception) -> bool:
         """사용자 입력/상태 충돌인 4xx는 반복해도 같으므로 자동 재시도하지 않습니다."""
         from agent_service.model_selection import ModelSelectionError
+        from app.services.executor_client import ExecutorSubmitError, ExecutorOutcomeUnknown
+        if isinstance(exc, ExecutorOutcomeUnknown):
+            return False
+        if isinstance(exc, ExecutorSubmitError):
+            return exc.retryable
         if isinstance(exc, ModelSelectionError):
             return False
         return not isinstance(exc, HTTPException) or exc.status_code >= 500
@@ -96,7 +101,12 @@ class RunService:
     ) -> dict[str, Any]:
         """Graph와 DB cancel watcher를 경쟁시켜 실제 coroutine을 cooperative cancel합니다."""
         stop = asyncio.Event()
-        graph_task = asyncio.create_task(graph_awaitable, name=f"graph:{run_id}")
+        from app.services.executor_client import submission_scope, SubmissionEffects, ExecutorOutcomeUnknown
+        effects = SubmissionEffects()
+        async def invoke():
+            with submission_scope(effects):
+                return await graph_awaitable
+        graph_task = asyncio.create_task(invoke(), name=f"graph:{run_id}")
         cancel_task = asyncio.create_task(RunService._wait_for_cancellation(run_id, stop), name=f"cancel-watch:{run_id}")
 
         async def cleanup():
@@ -109,7 +119,12 @@ class RunService:
             finally:
                 # Retrieve the exception even when cancellation/another observer
                 # won the race; the selected graph result is handled below.
-                await asyncio.gather(graph_task, return_exceptions=True)
+                outcomes = await asyncio.gather(graph_task, return_exceptions=True)
+                import inspect
+                if inspect.iscoroutine(graph_awaitable) and inspect.getcoroutinestate(graph_awaitable) == inspect.CORO_CREATED:
+                    graph_awaitable.close()
+                if isinstance(outcomes[0], ExecutionNeedsRecovery):
+                    errors.append(outcomes[0])
             try:
                 await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_stop")
             except ExecutionNeedsRecovery as exc:
@@ -130,6 +145,8 @@ class RunService:
             if cancel_task in done:
                 requested = await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_failed")
                 if requested:
+                    if effects.may_have_submitted:
+                        raise ExecutorOutcomeUnknown("Cancellation raced with Executor submission; reconcile before releasing the session")
                     raise RunService.CancellationRequested
             return await graph_task
         finally:

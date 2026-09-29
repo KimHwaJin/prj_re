@@ -131,4 +131,6 @@ class LangGraphEventAdapter:
         if self.project_context_loader is not None and values and "project_system_prompt" not in values:
             update = await self.project_context_loader(values)
             await self.graph.aupdate_state(config, update)
-        return await self.graph.ainvoke(value, config, durability=durability)
+        from app.services.executor_client import submission_scope
+        with submission_scope():
+            return await self.graph.ainvoke(value, config, durability=durability)

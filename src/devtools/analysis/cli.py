@@ -6,7 +6,6 @@ import argparse
 import asyncio
 import json
 import sys
-from contextlib import nullcontext
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -307,12 +306,14 @@ async def _main(args) -> None:
     setup_phoenix(settings)
     try:
         dependencies = create_llm_dependencies(settings)
-        graph_context = (
-            compiled_postgres_graph(dependencies, settings)
-            if args.postgres
-            else nullcontext(compiled_in_memory_graph(dependencies, settings))
-        )
-        async with graph_context as graph:
+        from contextlib import AsyncExitStack
+        from app.services.executor_client import ExecutorClient
+        async with AsyncExitStack() as stack:
+            if args.postgres:
+                graph = await stack.enter_async_context(compiled_postgres_graph(dependencies, settings))
+            else:
+                client = await stack.enter_async_context(ExecutorClient(settings))
+                graph = compiled_in_memory_graph(dependencies, settings, executor_client=client)
             await _run_conversation(graph, session_id=args.session_id)
     finally:
         shutdown_phoenix()

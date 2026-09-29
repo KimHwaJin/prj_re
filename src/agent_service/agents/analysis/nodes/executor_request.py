@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from agent_config import AgentSettings
+from agent_service.runtime.blocking import run_sync, call_io
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorRequestBody
 from agent_service.agents.analysis.artifacts import (
@@ -161,13 +162,13 @@ def make_build_executor_request(
 ):
     store = workflow_store or NullWorkflowStore()
 
-    def build_executor_request(state: AnalysisWorkflowState) -> dict:
+    async def build_executor_request(state: AnalysisWorkflowState) -> dict:
         artifact_files = dict(state.get("artifact_files", {}))
         notebook_cells = state["notebook"]["cells"]
 
         operation_mode = _operation_mode(state["workflow"])
         task_id = state["task_id"]
-        source_steps = build_executor_steps(
+        source_steps = await run_sync(build_executor_steps,
             settings,
             task_id=task_id,
             notebook_cells=notebook_cells,
@@ -219,19 +220,19 @@ def make_build_executor_request(
         request_path = ""
         run_dir = None
         if settings.demo_artifacts_enabled:
-            run_dir = build_run_artifact_dir(
+            run_dir = await run_sync(build_run_artifact_dir,
                 settings,
                 user_id=state["user_id"],
                 project_id=state["project_id"],
                 session_id=state["session_id"],
                 task_id=state["task_id"],
             )
-            path = write_demo_json(run_dir / "executor_request.json", payload)
+            path = await run_sync(write_demo_json, run_dir / "executor_request.json", payload)
             request_path = str(path)
             artifact_files["executor_request"] = str(path)
 
         if settings.executor_submit_enabled:
-            submit_response = submit_start(settings, payload)
+            submit_response = await call_io(submit_start, settings, payload)
         else:
             submit_response = {
                 "status_code": None,
@@ -240,7 +241,7 @@ def make_build_executor_request(
                 "reason": "EXECUTOR_SUBMIT_ENABLED=false",
             }
         if run_dir is not None:
-            response_path = write_demo_json(
+            response_path = await run_sync(write_demo_json,
                 run_dir / "executor_submit_response.json",
                 submit_response,
             )
@@ -251,7 +252,7 @@ def make_build_executor_request(
         executor_operation_steps = response_operation.get("steps") or []
         execution_id = str(response_body.get("execution_id") or "")
         if execution_id:
-            store.start_execution(
+            await run_sync(store.start_execution,
                 execution_id=execution_id,
                 catalog_id=state.get("workflow_catalog_id"),
                 session_id=state["session_id"],

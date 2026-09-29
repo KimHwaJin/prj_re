@@ -133,3 +133,8 @@ Run 실행 준비·결과 저장은 짧은 서비스 DB 트랜잭션으로 처�
 
 `MODEL_CATALOG`와 `DEFAULT_MODEL`도 이 중앙 로더에서만 해석한다.
 [Run 모델 선택 설정](run-model-selection.md)의 예시와 우선순위·장기 Run 배포 정책을 따른다.
+
+### Executor HTTP 연결 예산
+
+Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀 대기 기한·응답 크기 설정과
+복구 필요 상태의 의미는 [Executor HTTP 런타임](executor-http-runtime.md)을 따른다.

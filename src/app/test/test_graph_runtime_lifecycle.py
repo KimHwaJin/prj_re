@@ -224,6 +224,7 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
     import app.services.executor_completion as completion
     projection = AsyncMock()
     monkeypatch.setattr(completion, 'synchronize_executor_completion', projection)
+    clients = []
     counts = {'pool_open': 0, 'pool_close': 0, 'build': 0, 'events': 0}
     @asynccontextmanager
     async def checkpointer(**_):
@@ -234,6 +235,8 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
             counts['pool_close'] += 1
     def graph(**kwargs):
         assert kwargs['checkpointer'] == 'checkpoint'
+        assert not kwargs['executor_client'].http.is_closed
+        clients.append(kwargs['executor_client'])
         counts['build'] += 1
         return object()
     class Adapter:
@@ -252,6 +255,7 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
             return self
         async def __aexit__(self, *_):
             assert counts['pool_close'] == 1
+            assert len(clients) == 1 and clients[0].http.is_closed
         def add_readiness_check(self, *args):
             pass
         async def run(self):

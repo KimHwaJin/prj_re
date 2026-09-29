@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from agent_config import AgentSettings
+from agent_service.runtime.blocking import run_sync, call_io
+from functools import partial
 from app.services.executor_client import (
     get_execution_notebook,
     get_execution_result,
@@ -26,12 +28,15 @@ def _current_sequences(state: dict[str, Any]) -> list[int]:
     return list(range(max(0, next_sequence - cell_count), next_sequence))
 
 
-def read_current_operation_tool_results(
+async def read_current_operation_tool_results(
     settings: AgentSettings,
     state: dict[str, Any],
     *,
+    executor_client=None,
     fetch_notebook: Callable[..., dict[str, Any]] = get_execution_notebook,
 ) -> list[dict[str, Any]]:
+    if executor_client is not None:
+        fetch_notebook = partial(fetch_notebook, client=executor_client)
     execution_id = str(state.get("execution_id") or "")
     if not execution_id:
         raise RuntimeError("notebook result collection requires execution_id")
@@ -50,7 +55,7 @@ def read_current_operation_tool_results(
     start = first
     while start <= last:
         limit = min(200, last - start + 1)
-        response = fetch_notebook(
+        response = await call_io(fetch_notebook,
             settings,
             execution_id,
             view="FULL",
@@ -101,20 +106,24 @@ def read_current_operation_tool_results(
     return results
 
 
-def read_current_operation_results_from_api(
+async def read_current_operation_results_from_api(
     settings: AgentSettings,
     state: dict[str, Any],
     *,
+    executor_client=None,
     fetch_result: Callable[..., dict[str, Any]] = get_execution_result,
     fetch_notebook: Callable[..., dict[str, Any]] = get_execution_notebook,
 ) -> list[dict[str, Any]]:
     """Read authoritative Step status/error and attach available notebook output."""
 
+    if executor_client is not None:
+        fetch_result = partial(fetch_result, client=executor_client)
+        fetch_notebook = partial(fetch_notebook, client=executor_client)
     execution_id = str(state.get("execution_id") or "")
     if not execution_id:
         raise RuntimeError("execution result collection requires execution_id")
     operation_number = int(state.get("executor_operation_number", 1))
-    response = fetch_result(settings, execution_id)
+    response = await call_io(fetch_result, settings, execution_id)
     body = response.get("body") or {}
     operation = next(
         (
@@ -143,7 +152,7 @@ def read_current_operation_results_from_api(
     last = max(sequences)
     while start <= last:
         limit = min(200, last - start + 1)
-        notebook_response = fetch_notebook(
+        notebook_response = await call_io(fetch_notebook,
             settings,
             execution_id,
             view="FULL",
@@ -197,19 +206,21 @@ def read_current_operation_results_from_api(
     return results
 
 
-def read_current_operation_results(
+async def read_current_operation_results(
     settings: AgentSettings,
     state: dict[str, Any],
     *,
+    executor_client=None,
     fetch_result: Callable[..., dict[str, Any]] = get_execution_result,
     fetch_notebook: Callable[..., dict[str, Any]] = get_execution_notebook,
 ) -> list[dict[str, Any]]:
     """Select the configured result source while preserving the API reader."""
 
     if settings.executor_result_read_mode == "API":
-        return read_current_operation_results_from_api(
+        return await read_current_operation_results_from_api(
             settings,
             state,
+            executor_client=executor_client,
             fetch_result=fetch_result,
             fetch_notebook=fetch_notebook,
         )
@@ -218,7 +229,7 @@ def read_current_operation_results(
             read_current_operation_results_from_manifest,
         )
 
-        return read_current_operation_results_from_manifest(settings, state)
+        return await run_sync(read_current_operation_results_from_manifest, settings, state)
     raise ValueError(
         f"unsupported Executor result read mode: "
         f"{settings.executor_result_read_mode!r}"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from agent_config import AgentSettings
+from agent_service.runtime.blocking import run_sync, call_io
 from agent_service.agents.analysis.state import AnalysisWorkflowState
 from agent_service.agents.analysis.workflow.execution_notebook_reader import (
     read_current_operation_results,
@@ -27,7 +28,7 @@ def make_collect_execution_results(
 ):
     store = workflow_store or NullWorkflowStore()
 
-    def collect_execution_results(state: AnalysisWorkflowState) -> dict:
+    async def collect_execution_results(state: AnalysisWorkflowState) -> dict:
         execution_id = str(state.get("execution_id") or "")
         if not execution_id:
             raise RuntimeError("automatic result collection requires execution_id")
@@ -39,7 +40,7 @@ def make_collect_execution_results(
             )
         event_status = str(event["status"])
         event_state_version = int(event["state_version"])
-        tool_results = read_results(settings, state)
+        tool_results = await call_io(read_results, settings, state)
         update: dict = {
             "execution_event": None,
             "executor_state_version": event_state_version,
@@ -85,7 +86,7 @@ def make_collect_execution_results(
                 }
             )
         else:
-            store.finish_execution(
+            await run_sync(store.finish_execution,
                 execution_id=execution_id,
                 status=event_status,
                 final_workflow=effective_workflow_snapshot(

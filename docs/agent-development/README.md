@@ -126,3 +126,8 @@ async for update in graph.astream(graph_input, config):
 모델과 프로젝트 프롬프트를 함께 사용한다. 개별 노드에서 전역 기본 모델을
 새로 읽거나 모델 클라이언트를 생성하지 않는다.
 [API·설정·장기 Run 정책](../run-model-selection.md)을 참고한다.
+
+### Executor HTTP 호출
+
+제출·추가 실행·종료·결과 조회·보고서 업로드는 공유 ExecutorClient의 async 경로를 사용한다.
+[자원 소유권·취소·멱등성 계약](../executor-http-runtime.md)을 참고한다.

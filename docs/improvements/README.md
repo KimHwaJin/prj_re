@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/run-model-selection` (023 구현·검증 `b99a686` 완료; 이번 항목 베이스 미병합). 022의 `403c77d`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
+현재 작업 브랜치: `feature/executor-async-http` (024 구현·검증 완료). 023 기록을 포함한 `009e996`까지 `feature/refactor-base`에 fast-forward 병합했다. 원격 push·배포는 하지 않았다.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -43,6 +43,8 @@
 | 021 | 목록·상태조회 불필요한 데이터 로딩 제거 | 구현·격리 PostgreSQL 계측/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](021-read-query-efficiency.md) |
 | 022 | Task 진단 조회·페이지 및 명령 Runs 통일 | 구현·격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](022-task-diagnostics.md) |
 | 023 | Run별 모델 선택·HITL/Executor 모델 고정 | 구현·격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](023-run-model-selection.md) |
+
+| 024 | Executor HTTP 비동기 호출·연결 수명·불확실 제출 보호 | 구현·로컬 HTTP/격리 PostgreSQL/전체 회귀/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](024-executor-async-http.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

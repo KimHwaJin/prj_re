@@ -2,19 +2,147 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import ssl
 from typing import Any
-from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, field
+
+import httpx
 
 from agent_config import AgentSettings
 from agent_service.agents.analysis.schemas.agents.orchestration_schema import ExecutorSubmitResponse
+from app.core.execution_lifecycle import ExecutionNeedsRecovery
 
 
 class ExecutorSubmitError(RuntimeError):
-    """Raised when Executor does not accept an execution request."""
+    """A bounded, sanitized error with a known retry classification."""
+    def __init__(self, message, *, retryable=True):
+        super().__init__(message)
+        self.retryable = retryable
+
+
+class ExecutorOutcomeUnknown(ExecutionNeedsRecovery):
+    """POST may have been accepted; preserve ownership instead of blind retry."""
+
+
+@dataclass
+class SubmissionEffects:
+    possible_submissions: set[object] = field(default_factory=set)
+
+    @property
+    def may_have_submitted(self) -> bool:
+        return bool(self.possible_submissions)
+
+
+_effects: ContextVar[SubmissionEffects | None] = ContextVar("executor_submission_effects", default=None)
+
+
+@contextmanager
+def submission_scope(effects=None):
+    """Shared by child graph tasks, isolated from other concurrent invocations.
+
+    A successful POST followed by failure/cancellation before the invocation
+    finishes is also uncertain, even when the HTTP call itself has returned.
+    """
+    effects = effects if effects is not None else SubmissionEffects()
+    token = _effects.set(effects)
+    try:
+        yield effects
+    except BaseException as exc:
+        if effects.may_have_submitted and not isinstance(exc, ExecutorOutcomeUnknown):
+            raise ExecutorOutcomeUnknown("Executor POST may be accepted; reconcile its idempotency key before retry") from exc
+        raise
+    finally:
+        _effects.reset(token)
+
+
+class ExecutorClient:
+    """One native async HTTP connection pool per graph runtime, never per Run."""
+    def __init__(self, settings: AgentSettings, *, transport=None):
+        self.settings = settings
+        self.transport = transport
+        self.http = None
+
+    async def __aenter__(self):
+        if self.http is not None:
+            raise RuntimeError("ExecutorClient is already open")
+        self.http = httpx.AsyncClient(
+            transport=self.transport,
+            verify=ssl.create_default_context() if self.settings.executor_tls_verify else False,
+            trust_env=False, follow_redirects=False,
+            limits=httpx.Limits(max_connections=self.settings.executor_http_max_connections,
+                               max_keepalive_connections=self.settings.executor_http_max_connections),
+            timeout=httpx.Timeout(self.settings.executor_timeout_seconds,
+                connect=self.settings.executor_http_connect_timeout_seconds,
+                pool=self.settings.executor_http_pool_timeout_seconds),
+        )
+        return self
+
+    async def __aexit__(self, *_):
+        if self.http is not None:
+            from app.core.execution_lifecycle import protected_cleanup
+            await protected_cleanup(self.http.aclose())
+
+    async def request(self, method, url, payload=None):
+        if self.http is None or self.http.is_closed:
+            raise RuntimeError("ExecutorClient is not open")
+        mutation = method == "POST"
+        if mutation and (not isinstance(payload, dict) or not payload.get("idempotency_key")):
+            raise ExecutorSubmitError("Executor POST requires idempotency_key", retryable=False)
+        # Encode before marking possible delivery. Encoding errors send nothing.
+        content = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8") if mutation else None
+        effects = _effects.get()
+        no_delivery = False
+        attempt = object()
+        if mutation and effects is not None:
+            effects.possible_submissions.add(attempt)
+        def not_delivered():
+            nonlocal no_delivery
+            no_delivery = True
+            if mutation and effects is not None:
+                effects.possible_submissions.discard(attempt)
+        try:
+            # End-to-end deadline also covers streaming trickle responses.
+            async with asyncio.timeout(self.settings.executor_timeout_seconds):
+                async with self.http.stream(method, url, content=content,
+                    headers={"Accept":"application/json", "Content-Type":"application/json"}) as response:
+                    if response.status_code >= 300:
+                        if mutation and (response.status_code >= 500 or response.status_code in {408, 409} or response.status_code < 400):
+                            raise ExecutorOutcomeUnknown("Executor POST returned an uncertain server response")
+                        not_delivered()
+                        raise ExecutorSubmitError(f"Executor HTTP {response.status_code}",
+                            retryable=response.status_code == 429 or response.status_code >= 500)
+                    body = bytearray()
+                    async for chunk in response.aiter_bytes(chunk_size=65536):
+                        body.extend(chunk)
+                        if len(body) > self.settings.executor_http_max_response_bytes:
+                            raise ExecutorSubmitError("Executor response exceeds configured byte limit", retryable=False)
+                    parsed = json.loads(body) if body else None
+                    if method == "GET" and not isinstance(parsed, dict):
+                        raise ExecutorSubmitError("Executor GET response must be a JSON object", retryable=False)
+                    return {"status_code":response.status_code, "body":parsed}
+        except (httpx.InvalidURL, httpx.UnsupportedProtocol):
+            not_delivered()
+            raise ExecutorSubmitError("Invalid Executor URL configuration", retryable=False) from None
+        except (httpx.PoolTimeout, httpx.ConnectTimeout, httpx.ConnectError):
+            not_delivered()
+            raise ExecutorSubmitError("Executor connection unavailable before request delivery") from None
+        except ExecutorOutcomeUnknown:
+            raise
+        except BaseException as exc:
+            # Known HTTP rejection clears only this attempt; earlier accepted
+            # mutations in the same graph invocation still require recovery.
+            if mutation and not no_delivery:
+                raise ExecutorOutcomeUnknown("Executor POST outcome unknown; reconcile its idempotency key") from exc
+            if isinstance(exc, (asyncio.CancelledError, ExecutorSubmitError)):
+                raise
+            if isinstance(exc, (TimeoutError, httpx.HTTPError, ValueError)):
+                raise ExecutorSubmitError("Executor GET failed or returned invalid JSON") from None
+            raise
 
 
 def _format_execution_url(path_template: str, execution_id: str) -> str:
@@ -23,111 +151,45 @@ def _format_execution_url(path_template: str, execution_id: str) -> str:
     return path_template.format(execution_id=execution_id)
 
 
-def _post_json(
-    url: str,
-    payload: dict[str, Any],
-    *,
-    timeout_seconds: float,
-    ssl_context: ssl.SSLContext | None = None,
-) -> dict[str, Any]:
-    body = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
-    request = Request(
-        url,
-        data=body,
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urlopen(
-            request,
-            timeout=timeout_seconds,
-            context=ssl_context,
-        ) as response:
-            response_body = response.read().decode("utf-8")
-            parsed_body: Any = json.loads(response_body) if response_body else None
-            return {
-                "status_code": response.status,
-                "body": parsed_body,
-            }
-    except HTTPError as exc:
-        error_body = exc.read().decode("utf-8", errors="replace")
-        raise ExecutorSubmitError(
-            f"executor request failed with HTTP {exc.code}: {error_body}"
-        ) from exc
-    except URLError as exc:
-        raise ExecutorSubmitError(f"executor request failed: {exc.reason}") from exc
+async def _post_json(url, payload, *, client):
+    if client is None:
+        raise RuntimeError("ExecutorClient must be owned by the graph runtime")
+    return await client.request("POST", url, payload)
 
 
-def _get_json(
-    url: str,
-    *,
-    timeout_seconds: float,
-    ssl_context: ssl.SSLContext | None = None,
-) -> dict[str, Any]:
-    request = Request(
-        url,
-        headers={"Accept": "application/json"},
-        method="GET",
-    )
-    try:
-        with urlopen(
-            request,
-            timeout=timeout_seconds,
-            context=ssl_context,
-        ) as response:
-            response_body = response.read().decode("utf-8")
-            parsed_body: Any = json.loads(response_body) if response_body else None
-            if not isinstance(parsed_body, dict):
-                raise ExecutorSubmitError("executor GET response must be a JSON object")
-            return {"status_code": response.status, "body": parsed_body}
-    except HTTPError as exc:
-        error_body = exc.read().decode("utf-8", errors="replace")
-        raise ExecutorSubmitError(
-            f"executor request failed with HTTP {exc.code}: {error_body}"
-        ) from exc
-    except URLError as exc:
-        raise ExecutorSubmitError(f"executor request failed: {exc.reason}") from exc
+async def _get_json(url, *, client):
+    if client is None:
+        raise RuntimeError("ExecutorClient must be owned by the graph runtime")
+    return await client.request("GET", url)
 
 
-def _executor_ssl_context(settings: AgentSettings) -> ssl.SSLContext | None:
-    if not settings.executor_base_url.lower().startswith("https://"):
-        return None
-    context = ssl.create_default_context()
-    if not settings.executor_tls_verify:
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-    return context
-
-
-def get_execution(
+async def get_execution(
     settings: AgentSettings,
     execution_id: str,
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    return _get_json(
+    return await _get_json(
         _format_execution_url(settings.executor_execution_url, execution_id),
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
-def get_execution_result(
+async def get_execution_result(
     settings: AgentSettings,
     execution_id: str,
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    return _get_json(
+    return await _get_json(
         _format_execution_url(settings.executor_result_url, execution_id),
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
-def get_execution_notebook(
+async def get_execution_notebook(
     settings: AgentSettings,
     execution_id: str,
     *,
+    client: ExecutorClient | None = None,
     view: str = "FULL",
     start_index: int = 0,
     limit: int = 200,
@@ -142,84 +204,96 @@ def get_execution_notebook(
     query = urlencode(
         {"view": view, "start_index": start_index, "limit": limit}
     )
-    return _get_json(
+    return await _get_json(
         f"{base_url}?{query}",
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
-def submit_execution_start(
+async def submit_execution_start(
     settings: AgentSettings,
     payload: dict[str, Any],
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    response = _post_json(
+    response = await _post_json(
         settings.executor_executions_url,
         payload,
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
+    if not isinstance(response.get("body"), dict):
+        raise ExecutorOutcomeUnknown("Executor accepted POST but its receipt is missing")
     if isinstance(response.get("body"), dict):
-        ExecutorSubmitResponse.model_validate(response["body"])
+        try:
+            ExecutorSubmitResponse.model_validate(response["body"])
+        except ValueError:
+            raise ExecutorOutcomeUnknown("Executor accepted POST but its receipt is invalid") from None
     return response
 
 
-def submit_execution_continue(
+async def submit_execution_continue(
     settings: AgentSettings,
     execution_id: str,
     payload: dict[str, Any],
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    response = _post_json(
+    response = await _post_json(
         _format_execution_url(settings.executor_operations_url, execution_id),
         payload,
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
+    if not isinstance(response.get("body"), dict):
+        raise ExecutorOutcomeUnknown("Executor accepted POST but its receipt is missing")
     if isinstance(response.get("body"), dict):
-        ExecutorSubmitResponse.model_validate(response["body"])
+        try:
+            ExecutorSubmitResponse.model_validate(response["body"])
+        except ValueError:
+            raise ExecutorOutcomeUnknown("Executor accepted POST but its receipt is invalid") from None
     return response
 
 
-def submit_execution_finish(
+async def submit_execution_finish(
     settings: AgentSettings,
     execution_id: str,
     payload: dict[str, Any],
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    return _post_json(
+    return await _post_json(
         _format_execution_url(settings.executor_finalize_url, execution_id),
         payload,
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
-def submit_execution_cancel(
+async def submit_execution_cancel(
     settings: AgentSettings,
     execution_id: str,
     payload: dict[str, Any],
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    return _post_json(
+    return await _post_json(
         _format_execution_url(settings.executor_cancel_url, execution_id),
         payload,
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
-def submit_execution_artifact(
+async def submit_execution_artifact(
     settings: AgentSettings,
     execution_id: str,
     payload: dict[str, Any],
+    *, client: ExecutorClient | None = None,
 ) -> dict[str, Any]:
-    return _post_json(
+    return await _post_json(
         _format_execution_url(settings.executor_artifacts_url, execution_id),
         payload,
-        timeout_seconds=settings.executor_timeout_seconds,
-        ssl_context=_executor_ssl_context(settings),
+        client=client,
     )
 
 
 __all__ = [
+    "ExecutorClient",
+    "ExecutorOutcomeUnknown",
+    "submission_scope",
     "ExecutorSubmitError",
     "get_execution",
     "get_execution_result",

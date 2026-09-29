@@ -17,6 +17,7 @@ def build_agent_graph(
     *,
     bindings: ExecutionBindings,
     checkpointer: Any,
+    executor_client: Any = None,
 ) -> Any:
     """Compile the service graph with Worker bindings and its checkpointer."""
 
@@ -28,5 +29,6 @@ def build_agent_graph(
         settings,
         bindings=bindings,
         checkpointer=checkpointer,
+        executor_client=executor_client,
         workflow_store=workflow_store,
     )

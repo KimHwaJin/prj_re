@@ -73,11 +73,12 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
 
     async with ExecutorWorker(worker_settings, handlers) as worker:
         # Compile/open once per Worker lifespan, not once per Redis event.
-        async with create_checkpointer(
+        from app.services.executor_client import ExecutorClient
+        async with ExecutorClient(service.agent) as executor_client, create_checkpointer(
             database_url=service.agent.checkpoint_db_uri,
             setup_on_start=service.agent.checkpoint_setup_on_start,
         ) as checkpointer:
-            graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer)
+            graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer, executor_client=executor_client)
             _validate_graph(graph)
             from app.services.agent_project_context import load_event_project_snapshot
             from app.services.executor_completion import synchronize_executor_completion

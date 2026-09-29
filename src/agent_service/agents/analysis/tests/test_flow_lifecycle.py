@@ -90,7 +90,7 @@ async def test_approval_to_executor_event_and_report_survives_rebuild(tmp_path, 
 
     # Factory default parameters are bound at import time; intercept the HTTP
     # transport boundary, so real report construction still runs without network.
-    def upload(url, payload, **kwargs):
+    async def upload(url, payload, **kwargs):
         uploads.append(payload)
         return {"status_code": 202, "body": {}}
 

@@ -26,13 +26,13 @@ def _settings(**overrides):
     return load_agent_settings(environ)
 
 
-class ExecutionResultTests(unittest.TestCase):
-    def test_result_read_mode_defaults_to_api_and_rejects_unknown_mode(self):
+class ExecutionResultTests(unittest.IsolatedAsyncioTestCase):
+    async def test_result_read_mode_defaults_to_api_and_rejects_unknown_mode(self):
         self.assertEqual(_settings().executor_result_read_mode, "API")
         with self.assertRaisesRegex(ValueError, "EXECUTOR_RESULT_READ_MODE"):
             _settings(EXECUTOR_RESULT_READ_MODE="UNKNOWN")
 
-    def test_manifest_path_must_stay_under_shared_result_root(self):
+    async def test_manifest_path_must_stay_under_shared_result_root(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             root = Path(temporary_root)
             with self.assertRaisesRegex(ValueError, "unsafe shared-PV"):
@@ -40,7 +40,7 @@ class ExecutionResultTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unsafe shared-PV"):
                 _safe_resolve(root, "/absolute/manifest.json")
 
-    def test_manifest_mode_reads_event_referenced_step_output_without_api_get(self):
+    async def test_manifest_mode_reads_event_referenced_step_output_without_api_get(self):
         execution_id = "10000000-0000-0000-0000-000000000001"
         operation_id = "20000000-0000-0000-0000-000000000002"
         step_id = "30000000-0000-0000-0000-000000000003"
@@ -154,7 +154,7 @@ class ExecutionResultTests(unittest.TestCase):
             def fail_api(*_args, **_kwargs):
                 self.fail("MANIFEST mode must not call an Executor GET API")
 
-            results = read_current_operation_results(
+            results = await read_current_operation_results(
                 _settings(
                     EXECUTOR_RESULT_READ_MODE="MANIFEST",
                     EXECUTOR_SHARED_RESULT_ROOT=temporary_root,
@@ -171,7 +171,7 @@ class ExecutionResultTests(unittest.TestCase):
             "missing_rate=0.1\n",
         )
 
-    def test_failed_step_cancels_instead_of_retrying_skipped_dependents(self):
+    async def test_failed_step_cancels_instead_of_retrying_skipped_dependents(self):
         state = {
             "execution_id": "execution-1",
             "executor_operation_number": 2,
@@ -245,7 +245,7 @@ class ExecutionResultTests(unittest.TestCase):
                 }
             }
 
-        results = read_current_operation_results(
+        results = await read_current_operation_results(
             _settings(),
             state,
             fetch_result=fetch_result,
@@ -269,7 +269,7 @@ class ExecutionResultTests(unittest.TestCase):
             "cancel_adaptive_execution",
         )
 
-    def test_failed_final_segment_is_cancelled_instead_of_finalized(self):
+    async def test_failed_final_segment_is_cancelled_instead_of_finalized(self):
         self.assertEqual(
             route_after_adaptive_results(
                 {
@@ -285,7 +285,7 @@ class ExecutionResultTests(unittest.TestCase):
             "cancel_adaptive_execution",
         )
 
-    def test_notebook_cells_are_mapped_to_lineage_tool_ids(self):
+    async def test_notebook_cells_are_mapped_to_lineage_tool_ids(self):
         settings = _settings()
         state = {
             "execution_id": "execution-1",
@@ -355,7 +355,7 @@ class ExecutionResultTests(unittest.TestCase):
                 },
             }
 
-        results = read_current_operation_tool_results(
+        results = await read_current_operation_tool_results(
             settings,
             state,
             fetch_notebook=fetch_notebook,
@@ -367,7 +367,7 @@ class ExecutionResultTests(unittest.TestCase):
         )
         self.assertEqual(results[0]["result"]["cell_index"], 2)
 
-    def test_unexecuted_notebook_cell_is_not_reported_as_succeeded(self):
+    async def test_unexecuted_notebook_cell_is_not_reported_as_succeeded(self):
         settings = _settings()
         state = {
             "execution_id": "execution-1",
@@ -402,7 +402,7 @@ class ExecutionResultTests(unittest.TestCase):
                 },
             }
 
-        results = read_current_operation_tool_results(
+        results = await read_current_operation_tool_results(
             settings,
             state,
             fetch_notebook=fetch_notebook,
@@ -410,7 +410,7 @@ class ExecutionResultTests(unittest.TestCase):
 
         self.assertEqual(results[0]["result"]["status"], "NOT_EXECUTED")
 
-    def test_redis_event_results_feed_adaptive_observations(self):
+    async def test_redis_event_results_feed_adaptive_observations(self):
         tool_results = [
             {
                 "tool_id": "quality.profile_data",
@@ -422,7 +422,7 @@ class ExecutionResultTests(unittest.TestCase):
             adaptive=True,
             read_results=lambda _settings, _state: tool_results,
         )
-        update = node(
+        update = await node(
             {
                 "execution_id": "execution-1",
                 "execution_event": {

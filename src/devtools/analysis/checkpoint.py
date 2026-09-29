@@ -35,7 +35,8 @@ async def compiled_postgres_graph(
     # Lazy import keeps ordinary graph imports/tests independent of PostgreSQL.
     from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 
-    async with create_checkpointer(
+    from app.services.executor_client import ExecutorClient
+    async with ExecutorClient(settings) as executor_client, create_checkpointer(
         database_url=settings.checkpoint_db_uri,
         setup_on_start=settings.checkpoint_setup_on_start,
         min_size=settings.checkpoint_pool_min_size,
@@ -46,6 +47,7 @@ async def compiled_postgres_graph(
             deps,
             settings,
             checkpointer=checkpointer,
+            executor_client=executor_client,
             submit_execution_start=submit_execution_start,
             submit_execution_continue=submit_execution_continue,
             submit_execution_finish=submit_execution_finish,
@@ -59,6 +61,7 @@ def compiled_in_memory_graph(
     deps: AgentDependencies,
     settings: AgentSettings,
     *,
+    executor_client: Any | None = None,
     submit_execution_start: Any | None = None,
     submit_execution_continue: Any | None = None,
     submit_execution_finish: Any | None = None,
@@ -71,6 +74,7 @@ def compiled_in_memory_graph(
     return build_analysis_workflow_graph(
         deps,
         settings,
+        executor_client=executor_client,
         checkpointer=InMemorySaver(),
         submit_execution_start=submit_execution_start,
         submit_execution_continue=submit_execution_continue,
