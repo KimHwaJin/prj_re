@@ -6,7 +6,7 @@
 | 시작일 / 완료일 | 2026-10-01 / 2026-10-01 |
 | 브랜치 | feature/dataset-registry-contract |
 | 기준 commit | e5fc1d9fa38364bb376847f622323f2eee7949c8 — 041에서 분기 |
-| 계약 구현 commit | 기록 commit에서 확정 |
+| 계약 구현 commit | 5beefcfefa23b8350e17c7253cbad0abf9891dd6 |
 | 배포 상태 | 실제 서비스 기동·변경 없음. 베이스 병합·push·배포 미수행 |
 
 ## 문제와 범위 변경

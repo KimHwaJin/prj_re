@@ -3,7 +3,7 @@
   "date": "2026-10-01",
   "branch": "feature/dataset-registry-contract",
   "parent_commit": "e5fc1d9fa38364bb376847f622323f2eee7949c8",
-  "contract_commit": null,
+  "contract_commit": "5beefcfefa23b8350e17c7253cbad0abf9891dd6",
   "contract_version": "dataset-registry.v1-draft",
   "status": "offline_contract_draft_verified",
   "new_contract_tests": {
