@@ -6,6 +6,7 @@
 | 시작일 / 완료일 | 2026-09-30 / 2026-09-30 |
 | 브랜치 | feature/agentic-analysis-runtime |
 | 기준 commit | 680c6d2 — feature/refactor-base에서 분기 |
+| 구현·검증 commit | 0eb34ed314668743de1354f1433e12733144a97a — 코드 및 검증 기록 |
 | 배포 상태 | 기존 Compose 변경 없음, 테스트용 서버 종료, 미배포 |
 
 **문제와 영향**

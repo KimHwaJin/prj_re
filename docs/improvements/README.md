@@ -5,6 +5,7 @@
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
 현재 작업 브랜치: `feature/agentic-analysis-runtime` (038). `feature/refactor-base`의 `680c6d2`에서 분기했다. 036~037 계약은 베이스에 병합돼 있고, 베이스 및 파생 36개 브랜치는 prj_re에 push된 상태다. 038은 실제 API·계획 Graph·HITL·SSE 연결과 실제 모델/DB/Phoenix·회귀·wheel 검증을 완료했다. 새 기능은 아직 베이스 병합·원격 push·배포하지 않았다.
+038 구현·검증 기록 commit: `0eb34ed314668743de1354f1433e12733144a97a`.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
