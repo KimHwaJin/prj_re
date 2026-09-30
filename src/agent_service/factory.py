@@ -88,6 +88,7 @@ def build_role_agent(
     output_type: type[BaseModel] | None = None,
     structured_output_mode: str = "prompt_json",
     max_validation_attempts: int = 3,
+    validate_response: Callable | None = None,
 ) -> RoleAgent:
     policies = list(middleware)
     kwargs = {}
@@ -100,10 +101,14 @@ def build_role_agent(
         )
         if structured_output_mode == "provider_json_schema":
             kwargs["response_format"] = ProviderStrategy(output_type, strict=True)
+            if validate_response is not None:
+                policies.insert(0, PromptJsonMiddleware(output_type,
+                    max_attempts=max_validation_attempts, validate_response=validate_response))
         elif structured_output_mode == "prompt_json":
             # Outer validation re-enters every supplied model policy on retry.
             policies.insert(
-                0, PromptJsonMiddleware(output_type, max_attempts=max_validation_attempts)
+                0, PromptJsonMiddleware(output_type, max_attempts=max_validation_attempts,
+                                        validate_response=validate_response)
             )
         else:
             raise ValueError(f"Unsupported structured output mode: {structured_output_mode!r}")

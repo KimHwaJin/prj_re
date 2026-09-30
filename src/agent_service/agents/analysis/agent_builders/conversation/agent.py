@@ -18,7 +18,7 @@ class Proposal(BaseModel):
     input_values: dict = Field(default_factory=dict)
 
 
-def reply_schema(catalog, max_candidates):
+def reply_schema(catalog, max_candidates, repair_limit=4):
     class Reply(BaseModel):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'plans']
@@ -31,7 +31,7 @@ def reply_schema(catalog, max_candidates):
                 raise ValueError('plans kind requires plans; answer kind forbids plans')
             for proposal in self.plans:
                 policy = {'allowed_modes': ['MULTI'] if proposal.definition.get('decisions') or any('when' in s for s in proposal.definition.get('steps', [])) else ['SINGLE', 'MULTI'],
-                          'repair_level_limit': 4, 'max_repair_attempts_limit': 3}
+                          'repair_level_limit': repair_limit, 'max_repair_attempts_limit': 0 if repair_limit==0 else 3}
                 review = new_review(proposal.definition, proposal.input_values, catalog.metadata, policy)
                 if review['document']['execution']['max_repair_attempts'] > 3:
                     raise ValueError('Repair attempts exceed the service limit')
@@ -46,8 +46,8 @@ def reply_schema(catalog, max_candidates):
     return Reply
 
 
-def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json'):
-    schema = reply_schema(catalog, max_candidates)
+def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4):
+    schema = reply_schema(catalog, max_candidates,repair_limit)
     prompt = load_prompt(__package__) + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
                             tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],

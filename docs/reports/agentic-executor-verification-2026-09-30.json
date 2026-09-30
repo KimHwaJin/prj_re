@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-30",
+  "stage": 39,
+  "branch": "feature/agentic-executor-runtime",
+  "base_commit": "2f54b094354c9ed02eff56a1fa655eb0843d662c",
+  "final_regression": {
+    "passed": 688,
+    "failed": 0,
+    "subtests_passed": 2,
+    "warnings": 58,
+    "seconds": 292.25,
+    "scope": "All API and Agent tests with isolated local PostgreSQL"
+  },
+  "previous_regressions": [
+    {
+      "passed": 678,
+      "failed": 7,
+      "seconds": 294.59,
+      "cause": "Outdated project-query/graph-provider doubles and new test pool isolation"
+    },
+    {
+      "passed": 684,
+      "failed": 1,
+      "seconds": 299.2,
+      "cause": "Graph-provider fixture inherited submit-disabled settings"
+    }
+  ],
+  "targeted_final": {
+    "passed": 45,
+    "seconds": 4.38
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 4,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 10,
+    "production_builders_constructed": true,
+    "create_agent_roles": 10,
+    "role_checkpointers_disabled": true
+  },
+  "real_lifecycle": {
+    "passed": true,
+    "planning_seconds": 39.299,
+    "approval_to_wait_seconds": 0.466,
+    "execution_seconds": 44.398,
+    "operation_count": 2,
+    "terminal_event_seen": true,
+    "phoenix_trace_count": 14,
+    "model_calls_by_role": {
+      "planning": 6,
+      "review": 1,
+      "report": 2
+    }
+  },
+  "mock_lifecycle": {
+    "passed": true,
+    "planning_seconds": 0.397,
+    "execution_seconds": 5.503,
+    "operation_count": 2,
+    "next_invocation_status": "waiting_input"
+  },
+  "real_report_component": {
+    "elapsed_seconds": 20.08,
+    "narrative_validated": true,
+    "y_third_quartile_copied_exactly": true,
+    "scope": "Separate role invocation on the real Executor observations, not a second E2E"
+  },
+  "not_verified": [
+    "Production/Kubernetes deployment",
+    "Multi-user throughput",
+    "Week-long execution",
+    "Autonomous repair levels 1–4",
+    "Artifact report registration",
+    "All natural-language interpretation claims"
+  ],
+  "runtime_changes": "Existing Compose and original dirty checkout preserved; temporary HTTP test server stopped"
+}

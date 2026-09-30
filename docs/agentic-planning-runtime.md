@@ -1,6 +1,6 @@
 # 분석 Agent 계획 Runtime 개발 안내
 
-2026-09-30 · feature/agentic-analysis-runtime · 038. 실제 서비스 연결을 위한 1단계이며 전체 분석 E2E 완성은 아니다.
+2026-09-30 · 038 계획 Runtime, 039 Executor 연결. 아래는 계획 구간의 설명이며 승인 이후는 [Executor Runtime 안내](agentic-executor-runtime.md)를 따른다.
 
 ## 실행 구조
 
@@ -43,9 +43,9 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 
 기존 `agents/analysis/workflow` 자산 패키지는 유지한다. 그 안의 tools/skills/workflows와 등록 YAML을 수정한 뒤 재배포한다. Tool registry의 availability는 ready(기본) 또는 test_only다. 기존 placeholder extract_data/transform_nce/transform_wt는 test_only로 지정해 이 Runtime의 모델에게 실행 후보로 주지 않는다. Registry 재생성은 이 수동 가용성 정책을 보존한다. 원래 레거시 Tool 파일과 이전 실행 코드는 제거하지 않았다.
 
-새 자산은 등록 Tool·Skill membership, 함수 signature, docstring, 필요한 import를 함수 내부에 포함하는 규칙을 따른다. 승인 snapshot은 등록 함수에서 docstring만 제거한 코드와 hash 및 해당 Skill 원문을 내부에 저장한다. 실제 Executor 제출 compiler는 다음 작업에서 연결한다. 이 단계는 임의 Tool 수정·자유 코드 작성의 자율 실행을 추가하지 않았다.
+새 자산은 등록 Tool·Skill membership, 함수 signature, docstring, 필요한 import를 함수 내부에 포함하는 규칙을 따른다. 승인 snapshot은 등록 함수에서 docstring만 제거한 코드와 hash 및 해당 Skill 원문을 내부에 저장한다. 실제 제출 compiler는 039의 analysis/execution/compiler.py에 연결했다. 이 단계는 임의 Tool 수정·자유 코드 작성의 자율 실행을 추가하지 않았다.
 
-새 Runtime은 API Run Worker에 연결했고 기존 graph.py/구 Agent builders/CLI/Executor event Worker는 이전 흐름의 검증과 차기 이행을 위해 남아 있다. **모두 새 흐름으로 바뀌었다고 보면 안 된다.** Executor 단계 이행 이후 실제 미사용 코드·개발 도구를 확인하여 제거한다. 제공 Gaia core/router는 수정하지 않았고 등록 객체 adapter는 후속 구현이다.
+새 Runtime은 API Run Worker에 연결했고 기존 graph.py/구 Agent builders/CLI는 이전 흐름의 검증과 차기 이행을 위해 남아 있다. 039에서 Executor event Worker도 새 PlanningRuntime/실행 그래프를 사용하도록 연결했다. **모두 새 흐름으로 바뀌었다고 보면 안 된다.** Executor 단계 이행 이후 실제 미사용 코드·개발 도구를 확인하여 제거한다. 제공 Gaia core/router는 수정하지 않았고 등록 객체 adapter는 후속 구현이다.
 
 ## 데이터와 설정
 
@@ -72,9 +72,9 @@ service:
 | AGENT_HISTORY_MESSAGE_LIMIT | 40, 2~200 | 같은 세션의 대화 메시지 개수 상한. token 기반 요약/project_memory는 후속 |
 | ANALYSIS_DATASETS | 빈 mapping, 최대 1000 | 검증용 서버 데이터 선언. 정식 PVC catalog API를 대체하는 운영 카탈로그가 아님 |
 
-GLOBAL은 공유 원천/test 데이터만 사용한다. 전처리 데이터는 USER/PROJECT/SESSION을 쓰고 owner_user_id(서비스 내부 UUID), project_id, session_id를 해당 scope에 맞게 지정한다. 서버 runtime_path는 Jupyter에서 접근할 절대 경로이며 프론트·LLM에는 공개 dataset_id/title/description/scope만 전달한다. Agent 서버가 그 Parquet를 직접 읽거나 MinIO에 metadata를 쓰지 않는다. 이 선언은 schema/행 내용을 실시간 확인한 결과가 아니며 실제 관찰은 다음 Executor 작업에서 얻는다.
+GLOBAL은 공유 원천/test 데이터만 사용한다. 전처리 데이터는 USER/PROJECT/SESSION을 쓰고 owner_user_id(서비스 내부 UUID), project_id, session_id를 해당 scope에 맞게 지정한다. 서버 runtime_path는 Jupyter에서 접근할 절대 경로이며 프론트·LLM에는 공개 dataset_id/title/description/scope만 전달한다. Agent 서버가 그 Parquet를 직접 읽거나 MinIO에 metadata를 쓰지 않는다. 이 선언은 schema/행 내용을 실시간 확인한 결과가 아니며 실제 관찰은 039의 Executor 실행과 manifest 검증에서 얻는다.
 
-repair_level은 0=실패 전달, 1~4는 후속 실행 정책 단계의 표현이며 **이 단계에서 자동 코드 수정을 구현한 것이 아니다**. SINGLE은 repair_level/attempts=0만 허용한다. MULTI 정책과 결과 기반 decisions는 사용자에게 보이지만 이행은 다음 단계에 연결한다. 현재 서비스 ceiling은 repair_level 4, attempts 3이며 설정 확장은 후속이다.
+repair_level은 0=실패 전달, 1~4는 후속 실행 정책 단계의 표현이며 **이 단계에서 자동 코드 수정을 구현한 것이 아니다**. SINGLE은 repair_level/attempts=0만 허용한다. 039에서 MULTI 결과 기반 decisions와 후속 Operation을 연결했다. 실제 제출 Runtime의 ceiling은 repair_level 0, attempts 0이며 미구현된 자동 수정을 허용하지 않는다. port 없는 독립 계획 테스트의 ceiling 4/attempts 3은 계약 검증용이고 실제 수정 실행이 아니다.
 
 ## 실행·검증
 

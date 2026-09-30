@@ -1,6 +1,6 @@
 """Service context ownership and initial/resume boundary tests without external DB."""
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -10,16 +10,22 @@ from api_service.services import agent_graph_service as service
 from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
 
 
+def context_db(prompt, version, settings=None):
+    project=SimpleNamespace(system_prompt=prompt,prompt_version=version)
+    result=SimpleNamespace(one_or_none=Mock(return_value=(project,settings or {})))
+    return SimpleNamespace(close=AsyncMock(),execute=AsyncMock(return_value=result))
+
+
 @pytest.mark.asyncio
 async def test_context_query_is_scoped_to_user_session_and_project():
     user_id, session_id, project_id = uuid4(), uuid4(), uuid4()
-    db = SimpleNamespace(close=AsyncMock(), scalar=AsyncMock(return_value=SimpleNamespace(system_prompt="project", prompt_version=9)))
+    db = context_db("project", 9)
     assert await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id) == {
         "project_system_prompt": "project", "project_prompt_version": 9}
-    query = db.scalar.call_args.args[0]
+    query = db.execute.call_args.args[0]
     assert set(query.compile().params.values()) == {user_id, session_id, project_id}
     assert "sessions.user_id" in str(query) and "sessions.session_id" in str(query)
-    db.scalar.return_value = None
+    db.execute.return_value.one_or_none.return_value = None
     with pytest.raises(ValueError, match="does not belong"):
         await load_project_snapshot(db, user_id=user_id, session_id=session_id, project_id=project_id)
 
@@ -28,7 +34,7 @@ async def test_context_query_is_scoped_to_user_session_and_project():
 @pytest.mark.parametrize("stream", [False, True])
 async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatch, stream):
     user_id, session_id, project_id, run_id = [uuid4() for _ in range(4)]
-    db = SimpleNamespace(close=AsyncMock(), scalar=AsyncMock(return_value=SimpleNamespace(system_prompt="server project prompt", prompt_version=2)))
+    db = context_db("server project prompt", 2)
     received = []
     from api_service.services import initial_request_service as initial
     saved = SimpleNamespace(values={}, tasks=(), next=())
@@ -55,7 +61,7 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
     assert received[0]["project_system_prompt"] == "server project prompt"
     assert received[0]["project_prompt_version"] == 2
     assert received[0]["user_request"] == "hello"
-    db.scalar.assert_awaited_once()
+    db.execute.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -68,15 +74,15 @@ async def test_project_context_helper_only_backfills_legacy_snapshot(monkeypatch
     if existing is not None:
         values["project_system_prompt"] = existing
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=SimpleNamespace(values=values)), aupdate_state=AsyncMock())
-    db = SimpleNamespace(close=AsyncMock(), scalar=AsyncMock(return_value=SimpleNamespace(system_prompt="new prompt", prompt_version=3)))
+    db = context_db("new prompt", 3)
     from api_service.services.agent_project_context import ensure_project_snapshot
     await ensure_project_snapshot(graph, {}, session_factory=lambda: db,
                                   user_id=user_id, session_id=session_id)
     if existing is None:
-        db.scalar.assert_awaited_once()
+        db.execute.assert_awaited_once()
         assert graph.aupdate_state.call_args.args[1]["project_system_prompt"] == "new prompt"
     else:
-        db.scalar.assert_not_called()
+        db.execute.assert_not_called()
         graph.aupdate_state.assert_not_called()
 
 

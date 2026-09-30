@@ -7,14 +7,22 @@ from api_service.models.common.session_model import SessionModel
 
 
 async def load_project_snapshot(db, *, user_id, session_id, project_id=None):
-    query = select(ProjectModel).join(SessionModel, SessionModel.project_id == ProjectModel.project_id).where(
+    query = select(ProjectModel,SessionModel.settings).join(SessionModel, SessionModel.project_id == ProjectModel.project_id).where(
         SessionModel.session_id == UUID(str(session_id)), SessionModel.user_id == UUID(str(user_id)))
     if project_id is not None:
         query = query.where(ProjectModel.project_id == UUID(str(project_id)))
-    project = await db.scalar(query)
-    if project is None:
+    row = (await db.execute(query)).one_or_none()
+    if row is None:
         raise ValueError("Project context does not belong to this user/session")
-    return {"project_system_prompt": project.system_prompt or "", "project_prompt_version": project.prompt_version}
+    project,settings = row
+    result={"project_system_prompt": project.system_prompt or "", "project_prompt_version": project.prompt_version}
+    profile=(settings or {}).get('kernel_profile')
+    if profile is not None:
+        import re
+        if not isinstance(profile,str) or not re.fullmatch(r'[a-zA-Z0-9_.-]{1,128}',profile):
+            raise ValueError('Invalid session kernel_profile')
+        result['kernel_profile']=profile
+    return result
 
 
 async def read_project_snapshot(*, user_id, session_id, project_id=None, session_factory=None):

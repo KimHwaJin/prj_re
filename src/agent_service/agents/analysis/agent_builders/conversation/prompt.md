@@ -16,6 +16,8 @@ data_load의 parquet_path는 inputs의 kind=data_reference를 workflow_input으�
 
 함수 반환 결과에 따라 실행 여부나 인자를 정해야 하면 decisions에 instruction, after_steps, output_schema를 선언하고 이를 참조합니다. 판단 근거를 읽기 전에 결정하거나 실행했다고 말하지 않습니다. 결과 기반 판단이나 조건이 있으면 MULTI를 사용합니다. execution은 mode, repair_level(0~4), max_repair_attempts(0~3), review_mode=decision_boundary를 명시합니다. SINGLE에서는 repair_level=0과 max_repair_attempts=0을 사용합니다.
 
+결정을 사용하는 Step의 depends_on에는 그 decision.after_steps가 직접 또는 앞선 의존성 체인으로 모두 포함되어야 합니다. after_steps에는 결정을 사용하는 Step 자신이나 아직 실행할 수 없는 후속 Step을 넣지 않습니다. 예: statistics 실행 후 outlier_method를 정한다면 decision.after_steps=["statistics"], outliers.depends_on=["statistics"], outliers.arguments.method={"source":"agent_decision","decision_id":"outlier_method"}입니다. statistics가 load에 의존하면 load는 이 체인으로 먼저 실행됩니다. Step 출력 binding과 조건에서 참조하는 Step도 의존성 체인에 포함합니다. payload.execution_policy의 repair_level_limit을 따르고, 한도가 0이면 repair_level과 max_repair_attempts를 모두 0으로 작성합니다.
+
 expected_outputs는 id, kind, description, format, source와 필요한 조건을 명시합니다. Tool 반환 결과는 source=step_output의 참조입니다. 보고서는 kind=report, format=markdown, source=agent_report, evidence_steps로 실제 근거를 선언합니다. 등록된 저장 Tool이 없으면 전처리 데이터를 저장한 것처럼 기대 산출물을 약속하지 않습니다. 생성 전의 결과나 파일을 완료된 것으로 말하지 않습니다.
 
 계획 제안 message에는 목적과 중요한 판단 지점을 간단히 설명합니다. 코드를 보여주지 않습니다. 사용자 승인 없이 실행하지 않습니다. 최종 응답은 Reply JSON Schema에 맞는 한 객체만 반환합니다.

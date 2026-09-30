@@ -33,6 +33,7 @@ def new_review(document, values, catalog, policy):
     require(execution['repair_level'] <= policy['repair_level_limit'], 'Repair level exceeds service limit')
     require(execution['max_repair_attempts'] <= policy['max_repair_attempts_limit'], 'Repair attempts exceed service limit')
     require(execution['mode'] != 'SINGLE' or (execution['repair_level'] == 0 and execution['max_repair_attempts'] == 0), 'SINGLE does not support repair')
+    require(execution['mode'] != 'SINGLE' or execution['review_mode']=='decision_boundary','SINGLE cannot review between Tools')
     initial = {k: v['default'] for k, v in document['inputs'].items() if 'default' in v}
     origins = {k: 'workflow_default' for k in initial}
     for key, value in values.items():
@@ -110,6 +111,7 @@ def patch_review(review, raw_action, *, datasets, context):
     require(0 <= document['execution']['repair_level'] <= policy['repair_level_limit'], 'Repair level exceeds service limit')
     require(0 <= document['execution']['max_repair_attempts'] <= policy['max_repair_attempts_limit'], 'Repair attempts exceed service limit')
     require(document['execution']['mode'] != 'SINGLE' or (document['execution']['repair_level'] == 0 and document['execution']['max_repair_attempts'] == 0), 'SINGLE does not support repair')
+    require(document['execution']['mode'] != 'SINGLE' or document['execution']['review_mode']=='decision_boundary','SINGLE cannot review between Tools')
     errors = validate(document, result['catalog'])
     require(not errors, '; '.join(errors[:8]))
     used = {b['decision_id'] for s in document['steps'] if s['id'] not in excluded
@@ -151,6 +153,10 @@ def freeze_approval(review, sources, skill_sources, context, asset_revision, dat
     # edit cannot redirect an already approved analysis to a different file.
     accessible = visible_datasets(datasets or {}, context)
     snapshot['dataset_bindings'] = {}
+    # Pin the session's kernel and service data root before any external submission.
+    for key in ('kernel_profile','dataset_output_dir'):
+        if key in context:
+            snapshot['context'][key] = context[key]
     for name, field in review['document']['inputs'].items():
         if field['kind'] == 'data_reference' and name in review['input_values']:
             reference = review['input_values'][name]

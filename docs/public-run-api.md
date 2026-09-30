@@ -1,6 +1,6 @@
 # 공개 Run API 계약
 
-038 구현 · 2026-09-30. 현재 새 분석 Runtime은 **답변 또는 실행 계획 승인 저장까지** 연결한다. 승인 후 `success`는 계획 단계의 성공이며 Executor 실행 성공이 아니다. `result.final_response.status=plan_approved`로 구분한다. 다음 작업에서 승인 뒤 Executor 그래프를 연결한다.
+039 구현 · 2026-09-30. 답변·계획 승인에 이어 실제 Executor 제출·결과 판단·리포트·Finalize를 연결한다. 실제 제출 활성화 시 승인만으로 success가 되지 않으며, 최종 Executor 이벤트와 리포트 저장 후 `result.final_response.status=analysis_completed/analysis_failed`로 끝난다. 제출 비활성화 시에는 기존 plan_approved까지다. [실행·결정 화면·설정 안내](agentic-executor-runtime.md)를 참고한다.
 
 ## 요청·재개
 
@@ -82,10 +82,12 @@ Durable 이벤트에는 SSE `id`와 envelope sequence가 같다. `run.snapshot`�
 
 GET `.../runs`, `.../runs/{id}`, `.../runs/{id}/logs`, `.../runs/{id}/join`은 유지한다. join은 즉시 조회 별칭이다. task_id/checkpoint_run_id는 호환 진단 필드이며 클라이언트가 재개 대상을 만들 때 사용하지 않는다. 공개 ID는 여러 승인 구간에서 유지하고 내부 invocation ID는 구간마다 달라진다.
 
+결과 기반 파라미터 확인은 `interaction.opened`의 `kind=decision_review`로 구분하고 동일 POST에 `action=approve_decisions`를 보낸다. [결정 화면 형식](agentic-executor-runtime.md#사용자-결정-화면)을 따른다.
+
 POST `.../runs/{id}/cancel`은 기존 취소 처리와 실행 종료 확인을 유지한다. Executor 대기 중 로컬 상태만 종료하는 취소는 여전히 거절한다. Task는 조회 진단만 제공한다.
 
 ## 파일 입력·배포 이행
 
 입력 계약에는 `{"type":"image","file_id":"UUID"}`, `{"type":"file","file_id":"UUID"}` 참조 형식을 마련했지만 업로드·소유권 검증·text-only/VLM 처리가 미구현이므로 현재 422로 명확히 거절한다. 전달되지 않은 첨부를 무시하고 분석한 척하지 않는다.
 
-038의 그래프 node/state 계약은 이전 Agent와 다르다. **이전 그래프의 pending/대기 Run 및 checkpoint를 새 Runtime으로 자동 이어 실행하지 않는다.** 새 Runtime 전환은 기존 실행을 정리하고 새 세션/테스트 DB에서 검증한 뒤 진행한다. 실제 Gaia 제공 router, Executor 이벤트 재개, pgvector 추천·Workflow CRUD, 프로젝트 메모리, 전체 UI는 후속 단계다. 과거 벤치마크는 해당 이전 commit을 재현하는 자료로 보존한다. 현재 공용 loadtest는 계획 승인 대기만 측정하며 submit 모드는 아직 거절한다.
+038의 그래프 node/state 계약은 이전 Agent와 다르다. **이전 그래프의 pending/대기 Run 및 checkpoint를 새 Runtime으로 자동 이어 실행하지 않는다.** 새 Runtime 전환은 기존 실행을 정리하고 새 세션/테스트 DB에서 검증한 뒤 진행한다. Executor 이벤트 재개는 039에서 연결했다. 실제 Gaia 제공 router, pgvector 추천·Workflow CRUD, 프로젝트 메모리, 전체 UI는 후속 단계다. 과거 벤치마크는 해당 이전 commit을 재현하는 자료로 보존한다. 현재 공용 loadtest는 계획 승인 대기만 측정하며 submit 모드는 아직 거절한다.

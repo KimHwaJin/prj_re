@@ -23,3 +23,24 @@ class MockConversation:
         values = {'dataset': datasets[0]['dataset_id']} if datasets else {}
         return self.schema(kind='plans', message='등록된 Skill·Tool로 품질 분석 계획을 준비했습니다. 실행 전 계획을 확인해 주세요.',
                            plans=[{'definition': document, 'input_values': values}])
+
+
+def mock_execution_role(role, payload):
+    """Explicit mock provider only; its output still uses real supplied observations."""
+    if role == 'review':
+        from agent_service.agents.analysis.agent_builders.execution_review.agent import ReviewResponse
+        choices = []
+        for item in payload['pending_decisions']:
+            schema = item['output_schema']
+            if schema.get('type') == 'boolean':
+                value = True
+            elif schema.get('enum'):
+                value = schema['enum'][0]
+            else:
+                return ReviewResponse(choices=choices,needs_user_input=True,message='Mock 판단값을 사용자에게 확인합니다.')
+            choices.append({'decision_id':item['id'],'value':value,'reason':'명시적 mock 실행 정책의 검증용 선택입니다.','evidence_steps':item['after_steps']})
+        return ReviewResponse(choices=choices,needs_user_input=False,message='실행된 단계의 결과를 확인하고 다음 승인된 단계를 준비했습니다.')
+    from agent_service.agents.analysis.agent_builders.execution_report.agent import ReportResponse
+    facts = payload['observations']
+    return ReportResponse(markdown='# 분석 결과\n\n명시적 mock 모델로 작성한 검증용 해석입니다. 실제 결과는 아래 실행 근거를 확인하세요.',
+        evidence_steps=[o['step_id'] for o in facts if o['status']=='SUCCEEDED'])

@@ -16,6 +16,9 @@ from api_service.worker import DeferEvent, EventContext
 async def synchronize_executor_completion(context: EventContext, graph) -> None:
     snapshot = await graph.aget_state(context.graph_config)
     values = snapshot.values
+    if values.get('agent_runtime')=='agentic-planning-v1':
+        await synchronize_agentic_execution(context,snapshot)
+        return
     # A step event may only advance to another wait; do not release that session.
     if snapshot.next or not values:
         return
@@ -71,3 +74,31 @@ async def synchronize_executor_completion(context: EventContext, graph) -> None:
             payload={"status": target.value, "execution_id": str(context.execution_id)}, commit=False,
         )
         await db.commit()
+
+
+async def synchronize_agentic_execution(context,snapshot):
+    """Project both decision/Executor waits and terminal result from a durable receipt."""
+    values=snapshot.values
+    if (values.get('task_id')!=context.task_id or values.get('execution_id')!=str(context.execution_id)
+            or values.get('ew_receipts',{}).get(str(context.command_id))!=str(context.event.event_id)):
+        raise DeferEvent('Execution state has no matching durable receipt')
+    from api_service.services.graph_recovery import checkpoint_state,snapshot_interrupts
+    if snapshot.next and not snapshot_interrupts(snapshot):
+        raise DeferEvent('Executor graph progress is incomplete')
+    from api_service.services.graph_crud_persistence import persist_graph_state
+    state=checkpoint_state(snapshot)
+    # Receipt replay repairs events/messages before updating the public Run state.
+    await persist_graph_state(state,user_id=UUID(values['user_id']),agent_run_id=values['agent_run_id'])
+    async with get_session_factory()() as db:
+        task_id=await db.scalar(select(TaskModel.task_id).where(TaskModel.session_id==UUID(context.session_id),
+            TaskModel.graph_task_id==UUID(context.task_id)))
+        if task_id is None:
+            raise DeferEvent('API task has not recorded graph identity')
+        run_id=await db.scalar(select(AgentRunModel.run_id).where(AgentRunModel.task_id==task_id)
+            .order_by(AgentRunModel.created_at.desc(),AgentRunModel.run_id.desc()).limit(1))
+        run,task=await RunService._lock_run_and_task(db,run_id)
+        if task.status in TaskService.TERMINAL_STATUSES:
+            return
+        if task.recovery_required or task.status!=TaskStatus.WAITING_INPUT or run.status!=AgentRunStatus.INTERRUPTED:
+            raise DeferEvent('API invocation has not committed its wait')
+        await RunService._finalize_state(db,run_id,UUID(values['user_id']),state)

@@ -184,6 +184,10 @@ class AgentSettings:
     agent_history_message_limit: int = 40
     # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
     analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
+    # Text evidence supplied to the text-only model per Step; full output remains on Executor PV.
+    agent_observation_max_chars: int = 16000
+    # Safety bound for a MULTI plan; waiting never occupies an Agent execution slot.
+    agent_max_operations: int = 64
 
     @property
     def executor_executions_url(self) -> str:
@@ -324,6 +328,10 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
     discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
     history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
+    observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
+    max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
+    if not 1024 <= observation_limit <= 64000 or not 1 <= max_operations <= 256:
+        raise ValueError('Invalid Agent observation/operation limits')
     if not 1 <= max_candidates <= 20 or not 2 <= history_limit <= 200 or not 1 <= discovery_rounds <= 12:
         raise ValueError('Invalid planning candidate/history limits')
     datasets = json.loads(env.get('ANALYSIS_DATASETS', '{}'))
@@ -335,6 +343,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
         agent_discovery_max_rounds=discovery_rounds,
         analysis_datasets=datasets,
+        agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,
         model_mock_delay_ms=mock_delay_ms,
         environment=env.get("APP_ENV", "development"),
         model_provider=provider,

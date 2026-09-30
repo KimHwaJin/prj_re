@@ -127,7 +127,7 @@ def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event) 
     if settings.event_worker_enabled:
         from api_service.agent_worker.worker_main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
-        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event)
+        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, use_shared_graph=True)
     return factories
 
 

@@ -85,9 +85,18 @@ class AgentGraphRuntime:
         from agent_service.runtime.langgraph.checkpointer import create_checkpointer
         from langgraph.checkpoint.memory import InMemorySaver
         if kind == 'postgres':
-            async with create_checkpointer(database_url=agent_settings.checkpoint_db_uri,
-                                           setup_on_start=agent_settings.checkpoint_setup_on_start) as saver:
-                self._observed_pools = ((saver.conn, 'checkpoint_pool'),)
+            async with AsyncExitStack() as stack:
+                saver=await stack.enter_async_context(create_checkpointer(database_url=agent_settings.checkpoint_db_uri,
+                                           setup_on_start=agent_settings.checkpoint_setup_on_start))
+                pools=[(saver.conn,'checkpoint_pool')]
+                if agent_settings.executor_submit_enabled:
+                    from integrations.executor.client import ExecutorClient
+                    from api_service.agent_worker.api_bridge import ApiWorkerBridge
+                    planning.executor=await stack.enter_async_context(ExecutorClient(agent_settings))
+                    bridge=await stack.enter_async_context(ApiWorkerBridge(self._worker_settings()))
+                    planning.bindings=bridge.bindings
+                    pools.append((bridge.pool,'bridge_pool'))
+                self._observed_pools = tuple(pools)
                 yield build_planning_graph(planning, checkpointer=saver)
         elif kind == 'memory':
             yield build_planning_graph(planning, checkpointer=InMemorySaver())
@@ -219,6 +228,8 @@ def interrupt_payload(state: Mapping[str, Any] | None) -> list[dict[str, Any]] |
 def run_status_from_state(state: Mapping[str, Any] | None) -> AgentRunStatus:
     if interrupt_payload(state):
         return AgentRunStatus.INTERRUPTED
+    if (state or {}).get('agent_runtime')=='agentic-planning-v1' and (state.get('final_response') or {}).get('status')=='analysis_failed':
+        return AgentRunStatus.ERROR
     return AgentRunStatus.SUCCESS
 
 

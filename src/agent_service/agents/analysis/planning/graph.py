@@ -20,6 +20,7 @@ class PlanningState(TypedDict, total=False):
     project_id: str
     session_id: str
     run_id: str
+    task_id: str
     public_run_id: str
     agent_run_id: str
     thread_id: str
@@ -45,6 +46,31 @@ class PlanningState(TypedDict, total=False):
     approved_snapshot: dict | None
     routing_result: dict
     final_response: dict | None
+    kernel_profile: str
+    dataset_output_dir: str
+    execution_id: str | None
+    executor_version: int
+    executor_operation_number: int
+    executor_operation_id: str
+    executor_wait_phase: str
+    execution_command: dict
+    execution_phase: str
+    submitted_steps: list[dict]
+    next_step_sequence: int
+    completed_steps: list[str]
+    skipped_steps: list[str]
+    execution_decisions: dict
+    pending_decisions: list[dict]
+    decision_review: dict | None
+    observations: list[dict]
+    execution_status: str
+    execution_error: dict | str | None
+    analysis_failure: bool
+    terminal_event_seen: bool
+    report_status: str
+    ew_pending: dict
+    ew_receipts: dict
+    ew_sequences: dict
 
 
 def public_event(state, event_type, data):
@@ -61,6 +87,12 @@ def build_planning_graph(runtime, *, checkpointer):
         events = [public_event(current, 'message.completed', {'role': 'user', 'channel': 'answer', 'content': [{'type': 'text', 'text': state['user_request']}]})]
         events.append(public_event(current, 'activity.started', {'activity_id': str(uuid4()), 'kind': 'planning', 'title': '요청에 맞는 답변 또는 분석 계획을 준비하고 있어요.'}))
         return {'agent_runtime': RUNTIME_VERSION, 'public_run_id': current['public_run_id'],
+                'task_id': str(uuid4()),'kernel_profile':state.get('kernel_profile') or runtime.settings.executor_runtime_profile,
+                'dataset_output_dir':f"/workspace/pv/user/{state['user_id']}/project/{state['project_id']}/data",
+                'execution_id':None,'executor_operation_number':0,'next_step_sequence':0,
+                'completed_steps':[],'skipped_steps':[],'execution_decisions':{},'pending_decisions':[],
+                'decision_review':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
+                'ew_pending':{},'ew_receipts':{},'ew_sequences':{},'execution_status':'','report_status':'',
                 'agent_run_id': current['agent_run_id'], 'initial_request_receipt': state.get('initial_request_identity'),
                 'user_resume_receipt': None, 'public_events': events, 'history': history,
                 'reviews': [], 'plan_views': [], 'interaction_data': None, 'approved_snapshot': None,
@@ -78,7 +110,8 @@ def build_planning_graph(runtime, *, checkpointer):
         for proposal in reply.plans:
             definition = proposal.definition
             policy = {'allowed_modes': ['MULTI'] if definition['decisions'] or any('when' in s for s in definition['steps']) else ['SINGLE', 'MULTI'],
-                      'repair_level_limit': 4, 'max_repair_attempts_limit': 3}
+                      'repair_level_limit': 0 if runtime.execution_enabled else 4,
+                      'max_repair_attempts_limit': 0 if runtime.execution_enabled else 3}
             review = new_review(definition, proposal.input_values, runtime.catalog.metadata, policy)
             # Validate proposed data references with exactly the same rules as user edits.
             patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1}, datasets=runtime.datasets, context=state)
@@ -145,6 +178,11 @@ def build_planning_graph(runtime, *, checkpointer):
     builder.add_conditional_edges('conversation', lambda s: 'publish_review' if s['reviews'] else END)
     builder.add_edge('publish_review', 'await_review')
     builder.add_edge('await_review', 'apply_review')
-    builder.add_conditional_edges('apply_review', lambda s: END if s.get('approved_snapshot') else 'publish_review')
+    if runtime.execution_enabled:
+        from agent_service.agents.analysis.execution.nodes import wire_execution
+        wire_execution(builder,runtime,public_event)
+        builder.add_conditional_edges('apply_review', lambda s: 'execution_select' if s.get('approved_snapshot') else 'publish_review')
+    else:
+        builder.add_conditional_edges('apply_review', lambda s: END if s.get('approved_snapshot') else 'publish_review')
     graph = builder.compile(checkpointer=checkpointer, name=RUNTIME_VERSION)
     return graph

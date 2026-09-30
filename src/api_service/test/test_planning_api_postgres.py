@@ -60,7 +60,7 @@ async def planning(test_config, monkeypatch):
         await db.execute(text('TRUNCATE users CASCADE'))
     monkeypatch.setattr(service_settings, '_snapshot', None)
     settings = service_settings.load_settings(config={**test_config,
-        'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False, 'EVENT_WORKER_ENABLED': False,
+        'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False, 'EVENT_WORKER_ENABLED': False,'EXECUTOR_SUBMIT_ENABLED':False,
         'MODEL_PROVIDER': 'mock', 'CHECKPOINT_SETUP_ON_START': True,
         'TASK_CANCEL_POLL_INTERVAL_SECONDS': .2, 'AGENT_WORKER_POLL_INTERVAL_SECONDS': .1,
         'ANALYSIS_DATASETS': {'default-nce': {'title': 'NCE', 'scope': 'GLOBAL',

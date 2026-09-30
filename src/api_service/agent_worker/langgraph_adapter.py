@@ -98,9 +98,9 @@ class LangGraphEventAdapter:
         elif len(interrupts) == 1:
             boundary = interrupts[0]
             value = boundary.value
-            if not isinstance(value, dict) or value.get("kind") != (
-                "EXECUTOR_EVENT"
-            ):
+            terminal_closes_decision = (isinstance(value,dict) and value.get('kind')=='decision_review'
+                                       and context.event.event_type=='execution.completed')
+            if not isinstance(value, dict) or (value.get("kind") != "EXECUTOR_EVENT" and not terminal_closes_decision):
                 raise DeferEvent("Graph is waiting for non-Executor input")
             if (
                 value.get("task_id") != context.task_id
@@ -133,4 +133,10 @@ class LangGraphEventAdapter:
             await self.graph.aupdate_state(config, update)
         from integrations.executor.client import submission_scope
         with submission_scope():
+            if getattr(self.graph,'name',None)=='agentic-planning-v1':
+                from uuid import UUID
+                from api_service.services.graph_crud_persistence import persist_graph_state
+                async for emitted in self.graph.astream(value,config,stream_mode='values',durability=durability):
+                    await persist_graph_state(emitted,user_id=UUID(emitted['user_id']),agent_run_id=emitted['agent_run_id'])
+                return
             return await self.graph.ainvoke(value, config, durability=durability)

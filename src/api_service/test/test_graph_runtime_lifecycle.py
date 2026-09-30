@@ -282,6 +282,23 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
 
 
 @pytest.mark.asyncio
+async def test_embedded_event_worker_borrows_api_graph_without_second_pool(monkeypatch):
+    import api_service.agent_worker.worker_main as entry
+    import api_service.services.agent_graph_service as shared
+    from types import SimpleNamespace
+    graph = object()
+    runtime = AgentGraphRuntime()
+    runtime.override_graph(graph)
+    monkeypatch.setattr(shared, 'runtime', runtime)
+    # The standalone constructor is never needed by this embedded path.
+    monkeypatch.setattr(entry, 'build_agent_graph', lambda **_: pytest.fail('Second graph built'))
+    async with entry.graph_context(SimpleNamespace(), SimpleNamespace(), use_shared_graph=True) as borrowed:
+        assert borrowed is graph and runtime._active == 1
+    assert runtime._active == 0
+    await runtime.shutdown()
+
+
+@pytest.mark.asyncio
 async def test_shared_pool_visible_in_every_run_trace_without_double_wrapping(monkeypatch, tmp_path):
     from dataclasses import replace
     from service_runtime.diagnostics import observe_pool, run_trace

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
+from contextlib import asynccontextmanager
 from typing import Any
 
 from api_service.agent_worker.graph_provider import build_agent_graph
@@ -58,9 +59,27 @@ def _install_signal_handlers(worker: ExecutorWorker) -> list[signal.Signals]:
     return installed
 
 
-async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None = None) -> None:
-    from service_settings import get_settings
+@asynccontextmanager
+async def graph_context(service, worker, *, use_shared_graph):
+    if use_shared_graph:
+        # Embedded Run and Event Workers borrow one graph/model cache/checkpoint pool.
+        from api_service.services.agent_graph_service import runtime
+        async with runtime.open_graph() as graph:
+            yield graph
+        return
     from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+    from integrations.executor.client import ExecutorClient
+    async with ExecutorClient(service.agent) as executor_client, create_checkpointer(
+        database_url=service.agent.checkpoint_db_uri,
+        setup_on_start=service.agent.checkpoint_setup_on_start,
+    ) as checkpointer:
+        yield await asyncio.to_thread(build_agent_graph, bindings=worker.bindings,
+            checkpointer=checkpointer, executor_client=executor_client)
+
+
+async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None = None,
+               use_shared_graph: bool = False) -> None:
+    from service_settings import get_settings
     service = get_settings()
     worker_settings = service.worker
     deferred = DeferredHandler()
@@ -73,12 +92,7 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
 
     async with ExecutorWorker(worker_settings, handlers) as worker:
         # Compile/open once per Worker lifespan, not once per Redis event.
-        from integrations.executor.client import ExecutorClient
-        async with ExecutorClient(service.agent) as executor_client, create_checkpointer(
-            database_url=service.agent.checkpoint_db_uri,
-            setup_on_start=service.agent.checkpoint_setup_on_start,
-        ) as checkpointer:
-            graph = build_agent_graph(bindings=worker.bindings, checkpointer=checkpointer, executor_client=executor_client)
+        async with graph_context(service, worker, use_shared_graph=use_shared_graph) as graph:
             _validate_graph(graph)
             from api_service.services.agent_project_context import load_event_project_snapshot
             from api_service.services.executor_completion import synchronize_executor_completion

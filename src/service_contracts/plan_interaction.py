@@ -30,7 +30,17 @@ class PlanAction(StrictModel):
 
 
 class ResumeCommand(StrictModel):
-    resume: PlanAction
+    resume: 'PlanAction | DecisionAction'
+
+
+class DecisionAction(StrictModel):
+    action: Literal['approve_decisions']
+    interaction_id: UUID
+    revision: int = Field(ge=1,strict=True)
+    values: dict[str,Any]
+
+
+ResumeCommand.model_rebuild()
 
 
 class ResumeRequest(StrictModel):
@@ -172,3 +182,36 @@ class InteractionResolvedEvent(StrictModel):
     run_id: UUID
     occurred_at: str
     data: ResolutionData
+
+
+class DecisionField(StrictModel):
+    decision_id: str
+    guidance: str
+    evidence_steps: list[str]
+    value_schema: dict | bool
+    has_value: bool
+    value: Any = None
+
+
+class DecisionPayload(StrictModel):
+    decisions: list[DecisionField] = Field(min_length=1, max_length=100)
+
+
+class DecisionInteractionData(StrictModel):
+    interaction_id: UUID
+    revision: int = Field(ge=1, strict=True)
+    kind: Literal['decision_review']
+    status: Literal['open']
+    resume_token: UUID
+    summary: str
+    payload: DecisionPayload
+
+
+class DecisionInteractionEvent(StrictModel):
+    schema_version: Literal[1] = 1
+    type: Literal['interaction.opened']
+    sequence: int = Field(ge=1, strict=True)
+    session_id: UUID
+    run_id: UUID
+    occurred_at: str
+    data: DecisionInteractionData

@@ -1,0 +1,10 @@
+{
+  "real_llm": true,
+  "namespace": "agentic-exec-02e170beed",
+  "port": 18091,
+  "passed": false,
+  "run_id": "757747c8-b429-42e2-a232-ac497a8132a4",
+  "session_id": "a44ab5f0-01c5-4468-be81-7d2d929f22a2",
+  "error_type": "AssertionError",
+  "error": "{'main_model_name': 'default', 'model_revision': 'd76111b4432bc0226e702a31728f1db34ef592f69396744d69aa82c1d49ecde4', 'id': '757747c8-b429-42e2-a232-ac497a8132a4', 'session_id': 'a44ab5f0-01c5-4468-be81-7d2d929f22a2', 'status': 'recovery_required', 'resume_token': None, 'interrupt': None, 'failure': {'code': 'RUN_RECOVERY_REQUIRED', 'message': 'Initial request was consumed but graph progress is incomplete', 'retry_scheduled': False}, 'result': None, 'recovery_required': True, 'checkpoint_run_id': '757747c8-b429-42e2-a232-ac497a8132a4', 'task_id': 'ec6ff888-1415-4590-9c8e-6f4b86e25fa0', 'attempt_count': 2, 'next_attempt_at': None, 'cancel_reason': None, 'cancel_requested_at': None, 'created_at': '2026-09-30T14:27:39.121778Z', 'updated_at': '2026-09-30T14:28:18.937641Z', 'started_at': '2026-09-30T14:28:18.889764Z', 'completed_at': None}"
+}

@@ -5,7 +5,7 @@ dtest 프로젝트 공유
 
 ## 리팩토링 브랜치의 현재 실행 계약
 
-분석 Agent 구현은 `src/agent_service/agents/analysis/`로 이동했다. [Agent 개발·이관 안내](docs/agent-development/README.md)와 [서비스 구조 및 이행 상태](docs/architecture/service-layout.md)를 먼저 참고한다. 루트 `app.py` 실행은 유지하며 006에서 Agent·LLM 호출을 비동기로 전환했다. 008에서 역할별 선언과 독립 프롬프트를 `agent_builders/<role>/`에 배치했다. create_agent·미들웨어 통일은 후속이다. 공통 API/실행기의 패키지 분리와 HTTP·DB·파일 I/O 전체 전환은 후속 단계다.
+분석 Agent 구현은 `src/agent_service/agents/analysis/`에 있고 역할별 선언·독립 prompt는 `agent_builders/<role>/`에 둔다. 공개 API는 038~039의 새 계획/실행 Graph를 사용한다. 통합 Run 접수·HITL·SSE에 이어 실제 Executor 제출·결과 판단·후속 Operation·리포트·Finalize를 연결했다. [공개 API](docs/public-run-api.md), [Executor Runtime](docs/agentic-executor-runtime.md), [039 작업·검증 결과](docs/improvements/039-agentic-executor-runtime.md)를 현재 계약으로 참고한다. 루트 `app.py`와 중앙 설정/비동기 자원 수명을 유지한다. 기존 CLI/Graph의 이행, 자동 수정 단계, Workflow 추천·관리, 데이터 catalog·프로젝트 메모리는 후속이다.
 
 Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 

@@ -50,7 +50,7 @@ assert SOURCE_ROOT == installed.resolve()
 for prefix in TOOL_SOURCE_PREFIXES:
     assert resolve_tool_source(prefix + 'eda/profile_data.py', installed) == TOOLS_ROOT / 'eda/profile_data.py'
 roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
-         'conditional_decider', 'faq', 'report_writer', 'conversation')
+         'conditional_decider', 'faq', 'report_writer', 'conversation', 'execution_review', 'execution_report')
 for role in roles:
     prompt = files(f'agent_service.agents.analysis.agent_builders.{role}').joinpath('prompt.md')
     assert prompt.read_text(encoding='utf-8').strip()
@@ -73,6 +73,11 @@ from agent_service.agents.analysis.planning.catalog import AssetCatalog
 from agent_service.agents.analysis.dependencies import create_chat_model
 conversation = build_conversation(create_chat_model(production_settings), AssetCatalog())
 assert isinstance(conversation, RoleAgent) and conversation.agent.checkpointer is False
+from agent_service.agents.analysis.agent_builders.execution_review.agent import build_agent as build_review
+from agent_service.agents.analysis.agent_builders.execution_report.agent import build_agent as build_report
+for builder in (build_review, build_report):
+    role = builder(create_chat_model(production_settings))
+    assert isinstance(role, RoleAgent) and role.agent.checkpointer is False
 settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED':False,
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
@@ -122,4 +127,4 @@ print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
     'removed_agent_packages_in_wheel':False, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
-    'create_agent_roles':8, 'role_checkpointers_disabled':True}))
+    'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

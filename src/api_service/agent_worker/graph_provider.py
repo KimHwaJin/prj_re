@@ -6,11 +6,8 @@ from typing import Any
 
 from agent_config import load_agent_settings
 from service_contracts.executor_boundary import ExecutionBindings
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
-from agent_service.agents.analysis.graph import (
-    build_analysis_workflow_graph,
-)
-from api_service.services.workflow_persistence import workflow_store_from_environment
+from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from agent_service.agents.analysis.planning.graph import build_planning_graph
 
 
 def build_agent_graph(
@@ -22,13 +19,5 @@ def build_agent_graph(
     """Compile the service graph with Worker bindings and its checkpointer."""
 
     settings = load_agent_settings()
-    dependencies = create_llm_dependencies(settings)
-    workflow_store = workflow_store_from_environment()
-    return build_analysis_workflow_graph(
-        dependencies,
-        settings,
-        bindings=bindings,
-        checkpointer=checkpointer,
-        executor_client=executor_client,
-        workflow_store=workflow_store,
-    )
+    runtime=PlanningRuntime(settings,executor=executor_client,bindings=bindings)
+    return build_planning_graph(runtime,checkpointer=checkpointer)

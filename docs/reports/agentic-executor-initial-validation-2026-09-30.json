@@ -1,0 +1,19 @@
+{
+  "real_llm": true,
+  "namespace": "agentic-exec-8ebdfc5b00",
+  "port": 18091,
+  "passed": false,
+  "run_id": "a898822a-b872-4779-94ea-76d48e69469e",
+  "session_id": "840edb37-5737-42b9-a631-5b9dd9e0114a",
+  "planning_seconds": 40.308,
+  "tools": [
+    "data_load",
+    "profile_data",
+    "compute_statistics",
+    "detect_outliers"
+  ],
+  "approval_to_wait_seconds": 0.366,
+  "same_session_submission_status": 409,
+  "error_type": "TimeoutError",
+  "error": ""
+}

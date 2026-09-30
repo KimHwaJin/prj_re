@@ -1,0 +1,376 @@
+{
+  "real_llm": true,
+  "namespace": "agentic-exec-8b6909547a",
+  "port": 18091,
+  "passed": true,
+  "run_id": "ddceec7a-66ea-48ea-9371-a17f01c948c7",
+  "session_id": "cacef109-3ad4-43d7-8d18-c5b7126b7e3d",
+  "planning_seconds": 49.869,
+  "tools": [
+    "data_load",
+    "profile_data",
+    "compute_statistics",
+    "detect_outliers"
+  ],
+  "approval_to_wait_seconds": 0.377,
+  "same_session_submission_status": 409,
+  "execution_seconds": 28.786,
+  "status_history": [
+    "waiting_executor",
+    "success"
+  ],
+  "final_status": "success",
+  "execution_id": "6cc6705a-f49a-47ff-827c-98f08d2ea7da",
+  "observations": [
+    {
+      "error": null,
+      "status": "SUCCEEDED",
+      "step_id": "load_data",
+      "summary": {
+        "head": {
+          "type": "list",
+          "items": [
+            {
+              "type": "dict",
+              "items": {
+                "x": 25,
+                "y": 11,
+                "wf_id": "22",
+                "die_id": "TE2YW17.22.25.11",
+                "max_val": 2.561575,
+                "process": "ISO PARTITION MASK MACRO",
+                "timekey": "20251001084402071",
+                "alias_lot_id": "TE2YW17"
+              },
+              "truncated": false
+            },
+            {
+              "type": "dict",
+              "items": {
+                "x": 36,
+                "y": 17,
+                "wf_id": "6",
+                "die_id": "TE2YW24.6.36.17",
+                "max_val": 2.26394790749196,
+                "process": "CLEAN",
+                "timekey": "20251007123208839",
+                "alias_lot_id": "TE2YW24"
+              },
+              "truncated": false
+            },
+            {
+              "type": "dict",
+              "items": {
+                "x": 10,
+                "y": 43,
+                "wf_id": "14",
+                "die_id": "TE2YW23.14.10.43",
+                "max_val": 2.2120175525513273,
+                "process": "ISO PARTITION MASK MACRO",
+                "timekey": "20251009140316671",
+                "alias_lot_id": "TE2YW23"
+              },
+              "truncated": false
+            },
+            {
+              "type": "dict",
+              "items": {
+                "x": 36,
+                "y": 5,
+                "wf_id": "17",
+                "die_id": "TE2YW21.17.36.5",
+                "max_val": 2.3253982528899653,
+                "process": "ISO PARTITION MASK MACRO",
+                "timekey": "20251030150713163",
+                "alias_lot_id": "TE2YW21"
+              },
+              "truncated": false
+            },
+            {
+              "type": "dict",
+              "items": {
+                "x": 28,
+                "y": 5,
+                "wf_id": "7",
+                "die_id": "TE2YW21.7.28.5",
+                "max_val": 2.664959322787764,
+                "process": "ETCH",
+                "timekey": "20251027213113904",
+                "alias_lot_id": "TE2YW21"
+              },
+              "truncated": false
+            }
+          ],
+          "truncated": false
+        },
+        "type": "DataFrame",
+        "shape": [
+          10000,
+          8
+        ],
+        "dtypes": {
+          "x": "int32",
+          "y": "int32",
+          "wf_id": "object",
+          "die_id": "object",
+          "max_val": "float64",
+          "process": "object",
+          "timekey": "object",
+          "alias_lot_id": "object"
+        },
+        "columns": [
+          "die_id",
+          "alias_lot_id",
+          "wf_id",
+          "x",
+          "y",
+          "process",
+          "max_val",
+          "timekey"
+        ],
+        "truncated": true
+      },
+      "tool_id": "data_load",
+      "has_image": false,
+      "incomplete": false
+    },
+    {
+      "error": null,
+      "status": "SUCCEEDED",
+      "step_id": "profile_dataset",
+      "summary": {
+        "type": "dict",
+        "items": {
+          "profile": {
+            "type": "dict",
+            "items": {
+              "row_count": 10000,
+              "column_count": 8,
+              "missing_rate": 0.0045
+            },
+            "truncated": false
+          }
+        },
+        "truncated": false
+      },
+      "tool_id": "profile_data",
+      "has_image": false,
+      "incomplete": false
+    },
+    {
+      "error": null,
+      "status": "SUCCEEDED",
+      "step_id": "compute_stats",
+      "summary": {
+        "type": "dict",
+        "items": {
+          "statistics": {
+            "type": "dict",
+            "items": {
+              "x": {
+                "type": "dict",
+                "items": {
+                  "25%": 12.0,
+                  "50%": 25.0,
+                  "75%": 38.0,
+                  "max": 50.0,
+                  "min": 0.0,
+                  "std": 14.703300589147371,
+                  "mean": 25.1757,
+                  "count": 10000.0
+                },
+                "truncated": false
+              },
+              "y": {
+                "type": "dict",
+                "items": {
+                  "25%": 12.0,
+                  "50%": 25.0,
+                  "75%": 38.0,
+                  "max": 50.0,
+                  "min": 0.0,
+                  "std": 14.816387808597934,
+                  "mean": 24.9978,
+                  "count": 10000.0
+                },
+                "truncated": false
+              },
+              "wf_id": {
+                "type": "dict",
+                "items": {
+                  "top": "1",
+                  "freq": 453,
+                  "count": 10000,
+                  "unique": 25
+                },
+                "truncated": false
+              },
+              "die_id": {
+                "type": "dict",
+                "items": {
+                  "top": "TE2YW19.1.15.2",
+                  "freq": 3,
+                  "count": 9980,
+                  "unique": 9911
+                },
+                "truncated": false
+              },
+              "max_val": {
+                "type": "dict",
+                "items": {
+                  "25%": 2.323531888951413,
+                  "50%": 2.5592642467575075,
+                  "75%": 2.799993016402392,
+                  "max": 14.95650983831461,
+                  "min": 1.0700467491132022,
+                  "std": 0.7239302228751536,
+                  "mean": 2.601143915312996,
+                  "count": 9800.0
+                },
+                "truncated": false
+              },
+              "process": {
+                "type": "dict",
+                "items": {
+                  "top": "ISO PARTITION MASK MACRO",
+                  "freq": 5449,
+                  "count": 9900,
+                  "unique": 5
+                },
+                "truncated": false
+              },
+              "timekey": {
+                "type": "dict",
+                "items": {
+                  "top": "20251001084402071",
+                  "freq": 1,
+                  "count": 9980,
+                  "unique": 9980
+                },
+                "truncated": false
+              },
+              "alias_lot_id": {
+                "type": "dict",
+                "items": {
+                  "top": "TE2YW21",
+                  "freq": 1043,
+                  "count": 9980,
+                  "unique": 10
+                },
+                "truncated": false
+              }
+            },
+            "truncated": false
+          }
+        },
+        "truncated": false
+      },
+      "tool_id": "compute_statistics",
+      "has_image": false,
+      "incomplete": false
+    },
+    {
+      "error": null,
+      "status": "SUCCEEDED",
+      "step_id": "detect_outliers_step",
+      "summary": {
+        "type": "dict",
+        "items": {
+          "outlier_report": {
+            "type": "dict",
+            "items": {
+              "method": "iqr",
+              "columns": {
+                "type": "list",
+                "items": [
+                  "x",
+                  "y",
+                  "max_val"
+                ],
+                "truncated": false
+              },
+              "row_count": 10000,
+              "outlier_rate": 0.0109,
+              "column_report": {
+                "type": "dict",
+                "items": {
+                  "x": {
+                    "type": "dict",
+                    "items": {
+                      "lower_bound": -27.0,
+                      "upper_bound": 77.0,
+                      "outlier_count": 0
+                    },
+                    "truncated": false
+                  },
+                  "y": {
+                    "type": "dict",
+                    "items": {
+                      "lower_bound": -27.0,
+                      "upper_bound": 77.0,
+                      "outlier_count": 0
+                    },
+                    "truncated": false
+                  },
+                  "max_val": {
+                    "type": "dict",
+                    "items": {
+                      "lower_bound": 1.6088401977749442,
+                      "upper_bound": 3.5146847075788608,
+                      "outlier_count": 109
+                    },
+                    "truncated": false
+                  }
+                },
+                "truncated": false
+              },
+              "outlier_count": 109
+            },
+            "truncated": false
+          },
+          "outlier_indices": {
+            "type": "list",
+            "items": [
+              26,
+              71,
+              97,
+              150,
+              249,
+              330,
+              541,
+              561,
+              591,
+              684
+            ],
+            "truncated": true
+          }
+        },
+        "truncated": false
+      },
+      "tool_id": "detect_outliers",
+      "has_image": false,
+      "incomplete": false
+    }
+  ],
+  "report": {
+    "format": "markdown",
+    "content": "# default-nce 데이터 품질 및 이상치 진단 리포트\n\n## 1. 개요\n본 리포트는 `default-nce` 데이터셋의 품질, 기본 통계, 그리고 IQR 기반 이상치 후보를 진단하기 위해 수행된 분석 결과를 요약한 것입니다. 분석은 10,000행, 8개 열로 구성된 데이터프레임을 대상으로 진행되었습니다.\n\n## 2. 데이터 구조 및 품질\n- **데이터 규모**: 10,000행 × 8열\n- **열 구성**: `die_id`, `alias_lot_id`, `wf_id`, `x`, `y`, `process`, `max_val`, `timekey`\n- **누락값 비율**: 전체 데이터의 약 **0.45%** (450개 셀)에 누락값이 존재합니다.\n- **데이터 타입**: \n  - 수치형: `x` (int32), `y` (int32), `max_val` (float64)\n  - 문자열형: `die_id`, `alias_lot_id`, `wf_id`, `process`, `timekey`\n\n## 3. 기본 통계\n주요 열에 대한 기술 통계는 다음과 같습니다.\n\n| 열 | Count | Mean | Std | Min | 25% | 50% (Median) | 75% | Max |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **x** | 10,000 | 25.18 | 14.70 | 0 | 12 | 25 | 38 | 50 |\n| **y** | 10,000 | 25.00 | 14.82 | 0 | 12 | 25 | 38 | 50 |\n| **max_val** | 9,800 | 2.60 | 0.72 | 1.07 | 2.32 | 2.56 | 2.80 | 14.96 |\n\n- **범주형 변수 요약**:\n  - `die_id`: 9,911개 고유값 (최다: `TE2YW19.1.15.2`, 3회)\n  - `alias_lot_id`: 10개 고유값 (최다: `TE2YW21`, 1,043회)\n  - `wf_id`: 25개 고유값 (최다: `1`, 453회)\n  - `process`: 5개 고유값 (최다: `ISO PARTITION MASK MACRO`, 5,449회)\n  - `timekey`: 9,980개 고유값 (모두 고유)\n\n## 4. 이상치 진단 (IQR 방법)\nIQR(사분위수 범위) 방법을 적용하여 `x`, `y`, `max_val` 열의 이상치 후보를 식별했습니다.\n\n- **총 이상치 후보**: 109개 (전체 10,000행의 **1.09%**)\n- **열별 상세 결과**:\n  - **x**: 하한 -27.0, 상한 77.0 → 이상치 **0개**\n  - **y**: 하한 -27.0, 상한 77.0 → 이상치 **0개**\n  - **max_val**: 하한 1.609, 상한 3.515 → 이상치 **109개**\n\n**해석**: `x`와 `y` 좌표값은 정상 범위 내에 있으며, 이상치는 전적으로 `max_val` 열에서 발생했습니다. `max_val`의 최대값(14.96)이 IQR 상한(3.515)을 크게 초과하여, 해당 109개 행이 잠재적 이상치로 분류되었습니다.\n\n## 5. 한계 및 주의사항\n- **샘플링 한계**: 데이터 로딩 시 `head` 출력은 5행만 표시되었으므로, 전체 데이터의 분포를 완전히 확인한 것은 아닙니다.\n- **누락값 처리**: `max_val` 열은 200개(2%)의 누락값이 있어, 통계 계산 시 이 값들이 제외되었습니다. 누락값의 원인은 확인되지 않았습니다.\n- **이상치 기준**: IQR 방법은 데이터 분포에 민감하며, 특히 `max_val`처럼 오른쪽 꼬리가 긴 분포에서는 정상 범위를 벗어난 값이 다수 이상치로 분류될 수 있습니다. 추가적인 도메인 지식을 바탕으로 이상치 여부를 재검토할 것을 권장합니다.\n- **인과 관계 미확인**: 이상치가 특정 `process`나 `alias_lot_id`와 연관되어 있는지 여부는 본 분석에서 확인되지 않았습니다.\n\n## 6. 결론\n`default-nce` 데이터는 전반적으로 양호한 품질을 보이며, 누락값 비율이 낮고 좌표값(`x`, `y`)은 정상 범위를 유지합니다. 그러나 `max_val` 열에서 1.09%의 이상치 후보가 발견되었으므로, 해당 값들의 물리적 의미나 측정 오류 여부를 확인하는 후속 조치가 필요합니다.",
+    "artifact_registration": "deferred"
+  },
+  "skipped_steps": [],
+  "operation_count": 2,
+  "terminal_event_seen": true,
+  "sse_types": [
+    "activity.completed",
+    "activity.started",
+    "activity.updated",
+    "interaction.opened",
+    "interaction.resolved",
+    "message.completed",
+    "run.snapshot",
+    "run.updated"
+  ],
+  "same_session_after_completion_status": 202,
+  "phoenix_trace_count": 14,
+  "phoenix_project": "agentic-exec-8b6909547a"
+}

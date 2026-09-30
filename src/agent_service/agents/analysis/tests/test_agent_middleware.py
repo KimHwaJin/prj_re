@@ -34,6 +34,39 @@ def response(content):
         "model": "test", "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}]})
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize('mode',['prompt_json','provider_json_schema'])
+async def test_report_corrects_invalid_evidence_ids_inside_create_agent(mode):
+    from agent_service.agents.analysis.agent_builders.execution_report.agent import build_agent
+    calls=[]
+    async def handle(request):
+        calls.append(json.loads(request.content))
+        ids=['profile_data'] if len(calls)==1 else ['profile']
+        return response(json.dumps({'markdown':'# Actual profile','evidence_steps':ids}))
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as ac:
+        model=ChatOpenAI(model='test',api_key='test',base_url='http://llm.invalid/v1',max_retries=0,http_async_client=ac)
+        agent=build_agent(model,structured_output_mode=mode)
+        result=await agent.ainvoke({'observations':[{'step_id':'profile','tool_id':'profile_data','status':'SUCCEEDED'}]},
+            context=AgentContext(project_system_prompt='PROJECT RULE'))
+    assert result.evidence_steps==['profile'] and len(calls)==2
+    assert 'Allowed IDs' in calls[1]['messages'][-1]['content']
+    assert all(c['messages'][0]['content'].count('PROJECT RULE')==1 for c in calls)
+
+
+@pytest.mark.asyncio
+async def test_report_retries_model_invented_numbers_before_rendering_facts():
+    from agent_service.agents.analysis.agent_builders.execution_report.agent import build_agent
+    calls=[]
+    async def handle(request):
+        calls.append(json.loads(request.content))
+        text='450 missing cells' if len(calls)==1 else '# 해석\n\n누락된 값이 존재합니다. 실제 수치는 실행 근거를 확인하세요.'
+        return response(json.dumps({'markdown':text,'evidence_steps':['profile']}))
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as ac:
+        model=ChatOpenAI(model='test',api_key='test',base_url='http://llm.invalid/v1',max_retries=0,http_async_client=ac)
+        result=await build_agent(model).ainvoke({'observations':[{'step_id':'profile','tool_id':'profile_data','status':'SUCCEEDED'}]})
+    assert len(calls)==2 and '450' not in result.markdown
+
+
 ROLES = [
     ("routing", "analysis"),
     ("intent_classifier", "failure_prediction"),

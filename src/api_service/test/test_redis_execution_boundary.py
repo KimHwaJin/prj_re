@@ -17,8 +17,8 @@ from agent_service.agents.analysis.routers.orchestration_router import route_red
 
 
 class RedisExecutionBoundaryTests(unittest.TestCase):
-    def test_worker_graph_provider_builds_service_graph_in_redis_mode(self):
-        settings = load_agent_settings()
+    def test_worker_graph_provider_builds_same_agentic_graph_for_redis_resume(self):
+        settings = load_agent_settings({'MODEL_PROVIDER':'mock','EXECUTOR_SUBMIT_ENABLED':'true'})
         bindings = MagicMock()
         checkpointer = InMemorySaver()
         with (
@@ -26,17 +26,16 @@ class RedisExecutionBoundaryTests(unittest.TestCase):
                 "api_service.agent_worker.graph_provider.load_agent_settings",
                 return_value=settings,
             ),
-            patch(
-                "api_service.agent_worker.graph_provider.create_llm_dependencies",
-                return_value=MagicMock(),
-            ),
         ):
             graph = build_agent_graph(
                 bindings=bindings,
                 checkpointer=checkpointer,
+                executor_client=MagicMock(),
             )
 
         self.assertIs(graph.checkpointer, checkpointer)
+        self.assertEqual(graph.name, "agentic-planning-v1")
+        self.assertIn("execution_wait", graph.nodes)
 
     def test_operation_event_is_normalized_for_existing_result_nodes(self):
         state = {

@@ -137,3 +137,7 @@ async for update in graph.astream(graph_input, config):
 
 제출·추가 실행·종료·결과 조회·보고서 업로드는 공유 ExecutorClient의 async 경로를 사용한다.
 [자원 소유권·취소·멱등성 계약](../executor-http-runtime.md)을 참고한다.
+
+### 새 분석 Runtime의 실제 실행
+
+공개 API·Executor Event Worker는 039의 planning/graph.py와 execution/{compiler,nodes}.py를 사용한다. 결과 판단은 agent_builders/execution_review, 리포트는 agent_builders/execution_report에 선언과 독립 prompt를 둔다. 등록 함수 원문 보존, 실제 관찰, 사용자 decision_review, 자원 수명은 [실행 개발 안내](../agentic-executor-runtime.md)를 따른다. 기존 CLI/graph의 이행 여부와 구분한다.
