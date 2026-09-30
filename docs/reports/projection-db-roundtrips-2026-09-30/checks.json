@@ -1,0 +1,98 @@
+[
+  {
+    "users": 1,
+    "source_ref": "8836df6",
+    "status": "passed",
+    "complete": 1,
+    "attempts": 4,
+    "models": 4,
+    "worker_sql_per_user": 344.0,
+    "worker_commit_calls_per_user": 51.0,
+    "variant": "before",
+    "repeat": 1
+  },
+  {
+    "users": 10,
+    "source_ref": "8836df6",
+    "status": "passed",
+    "complete": 10,
+    "attempts": 40,
+    "models": 40,
+    "worker_sql_per_user": 344.0,
+    "worker_commit_calls_per_user": 51.0,
+    "variant": "before",
+    "repeat": 1
+  },
+  {
+    "users": 1,
+    "source_ref": "8836df6",
+    "status": "passed",
+    "complete": 1,
+    "attempts": 4,
+    "models": 4,
+    "worker_sql_per_user": 344.0,
+    "worker_commit_calls_per_user": 51.0,
+    "variant": "before",
+    "repeat": 2
+  },
+  {
+    "users": 10,
+    "source_ref": "8836df6",
+    "status": "passed",
+    "complete": 10,
+    "attempts": 40,
+    "models": 40,
+    "worker_sql_per_user": 344.0,
+    "worker_commit_calls_per_user": 51.0,
+    "variant": "before",
+    "repeat": 2
+  },
+  {
+    "users": 1,
+    "source_ref": "88e026542f7fd2dc8251cc5344a5e29c1919e7e5",
+    "status": "passed",
+    "complete": 1,
+    "attempts": 4,
+    "models": 4,
+    "worker_sql_per_user": 281.0,
+    "worker_commit_calls_per_user": 48.0,
+    "variant": "after",
+    "repeat": 1
+  },
+  {
+    "users": 10,
+    "source_ref": "88e026542f7fd2dc8251cc5344a5e29c1919e7e5",
+    "status": "passed",
+    "complete": 10,
+    "attempts": 40,
+    "models": 40,
+    "worker_sql_per_user": 281.0,
+    "worker_commit_calls_per_user": 48.0,
+    "variant": "after",
+    "repeat": 1
+  },
+  {
+    "users": 1,
+    "source_ref": "88e026542f7fd2dc8251cc5344a5e29c1919e7e5",
+    "status": "passed",
+    "complete": 1,
+    "attempts": 4,
+    "models": 4,
+    "worker_sql_per_user": 281.0,
+    "worker_commit_calls_per_user": 48.0,
+    "variant": "after",
+    "repeat": 2
+  },
+  {
+    "users": 10,
+    "source_ref": "88e026542f7fd2dc8251cc5344a5e29c1919e7e5",
+    "status": "passed",
+    "complete": 10,
+    "attempts": 40,
+    "models": 40,
+    "worker_sql_per_user": 281.0,
+    "worker_commit_calls_per_user": 48.0,
+    "variant": "after",
+    "repeat": 2
+  }
+]

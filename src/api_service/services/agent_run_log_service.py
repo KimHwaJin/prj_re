@@ -35,17 +35,21 @@ class AgentRunLogService:
                 return existing[0]
             # Concurrent callers wait on this unique key without rolling back
             # the transaction on a duplicate. The first stored payload wins.
-            await db.execute(insert(AgentRunLogModel).values(
+            log = await db.scalar(insert(AgentRunLogModel).values(
                 run_id=run_id, event_key=event_key, agent_name=agent_name,
                 node=node, event=event, kind=kind, payload=payload,
-            ).on_conflict_do_nothing(constraint="uq_agent_run_logs_event"))
-            log = await db.scalar(select(AgentRunLogModel).where(
-                AgentRunLogModel.run_id == run_id,
-                AgentRunLogModel.event_key == event_key,
-            ).with_for_update().execution_options(populate_existing=True))
-            linked = await db.scalar(select(TaskEventModel.task_event_id).where(
-                TaskEventModel.agent_run_log_id == log.log_id,
-            ))
+            ).on_conflict_do_nothing(constraint="uq_agent_run_logs_event").returning(AgentRunLogModel))
+            linked = None
+            if log is None:
+                # A concurrent insert or legacy log won. Lock/re-read only this
+                # path; a freshly returned INSERT already owns its new row.
+                log = await db.scalar(select(AgentRunLogModel).where(
+                    AgentRunLogModel.run_id == run_id,
+                    AgentRunLogModel.event_key == event_key,
+                ).with_for_update().execution_options(populate_existing=True))
+                linked = await db.scalar(select(TaskEventModel.task_event_id).where(
+                    TaskEventModel.agent_run_log_id == log.log_id,
+                ))
             if linked is None:
                 # Also repairs a legacy log whose corresponding event is missing.
                 # Always use the persisted log, never a changed retry payload.
@@ -58,7 +62,10 @@ class AgentRunLogService:
             # Log, event and Task sequence become visible together. A Run with
             # no associated Task retains the existing log-only behavior.
             await db.commit()
-            await db.refresh(log)
+            # Production sessions retain loaded values across commit; RETURNING
+            # includes generated IDs/timestamps. Support other session factories.
+            if db.sync_session.expire_on_commit:
+                await db.refresh(log)
             return log
         except BaseException:
             await db.rollback()

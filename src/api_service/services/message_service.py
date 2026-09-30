@@ -40,17 +40,11 @@ class MessageService:
                 status_code=422,
                 detail="MessageService requires an existing session_id.",
             )
-        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=project_id)
-        session = await SessionRepository.get_active_by_user(
-            db,
-            user_id=user_id,
-            session_id=session_id,
-            for_update=True,
+        # The lifecycle barrier rechecks ownership/project after acquiring the
+        # admission lock; return that row with the same final row lock we need.
+        session = await lifecycle.lock_session(
+            db, user_id, session_id, expected_project_id=project_id, for_update=True,
         )
-        if session is None:
-            raise HTTPException(status_code=404, detail="Session을 찾을 수 없습니다.")
-        if project_id is not None and session.project_id != project_id:
-            raise HTTPException(status_code=409, detail="입력한 project_id와 Session의 소속 Project가 다릅니다.")
         return session, False
 
     @staticmethod
@@ -104,15 +98,16 @@ class MessageService:
         if payload.message_type == MessageType.USER and session.session_name == "새 대화":
             session.session_name = make_session_name(payload.content_text)
 
-        await db.commit()
-        await db.refresh(message)
-
-        return MessageCreateResult(
+        # INSERT/flush returned sequence_no and server timestamps already.
+        # Capture a DTO before commit so expiry-enabled sessions work as well.
+        result = MessageCreateResult(
             session_created=session_created,
             project_id=session.project_id,
             session_id=session.session_id,
             message=MessageRead.model_validate(message),
         )
+        await db.commit()
+        return result
 
     @staticmethod
     async def read(db: AsyncSession, user_id: UUID, message_id: UUID) -> MessageRead:

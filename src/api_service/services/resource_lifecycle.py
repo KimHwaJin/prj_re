@@ -42,7 +42,8 @@ async def lock_projects(db: AsyncSession, user_id: UUID, project_ids, *, exclusi
 
 async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
                        expected_project_id: UUID | None = None,
-                       target_project_id: UUID | None = None) -> SessionModel:
+                       target_project_id: UUID | None = None,
+                       for_update: bool = False) -> SessionModel:
     query = select(SessionModel).where(SessionModel.session_id == session_id,
         SessionModel.user_id == user_id, SessionModel.delete_yn == DeleteYN.N)
     session = await db.scalar(query.execution_options(populate_existing=True))
@@ -53,6 +54,8 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
     await lock_projects(db, user_id, ids)
     # Same key as Run admission, shared across all API replicas.
     await db.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(f"run-admission:{session_id}", 0))))
+    if for_update:
+        query = query.with_for_update()
     session = await db.scalar(query.execution_options(populate_existing=True))
     if session is None:
         raise HTTPException(404, "Session not found.")

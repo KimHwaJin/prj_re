@@ -47,11 +47,10 @@ class TaskService:
     ) -> None:
         """Link the graph/Executor task identity to its durable CRUD Task."""
 
-        run = await db.get(AgentRunModel, run_id)
-        if run is None or run.task_id is None:
-            return
-        task = await db.get(TaskModel, run.task_id)
-        if task is None:
+        task = await db.scalar(select(TaskModel).join(
+            AgentRunModel, AgentRunModel.task_id == TaskModel.task_id,
+        ).where(AgentRunModel.run_id == run_id))
+        if task is None or task.graph_task_id == graph_task_id:
             return
         if task.graph_task_id is not None and task.graph_task_id != graph_task_id:
             raise RuntimeError(

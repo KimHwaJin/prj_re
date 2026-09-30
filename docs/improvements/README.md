@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/log-event-atomicity` (032 로그·이벤트 원자 저장 구현·검증·기록 완료). 028~032는 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
+현재 작업 브랜치: `feature/projection-db-roundtrips` (033 결과 저장 DB 왕복 축소·A/B·검증·기록 완료). 028~033은 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -52,6 +52,7 @@
 | 030 | 사용자 resume 입력 재사용 방지·checkpoint 기반 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-29 | [변경·검증·제한](030-resume-checkpoint-recovery.md) |
 | 031 | 최초 입력 재전달 방지·checkpoint 기반 결과 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [변경·검증·제한](031-initial-checkpoint-recovery.md) |
 | 032 | Agent 로그·대응 이벤트 원자 저장·멱등 복구 | 구현·격리 PostgreSQL/마이그레이션/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](032-log-event-atomicity.md) |
+| 033 | 결과 저장 DB 왕복 축소·동일 조건 A/B | 1차 개선·1/10명 A/B·전체 회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](033-projection-db-roundtrips.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
@@ -109,3 +110,5 @@
 - [폐쇄망 Gaia 템플릿 통합 설계](../design/gaia-template-integration-2026-09-28.md)
 - [환경변수·설정 로딩 및 주입 통합](../design/configuration-unification-2026-09-28.md)
 - [공통 API·Runtime과 여러 업무 Agent의 분리](../design/extensible-agent-runtime-2026-09-28.md)
+
+- 2026-09-30 우선순위 변경: 처리량·성능 구조 → Agent 로직 변경 → 기능·디테일 검증 → 종합 성능 검증 → 에러 처리·운영성 순으로 진행한다. 에러 처리 신규 개선은 마지막 단계로 보류하고 기존 보호 장치는 유지한다. 1단계의 변경 효과 확인용 작은 A/B는 수행한다.

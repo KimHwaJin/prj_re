@@ -1,0 +1,12 @@
+{
+  "api": {
+    "seconds": 0.2390034159179777,
+    "forced_kill": false,
+    "returncode": -15
+  },
+  "model": {
+    "seconds": 0.1338024998549372,
+    "forced_kill": false,
+    "returncode": -15
+  }
+}

@@ -1,0 +1,90 @@
+diff --git a/src/api_service/services/agent_run_log_service.py b/src/api_service/services/agent_run_log_service.py
+index d80b241..1aaf5c5 100644
+--- a/src/api_service/services/agent_run_log_service.py
++++ b/src/api_service/services/agent_run_log_service.py
+@@ -38 +38 @@ class AgentRunLogService:
+-            await db.execute(insert(AgentRunLogModel).values(
++            log = await db.scalar(insert(AgentRunLogModel).values(
+@@ -41,8 +41,12 @@ class AgentRunLogService:
+-            ).on_conflict_do_nothing(constraint="uq_agent_run_logs_event"))
+-            log = await db.scalar(select(AgentRunLogModel).where(
+-                AgentRunLogModel.run_id == run_id,
+-                AgentRunLogModel.event_key == event_key,
+-            ).with_for_update().execution_options(populate_existing=True))
+-            linked = await db.scalar(select(TaskEventModel.task_event_id).where(
+-                TaskEventModel.agent_run_log_id == log.log_id,
+-            ))
++            ).on_conflict_do_nothing(constraint="uq_agent_run_logs_event").returning(AgentRunLogModel))
++            linked = None
++            if log is None:
++                # A concurrent insert or legacy log won. Lock/re-read only this
++                # path; a freshly returned INSERT already owns its new row.
++                log = await db.scalar(select(AgentRunLogModel).where(
++                    AgentRunLogModel.run_id == run_id,
++                    AgentRunLogModel.event_key == event_key,
++                ).with_for_update().execution_options(populate_existing=True))
++                linked = await db.scalar(select(TaskEventModel.task_event_id).where(
++                    TaskEventModel.agent_run_log_id == log.log_id,
++                ))
+@@ -61 +65,4 @@ class AgentRunLogService:
+-            await db.refresh(log)
++            # Production sessions retain loaded values across commit; RETURNING
++            # includes generated IDs/timestamps. Support other session factories.
++            if db.sync_session.expire_on_commit:
++                await db.refresh(log)
+diff --git a/src/api_service/services/message_service.py b/src/api_service/services/message_service.py
+index 9d2702e..277641e 100644
+--- a/src/api_service/services/message_service.py
++++ b/src/api_service/services/message_service.py
+@@ -43,6 +43,4 @@ class MessageService:
+-        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=project_id)
+-        session = await SessionRepository.get_active_by_user(
+-            db,
+-            user_id=user_id,
+-            session_id=session_id,
+-            for_update=True,
++        # The lifecycle barrier rechecks ownership/project after acquiring the
++        # admission lock; return that row with the same final row lock we need.
++        session = await lifecycle.lock_session(
++            db, user_id, session_id, expected_project_id=project_id, for_update=True,
+@@ -50,4 +47,0 @@ class MessageService:
+-        if session is None:
+-            raise HTTPException(status_code=404, detail="Session을 찾을 수 없습니다.")
+-        if project_id is not None and session.project_id != project_id:
+-            raise HTTPException(status_code=409, detail="입력한 project_id와 Session의 소속 Project가 다릅니다.")
+@@ -107,4 +101,3 @@ class MessageService:
+-        await db.commit()
+-        await db.refresh(message)
+-
+-        return MessageCreateResult(
++        # INSERT/flush returned sequence_no and server timestamps already.
++        # Capture a DTO before commit so expiry-enabled sessions work as well.
++        result = MessageCreateResult(
+@@ -115,0 +109,2 @@ class MessageService:
++        await db.commit()
++        return result
+diff --git a/src/api_service/services/resource_lifecycle.py b/src/api_service/services/resource_lifecycle.py
+index c5452dc..9e9f77e 100644
+--- a/src/api_service/services/resource_lifecycle.py
++++ b/src/api_service/services/resource_lifecycle.py
+@@ -45 +45,2 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
+-                       target_project_id: UUID | None = None) -> SessionModel:
++                       target_project_id: UUID | None = None,
++                       for_update: bool = False) -> SessionModel:
+@@ -55,0 +57,2 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
++    if for_update:
++        query = query.with_for_update()
+diff --git a/src/api_service/services/task_service.py b/src/api_service/services/task_service.py
+index 764b0bd..4c886bd 100644
+--- a/src/api_service/services/task_service.py
++++ b/src/api_service/services/task_service.py
+@@ -50,5 +50,4 @@ class TaskService:
+-        run = await db.get(AgentRunModel, run_id)
+-        if run is None or run.task_id is None:
+-            return
+-        task = await db.get(TaskModel, run.task_id)
+-        if task is None:
++        task = await db.scalar(select(TaskModel).join(
++            AgentRunModel, AgentRunModel.task_id == TaskModel.task_id,
++        ).where(AgentRunModel.run_id == run_id))
++        if task is None or task.graph_task_id == graph_task_id:

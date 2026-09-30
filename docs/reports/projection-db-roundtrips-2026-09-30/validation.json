@@ -1,0 +1,61 @@
+{
+  "date": "2026-09-30",
+  "branch": "feature/projection-db-roundtrips",
+  "before_commit": "8836df6",
+  "after_ref": "88e026542f7fd2dc8251cc5344a5e29c1919e7e5",
+  "after_ref_type": "Git tree snapshot; production files match final working source",
+  "trial_order": [
+    "before-r1",
+    "after-r1",
+    "before-r2",
+    "after-r2"
+  ],
+  "trial_users": [
+    1,
+    10
+  ],
+  "repeats_per_variant": 2,
+  "complete_users": 44,
+  "invocations": 176,
+  "model_calls": 176,
+  "api_processes": 1,
+  "run_concurrency": 4,
+  "model_mock_delay_seconds": 5,
+  "service_pool_size": 10,
+  "service_pool_overflow": 0,
+  "database": "temporary localhost PostgreSQL 17, identity_test; removed after validation",
+  "whole_suite": {
+    "passed": 653,
+    "warnings": 53,
+    "subtests_passed": 2,
+    "seconds": 267.29
+  },
+  "targeted_suite": {
+    "passed": 17,
+    "seconds": 10.67
+  },
+  "baseline_query_probe": {
+    "passed": 3,
+    "deselected": 2,
+    "seconds": 3.99
+  },
+  "production_code_changed_after_whole_suite": false,
+  "benchmark_checks": "8 trials independently verified; no censored users; no failed attempts; no forced process kill",
+  "wheel": "four changed modules match source; tests excluded",
+  "limits": [
+    "local DB with low network RTT",
+    "two repeats only",
+    "simultaneous-start batches; not sustainable capacity",
+    "fresh processes/pools per cohort, initialization included",
+    "Executor/Redis disabled; no real LLM capacity tested",
+    "performance changes not deployed"
+  ],
+  "source_sha256": {
+    "src/api_service/services/agent_run_log_service.py": "645ac5ff4e535983d4220ca3cfc24ffcda2c2910b8acd0e3fef834c2f68081fa",
+    "src/api_service/services/message_service.py": "34c6e4eb3986eb748c103a5d1f08bc92e01e8c69ef7ed4575111700a098c0f78",
+    "src/api_service/services/resource_lifecycle.py": "fec6f9d7f91d195be903daa89fe6d3323fc05f7b6226107f434f7a1ff54ab8e1",
+    "src/api_service/services/task_service.py": "5a63b354eff75f39a2ff163d69e42a4d462d161afc54ece8e7c1fc23ab8278a6",
+    "src/api_service/test/test_projection_roundtrips_postgres.py": "353707904bf2bde49f3c4df9398f0d138bc997af17c27eb54d897fe4a0119de7",
+    "scripts/benchmarks/projection_roundtrips/compare.py": "bb639cc41b8cd3bcf8efcc76411d70e3e730498cbd5dd82853f0e980a302da92"
+  }
+}
