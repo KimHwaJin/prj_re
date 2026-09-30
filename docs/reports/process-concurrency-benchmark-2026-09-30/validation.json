@@ -1,0 +1,24 @@
+{
+  "readiness": "share_with_caveats",
+  "evidence": "21 complete trials / 690 users / 2760 model calls",
+  "checks": {
+    "cohort_outcomes": "passed",
+    "unique_runs_and_process_coverage": "passed",
+    "arithmetic_and_aggregates": "passed",
+    "raw_hashes": "passed",
+    "nine_analyzer_tests": "passed",
+    "legacy_four_slot_analysis_compatibility": "passed",
+    "portable_artifact_structure": "passed",
+    "browser_rendering": "not_verified"
+  },
+  "limitations": [
+    "Local finite batches, no Kubernetes resource quota or real LLM rate limits",
+    "One trial per condition; only 50-user 16-slot layouts repeated twice",
+    "Repeated p95 is average of trial p95, not pooled percentile",
+    "RSS is sampled and includes instrumentation/shared-page duplication",
+    "Per-process DB pools grow with process count; not equal aggregate pool budget",
+    "Installed Chrome static-chart extraction timed out twice; final HTML passed structural verification only"
+  ],
+  "operating_settings_changed": false,
+  "scratch_database_removed": true
+}

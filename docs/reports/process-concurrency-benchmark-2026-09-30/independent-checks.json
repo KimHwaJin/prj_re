@@ -1,0 +1,128 @@
+[
+  {
+    "layout": "1\u00d716",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d74",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d78",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d74",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d78",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "4\u00d74",
+    "users": 10,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d716",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d74",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d78",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d74",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d78",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "4\u00d74",
+    "users": 30,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d716",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d74",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d78",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d74",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d78",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "4\u00d74",
+    "users": 50,
+    "repeat": 1,
+    "status": "passed"
+  },
+  {
+    "layout": "1\u00d716",
+    "users": 50,
+    "repeat": 2,
+    "status": "passed"
+  },
+  {
+    "layout": "2\u00d78",
+    "users": 50,
+    "repeat": 2,
+    "status": "passed"
+  },
+  {
+    "layout": "4\u00d74",
+    "users": 50,
+    "repeat": 2,
+    "status": "passed"
+  }
+]

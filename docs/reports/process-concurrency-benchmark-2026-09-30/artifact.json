@@ -1,0 +1,1186 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "API 프로세스와 Run 컨커런시 비교 — 2026년 9월 30일",
+    "description": "고정된 서비스 코드에서 처리량·지연·자원 비용을 비교한 기술 보고서",
+    "generatedAt": "2026-09-30T02:36:05.169128+00:00",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# API 프로세스와 Run 컨커런시 비교 — 2026년 9월 30일"
+      },
+      {
+        "id": "summary",
+        "type": "markdown",
+        "body": "## 실행 자리와 프로세스 비용을 분리해서 판단\n\n50명에서 1×4의 평균 완료 시간은 254.90초, 1×16은 70.24초로 72.4% 짧아졌다. 동일 16자리의 평균 완료 시간 최저 조합은 4×4(63.17초)다. 다만 한두 차례의 로컬 측정에서 작은 차이를 확정 순위로 해석하지 않는다.\n\n4×4의 평균 시간은 1×16보다 10.1% 짧았다. 1×16의 API 메모리 최고 표본 평균은 258 MiB, 4×4는 829 MiB였다. DB 연결 최고 표본 평균은 각각 13개와 53개였다. 이번 mock 조건에서는 1프로세스에서 컨커런시를 늘리는 방식을 자원 효율 우선 후보로 삼을 근거가 있다. 최대 속도가 중요할 때는 다중 프로세스의 추가 비용도 함께 판단해야 한다. 실제 LLM 한도 및 Kubernetes CPU/메모리 제한을 반영한 운영 권장값 확정은 이번 결과의 범위 밖이다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## 표의 숫자는 무엇을 의미하는가\n\n1×16은 Uvicorn 프로세스 1개에서 서로 다른 세션의 Run을 최대 16개 동시 처리한다는 뜻이다. 전체 완료 시간은 세션 생성부터 3회 resume를 거쳐 Workflow 승인 대기에 도달할 때까지이며, 사용자별 LLM 호출은 4회다. 10·30·50명이 동시에 시작한다.\n\n평균과 p95의 단위는 초, 처리량은 완료 사용자/초다. CPU는 API worker만, RSS는 worker와 supervisor를 합산한다. SQL pool/loop 지표는 밀리초다. CPU·메모리·DB 측정에는 계측 오버헤드가 포함된다. 각 조건의 반복 수를 표에 공개한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "latency",
+        "type": "markdown",
+        "body": "## 컨커런시를 늘렸을 때의 완료 시간\n\n같은 1프로세스에서 4→8→16자리를 비교하면 프로세스 복제 없이 실행 대기를 줄이는 효과를 볼 수 있다. 아래 막대는 사용자 수별 평균 완료 시간이며, 실제 모델의 동시 요청 제한이 없는 5초 mock 조건이다. 변화량을 실제 LLM 제공사의 수용량으로 일반화하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "latency-chart-block",
+        "type": "chart",
+        "chartId": "latency-chart"
+      },
+      {
+        "id": "decomposition",
+        "type": "markdown",
+        "body": "## 50명에서 줄어든 시간은 대부분 큐 대기다\n\n1×4에서 사용자당 큐 대기 합계는 231.35초였고 1×16에서는 45.71초였다. LLM 호출 합계는 각각 20.02초와 20.02초로 거의 같다. 즉 이번 차이의 주된 원인은 모델 응답 자체가 아니라 동시에 실행 가능한 자리를 늘려 줄어든 대기다. 4×4에서는 큐 대기가 39.26초였으나, 총 풀 크기도 함께 늘었으므로 프로세스 수 하나만의 순수 효과로 분리하지 않는다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "latency-table-block",
+        "type": "table",
+        "tableId": "latency-table"
+      },
+      {
+        "id": "equal-slots",
+        "type": "markdown",
+        "body": "## 같은 실행 자리에서도 프로세스 비용은 달라진다\n\n8자리는 1×8과 2×4, 16자리는 1×16·2×8·4×4를 비교한다. 다중 프로세스는 별도 Python 런타임·Agent 그래프·DB 풀을 가진다. 다음 표는 가장 높은 부하인 50명의 결과다. 총 DB pool 예산을 고정한 비교가 아니라 프로세스당 같은 설정을 복제한 배포 비교라는 점에 유의해야 한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "equal-table-block",
+        "type": "table",
+        "tableId": "equal-table"
+      },
+      {
+        "id": "repeat-check",
+        "type": "markdown",
+        "body": "## 반복 측정으로 본 작은 차이\n\n50명·총 16자리 조건은 순서를 뒤집어 2회 측정했다. 각 실행의 평균을 아래에 그대로 공개한다. 2×8과 4×4의 시간 순위는 반복에 따라 바뀌었다. 따라서 이 둘의 우열을 확정하기보다 추가 프로세스의 메모리와 DB 비용을 함께 판단한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "repeat-table-block",
+        "type": "table",
+        "tableId": "repeat-table"
+      },
+      {
+        "id": "memory",
+        "type": "markdown",
+        "body": "## 메모리와 DB 연결은 별도 비용이다\n\n프로세스 수를 늘리면 동일한 서비스를 위한 상주 메모리와 독립 풀이 복제된다. 아래 그래프는 50명 조건에서 약 1초 간격으로 측정한 worker+supervisor RSS 합의 최고값이다. 이는 계측 버퍼를 포함한 표본 최고치이며 순간 최대 또는 Kubernetes 메모리 limit 권장값이 아니다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "memory-chart-block",
+        "type": "chart",
+        "chartId": "memory-chart"
+      },
+      {
+        "id": "database",
+        "type": "markdown",
+        "body": "## DB 풀과 잠금 경합을 함께 확인\n\n프로세스당 service pool 10/overflow 0, checkpoint 최대 4, bridge 4를 유지했다. 프로세스가 4개면 service pool 상한만 40개가 된다. 아래 DB 연결 수는 전용 DB의 idle/active 연결을 모두 포함하며 계측용 연결은 제외한다. 짧은 lock 대기는 표본에서 누락될 수 있으므로 SQL 실행 지연·pool 획득 지연도 함께 제시한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "database-table-block",
+        "type": "table",
+        "tableId": "database-table"
+      },
+      {
+        "id": "methods",
+        "type": "markdown",
+        "body": "## 측정 설계와 검산\n\n서비스 소스는 c3534f0으로 고정하고 git archive로 독립 복사했다. 실제 Uvicorn shared socket worker들이 같은 PostgreSQL 큐와 checkpoint를 공유한다. 프로세스별 별도 localhost 제어 채널에서 계측을 직접 수집해 한 프로세스의 지표만 전체로 오인하지 않도록 했다.\n\n각 조건마다 DB와 API/모델 프로세스를 새로 시작한다. 사용자 등록은 측정 밖, 세션 생성과 Agent/풀 초기화는 측정 안이다. 단계 간 think time은 0.2초이며 상태 전달은 SSE다. mock Executor도 호출하지 않는다. source ref, Run·모델·stage 개수, 실제 동시 실행 상한, DB의 recovery/소유권 상태, 메시지·로그 건수와 프로세스 종료 상태를 검산했다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "limits",
+        "type": "markdown",
+        "body": "## 이 결과로 아직 확정할 수 없는 것\n\n로컬 macOS 개발 머신(14 CPU, RAM 24 GiB)과 Docker PostgreSQL(14 CPU, 메모리 약 15.6 GiB)이며 Pod CPU quota·memory limit을 적용하지 않았다. 레포 예제 deployment에는 2 CPU/4 GiB limit이 있지만 실제 플랫폼 CI/CD 템플릿의 값은 미확정이므로 적용 환경과 같다고 보지 않았다. 다른 로컬 서비스와 자원을 공유한다.\n\n주 비교는 조건당 1회이며 추가 반복 조건은 표의 반복 수로 표시한다. 지속 유입·다양한 prompt 길이·실제 LLM rate limit·장기 Executor 작업·실제 공유 PV 지연은 포함하지 않았다. p95는 작은 표본에서 불안정하고, 반복이 있으면 trial별 p95의 평균이다. CPU는 API worker CPU 합만 측정하고 DB·mock·supervisor CPU는 포함하지 않는다. RSS에는 Python 계측 목록이 포함되고, 프로세스 간 공유 페이지가 중복 합산될 수 있어 cgroup working set과 같지 않다. 같은 자릿수에서의 작은 차이는 우열 확정 근거가 아니다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "next",
+        "type": "markdown",
+        "body": "## 다음 적용 판단\n\n평균 완료 시간뿐 아니라 CPU 초/사용자·메모리·연결 비용이 낮은 조합을 배포 후보로 삼는다. 16은 이번에 시험한 컨커런시의 상한이며 최적값이나 시스템 한계로 확정한 숫자가 아니다. 이번 결과만으로 운영 프로세스 수나 컨커런시를 자동 변경하지 않는다. 확정할 Kubernetes CPU/메모리 제한과 실제 LLM 동시 요청 수용량을 맞춘 뒤 후보를 재검증해야 한다.\n\n사용자 우선순위에 따라 다음 단계는 새 Agent 흐름 검토다. 모델 호출 수와 실행 단위가 바뀌면 이번 용량 측정도 다시 확인한다.",
+        "sourceId": "measurements"
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "body": "## 배포 전 남은 질문\n\nPod의 CPU request/limit과 memory limit은 얼마인가? 실제 LLM이 안정적으로 받는 동시 요청 수는 몇 개인가? 모델 호출이 없는 resume 구간과 호출이 있는 구간을 분리할 필요가 있는가? 플랫폼 scale-out 때 총 DB 연결 수용량을 어떤 범위까지 확보할 수 있는가?"
+      }
+    ],
+    "charts": [
+      {
+        "id": "latency-chart",
+        "title": "사용자 수별 평균 완료 시간",
+        "subtitle": "API 1 Pod 상당의 로컬 프로세스 집합 · LLM 5초 × 4회 · 각 값의 반복 수는 표에 표시",
+        "type": "bar",
+        "dataset": "matrix",
+        "sourceId": "measurements",
+        "encodings": {
+          "x": {
+            "field": "layout",
+            "type": "nominal",
+            "label": "프로세스 × 컨커런시"
+          },
+          "y": {
+            "field": "mean_s",
+            "type": "quantitative",
+            "label": "초"
+          },
+          "color": {
+            "field": "cohort",
+            "type": "nominal",
+            "label": "동시 사용자"
+          }
+        }
+      },
+      {
+        "id": "memory-chart",
+        "title": "50명 조건의 API RSS 최고 표본",
+        "subtitle": "API 1 Pod 상당의 로컬 프로세스 집합 · LLM 5초 × 4회 · 각 값의 반복 수는 표에 표시",
+        "type": "bar",
+        "dataset": "heavy",
+        "sourceId": "measurements",
+        "encodings": {
+          "x": {
+            "field": "layout",
+            "type": "nominal",
+            "label": "프로세스 × 컨커런시"
+          },
+          "y": {
+            "field": "rss_mib",
+            "type": "quantitative",
+            "label": "MiB"
+          }
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "latency-table",
+        "title": "전체 조건의 완료 시간과 큐 대기",
+        "dataset": "matrix",
+        "sourceId": "measurements",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "layout",
+            "label": "프로세스×컨커런시",
+            "type": "text"
+          },
+          {
+            "field": "users",
+            "label": "사용자",
+            "format": "number"
+          },
+          {
+            "field": "repeats",
+            "label": "반복",
+            "format": "number"
+          },
+          {
+            "field": "mean_s",
+            "label": "평균 초",
+            "format": "number"
+          },
+          {
+            "field": "p95_s",
+            "label": "p95 초",
+            "format": "number"
+          },
+          {
+            "field": "queue_s",
+            "label": "큐 대기 초",
+            "format": "number"
+          },
+          {
+            "field": "throughput",
+            "label": "완료/초",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "equal-table",
+        "title": "50명 조건: 같은 자리 수의 시간·CPU·메모리",
+        "dataset": "heavy",
+        "sourceId": "measurements",
+        "defaultSort": {
+          "field": "slots",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "layout",
+            "label": "프로세스×컨커런시",
+            "type": "text"
+          },
+          {
+            "field": "slots",
+            "label": "총 자리",
+            "format": "number"
+          },
+          {
+            "field": "peak_runs",
+            "label": "실제 동시 실행 최고",
+            "format": "number"
+          },
+          {
+            "field": "repeats",
+            "label": "반복",
+            "format": "number"
+          },
+          {
+            "field": "mean_s",
+            "label": "평균 초",
+            "format": "number"
+          },
+          {
+            "field": "throughput",
+            "label": "완료/초",
+            "format": "number"
+          },
+          {
+            "field": "cpu_s_user",
+            "label": "CPU 초/사용자",
+            "format": "number"
+          },
+          {
+            "field": "rss_mib",
+            "label": "RSS 최고 평균 MiB",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "repeat-table",
+        "title": "50명·총 16자리의 개별 실행",
+        "dataset": "repeated",
+        "sourceId": "measurements",
+        "defaultSort": {
+          "field": "repeat",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "layout",
+            "label": "프로세스×컨커런시",
+            "type": "text"
+          },
+          {
+            "field": "repeat",
+            "label": "반복 번호",
+            "format": "number"
+          },
+          {
+            "field": "mean_s",
+            "label": "평균 초",
+            "format": "number"
+          },
+          {
+            "field": "p95_s",
+            "label": "p95 초",
+            "format": "number"
+          },
+          {
+            "field": "rss_mib",
+            "label": "RSS 최고 MiB",
+            "format": "number"
+          },
+          {
+            "field": "db_peak",
+            "label": "DB 최고",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "database-table",
+        "title": "50명 조건의 DB·이벤트 루프 지표",
+        "dataset": "heavy",
+        "sourceId": "measurements",
+        "defaultSort": {
+          "field": "db_peak",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "layout",
+            "label": "프로세스×컨커런시",
+            "type": "text"
+          },
+          {
+            "field": "db_peak",
+            "label": "DB 최고 표본 평균",
+            "format": "number"
+          },
+          {
+            "field": "pool_p95_ms",
+            "label": "pool p95 ms",
+            "format": "number"
+          },
+          {
+            "field": "sql_p95_ms",
+            "label": "SQL p95 ms",
+            "format": "number"
+          },
+          {
+            "field": "lag_p95_ms",
+            "label": "loop p95 ms",
+            "format": "number"
+          },
+          {
+            "field": "lock_peak",
+            "label": "lock 대기 최고",
+            "format": "number"
+          },
+          {
+            "field": "idle_tx_peak",
+            "label": "idle tx 최고",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "cards": [],
+    "sources": [
+      {
+        "id": "measurements",
+        "label": "고정 소스의 실제 API·Worker·PostgreSQL 부하 측정",
+        "path": "aggregation.sql",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT layout, users, CAST(CAST(users AS INTEGER) AS TEXT) || '명' AS cohort,\n COUNT(*) AS repeats, processes, concurrency, slots,\n AVG(mean_s) AS mean_s, AVG(p95_s) AS p95_s, AVG(queue_s) AS queue_s,\n AVG(llm_s) AS llm_s, AVG(internal_s) AS internal_s, AVG(throughput) AS throughput,\n MAX(peak_runs) AS peak_runs, AVG(cpu_s_user) AS cpu_s_user, AVG(cpu_cores) AS cpu_cores,\n AVG(rss_mib) AS rss_mib, AVG(db_peak) AS db_peak,\n AVG(pool_p95_ms) AS pool_p95_ms, AVG(lag_p95_ms) AS lag_p95_ms,\n MAX(lock_peak) AS lock_peak, MAX(idle_tx_peak) AS idle_tx_peak,\n AVG(sql_p95_ms) AS sql_p95_ms\n FROM benchmark_trials\n WHERE source_commit = 'c3534f0' AND users IN (10, 30, 50)\n GROUP BY layout, users, processes, concurrency, slots\n ORDER BY slots, processes, users",
+          "description": "실제 HTTP/SSE 시나리오 완료 시간, Run 생성/시작 시각, 프로세스별 계측 및 pg_stat_activity 표본을 검산·집계한다.",
+          "tables_used": [
+            "benchmark_trials"
+          ],
+          "filters": [
+            "source=c3534f0",
+            "LLM mock=5 seconds per call, 4 calls per user",
+            "Workflow approval waiting; no Executor submission",
+            "users=10,30,50"
+          ],
+          "metric_definitions": [
+            "mean_s: 사용자별 세션 생성부터 Workflow 승인 대기까지 시간의 평균. 반복이 있으면 trial 평균의 산술평균.",
+            "p95_s: 각 trial의 사용자 완료 시간 nearest-rank p95; 반복 간에는 해당 p95들의 평균이며 pooled p95가 아니다.",
+            "queue_s: 사용자별 4개 Run의 created_at→started_at 시간 합계의 평균.",
+            "throughput: trial의 완료 사용자 수 / 마지막 사용자 완료까지 경과 초. 지속 유입 처리 한계가 아니다.",
+            "rss_mib: 같은 표본 시점의 worker+supervisor RSS 합의 trial별 최고치를 반복 간 평균. MiB, 약 1초 간격; instrumentation 포함.",
+            "cpu_s_user: 모든 API worker CPU process_time 합 / 완료 사용자 수. supervisor·DB·LLM mock CPU 제외.",
+            "db_peak: 전용 DB client backend 수의 trial별 최고 표본을 반복 간 평균; 계측용 연결 제외, active/idle 포함.",
+            "pool_p95_ms: SQLAlchemy pool 획득+연결 확인 지연 p95. 순수 queue 대기만은 아니다."
+          ],
+          "executed_at": "2026-09-30T02:36:05.168551+00:00"
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-09-30T02:36:05.169128+00:00",
+    "status": "ready",
+    "datasets": {
+      "matrix": [
+        {
+          "layout": "1×4",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 4,
+          "slots": 4,
+          "mean_s": 48.25434596245177,
+          "p95_s": 55.633859999943525,
+          "queue_s": 24.9603885,
+          "llm_s": 20.044631054392084,
+          "internal_s": 0.9153800913365557,
+          "throughput": 0.17974341057422774,
+          "peak_runs": 4.0,
+          "cpu_s_user": 0.6025788,
+          "cpu_cores": 0.10830956865172545,
+          "rss_mib": 206.234375,
+          "db_peak": 13.0,
+          "pool_p95_ms": 1.3158749788999557,
+          "lag_p95_ms": 2.037291973829264,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 6.0,
+          "sql_p95_ms": 6.075625075027347
+        },
+        {
+          "layout": "1×4",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 4,
+          "slots": 4,
+          "mean_s": 150.7245118513005,
+          "p95_s": 161.58741949987598,
+          "queue_s": 127.2426624,
+          "llm_s": 20.023428943225493,
+          "internal_s": 0.8571136678491409,
+          "throughput": 0.1856542836130702,
+          "peak_runs": 4.0,
+          "cpu_s_user": 0.6756474666666666,
+          "cpu_cores": 0.12543684639898572,
+          "rss_mib": 223.84375,
+          "db_peak": 13.0,
+          "pool_p95_ms": 3.3672910649329424,
+          "lag_p95_ms": 2.844583103433246,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 9.0,
+          "sql_p95_ms": 6.64908392354846
+        },
+        {
+          "layout": "1×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 4,
+          "slots": 4,
+          "mean_s": 254.89500703827943,
+          "p95_s": 259.5707998329308,
+          "queue_s": 231.35383504,
+          "llm_s": 20.019365725968964,
+          "internal_s": 0.7789717230247334,
+          "throughput": 0.18712755969679812,
+          "peak_runs": 4.0,
+          "cpu_s_user": 0.7720256600000001,
+          "cpu_cores": 0.14446727777910998,
+          "rss_mib": 239.71875,
+          "db_peak": 13.0,
+          "pool_p95_ms": 2.5631249882280827,
+          "lag_p95_ms": 2.6694159954786247,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 5.950500024482608
+        },
+        {
+          "layout": "1×8",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 8,
+          "slots": 8,
+          "mean_s": 28.82741442071274,
+          "p95_s": 36.19830562500283,
+          "queue_s": 5.4985368,
+          "llm_s": 20.031492003705353,
+          "internal_s": 1.1864420129917561,
+          "throughput": 0.27624542776059735,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.5391378,
+          "cpu_cores": 0.14893435218290738,
+          "rss_mib": 207.75,
+          "db_peak": 13.0,
+          "pool_p95_ms": 1.633291831240058,
+          "lag_p95_ms": 2.759292116388673,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 6.982374936342239
+        },
+        {
+          "layout": "1×8",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 8,
+          "slots": 8,
+          "mean_s": 72.55938250148513,
+          "p95_s": 86.32066225004382,
+          "queue_s": 48.96541633333333,
+          "llm_s": 20.030516456603074,
+          "internal_s": 1.1492187728639691,
+          "throughput": 0.34597065419229434,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.5586835666666666,
+          "cpu_cores": 0.19328811904615095,
+          "rss_mib": 217.75,
+          "db_peak": 13.0,
+          "pool_p95_ms": 4.032874945551157,
+          "lag_p95_ms": 2.538750041276211,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 9.0,
+          "sql_p95_ms": 7.31312483549118
+        },
+        {
+          "layout": "1×8",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 8,
+          "slots": 8,
+          "mean_s": 131.87226881490554,
+          "p95_s": 137.26635470800102,
+          "queue_s": 108.12225178,
+          "llm_s": 20.018071289989166,
+          "internal_s": 1.2961126048164442,
+          "throughput": 0.34847656988660836,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.60542702,
+          "cpu_cores": 0.21097713124627102,
+          "rss_mib": 244.703125,
+          "db_peak": 14.0,
+          "pool_p95_ms": 26.256707962602377,
+          "lag_p95_ms": 3.331666905432934,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 9.0,
+          "sql_p95_ms": 7.623917190358043
+        },
+        {
+          "layout": "2×4",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 4,
+          "slots": 8,
+          "mean_s": 29.101719137397595,
+          "p95_s": 36.420663916971534,
+          "queue_s": 5.2548811,
+          "llm_s": 20.052169470721857,
+          "internal_s": 1.41789146696683,
+          "throughput": 0.274562968915022,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.674289,
+          "cpu_cores": 0.1851347897467413,
+          "rss_mib": 414.53125,
+          "db_peak": 26.0,
+          "pool_p95_ms": 1.0797078721225262,
+          "lag_p95_ms": 2.910166839137668,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 8.0,
+          "sql_p95_ms": 8.656832855194807
+        },
+        {
+          "layout": "2×4",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 4,
+          "slots": 8,
+          "mean_s": 71.56765344447146,
+          "p95_s": 84.67229383299127,
+          "queue_s": 48.01955576666666,
+          "llm_s": 20.02238533468141,
+          "internal_s": 0.9575646554973597,
+          "throughput": 0.3542915962273314,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.5836916666666667,
+          "cpu_cores": 0.2067970522879248,
+          "rss_mib": 432.765625,
+          "db_peak": 26.0,
+          "pool_p95_ms": 2.2052910644561052,
+          "lag_p95_ms": 1.8462080974131767,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 6.395791191607714
+        },
+        {
+          "layout": "2×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 4,
+          "slots": 8,
+          "mean_s": 127.01287240329198,
+          "p95_s": 135.82498045801185,
+          "queue_s": 103.32275016,
+          "llm_s": 20.017319200895727,
+          "internal_s": 0.9417821549251676,
+          "throughput": 0.359210318752257,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.63352906,
+          "cpu_cores": 0.22757017558141773,
+          "rss_mib": 454.5625,
+          "db_peak": 26.0,
+          "pool_p95_ms": 2.5594159960746765,
+          "lag_p95_ms": 1.8691670615225975,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 12.0,
+          "sql_p95_ms": 5.878416821360588
+        },
+        {
+          "layout": "1×16",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "mean_s": 24.66218030829914,
+          "p95_s": 24.828370624920353,
+          "queue_s": 1.4236806,
+          "llm_s": 20.04257556621451,
+          "internal_s": 1.2258914751466363,
+          "throughput": 0.4027552216150204,
+          "peak_runs": 10.0,
+          "cpu_s_user": 0.48048440000000003,
+          "cpu_cores": 0.1935176010045601,
+          "rss_mib": 213.765625,
+          "db_peak": 13.0,
+          "pool_p95_ms": 3.8637910038232803,
+          "lag_p95_ms": 2.4321671575307793,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 7.0,
+          "sql_p95_ms": 7.017749827355146
+        },
+        {
+          "layout": "1×16",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "mean_s": 38.175520398654044,
+          "p95_s": 44.96302108396776,
+          "queue_s": 14.505646533333334,
+          "llm_s": 20.02550545987518,
+          "internal_s": 1.2544656680275996,
+          "throughput": 0.6671359708780705,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.4467401333333333,
+          "cpu_cores": 0.298036412581532,
+          "rss_mib": 237.640625,
+          "db_peak": 13.0,
+          "pool_p95_ms": 13.724707998335361,
+          "lag_p95_ms": 4.5314169023185915,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 6.668084068223834
+        },
+        {
+          "layout": "1×16",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "mean_s": 70.23743517711759,
+          "p95_s": 75.4863341456512,
+          "queue_s": 45.70971361,
+          "llm_s": 20.023258290009107,
+          "internal_s": 2.079268756737001,
+          "throughput": 0.6156891489025891,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.5076349600000001,
+          "cpu_cores": 0.31247329205231295,
+          "rss_mib": 257.765625,
+          "db_peak": 13.0,
+          "pool_p95_ms": 90.1180210057646,
+          "lag_p95_ms": 6.341416481882328,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 8.52789543569088
+        },
+        {
+          "layout": "2×8",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "mean_s": 24.705775458202698,
+          "p95_s": 24.77451170887798,
+          "queue_s": 1.0207787000000001,
+          "llm_s": 20.022188812121748,
+          "internal_s": 1.3844469881383703,
+          "throughput": 0.40362521774035,
+          "peak_runs": 10.0,
+          "cpu_s_user": 0.5954624,
+          "cpu_cores": 0.24034364085619137,
+          "rss_mib": 428.46875,
+          "db_peak": 26.0,
+          "pool_p95_ms": 2.4564170744270086,
+          "lag_p95_ms": 2.1322091110050625,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 12.0,
+          "sql_p95_ms": 7.3878339026123285
+        },
+        {
+          "layout": "2×8",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "mean_s": 37.23515549724301,
+          "p95_s": 44.34660308388993,
+          "queue_s": 13.866074900000001,
+          "llm_s": 20.018372505608326,
+          "internal_s": 1.0042257332165414,
+          "throughput": 0.6755474300705958,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.49396433333333334,
+          "cpu_cores": 0.33369633592986847,
+          "rss_mib": 438.3125,
+          "db_peak": 26.0,
+          "pool_p95_ms": 4.119875142350793,
+          "lag_p95_ms": 2.2008331492543167,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 8.0,
+          "sql_p95_ms": 5.700916983187199
+        },
+        {
+          "layout": "2×8",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "mean_s": 65.63555472918321,
+          "p95_s": 75.01023520808667,
+          "queue_s": 41.81400744,
+          "llm_s": 20.023945974621455,
+          "internal_s": 1.414279419137165,
+          "throughput": 0.6454450335912372,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.54409139,
+          "cpu_cores": 0.3511175778410256,
+          "rss_mib": 461.5703125,
+          "db_peak": 26.5,
+          "pool_p95_ms": 27.048854040913284,
+          "lag_p95_ms": 2.7544795069843477,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 17.0,
+          "sql_p95_ms": 8.734145434573293
+        },
+        {
+          "layout": "4×4",
+          "users": 10,
+          "cohort": "10명",
+          "repeats": 1,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "mean_s": 24.569677437492647,
+          "p95_s": 24.67768937489018,
+          "queue_s": 0.6505294,
+          "llm_s": 20.050864199758507,
+          "internal_s": 1.5146822166163474,
+          "throughput": 0.40520667000737287,
+          "peak_runs": 10.0,
+          "cpu_s_user": 0.7632662,
+          "cpu_cores": 0.3092805552311815,
+          "rss_mib": 775.34375,
+          "db_peak": 52.0,
+          "pool_p95_ms": 1.1244160123169422,
+          "lag_p95_ms": 1.9447080325335209,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 8.247209014371037
+        },
+        {
+          "layout": "4×4",
+          "users": 30,
+          "cohort": "30명",
+          "repeats": 1,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "mean_s": 37.31575178736045,
+          "p95_s": 43.71224445803091,
+          "queue_s": 13.8037225,
+          "llm_s": 20.027378198644147,
+          "internal_s": 1.1454082264720151,
+          "throughput": 0.6862298992524167,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.5907690666666666,
+          "cpu_cores": 0.4054033971001109,
+          "rss_mib": 821.5,
+          "db_peak": 52.0,
+          "pool_p95_ms": 0.9065840858966112,
+          "lag_p95_ms": 1.8330829683691208,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 14.0,
+          "sql_p95_ms": 6.980083882808685
+        },
+        {
+          "layout": "4×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "mean_s": 63.16908300959505,
+          "p95_s": 75.0211518749129,
+          "queue_s": 39.25562492,
+          "llm_s": 20.02713934684172,
+          "internal_s": 1.2751616227952765,
+          "throughput": 0.6544767973925132,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.62831905,
+          "cpu_cores": 0.41111386060075494,
+          "rss_mib": 829.3515625,
+          "db_peak": 53.0,
+          "pool_p95_ms": 2.9625415336340666,
+          "lag_p95_ms": 1.9661040045320934,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 20.0,
+          "sql_p95_ms": 8.336208062246442
+        }
+      ],
+      "heavy": [
+        {
+          "layout": "1×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 4,
+          "slots": 4,
+          "mean_s": 254.89500703827943,
+          "p95_s": 259.5707998329308,
+          "queue_s": 231.35383504,
+          "llm_s": 20.019365725968964,
+          "internal_s": 0.7789717230247334,
+          "throughput": 0.18712755969679812,
+          "peak_runs": 4.0,
+          "cpu_s_user": 0.7720256600000001,
+          "cpu_cores": 0.14446727777910998,
+          "rss_mib": 239.71875,
+          "db_peak": 13.0,
+          "pool_p95_ms": 2.5631249882280827,
+          "lag_p95_ms": 2.6694159954786247,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 5.950500024482608
+        },
+        {
+          "layout": "1×8",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 1,
+          "concurrency": 8,
+          "slots": 8,
+          "mean_s": 131.87226881490554,
+          "p95_s": 137.26635470800102,
+          "queue_s": 108.12225178,
+          "llm_s": 20.018071289989166,
+          "internal_s": 1.2961126048164442,
+          "throughput": 0.34847656988660836,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.60542702,
+          "cpu_cores": 0.21097713124627102,
+          "rss_mib": 244.703125,
+          "db_peak": 14.0,
+          "pool_p95_ms": 26.256707962602377,
+          "lag_p95_ms": 3.331666905432934,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 9.0,
+          "sql_p95_ms": 7.623917190358043
+        },
+        {
+          "layout": "2×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 1,
+          "processes": 2,
+          "concurrency": 4,
+          "slots": 8,
+          "mean_s": 127.01287240329198,
+          "p95_s": 135.82498045801185,
+          "queue_s": 103.32275016,
+          "llm_s": 20.017319200895727,
+          "internal_s": 0.9417821549251676,
+          "throughput": 0.359210318752257,
+          "peak_runs": 8.0,
+          "cpu_s_user": 0.63352906,
+          "cpu_cores": 0.22757017558141773,
+          "rss_mib": 454.5625,
+          "db_peak": 26.0,
+          "pool_p95_ms": 2.5594159960746765,
+          "lag_p95_ms": 1.8691670615225975,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 12.0,
+          "sql_p95_ms": 5.878416821360588
+        },
+        {
+          "layout": "1×16",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "mean_s": 70.23743517711759,
+          "p95_s": 75.4863341456512,
+          "queue_s": 45.70971361,
+          "llm_s": 20.023258290009107,
+          "internal_s": 2.079268756737001,
+          "throughput": 0.6156891489025891,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.5076349600000001,
+          "cpu_cores": 0.31247329205231295,
+          "rss_mib": 257.765625,
+          "db_peak": 13.0,
+          "pool_p95_ms": 90.1180210057646,
+          "lag_p95_ms": 6.341416481882328,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 10.0,
+          "sql_p95_ms": 8.52789543569088
+        },
+        {
+          "layout": "2×8",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "mean_s": 65.63555472918321,
+          "p95_s": 75.01023520808667,
+          "queue_s": 41.81400744,
+          "llm_s": 20.023945974621455,
+          "internal_s": 1.414279419137165,
+          "throughput": 0.6454450335912372,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.54409139,
+          "cpu_cores": 0.3511175778410256,
+          "rss_mib": 461.5703125,
+          "db_peak": 26.5,
+          "pool_p95_ms": 27.048854040913284,
+          "lag_p95_ms": 2.7544795069843477,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 17.0,
+          "sql_p95_ms": 8.734145434573293
+        },
+        {
+          "layout": "4×4",
+          "users": 50,
+          "cohort": "50명",
+          "repeats": 2,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "mean_s": 63.16908300959505,
+          "p95_s": 75.0211518749129,
+          "queue_s": 39.25562492,
+          "llm_s": 20.02713934684172,
+          "internal_s": 1.2751616227952765,
+          "throughput": 0.6544767973925132,
+          "peak_runs": 16.0,
+          "cpu_s_user": 0.62831905,
+          "cpu_cores": 0.41111386060075494,
+          "rss_mib": 829.3515625,
+          "db_peak": 53.0,
+          "pool_p95_ms": 2.9625415336340666,
+          "lag_p95_ms": 1.9661040045320934,
+          "lock_peak": 0.0,
+          "idle_tx_peak": 20.0,
+          "sql_p95_ms": 8.336208062246442
+        }
+      ],
+      "repeated": [
+        {
+          "repeat": 1,
+          "layout": "1×16",
+          "users": 50,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 69.29660965167452,
+          "p95_s": 75.15835966612212,
+          "queue_s": 45.05022462,
+          "llm_s": 20.01924485336989,
+          "internal_s": 1.8637993560172617,
+          "throughput": 0.623423768463722,
+          "peak_runs": 16,
+          "cpu_s_user": 0.49832042,
+          "cpu_cores": 0.31066479413882475,
+          "rss_mib": 257.671875,
+          "db_peak": 13,
+          "pool_p95_ms": 73.36033298633993,
+          "lag_p95_ms": 5.884207878261799,
+          "lock_peak": 0,
+          "idle_tx_peak": 10,
+          "sql_p95_ms": 7.850833004340529
+        },
+        {
+          "repeat": 1,
+          "layout": "2×8",
+          "users": 50,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 66.6533821258042,
+          "p95_s": 74.24615145800635,
+          "queue_s": 42.95968266,
+          "llm_s": 20.01780964099802,
+          "internal_s": 1.3743999916268512,
+          "throughput": 0.6481105452396883,
+          "peak_runs": 16,
+          "cpu_s_user": 0.5202657,
+          "cpu_cores": 0.3371896864965081,
+          "rss_mib": 462.859375,
+          "db_peak": 26,
+          "pool_p95_ms": 40.8570000436157,
+          "lag_p95_ms": 2.2312499117106146,
+          "lock_peak": 0,
+          "idle_tx_peak": 17,
+          "sql_p95_ms": 8.183791069313884
+        },
+        {
+          "repeat": 1,
+          "layout": "4×4",
+          "users": 50,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 60.80016658001114,
+          "p95_s": 74.19650212489069,
+          "queue_s": 36.90625912,
+          "llm_s": 20.02153289364651,
+          "internal_s": 1.1268693589093164,
+          "throughput": 0.6627773122939751,
+          "peak_runs": 16,
+          "cpu_s_user": 0.6155031000000001,
+          "cpu_cores": 0.4079414903266098,
+          "rss_mib": 834.71875,
+          "db_peak": 52,
+          "pool_p95_ms": 2.289416966959834,
+          "lag_p95_ms": 1.8930000718682949,
+          "lock_peak": 0,
+          "idle_tx_peak": 19,
+          "sql_p95_ms": 6.923416163772345
+        },
+        {
+          "repeat": 2,
+          "layout": "1×16",
+          "users": 50,
+          "processes": 1,
+          "concurrency": 16,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 71.17826070256065,
+          "p95_s": 75.81430862518027,
+          "queue_s": 46.3692026,
+          "llm_s": 20.027271726648323,
+          "internal_s": 2.2947381574567407,
+          "throughput": 0.6079545293414562,
+          "peak_runs": 16,
+          "cpu_s_user": 0.5169495000000001,
+          "cpu_cores": 0.31428178996580114,
+          "rss_mib": 257.859375,
+          "db_peak": 13,
+          "pool_p95_ms": 106.87570902518928,
+          "lag_p95_ms": 6.798625085502858,
+          "lock_peak": 0,
+          "idle_tx_peak": 9,
+          "sql_p95_ms": 9.20495786704123
+        },
+        {
+          "repeat": 2,
+          "layout": "2×8",
+          "users": 50,
+          "processes": 2,
+          "concurrency": 8,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 64.61772733256221,
+          "p95_s": 75.77431895816699,
+          "queue_s": 40.66833222,
+          "llm_s": 20.030082308244893,
+          "internal_s": 1.4541588466474786,
+          "throughput": 0.6427795219427862,
+          "peak_runs": 16,
+          "cpu_s_user": 0.56791708,
+          "cpu_cores": 0.36504546918554304,
+          "rss_mib": 460.28125,
+          "db_peak": 27,
+          "pool_p95_ms": 13.240708038210869,
+          "lag_p95_ms": 3.277709102258081,
+          "lock_peak": 0,
+          "idle_tx_peak": 14,
+          "sql_p95_ms": 9.284499799832702
+        },
+        {
+          "repeat": 2,
+          "layout": "4×4",
+          "users": 50,
+          "processes": 4,
+          "concurrency": 4,
+          "slots": 16,
+          "source_commit": "c3534f0",
+          "mean_s": 65.53799943917896,
+          "p95_s": 75.84580162493512,
+          "queue_s": 41.60499072,
+          "llm_s": 20.03274580003694,
+          "internal_s": 1.4234538866812363,
+          "throughput": 0.6461762824910512,
+          "peak_runs": 16,
+          "cpu_s_user": 0.641135,
+          "cpu_cores": 0.41428623087490013,
+          "rss_mib": 823.984375,
+          "db_peak": 54,
+          "pool_p95_ms": 3.635666100308299,
+          "lag_p95_ms": 2.0392079371958918,
+          "lock_peak": 0,
+          "idle_tx_peak": 20,
+          "sql_p95_ms": 9.748999960720539
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "measurements",
+      "label": "고정 소스의 실제 API·Worker·PostgreSQL 부하 측정",
+      "path": "aggregation.sql",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT layout, users, CAST(CAST(users AS INTEGER) AS TEXT) || '명' AS cohort,\n COUNT(*) AS repeats, processes, concurrency, slots,\n AVG(mean_s) AS mean_s, AVG(p95_s) AS p95_s, AVG(queue_s) AS queue_s,\n AVG(llm_s) AS llm_s, AVG(internal_s) AS internal_s, AVG(throughput) AS throughput,\n MAX(peak_runs) AS peak_runs, AVG(cpu_s_user) AS cpu_s_user, AVG(cpu_cores) AS cpu_cores,\n AVG(rss_mib) AS rss_mib, AVG(db_peak) AS db_peak,\n AVG(pool_p95_ms) AS pool_p95_ms, AVG(lag_p95_ms) AS lag_p95_ms,\n MAX(lock_peak) AS lock_peak, MAX(idle_tx_peak) AS idle_tx_peak,\n AVG(sql_p95_ms) AS sql_p95_ms\n FROM benchmark_trials\n WHERE source_commit = 'c3534f0' AND users IN (10, 30, 50)\n GROUP BY layout, users, processes, concurrency, slots\n ORDER BY slots, processes, users",
+        "description": "실제 HTTP/SSE 시나리오 완료 시간, Run 생성/시작 시각, 프로세스별 계측 및 pg_stat_activity 표본을 검산·집계한다.",
+        "tables_used": [
+          "benchmark_trials"
+        ],
+        "filters": [
+          "source=c3534f0",
+          "LLM mock=5 seconds per call, 4 calls per user",
+          "Workflow approval waiting; no Executor submission",
+          "users=10,30,50"
+        ],
+        "metric_definitions": [
+          "mean_s: 사용자별 세션 생성부터 Workflow 승인 대기까지 시간의 평균. 반복이 있으면 trial 평균의 산술평균.",
+          "p95_s: 각 trial의 사용자 완료 시간 nearest-rank p95; 반복 간에는 해당 p95들의 평균이며 pooled p95가 아니다.",
+          "queue_s: 사용자별 4개 Run의 created_at→started_at 시간 합계의 평균.",
+          "throughput: trial의 완료 사용자 수 / 마지막 사용자 완료까지 경과 초. 지속 유입 처리 한계가 아니다.",
+          "rss_mib: 같은 표본 시점의 worker+supervisor RSS 합의 trial별 최고치를 반복 간 평균. MiB, 약 1초 간격; instrumentation 포함.",
+          "cpu_s_user: 모든 API worker CPU process_time 합 / 완료 사용자 수. supervisor·DB·LLM mock CPU 제외.",
+          "db_peak: 전용 DB client backend 수의 trial별 최고 표본을 반복 간 평균; 계측용 연결 제외, active/idle 포함.",
+          "pool_p95_ms: SQLAlchemy pool 획득+연결 확인 지연 p95. 순수 queue 대기만은 아니다."
+        ],
+        "executed_at": "2026-09-30T02:36:05.168551+00:00"
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/projection-batch-storage` (034 결과 단위 검증 공유·배치 저장·A/B·회귀·기록 완료). 028~034는 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
+현재 작업 브랜치: `feature/process-concurrency-benchmark` (035 프로세스·동시 실행 비교 완료). 028~035는 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -54,6 +54,7 @@
 | 032 | Agent 로그·대응 이벤트 원자 저장·멱등 복구 | 구현·격리 PostgreSQL/마이그레이션/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](032-log-event-atomicity.md) |
 | 033 | 결과 저장 DB 왕복 축소·동일 조건 A/B | 1차 개선·1/10명 A/B·전체 회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](033-projection-db-roundtrips.md) |
 | 034 | 결과 단위 검증 공유·배치 저장 | 구현·격리 PostgreSQL/전체 회귀·1/10명 A/B/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](034-projection-batch-storage.md) |
+| 035 | API 프로세스·Run 동시 실행 수 비교 | 21회 실측·독립 검산·보고서 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](035-process-concurrency-benchmark.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

@@ -1,0 +1,8 @@
+{
+  "python_syntax": "passed",
+  "raw_files": 21,
+  "config_secrets_excluded": true,
+  "application_source_changed": false,
+  "benchmark_processes_remaining": false,
+  "scratch_postgres_removed": true
+}

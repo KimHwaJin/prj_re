@@ -1,0 +1,5 @@
+{
+  "status": "passed",
+  "source": "docs/reports/projection-batch-storage-2026-09-30/raw/after-r1/flow-10-after-s4-r1/raw.json.gz",
+  "comparison": "entire analysis result identical before and after generalized capacity"
+}

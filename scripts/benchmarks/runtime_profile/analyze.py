@@ -31,7 +31,8 @@ def analyze(path):
     assert not r['stop_reason'] and server['healthy'] and not server['faults']
     assert not db['recovery_tasks'] and not db['session_owners']
     assert all(x['status']=='interrupted' and x['attempt_count']==1 for x in db['runs'])
-    assert server['peak_worker']<=4 and server['peak_graph']<=4
+    capacity=r['config'].get('total_slots',4)
+    assert server['peak_worker']<=capacity and server['peak_graph']<=capacity
     assert all(not x['error'] for x in r['requests'])
     workers={x['run_id']:x for x in server['workers']};runs={x['run_id']:x for x in db['runs']}
     assert len(workers)==4*n
@@ -93,7 +94,7 @@ def analyze(path):
       'pool_acquire_ms':summary([x['ms'] for x in server['acquires']]),
       'event_loop_lag_ms':summary([x['lag_ms'] for x in server['samples']]),
       'peak_worker':server['peak_worker'],'peak_graph':server['peak_graph'],
-      'slot_occupancy':sum(x['ms']/1000 for x in server['workers'])/(4*r['elapsed_s']),
+      'slot_occupancy':sum(x['ms']/1000 for x in server['workers'])/(capacity*r['elapsed_s']),
       'commit_calls_by_actor':dict(collections.Counter(x['kind'] for x in server['commits'])),
       'pool_wait_over_100ms':{'total':sum(x['ms']>100 for x in server['acquires']),'first_2s':sum(x['ms']>100 and x['at']-server['start']<2 for x in server['acquires'])},
       'peak_pool_checked_out':max(x['checked_out'] for x in server['samples']),

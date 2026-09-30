@@ -206,4 +206,5 @@ async def main():
                 task.cancel();await asyncio.gather(task,return_exceptions=True)
     app.router.lifespan_context=life
     await uvicorn.Server(uvicorn.Config(app,host='127.0.0.1',port=cfg['port'],log_level='error',timeout_graceful_shutdown=8)).serve()
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

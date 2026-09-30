@@ -1,0 +1,3 @@
+{"trial": "flow-50-p4-c4-r2", "seconds": 77.38, "complete": 50, "users": 50, "censored": 0, "http_errors": 0, "models": 200, "stop_reason": null}
+{"trial": "flow-50-p2-c8-r2", "seconds": 77.79, "complete": 50, "users": 50, "censored": 0, "http_errors": 0, "models": 200, "stop_reason": null}
+{"trial": "flow-50-p1-c16-r2", "seconds": 82.24, "complete": 50, "users": 50, "censored": 0, "http_errors": 0, "models": 200, "stop_reason": null}
