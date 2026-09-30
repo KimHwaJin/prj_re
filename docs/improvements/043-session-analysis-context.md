@@ -6,7 +6,7 @@
 | 시작일 / 완료일 | 2026-10-01 / 2026-10-01 |
 | 브랜치 | feature/agentic-session-analysis-context |
 | 기준 commit | 71c40710fa34909fdc7b2de0b16faafeb0fff76d — 042에서 분기 |
-| 구현 commit | 기록 commit에서 확정 |
+| 구현 commit | cad68b5196dd8731768a5201a4d7564e9d4eb0af |
 | 배포 상태 | 임시 격리 API 종료. 기존 Compose·Executor 소스·사용자 checkout 유지. 베이스 병합·push·배포 미수행 |
 
 ## 문제·작업 방향
