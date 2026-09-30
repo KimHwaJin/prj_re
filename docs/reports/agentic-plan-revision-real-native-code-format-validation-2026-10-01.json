@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-86c52d6808",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "provider_json_schema",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "95e0302d-eed6-4e56-9cad-8045262a3328",
+      "run_id": "459ca89f-0eee-4538-91a1-6e64508367e5",
+      "diagnostic_validation_error": "Failed to parse structured output for tool 'RevisionReply': Native structured output expected valid JSON for RevisionReply, but parsing failed: Expecting ',' delimiter: line 1 column 2145 (char 2144).."
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "Revision produced no validated new candidate; original plan was preserved, not submitted",
+  "diagnosis": {
+    "failure": "Native structured output with a multiline code-string regex returned invalid JSON. No correction submitted. Execution-local function output now uses a header plus typed indentation/text lines, assembled and AST validated by the service."
+  }
+}

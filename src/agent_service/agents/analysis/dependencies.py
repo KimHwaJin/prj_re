@@ -35,7 +35,7 @@ class AgentDependencies:
 def create_chat_model(settings: AgentSettings) -> Any:
     """Create the configured OpenAI-compatible model."""
     if settings.model_provider == "openai_compatible":
-        from langchain_openai import ChatOpenAI
+        from agent_service.model import CompatibleChatOpenAI
 
         if not settings.model_api_key or not settings.api_base_url:
             raise ValueError("Internal deployment requires MODEL_API_KEY and API_BASE_URL")
@@ -46,7 +46,7 @@ def create_chat_model(settings: AgentSettings) -> Any:
                     "enable_thinking": settings.model_enable_thinking,
                 }
             }
-        return ChatOpenAI(
+        return CompatibleChatOpenAI(
             api_key=settings.model_api_key,
             base_url=settings.api_base_url,
             model=settings.model_name,

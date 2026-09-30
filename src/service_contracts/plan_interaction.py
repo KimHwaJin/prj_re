@@ -1,7 +1,7 @@
 """Typed public plan forms and resume commands, shared by API and Agent."""
 from typing import Any, Literal
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
@@ -30,7 +30,7 @@ class PlanAction(StrictModel):
 
 
 class ResumeCommand(StrictModel):
-    resume: 'PlanAction | DecisionAction | RepairAction'
+    resume: 'PlanAction | DecisionAction | RepairAction | PlanRevisionAction'
 
 
 class DecisionAction(StrictModel):
@@ -46,6 +46,20 @@ class RepairAction(StrictModel):
     revision: int = Field(ge=1, strict=True)
     proposal_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
     allow_policy_escalation: bool = Field(default=False, strict=True)
+
+
+class PlanRevisionAction(StrictModel):
+    action: Literal['replan', 'answer_clarification']
+    interaction_id: UUID
+    revision: int = Field(ge=1, strict=True)
+    feedback: str = Field(min_length=1, max_length=4000)
+
+    @field_validator('feedback')
+    @classmethod
+    def nonblank(cls, value):
+        if not value.strip():
+            raise ValueError('Feedback must contain text')
+        return value.strip()
 
 
 ResumeCommand.model_rebuild()
@@ -132,6 +146,9 @@ class PlanView(StrictModel):
     plan_id: str
     plan_revision: int
     workflow_id: str
+    execution_kind: Literal['registered', 'free_code'] = 'registered'
+    workflow_eligible: bool = True
+    approval_mode: Literal['user', 'configuration'] = 'user'
     definition_version: int
     name: str
     goal: str
@@ -143,8 +160,16 @@ class PlanView(StrictModel):
     outputs: list[OutputView]
 
 
+class PlanningRevisionPolicy(StrictModel):
+    used: int = Field(ge=0)
+    limit: int = Field(ge=1, le=20)
+    free_code_allowed: bool
+    free_code_require_approval: bool
+
+
 class ReviewPayload(StrictModel):
     plans: list[PlanView] = Field(min_length=1)
+    revision_policy: PlanningRevisionPolicy | None = None
     notices: list[str] = Field(default_factory=list)
 
 
@@ -178,7 +203,7 @@ class ResolutionData(StrictModel):
     revision: int = Field(ge=1, strict=True)
     kind: Literal['plan_review']
     status: Literal['resolved']
-    resolution: Literal['approved']
+    resolution: Literal['approved', 'auto_approved']
     payload: ResolutionPayload
 
 
@@ -223,3 +248,64 @@ class DecisionInteractionEvent(StrictModel):
     run_id: UUID
     occurred_at: str
     data: DecisionInteractionData
+
+
+class ClarificationPayload(StrictModel):
+    revision_policy: PlanningRevisionPolicy | None = None
+    question: str = Field(min_length=1, max_length=12000)
+    notices: list[str] = Field(default_factory=list)
+
+
+class ClarificationData(StrictModel):
+    interaction_id: UUID
+    revision: int = Field(ge=1, strict=True)
+    kind: Literal['planning_question']
+    status: Literal['open']
+    resume_token: UUID
+    summary: str
+    payload: ClarificationPayload
+
+
+class ClarificationEvent(StrictModel):
+    schema_version: Literal[1] = 1
+    type: Literal['interaction.opened', 'interaction.updated']
+    sequence: int = Field(ge=1, strict=True)
+    session_id: UUID
+    run_id: UUID
+    occurred_at: str
+    data: ClarificationData
+
+
+def validate_plan_revision(interaction, raw, *, count, limit):
+    action = PlanRevisionAction.model_validate(raw)
+    if str(action.interaction_id) != interaction.get('interaction_id') or action.revision != interaction.get('revision'):
+        raise ValueError('Stale planning interaction; refresh Run state')
+    expected = 'answer_clarification' if interaction.get('kind') == 'planning_question' else 'replan'
+    if interaction.get('status') != 'open' or interaction.get('kind') not in {'plan_review', 'planning_question'} or action.action != expected:
+        raise ValueError('This interaction does not accept that planning action')
+    if count >= limit:
+        raise ValueError('Planning revision limit reached; approve, cancel, or start a new Run')
+    return action
+
+
+class PlanningTransitionPayload(StrictModel):
+    notices: list[str] = Field(default_factory=list)
+
+
+class PlanningTransitionData(StrictModel):
+    interaction_id: UUID
+    revision: int = Field(ge=1, strict=True)
+    kind: Literal['plan_review', 'planning_question']
+    status: Literal['resolved']
+    resolution: Literal['replanning', 'answered']
+    payload: PlanningTransitionPayload
+
+
+class PlanningTransitionEvent(StrictModel):
+    schema_version: Literal[1] = 1
+    type: Literal['interaction.resolved']
+    sequence: int = Field(ge=1, strict=True)
+    session_id: UUID
+    run_id: UUID
+    occurred_at: str
+    data: PlanningTransitionData

@@ -1,0 +1,22 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-dca9bcbd1f",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "provider_json_schema",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "beb28956-6224-4f9f-8ccd-7a67b3c18f64",
+      "run_id": "d04f5adb-9502-47b1-8408-ef3fad26af1a"
+    }
+  ],
+  "error_type": "TypeError",
+  "error": "'NoneType' object is not subscriptable",
+  "diagnosis": {
+    "failure": "Actual gateway native grammar rejected JSON Schema uniqueItems keyword with HTTP 400. Generation schema omits this unsupported keyword; complete Workflow validation still enforces uniqueness before execution."
+  }
+}

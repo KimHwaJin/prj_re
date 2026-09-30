@@ -145,3 +145,6 @@ Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀
 
 
 040의 AGENT_REPAIR_LEVEL(기본 0), AGENT_REPAIR_LEVEL_LIMIT(기본 4), AGENT_MAX_REPAIR_ATTEMPTS(기본 3)도 `service.agent`에서 중앙 주입한다. Workflow 명시 정책을 먼저 유지하고 없는 항목만 중앙 기본값으로 채운다. 의미·범위·승인 예시는 [오류 수정 설정](agentic-execution-repair.md#중앙-설정)을 따른다. 개별 Agent가 별도로 os.environ을 읽지 않는다.
+
+
+041의 `AGENT_FREE_PLAN_ENABLED`(기본 true), `AGENT_FREE_PLAN_REQUIRE_APPROVAL`(기본 true), `AGENT_MAX_PLAN_REVISIONS`(기본 5, 1~20)도 `service.agent`에서 중앙 주입한다. 실행 전 사용자 재작성 이후의 자유 코드 허용/확인과 Run 공통 재작성·질문 답변 횟수이며 실행 실패 수정 설정과 독립이다. 승인 생략은 완전한 자유 후보 하나에만 적용한다. [재작성 설정과 예외](agentic-plan-revision.md#중앙-설정)를 따른다.

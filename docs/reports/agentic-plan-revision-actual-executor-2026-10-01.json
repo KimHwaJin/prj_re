@@ -1,0 +1,419 @@
+{
+  "passed": true,
+  "namespace": "agentic-revision-5f3d99a41d",
+  "real_revision_llm": false,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "prompt_json",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "registered",
+      "passed": true,
+      "session_id": "b11fac9c-a1d4-4cc8-9b93-14ecfd978649",
+      "run_id": "8961bdbe-f9da-4137-9974-ffb2830f4056",
+      "seconds": 4.602,
+      "operation_count": 1,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "registered",
+      "approval_mode": "user",
+      "workflow_eligible": true,
+      "terminal_event_seen": true,
+      "final": {
+        "repair": {
+          "history": [],
+          "attempts": 0,
+          "stop_reason": null,
+          "max_attempts": 0,
+          "authorized_level": 0,
+          "workflow_eligible": true
+        },
+        "report": null,
+        "status": "analysis_completed",
+        "planning": {
+          "approval_mode": "user",
+          "execution_kind": "registered",
+          "revision_count": 1,
+          "workflow_eligible": true
+        },
+        "execution_id": "37dc66ed-cd4f-4a20-af8d-b15fbacd54f4",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "transform",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    1.0,
+                    2.0,
+                    3.0
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "registered_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "finish",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "sum": 6.0
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "SUCCEEDED"
+      }
+    },
+    {
+      "scenario": "free",
+      "passed": true,
+      "session_id": "3b1da2c4-d9cf-4a57-832c-b2350d18492c",
+      "run_id": "aac88695-e1cc-4d5d-8b50-224370de2ecb",
+      "seconds": 3.563,
+      "operation_count": 1,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true,
+      "final": {
+        "repair": {
+          "history": [],
+          "attempts": 0,
+          "stop_reason": null,
+          "max_attempts": 0,
+          "authorized_level": 0,
+          "workflow_eligible": false
+        },
+        "report": null,
+        "status": "analysis_completed",
+        "planning": {
+          "approval_mode": "user",
+          "execution_kind": "free_code",
+          "revision_count": 1,
+          "workflow_eligible": false
+        },
+        "execution_id": "cd1287af-6fd5-4f6d-883a-2db7de3361a4",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "transform",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    1.0,
+                    2.0,
+                    3.0
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "custom.revised_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "finish",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "sum": 6.0
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "SUCCEEDED"
+      }
+    },
+    {
+      "scenario": "clarification",
+      "passed": true,
+      "session_id": "d7d6ae0c-b050-4d02-b13b-39fca634f771",
+      "run_id": "82d96c6b-6b32-4c30-a027-28efb262d548",
+      "seconds": 4.012,
+      "operation_count": 1,
+      "planning_revision_count": 2,
+      "review_count": 1,
+      "question_count": 1,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true,
+      "final": {
+        "repair": {
+          "history": [],
+          "attempts": 0,
+          "stop_reason": null,
+          "max_attempts": 0,
+          "authorized_level": 0,
+          "workflow_eligible": false
+        },
+        "report": null,
+        "status": "analysis_completed",
+        "planning": {
+          "approval_mode": "user",
+          "execution_kind": "free_code",
+          "revision_count": 2,
+          "workflow_eligible": false
+        },
+        "execution_id": "059b185a-38ac-40d4-bda7-42fa5a483b27",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "transform",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    1.0,
+                    2.0,
+                    3.0
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "custom.revised_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "finish",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "sum": 6.0
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "SUCCEEDED"
+      }
+    },
+    {
+      "scenario": "modified",
+      "passed": true,
+      "session_id": "1ef8d13c-aeda-428a-9079-5e469568eb0e",
+      "run_id": "ad95569f-8fd2-43b7-bd88-589c5d92feed",
+      "seconds": 4.076,
+      "operation_count": 1,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true,
+      "final": {
+        "repair": {
+          "history": [],
+          "attempts": 0,
+          "stop_reason": null,
+          "max_attempts": 0,
+          "authorized_level": 0,
+          "workflow_eligible": false
+        },
+        "report": null,
+        "status": "analysis_completed",
+        "planning": {
+          "approval_mode": "user",
+          "execution_kind": "free_code",
+          "revision_count": 1,
+          "workflow_eligible": false
+        },
+        "execution_id": "c3e126e9-8ec2-4f75-bbeb-96d1a42b56e8",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "transform",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    0.6666666666666666,
+                    1.3333333333333333,
+                    2.0
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "custom.revised_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "finish",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "sum": 4.0
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "SUCCEEDED"
+      }
+    }
+  ]
+}

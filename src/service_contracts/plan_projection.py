@@ -52,6 +52,8 @@ def plan_view(state):
     plan = PlanView(plan_id=state['plan_id'], plan_revision=state['plan_revision'],
         workflow_id=document['workflow_id'], definition_version=document['definition_version'],
         name=document['name'], goal=document['goal'], inputs=fields, steps=step_views,
+        execution_kind=state.get('execution_kind','registered'), workflow_eligible=state.get('workflow_eligible',True),
+        approval_mode=state.get('approval_mode','user'),
         skills=[SkillView(skill_id=id, name=id, description=catalog['skills'][id].get('description', id))
                 for id in dict.fromkeys(step['skill_id'] for step in document['steps'])],
         decisions=[DecisionView(decision_id=item['id'], evidence_steps=item['after_steps'],

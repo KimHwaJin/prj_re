@@ -7,7 +7,7 @@ from typing import TypedDict
 from uuid import uuid4
 
 import httpx
-import langchain_openai
+import agent_service.model as model_api
 import pytest
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage
@@ -179,8 +179,8 @@ async def test_configured_provider_uses_async_http_only(monkeypatch, mode):
         raise AssertionError('synchronous HTTP transport used')
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as async_client:
         with httpx.Client(transport=httpx.MockTransport(no_sync)) as sync_client:
-            real_class = langchain_openai.ChatOpenAI
-            monkeypatch.setattr(langchain_openai, 'ChatOpenAI',
+            real_class = model_api.CompatibleChatOpenAI
+            monkeypatch.setattr(model_api, 'CompatibleChatOpenAI',
                 lambda **kwargs: real_class(http_async_client=async_client, http_client=sync_client, **kwargs))
             settings = load_agent_settings({'MODEL_PROVIDER':'openai_compatible', 'MODEL_NAME':'test',
                 'API_BASE_URL':'http://llm.invalid/v1', 'MODEL_API_KEY':'test-key', 'MODEL_MAX_RETRIES':'0'})

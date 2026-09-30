@@ -130,7 +130,7 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 
 설정은 중앙 YAML→env→기본값 우선순위를 따른다. memory checkpointer/독립 port 없는 PlanningRuntime은 계획 승인 저장용이다. 실제 비동기 배포에는 영속 checkpoint·binding 테이블 migration·Redis 소비 설정·PV mount가 필요하다. Worker 테이블은 top-level `alembic.ini`, API 관리 테이블은 `alembic.crud.ini`로 migration한다.
 
-040에서 수정 수준 1~4의 실행별 코드/연결/등록 자산 재계획과 승인·시도 한도를 연결했다. 기본 권한은 0이며 SINGLE은 실패 전달을 유지한다. [오류 수정 Runtime](agentic-execution-repair.md)의 설정·승인 경계를 따른다. 정식 PVC 데이터 catalog·scope별 쓰기 root·metadata Artifact 등록, project_memory, 후보 전체 거절 후 신규 자유 계획, pgvector Workflow 추천·CRUD, Gaia adapter, 첨부·VLM은 후속이다. 현재 dataset_output_dir는 프로젝트 기본 경로이며 scope별 카탈로그 구현이 완료된 것이 아니다.
+040에서 수정 수준 1~4의 실행별 코드/연결/등록 자산 재계획과 승인·시도 한도를 연결했다. 기본 권한은 0이며 SINGLE은 실패 전달을 유지한다. [오류 수정 Runtime](agentic-execution-repair.md)의 설정·승인 경계를 따른다. 정식 PVC 데이터 catalog·scope별 쓰기 root·metadata Artifact 등록, project_memory, pgvector Workflow 추천·CRUD, Gaia adapter, 첨부·VLM은 후속이다. 후보 거절 후 실행 전 재작성/자유 함수/별도 승인은 [041](agentic-plan-revision.md)에 구현했다. 현재 dataset_output_dir는 프로젝트 기본 경로이며 scope별 카탈로그 구현이 완료된 것이 아니다.
 
 기존 graph/CLI는 아직 남아 있으나 공개 API와 이벤트 Worker는 새 Runtime을 사용한다. 이전 그래프 checkpoint 및 진행 중 Run의 자동 이행은 하지 않는다. 038에서 이미 완료한 계획 승인 checkpoint는 실제 제출을 위해 새 Run을 시작한다.
 

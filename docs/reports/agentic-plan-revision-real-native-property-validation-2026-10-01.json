@@ -1,0 +1,28 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-79bc22276d",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "provider_json_schema",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "7884fe3d-72a0-49bd-8674-ca0eb6766f7d",
+      "run_id": "8378d586-4408-46b5-bf6d-9fd7c167ad2e",
+      "public_status": "recovery_required",
+      "public_failure": {
+        "code": "RUN_RECOVERY_REQUIRED",
+        "message": "User answer was consumed but graph progress is incomplete",
+        "retry_scheduled": false
+      }
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "Agent failed before a validated revision/Executor result",
+  "diagnosis": {
+    "failure": "After removing unsupported uniqueItems, actual native grammar rejected propertyNames with HTTP 400. Generation schema omits both; complete Workflow validation still enforces key patterns and uniqueness."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-2be090f691",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "c40134e2-306e-4e8e-8ee8-a754c4d0493c",
+      "run_id": "3679c042-e412-42ef-af7c-615b941ffcae",
+      "diagnostic_validation_error": "Structured LLM response failed validation after 2 attempts: LLM response must contain non-empty text"
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "Revision produced no validated new candidate; original plan was preserved, not submitted",
+  "diagnosis": {
+    "failure": "Final content was empty after bounded model validation. Original plan preserved; no Executor submission."
+  }
+}

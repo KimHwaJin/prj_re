@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-bdfe620878",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "provider_json_schema",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "d17cd81e-4061-4257-ae48-e87cec4d289b",
+      "run_id": "a73b3a16-1d86-48cf-aebb-c7238f6fb489",
+      "diagnostic_validation_error": "Structured LLM response failed validation after 2 attempts: Invalid execution-local plan: expected an indented block after function definition on line 1 (<unknown>, line 1)"
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "Revision produced no validated new candidate; original plan was preserved, not submitted",
+  "diagnosis": {
+    "failure": "Native model returned only the function signature with no body in both validation attempts. Blocked before Executor submission. Code field now requires a multiline function with an indented body and full AST validation."
+  }
+}

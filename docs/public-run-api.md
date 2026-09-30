@@ -96,3 +96,16 @@ POST `.../runs/{id}/cancel`은 기존 취소 처리와 실행 종료 확인을 �
 ## MULTI 수정 확인 화면
 
 040의 `interaction.opened`에서 `kind=repair_review`를 받으면 기존 POST에 `approve_repair` 또는 `reject_repair`를 제출한다. 현재 run_id/resume_token, interaction_id/revision과 proposal_sha256을 그대로 보낸다. 승인 범위를 높여야 하는 화면에는 allow_policy_escalation=true라는 명시 동의가 필요하다. revision 불일치는 409, 다른 제안 hash/허용하지 않은 code 필드/승인 누락은 422이며 token을 소비하지 않는다. [수정 승인 규격과 설정](agentic-execution-repair.md#승인-화면과-api)을 따른다. 최종 `result.final_response.repair`에는 시도 수·종료 이유·코드 없는 변경 이력·수정 Operation outcome을 제공한다. Executor 대기 중 입력 잠금과 기존 GET/SSE 경로는 유지한다.
+
+
+## 실행 전 재작성·추가 질문
+
+041에서는 같은 POST `/api/v1/sessions/{session_id}/runs`에 자연어 피드백을 보낸다. 기존 X-User-Id/Idempotency-Key, 현재 run_id/resume_token을 사용한다.
+
+```json
+{"run_id":"공개 Run UUID","resume_token":"현재 token UUID","command":{"resume":{"action":"replan","interaction_id":"현재 화면 UUID","revision":1,"feedback":"이 후보들 대신 다른 전처리 방법으로 분석해 주세요."}}}
+```
+
+`interaction.opened/updated`의 `kind=planning_question`은 같은 형식의 `action=answer_clarification`과 feedback 답변으로 재개한다. plan_review는 replan, 질문은 answer_clarification을 받는다. `interaction.resolved`의 resolution은 replanning/answered/auto_approved를 추가 지원한다. 이후 새로운 후보 ID와 증가한 화면 revision을 사용한다. 이전 후보 승인은 거절한다. 실행 중 동일 세션 입력 잠금은 유지한다.
+
+계획 view의 execution_kind/workflow_eligible/approval_mode, 중앙 설정 및 token 미소비 오류 규칙은 [계획 재작성 계약](agentic-plan-revision.md)을 따른다. 직접 code 필드를 받지 않고 공개 SSE에도 소스를 넣지 않는다.

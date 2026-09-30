@@ -50,7 +50,7 @@ assert SOURCE_ROOT == installed.resolve()
 for prefix in TOOL_SOURCE_PREFIXES:
     assert resolve_tool_source(prefix + 'eda/profile_data.py', installed) == TOOLS_ROOT / 'eda/profile_data.py'
 roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
-         'conditional_decider', 'faq', 'report_writer', 'conversation', 'execution_review', 'execution_report', 'execution_repair')
+         'conditional_decider', 'faq', 'report_writer', 'conversation', 'execution_review', 'execution_report', 'execution_repair', 'plan_revision')
 for role in roles:
     prompt = files(f'agent_service.agents.analysis.agent_builders.{role}').joinpath('prompt.md')
     assert prompt.read_text(encoding='utf-8').strip()
@@ -79,6 +79,9 @@ from agent_service.agents.analysis.agent_builders.execution_repair.agent import 
 for builder in (build_review, build_report, build_repair):
     role = builder(create_chat_model(production_settings))
     assert isinstance(role, RoleAgent) and role.agent.checkpointer is False
+from agent_service.agents.analysis.agent_builders.plan_revision.agent import build_agent as build_revision
+revision = build_revision(create_chat_model(production_settings), AssetCatalog())
+assert isinstance(revision, RoleAgent) and revision.agent.checkpointer is False
 settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED':False,
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)

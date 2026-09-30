@@ -157,6 +157,20 @@ class PublicRunService:
                     raise HTTPException(422,str(exc)) from exc
                 await RunService.create(db,user_id,session_id,command,key)
                 return await PublicRunService.read(db,user_id,session_id,current.id)
+            revision_action=(payload.command or {}).get('resume')
+            if isinstance(revision_action,dict) and revision_action.get('action') in {'replan','answer_clarification'}:
+                from service_contracts.plan_interaction import validate_plan_revision
+                from service_settings import get_settings
+                interaction=latest.metadata_json.get('_planning_interaction') or {}
+                if revision_action.get('revision')!=interaction.get('revision') or revision_action.get('interaction_id')!=interaction.get('interaction_id'):
+                    raise HTTPException(409,'Stale planning interaction; refresh Run state.')
+                try:
+                    validate_plan_revision(interaction,revision_action,count=latest.metadata_json.get('_planning_revision_count',0),
+                        limit=get_settings().agent.agent_max_plan_revisions)
+                except (ValueError,TypeError) as exc:
+                    raise HTTPException(422,str(exc)) from exc
+                await RunService.create(db,user_id,session_id,command,key)
+                return await PublicRunService.read(db,user_id,session_id,current.id)
             from service_contracts.plan_review import patch_review
             from service_settings import get_settings
             session = await RunService._session(db, user_id, session_id)

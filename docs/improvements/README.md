@@ -4,9 +4,10 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 작업 브랜치: `feature/agentic-execution-repair` (040). 039의 `199d4fa`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~040은 파생 이력에 있다. 040은 MULTI 실패 분석·수정 수준 1~4·승인·후속 Operation을 구현하고 전체 712개 회귀·실제 Executor 8개 시나리오·실제 모델 수정 역할·wheel 검증을 완료했다. 베이스 병합·원격 push·배포는 아직 수행하지 않았다.
+현재 작업 브랜치: `feature/agentic-plan-revision` (041). 040의 `d8e6525`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~041은 파생 이력에 있다. 041은 실행 전 자연어 재작성·질문/답변·실행별 자유 함수·별도 승인 설정을 구현했다. 전체 727개 회귀·실제 Executor 5개 시나리오·실제 재작성 모델 1개·12개 역할 wheel 검증을 완료했다. 베이스 병합·원격 push·배포는 아직 수행하지 않았다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
+041 구현 commit: 커밋 후 기록. [작업 결과](041-agentic-plan-revision.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -64,6 +65,7 @@
 | 038 | 실제 모델 기반 계획·HITL·통합 Run/SSE Runtime | 계획 승인 단계 구현·실제 모델/DB/SSE/Phoenix·회귀/wheel 검증 완료 / Executor 이행 전 | 2026-09-30 | [변경·검증·제한](038-agentic-planning-runtime.md) |
 | 039 | 승인 snapshot의 Executor 실행·결과 판단·decision HITL·리포트 | 구현·실제 서비스/688 회귀/wheel 검증 완료, 미배포 | 2026-09-30 | [작업 기록](039-agentic-executor-runtime.md) |
 | 040 | MULTI 실패 분석·수정 승인·후속 실행 | 구현/712개 회귀·실제 Executor 8개·실제 수정 모델/wheel 검증, 베이스 미병합 | 2026-10-01 | [040 기록](040-agentic-execution-repair.md) |
+| 041 | 실행 전 자연어 재작성·추가 질문·자유 코드 계획 | 구현/727 회귀·실제 Executor 5개·실제 재작성 모델·wheel 검증, 베이스 미병합 | 2026-10-01 | [041 기록](041-agentic-plan-revision.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

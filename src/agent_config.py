@@ -195,6 +195,13 @@ class AgentSettings:
     agent_repair_level_limit: int = 4
     # Run-wide accepted correction Operation budget; also default when level > 0.
     agent_max_repair_attempts: int = 3
+    # Allow execution-local code only after the user requests a plan revision.
+    agent_free_plan_enabled: bool = True
+    # False allows ONE complete free-code proposal to execute after notifying the user.
+    # Multiple candidates, unanswered questions and missing required inputs still require HITL.
+    agent_free_plan_require_approval: bool = True
+    # User revision/clarification turns per Run, independent of model retries/repair attempts.
+    agent_max_plan_revisions: int = 5
 
     @property
     def executor_executions_url(self) -> str:
@@ -337,6 +344,9 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
     observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
     max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
+    plan_revisions = int(env.get('AGENT_MAX_PLAN_REVISIONS', '5'))
+    if not 1 <= plan_revisions <= 20:
+        raise ValueError('AGENT_MAX_PLAN_REVISIONS must be 1..20')
     repair_level = int(env.get('AGENT_REPAIR_LEVEL', '0'))
     repair_limit = int(env.get('AGENT_REPAIR_LEVEL_LIMIT', '4'))
     repair_attempts = int(env.get('AGENT_MAX_REPAIR_ATTEMPTS', '3'))
@@ -357,6 +367,9 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         analysis_datasets=datasets,
         agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,
         agent_repair_level=repair_level,agent_repair_level_limit=repair_limit,agent_max_repair_attempts=repair_attempts,
+        agent_free_plan_enabled=_as_bool(env.get('AGENT_FREE_PLAN_ENABLED'),True),
+        agent_free_plan_require_approval=_as_bool(env.get('AGENT_FREE_PLAN_REQUIRE_APPROVAL'),True),
+        agent_max_plan_revisions=plan_revisions,
         model_mock_delay_ms=mock_delay_ms,
         environment=env.get("APP_ENV", "development"),
         model_provider=provider,

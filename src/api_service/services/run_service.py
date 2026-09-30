@@ -743,6 +743,8 @@ class RunService:
         if state.get('agent_runtime') == 'agentic-planning-v1':
             run.metadata_json = {**(run.metadata_json or {}), '_agent_runtime': 'agentic-planning-v1',
                                  '_plan_reviews': state.get('reviews', []),
+                                 '_planning_interaction':state.get('interaction_data'),
+                                 '_planning_revision_count':state.get('planning_revision_count',0),
                                  '_decision_review':state.get('decision_review'),
                                  '_repair_review':state.get('repair_review'),
                                  '_approved_plan': state.get('approved_snapshot')}

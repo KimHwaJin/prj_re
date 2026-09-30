@@ -43,7 +43,7 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 
 기존 `agents/analysis/workflow` 자산 패키지는 유지한다. 그 안의 tools/skills/workflows와 등록 YAML을 수정한 뒤 재배포한다. Tool registry의 availability는 ready(기본) 또는 test_only다. 기존 placeholder extract_data/transform_nce/transform_wt는 test_only로 지정해 이 Runtime의 모델에게 실행 후보로 주지 않는다. Registry 재생성은 이 수동 가용성 정책을 보존한다. 원래 레거시 Tool 파일과 이전 실행 코드는 제거하지 않았다.
 
-새 자산은 등록 Tool·Skill membership, 함수 signature, docstring, 필요한 import를 함수 내부에 포함하는 규칙을 따른다. 승인 snapshot은 등록 함수에서 docstring만 제거한 코드와 hash 및 해당 Skill 원문을 내부에 저장한다. 실제 제출 compiler는 039의 analysis/execution/compiler.py에 연결했다. 이 단계는 임의 Tool 수정·자유 코드 작성의 자율 실행을 추가하지 않았다.
+새 자산은 등록 Tool·Skill membership, 함수 signature, docstring, 필요한 import를 함수 내부에 포함하는 규칙을 따른다. 승인 snapshot은 등록 함수에서 docstring만 제거한 코드와 hash 및 해당 Skill 원문을 내부에 저장한다. 실제 제출 compiler는 039의 analysis/execution/compiler.py에 연결했다. 038 당시에는 임의 Tool 수정·자유 코드 작성이 없었다. 041에서 [실행 전 재작성·질문·자유 코드 계획](agentic-plan-revision.md)을 같은 Run에 추가했다. 최초 계획은 여전히 등록 자산을 사용한다.
 
 새 Runtime은 API Run Worker에 연결했고 기존 graph.py/구 Agent builders/CLI는 이전 흐름의 검증과 차기 이행을 위해 남아 있다. 039에서 Executor event Worker도 새 PlanningRuntime/실행 그래프를 사용하도록 연결했다. **모두 새 흐름으로 바뀌었다고 보면 안 된다.** Executor 단계 이행 이후 실제 미사용 코드·개발 도구를 확인하여 제거한다. 제공 Gaia core/router는 수정하지 않았고 등록 객체 adapter는 후속 구현이다.
 

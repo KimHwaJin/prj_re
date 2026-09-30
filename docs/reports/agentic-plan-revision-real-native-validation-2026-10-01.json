@@ -1,0 +1,22 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-f0a02e9a42",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "structured_output_mode": "provider_json_schema",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "e1f41b84-4a70-431e-8543-fd7b3de5911c",
+      "run_id": "f8b01ebb-4fb3-4e12-8ea3-04d4fdf63490"
+    }
+  ],
+  "error_type": "TypeError",
+  "error": "'NoneType' object is not subscriptable",
+  "diagnosis": {
+    "failure": "ProviderStrategy synthesis emitted tools=[]; the actual gateway rejected the empty array with HTTP 400. No Executor submission."
+  }
+}

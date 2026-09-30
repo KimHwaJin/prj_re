@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "namespace": "agentic-revision-290dff8c9d",
+  "real_revision_llm": true,
+  "initial_planning": "preset_fixture",
+  "approval_required": true,
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "free",
+      "passed": false,
+      "session_id": "0d00a66a-3b72-4609-ae56-c93b4c6191bc",
+      "run_id": "935cc174-f7c7-40a1-a51b-93ab30e5f47d"
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "",
+  "diagnosis": {
+    "invalid_json_responses": 2,
+    "model": "qwen38-27b-nvfp4",
+    "failure": "Final JSON omitted the closing plans array delimiter after functions. Original form retained; no Executor submission."
+  }
+}

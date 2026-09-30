@@ -150,7 +150,7 @@ def freeze_approval(review, sources, skill_sources, context, asset_revision, dat
                 'input_values': deepcopy(review['input_values']), 'execution': deepcopy(review['document']['execution']),
                 'excluded_step_ids': review['excluded_step_ids'], 'user_actions': review['user_actions'],
                 'asset_revision': asset_revision,
-                'tool_sources': {s['tool_id']: sources[s['tool_id']] for s in steps},
+                'tool_sources': {s['tool_id']: {**sources, **review.get('local_sources', {})}[s['tool_id']] for s in steps},
                 'skill_sources': {s['skill_id']: skill_sources[s['skill_id']] for s in steps},
                 'context': {k: context[k] for k in ('user_id', 'project_id', 'session_id', 'public_run_id')}}
     # Freeze the trusted resolution as well as the public ID, so a later config
@@ -166,5 +166,9 @@ def freeze_approval(review, sources, skill_sources, context, asset_revision, dat
             reference = review['input_values'][name]
             require(reference in accessible, 'Approved dataset is no longer accessible')
             snapshot['dataset_bindings'][name] = {'dataset_id': reference, **deepcopy(accessible[reference])}
+    if review.get('execution_kind'):
+        snapshot['execution_kind'] = review['execution_kind']
+        snapshot['workflow_eligible'] = review['workflow_eligible']
+        snapshot['approval_mode'] = review.get('approval_mode', 'user')
     snapshot['approval_sha256'] = sha256(canonical(snapshot).encode()).hexdigest()
     return snapshot

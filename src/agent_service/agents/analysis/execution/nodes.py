@@ -250,7 +250,10 @@ class ExecutionNodes:
         else:
             text='승인된 분석을 완료했습니다.' if success else '분석 실행이 완료되지 않았습니다. 확인된 단계 결과를 보존했습니다.'
         final={'status':'analysis_completed' if success else 'analysis_failed','execution_id':state['execution_id'],
-            'executor_status':state['execution_status'],'observations':facts,'skipped_steps':state.get('skipped_steps',[]),
+            'executor_status':state['execution_status'],
+            'planning':{'revision_count':state.get('planning_revision_count',0),
+                'execution_kind':snapshot.get('execution_kind','registered'),'approval_mode':snapshot.get('approval_mode','user'),
+                'workflow_eligible':not any(s['tool_id'].startswith('custom.') for s in snapshot['steps'])},'observations':facts,'skipped_steps':state.get('skipped_steps',[]),
             'repair':{'attempts':state.get('repair_attempts',0),'max_attempts':state.get('repair_max_attempts',0),
                 'authorized_level':state.get('repair_authorized_level',0),'stop_reason':state.get('repair_stop_reason'),
                 'history':[{**{k:r[k] for k in ("attempt","required_level","summary","changed_step_ids","status")},"outcome":r.get("outcome","not_submitted")} for r in state.get("repair_history",[])],

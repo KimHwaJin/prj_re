@@ -110,3 +110,6 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_repair_http.p
 ```
 
 기존 039 harness와 동일한 격리 DB/localhost Executor 설정을 사용한다. 기본 시험은 명시적인 수정 모델 대역과 **실제 Executor/Jupyter**의 8개 시나리오다. --real은 계획은 고정하고 수정 역할만 실제 모델로 호출한다. 실제 모델의 계획 생성부터 모두 실험한 E2E로 표시하지 않는다. 개인 설정/모델 키는 저장소에 넣지 않는다. 전용 Redis namespace/group, 신규 진단용 Execution·노트북을 사용하고 임시 API 서버를 종료한다.
+
+
+실행 전 모든 후보를 거절하고 새로운 계획/자유 함수를 제안하는 경계는 [041 재작성 Runtime](agentic-plan-revision.md)이다. 실패 후 수정 수준·시도 한도와 별개이며 공통 함수 구조 검증만 execution/sources에서 공유한다.

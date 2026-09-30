@@ -1,0 +1,140 @@
+{
+  "date": "2026-10-01",
+  "branch": "feature/agentic-plan-revision",
+  "parent_commit": "d8e6525845d8dca73988edd554a1167c96948c13",
+  "implementation_commit": null,
+  "deployment": "isolated diagnostic server only; stopped; no merge/push/deployment",
+  "regression": {
+    "passed": 727,
+    "warnings": 64,
+    "subtests_passed": 2,
+    "seconds": 304.17,
+    "suite": [
+      "src/api_service/test",
+      "src/agent_service/agents/analysis/tests"
+    ],
+    "previous_stage_passed": 712,
+    "new_unit_tests": 14,
+    "new_postgres_api_tests": 1,
+    "targeted_tests_included_in_total": true
+  },
+  "initial_regression": {
+    "passed": 722,
+    "failed": 5,
+    "seconds": 307.23,
+    "cause": "Existing HTTP transport double patched the old model constructor; updated to CompatibleChatOpenAI without removing synchronous-HTTP/cancellation assertions."
+  },
+  "model_transport_targeted_recheck": {
+    "passed": 25,
+    "seconds": 3.07,
+    "included_in_final_total": true
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 4,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 12,
+    "production_builders_constructed": true,
+    "create_agent_roles": 12,
+    "role_checkpointers_disabled": true,
+    "packaged_files_matching_final_source": 317
+  },
+  "executor_scenarios": [
+    {
+      "scenario": "registered",
+      "seconds": 4.602,
+      "passed": true,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "registered",
+      "approval_mode": "user",
+      "workflow_eligible": true,
+      "terminal_event_seen": true
+    },
+    {
+      "scenario": "free",
+      "seconds": 3.563,
+      "passed": true,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true
+    },
+    {
+      "scenario": "clarification",
+      "seconds": 4.012,
+      "passed": true,
+      "planning_revision_count": 2,
+      "review_count": 1,
+      "question_count": 1,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true
+    },
+    {
+      "scenario": "modified",
+      "seconds": 4.076,
+      "passed": true,
+      "planning_revision_count": 1,
+      "review_count": 1,
+      "question_count": 0,
+      "execution_kind": "free_code",
+      "approval_mode": "user",
+      "workflow_eligible": false,
+      "terminal_event_seen": true
+    },
+    {
+      "scenario": "free",
+      "seconds": 3.711,
+      "passed": true,
+      "planning_revision_count": 1,
+      "review_count": 0,
+      "question_count": 0,
+      "execution_kind": "free_code",
+      "approval_mode": "configuration",
+      "workflow_eligible": false,
+      "terminal_event_seen": true
+    }
+  ],
+  "real_revision": {
+    "report": "agentic-plan-revision-real-role-2026-10-01.json",
+    "passed": true,
+    "initial_planning": "preset_fixture",
+    "structured_output_mode": "provider_json_schema",
+    "real_role": "plan_revision only",
+    "executor": "actual_local_compose",
+    "seconds": 36.977,
+    "actual_result": 7.5,
+    "operation_count": 1,
+    "terminal_event_seen": true
+  },
+  "earlier_failed_real_attempt_reports": [
+    "agentic-plan-revision-real-full-document-validation-2026-10-01.json",
+    "agentic-plan-revision-real-initial-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-code-format-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-grammar-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-line-pattern-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-property-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-shape-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-source-validation-2026-10-01.json",
+    "agentic-plan-revision-real-native-validation-2026-10-01.json",
+    "agentic-plan-revision-real-prompt-validation-2026-10-01.json"
+  ],
+  "limits": [
+    "One real-model revision success does not establish general model output/semantic reliability. Earlier malformed/schema/argument failures preserved separately.",
+    "No actual initial-model general business E2E, load benchmark, Kubernetes, process-kill or week-long validation.",
+    "AST/schema/signature checks are not a Python sandbox or proof of semantic correctness.",
+    "UI not implemented; new interaction kinds/resolutions require frontend support.",
+    "PVC dataset catalogue/project_memory/Workflow CRUD and pgvector/Gaia adapter/attachments remain follow-up."
+  ]
+}
