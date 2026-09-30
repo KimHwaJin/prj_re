@@ -6,7 +6,7 @@
 
 현재 작업 브랜치: `feature/agentic-execution-repair` (040). 039의 `199d4fa`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~040은 파생 이력에 있다. 040은 MULTI 실패 분석·수정 수준 1~4·승인·후속 Operation을 구현하고 전체 712개 회귀·실제 Executor 8개 시나리오·실제 모델 수정 역할·wheel 검증을 완료했다. 베이스 병합·원격 push·배포는 아직 수행하지 않았다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
-040 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
+040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`

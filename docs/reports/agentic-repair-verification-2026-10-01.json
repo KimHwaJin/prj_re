@@ -157,5 +157,6 @@
     "production_deployed": false,
     "temporary_servers_stopped": true,
     "original_checkout_preserved": true
-  }
+  },
+  "implementation_commit": "3b18207cad5c583c347a8cbcf64579dd5028c543"
 }
