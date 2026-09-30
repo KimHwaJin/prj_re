@@ -49,6 +49,8 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 
 ## 데이터와 설정
 
+042의 [Dataset Registry 계약 초안](design/dataset-registry-contract/README.md)은 정적 데이터 목록을 동적 PVC 목록으로 확장하기 위한 명세다. 현재 Runtime은 여전히 설정 목록을 사용하며 신규 API·범위 경로·fresh resolve는 구현 전이다.
+
 서비스 YAML 우선, env 다음, 기본값 마지막의 중앙 설정을 따른다. 예:
 
 ```yaml

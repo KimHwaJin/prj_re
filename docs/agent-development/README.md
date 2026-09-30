@@ -17,6 +17,8 @@
 
 ## 신규 Agent 설계 초안
 
+[전처리 데이터 등록·조회 계약](../design/dataset-registry-contract/README.md)은 Executor 개발자와 합의할 042 초안이다. 실제 파일 정보는 Executor, 의미 설명은 Agent가 맡으며 범위·버전을 고정한다. 아직 동적 Dataset API/provider는 연결하지 않았다.
+
 [Workflow JSON 계약 초안](../design/agentic-workflow-contract/README.md)은 결과 기반 판단·조건·입력 연결·승인과 산출물의 새 규격이다. 현재 실행 코드와 별개의 설계 초안이며 API·compiler에서 아직 지원하지 않는다. 실제 등록 자산 예제와 미구현 목표 예제를 구분하고 오프라인 검증 범위를 명시했다.
 
 [계획 승인·Executor 제출 계약](../design/plan-interaction-contract/README.md)은 Workflow 정의를 코드 없는 HITL 화면과 수정·승인 body, 소스가 고정된 제출 계획으로 연결하는 개발용 prototype이다. 작은 Parquet와 실제 등록 함수를 로컬에서 검증했고 Executor 요청 모델을 별도로 확인했다. API·DB·Graph에는 아직 연결하지 않았다.

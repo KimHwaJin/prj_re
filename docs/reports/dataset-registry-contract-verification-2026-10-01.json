@@ -1,0 +1,80 @@
+{
+  "stage": "042",
+  "date": "2026-10-01",
+  "branch": "feature/dataset-registry-contract",
+  "parent_commit": "e5fc1d9fa38364bb376847f622323f2eee7949c8",
+  "contract_commit": null,
+  "contract_version": "dataset-registry.v1-draft",
+  "status": "offline_contract_draft_verified",
+  "new_contract_tests": {
+    "passed": 50,
+    "seconds": 0.50,
+    "path": "src/agent_service/agents/analysis/tests/test_dataset_contract_draft.py"
+  },
+  "related_regression": {
+    "passed": 127,
+    "warnings": 3,
+    "seconds": 4.81,
+    "includes_new_contract_tests": true,
+    "paths": [
+      "src/agent_service/agents/analysis/tests/test_dataset_contract_draft.py",
+      "src/agent_service/agents/analysis/tests/test_planning_runtime.py",
+      "src/agent_service/agents/analysis/tests/test_plan_revision.py",
+      "src/agent_service/agents/analysis/tests/test_workflow_compiler.py",
+      "src/agent_service/agents/analysis/tests/test_workflow_condition_contract.py",
+      "src/api_service/test/test_bootstrap_settings.py"
+    ],
+    "warning_reason": "Existing model tests specify durability without a checkpointer",
+    "full_727_suite_rerun": false
+  },
+  "schema_export": {
+    "passed": true,
+    "definitions": 16,
+    "schema": "docs/design/dataset-registry-contract/dataset-contract.schema.json",
+    "synthetic_example": "docs/design/dataset-registry-contract/examples/project-reuse.json"
+  },
+  "openapi": {
+    "baseline_paths": 34,
+    "draft_paths": 34,
+    "baseline_sha256": "ceaef20c95a84a1b121be3075c82ea342f342b27f5303f8de35db28f316f0580",
+    "draft_sha256": "ceaef20c95a84a1b121be3075c82ea342f342b27f5303f8de35db28f316f0580",
+    "identical": true,
+    "new_draft_module_imported_by_app": false,
+    "lifespan_started": false
+  },
+  "existing_approval_contract_compatibility": {
+    "passed": true,
+    "selection": "pvc:{canonical_uuid}:{positive_integer_version}",
+    "input_kind": "data_reference",
+    "input_shape": "string",
+    "scope": "Pure approve/freeze helpers with supplied synthetic binding; dynamic Registry is not wired"
+  },
+  "external_activity": {
+    "actual_executor_calls": 0,
+    "actual_dataset_files_read": 0,
+    "actual_dataset_files_written": 0,
+    "llm_calls": 0,
+    "external_db_calls": 0,
+    "executor_repository_modified": false
+  },
+  "runtime_integrated": false,
+  "merged": false,
+  "pushed": false,
+  "deployed": false,
+  "pending": [
+    "Executor storage namespace/root and scope directory agreement",
+    "Trusted caller context, non-UUID consumers, page/error envelopes",
+    "Actual candidate detection, bounded Parquet footer inspection and atomic publication",
+    "Registry persistence/idempotency and optional sidecar authority",
+    "Fresh file resolve and physical containment checks",
+    "Agent async provider, approval binding and submission-time revalidation",
+    "Real file and cross-session integration tests"
+  ],
+  "limits": [
+    "Pure validators do not establish that a Dataset file exists",
+    "Synthetic 200GB/one-billion-row metadata is not a large-file performance measurement",
+    "Stat/footer revision is not full-file SHA or proof of immutability",
+    "Structural public projection does not automatically sanitize free-form annotations",
+    "No actual user/project/session filesystem isolation was verified"
+  ]
+}

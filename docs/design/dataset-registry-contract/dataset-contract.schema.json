@@ -1,0 +1,701 @@
+{
+  "$defs": {
+    "AgentAnnotation": {
+      "additionalProperties": false,
+      "description": "Agent interpretations; never supplied as measured rows/column types/file identity.",
+      "properties": {
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 4000,
+          "title": "Description",
+          "type": "string"
+        },
+        "purpose": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Purpose",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Notes",
+          "type": "array"
+        },
+        "declared_parents": {
+          "items": {
+            "$ref": "#/$defs/DatasetRef"
+          },
+          "maxItems": 100,
+          "title": "Declared Parents",
+          "type": "array"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "title": "AgentAnnotation",
+      "type": "object"
+    },
+    "ColumnInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "dtype": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Dtype",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "name",
+        "dtype"
+      ],
+      "title": "ColumnInfo",
+      "type": "object"
+    },
+    "DataScope": {
+      "enum": [
+        "USER",
+        "PROJECT",
+        "SESSION"
+      ],
+      "title": "DataScope",
+      "type": "string"
+    },
+    "DatasetCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "dataset-registry.v1-draft",
+          "default": "dataset-registry.v1-draft",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/$defs/ScopeOwner"
+        },
+        "producer": {
+          "$ref": "#/$defs/ProducerEvidence"
+        },
+        "publication": {
+          "enum": [
+            "FINALIZED",
+            "WRITING",
+            "UNKNOWN"
+          ],
+          "title": "Publication",
+          "type": "string"
+        },
+        "file": {
+          "$ref": "#/$defs/FileEvidence"
+        },
+        "inspection": {
+          "$ref": "#/$defs/ParquetInspection"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "owner",
+        "producer",
+        "publication",
+        "file",
+        "inspection"
+      ],
+      "title": "DatasetCandidate",
+      "type": "object"
+    },
+    "DatasetPage": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "dataset-registry.v1-draft",
+          "default": "dataset-registry.v1-draft",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/DatasetView"
+          },
+          "maxItems": 100,
+          "title": "Items",
+          "type": "array"
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Cursor"
+        }
+      },
+      "title": "DatasetPage",
+      "type": "object"
+    },
+    "DatasetRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "dataset-registry.v1-draft",
+          "default": "dataset-registry.v1-draft",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "ref": {
+          "$ref": "#/$defs/DatasetRef"
+        },
+        "candidate": {
+          "$ref": "#/$defs/DatasetCandidate"
+        },
+        "annotation": {
+          "$ref": "#/$defs/AgentAnnotation"
+        },
+        "status": {
+          "default": "AVAILABLE",
+          "enum": [
+            "AVAILABLE",
+            "STALE",
+            "UNAVAILABLE"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "candidate",
+        "annotation"
+      ],
+      "title": "DatasetRecord",
+      "type": "object"
+    },
+    "DatasetRef": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "format": "uuid",
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "version"
+      ],
+      "title": "DatasetRef",
+      "type": "object"
+    },
+    "DatasetRegistration": {
+      "additionalProperties": false,
+      "description": "Proposed metadata registration body. File paths, owner IDs and schema are forbidden.",
+      "properties": {
+        "idempotency_key": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "expected_file_revision": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Expected File Revision",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/DataScope",
+          "default": "PROJECT"
+        },
+        "annotation": {
+          "$ref": "#/$defs/AgentAnnotation"
+        }
+      },
+      "required": [
+        "idempotency_key",
+        "candidate_id",
+        "expected_file_revision",
+        "annotation"
+      ],
+      "title": "DatasetRegistration",
+      "type": "object"
+    },
+    "DatasetView": {
+      "additionalProperties": false,
+      "description": "Only this projection is passed to the model/HITL; no paths, file tokens or code.",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/DatasetRef"
+        },
+        "selection_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Selection Id",
+          "type": "string"
+        },
+        "source": {
+          "const": "PREPROCESSED",
+          "default": "PREPROCESSED",
+          "title": "Source",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        },
+        "scope": {
+          "$ref": "#/$defs/DataScope"
+        },
+        "status": {
+          "enum": [
+            "AVAILABLE",
+            "STALE",
+            "UNAVAILABLE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "size_bytes": {
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "inspection": {
+          "$ref": "#/$defs/ParquetInspection"
+        }
+      },
+      "required": [
+        "ref",
+        "selection_id",
+        "title",
+        "description",
+        "purpose",
+        "scope",
+        "status",
+        "size_bytes",
+        "inspection"
+      ],
+      "title": "DatasetView",
+      "type": "object"
+    },
+    "FileEvidence": {
+      "additionalProperties": false,
+      "description": "Private facts from the storage driver. A stat/footer token is not a full-file SHA proof.",
+      "properties": {
+        "storage_namespace": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Storage Namespace",
+          "type": "string"
+        },
+        "relative_path": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 1,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "revision": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_method": {
+          "enum": [
+            "STAT_AND_FOOTER",
+            "STORAGE_VERSION",
+            "WRITER_SHA256"
+          ],
+          "title": "Revision Method",
+          "type": "string"
+        },
+        "format": {
+          "const": "parquet",
+          "default": "parquet",
+          "title": "Format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "storage_namespace",
+        "relative_path",
+        "size_bytes",
+        "revision",
+        "revision_method"
+      ],
+      "title": "FileEvidence",
+      "type": "object"
+    },
+    "ParquetInspection": {
+      "additionalProperties": false,
+      "description": "Executor-owned bounded footer facts. No full data/head arrays in v1.",
+      "properties": {
+        "status": {
+          "enum": [
+            "AVAILABLE",
+            "UNAVAILABLE"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rows"
+        },
+        "column_count": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Count"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/$defs/ColumnInfo"
+          },
+          "maxItems": 200,
+          "title": "Columns",
+          "type": "array"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "ParquetInspection",
+      "type": "object"
+    },
+    "ProducerEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_id": {
+          "format": "uuid",
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "operation_id": {
+          "format": "uuid",
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "step_id": {
+          "format": "uuid",
+          "title": "Step Id",
+          "type": "string"
+        },
+        "execution_attempt_id": {
+          "format": "uuid",
+          "title": "Execution Attempt Id",
+          "type": "string"
+        },
+        "step_attempt_id": {
+          "format": "uuid",
+          "title": "Step Attempt Id",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "fencing_token": {
+          "minimum": 1,
+          "title": "Fencing Token",
+          "type": "integer"
+        },
+        "context": {
+          "$ref": "#/$defs/RequestContext"
+        },
+        "step_status": {
+          "enum": [
+            "SUCCEEDED",
+            "FAILED",
+            "NOT_RUN"
+          ],
+          "title": "Step Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "execution_id",
+        "operation_id",
+        "step_id",
+        "execution_attempt_id",
+        "step_attempt_id",
+        "sequence",
+        "fencing_token",
+        "context",
+        "step_status"
+      ],
+      "title": "ProducerEvidence",
+      "type": "object"
+    },
+    "RequestContext": {
+      "additionalProperties": false,
+      "description": "Agent derives these from its authorized Session, not arbitrary frontend IDs.",
+      "properties": {
+        "user_id": {
+          "format": "uuid",
+          "title": "User Id",
+          "type": "string"
+        },
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "project_id",
+        "session_id"
+      ],
+      "title": "RequestContext",
+      "type": "object"
+    },
+    "RuntimeDatasetBinding": {
+      "additionalProperties": false,
+      "description": "Private approval binding. Kept outside public view/Agent-generated requests.",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/DatasetRef"
+        },
+        "owner": {
+          "$ref": "#/$defs/ScopeOwner"
+        },
+        "storage_namespace": {
+          "title": "Storage Namespace",
+          "type": "string"
+        },
+        "runtime_path": {
+          "title": "Runtime Path",
+          "type": "string"
+        },
+        "expected_file_revision": {
+          "title": "Expected File Revision",
+          "type": "string"
+        },
+        "revision_method": {
+          "enum": [
+            "STAT_AND_FOOTER",
+            "STORAGE_VERSION",
+            "WRITER_SHA256"
+          ],
+          "title": "Revision Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "owner",
+        "storage_namespace",
+        "runtime_path",
+        "expected_file_revision",
+        "revision_method"
+      ],
+      "title": "RuntimeDatasetBinding",
+      "type": "object"
+    },
+    "ScopeOwner": {
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "$ref": "#/$defs/DataScope",
+          "default": "PROJECT"
+        },
+        "user_id": {
+          "format": "uuid",
+          "title": "User Id",
+          "type": "string"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Id"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Session Id"
+        }
+      },
+      "required": [
+        "user_id"
+      ],
+      "title": "ScopeOwner",
+      "type": "object"
+    },
+    "StoragePolicy": {
+      "additionalProperties": false,
+      "description": "Internal deployment mapping: namespace means logical shared storage, not Pod/kernel ID.",
+      "properties": {
+        "namespace": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "title": "Namespace",
+          "type": "string"
+        },
+        "runtime_root": {
+          "maxLength": 2000,
+          "minLength": 2,
+          "title": "Runtime Root",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace",
+        "runtime_root"
+      ],
+      "title": "StoragePolicy",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Offline schema bundle only. This envelope is not a proposed REST endpoint.",
+  "properties": {
+    "context": {
+      "$ref": "#/$defs/RequestContext"
+    },
+    "storage": {
+      "$ref": "#/$defs/StoragePolicy"
+    },
+    "registration": {
+      "$ref": "#/$defs/DatasetRegistration"
+    },
+    "candidate": {
+      "$ref": "#/$defs/DatasetCandidate"
+    },
+    "record": {
+      "$ref": "#/$defs/DatasetRecord"
+    },
+    "public_view": {
+      "$ref": "#/$defs/DatasetView"
+    },
+    "binding": {
+      "$ref": "#/$defs/RuntimeDatasetBinding"
+    },
+    "page": {
+      "$ref": "#/$defs/DatasetPage"
+    }
+  },
+  "required": [
+    "context",
+    "storage",
+    "registration",
+    "candidate",
+    "record",
+    "public_view",
+    "binding",
+    "page"
+  ],
+  "title": "ContractExamples",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dtest:dataset-registry:v1-draft:offline-bundle"
+}

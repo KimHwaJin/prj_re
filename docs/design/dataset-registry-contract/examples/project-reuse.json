@@ -1,0 +1,233 @@
+{
+  "context": {
+    "user_id": "00000000-0000-4000-8000-000000000001",
+    "project_id": "00000000-0000-4000-8000-000000000002",
+    "session_id": "00000000-0000-4000-8000-000000000003"
+  },
+  "storage": {
+    "namespace": "shared-pvc-main",
+    "runtime_root": "/workspace/pv"
+  },
+  "registration": {
+    "idempotency_key": "demo-dataset-registration-1",
+    "candidate_id": "00000000-0000-4000-8000-000000000004",
+    "expected_file_revision": "demo-stat-footer-revision-1",
+    "scope": "PROJECT",
+    "annotation": {
+      "title": "이상치를 제외한 온도 분석 데이터",
+      "description": "실제 전처리 Step의 관찰을 바탕으로 Agent가 붙인 설명입니다.",
+      "purpose": "후속 분석에서 같은 전처리 결과를 재사용합니다.",
+      "notes": [],
+      "declared_parents": []
+    }
+  },
+  "candidate": {
+    "schema_version": "dataset-registry.v1-draft",
+    "candidate_id": "00000000-0000-4000-8000-000000000004",
+    "owner": {
+      "scope": "PROJECT",
+      "user_id": "00000000-0000-4000-8000-000000000001",
+      "project_id": "00000000-0000-4000-8000-000000000002",
+      "session_id": null
+    },
+    "producer": {
+      "execution_id": "00000000-0000-4000-8000-000000000005",
+      "operation_id": "00000000-0000-4000-8000-000000000006",
+      "step_id": "00000000-0000-4000-8000-000000000007",
+      "execution_attempt_id": "00000000-0000-4000-8000-000000000008",
+      "step_attempt_id": "00000000-0000-4000-8000-000000000009",
+      "sequence": 1,
+      "fencing_token": 1,
+      "context": {
+        "user_id": "00000000-0000-4000-8000-000000000001",
+        "project_id": "00000000-0000-4000-8000-000000000002",
+        "session_id": "00000000-0000-4000-8000-000000000003"
+      },
+      "step_status": "SUCCEEDED"
+    },
+    "publication": "FINALIZED",
+    "file": {
+      "storage_namespace": "shared-pvc-main",
+      "relative_path": "users/00000000-0000-4000-8000-000000000001/projects/00000000-0000-4000-8000-000000000002/datasets/outputs/run-demo/cleaned.parquet",
+      "size_bytes": 123456,
+      "revision": "demo-stat-footer-revision-1",
+      "revision_method": "STAT_AND_FOOTER",
+      "format": "parquet"
+    },
+    "inspection": {
+      "status": "AVAILABLE",
+      "rows": 1000,
+      "column_count": 2,
+      "columns": [
+        {
+          "index": 0,
+          "name": "temperature",
+          "dtype": "double"
+        },
+        {
+          "index": 1,
+          "name": "target",
+          "dtype": "int64"
+        }
+      ],
+      "truncated": false,
+      "reason": null
+    }
+  },
+  "record": {
+    "schema_version": "dataset-registry.v1-draft",
+    "ref": {
+      "dataset_id": "00000000-0000-4000-8000-000000000010",
+      "version": 1
+    },
+    "candidate": {
+      "schema_version": "dataset-registry.v1-draft",
+      "candidate_id": "00000000-0000-4000-8000-000000000004",
+      "owner": {
+        "scope": "PROJECT",
+        "user_id": "00000000-0000-4000-8000-000000000001",
+        "project_id": "00000000-0000-4000-8000-000000000002",
+        "session_id": null
+      },
+      "producer": {
+        "execution_id": "00000000-0000-4000-8000-000000000005",
+        "operation_id": "00000000-0000-4000-8000-000000000006",
+        "step_id": "00000000-0000-4000-8000-000000000007",
+        "execution_attempt_id": "00000000-0000-4000-8000-000000000008",
+        "step_attempt_id": "00000000-0000-4000-8000-000000000009",
+        "sequence": 1,
+        "fencing_token": 1,
+        "context": {
+          "user_id": "00000000-0000-4000-8000-000000000001",
+          "project_id": "00000000-0000-4000-8000-000000000002",
+          "session_id": "00000000-0000-4000-8000-000000000003"
+        },
+        "step_status": "SUCCEEDED"
+      },
+      "publication": "FINALIZED",
+      "file": {
+        "storage_namespace": "shared-pvc-main",
+        "relative_path": "users/00000000-0000-4000-8000-000000000001/projects/00000000-0000-4000-8000-000000000002/datasets/outputs/run-demo/cleaned.parquet",
+        "size_bytes": 123456,
+        "revision": "demo-stat-footer-revision-1",
+        "revision_method": "STAT_AND_FOOTER",
+        "format": "parquet"
+      },
+      "inspection": {
+        "status": "AVAILABLE",
+        "rows": 1000,
+        "column_count": 2,
+        "columns": [
+          {
+            "index": 0,
+            "name": "temperature",
+            "dtype": "double"
+          },
+          {
+            "index": 1,
+            "name": "target",
+            "dtype": "int64"
+          }
+        ],
+        "truncated": false,
+        "reason": null
+      }
+    },
+    "annotation": {
+      "title": "이상치를 제외한 온도 분석 데이터",
+      "description": "실제 전처리 Step의 관찰을 바탕으로 Agent가 붙인 설명입니다.",
+      "purpose": "후속 분석에서 같은 전처리 결과를 재사용합니다.",
+      "notes": [],
+      "declared_parents": []
+    },
+    "status": "AVAILABLE"
+  },
+  "public_view": {
+    "ref": {
+      "dataset_id": "00000000-0000-4000-8000-000000000010",
+      "version": 1
+    },
+    "selection_id": "pvc:00000000-0000-4000-8000-000000000010:1",
+    "source": "PREPROCESSED",
+    "title": "이상치를 제외한 온도 분석 데이터",
+    "description": "실제 전처리 Step의 관찰을 바탕으로 Agent가 붙인 설명입니다.",
+    "purpose": "후속 분석에서 같은 전처리 결과를 재사용합니다.",
+    "scope": "PROJECT",
+    "status": "AVAILABLE",
+    "size_bytes": 123456,
+    "inspection": {
+      "status": "AVAILABLE",
+      "rows": 1000,
+      "column_count": 2,
+      "columns": [
+        {
+          "index": 0,
+          "name": "temperature",
+          "dtype": "double"
+        },
+        {
+          "index": 1,
+          "name": "target",
+          "dtype": "int64"
+        }
+      ],
+      "truncated": false,
+      "reason": null
+    }
+  },
+  "binding": {
+    "ref": {
+      "dataset_id": "00000000-0000-4000-8000-000000000010",
+      "version": 1
+    },
+    "owner": {
+      "scope": "PROJECT",
+      "user_id": "00000000-0000-4000-8000-000000000001",
+      "project_id": "00000000-0000-4000-8000-000000000002",
+      "session_id": null
+    },
+    "storage_namespace": "shared-pvc-main",
+    "runtime_path": "/workspace/pv/users/00000000-0000-4000-8000-000000000001/projects/00000000-0000-4000-8000-000000000002/datasets/outputs/run-demo/cleaned.parquet",
+    "expected_file_revision": "demo-stat-footer-revision-1",
+    "revision_method": "STAT_AND_FOOTER"
+  },
+  "page": {
+    "schema_version": "dataset-registry.v1-draft",
+    "items": [
+      {
+        "ref": {
+          "dataset_id": "00000000-0000-4000-8000-000000000010",
+          "version": 1
+        },
+        "selection_id": "pvc:00000000-0000-4000-8000-000000000010:1",
+        "source": "PREPROCESSED",
+        "title": "이상치를 제외한 온도 분석 데이터",
+        "description": "실제 전처리 Step의 관찰을 바탕으로 Agent가 붙인 설명입니다.",
+        "purpose": "후속 분석에서 같은 전처리 결과를 재사용합니다.",
+        "scope": "PROJECT",
+        "status": "AVAILABLE",
+        "size_bytes": 123456,
+        "inspection": {
+          "status": "AVAILABLE",
+          "rows": 1000,
+          "column_count": 2,
+          "columns": [
+            {
+              "index": 0,
+              "name": "temperature",
+              "dtype": "double"
+            },
+            {
+              "index": 1,
+              "name": "target",
+              "dtype": "int64"
+            }
+          ],
+          "truncated": false,
+          "reason": null
+        }
+      }
+    ],
+    "next_cursor": null
+  }
+}
