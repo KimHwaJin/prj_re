@@ -154,3 +154,10 @@ ORDER BY updated_at DESC;
 민감한 DB URL, 비밀번호, Redis credential은 문서나 migration 파일에 넣지 않고
 Deployment Secret에서 환경변수로 주입한다.
 
+
+
+## 8. Agent 로그·이벤트 연결 (032, 2026-09-30)
+
+서비스 DB head `20260930_0023`은 `task_events.agent_run_log_id` 연결과 unique 제약을 추가한다. 기존 이벤트의 ID/순번/payload를 보존하면서 같은 Run·동일 내용의 로그와 발생 개수대로 연결한다. 누락 이벤트는 이후 해당 로그가 재처리될 때 저장한다.
+
+새 코드 전 migration 적용 및 기존 writer drain이 필요하며 구·신 writer 혼재는 보장하지 않는다. downgrade는 연결만 제거하고 로그/이벤트는 보존한다. [상세 계약·기존 데이터 처리·배포 제한](architecture/log-event-persistence.md)을 참고한다.

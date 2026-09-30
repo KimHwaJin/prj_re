@@ -1,0 +1,3 @@
+WHEEL_CHECK_OK: changed modules match final source; test packages excluded
+Repository Dockerfile copies crud_migrations (including 0023); image build not run
+dtest_agent-0.1.0-py3-none-any.whl

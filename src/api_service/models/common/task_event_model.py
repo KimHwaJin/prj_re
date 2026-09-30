@@ -23,6 +23,9 @@ class TaskEventModel(Base):
     run_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("agent_runs.run_id", ondelete="CASCADE"), nullable=False, index=True
     )
+    agent_run_log_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("agent_run_logs.log_id", ondelete="CASCADE"), nullable=True
+    )
     sequence: Mapped[int] = mapped_column(BigInteger, nullable=False)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default="{}")
@@ -31,6 +34,7 @@ class TaskEventModel(Base):
     task = relationship("TaskModel", back_populates="events")
 
     __table_args__ = (
+        UniqueConstraint("agent_run_log_id", name="uq_task_events_agent_run_log"),
         UniqueConstraint("task_id", "sequence", name="uq_task_events_task_sequence"),
         Index("ix_task_events_task_sequence", "task_id", "sequence"),
     )

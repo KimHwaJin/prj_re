@@ -22,6 +22,7 @@ class TaskEventService:
         event_type: str,
         payload: dict,
         commit: bool = True,
+        agent_run_log_id: UUID | None = None,
     ) -> TaskEventModel | None:
         sequence = await db.scalar(
             update(TaskModel)
@@ -38,6 +39,7 @@ class TaskEventService:
             task_id=task_id,
             run_id=run_id,
             sequence=sequence,
+            agent_run_log_id=agent_run_log_id,
             event_type=event_type,
             payload=payload,
         )
@@ -57,6 +59,7 @@ class TaskEventService:
         event_type: str,
         payload: dict,
         commit: bool = True,
+        agent_run_log_id: UUID | None = None,
     ) -> TaskEventModel | None:
         task_id = await db.scalar(select(AgentRunModel.task_id).where(AgentRunModel.run_id == run_id))
         if task_id is None:
@@ -68,6 +71,7 @@ class TaskEventService:
             event_type=event_type,
             payload=payload,
             commit=commit,
+            agent_run_log_id=agent_run_log_id,
         )
 
     @staticmethod

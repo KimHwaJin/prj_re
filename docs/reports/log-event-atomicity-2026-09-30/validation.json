@@ -1,0 +1,63 @@
+{
+  "date": "2026-09-30",
+  "branch": "feature/log-event-atomicity",
+  "base_commit": "6dcea76",
+  "database": "dedicated PostgreSQL 17 at localhost:55233/identity_test; removed after validation",
+  "production_services_changed": false,
+  "migration": "20260930_0023",
+  "before_defect_probe": {
+    "passed": 1,
+    "seconds": 3.86,
+    "meaning": "Passing characterization test asserts one log and zero agent.event rows even after replay."
+  },
+  "initial_atomicity_tests": {
+    "passed": 11,
+    "seconds": 7.34
+  },
+  "migration_tests": {
+    "passed": 1,
+    "seconds": 6.16
+  },
+  "full_suite_before_read_optimization": {
+    "passed": 647,
+    "warnings": 53,
+    "subtests_passed": 2,
+    "seconds": 259.68
+  },
+  "final_targeted_suite": {
+    "passed": 72,
+    "seconds": 71.49,
+    "scope": [
+      "atomicity/concurrency/read-only replay",
+      "legacy migration/repair",
+      "initial checkpoint recovery",
+      "user resume recovery",
+      "Run SSE notifications",
+      "short transactions",
+      "token event buffer"
+    ]
+  },
+  "change_after_full_suite": "Complete linked log/event replay now returns with one read and no writes/row locks. Final targeted regression and wheel verification run afterward; full suite not repeated.",
+  "replay_sql": {
+    "statements": 1,
+    "type": "SELECT",
+    "row_lock": false
+  },
+  "wheel": "Changed modules match final source; tests excluded; Dockerfile copies crud_migrations; image build not run.",
+  "not_run": [
+    "production migration",
+    "Kubernetes rollout",
+    "external Executor/Redis",
+    "performance load A/B",
+    "process hard-kill recovery"
+  ],
+  "source_sha256": {
+    "crud_migrations/versions/20260930_0023_agent_log_event_link.py": "2022ea4a986c8e29f89d78874e6069f63f9fcc009fea173fab2b98ba7d094027",
+    "src/api_service/models/common/task_event_model.py": "98cbbc5cb0aa97ec87f491ccb0cdef45b2c85362521c2f1c735528ddfa59fd75",
+    "src/api_service/services/agent_run_log_service.py": "3a0ec7666c802eb40583610b048a0bb299e57c1c03dfd74ea7f07e2ba259276d",
+    "src/api_service/services/task_event_service.py": "00b356a2a847bec98cfedd645dcb103c0161147cb2bd2523808efbf940ebac64",
+    "src/api_service/test/test_initial_request_recovery_postgres.py": "6f7a177b469349d1c6ada341dabb70624f9ba5250276857044d841a2660907f0",
+    "src/api_service/test/test_log_event_atomicity_postgres.py": "b8c8e3ed2f96552811e336c516924ae8043d0dc0bf104f9e237440a470501fd3",
+    "src/api_service/test/test_log_event_migration_postgres.py": "264d3e0bcb45a350b3f48495ab2fcebeda6f3f3aa5a5e81ed873e750f8eed238"
+  }
+}

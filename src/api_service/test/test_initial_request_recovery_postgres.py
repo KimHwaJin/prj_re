@@ -108,7 +108,7 @@ async def saved(h, run_id):
         return await graph.aget_state(graphs.graph_config(h.session_id, run_id))
 
 
-@pytest.mark.parametrize('failure', ['projection', 'final_event', 'graph_response'])
+@pytest.mark.parametrize('failure', ['projection', 'final_event', 'graph_response', 'log_event'])
 @pytest.mark.parametrize('terminal', [False, True])
 async def test_initial_retry_only_projects_after_runtime_restart(real_initial, monkeypatch, failure, terminal):
     h = real_initial
@@ -120,6 +120,15 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
             monkeypatch.setattr(projection, '_persist_state', original)
             raise SQLAlchemyError('service projection unavailable')
         monkeypatch.setattr(projection, '_persist_state', once)
+    elif failure == 'log_event':
+        original = TaskEventService.append_for_run
+        async def once(*args, **kwargs):
+            result = await original(*args, **kwargs)
+            if kwargs['event_type'] == 'agent.event':
+                monkeypatch.setattr(TaskEventService, 'append_for_run', staticmethod(original))
+                raise SQLAlchemyError('event inserted but transaction not committed')
+            return result
+        monkeypatch.setattr(TaskEventService, 'append_for_run', staticmethod(once))
     elif failure == 'final_event':
         original = TaskEventService.append_for_run
         async def once(*args, **kwargs):
@@ -153,6 +162,14 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
     run, task = await rows(h, queued['id'])
     assert run.attempt_count == 2 and not task.recovery_required
     assert h.calls['entry'] == h.calls['model'] == 1
+    if failure == 'log_event':
+        from api_service.models.common.agent_run_log_model import AgentRunLogModel
+        async with h.factory() as db:
+            logs = list((await db.scalars(select(AgentRunLogModel).where(AgentRunLogModel.run_id == run.run_id))).all())
+            events = list((await db.scalars(select(TaskEventModel).where(
+                TaskEventModel.run_id == run.run_id, TaskEventModel.event_type == 'agent.event'))).all())
+            assert len(logs) == len(events) == 1
+            assert events[0].agent_run_log_id == logs[0].log_id
     public = await state(h, queued['id'])
     assert public['status'] == ('success' if terminal else 'waiting_input')
     assert 'answer' not in (await saved(h, queued['id'])).values
