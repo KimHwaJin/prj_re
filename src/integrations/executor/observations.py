@@ -33,8 +33,14 @@ def read_operation_observations(settings, event, expected_steps):
     if not isinstance(results,list):
         raise ValueError('Operation completion has no Step results')
     expected = {s['sequence']:s for s in expected_steps}
-    if len(results) != len(expected) or {r['sequence'] for r in results} != expected.keys():
+    sequences=[r['sequence'] for r in results]
+    if len(sequences)!=len(set(sequences)) or not set(sequences)<=expected.keys() or (payload['status']=='SUCCEEDED' and set(sequences)!=expected.keys()):
         raise ValueError('Operation results do not match submitted sequences')
+    # Failure events only include persisted results for Steps actually reached.
+    # Missing submitted Steps are not evidence of execution or success.
+    by_sequence={r['sequence']:r for r in results}
+    results=[by_sequence.get(sequence,{'sequence':sequence,'step_id':submitted.get('executor_step_id'),
+             'status':'NOT_RUN','result_ref':None}) for sequence,submitted in expected.items()]
     observations = []
     for result in results:
         sequence = result['sequence']; submitted = expected[sequence]
@@ -43,7 +49,7 @@ def read_operation_observations(settings, event, expected_steps):
         logical_id = submitted['plan_step_id']
         observation = {'step_id':logical_id,'sequence':sequence,'status':result['status'],
                        'tool_id':submitted['tool_id'],'summary':None,'text':[],
-                       'has_image':False,'incomplete':False,'error':result.get('error')}
+                       'has_image':False,'incomplete':False,'error':result.get('error'),'repair_attempt':submitted.get('repair_attempt',0)}
         ref = result.get('result_ref')
         if not ref:
             if result['status'] == 'SUCCEEDED':
@@ -98,5 +104,5 @@ def canonical_summary(value):
 def public_observations(observations):
     """Code/path-free facts for public API or role prompts; raw refs stay internal."""
     return [{**{k:obs[k] for k in ('step_id','tool_id','status','summary','has_image','incomplete')},
-             'error':'Tool 실행 오류 — 내부 실행 기록에 상세 원인을 보존했습니다.' if obs.get('error') else None}
+             'repair_attempt':obs.get('repair_attempt',0),'error':'Tool 실행 오류 — 내부 실행 기록에 상세 원인을 보존했습니다.' if obs.get('error') else None}
             for obs in observations]

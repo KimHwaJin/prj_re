@@ -18,7 +18,7 @@ class Proposal(BaseModel):
     input_values: dict = Field(default_factory=dict)
 
 
-def reply_schema(catalog, max_candidates, repair_limit=4):
+def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
     class Reply(BaseModel):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'plans']
@@ -31,9 +31,9 @@ def reply_schema(catalog, max_candidates, repair_limit=4):
                 raise ValueError('plans kind requires plans; answer kind forbids plans')
             for proposal in self.plans:
                 policy = {'allowed_modes': ['MULTI'] if proposal.definition.get('decisions') or any('when' in s for s in proposal.definition.get('steps', [])) else ['SINGLE', 'MULTI'],
-                          'repair_level_limit': repair_limit, 'max_repair_attempts_limit': 0 if repair_limit==0 else 3}
+                          'repair_level_limit': repair_limit, 'max_repair_attempts_limit': repair_attempts}
                 review = new_review(proposal.definition, proposal.input_values, catalog.metadata, policy)
-                if review['document']['execution']['max_repair_attempts'] > 3:
+                if review['document']['execution']['max_repair_attempts'] > repair_attempts:
                     raise ValueError('Repair attempts exceed the service limit')
                 # Paths are resolved by the service, never fabricated from chat.
                 for step in proposal.definition['steps']:
@@ -46,8 +46,8 @@ def reply_schema(catalog, max_candidates, repair_limit=4):
     return Reply
 
 
-def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4):
-    schema = reply_schema(catalog, max_candidates,repair_limit)
+def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3):
+    schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts)
     prompt = load_prompt(__package__) + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
                             tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],

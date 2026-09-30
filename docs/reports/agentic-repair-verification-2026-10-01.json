@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "stage": "040",
+  "branch": "feature/agentic-execution-repair",
+  "baseline_commit": "199d4faa472a2c66c1ee1fbbadaa53b56df782a0",
+  "regression": {
+    "passed": 712,
+    "failed": 0,
+    "subtests_passed": 2,
+    "warnings": 61,
+    "seconds": 299.43,
+    "scope": "All API and analysis Agent tests, including guarded local PostgreSQL suites"
+  },
+  "targeted": {
+    "passed": 23,
+    "seconds": 3.82,
+    "included_in_full_suite": true
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 34,
+    "mock_graph_execution_steps": 4,
+    "removed_agent_packages_in_wheel": false,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 11,
+    "production_builders_constructed": true,
+    "create_agent_roles": 11,
+    "role_checkpointers_disabled": true
+  },
+  "actual_executor": {
+    "passed": true,
+    "planning": "preset_fault_injection",
+    "repair_model": "explicit_deterministic_double",
+    "scenarios": [
+      {
+        "scenario": "binding",
+        "passed": true,
+        "seconds": 3.839,
+        "operation_count": 2,
+        "terminal_event_seen": true,
+        "public_status": "success",
+        "attempts": 1,
+        "executor_status": "SUCCEEDED"
+      },
+      {
+        "scenario": "source",
+        "passed": true,
+        "seconds": 4.593,
+        "operation_count": 2,
+        "terminal_event_seen": true,
+        "public_status": "success",
+        "attempts": 1,
+        "executor_status": "SUCCEEDED"
+      },
+      {
+        "scenario": "replan",
+        "passed": true,
+        "seconds": 4.622,
+        "operation_count": 2,
+        "terminal_event_seen": true,
+        "public_status": "success",
+        "attempts": 1,
+        "executor_status": "SUCCEEDED"
+      },
+      {
+        "scenario": "custom",
+        "passed": true,
+        "seconds": 4.676,
+        "operation_count": 2,
+        "terminal_event_seen": true,
+        "public_status": "success",
+        "attempts": 1,
+        "executor_status": "SUCCEEDED"
+      },
+      {
+        "scenario": "reject",
+        "passed": true,
+        "seconds": 3.073,
+        "operation_count": 1,
+        "terminal_event_seen": true,
+        "public_status": "error",
+        "attempts": 0,
+        "executor_status": "CANCELLED"
+      },
+      {
+        "scenario": "exhausted",
+        "passed": true,
+        "seconds": 4.955,
+        "operation_count": 3,
+        "terminal_event_seen": true,
+        "public_status": "error",
+        "attempts": 2,
+        "executor_status": "CANCELLED"
+      },
+      {
+        "scenario": "disabled",
+        "passed": true,
+        "seconds": 3.269,
+        "operation_count": 1,
+        "terminal_event_seen": true,
+        "public_status": "error",
+        "attempts": 0,
+        "executor_status": "CANCELLED"
+      },
+      {
+        "scenario": "single",
+        "passed": true,
+        "seconds": 2.144,
+        "operation_count": 1,
+        "terminal_event_seen": true,
+        "public_status": "error",
+        "attempts": 0,
+        "executor_status": "FAILED"
+      }
+    ]
+  },
+  "real_repair_role": {
+    "passed": true,
+    "planning": "preset_fault_injection",
+    "repair_level_tested": 1,
+    "model_calls": [
+      {
+        "model": "qwen38-27b-nvfp4",
+        "prompt_tokens": 5871,
+        "completion_tokens": 277,
+        "content_nonempty": true,
+        "tool_calls": 0,
+        "finish_reason": "stop"
+      }
+    ],
+    "seconds": 13.501,
+    "operations": 2,
+    "terminal_event_seen": true
+  },
+  "initial_real_failures": {
+    "count": 2,
+    "failure": "Empty model content after metadata discovery/limited validation; no correction submitted, execution canceled",
+    "records": [
+      "agentic-repair-real-initial-validation-2026-10-01.json",
+      "agentic-repair-real-discovery-validation-2026-10-01.json"
+    ]
+  },
+  "limitations": [
+    "No real planning in fault-injection harness",
+    "Real model repair levels 2–4 not exercised; deterministic double + actual Executor used",
+    "Structural signature/binding validation is not full semantic equivalence or a Python sandbox",
+    "Failed Steps may have partial side effects before correction",
+    "No throughput/p95/Kubernetes/kill/week-long execution benchmark",
+    "Workflow promotion enforcement, dataset catalogue, project memory, Artifact timing and initial candidate-rejection free planning remain subsequent work"
+  ],
+  "deployment": {
+    "base_merged": false,
+    "pushed": false,
+    "production_deployed": false,
+    "temporary_servers_stopped": true,
+    "original_checkout_preserved": true
+  }
+}

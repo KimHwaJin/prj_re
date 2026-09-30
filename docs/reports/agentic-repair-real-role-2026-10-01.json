@@ -1,0 +1,157 @@
+{
+  "passed": true,
+  "namespace": "agentic-repair-cec5a11c79",
+  "real_repair_llm": true,
+  "planning": "preset_fault_injection",
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "binding",
+      "passed": true,
+      "session_id": "38353efa-1452-4172-b5d2-6d595da2bd2b",
+      "run_id": "62668172-d246-466a-8a3a-73ac526258c4",
+      "final": {
+        "repair": {
+          "history": [
+            {
+              "status": "accepted",
+              "attempt": 1,
+              "outcome": "succeeded",
+              "summary": "변환 단계의 나눗셈 인자를 0에서 2로 수정하여 목표에 맞는 계산이 수행되도록 합니다.",
+              "required_level": 1,
+              "changed_step_ids": [
+                "transform"
+              ]
+            }
+          ],
+          "attempts": 1,
+          "stop_reason": null,
+          "max_attempts": 2,
+          "authorized_level": 1,
+          "workflow_eligible": true
+        },
+        "report": null,
+        "status": "analysis_completed",
+        "execution_id": "08016fd0-cc15-4f72-a1d7-97f6c00da946",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": "Tool 실행 오류 — 내부 실행 기록에 상세 원인을 보존했습니다.",
+            "status": "FAILED",
+            "step_id": "transform",
+            "summary": null,
+            "tool_id": "repair_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "NOT_RUN",
+            "step_id": "finish",
+            "summary": null,
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": true,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "transform",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    1.0,
+                    2.0,
+                    3.0
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 1
+          },
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "finish",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "sum": 6.0
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 1
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "SUCCEEDED"
+      },
+      "public_status": "success",
+      "seconds": 13.501,
+      "repair_review_count": 0,
+      "operation_count": 2,
+      "terminal_event_seen": true,
+      "completed_steps": [
+        "load",
+        "transform",
+        "finish"
+      ],
+      "sse_types": [
+        "activity.completed",
+        "activity.started",
+        "activity.updated",
+        "interaction.opened",
+        "interaction.resolved",
+        "message.completed",
+        "run.snapshot",
+        "run.updated"
+      ]
+    }
+  ],
+  "phoenix_model_calls": [
+    {
+      "model": "qwen38-27b-nvfp4",
+      "prompt_tokens": 5871,
+      "completion_tokens": 277,
+      "content_nonempty": true,
+      "tool_calls": 0,
+      "finish_reason": "stop"
+    }
+  ]
+}

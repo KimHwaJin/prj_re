@@ -98,7 +98,7 @@ class LangGraphEventAdapter:
         elif len(interrupts) == 1:
             boundary = interrupts[0]
             value = boundary.value
-            terminal_closes_decision = (isinstance(value,dict) and value.get('kind')=='decision_review'
+            terminal_closes_decision = (isinstance(value,dict) and value.get('kind') in {'decision_review','repair_review'}
                                        and context.event.event_type=='execution.completed')
             if not isinstance(value, dict) or (value.get("kind") != "EXECUTOR_EVENT" and not terminal_closes_decision):
                 raise DeferEvent("Graph is waiting for non-Executor input")

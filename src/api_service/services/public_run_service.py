@@ -133,6 +133,18 @@ class PublicRunService:
             raise HTTPException(status_code=409, detail="Run is not waiting for this input; refresh Run state.")
         latest = await db.get(Run, payload.resume_token)
         if (latest.metadata_json or {}).get('_agent_runtime') == 'agentic-planning-v1':
+            repair_review=latest.metadata_json.get('_repair_review')
+            if repair_review:
+                from service_contracts.execution_repair import validate_repair_action
+                action=(payload.command or {}).get('resume')
+                if (action or {}).get('revision')!=repair_review['revision']:
+                    raise HTTPException(409,'Stale repair revision; refresh Run state.')
+                try:
+                    validate_repair_action(repair_review,action)
+                except (ValueError,TypeError) as exc:
+                    raise HTTPException(422,str(exc)) from exc
+                await RunService.create(db,user_id,session_id,command,key)
+                return await PublicRunService.read(db,user_id,session_id,current.id)
             decision_review=latest.metadata_json.get('_decision_review')
             if decision_review:
                 from service_contracts.execution_review import validate_decision_action

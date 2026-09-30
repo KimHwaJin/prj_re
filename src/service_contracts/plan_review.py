@@ -27,8 +27,12 @@ def new_review(document, values, catalog, policy):
     errors = validate(document, catalog)
     require(not errors, '; '.join(errors[:8]))
     document = deepcopy(document)
-    execution = {'mode': 'MULTI', 'repair_level': 0, 'max_repair_attempts': 0, 'review_mode': 'decision_boundary'}
-    execution.update(document.get('execution', {}))
+    execution = {'mode': 'MULTI', 'repair_level': policy.get('default_repair_level',0),
+                 'max_repair_attempts': 0, 'review_mode': 'decision_boundary'}
+    declared=document.get('execution', {})
+    execution.update(declared)
+    if 'max_repair_attempts' not in declared and execution['repair_level']>0:
+        execution['max_repair_attempts']=policy.get('default_repair_attempts',0)
     document['execution'] = execution
     require(execution['repair_level'] <= policy['repair_level_limit'], 'Repair level exceeds service limit')
     require(execution['max_repair_attempts'] <= policy['max_repair_attempts_limit'], 'Repair attempts exceed service limit')
@@ -59,7 +63,7 @@ def new_review(document, values, catalog, policy):
     return {'plan_id': str(uuid4()), 'plan_revision': 1, 'document': document,
             'input_values': initial, 'input_origins': origins, 'editable_parameters': editable,
             'excluded_step_ids': [], 'user_actions': [], 'catalog': deepcopy(catalog),
-            'policy': deepcopy(policy), 'consumed': False}
+            'policy': {k:deepcopy(v) for k,v in policy.items() if not k.startswith('default_')}, 'consumed': False}
 
 
 def visible_datasets(datasets, context):

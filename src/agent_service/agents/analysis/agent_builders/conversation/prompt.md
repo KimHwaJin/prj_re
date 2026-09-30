@@ -21,3 +21,6 @@ data_load의 parquet_path는 inputs의 kind=data_reference를 workflow_input으�
 expected_outputs는 id, kind, description, format, source와 필요한 조건을 명시합니다. Tool 반환 결과는 source=step_output의 참조입니다. 보고서는 kind=report, format=markdown, source=agent_report, evidence_steps로 실제 근거를 선언합니다. 등록된 저장 Tool이 없으면 전처리 데이터를 저장한 것처럼 기대 산출물을 약속하지 않습니다. 생성 전의 결과나 파일을 완료된 것으로 말하지 않습니다.
 
 계획 제안 message에는 목적과 중요한 판단 지점을 간단히 설명합니다. 코드를 보여주지 않습니다. 사용자 승인 없이 실행하지 않습니다. 최종 응답은 Reply JSON Schema에 맞는 한 객체만 반환합니다.
+
+
+Execution repair policy is independent of normal result-based decisions. Use an explicit Workflow repair_level/max_repair_attempts when declared; otherwise omit those fields to let central configuration supply defaults. Do not propose values above execution_policy limits. SINGLE always requires level/attempts zero. Explain repair permissions when proposing nonzero levels: bindings, contract-preserving Tool implementation, registered replan with approval, or execution-local autonomous code. Never promise that a failed Step has no partial side effects.

@@ -29,13 +29,32 @@ class PlanningRuntime:
         if spec.provider == 'mock':
             from agent_service.agents.analysis.planning.testing import mock_execution_role
             return mock_execution_role(role,payload)
-        key = (role,state['model_selection']['name'],state['model_selection']['revision'])
+        discovery=role=='repair' and payload['repair_context']['repair_authorized_level']>=3
+        key = (role,state['model_selection']['name'],state['model_selection']['revision'],discovery)
         if key not in self.execution_agents:
             if role == 'review':
                 from agent_service.agents.analysis.agent_builders.execution_review.agent import build_agent
-            else:
+            elif role == 'report':
                 from agent_service.agents.analysis.agent_builders.execution_report.agent import build_agent
-            self.execution_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)),structured_output_mode=spec.structured_output_mode)
+            if role=='repair':
+                import json
+                from langchain_core.messages import HumanMessage
+                from agent_service.agents.analysis.agent_builders.execution_repair.agent import build_agent
+                from agent_service.agents.analysis.execution.repair_policy import proposal_snapshot
+                def validate_repair(response,request):
+                    payload=json.loads(next(m.content for m in request.messages if isinstance(m,HumanMessage)))
+                    if response.can_repair:
+                        try:
+                            proposal_snapshot(payload['repair_context'],response,self.catalog,level_limit=self.settings.agent_repair_level_limit)
+                        except (SyntaxError,KeyError,TypeError) as exc:
+                            raise ValueError('Invalid repair structure/source: '+str(exc)) from exc
+                    elif response.argument_changes or response.source_changes or response.replacement_steps or response.replacement_decisions:
+                        raise ValueError('can_repair=false must not contain execution changes')
+                self.execution_agents[key]=build_agent(create_chat_model(spec.apply(self.settings)),self.catalog,
+                    discovery_max_rounds=self.settings.agent_discovery_max_rounds,enable_discovery=discovery,
+                    structured_output_mode=spec.structured_output_mode,validate_response=validate_repair)
+            else:
+                self.execution_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)),structured_output_mode=spec.structured_output_mode)
         return await self.execution_agents[key].ainvoke(payload,context=context)
 
     async def respond(self, state, context, dataset_catalog):
@@ -50,11 +69,13 @@ class PlanningRuntime:
                 self.agents[key] = build_agent(create_chat_model(spec.apply(self.settings)), self.catalog,
                                                max_candidates=self.settings.max_plan_candidates,
                                                discovery_max_rounds=self.settings.agent_discovery_max_rounds,
-                                               repair_limit=0 if self.execution_enabled else 4,
+                                               repair_limit=self.settings.agent_repair_level_limit,repair_attempts=self.settings.agent_max_repair_attempts,
                                                structured_output_mode=spec.structured_output_mode)
         return await self.agents[key].ainvoke({
             'request': state['user_request'], 'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
             'available_skills': self.catalog.public_skills(), 'dataset_catalog': dataset_catalog,
             'max_candidates': self.settings.max_plan_candidates,
-            'execution_policy': {'repair_level_limit':0 if self.execution_enabled else 4},
+            'execution_policy': {'repair_level_limit':self.settings.agent_repair_level_limit,
+                'max_repair_attempts_limit':self.settings.agent_max_repair_attempts,
+                'default_repair_level':self.settings.agent_repair_level,'default_repair_attempts':self.settings.agent_max_repair_attempts},
         }, context=context)

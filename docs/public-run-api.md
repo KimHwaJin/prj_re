@@ -91,3 +91,8 @@ POST `.../runs/{id}/cancel`은 기존 취소 처리와 실행 종료 확인을 �
 입력 계약에는 `{"type":"image","file_id":"UUID"}`, `{"type":"file","file_id":"UUID"}` 참조 형식을 마련했지만 업로드·소유권 검증·text-only/VLM 처리가 미구현이므로 현재 422로 명확히 거절한다. 전달되지 않은 첨부를 무시하고 분석한 척하지 않는다.
 
 038의 그래프 node/state 계약은 이전 Agent와 다르다. **이전 그래프의 pending/대기 Run 및 checkpoint를 새 Runtime으로 자동 이어 실행하지 않는다.** 새 Runtime 전환은 기존 실행을 정리하고 새 세션/테스트 DB에서 검증한 뒤 진행한다. Executor 이벤트 재개는 039에서 연결했다. 실제 Gaia 제공 router, pgvector 추천·Workflow CRUD, 프로젝트 메모리, 전체 UI는 후속 단계다. 과거 벤치마크는 해당 이전 commit을 재현하는 자료로 보존한다. 현재 공용 loadtest는 계획 승인 대기만 측정하며 submit 모드는 아직 거절한다.
+
+
+## MULTI 수정 확인 화면
+
+040의 `interaction.opened`에서 `kind=repair_review`를 받으면 기존 POST에 `approve_repair` 또는 `reject_repair`를 제출한다. 현재 run_id/resume_token, interaction_id/revision과 proposal_sha256을 그대로 보낸다. 승인 범위를 높여야 하는 화면에는 allow_policy_escalation=true라는 명시 동의가 필요하다. revision 불일치는 409, 다른 제안 hash/허용하지 않은 code 필드/승인 누락은 422이며 token을 소비하지 않는다. [수정 승인 규격과 설정](agentic-execution-repair.md#승인-화면과-api)을 따른다. 최종 `result.final_response.repair`에는 시도 수·종료 이유·코드 없는 변경 이력·수정 Operation outcome을 제공한다. Executor 대기 중 입력 잠금과 기존 GET/SSE 경로는 유지한다.

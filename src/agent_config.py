@@ -188,6 +188,13 @@ class AgentSettings:
     agent_observation_max_chars: int = 16000
     # Safety bound for a MULTI plan; waiting never occupies an Agent execution slot.
     agent_max_operations: int = 64
+    # Default repair authorization only when Workflow has no explicit repair policy.
+    # 0=off, 1=bindings, 2=failed Tool implementation, 3=registered replan + HITL, 4=execution-local code.
+    agent_repair_level: int = 0
+    # Service capability ceiling; HITL cannot grant a level above this limit.
+    agent_repair_level_limit: int = 4
+    # Run-wide accepted correction Operation budget; also default when level > 0.
+    agent_max_repair_attempts: int = 3
 
     @property
     def executor_executions_url(self) -> str:
@@ -330,6 +337,11 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
     observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
     max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
+    repair_level = int(env.get('AGENT_REPAIR_LEVEL', '0'))
+    repair_limit = int(env.get('AGENT_REPAIR_LEVEL_LIMIT', '4'))
+    repair_attempts = int(env.get('AGENT_MAX_REPAIR_ATTEMPTS', '3'))
+    if not 0 <= repair_level <= repair_limit <= 4 or not 0 <= repair_attempts <= 10:
+        raise ValueError('Invalid Agent repair level/attempt limits')
     if not 1024 <= observation_limit <= 64000 or not 1 <= max_operations <= 256:
         raise ValueError('Invalid Agent observation/operation limits')
     if not 1 <= max_candidates <= 20 or not 2 <= history_limit <= 200 or not 1 <= discovery_rounds <= 12:
@@ -344,6 +356,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         agent_discovery_max_rounds=discovery_rounds,
         analysis_datasets=datasets,
         agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,
+        agent_repair_level=repair_level,agent_repair_level_limit=repair_limit,agent_max_repair_attempts=repair_attempts,
         model_mock_delay_ms=mock_delay_ms,
         environment=env.get("APP_ENV", "development"),
         model_provider=provider,

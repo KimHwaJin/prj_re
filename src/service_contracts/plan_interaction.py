@@ -30,7 +30,7 @@ class PlanAction(StrictModel):
 
 
 class ResumeCommand(StrictModel):
-    resume: 'PlanAction | DecisionAction'
+    resume: 'PlanAction | DecisionAction | RepairAction'
 
 
 class DecisionAction(StrictModel):
@@ -38,6 +38,14 @@ class DecisionAction(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1,strict=True)
     values: dict[str,Any]
+
+
+class RepairAction(StrictModel):
+    action: Literal['approve_repair', 'reject_repair']
+    interaction_id: UUID
+    revision: int = Field(ge=1, strict=True)
+    proposal_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    allow_policy_escalation: bool = Field(default=False, strict=True)
 
 
 ResumeCommand.model_rebuild()

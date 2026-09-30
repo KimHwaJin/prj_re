@@ -68,6 +68,17 @@ class PlanningState(TypedDict, total=False):
     analysis_failure: bool
     terminal_event_seen: bool
     report_status: str
+    execution_snapshot: dict | None
+    failed_step_ids: list[str]
+    repair_attempts: int
+    repair_max_attempts: int
+    repair_authorized_level: int
+    repair_candidate: dict | None
+    repair_review: dict | None
+    repair_action: str
+    repair_history: list[dict]
+    repair_stop_reason: str | None
+    repair_validation_error: str | None
     ew_pending: dict
     ew_receipts: dict
     ew_sequences: dict
@@ -92,6 +103,9 @@ def build_planning_graph(runtime, *, checkpointer):
                 'execution_id':None,'executor_operation_number':0,'next_step_sequence':0,
                 'completed_steps':[],'skipped_steps':[],'execution_decisions':{},'pending_decisions':[],
                 'decision_review':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
+                'execution_snapshot':None,'failed_step_ids':[],'repair_attempts':0,'repair_max_attempts':0,
+                'repair_authorized_level':0,'repair_candidate':None,'repair_review':None,'repair_history':[],
+                'repair_action':'','repair_stop_reason':None,'repair_validation_error':None,
                 'ew_pending':{},'ew_receipts':{},'ew_sequences':{},'execution_status':'','report_status':'',
                 'agent_run_id': current['agent_run_id'], 'initial_request_receipt': state.get('initial_request_identity'),
                 'user_resume_receipt': None, 'public_events': events, 'history': history,
@@ -110,8 +124,10 @@ def build_planning_graph(runtime, *, checkpointer):
         for proposal in reply.plans:
             definition = proposal.definition
             policy = {'allowed_modes': ['MULTI'] if definition['decisions'] or any('when' in s for s in definition['steps']) else ['SINGLE', 'MULTI'],
-                      'repair_level_limit': 0 if runtime.execution_enabled else 4,
-                      'max_repair_attempts_limit': 0 if runtime.execution_enabled else 3}
+                      'repair_level_limit': runtime.settings.agent_repair_level_limit,
+                      'max_repair_attempts_limit': runtime.settings.agent_max_repair_attempts,
+                      'default_repair_level':runtime.settings.agent_repair_level,
+                      'default_repair_attempts':runtime.settings.agent_max_repair_attempts}
             review = new_review(definition, proposal.input_values, runtime.catalog.metadata, policy)
             # Validate proposed data references with exactly the same rules as user edits.
             patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1}, datasets=runtime.datasets, context=state)

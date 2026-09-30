@@ -74,7 +74,7 @@ service:
 
 GLOBAL은 공유 원천/test 데이터만 사용한다. 전처리 데이터는 USER/PROJECT/SESSION을 쓰고 owner_user_id(서비스 내부 UUID), project_id, session_id를 해당 scope에 맞게 지정한다. 서버 runtime_path는 Jupyter에서 접근할 절대 경로이며 프론트·LLM에는 공개 dataset_id/title/description/scope만 전달한다. Agent 서버가 그 Parquet를 직접 읽거나 MinIO에 metadata를 쓰지 않는다. 이 선언은 schema/행 내용을 실시간 확인한 결과가 아니며 실제 관찰은 039의 Executor 실행과 manifest 검증에서 얻는다.
 
-repair_level은 0=실패 전달, 1~4는 후속 실행 정책 단계의 표현이며 **이 단계에서 자동 코드 수정을 구현한 것이 아니다**. SINGLE은 repair_level/attempts=0만 허용한다. 039에서 MULTI 결과 기반 decisions와 후속 Operation을 연결했다. 실제 제출 Runtime의 ceiling은 repair_level 0, attempts 0이며 미구현된 자동 수정을 허용하지 않는다. port 없는 독립 계획 테스트의 ceiling 4/attempts 3은 계약 검증용이고 실제 수정 실행이 아니다.
+040에서 repair_level 1~4를 실제 MULTI 실행에 연결했다. 기본 권한은 0, 서비스 ceiling은 기본 4, 시도 ceiling은 기본 3이며 Workflow의 명시 값과 중앙 기본값, 적법한 사용자 수정으로 확정한다. SINGLE은 repair_level/attempts=0만 허용한다. [오류 수정 Runtime](agentic-execution-repair.md)을 따른다. port 없는 계획 전용 실행이 실제 Executor 수정을 수행하는 것은 아니다.
 
 ## 실행·검증
 

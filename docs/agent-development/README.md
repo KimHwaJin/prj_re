@@ -1,5 +1,7 @@
 # Agent 개발 안내
 
+현재 분석 Agent의 최신 실행 안내: [계획 제안](../agentic-planning-runtime.md), [Executor 실행](../agentic-executor-runtime.md), [040 오류 수정](../agentic-execution-repair.md). 오류 수정 역할의 선언·프롬프트는 analysis/agent_builders/execution_repair, 실행 노드는 analysis/execution/repair_nodes, 순수 검증은 repair_policy에 있다. 등록 workflow 자산 파일을 실행 중 변경하지 않는다.
+
 현재 구현 기준: 개선 기록 025. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory 자동 요약/저장과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)

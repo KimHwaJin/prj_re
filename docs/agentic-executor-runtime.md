@@ -1,6 +1,6 @@
 # 승인된 분석 계획의 Executor 실행
 
-039 구현, 2026-09-30. 공개 Run API는 승인한 계획으로 실제 Executor를 호출한다. 장기 실행은 LangGraph의 `interrupt`에서 멈추고 Redis 이벤트를 받아 이어간다. Agent 프로세스가 분석 함수를 실행하거나 실행 완료까지 HTTP 응답을 기다리지 않는다.
+039 실행 경계 및 040 오류 수정 구현, 2026-10-01. 공개 Run API는 승인한 계획으로 실제 Executor를 호출한다. 장기 실행은 LangGraph의 `interrupt`에서 멈추고 Redis 이벤트를 받아 이어간다. Agent 프로세스가 분석 함수를 실행하거나 실행 완료까지 HTTP 응답을 기다리지 않는다.
 
 ## 그래프와 실행 경계
 
@@ -20,7 +20,7 @@ flowchart TD
   A -->|사용자 확인 필요| U[decision_review interrupt]
   U -->|approve_decisions| C
   O -->|MULTI 단계 완료| F[명시적 Finalize]
-  O -->|MULTI 단계 실패 및 계속 가능| X[수정 없이 Cancel 요청]
+  O -->|MULTI 코드 실패 및 계속 가능| X[040 수정 판단·승인·후속 Operation 또는 Cancel]
   F --> T[최종 execution.completed 대기]
   X --> T
   O -->|SINGLE| T
@@ -130,7 +130,7 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 
 설정은 중앙 YAML→env→기본값 우선순위를 따른다. memory checkpointer/독립 port 없는 PlanningRuntime은 계획 승인 저장용이다. 실제 비동기 배포에는 영속 checkpoint·binding 테이블 migration·Redis 소비 설정·PV mount가 필요하다. Worker 테이블은 top-level `alembic.ini`, API 관리 테이블은 `alembic.crud.ini`로 migration한다.
 
-현재 실제 실행의 repair_level/attempt ceiling은 **0**이다. SINGLE은 실패 전달, MULTI는 계속 가능한 실패 Operation에서 수정 없이 Cancel하여 실패 결과를 남긴다. 1~4 자동 수정 구현 전에는 화면에서 선택할 수 없게 검증한다. 정식 PVC 데이터 catalog·scope별 쓰기 root·metadata Artifact 등록, project_memory, 자유 코드/Tool 수정, pgvector Workflow 추천·CRUD, Gaia adapter, 첨부·VLM은 후속이다. 현재 dataset_output_dir는 프로젝트 기본 경로이며 scope별 카탈로그 구현이 완료된 것이 아니다.
+040에서 수정 수준 1~4의 실행별 코드/연결/등록 자산 재계획과 승인·시도 한도를 연결했다. 기본 권한은 0이며 SINGLE은 실패 전달을 유지한다. [오류 수정 Runtime](agentic-execution-repair.md)의 설정·승인 경계를 따른다. 정식 PVC 데이터 catalog·scope별 쓰기 root·metadata Artifact 등록, project_memory, 후보 전체 거절 후 신규 자유 계획, pgvector Workflow 추천·CRUD, Gaia adapter, 첨부·VLM은 후속이다. 현재 dataset_output_dir는 프로젝트 기본 경로이며 scope별 카탈로그 구현이 완료된 것이 아니다.
 
 기존 graph/CLI는 아직 남아 있으나 공개 API와 이벤트 Worker는 새 Runtime을 사용한다. 이전 그래프 checkpoint 및 진행 중 Run의 자동 이행은 하지 않는다. 038에서 이미 완료한 계획 승인 checkpoint는 실제 제출을 위해 새 Run을 시작한다.
 

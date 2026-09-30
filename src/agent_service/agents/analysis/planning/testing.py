@@ -27,6 +27,10 @@ class MockConversation:
 
 def mock_execution_role(role, payload):
     """Explicit mock provider only; its output still uses real supplied observations."""
+    if role == 'repair':
+        from service_contracts.execution_repair import RepairResponse
+        return RepairResponse(can_repair=False,summary='명시적 mock은 수정안을 만들지 않습니다.',
+            reason='No repair fixture configured; never fabricate a successful correction.',evidence_steps=payload['repair_context']['failed_step_ids'])
     if role == 'review':
         from agent_service.agents.analysis.agent_builders.execution_review.agent import ReviewResponse
         choices = []

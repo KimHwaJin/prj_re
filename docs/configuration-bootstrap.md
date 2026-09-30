@@ -142,3 +142,6 @@ Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀
 ## 038 계획 Agent 설정
 
 `service.agent` 그룹에 `max_plan_candidates`, `agent_discovery_max_rounds`, `agent_history_message_limit`, `analysis_datasets`를 둘 수 있다. 대응 env는 MAX_PLAN_CANDIDATES, AGENT_DISCOVERY_MAX_ROUNDS, AGENT_HISTORY_MESSAGE_LIMIT, ANALYSIS_DATASETS다. YAML mapping은 중앙 설정에서 JSON으로 변환되므로 env에서는 JSON 문자열을 사용한다. 상세 기본값·제한·데이터 scope는 [계획 Runtime 안내](agentic-planning-runtime.md)를 참고한다. Phoenix도 중앙 PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY를 사용하고 API lifespan에서 시작·종료한다.
+
+
+040의 AGENT_REPAIR_LEVEL(기본 0), AGENT_REPAIR_LEVEL_LIMIT(기본 4), AGENT_MAX_REPAIR_ATTEMPTS(기본 3)도 `service.agent`에서 중앙 주입한다. Workflow 명시 정책을 먼저 유지하고 없는 항목만 중앙 기본값으로 채운다. 의미·범위·승인 예시는 [오류 수정 설정](agentic-execution-repair.md#중앙-설정)을 따른다. 개별 Agent가 별도로 os.environ을 읽지 않는다.

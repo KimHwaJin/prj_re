@@ -1,0 +1,82 @@
+{
+  "passed": false,
+  "namespace": "agentic-repair-edc9f91ddc",
+  "real_repair_llm": true,
+  "planning": "preset_fault_injection",
+  "executor": "actual_local_compose",
+  "scenarios": [
+    {
+      "scenario": "binding",
+      "passed": false,
+      "session_id": "4e03cb8e-e679-4e58-aa49-b282b8b8a05e",
+      "run_id": "3b9e22a5-518f-4e52-b1ad-1b7faabf81cd",
+      "final": {
+        "repair": {
+          "history": [],
+          "attempts": 0,
+          "stop_reason": "invalid_repair_proposal",
+          "max_attempts": 2,
+          "authorized_level": 1,
+          "workflow_eligible": true
+        },
+        "report": null,
+        "status": "analysis_failed",
+        "execution_id": "76e58e2c-7329-4b73-b13e-30af93653420",
+        "observations": [
+          {
+            "error": null,
+            "status": "SUCCEEDED",
+            "step_id": "load",
+            "summary": {
+              "type": "dict",
+              "items": {
+                "values": {
+                  "type": "list",
+                  "items": [
+                    2,
+                    4,
+                    6
+                  ],
+                  "truncated": false
+                }
+              },
+              "truncated": false
+            },
+            "tool_id": "repair_load",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": "Tool 실행 오류 — 내부 실행 기록에 상세 원인을 보존했습니다.",
+            "status": "FAILED",
+            "step_id": "transform",
+            "summary": null,
+            "tool_id": "repair_transform",
+            "has_image": false,
+            "incomplete": false,
+            "repair_attempt": 0
+          },
+          {
+            "error": null,
+            "status": "NOT_RUN",
+            "step_id": "finish",
+            "summary": null,
+            "tool_id": "repair_finish",
+            "has_image": false,
+            "incomplete": true,
+            "repair_attempt": 0
+          }
+        ],
+        "skipped_steps": [],
+        "executor_status": "CANCELLED"
+      },
+      "public_status": "error",
+      "seconds": 37.439,
+      "repair_review_count": 0
+    }
+  ],
+  "error_type": "AssertionError",
+  "error": "{'repair': {'history': [], 'attempts': 0, 'stop_reason': 'invalid_repair_proposal', 'max_attempts': 2, 'authorized_level': 1, 'workflow_eligible': True}, 'report': None, 'status': 'analysis_failed', 'execution_id': '76e58e2c-7329-4b73-b13e-30af93653420', 'observations': [{'error': None, 'status': 'SUCCEEDED', 'step_id': 'load', 'summary': {'type': 'dict', 'items': {'values': {'type': 'list', 'items': [2, 4, 6], 'truncated': False}}, 'truncated': False}, 'tool_id': 'repair_load', 'has_image': False, 'incomplete': False, 'repair_attempt': 0}, {'error': 'Tool 실행 오류 — 내부 실행 기록에 상세 원인을 보존했습니다.', 'status': 'FAILED', 'step_id': 'transform', 'summary': None, 'tool_id': 'repair_transform', 'has_image': False, 'incomplete': False, 'repair_attempt': 0}, {'error': None, 'status': 'NOT_RUN', 'step_id': 'finish', 'summary': None, 'tool_id': 'repair_finish', 'has_image': False, 'incomplete': True, 'repair_attempt': 0}], 'skipped_steps': [], 'executor_status': 'CANCELLED'}",
+  "diagnostic_validation_error": "Structured LLM response failed validation after 2 attempts: LLM response must contain non-empty text"
+}
