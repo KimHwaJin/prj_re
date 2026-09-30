@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-30",
+  "branch": "feature/projection-batch-storage",
+  "before_commit": "eef0bb7",
+  "after_source_tree": "9778a253af4d011c51c0c077c07ed4fe0f6562f0",
+  "production_file_sha256": {
+    "src/api_service/services/agent_run_log_service.py": "1c8b9051acb577f1a943c6f6a8c3c154abcd2246ccf8425c4485659b95d1dd0c",
+    "src/api_service/services/chat_crud_message_sink.py": "e742b7e88df9abdbb76331cd1b804d8c88eee7d5ee5c3e53758045e567672c5d",
+    "src/api_service/services/graph_crud_persistence.py": "506013a6408b354f360020b72abb27efcc41e570dffe36026411967b8d36545b",
+    "src/api_service/services/graph_event_persistence.py": "a10cee30e16f81bf7e6a0296106f6b79bcbf0ccef7b1ee03ae59402f6c6d5f13",
+    "src/api_service/services/graph_result_batch.py": "2ea03f8c27c61eaab219ecf19b562df0abe28ef47fa526ad5af1958117d5ca11",
+    "src/api_service/services/message_service.py": "a059111d6307560344e4c8840ef54ac1cbffc9f45af0fb5b240896cd6a45167a",
+    "src/api_service/services/run_service.py": "b7c8af3046454e30408cba6991e90dd6a0756d0fd5f8d9de009a0bde37bcb350",
+    "src/api_service/services/task_service.py": "32726c586e05152d57ec4434ee5f127022fdfa5dceeb47c222f519476642cc24"
+  },
+  "trial_order": [
+    "before-r1",
+    "after-r1",
+    "before-r2",
+    "after-r2"
+  ],
+  "users": [
+    1,
+    10
+  ],
+  "repeats": 2,
+  "complete_users": 44,
+  "invocations": 176,
+  "model_calls": 176,
+  "api_processes": 1,
+  "run_concurrency": 4,
+  "model_mock_delay_seconds": 5,
+  "targeted_tests": 40,
+  "full_suite_output": "full-suite.txt",
+  "wheel": "8 changed modules byte-equal; test packages excluded",
+  "database": "temporary localhost PostgreSQL 17 identity_test",
+  "source_changed_after_full_suite": false,
+  "full_suite": {
+    "passed": 664,
+    "warnings": 53,
+    "subtests_passed": 2,
+    "seconds": 306.9
+  },
+  "temporary_database_removed": true
+}

@@ -53,13 +53,21 @@ class MessageService:
         user_id: UUID,
         payload: MessageCreate,
     ) -> MessageCreateResult:
-        session, session_created = await MessageService._resolve_session(
+        session, _ = await MessageService._resolve_session(
             db,
             user_id=user_id,
             session_id=payload.session_id,
             project_id=payload.project_id,
         )
 
+        return await MessageService._create_locked(db, session, payload)
+
+    @staticmethod
+    async def _create_locked(
+        db: AsyncSession, session: SessionModel, payload: MessageCreate,
+        *, commit: bool = True,
+    ) -> MessageCreateResult:
+        """Internal insert; caller holds lifecycle and Session locks until commit."""
         if payload.client_request_id is not None:
             duplicate = await db.scalar(
                 select(MessageModel).where(
@@ -101,12 +109,13 @@ class MessageService:
         # INSERT/flush returned sequence_no and server timestamps already.
         # Capture a DTO before commit so expiry-enabled sessions work as well.
         result = MessageCreateResult(
-            session_created=session_created,
+            session_created=False,
             project_id=session.project_id,
             session_id=session.session_id,
             message=MessageRead.model_validate(message),
         )
-        await db.commit()
+        if commit:
+            await db.commit()
         return result
 
     @staticmethod

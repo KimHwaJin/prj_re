@@ -354,6 +354,7 @@ async def save_graph_message(
     trigger_message_id: str | UUID | None = None,
     agent_run_id: str | UUID | None = None,
     plan_id: str | UUID | None = None,
+    batch: Any | None = None,
 ) -> Any:
     """Save one graph message using ``MessageService.create``.
 
@@ -390,19 +391,22 @@ async def save_graph_message(
             f"state_session_id={state.get('session_id')!r}, "
             f"payload={payload.model_dump(mode='json')}"
         )
-    await _require_existing_session_for_message(
-        db,
-        user_id=resolved_user_uuid,
-        session_id=target_session_id,
-        project_id=target_project_id,
-    )
-    result = await _call_message_create(
-        MessageService,
-        db,
-        user_id=resolved_user_uuid,
-        payload=payload,
-        session_id=target_session_id,
-    )
+    if batch is not None:
+        result = await batch.create_message(db, resolved_user_uuid, payload)
+    else:
+        await _require_existing_session_for_message(
+            db,
+            user_id=resolved_user_uuid,
+            session_id=target_session_id,
+            project_id=target_project_id,
+        )
+        result = await _call_message_create(
+            MessageService,
+            db,
+            user_id=resolved_user_uuid,
+            payload=payload,
+            session_id=target_session_id,
+        )
     result_session_id = getattr(result, "session_id", target_session_id)
     result_session_created = bool(getattr(result, "session_created", False))
     if result_session_created or result_session_id != target_session_id:
@@ -454,6 +458,8 @@ async def save_agent_run_log(
     event: str,
     kind: str,
     payload: dict[str, Any],
+    commit: bool = True,
+    batch: Any | None = None,
 ) -> Any:
     """Graph output을 AgentRunLog CRUD로 전달합니다; 이 모듈은 라우팅만 담당합니다."""
 
@@ -468,6 +474,8 @@ async def save_agent_run_log(
         event=event,
         kind=kind,
         payload=payload,
+        commit=commit,
+        batch=batch,
     )
 
 

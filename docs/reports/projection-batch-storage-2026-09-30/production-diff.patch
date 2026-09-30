@@ -1,0 +1,234 @@
+diff --git a/src/api_service/services/agent_run_log_service.py b/src/api_service/services/agent_run_log_service.py
+index 1aaf5c5..13f3c2b 100644
+--- a/src/api_service/services/agent_run_log_service.py
++++ b/src/api_service/services/agent_run_log_service.py
+@@ -3 +3 @@ from uuid import UUID
+-from sqlalchemy import select
++from sqlalchemy import func, select
+@@ -14,0 +15,8 @@ class AgentRunLogService:
++    @staticmethod
++    async def lock_run(db: AsyncSession, run_id: UUID) -> None:
++        # Every log writer takes this before log/Task row locks. A batch can
++        # otherwise deadlock with a single writer inserting a later log first.
++        await db.execute(select(func.pg_advisory_xact_lock(
++            func.hashtextextended(f"result-logs:{run_id}", 0),
++        )))
++
+@@ -25,0 +34,2 @@ class AgentRunLogService:
++        commit: bool = True,
++        batch=None,
+@@ -35,0 +46,4 @@ class AgentRunLogService:
++            if batch is None:
++                await AgentRunLogService.lock_run(db, run_id)
++            else:
++                batch.require_log_context(db, run_id)
+@@ -64 +78,2 @@ class AgentRunLogService:
+-            await db.commit()
++            if commit:
++                await db.commit()
+@@ -67 +82 @@ class AgentRunLogService:
+-            if db.sync_session.expire_on_commit:
++            if commit and db.sync_session.expire_on_commit:
+diff --git a/src/api_service/services/chat_crud_message_sink.py b/src/api_service/services/chat_crud_message_sink.py
+index b737232..d348be3 100644
+--- a/src/api_service/services/chat_crud_message_sink.py
++++ b/src/api_service/services/chat_crud_message_sink.py
+@@ -356,0 +357 @@ async def save_graph_message(
++    batch: Any | None = None,
+@@ -393,13 +394,16 @@ async def save_graph_message(
+-    await _require_existing_session_for_message(
+-        db,
+-        user_id=resolved_user_uuid,
+-        session_id=target_session_id,
+-        project_id=target_project_id,
+-    )
+-    result = await _call_message_create(
+-        MessageService,
+-        db,
+-        user_id=resolved_user_uuid,
+-        payload=payload,
+-        session_id=target_session_id,
+-    )
++    if batch is not None:
++        result = await batch.create_message(db, resolved_user_uuid, payload)
++    else:
++        await _require_existing_session_for_message(
++            db,
++            user_id=resolved_user_uuid,
++            session_id=target_session_id,
++            project_id=target_project_id,
++        )
++        result = await _call_message_create(
++            MessageService,
++            db,
++            user_id=resolved_user_uuid,
++            payload=payload,
++            session_id=target_session_id,
++        )
+@@ -456,0 +461,2 @@ async def save_agent_run_log(
++    commit: bool = True,
++    batch: Any | None = None,
+@@ -470,0 +477,2 @@ async def save_agent_run_log(
++        commit=commit,
++        batch=batch,
+diff --git a/src/api_service/services/graph_crud_persistence.py b/src/api_service/services/graph_crud_persistence.py
+index 1408490..8fa976b 100644
+--- a/src/api_service/services/graph_crud_persistence.py
++++ b/src/api_service/services/graph_crud_persistence.py
+@@ -109,2 +109,3 @@ async def _persist_state(
+-    # Existing handlers have idempotent, individually committed writes; this
+-    # scope does not imply atomicity across all graph events/checkpoints.
++    # The default dispatcher commits one result's messages/logs/events together.
++    # Task identity linking and LangGraph checkpoints remain separate; custom
++    # dispatchers retain their own commit contract.
+diff --git a/src/api_service/services/graph_event_persistence.py b/src/api_service/services/graph_event_persistence.py
+index 0603061..ca2da86 100644
+--- a/src/api_service/services/graph_event_persistence.py
++++ b/src/api_service/services/graph_event_persistence.py
+@@ -434,0 +435 @@ class MessageGraphEventHandler:
++        *, batch: Any | None = None,
+@@ -448,0 +450 @@ class MessageGraphEventHandler:
++            batch=batch,
+@@ -460,0 +463 @@ class MessageGraphEventHandler:
++                commit=batch is None,
+@@ -470 +473 @@ class AgentRunLogGraphEventHandler:
+-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent) -> Any:
++    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
+@@ -482,0 +486,2 @@ class AgentRunLogGraphEventHandler:
++            commit=batch is None,
++            batch=batch,
+@@ -492 +497 @@ class StructuredRunLogGraphEventHandler:
+-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent) -> Any:
++    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
+@@ -510,0 +516,2 @@ class StructuredRunLogGraphEventHandler:
++            commit=batch is None,
++            batch=batch,
+@@ -543,0 +551 @@ class GraphPersistenceDispatcher:
++        self._batch_results = False
+@@ -547 +555 @@ class GraphPersistenceDispatcher:
+-        return cls(
++        dispatcher = cls(
+@@ -556,0 +565,2 @@ class GraphPersistenceDispatcher:
++        dispatcher._batch_results = True
++        return dispatcher
+@@ -570,0 +581,15 @@ class GraphPersistenceDispatcher:
++        if not self._batch_results:
++            return await self._persist_events(db, state, events, next_cursor)
++
++        from api_service.services.graph_result_batch import GraphResultBatch
++
++        try:
++            batch = await GraphResultBatch.prepare(db, state, context, events)
++            result = await self._persist_events(db, state, events, next_cursor, batch=batch)
++            await db.commit()
++            return result
++        except BaseException:
++            await db.rollback()
++            raise
++
++    async def _persist_events(self, db, state, events, next_cursor, *, batch=None):
+@@ -586 +611,4 @@ class GraphPersistenceDispatcher:
+-            result = await handler.persist(db, state, graph_event)
++            if batch is None:
++                result = await handler.persist(db, state, graph_event)
++            else:
++                result = await handler.persist(db, state, graph_event, batch=batch)
+diff --git a/src/api_service/services/graph_result_batch.py b/src/api_service/services/graph_result_batch.py
+new file mode 100644
+index 0000000..1625913
+--- /dev/null
++++ b/src/api_service/services/graph_result_batch.py
+@@ -0,0 +1,49 @@
++"""Transaction-local message context for one default graph result projection.
++
++Never cache this across graph steps, commits, DB sessions or LLM waits. Acquire
++the Run log barrier, then user/project/session barriers before any log event
++locks the Task row. Never wait for the log barrier holding a Session row lock. The dispatcher owns commit/rollback.
++"""
++from uuid import UUID
++
++from api_service.services import resource_lifecycle
++from api_service.services.message_service import MessageService
++from api_service.services.agent_run_log_service import AgentRunLogService
++
++
++class GraphResultBatch:
++    def __init__(self, db, user_id, session, log_run_id):
++        self.db = db
++        self.user_id = user_id
++        self.session = session
++        self.log_run_id = log_run_id
++        self.transaction = db.get_transaction()
++
++    @classmethod
++    async def prepare(cls, db, state, context, events):
++        log_run_id = None
++        if context.agent_run_id and any(event.target in {"agent_runs", "plans", "workflow_logs"} for event in events):
++            log_run_id = UUID(context.agent_run_id)
++            await AgentRunLogService.lock_run(db, log_run_id)
++        session = None
++        if any(event.target == "messages" for event in events):
++            project_id = state.get("project_id")
++            session = await resource_lifecycle.lock_session(
++                db, context.user_id, UUID(context.session_id),
++                expected_project_id=UUID(str(project_id)) if project_id else None,
++                for_update=True,
++            )
++        return cls(db, context.user_id, session, log_run_id)
++
++    def require_log_context(self, db, run_id):
++        if (db is not self.db or db.get_transaction() is not self.transaction
++                or run_id != self.log_run_id):
++            raise RuntimeError("Graph result batch cannot reuse a different log transaction")
++
++    async def create_message(self, db, user_id, payload):
++        if (db is not self.db or db.get_transaction() is not self.transaction
++                or self.session is None or user_id != self.user_id
++                or payload.session_id != self.session.session_id
++                or (payload.project_id is not None and payload.project_id != self.session.project_id)):
++            raise RuntimeError("Graph result batch cannot reuse a different session or transaction")
++        return await MessageService._create_locked(db, self.session, payload, commit=False)
+diff --git a/src/api_service/services/message_service.py b/src/api_service/services/message_service.py
+index 277641e..e567220 100644
+--- a/src/api_service/services/message_service.py
++++ b/src/api_service/services/message_service.py
+@@ -56 +56 @@ class MessageService:
+-        session, session_created = await MessageService._resolve_session(
++        session, _ = await MessageService._resolve_session(
+@@ -62,0 +63,8 @@ class MessageService:
++        return await MessageService._create_locked(db, session, payload)
++
++    @staticmethod
++    async def _create_locked(
++        db: AsyncSession, session: SessionModel, payload: MessageCreate,
++        *, commit: bool = True,
++    ) -> MessageCreateResult:
++        """Internal insert; caller holds lifecycle and Session locks until commit."""
+@@ -104 +112 @@ class MessageService:
+-            session_created=session_created,
++            session_created=False,
+@@ -109 +117,2 @@ class MessageService:
+-        await db.commit()
++        if commit:
++            await db.commit()
+diff --git a/src/api_service/services/run_service.py b/src/api_service/services/run_service.py
+index 4e07042..14c72f6 100644
+--- a/src/api_service/services/run_service.py
++++ b/src/api_service/services/run_service.py
+@@ -798 +798 @@ class RunService:
+-    async def attach_trigger_message(db: AsyncSession, *, run_id: UUID, message_id: UUID) -> None:
++    async def attach_trigger_message(db: AsyncSession, *, run_id: UUID, message_id: UUID, commit: bool = True) -> None:
+@@ -803 +803 @@ class RunService:
+-                await TaskService.attach_trigger(db, task_id=run.task_id, message_id=message_id)
++                await TaskService.attach_trigger(db, task_id=run.task_id, message_id=message_id, commit=commit)
+diff --git a/src/api_service/services/task_service.py b/src/api_service/services/task_service.py
+index 4c886bd..6c86286 100644
+--- a/src/api_service/services/task_service.py
++++ b/src/api_service/services/task_service.py
+@@ -120 +120 @@ class TaskService:
+-    async def attach_trigger(db: AsyncSession, *, task_id: UUID, message_id: UUID) -> None:
++    async def attach_trigger(db: AsyncSession, *, task_id: UUID, message_id: UUID, commit: bool = True) -> None:
+@@ -123 +123,2 @@ class TaskService:
+-        await db.commit()
++        if commit:
++            await db.commit()

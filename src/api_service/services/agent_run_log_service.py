@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,14 @@ class AgentRunLogService:
     """Append a log and its replayable event in one short transaction."""
 
     @staticmethod
+    async def lock_run(db: AsyncSession, run_id: UUID) -> None:
+        # Every log writer takes this before log/Task row locks. A batch can
+        # otherwise deadlock with a single writer inserting a later log first.
+        await db.execute(select(func.pg_advisory_xact_lock(
+            func.hashtextextended(f"result-logs:{run_id}", 0),
+        )))
+
+    @staticmethod
     async def create(
         db: AsyncSession,
         *,
@@ -23,6 +31,8 @@ class AgentRunLogService:
         event: str,
         kind: str,
         payload: dict,
+        commit: bool = True,
+        batch=None,
     ) -> AgentRunLogModel:
         try:
             # Projection replays revisit earlier logs. A committed complete pair
@@ -33,6 +43,10 @@ class AgentRunLogService:
                 .execution_options(populate_existing=True))).one_or_none()
             if existing is not None and existing[1] is not None:
                 return existing[0]
+            if batch is None:
+                await AgentRunLogService.lock_run(db, run_id)
+            else:
+                batch.require_log_context(db, run_id)
             # Concurrent callers wait on this unique key without rolling back
             # the transaction on a duplicate. The first stored payload wins.
             log = await db.scalar(insert(AgentRunLogModel).values(
@@ -61,10 +75,11 @@ class AgentRunLogService:
                 )
             # Log, event and Task sequence become visible together. A Run with
             # no associated Task retains the existing log-only behavior.
-            await db.commit()
+            if commit:
+                await db.commit()
             # Production sessions retain loaded values across commit; RETURNING
             # includes generated IDs/timestamps. Support other session factories.
-            if db.sync_session.expire_on_commit:
+            if commit and db.sync_session.expire_on_commit:
                 await db.refresh(log)
             return log
         except BaseException:

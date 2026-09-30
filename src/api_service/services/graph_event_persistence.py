@@ -432,6 +432,7 @@ class MessageGraphEventHandler:
         db: Any,
         state: dict[str, Any],
         graph_event: GraphEvent,
+        *, batch: Any | None = None,
     ) -> Any:
         message = graph_event.display_message or graph_event.payload
         result = await save_graph_message(
@@ -446,6 +447,7 @@ class MessageGraphEventHandler:
             trigger_message_id=graph_event.context.trigger_message_id,
             agent_run_id=graph_event.context.agent_run_id,
             plan_id=graph_event.context.plan_id,
+            batch=batch,
         )
         if (
             graph_event.payload.get("role") == "user"
@@ -458,6 +460,7 @@ class MessageGraphEventHandler:
                 db,
                 run_id=UUID(graph_event.context.agent_run_id),
                 message_id=result.message.message_id,
+                commit=batch is None,
             )
         return result
 
@@ -467,7 +470,7 @@ class AgentRunLogGraphEventHandler:
 
     target = "agent_runs"
 
-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent) -> Any:
+    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
         run_id = graph_event.context.agent_run_id
         if not run_id:
             raise ValueError("agent_run_id is required to persist agent logs")
@@ -480,6 +483,8 @@ class AgentRunLogGraphEventHandler:
             event=graph_event.event,
             kind=graph_event.kind,
             payload=graph_event.payload,
+            commit=batch is None,
+            batch=batch,
         )
 
 
@@ -489,7 +494,7 @@ class StructuredRunLogGraphEventHandler:
     def __init__(self, target: str):
         self.target = target
 
-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent) -> Any:
+    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
         run_id = graph_event.context.agent_run_id
         if not run_id:
             raise ValueError("agent_run_id is required to persist structured logs")
@@ -508,6 +513,8 @@ class StructuredRunLogGraphEventHandler:
             event=graph_event.event,
             kind=graph_event.kind,
             payload=graph_event.payload,
+            commit=batch is None,
+            batch=batch,
         )
 
 
@@ -541,10 +548,11 @@ class GraphPersistenceDispatcher:
 
     def __init__(self, handlers: list[GraphEventHandler]):
         self.handlers = {handler.target: handler for handler in handlers}
+        self._batch_results = False
 
     @classmethod
     def default(cls, *, agent_message_type: str = "agent") -> "GraphPersistenceDispatcher":
-        return cls(
+        dispatcher = cls(
             [
                 MessageGraphEventHandler(agent_message_type=agent_message_type),
                 AgentRunLogGraphEventHandler(),
@@ -554,6 +562,8 @@ class GraphPersistenceDispatcher:
                 StructuredRunLogGraphEventHandler("workflow_logs"),
             ]
         )
+        dispatcher._batch_results = True
+        return dispatcher
 
     async def persist_state_delta(
         self,
@@ -568,6 +578,21 @@ class GraphPersistenceDispatcher:
             cursor,
             context=context,
         )
+        if not self._batch_results:
+            return await self._persist_events(db, state, events, next_cursor)
+
+        from api_service.services.graph_result_batch import GraphResultBatch
+
+        try:
+            batch = await GraphResultBatch.prepare(db, state, context, events)
+            result = await self._persist_events(db, state, events, next_cursor, batch=batch)
+            await db.commit()
+            return result
+        except BaseException:
+            await db.rollback()
+            raise
+
+    async def _persist_events(self, db, state, events, next_cursor, *, batch=None):
         persisted: list[dict[str, Any]] = []
         skipped: list[dict[str, Any]] = []
 
@@ -583,7 +608,10 @@ class GraphPersistenceDispatcher:
                     }
                 )
                 continue
-            result = await handler.persist(db, state, graph_event)
+            if batch is None:
+                result = await handler.persist(db, state, graph_event)
+            else:
+                result = await handler.persist(db, state, graph_event, batch=batch)
             persisted.append(
                 {
                     "target": graph_event.target,

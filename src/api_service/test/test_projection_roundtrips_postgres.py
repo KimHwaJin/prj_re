@@ -69,7 +69,7 @@ async def test_new_log_returns_generated_values_without_followup_reads(runtime):
         async with h.factory() as db:
             log = await AgentRunLogService.create(db, **args)
             assert log.created_at and log.log_id and log.payload == args['payload']
-    budget(count, statements=5, commits=1)
+    budget(count, statements=6, commits=1)
     with count_db(h, 'existing_log') as count:
         async with h.factory() as db:
             repeated = await AgentRunLogService.create(db, **args)

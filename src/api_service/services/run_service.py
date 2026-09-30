@@ -795,12 +795,12 @@ class RunService:
         return run
 
     @staticmethod
-    async def attach_trigger_message(db: AsyncSession, *, run_id: UUID, message_id: UUID) -> None:
+    async def attach_trigger_message(db: AsyncSession, *, run_id: UUID, message_id: UUID, commit: bool = True) -> None:
         run = await db.get(AgentRunModel, run_id)
         if run is not None and run.trigger_message_id is None:
             run.trigger_message_id = message_id
             if run.task_id is not None:
-                await TaskService.attach_trigger(db, task_id=run.task_id, message_id=message_id)
+                await TaskService.attach_trigger(db, task_id=run.task_id, message_id=message_id, commit=commit)
 
     @staticmethod
     async def read(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID) -> AgentRunModel:

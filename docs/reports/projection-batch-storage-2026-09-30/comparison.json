@@ -1,0 +1,170 @@
+[
+  {
+    "users": 1,
+    "before": {
+      "repeats": 2,
+      "complete_users": 2,
+      "total_s": 25.08256087510381,
+      "total_s_trial_means": [
+        24.41947800014168,
+        25.745643750065938
+      ],
+      "queue_s": 0.881867,
+      "queue_s_trial_means": [
+        0.852797,
+        0.910937
+      ],
+      "llm_s": 20.08208741643466,
+      "llm_s_trial_means": [
+        20.07586079207249,
+        20.08831404079683
+      ],
+      "internal_s": 2.0231939165387303,
+      "internal_s_trial_means": [
+        1.575861498946324,
+        2.4705263341311365
+      ],
+      "projection_s": 0.7739235622575507,
+      "projection_s_trial_means": [
+        0.4618142496328801,
+        1.0860328748822212
+      ],
+      "delivery_s": 1.4299124594544992,
+      "delivery_s_trial_means": [
+        1.2451714589260519,
+        1.6146534599829465
+      ],
+      "batch_throughput_users_s": 0.03986825071448864,
+      "worker_sql_per_user": 281.0,
+      "worker_commit_calls_per_user": 48.0
+    },
+    "after": {
+      "repeats": 2,
+      "complete_users": 2,
+      "total_s": 24.36216143751517,
+      "total_s_trial_means": [
+        24.561779167037457,
+        24.16254370799288
+      ],
+      "queue_s": 0.6201535,
+      "queue_s_trial_means": [
+        0.6714469999999999,
+        0.56886
+      ],
+      "llm_s": 20.07369737548288,
+      "llm_s_trial_means": [
+        20.075889417901635,
+        20.071505333064124
+      ],
+      "internal_s": 1.2269777914043516,
+      "internal_s_trial_means": [
+        1.3765437069814652,
+        1.077411875827238
+      ],
+      "projection_s": 0.2698350209975615,
+      "projection_s_trial_means": [
+        0.30061375023797154,
+        0.23905629175715148
+      ],
+      "delivery_s": 1.7720001257257536,
+      "delivery_s_trial_means": [
+        1.7656347940210253,
+        1.778365457430482
+      ],
+      "batch_throughput_users_s": 0.041047151978038494,
+      "worker_sql_per_user": 225.0,
+      "worker_commit_calls_per_user": 29.0
+    },
+    "reduction_percent": {
+      "total_s": 2.8721127845589556,
+      "internal_s": 39.35441475113473,
+      "projection_s": 65.13415094761461,
+      "worker_sql_per_user": 19.928825622775804,
+      "worker_commit_calls_per_user": 39.583333333333336
+    }
+  },
+  {
+    "users": 10,
+    "before": {
+      "repeats": 2,
+      "complete_users": 20,
+      "total_s": 48.62863879582146,
+      "total_s_trial_means": [
+        48.22629161239602,
+        49.03098597924691
+      ],
+      "queue_s": 25.4552105,
+      "queue_s_trial_means": [
+        25.1258953,
+        25.7845257
+      ],
+      "llm_s": 20.024857481289654,
+      "llm_s_trial_means": [
+        20.02629346253816,
+        20.02342150004115
+      ],
+      "internal_s": 1.0450556583236903,
+      "internal_s_trial_means": [
+        1.0243990955408662,
+        1.0657122211065144
+      ],
+      "projection_s": 0.40295956438640135,
+      "projection_s_trial_means": [
+        0.41967382512521,
+        0.3862453036475927
+      ],
+      "delivery_s": 1.3698716397746464,
+      "delivery_s_trial_means": [
+        1.3429807544220238,
+        1.3967625251272693
+      ],
+      "batch_throughput_users_s": 0.17841266579077097,
+      "worker_sql_per_user": 281.0,
+      "worker_commit_calls_per_user": 48.0
+    },
+    "after": {
+      "repeats": 2,
+      "complete_users": 20,
+      "total_s": 48.28813117279205,
+      "total_s_trial_means": [
+        48.441669895523226,
+        48.13459245006088
+      ],
+      "queue_s": 25.03460565,
+      "queue_s_trial_means": [
+        25.1905784,
+        24.8786329
+      ],
+      "llm_s": 20.024916429095903,
+      "llm_s_trial_means": [
+        20.026205345941708,
+        20.023627512250094
+      ],
+      "internal_s": 0.8717562959762291,
+      "internal_s_trial_means": [
+        0.9477159207686782,
+        0.7957966711837798
+      ],
+      "projection_s": 0.2725529895164073,
+      "projection_s_trial_means": [
+        0.29562091252300887,
+        0.24948506650980562
+      ],
+      "delivery_s": 1.649712628859561,
+      "delivery_s_trial_means": [
+        1.5697252368088812,
+        1.7297000209102407
+      ],
+      "batch_throughput_users_s": 0.1794768373360021,
+      "worker_sql_per_user": 225.0,
+      "worker_commit_calls_per_user": 29.0
+    },
+    "reduction_percent": {
+      "total_s": 0.7002203464076207,
+      "internal_s": 16.582787812989796,
+      "projection_s": 32.362198690721755,
+      "worker_sql_per_user": 19.928825622775804,
+      "worker_commit_calls_per_user": 39.583333333333336
+    }
+  }
+]

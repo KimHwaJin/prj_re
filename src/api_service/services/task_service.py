@@ -117,10 +117,11 @@ class TaskService:
         return token
 
     @staticmethod
-    async def attach_trigger(db: AsyncSession, *, task_id: UUID, message_id: UUID) -> None:
+    async def attach_trigger(db: AsyncSession, *, task_id: UUID, message_id: UUID, commit: bool = True) -> None:
         """E03-T02: Graph가 저장한 원본 사용자 Message를 분석 Task에 연결합니다."""
         await db.execute(update(TaskModel).where(TaskModel.task_id == task_id).values(trigger_message_id=message_id))
-        await db.commit()
+        if commit:
+            await db.commit()
 
     @staticmethod
     async def heartbeat(db: AsyncSession, *, task_id: UUID, lock_token: UUID) -> bool:

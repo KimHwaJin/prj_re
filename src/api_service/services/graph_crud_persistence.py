@@ -106,8 +106,9 @@ async def _persist_state(
     agent_run_id, trigger_message_id,
 ):
     # Graph execution and each yielded state own no service DB connection.
-    # Existing handlers have idempotent, individually committed writes; this
-    # scope does not imply atomicity across all graph events/checkpoints.
+    # The default dispatcher commits one result's messages/logs/events together.
+    # Task identity linking and LangGraph checkpoints remain separate; custom
+    # dispatchers retain their own commit contract.
     context = GraphPersistenceContext.from_state(
         state, user_id=user_id, trigger_message_id=trigger_message_id,
         agent_run_id=agent_run_id or state.get("run_id"),
