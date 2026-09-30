@@ -1,6 +1,8 @@
 # dtest-agent
 dtest 프로젝트 공유
 
+현재 리팩토링 작업 저장소는 [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re)이고, 기준 브랜치는 `feature/refactor-base`다. [저장소·브랜치 작업 안내](docs/repository-workflow.md)를 따라 베이스에서 파생 브랜치를 만들고 작업한다. 이전 단계별 브랜치는 이력 확인용으로 보존한다.
+
 ## 리팩토링 브랜치의 현재 실행 계약
 
 분석 Agent 구현은 `src/agent_service/agents/analysis/`로 이동했다. [Agent 개발·이관 안내](docs/agent-development/README.md)와 [서비스 구조 및 이행 상태](docs/architecture/service-layout.md)를 먼저 참고한다. 루트 `app.py` 실행은 유지하며 006에서 Agent·LLM 호출을 비동기로 전환했다. 008에서 역할별 선언과 독립 프롬프트를 `agent_builders/<role>/`에 배치했다. create_agent·미들웨어 통일은 후속이다. 공통 API/실행기의 패키지 분리와 HTTP·DB·파일 I/O 전체 전환은 후속 단계다.

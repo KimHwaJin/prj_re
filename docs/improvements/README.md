@@ -2,6 +2,8 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
+작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
+
 현재 브랜치: `feature/refactor-base`. 사용자 요청으로 036~037의 계약·prototype 커밋 `f6db511`을 fast-forward 병합했다. 충돌 없이 문서·schema·개발용 검증 코드 28개 파일을 통합했으며 파생 브랜치는 보존했다. 실제 API·DB·LangGraph 연결은 미구현이다. 베이스 병합 이력은 다음과 같다. 사용자 요청으로 028~035의 `a1e2f82`까지 fast-forward 병합했다. 충돌·추가 코드 변경 없이 8개 작업 commit을 반영했고 파생 브랜치는 보존했다. 병합 상태 기록은 별도 문서 commit으로 남긴다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
