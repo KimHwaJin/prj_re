@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 브랜치: `feature/agentic-workflow-contract`. 036~037의 Workflow·계획 승인 계약과 개발용 prototype을 베이스에서 분기했으며 런타임 연결·베이스 병합은 미수행. 베이스 병합 이력은 다음과 같다. 사용자 요청으로 028~035의 `a1e2f82`까지 fast-forward 병합했다. 충돌·추가 코드 변경 없이 8개 작업 commit을 반영했고 파생 브랜치는 보존했다. 병합 상태 기록은 별도 문서 commit으로 남긴다. 원격 push·배포 미수행.
+현재 브랜치: `feature/refactor-base`. 사용자 요청으로 036~037의 계약·prototype 커밋 `f6db511`을 fast-forward 병합했다. 충돌 없이 문서·schema·개발용 검증 코드 28개 파일을 통합했으며 파생 브랜치는 보존했다. 실제 API·DB·LangGraph 연결은 미구현이다. 베이스 병합 이력은 다음과 같다. 사용자 요청으로 028~035의 `a1e2f82`까지 fast-forward 병합했다. 충돌·추가 코드 변경 없이 8개 작업 commit을 반영했고 파생 브랜치는 보존했다. 병합 상태 기록은 별도 문서 commit으로 남긴다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -55,8 +55,8 @@
 | 033 | 결과 저장 DB 왕복 축소·동일 조건 A/B | 1차 개선·1/10명 A/B·전체 회귀/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](033-projection-db-roundtrips.md) |
 | 034 | 결과 단위 검증 공유·배치 저장 | 구현·격리 PostgreSQL/전체 회귀·1/10명 A/B/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](034-projection-batch-storage.md) |
 | 035 | API 프로세스·Run 동시 실행 수 비교 | 21회 실측·독립 검산·보고서 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](035-process-concurrency-benchmark.md) |
-| 036 | Agent Workflow JSON 계약 초안 | 설계·오프라인 계약 검증 완료 / 런타임 미구현·베이스 미병합 | 2026-09-30 | [작업 기록](036-agentic-workflow-contract-draft.md) |
-| 037 | 계획 승인 화면·수정 요청·Executor 제출 계약 | 개발용 prototype·오프라인/소규모 Tool/Executor 요청 모델 검증 완료 / 서비스 미연결·베이스 미병합 | 2026-09-30 | [작업 기록](037-plan-interaction-executor-contract.md) |
+| 036 | Agent Workflow JSON 계약 초안 | 설계·오프라인 계약 검증 완료 / 런타임 미구현·베이스 병합 완료 | 2026-09-30 | [작업 기록](036-agentic-workflow-contract-draft.md) |
+| 037 | 계획 승인 화면·수정 요청·Executor 제출 계약 | 개발용 prototype·오프라인/소규모 Tool/Executor 요청 모델 검증 완료 / 서비스 미연결·베이스 병합 완료 | 2026-09-30 | [작업 기록](037-plan-interaction-executor-contract.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

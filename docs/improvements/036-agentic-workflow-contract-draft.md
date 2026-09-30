@@ -5,7 +5,7 @@
 | 상태 | 설계 초안·오프라인 계약 검증 완료 / 런타임 미구현 |
 | 시작일 / 완료일 | 2026-09-30 / 설계 초안 2026-09-30 |
 | 브랜치 | feature/agentic-workflow-contract |
-| 관련 commit | 계약·prototype 커밋에 포함. 병합 commit은 작업 목록의 병합 기록 참조 |
+| 관련 commit | `f6db511` — 사용자 요청으로 feature/refactor-base에 fast-forward 병합 |
 | 배포 상태 | 미배포 |
 
 **문제와 영향**
@@ -40,3 +40,7 @@ LLM·실제 Tool·API·PostgreSQL·Executor·Gaia를 실행하지 않았다. JSO
 **완료 판단**
 
 설계 예제·검증 도구 작성은 완료했다. 신규 Agent·Workflow API·SSE·Executor 연계 구현과 배포는 완료하지 않았다. [작성 가이드](../design/agentic-workflow-contract/README.md)를 기준으로 다음 계약 검토를 진행한다.
+
+**베이스 통합**
+
+2026-09-30 사용자 요청으로 `f6db511`을 `feature/refactor-base`에 fast-forward 병합했다. 충돌·런타임 코드 변경 없이 통합했고 파생 브랜치는 보존했다. 원격 push·배포는 수행하지 않았다.

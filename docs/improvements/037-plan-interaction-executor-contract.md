@@ -5,7 +5,7 @@
 | 상태 | 개발용 계약 prototype·오프라인 및 소규모 Tool 검증 완료 / 서비스 미연결 |
 | 시작일 / 완료일 | 2026-09-30 / 계약 초안 2026-09-30 |
 | 브랜치 | feature/agentic-workflow-contract |
-| 관련 commit | 계약·prototype 커밋에 포함. 병합 commit은 작업 목록의 병합 기록 참조 |
+| 관련 commit | `f6db511` — 사용자 요청으로 feature/refactor-base에 fast-forward 병합 |
 | 배포 상태 | 미배포 |
 
 **문제와 영향**
@@ -39,4 +39,8 @@ Workflow 정의만으로 프론트의 편집 필드, 승인 요청, 실제 제�
 
 **완료 판단**
 
-설계 계약과 개발용 검증은 완료했다. 서비스 구현·배포·베이스 머지는 하지 않았다. [계약 가이드](../design/plan-interaction-contract/README.md)를 기반으로 실제 계획·HITL·실행 준비 경계를 연결한다.
+설계 계약과 개발용 검증은 완료했다. 서비스 구현·배포는 하지 않았다. 이후 사용자 요청으로 계약·prototype 커밋 `f6db511`을 베이스에 fast-forward 병합했다. [계약 가이드](../design/plan-interaction-contract/README.md)를 기반으로 실제 계획·HITL·실행 준비 경계를 연결한다.
+
+**베이스 통합**
+
+2026-09-30 사용자 요청으로 `f6db511`을 `feature/refactor-base`에 fast-forward 병합했다. 충돌·런타임 코드 변경 없이 통합했고 파생 브랜치는 보존했다. 원격 push·배포는 수행하지 않았다.
