@@ -6,7 +6,7 @@
 | 시작일 / 완료일 | 2026-10-01 / 2026-10-01 |
 | 브랜치 | feature/agentic-plan-revision |
 | 기준 commit | d8e6525845d8dca73988edd554a1167c96948c13 — 040에서 분기 |
-| 구현 commit | 코드·검증 기록 커밋 후 아래에 기록 |
+| 구현 commit | 7035a0edb93ec354a13acf3114e8f800ede84c8c |
 | 배포 상태 | 격리 진단 API만 실행 후 종료. 기존 사용자 체크아웃·Compose 설정 유지. 베이스 병합·push·배포 미수행 |
 
 ## 문제와 변경

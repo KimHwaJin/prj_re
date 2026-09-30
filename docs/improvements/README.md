@@ -7,7 +7,7 @@
 현재 작업 브랜치: `feature/agentic-plan-revision` (041). 040의 `d8e6525`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~041은 파생 이력에 있다. 041은 실행 전 자연어 재작성·질문/답변·실행별 자유 함수·별도 승인 설정을 구현했다. 전체 727개 회귀·실제 Executor 5개 시나리오·실제 재작성 모델 1개·12개 역할 wheel 검증을 완료했다. 베이스 병합·원격 push·배포는 아직 수행하지 않았다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
-041 구현 commit: 커밋 후 기록. [작업 결과](041-agentic-plan-revision.md).
+041 구현 commit: `7035a0edb93ec354a13acf3114e8f800ede84c8c`. [작업 결과](041-agentic-plan-revision.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
