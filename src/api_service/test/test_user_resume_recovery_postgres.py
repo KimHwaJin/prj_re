@@ -143,7 +143,7 @@ async def test_retry_repairs_saved_result_without_answering_next_question(real_g
     assert run.status == AgentRunStatus.PENDING
     assert run.failure['stage'] == 'state_projection'
     middle = await snapshot(h, current['id'])
-    assert middle.values['answer1'] == answer and 'answer2' not in middle.values
+    assert middle.values['answer1']['resume']['input_values']['legacy'] == answer and 'answer2' not in middle.values
     assert middle.values['user_resume_receipt']['command_id'] == str(run.run_id)
     assert middle.tasks[0].interrupts[0].value['stage'] == 2
     # Restart the compiled graph/pool before the queue retry: no in-memory receipt.
@@ -155,7 +155,7 @@ async def test_retry_repairs_saved_result_without_answering_next_question(real_g
     await execute()
     final = await snapshot(h, current['id'])
     run, task = await rows(h, current['id'])
-    assert final.values['answer1'] == answer and 'answer2' not in final.values
+    assert final.values['answer1']['resume']['input_values']['legacy'] == answer and 'answer2' not in final.values
     assert h.review_calls['one'] == 1 and h.review_calls['two'] == 0
     assert run.attempt_count == 2 and run.status == AgentRunStatus.INTERRUPTED
     assert not task.recovery_required
@@ -165,7 +165,7 @@ async def test_retry_repairs_saved_result_without_answering_next_question(real_g
     assert (await resume(h, public, command={'marker': 'second-only'})).status_code == 202
     await execute()
     final = await snapshot(h, current['id'])
-    assert final.values['answer2'] == {'marker': 'second-only'}
+    assert final.values['answer2']['resume']['input_values']['legacy'] == {'marker': 'second-only'}
     assert (await state(h, current['id']))['status'] == 'success'
 
 

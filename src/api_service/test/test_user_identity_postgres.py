@@ -44,7 +44,7 @@ def database_url(tmp_path_factory):
     if not value:
         pytest.skip("Needs dedicated local identity_test PostgreSQL")
     url = make_url(value)
-    assert url.database == "identity_test" and url.host in {"127.0.0.1", "localhost"}
+    assert url.database in {"identity_test", "agentic_regression_test"} and url.host in {"127.0.0.1", "localhost"}
     raw_url = url.set(drivername="postgresql").render_as_string(hide_password=False)
     config_path = tmp_path_factory.mktemp("identity-migrations") / "config.yml"
     config_path.write_text("service:\n  database_url: " + value + "\n  checkpoint_db_uri: " + raw_url + "\n")
@@ -340,7 +340,7 @@ async def test_header_maps_run_admission_to_internal_uuid_and_sse(harness, monke
     session_id = await add_session(h, user)
     result = await h.client.post(f"/api/v1/sessions/{session_id}/runs",
         headers={**headers("user-a"), "Idempotency-Key": "new-run"},
-        json={"input": {"messages": [{"role": "user", "content": "hello"}]}})
+        json={"input": {'content': [{'type': 'text', 'text': "hello"}]}})
     assert result.status_code == 202, result.text
     run_id = result.json()["id"]
     async with h.factory() as db:
@@ -355,7 +355,7 @@ async def test_header_maps_run_admission_to_internal_uuid_and_sse(harness, monke
     monkeypatch.setattr(routes, "get_session_factory", lambda: h.factory)
     stream = await asyncio.wait_for(h.client.get(f"/api/v1/sessions/{session_id}/runs/{run_id}/stream",
                                                 headers=headers("user-a")), 5)
-    assert stream.status_code == 200 and "event: task.queued" in stream.text
+    assert stream.status_code == 200 and "event: run.updated" in stream.text
     assert (await h.client.get(f"/api/v1/sessions/{session_id}/runs/{run_id}/stream",
                                headers=headers())).status_code == 404
 

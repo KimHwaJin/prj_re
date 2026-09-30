@@ -176,6 +176,14 @@ class AgentSettings:
     executor_http_max_response_bytes: int = 16 * 1024 * 1024
     model_mock_delay_ms: int = 0
     model_catalog: Any = field(default=None, repr=False, compare=False)
+    # Maximum combined plan candidates; never generate filler alternatives.
+    max_plan_candidates: int = 5
+    # Metadata tool rounds per conversation call; synthesis follows this limit.
+    agent_discovery_max_rounds: int = 4
+    # Only same-session conversation is supplied; oldest messages are trimmed.
+    agent_history_message_limit: int = 40
+    # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
+    analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
 
     @property
     def executor_executions_url(self) -> str:
@@ -311,7 +319,22 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
             "EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS must be at least 30"
         )
 
+    import json
+    from service_contracts.datasets import DatasetDeclaration
+    max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
+    discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
+    history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
+    if not 1 <= max_candidates <= 20 or not 2 <= history_limit <= 200 or not 1 <= discovery_rounds <= 12:
+        raise ValueError('Invalid planning candidate/history limits')
+    datasets = json.loads(env.get('ANALYSIS_DATASETS', '{}'))
+    if not isinstance(datasets, dict) or len(datasets) > 1000 or any(not isinstance(key, str) or not key.strip() for key in datasets):
+        raise ValueError('Invalid ANALYSIS_DATASETS mapping')
+    datasets = {key: DatasetDeclaration.model_validate(value).model_dump(exclude_none=True)
+                for key, value in datasets.items()}
     return AgentSettings(
+        max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
+        agent_discovery_max_rounds=discovery_rounds,
+        analysis_datasets=datasets,
         model_mock_delay_ms=mock_delay_ms,
         environment=env.get("APP_ENV", "development"),
         model_provider=provider,

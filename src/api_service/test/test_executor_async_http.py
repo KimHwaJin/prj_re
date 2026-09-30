@@ -269,49 +269,38 @@ async def test_get_cancel_propagates_without_claiming_remote_mutation():
 
 
 @pytest.mark.asyncio
-async def test_api_runtime_reuses_client_and_drains_request_before_close(monkeypatch):
-    from api_service.services.agent_graph_service import AgentGraphRuntime, GraphResourcesBusy
-    import agent_service.agents.analysis.graph as module
-    entered=asyncio.Event(); release=asyncio.Event(); clients=[]
-    async def handle(request): entered.set(); await release.wait(); return 200,{}
-    async with local_server(handle) as server:
-        cfg=settings(server.url)
-        runtime=AgentGraphRuntime()
-        monkeypatch.setattr(runtime,"_load_graph_inputs",lambda:(None,cfg,"memory"))
-        def build(*args,executor_client,**kwargs):
-            clients.append(executor_client)
-            return executor_client
-        monkeypatch.setattr(module,"build_analysis_workflow_graph",build)
-        async def borrow():
-            async with runtime.open_graph() as client:
-                await api.get_execution(cfg,"id",client=client)
-        active=asyncio.create_task(borrow())
-        await asyncio.wait_for(entered.wait(),2)
-        closing=asyncio.create_task(runtime.shutdown(timeout=2))
-        try:
-            await asyncio.sleep(.02)
-            assert not clients[0].http.is_closed and not closing.done()
-            with pytest.raises(GraphResourcesBusy):
-                async with runtime.open_graph(): pass
-        finally:
-            release.set(); await active; await closing
-        assert len(clients)==1 and clients[0].http.is_closed
+async def test_planning_api_runtime_does_not_open_executor_client(monkeypatch):
+    from api_service.services.agent_graph_service import AgentGraphRuntime
+    import agent_service.agents.analysis.planning.graph as module
+    from unittest.mock import Mock
+    runtime = AgentGraphRuntime()
+    dependency = object()
+    monkeypatch.setattr(runtime, '_load_graph_inputs', lambda: (dependency, settings(), 'memory'))
+    executor = Mock(side_effect=AssertionError('Planning must not open Executor HTTP'))
+    monkeypatch.setattr(api, 'ExecutorClient', executor)
+    build = Mock(return_value=object())
+    monkeypatch.setattr(module, 'build_planning_graph', build)
+    async with runtime.open_graph() as graph:
+        assert graph is build.return_value
+    async with runtime.open_graph() as second:
+        assert second is graph
+    assert build.call_count == 1
+    executor.assert_not_called()
+    await runtime.shutdown()
 
 
 @pytest.mark.asyncio
-async def test_api_runtime_initialization_failure_closes_client(monkeypatch):
+async def test_planning_api_runtime_build_failure_has_no_executor_resources(monkeypatch):
     from api_service.services.agent_graph_service import AgentGraphRuntime
-    import agent_service.agents.analysis.graph as module
-    clients=[]
-    runtime=AgentGraphRuntime()
-    monkeypatch.setattr(runtime,"_load_graph_inputs",lambda:(None,settings(),"memory"))
-    def build(*args,executor_client,**kwargs):
-        clients.append(executor_client)
-        raise ValueError("graph build failure")
-    monkeypatch.setattr(module,"build_analysis_workflow_graph",build)
+    import agent_service.agents.analysis.planning.graph as module
+    runtime = AgentGraphRuntime()
+    monkeypatch.setattr(runtime, '_load_graph_inputs', lambda: (None, settings(), 'memory'))
+    def fail(*args, **kwargs):
+        raise ValueError('graph build failure')
+    monkeypatch.setattr(module, 'build_planning_graph', fail)
     with pytest.raises(ValueError):
         async with runtime.open_graph(): pass
-    assert len(clients)==1 and clients[0].http.is_closed
+    assert runtime._graph is None and runtime._stack is None
     await runtime.shutdown()
 
 

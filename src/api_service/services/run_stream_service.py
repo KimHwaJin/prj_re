@@ -30,6 +30,7 @@ from api_service.models.common.project_model import ProjectModel
 from api_service.services.public_run_service import PublicRunService, project, TERMINAL
 from api_service.services.task_event_service import TaskEventService
 from service_runtime.cleanup import protected_cleanup
+from service_contracts.run_events import public_event_payload
 
 log = logging.getLogger(__name__)
 CHANNEL = 'dtest_run_changed'
@@ -197,9 +198,10 @@ class RunStreamHub:
                 state = project(*snapshot)
                 events = await TaskEventService.list_after_public_run(db, run_id=run_id,
                     sequence=sequence, limit=self.settings.sse_event_batch_size)
-                chunks = tuple((event.sequence,
-                    f'id: {event.sequence}\nevent: {event.event_type}\ndata: ' +
-                    json.dumps({**event.payload, 'run_id':str(run_id)}, ensure_ascii=False, default=str, separators=(',',':'))+'\n\n') for event in events)
+                public_events = [(event.sequence, public_event_payload(event, session_id=session_id, run_id=run_id)) for event in events]
+                chunks = tuple((sequence,
+                    f'id: {sequence}\nevent: {payload["type"]}\ndata: ' +
+                    json.dumps(payload, ensure_ascii=False, separators=(',',':'))+'\n\n') for sequence, payload in public_events)
                 frame = Frame(chunks, state.model_dump_json(), state.status in TERMINAL)
             size = frame.size
             if generation == entry.generation and size <= self.CACHE_BYTES:
@@ -234,7 +236,10 @@ class RunStreamHub:
                 full = len(frame.events) >= self.settings.sse_event_batch_size
                 if not full and frame.state != previous_state:
                     previous_state = frame.state
-                    yield f'event: run.state\ndata: {frame.state}\n\n'
+                    snapshot = {'schema_version': 1, 'type': 'run.snapshot',
+                        'session_id': str(entry.key[1]), 'run_id': str(entry.key[2]), 'cursor': sequence,
+                        'data': json.loads(frame.state)}
+                    yield 'event: run.snapshot\ndata: ' + json.dumps(snapshot, ensure_ascii=False, separators=(',', ':')) + '\n\n'
                 if frame.terminal and not frame.events:
                     return
                 if full or frame.terminal:

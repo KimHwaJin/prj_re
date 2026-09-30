@@ -54,7 +54,7 @@ async def enqueue(h, session_id=None):
     session_id = session_id or h.session_id
     response = await h.client.post(f'/api/v1/sessions/{session_id}/runs',
         headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-        json={'input': {'messages': [{'role': 'user', 'content': 'test request'}]}})
+        json={'input': {'content': [{'type': 'text', 'text': 'test request'}]}})
     assert response.status_code == 202, response.text
     return response.json()
 
@@ -163,7 +163,7 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
         assert not owner.done() and not execution_health.healthy
         response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs',
             headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-            json={'input': {'messages': [{'role': 'user', 'content': 'second'}]}})
+            json={'input': {'content': [{'type': 'text', 'text': 'second'}]}})
         assert response.status_code == 409
         response = await h.client.get(f'/api/v1/sessions/{h.session_id}/tasks', headers=headers(h.user['user_id']))
         assert response.status_code == 200 and response.json()['items'][0]['recovery_required'] is True
@@ -305,9 +305,9 @@ async def test_hitl_resume_keeps_normal_lifecycle(runtime, monkeypatch):
     await worker.execute_claimed(await worker.claim_one())
     run, task = await rows(h, queued['id'])
     assert run.status == AgentRunStatus.INTERRUPTED and task.status == TaskStatus.WAITING_INPUT
-    response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["id"]}/resume',
+    response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs',
         headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-        json={'command': {'resume': {'approved': True}}, 'resume_token': str(run.run_id)})
+        json={'run_id':queued['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': str(run.run_id)})
     assert response.status_code == 202, response.text
     resumed = response.json()
     await worker.execute_claimed(await worker.claim_one())

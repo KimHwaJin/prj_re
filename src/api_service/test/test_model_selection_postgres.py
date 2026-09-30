@@ -48,7 +48,7 @@ def use_catalog(monkeypatch,default="alpha",entries=None):
 
 
 async def start(h,*,name=None,key=None,extra=None,sid=None):
-    body={"input":{"messages":[{"role":"user","content":"hello"}]}}
+    body={"input":{'content': [{'type': 'text', 'text': "hello"}]}}
     if name is not None: body["main_model_name"]=name
     if extra: body.update(extra)
     return await h.client.post(f"/api/v1/sessions/{sid or h.session_id}/runs",

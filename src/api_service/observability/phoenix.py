@@ -6,7 +6,6 @@ from typing import Any
 
 from agent_config import AgentSettings
 
-# Phoenix 패키지를 설치한 뒤 아래 import의 주석을 해제하세요.
 from phoenix.otel import register
 
 
@@ -21,26 +20,20 @@ def setup_phoenix(settings: AgentSettings) -> Any | None:
         return None
     if _tracer_provider is not None:
         return _tracer_provider
-    
+
     headers = (
-    {"Authorization": f"Bearer {settings.phoenix_api_key}"}
-    if settings.phoenix_api_key
-    else None
+        {"Authorization": f"Bearer {settings.phoenix_api_key}"}
+        if settings.phoenix_api_key
+        else None
     )
-    # 위 import와 아래 register 호출의 주석을 해제하세요.
     _tracer_provider = register(
         endpoint=settings.phoenix_endpoint,
         project_name=settings.phoenix_project_name,
         headers=headers,
         auto_instrument=True,
-        batch=False,
+        batch=True,
     )
     return _tracer_provider
-
-    raise RuntimeError(
-        "PHOENIX_ENDPOINT가 설정되어 있습니다. "
-        "api_service/observability/phoenix.py의 Phoenix 연동 주석을 해제하세요."
-    )
 
 
 def shutdown_phoenix() -> None:

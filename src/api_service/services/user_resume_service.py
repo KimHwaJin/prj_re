@@ -71,10 +71,16 @@ async def resume_and_project(graph, config, *, user_id, run_id, command,
         # If this raises, a queue retry may only inspect the receipt. It may not
         # dispatch this Command again. External submission uncertainty propagates
         # through the existing submission_scope/ExecutionNeedsRecovery guard.
-        await graph.ainvoke(
-            Command(resume={target: resume_envelope(identity, command)}),
-            config=config, durability="sync",
-        )
+        if getattr(graph, 'name', None) == 'agentic-planning-v1':
+            async for emitted in graph.astream(Command(resume={target: resume_envelope(identity, command)}),
+                                               config=config, stream_mode='values', durability='sync'):
+                await projection.persist_graph_state(emitted, user_id=user_id, session_factory=session_factory,
+                                                     dispatcher=dispatcher, agent_run_id=run_id)
+        else:
+            await graph.ainvoke(
+                Command(resume={target: resume_envelope(identity, command)}),
+                config=config, durability="sync",
+            )
         snapshot = await graph.aget_state(config)
         require_finished(snapshot, identity)
     try:

@@ -254,6 +254,19 @@ def build_registry(root: Path) -> dict[str, Any]:
             raise ValueError(f"Duplicate Tool id: {path.stem!r}")
         tools[path.stem] = _entry(path, root, function)
 
+    # Availability is a deliberate maintainer policy, not inferable from AST.
+    # Preserve it when refreshing signatures/docstrings, including --output to
+    # a scratch location. Newly registered Tools default to ready.
+    previous_path = root / 'tool_registry.yaml'
+    if previous_path.is_file():
+        previous = yaml.safe_load(previous_path.read_text(encoding='utf-8')) or {}
+        for key, item in tools.items():
+            status = previous.get('tools', {}).get(key, {}).get('availability')
+            if status is not None:
+                if status not in {'ready', 'test_only'}:
+                    raise ValueError('Invalid Tool availability')
+                item['availability'] = status
+
     return {
         "schema_version": "2.0",
         "registry_type": "tool_registry",

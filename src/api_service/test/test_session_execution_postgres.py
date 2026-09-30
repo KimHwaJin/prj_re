@@ -252,7 +252,7 @@ async def test_quarantined_session_rejects_new_api_input(runtime):
         assert await ownership.acquire(db,owner)
         await db.commit()
     await ownership.quarantine(owner,'test_uncertain_owner')
-    response=await post(h,h.session_id,{'input':{'messages':[{'role':'user','content':'next'}]}})
+    response=await post(h,h.session_id,{'input':{'content': [{'type': 'text', 'text': 'next'}]}})
     assert response.status_code==409 and 'recovery' in response.text
 
 

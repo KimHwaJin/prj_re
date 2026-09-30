@@ -50,7 +50,7 @@ async def test_possible_submission_blocks_retry_and_keeps_session_locked(runtime
             current=await state(h,first["id"])
             assert current["status"]=="recovery_required"
             blocked=await h.client.post(path(h),headers={**headers(h.user["user_id"]),"Idempotency-Key":str(uuid4())},
-                json={"input":{"messages":[{"role":"user","content":"new"}]}})
+                json={"input":{'content': [{'type': 'text', 'text': "new"}]}})
             assert blocked.status_code==409,blocked.text
             assert len(server.requests)==1 and run.attempt_count==1
             with pytest.raises(ExecutionNeedsRecovery):

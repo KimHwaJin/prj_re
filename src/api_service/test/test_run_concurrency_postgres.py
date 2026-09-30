@@ -38,8 +38,7 @@ async def post(h, session, body, key=None):
             state = (await h.client.get(f'{path}/{target}', headers=headers(h.user['user_id']))).json()
         else:
             state = (await h.client.get(path, headers=headers(h.user['user_id']))).json()['items'][0]
-        path += f"/{state['id']}/resume"
-        body = {'command': body['command'], 'resume_token': target or state['resume_token'] or state['id']}
+        body = {'run_id': state['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1, 'input_values':{'legacy':body['command']}}}, 'resume_token': target or state['resume_token'] or state['id']}
     return await h.client.post(path,
         headers={**headers(h.user['user_id']), 'Idempotency-Key': key or str(uuid4())}, json=body)
 
@@ -62,7 +61,7 @@ async def test_two_consumers_do_not_claim_the_same_run(runtime, monkeypatch):
 @pytest.mark.asyncio
 async def test_same_session_concurrent_admission_and_idempotency(runtime):
     h = runtime
-    body = {'input': {'messages': [{'role':'user','content':'test'}]}}
+    body = {'input': {'content': [{'type': 'text', 'text': 'test'}]}}
     responses = await asyncio.gather(*(post(h, h.session_id, body) for _ in range(10)))
     assert sorted(r.status_code for r in responses) == [202] + [409]*9
     other = await add_session(h, h.user)
@@ -83,7 +82,7 @@ async def test_wait_releases_execution_but_keeps_session_admission_locked(runtim
     run, task = await rows(h, queued['id'])
     assert run.status == AgentRunStatus.INTERRUPTED
     assert task.status == TaskStatus.WAITING_INPUT and task.lock_token is None
-    body = {'input': {'messages':[{'role':'user','content':'another'}]}}
+    body = {'input': {'content': [{'type': 'text', 'text': 'another'}]}}
     assert (await post(h, h.session_id, body)).status_code == 409
     resumes = await asyncio.gather(*(post(h,h.session_id, {'command':{'approved':True}}) for _ in range(3)))
     assert sorted(r.status_code for r in resumes) == ([409]*3 if kind=='EXECUTOR_EVENT' else [202,409,409])
@@ -127,7 +126,7 @@ async def test_executor_completion_unlocks_session_once(runtime, monkeypatch, st
     assert task.last_event_sequence == first_task.last_event_sequence
     assert run.status == (AgentRunStatus.SUCCESS if status=='SUCCEEDED' else AgentRunStatus.ERROR)
     assert run.completed_at == first_run.completed_at
-    assert (await post(h,h.session_id, {'input':{'messages':[{'role':'user','content':'next'}]}})).status_code == 202
+    assert (await post(h,h.session_id, {'input':{'content': [{'type': 'text', 'text': 'next'}]}})).status_code == 202
 
 
 @pytest.mark.asyncio

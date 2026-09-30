@@ -48,9 +48,9 @@ async def state(h, rid):
 
 
 async def resume(h, current, key=None, command=None):
-    return await h.client.post(path(h, current['id'])+'/resume',
+    return await h.client.post(path(h),
         headers={**headers(h.user['user_id']), 'Idempotency-Key':key or str(uuid4())},
-        json={'resume_token':current['resume_token'], 'command':command or {'approved': True}})
+        json={'run_id':current['id'], 'resume_token':current['resume_token'], 'command':{'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1, 'input_values': {'legacy': command or {'approved':True}}}}})
 
 
 async def execute():
@@ -121,11 +121,11 @@ async def test_concurrent_replay_stale_tokens_and_payload_mismatch(runtime, monk
 async def test_initial_key_collision_and_invalid_public_commands(runtime):
     h = runtime
     hdr = {**headers(h.user['user_id']), 'Idempotency-Key':'start'}
-    body = {'input':{'messages':[{'role':'user','content':'first'}]}}
+    body = {'input':{'content': [{'type': 'text', 'text': 'first'}]}}
     first = await h.client.post(path(h), headers=hdr, json=body)
     assert first.status_code == 202
     assert (await h.client.post(path(h), headers=hdr, json=body)).json()['id'] == first.json()['id']
-    body['input']['messages'][0]['content'] = 'different'
+    body['input']['content'][0]['text'] = 'different'
     assert (await h.client.post(path(h), headers=hdr, json=body)).status_code == 409
     assert (await h.client.post(path(h), headers=hdr, json={'command':{'x':1}})).status_code == 422
     for metadata in ({'checkpoint_run_id':str(uuid4())}, {'_public_resume':str(uuid4())}):
@@ -145,7 +145,7 @@ async def test_owner_and_cross_run_tokens_are_rejected(runtime, monkeypatch):
     assert (await resume(h, current)).status_code == 409
     for suffix in ('', '/logs', '/stream', '/join'):
         assert (await h.client.get(path(h, first['id'])+suffix, headers=headers('admin'))).status_code == 404
-    for suffix, body in [('/resume', {'command':{}, 'resume_token':first['id']}),('/cancel',{})]:
+    for suffix, body in [('/cancel',{})]:
         assert (await h.client.post(path(h, first['id'])+suffix, headers={**headers('admin'),'Idempotency-Key':'x'}, json=body)).status_code == 404
 
 
@@ -172,7 +172,7 @@ async def test_cancel_and_session_lock_by_public_state(runtime, monkeypatch, sta
         await enqueue(h)
     else:
         assert after['status']==stage and after['completed_at'] is None
-        body={'input':{'messages':[{'role':'user','content':'blocked'}]}}
+        body={'input':{'content': [{'type': 'text', 'text': 'blocked'}]}}
         assert (await h.client.post(path(h), headers={**headers(h.user['user_id']), 'Idempotency-Key':'blocked'},json=body)).status_code==409
         # Removed Task commands cannot bypass the Run external-wait guard.
         assert (await h.client.post(f"/api/v1/tasks/{first['task_id']}/cancel",headers=headers(h.user['user_id']),json={})).status_code==404
@@ -202,7 +202,7 @@ async def test_sse_replays_all_invocations_and_logs_use_canonical_id(runtime, mo
     assert streamed.status_code==200
     ids=[int(line[4:]) for line in streamed.text.splitlines() if line.startswith('id: ')]
     assert ids==[e.sequence for e in events if e.sequence>cursor]
-    assert 'event: run.state' in streamed.text and '"status":"success"' in streamed.text
+    assert 'event: run.snapshot' in streamed.text and '"status":"success"' in streamed.text
     assert str(invocations[-1].run_id) not in streamed.text
     logs=(await h.client.get(path(h,first['id'])+'/logs',headers=headers(h.user['user_id']))).json()
     assert len(logs)==2 and {l['run_id'] for l in logs}=={first['id']}
@@ -282,7 +282,8 @@ async def test_real_checkpoint_two_hitl_restart_and_executor_projection(runtime,
                           schema_version='1.0',occurred_at='2026-09-29T00:00:00+00:00',payload={}))
         async with rt.open_graph() as graph:
             snapshot=await graph.aget_state(context.graph_config)
-            assert snapshot.next and snapshot.values['answer2']=={'approved':True}
+            assert snapshot.next and snapshot.values['answer2']['resume']['action']=='approve_plan'
+            assert snapshot.values['answer2']['resume']['input_values']['legacy']=={'approved':True}
             async def handle():
                 await graph.ainvoke(Command(resume={'completed':True}),context.graph_config,durability='sync')
                 await completion.synchronize_executor_completion(context,graph)
@@ -336,8 +337,8 @@ async def test_same_sse_survives_hitl_and_releases_single_db_connection(small_po
         async with asyncio.timeout(5):
             async for chunk in stream:
                 assert h.engine.pool.checkedout()==0
-                if chunk.startswith('event: run.state'):
-                    paused=json.loads(chunk.split('data: ',1)[1])
+                if chunk.startswith('event: run.snapshot'):
+                    paused=json.loads(chunk.split('data: ',1)[1])['data']
                     assert paused['status']=='waiting_input'
                     break
             # Hold this same HTTP stream open while another request resumes.
@@ -346,8 +347,8 @@ async def test_same_sse_survives_hitl_and_releases_single_db_connection(small_po
             finished=False
             async for chunk in stream:
                 assert h.engine.pool.checkedout()==0
-                if chunk.startswith('event: run.state'):
-                    finished=json.loads(chunk.split('data: ',1)[1])['status']=='success'
+                if chunk.startswith('event: run.snapshot'):
+                    finished=json.loads(chunk.split('data: ',1)[1])['data']['status']=='success'
             assert finished
     finally:
         await stream.aclose()

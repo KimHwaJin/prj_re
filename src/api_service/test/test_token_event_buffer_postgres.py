@@ -19,7 +19,7 @@ from api_service.test.test_run_cleanup_postgres import runtime, enqueue, rows, w
 
 
 @pytest.mark.asyncio
-async def test_worker_commits_unicode_tokens_before_terminal_event_and_cursor_replays(runtime, monkeypatch):
+async def test_worker_hides_internal_model_tokens_and_replays_terminal_event(runtime, monkeypatch):
     observed = []
     model_ids = [uuid4(), uuid4()]
     async def graph(**kwargs):
@@ -38,20 +38,12 @@ async def test_worker_commits_unicode_tokens_before_terminal_event_and_cursor_re
     async with runtime.factory() as db:
         events = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['id']), sequence=0, limit=100)
         deltas = [event for event in events if event.event_type == 'llm.token.delta']
-        assert deltas and events[-1].event_type == 'task.success'
-        assert max(event.sequence for event in deltas) < events[-1].sequence
-        for model_id, expected in zip(model_ids, ['가😀 tail', '다른 모델']):
-            selected = [event for event in deltas if event.payload['llm_run_id'] == str(model_id)]
-            assert ''.join(event.payload['delta'] for event in selected) == expected
-            offset = 0
-            for event in selected:
-                assert event.payload['offset_start'] == offset
-                offset += len(event.payload['delta'])
-                assert event.payload['offset_end'] == offset
+        assert not deltas and events[-1].event_type == 'task.success'
         replay = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['id']),
-            sequence=deltas[0].sequence, limit=100)
-        assert [event.sequence for event in replay] == [event.sequence for event in events if event.sequence > deltas[0].sequence]
+            sequence=events[0].sequence, limit=100)
+        assert [event.sequence for event in replay] == [event.sequence for event in events if event.sequence > events[0].sequence]
     assert observed[0].consumer.done() and observed[0].buffered_bytes == 0
+    assert observed[0].peak_buffered_bytes == 0
     assert execution_health.healthy
 
 
@@ -123,13 +115,15 @@ async def test_real_db_write_timeout_rolls_back_and_is_not_success(runtime, monk
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('failure', ['write_error', 'admission_timeout'])
-async def test_worker_token_failure_keeps_recovery_guard_and_never_retries(runtime, monkeypatch, failure):
+async def test_worker_internal_tokens_never_invoke_failed_or_blocked_public_writer(runtime, monkeypatch, failure):
     monkeypatch.setattr(tokens, 'settings', service_settings.get_settings().api.model_copy(update={
         'llm_token_buffer_max_items':1, 'llm_token_flush_characters':1,
         'llm_token_enqueue_timeout_seconds':.03,
     }))
     stopped = asyncio.Event()
+    writes = []
     async def append(*args):
+        writes.append(args)
         if failure == 'write_error':
             raise OSError('simulated writer failure')
         await asyncio.Event().wait()
@@ -140,20 +134,20 @@ async def test_worker_token_failure_keeps_recovery_guard_and_never_retries(runti
         try:
             await manager.on_llm_new_token('a')
             await manager.on_llm_new_token('b')
-            await asyncio.Event().wait()
+            return {'routing_result': {'route': 'analysis'}}
         finally:
             stopped.set()
     monkeypatch.setattr(runs, 'ainvoke_user_turn', graph)
     queued = await enqueue(runtime)
-    with pytest.raises(ExecutionNeedsRecovery):
-        await asyncio.wait_for(worker.execute_claimed(await worker.claim_one()), 2)
+    await asyncio.wait_for(worker.execute_claimed(await worker.claim_one()), 2)
     assert stopped.is_set()
+    assert writes == []
     run, task = await rows(runtime, queued['id'])
-    assert task.recovery_required and task.lock_token is not None
-    assert run.failure['code'] == 'RUN_RECOVERY_REQUIRED'
-    assert not run.failure['retry_scheduled'] and run.status == AgentRunStatus.RUNNING
+    assert not task.recovery_required and task.lock_token is None
+    assert run.status == AgentRunStatus.SUCCESS and task.status == TaskStatus.SUCCESS
     async with runtime.factory() as db:
         events = await TaskEventService.list_after_public_run(db, run_id=run.public_run_id, sequence=0, limit=100)
-    assert not any(event.event_type in ('task.success','task.retry_scheduled') for event in events)
-    with pytest.raises(ExecutionNeedsRecovery):
-        await worker.claim_one()
+    assert events[-1].event_type == 'task.success'
+    assert not any(event.event_type in ('llm.token.delta','task.retry_scheduled') for event in events)
+    assert execution_health.healthy
+    assert await worker.claim_one() is None

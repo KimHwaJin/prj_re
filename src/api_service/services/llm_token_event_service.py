@@ -39,7 +39,8 @@ class LLMTokenEventBuffer(AsyncCallbackHandler):
     run_inline = True
     raise_error = True
 
-    def __init__(self, *, task_id: UUID, run_id: UUID) -> None:
+    def __init__(self, *, task_id: UUID, run_id: UUID, expose_tokens: bool = True) -> None:
+        self.expose_tokens = expose_tokens
         self.task_id = task_id
         self.run_id = run_id
         self.max_bytes = settings.llm_token_buffer_max_bytes
@@ -73,6 +74,8 @@ class LLMTokenEventBuffer(AsyncCallbackHandler):
             raise RuntimeError("Token event buffer has not been started.")
 
     async def on_llm_new_token(self, token: str, *, run_id, **_kwargs) -> None:
+        if not self.expose_tokens:
+            return
         if not token:
             return
         self._check_accepting()

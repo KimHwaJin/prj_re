@@ -107,28 +107,18 @@ async def test_approval_submits_contract_and_registers_execution(tmp_path, monke
     assert client.post('/api/v1/executions', json={}).status_code == 422
 
 
-def test_submit_scenario_requires_execution_confirmation():
-    from scripts.loadtest.scenario import STAGES, execute
-
-    for valid in (True, False):
-        calls = []
-        public_id = str(uuid4())
-        def request(method, path, **kwargs):
-            calls.append((path, kwargs.get('json')))
-            if path.endswith('/sessions'):
-                return {'id': str(uuid4())}
-            index = len(calls) - 2
-            interrupt = ({'kind': 'EXECUTOR_EVENT', 'execution_id': str(uuid4())} if valid else
-                         {'action_requests': [{'name': 'workflow_approval'}]}) if index == 4 else {
-                             'action_requests': [{'name': STAGES[index][0]}]}
-            return {'id': public_id, 'status': 'waiting_executor' if index == 4 else 'waiting_input', 'resume_token': str(uuid4()), 'interrupt': [interrupt]}
-        if valid:
-            result = execute(request, {}, 'project', record=lambda *a: None, submit=True)
-            assert result['execution_id']
-            assert len(result['runs']) == 5
-            assert calls[-1][1]['command'] == {'approved': True}
-            assert calls[-1][0].endswith(f'/runs/{public_id}/resume')
-            assert calls[-1][1]['resume_token']
-        else:
-            with pytest.raises(RuntimeError, match='not confirmed'):
-                execute(request, {}, 'project', record=lambda *a: None, submit=True)
+def test_planning_load_scenario_and_unconnected_executor_guard():
+    from scripts.loadtest.scenario import execute
+    calls = []
+    public_id = str(uuid4())
+    def request(method, path, **kwargs):
+        calls.append((path, kwargs.get('json')))
+        if path.endswith('/sessions'):
+            return {'id': str(uuid4())}
+        return {'id': public_id, 'status': 'waiting_input', 'resume_token': str(uuid4()),
+                'interrupt': [{'kind': 'plan_review', 'payload': {'plans': []}}]}
+    result = execute(request, {}, 'project', record=lambda *a: None)
+    assert len(result['runs']) == 1 and result['execution_id'] is None
+    assert calls[-1][1]['input']['content'][0]['type'] == 'text'
+    with pytest.raises(RuntimeError, match='not connected'):
+        execute(request, {}, 'project', record=lambda *a: None, submit=True)

@@ -138,3 +138,7 @@ Run 실행 준비·결과 저장은 짧은 서비스 DB 트랜잭션으로 처�
 
 Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀 대기 기한·응답 크기 설정과
 복구 필요 상태의 의미는 [Executor HTTP 런타임](executor-http-runtime.md)을 따른다.
+
+## 038 계획 Agent 설정
+
+`service.agent` 그룹에 `max_plan_candidates`, `agent_discovery_max_rounds`, `agent_history_message_limit`, `analysis_datasets`를 둘 수 있다. 대응 env는 MAX_PLAN_CANDIDATES, AGENT_DISCOVERY_MAX_ROUNDS, AGENT_HISTORY_MESSAGE_LIMIT, ANALYSIS_DATASETS다. YAML mapping은 중앙 설정에서 JSON으로 변환되므로 env에서는 JSON 문자열을 사용한다. 상세 기본값·제한·데이터 scope는 [계획 Runtime 안내](agentic-planning-runtime.md)를 참고한다. Phoenix도 중앙 PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY를 사용하고 API lifespan에서 시작·종료한다.

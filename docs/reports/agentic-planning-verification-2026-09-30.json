@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-30",
+  "branch": "feature/agentic-analysis-runtime",
+  "parent_commit": "680c6d253cf789a42d5a56a7a06a69d0fb9aa4aa",
+  "scope": "new request or answer -> registered-asset plans -> checkpointed edit/approve -> saved approval; no Executor submission",
+  "regression": {
+    "initial_complete_api_agent_suite": {
+      "passed": 665,
+      "failed": 7,
+      "subtests_passed": 2,
+      "elapsed_seconds": 286.55,
+      "failure_causes": [
+        "Removed separate Run resume route expected by legacy OpenAPI assertion",
+        "Internal model token deltas expected by three Worker tests despite the new explicit non-public token policy",
+        "Legacy task.queued SSE name expected by identity test",
+        "Typed resume test wrapper not unwrapped by two legacy checkpoint assertions"
+      ]
+    },
+    "affected_files_and_new_runtime_after_contract_assertion_updates": {
+      "passed": 83,
+      "failed": 0,
+      "elapsed_seconds": 65.84,
+      "includes_all_seven_initial_failures": true,
+      "includes": [
+        "Task diagnostics OpenAPI",
+        "Public token filtering and explicit buffer PostgreSQL locks/timeouts",
+        "User identity and ownership",
+        "Checkpoint resume and projection recovery",
+        "Planning API on real PostgreSQL",
+        "Planning graph, model discovery and config"
+      ]
+    },
+    "counting_note": "The two executions overlap. Do not sum passed counts as distinct tests. No claim of a single complete suite rerun after test-only assertion updates."
+  },
+  "wheel": {
+    "passed": true,
+    "artifact": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "role_prompts_present": 8,
+    "create_agent_builders": 8,
+    "workflow_schema_and_mock_fixture_present": true,
+    "approved_registered_steps": 4,
+    "dataset_bindings_validated": true
+  },
+  "real_model_journey": {
+    "passed": true,
+    "report": "agentic-planning-real-validation-2026-09-30.json",
+    "planning_seconds": 44.121,
+    "approval_seconds": 0.268,
+    "model_calls": 6,
+    "phoenix_trace_count": 7,
+    "executor_submissions": 0,
+    "performance_benchmark": false,
+    "temporary_api_port": 18090,
+    "temporary_api_stopped": true
+  },
+  "existing_compose_changed": false,
+  "original_user_checkout_changed": false,
+  "remaining": [
+    "Approved snapshot -> Executor initial submission and result-driven operation loop",
+    "Reporting and explicit Finalize",
+    "Workflow vector recommendation and management",
+    "Production PVC dataset catalog and project_memory",
+    "Gaia adapter and attachment/VLM inputs",
+    "Legacy runtime migration and removal after Executor cutover"
+  ]
+}

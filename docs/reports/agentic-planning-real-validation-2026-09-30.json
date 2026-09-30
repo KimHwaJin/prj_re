@@ -1,0 +1,70 @@
+{
+  "project": "prj-re-agentic-70cc47f22e",
+  "port": 18090,
+  "executor_submissions": 0,
+  "run_id": "38c50929-025d-4416-814f-f3f77dc57905",
+  "session_id": "64cc8bb2-040f-4b99-a11c-72ed2b2d3190",
+  "planning_seconds": 44.121,
+  "planning_status": "waiting_input",
+  "candidate_count": 1,
+  "step_tools": [
+    "data_load",
+    "profile_data",
+    "compute_statistics",
+    "detect_outliers"
+  ],
+  "skills": [
+    "data_load",
+    "data_quality_check"
+  ],
+  "approval_seconds": 0.268,
+  "final_status": "plan_approved",
+  "sse_types": [
+    "activity.completed",
+    "activity.started",
+    "activity.updated",
+    "interaction.opened",
+    "interaction.resolved",
+    "message.completed",
+    "run.snapshot",
+    "run.updated"
+  ],
+  "approval_hash": "a90b6e0b5c3772177eba1309bc03c92d556ef9990b3b6b93c73e870893a3f2a6",
+  "phoenix_http_status": 200,
+  "phoenix_trace_count": 7,
+  "phoenix_span_names": [
+    "ChatCompletion",
+    "ChatOpenAI",
+    "Unnamed",
+    "agentic-planning-v1",
+    "analysis_conversation",
+    "await_review",
+    "conversation",
+    "model",
+    "publish_review",
+    "read_skill",
+    "receive",
+    "search_tools",
+    "tools"
+  ],
+  "passed": true,
+  "model_calls": 6,
+  "model_prompt_tokens": [
+    5698,
+    5654,
+    5643,
+    5504,
+    5288,
+    3967
+  ],
+  "model_completion_tokens": [
+    1981,
+    27,
+    28,
+    29,
+    33,
+    57
+  ],
+  "semantic_dataset_match": true,
+  "validation_scope": "single real HTTP journey to saved plan approval; no Executor/data analysis"
+}

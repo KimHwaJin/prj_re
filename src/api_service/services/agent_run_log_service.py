@@ -68,9 +68,9 @@ class AgentRunLogService:
                 # Also repairs a legacy log whose corresponding event is missing.
                 # Always use the persisted log, never a changed retry payload.
                 await TaskEventService.append_for_run(
-                    db, run_id=log.run_id, event_type="agent.event",
+                    db, run_id=log.run_id, event_type=log.event if log.kind == "public_event" else "agent.event",
                     agent_run_log_id=log.log_id, commit=False,
-                    payload={"agent_name": log.agent_name, "node": log.node,
+                    payload=log.payload if log.kind == "public_event" else {"agent_name": log.agent_name, "node": log.node,
                              "event": log.event, "kind": log.kind, "payload": log.payload},
                 )
             # Log, event and Task sequence become visible together. A Run with

@@ -1,0 +1,150 @@
+"""Durable conversation → candidate plans → human edits → frozen approval."""
+from datetime import datetime, timezone
+from typing import TypedDict, Any
+from uuid import uuid4
+
+from langgraph.graph import StateGraph, START, END
+
+from agent_service.context import AgentContext
+from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from service_contracts.plan_review import new_review, patch_review, freeze_approval, visible_datasets, PlanReviewError
+from service_contracts.plan_projection import plan_view
+
+
+RUNTIME_VERSION = 'agentic-planning-v1'
+
+
+class PlanningState(TypedDict, total=False):
+    agent_runtime: str
+    user_id: str
+    project_id: str
+    session_id: str
+    run_id: str
+    public_run_id: str
+    agent_run_id: str
+    thread_id: str
+    request_id: str
+    user_request: str
+    trigger_message_id: str
+    project_system_prompt: str
+    project_prompt_version: int
+    model_selection: dict
+    initial_request_identity: dict | None
+    initial_request_receipt: dict | None
+    user_resume_receipt: dict | None
+    history: list[dict]
+    public_events: list[dict]
+    reviews: list[dict]
+    plan_views: list[dict]
+    asset_revision: str
+    interaction_id: str
+    interaction_revision: int
+    interaction_data: dict | None
+    review_action: dict | None
+    review_error: str | None
+    approved_snapshot: dict | None
+    routing_result: dict
+    final_response: dict | None
+
+
+def public_event(state, event_type, data):
+    return {'event_id': str(uuid4()), 'owner_run_id': state['agent_run_id'],
+            'envelope': {'schema_version': 1, 'type': event_type, 'session_id': state['session_id'],
+                         'run_id': state['public_run_id'], 'occurred_at': datetime.now(timezone.utc).isoformat(), 'data': data}}
+
+
+def build_planning_graph(runtime, *, checkpointer):
+    def receive(state):
+        # Start each invocation with fresh plans/events; keep only bounded same-session conversation.
+        current = {**state, 'public_run_id': state['run_id'], 'agent_run_id': state['run_id']}
+        history = [*state.get('history', []), {'role': 'user', 'content': state['user_request']}][-runtime.settings.agent_history_message_limit:]
+        events = [public_event(current, 'message.completed', {'role': 'user', 'channel': 'answer', 'content': [{'type': 'text', 'text': state['user_request']}]})]
+        events.append(public_event(current, 'activity.started', {'activity_id': str(uuid4()), 'kind': 'planning', 'title': '요청에 맞는 답변 또는 분석 계획을 준비하고 있어요.'}))
+        return {'agent_runtime': RUNTIME_VERSION, 'public_run_id': current['public_run_id'],
+                'agent_run_id': current['agent_run_id'], 'initial_request_receipt': state.get('initial_request_identity'),
+                'user_resume_receipt': None, 'public_events': events, 'history': history,
+                'reviews': [], 'plan_views': [], 'interaction_data': None, 'approved_snapshot': None,
+                'final_response': None, 'review_action': None, 'review_error': None,
+                'interaction_id': str(uuid4()), 'interaction_revision': 1, 'asset_revision': runtime.catalog.revision}
+
+    async def converse(state):
+        context = AgentContext(user_id=state['user_id'], project_id=state['project_id'], session_id=state['session_id'],
+                               project_system_prompt=state.get('project_system_prompt', ''),
+                               project_prompt_version=state.get('project_prompt_version'), model_selection=state['model_selection'])
+        datasets = visible_datasets(runtime.datasets, state)
+        reply = await runtime.respond(state, context, [{'dataset_id': key, 'title': item['title'], 'description': item.get('description', ''), 'scope': item['scope']}
+                                                      for key, item in datasets.items()])
+        reviews = []
+        for proposal in reply.plans:
+            definition = proposal.definition
+            policy = {'allowed_modes': ['MULTI'] if definition['decisions'] or any('when' in s for s in definition['steps']) else ['SINGLE', 'MULTI'],
+                      'repair_level_limit': 4, 'max_repair_attempts_limit': 3}
+            review = new_review(definition, proposal.input_values, runtime.catalog.metadata, policy)
+            # Validate proposed data references with exactly the same rules as user edits.
+            patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1}, datasets=runtime.datasets, context=state)
+            reviews.append(review)
+        channel = 'commentary' if reviews else 'answer'
+        activity = next(e['envelope']['data']['activity_id'] for e in state['public_events'] if e['envelope']['type'] == 'activity.started')
+        events = [*state['public_events'], public_event(state, 'activity.completed', {'activity_id': activity, 'kind': 'planning', 'title': '답변 또는 계획을 준비했습니다.'}),
+                  public_event(state, 'message.completed', {'role': 'assistant', 'channel': channel, 'content': [{'type': 'text', 'text': reply.message}]})]
+        return {'reviews': reviews, 'routing_result': {'route': 'analysis' if reviews else 'faq'}, 'public_events': events,
+                'history': [*state['history'], {'role': 'assistant', 'content': reply.message}][-runtime.settings.agent_history_message_limit:],
+                'final_response': None if reviews else {'status': 'answer', 'message': reply.message}}
+
+    def publish_review(state):
+        owner = (state.get('user_resume_receipt') or {}).get('command_id', state['agent_run_id'])
+        current = {**state, 'agent_run_id': owner}
+        views = [plan_view(review) for review in state['reviews']]
+        data = {'interaction_id': state['interaction_id'], 'revision': state['interaction_revision'], 'kind': 'plan_review',
+                'status': 'open', 'resume_token': owner, 'summary': '계획과 입력값을 확인하고 승인해 주세요.',
+                'payload': {'plans': views, 'notices': [state['review_error']] if state.get('review_error') else []}}
+        event_type = 'interaction.opened' if state['interaction_revision'] == 1 else 'interaction.updated'
+        return {'agent_run_id': owner, 'plan_views': views, 'interaction_data': data,
+                'public_events': [*state['public_events'], public_event(current, event_type, data)]}
+
+    @record_user_resume
+    def await_review(state):
+        command = user_interrupt(state['interaction_data'])
+        action = command.get('resume') if isinstance(command, dict) else None
+        return {'review_action': action, 'public_events': []}
+
+    def apply_review(state):
+        owner = (state.get('user_resume_receipt') or {}).get('command_id', state['agent_run_id'])
+        current = {**state, 'agent_run_id': owner}
+        action = state.get('review_action')
+        try:
+            if runtime.catalog.revision != state['asset_revision']:
+                raise PlanReviewError('배포된 Skill·Tool이 변경되어 새 계획이 필요합니다.')
+            selected = next((r for r in state['reviews'] if r['plan_id'] == (action or {}).get('plan_id')), None)
+            if selected is None:
+                raise PlanReviewError('Unknown plan')
+            updated = patch_review(selected, action, datasets=runtime.datasets, context=state)
+            reviews = [updated if r['plan_id'] == selected['plan_id'] else r for r in state['reviews']]
+            result = {'reviews': reviews, 'agent_run_id': owner, 'interaction_revision': state['interaction_revision'] + 1, 'review_error': None}
+            if updated['consumed']:
+                snapshot = freeze_approval(updated, runtime.catalog.sources, runtime.catalog.skill_sources, state, runtime.catalog.revision, runtime.datasets)
+                view = plan_view(updated)
+                data = {'interaction_id': state['interaction_id'], 'revision': state['interaction_revision'], 'kind': 'plan_review',
+                        'status': 'resolved', 'resolution': 'approved', 'payload': {'approved_plan': view, 'notices': []}}
+                result.update({'approved_snapshot': snapshot, 'interaction_data': None,
+                               'final_response': {'status': 'plan_approved', 'approved_plan': view},
+                               'public_events': [public_event(current, 'interaction.resolved', data)]})
+            return result
+        except (ValueError, TypeError) as exc:
+            # A consumed command always checkpoints its receipt. A bad form opens a new wait, never a blind retry.
+            return {'agent_run_id': owner, 'review_error': str(exc), 'interaction_revision': state['interaction_revision'] + 1}
+
+    builder = StateGraph(PlanningState)
+    builder.add_node('receive', receive)
+    builder.add_node('conversation', converse)
+    builder.add_node('publish_review', publish_review)
+    builder.add_node('await_review', await_review)
+    builder.add_node('apply_review', apply_review)
+    builder.add_edge(START, 'receive')
+    builder.add_edge('receive', 'conversation')
+    builder.add_conditional_edges('conversation', lambda s: 'publish_review' if s['reviews'] else END)
+    builder.add_edge('publish_review', 'await_review')
+    builder.add_edge('await_review', 'apply_review')
+    builder.add_conditional_edges('apply_review', lambda s: END if s.get('approved_snapshot') else 'publish_review')
+    graph = builder.compile(checkpointer=checkpointer, name=RUNTIME_VERSION)
+    return graph

@@ -109,14 +109,14 @@ async def test_fallback_recovers_without_listener_and_heartbeat_has_no_sql(runti
     async with hub.subscribe(*key) as entry:
         stream=hub.stream(SimpleNamespace(is_disconnected=AsyncMock(return_value=False)),entry,0)
         async with asyncio.timeout(3):
-            while not (await anext(stream)).startswith('event: run.state'):pass
+            while not (await anext(stream)).startswith('event: run.snapshot'):pass
             async with runtime.factory() as db:
                 await db.execute(update(AgentRunModel).where(AgentRunModel.run_id==key[2]).values(status=AgentRunStatus.RUNNING))
                 await db.commit()
             chunks=[]
             while True:
                 chunk=await anext(stream);chunks.append(chunk)
-                if chunk.startswith('event: run.state') and '"status":"running"' in chunk:break
+                if chunk.startswith('event: run.snapshot') and '"status":"running"' in chunk:break
             assert ': heartbeat\n\n' in chunks
         await stream.aclose()
 
@@ -263,7 +263,7 @@ async def test_real_http_auth_and_idle_stream_release_single_connection(small_po
                 kind=None
                 async for line in lines:
                     if line.startswith('event: '):kind=line[7:]
-                    if line.startswith('data: ') and kind=='run.state':break
+                    if line.startswith('data: ') and kind=='run.snapshot':break
                 await asyncio.wait_for(hub.ready.wait(),3)
                 other=await client.get(f'/api/v1/sessions/{h.session_id}',headers=headers(h.user['user_id']))
                 assert other.status_code==200

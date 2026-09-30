@@ -11,6 +11,7 @@ from threading import RLock
 from types import MappingProxyType
 from typing import Any, Mapping
 import os
+import json
 
 import yaml
 from pydantic import ValidationError
@@ -32,7 +33,7 @@ ALIASES = {
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
-GROUPS = {"runtime", "database", "checkpoint", "llm", "executor", "events", "storage", "diagnostics"}
+GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics"}
 # Extra settings consumed by the legacy Agent adapter, outside the API model.
 AGENT_KEYS = set("""
 APP_ENV MODEL_MOCK_DELAY_MS MODEL_TEMPERATURE MODEL_PROVIDER MODEL_NAME
@@ -53,6 +54,7 @@ EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS EXECUTOR_SUBMIT_ENABLED
 DEMO_ARTIFACTS_ENABLED DEMO_ARTIFACTS_ROOT PHOENIX_ENDPOINT
 PHOENIX_PROJECT_NAME PHOENIX_API_KEY MAX_WORKFLOW_REVISIONS
 WORKFLOW_RECOMMENDATION_ENABLED WORKFLOW_SIMILARITY_SCORE
+    MAX_PLAN_CANDIDATES AGENT_HISTORY_MESSAGE_LIMIT ANALYSIS_DATASETS AGENT_DISCOVERY_MAX_ROUNDS
 """.split())
 EXTRA_KEYS = {
     "MODEL_CATALOG", "DEFAULT_MODEL",
@@ -266,7 +268,8 @@ def load_settings(
         value = merged[key]
         if value is None and key not in optional:
             raise ConfigurationError(f"Null is not allowed for {key}")
-        agent_env[key] = None if value is None else str(value)
+        agent_env[key] = (json.dumps(value) if key == "ANALYSIS_DATASETS" and isinstance(value, Mapping)
+                          else None if value is None else str(value))
     try:
         agent = _agent_settings_from_mapping(agent_env)
     except (ValueError, TypeError, AttributeError):

@@ -1,0 +1,9 @@
+{
+  "passed": false,
+  "phase": "initial real LLM discovery",
+  "http_journey_timeout_seconds": 240,
+  "observed_issue": "Repeated read_skill/search_tools calls, growing prompt, no final plan within the deadline",
+  "evidence": "Phoenix LLM tool_calls continued to request already read data_quality_check and data_load metadata; individual completed ChatCompletion samples were approximately 3 to 4 seconds",
+  "correction": "MetadataDiscoveryMiddleware prevents repeated full observations and forces synthesis after duplicate discovery or configured max rounds; recursion is bounded at 32",
+  "executor_submissions": 0
+}

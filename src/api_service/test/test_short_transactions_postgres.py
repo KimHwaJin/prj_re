@@ -134,9 +134,9 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
         queued = []
         for sid in sessions:
             state = (await h.client.get(f'/api/v1/sessions/{sid}/runs', headers=headers(h.user['user_id']))).json()['items'][0]
-            response = await h.client.post(f"/api/v1/sessions/{sid}/runs/{state['id']}/resume",
+            response = await h.client.post(f"/api/v1/sessions/{sid}/runs",
                 headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-                json={'command': {'approved': True}, 'resume_token': state['resume_token']})
+                json={'run_id':state['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': state['resume_token']})
             assert response.status_code == 202, response.text
             queued.append(response.json())
     jobs = [asyncio.create_task(execute_queued()) for _ in queued]
@@ -154,7 +154,7 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
             assert response.status_code == 200 and response.json()['status'] == 'running', response.text
         blocked = await h.client.post(f'/api/v1/sessions/{sessions[0]}/runs',
             headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-            json={'input': {'messages': [{'role': 'user', 'content': 'blocked'}]}})
+            json={'input': {'content': [{'type': 'text', 'text': 'blocked'}]}})
         assert blocked.status_code == 409
         assert all(not job.done() for job in jobs)
         assert h.holds and max(h.holds) < time.perf_counter() - begun

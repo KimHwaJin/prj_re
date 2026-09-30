@@ -4,7 +4,7 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 브랜치: `feature/refactor-base`. 사용자 요청으로 036~037의 계약·prototype 커밋 `f6db511`을 fast-forward 병합했다. 충돌 없이 문서·schema·개발용 검증 코드 28개 파일을 통합했으며 파생 브랜치는 보존했다. 실제 API·DB·LangGraph 연결은 미구현이다. 베이스 병합 이력은 다음과 같다. 사용자 요청으로 028~035의 `a1e2f82`까지 fast-forward 병합했다. 충돌·추가 코드 변경 없이 8개 작업 commit을 반영했고 파생 브랜치는 보존했다. 병합 상태 기록은 별도 문서 commit으로 남긴다. 원격 push·배포 미수행.
+현재 작업 브랜치: `feature/agentic-analysis-runtime` (038). `feature/refactor-base`의 `680c6d2`에서 분기했다. 036~037 계약은 베이스에 병합돼 있고, 베이스 및 파생 36개 브랜치는 prj_re에 push된 상태다. 038은 실제 API·계획 Graph·HITL·SSE 연결과 실제 모델/DB/Phoenix·회귀·wheel 검증을 완료했다. 새 기능은 아직 베이스 병합·원격 push·배포하지 않았다.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -59,6 +59,7 @@
 | 035 | API 프로세스·Run 동시 실행 수 비교 | 21회 실측·독립 검산·보고서 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](035-process-concurrency-benchmark.md) |
 | 036 | Agent Workflow JSON 계약 초안 | 설계·오프라인 계약 검증 완료 / 런타임 미구현·베이스 병합 완료 | 2026-09-30 | [작업 기록](036-agentic-workflow-contract-draft.md) |
 | 037 | 계획 승인 화면·수정 요청·Executor 제출 계약 | 개발용 prototype·오프라인/소규모 Tool/Executor 요청 모델 검증 완료 / 서비스 미연결·베이스 병합 완료 | 2026-09-30 | [작업 기록](037-plan-interaction-executor-contract.md) |
+| 038 | 실제 모델 기반 계획·HITL·통합 Run/SSE Runtime | 계획 승인 단계 구현·실제 모델/DB/SSE/Phoenix·회귀/wheel 검증 완료 / Executor 이행 전 | 2026-09-30 | [변경·검증·제한](038-agentic-planning-runtime.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

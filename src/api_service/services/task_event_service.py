@@ -35,6 +35,8 @@ class TaskEventService:
         if sequence is None:
             # FAQ 등 routing 후 hard-delete된 임시 Task에는 SSE event를 남기지 않습니다.
             return None
+        if payload.get('schema_version') == 1 and payload.get('type') == event_type:
+            payload = {**payload, 'sequence': sequence}
         event = TaskEventModel(
             task_id=task_id,
             run_id=run_id,

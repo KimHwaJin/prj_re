@@ -110,7 +110,7 @@ class PublicRunService:
     async def create(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunStart, key: str) -> PublicRunResource:
         payload = RunCreate(**payload.model_dump())
         reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume", "_model_selection", "_resume_target", "_resume_started", "_checkpoint_interrupt_id", "_initial_protocol", "_initial_started"}
-        if reserved.intersection(payload.metadata):
+        if reserved.intersection(payload.metadata) or any(k.startswith('_') for k in payload.metadata):
             raise HTTPException(status_code=422, detail="Execution identity metadata is managed by the server.")
         invocation = await RunService.create(db, user_id, session_id, payload, key)
         return await PublicRunService.read(db, user_id, session_id, invocation.public_run_id)
@@ -131,6 +131,23 @@ class PublicRunService:
             return current
         if current.status != "waiting_input" or current.resume_token != payload.resume_token:
             raise HTTPException(status_code=409, detail="Run is not waiting for this input; refresh Run state.")
+        latest = await db.get(Run, payload.resume_token)
+        if (latest.metadata_json or {}).get('_agent_runtime') == 'agentic-planning-v1':
+            from service_contracts.plan_review import patch_review
+            from service_settings import get_settings
+            session = await RunService._session(db, user_id, session_id)
+            action = (payload.command or {}).get('resume') if isinstance(payload.command, dict) else None
+            reviews = latest.metadata_json.get('_plan_reviews', [])
+            selected = next((r for r in reviews if r['plan_id'] == (action or {}).get('plan_id')), None)
+            if selected is None:
+                raise HTTPException(422, 'Unknown plan.')
+            if (action or {}).get('plan_revision') != selected['plan_revision']:
+                raise HTTPException(409, 'Stale plan revision; refresh Run state.')
+            try:
+                patch_review(selected, action, datasets=get_settings().agent.analysis_datasets,
+                    context={'user_id': str(user_id), 'project_id': str(session.project_id), 'session_id': str(session_id)})
+            except (ValueError, TypeError) as exc:
+                raise HTTPException(422, str(exc)) from exc
         await RunService.create(db, user_id, session_id, command, key)
         return await PublicRunService.read(db, user_id, session_id, current.id)
 

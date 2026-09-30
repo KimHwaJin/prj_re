@@ -50,7 +50,7 @@ assert SOURCE_ROOT == installed.resolve()
 for prefix in TOOL_SOURCE_PREFIXES:
     assert resolve_tool_source(prefix + 'eda/profile_data.py', installed) == TOOLS_ROOT / 'eda/profile_data.py'
 roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
-         'conditional_decider', 'faq', 'report_writer')
+         'conditional_decider', 'faq', 'report_writer', 'conversation')
 for role in roles:
     prompt = files(f'agent_service.agents.analysis.agent_builders.{role}').joinpath('prompt.md')
     assert prompt.read_text(encoding='utf-8').strip()
@@ -68,6 +68,11 @@ for field in ('routing_agent', 'analysis_intent_agent', 'skill_selector_agent',
     role = getattr(production_deps, field)
     assert isinstance(role, RoleAgent)
     assert role.agent.checkpointer is False
+from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent as build_conversation
+from agent_service.agents.analysis.planning.catalog import AssetCatalog
+from agent_service.agents.analysis.dependencies import create_chat_model
+conversation = build_conversation(create_chat_model(production_settings), AssetCatalog())
+assert isinstance(conversation, RoleAgent) and conversation.agent.checkpointer is False
 settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED':False,
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
@@ -75,9 +80,15 @@ paths = app.openapi()['paths']
 assert any(p.endswith('/runs') for p in paths)
 assert '/api/v1/tasks/{task_id}' in paths
 assert '/api/v1/admin/tasks/{task_id}' in paths
-for suffix in ('resume', 'cancel', 'stream'):
+for suffix in ('cancel', 'stream'):
     assert '/api/v1/tasks/{task_id}/' + suffix not in paths
     assert '/api/v1/sessions/{session_id}/runs/{run_id}/' + suffix in paths
+
+assert '/api/v1/sessions/{session_id}/runs/{run_id}/resume' not in paths
+assert '/api/v1/sessions/{session_id}/runs/stream' in paths
+assert files('service_contracts').joinpath('resources/workflow-definition.schema.json').is_file()
+assert files('agent_service.agents.analysis.agent_builders.conversation').joinpath('prompt.md').is_file()
+assert files('agent_service.agents.analysis.planning').joinpath('fixtures/quality-review.json').is_file()
 
 agent_settings = load_agent_settings({'MODEL_PROVIDER':'mock', 'DATA_MOCK':'true',
     'DEMO_ARTIFACTS_ENABLED':'false', 'EXECUTOR_SUBMIT_ENABLED':'false', 'EXECUTOR_SOURCE_TYPE':'INLINE'})
@@ -92,10 +103,23 @@ async def smoke():
         state = await graph.ainvoke(Command(resume=value), cfg)
     assert state['execution_steps']
     assert state['executor_submit_response']['skipped']
-    return len(state['execution_steps'])
+    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from agent_service.agents.analysis.planning.graph import build_planning_graph
+    planning_settings = load_settings(config={'MODEL_PROVIDER': 'mock', 'ANALYSIS_DATASETS': {
+        'package-data': {'title':'Package fixture', 'scope':'GLOBAL', 'runtime_path':'/workspace/pv/example.parquet'}}}, environ={})
+    runtime = PlanningRuntime(planning_settings.agent)
+    graph = build_planning_graph(runtime, checkpointer=InMemorySaver())
+    state = await graph.ainvoke({'user_id':str(uuid4()), 'project_id':str(uuid4()), 'session_id':session,
+        'run_id':str(uuid4()), 'user_request':'품질 분석 계획', 'model_selection':runtime.models.select().model_dump()}, cfg)
+    plan = state['plan_views'][0]
+    state = await graph.ainvoke(Command(resume={'resume': {'action':'approve_plan',
+        'plan_id':plan['plan_id'], 'plan_revision':plan['plan_revision']}}), cfg)
+    assert state['approved_snapshot']['dataset_bindings']['dataset']['dataset_id'] == 'package-data'
+    assert state['final_response']['status'] == 'plan_approved'
+    return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
     'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
     'removed_agent_packages_in_wheel':False, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
-    'create_agent_roles':7, 'role_checkpointers_disabled':True}))
+    'create_agent_roles':8, 'role_checkpointers_disabled':True}))

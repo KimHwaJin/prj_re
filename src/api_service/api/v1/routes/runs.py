@@ -18,6 +18,7 @@ from api_service.schemas.common.run_schema import (
     PublicRunResource,
     RunResume,
 )
+from service_contracts.run_request import RunRequest
 from api_service.services.run_service import RunService
 from api_service.services.public_run_service import PublicRunService, project
 from config import settings
@@ -28,7 +29,7 @@ router = APIRouter(tags=["runs"])
 
 @router.post("/sessions/{session_id}/runs", response_model=PublicRunResource, status_code=status.HTTP_202_ACCEPTED)
 async def create_run(
-    session_id: UUID, payload: RunStart, response: Response,
+    session_id: UUID, payload: RunRequest, response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db),
 ):
@@ -36,24 +37,55 @@ async def create_run(
         raise HTTPException(status_code=400, detail="Idempotency-Key is required.")
     if len(idempotency_key) > 255:
         raise HTTPException(status_code=422, detail="Idempotency-Key must not exceed 255 characters.")
-    run = await PublicRunService.create(db, user_id, session_id, payload, idempotency_key)
+    run = await submit_request(db, user_id, session_id, payload, idempotency_key)
     response.headers["Location"] = f"/api/v1/sessions/{session_id}/runs/{run.id}"
     return run
 
 
-@router.post("/sessions/{session_id}/runs/{run_id}/resume", response_model=PublicRunResource, status_code=status.HTTP_202_ACCEPTED)
-async def resume_run(
-    session_id: UUID, run_id: UUID, payload: RunResume, response: Response,
-    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-    user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db),
+async def submit_request(db, user_id, session_id, payload, key):
+    if not key or not key.strip():
+        raise HTTPException(400, 'Idempotency-Key is required.')
+    if len(key) > 255:
+        raise HTTPException(422, 'Idempotency-Key must not exceed 255 characters.')
+    if payload.command is not None:
+        return await PublicRunService.resume(db, user_id, session_id, payload.run_id,
+            RunResume(command=payload.command.model_dump(mode='json', exclude_unset=True), resume_token=payload.resume_token), key)
+    if any(part.type != 'text' for part in payload.input.content):
+        raise HTTPException(422, 'Image/file input requires the future authorized attachment service; text input is supported now.')
+    text = '\n'.join(part.text for part in payload.input.content).strip()
+    if not text:
+        raise HTTPException(422, 'A non-blank user message is required.')
+    return await PublicRunService.create(db, user_id, session_id,
+        RunStart(input={'messages': [{'role': 'user', 'content': text}]}, main_model_name=payload.main_model_name), key)
+
+
+@router.post('/sessions/{session_id}/runs/stream')
+async def create_run_stream(
+    request: Request, session_id: UUID, payload: RunRequest,
+    idempotency_key: str | None = Header(default=None, alias='Idempotency-Key'),
+    last_event_id: str | None = Header(default=None, alias='Last-Event-ID'),
+    user_id: UUID = Depends(get_stream_user_id, scope='function'),
+    db: AsyncSession = Depends(get_db, scope='function'),
 ):
-    if not idempotency_key or not idempotency_key.strip():
-        raise HTTPException(status_code=400, detail="Idempotency-Key is required.")
-    if len(idempotency_key) > 255:
-        raise HTTPException(status_code=422, detail="Idempotency-Key must not exceed 255 characters.")
-    run = await PublicRunService.resume(db, user_id, session_id, run_id, payload, idempotency_key)
-    response.headers["Location"] = f"/api/v1/sessions/{session_id}/runs/{run.id}"
-    return run
+    # Validate the cursor before enqueueing; a malformed HTTP request has no side effects.
+    sequence = parse_sequence(last_event_id)
+    run = await submit_request(db, user_id, session_id, payload, idempotency_key)
+    from api_service.services.run_stream_service import RunStreamResponse
+    response = RunStreamResponse(request.app.state.run_stream_hub, request,
+        (user_id, session_id, run.id), sequence)
+    response.headers['Location'] = f'/api/v1/sessions/{session_id}/runs/{run.id}'
+    response.headers['X-Run-Id'] = str(run.id)
+    return response
+
+
+def parse_sequence(value):
+    try:
+        result = int(value or '0')
+        if result < 0:
+            raise ValueError
+        return result
+    except ValueError as exc:
+        raise HTTPException(400, 'Last-Event-ID must be a non-negative integer.') from exc
 
 
 @router.get("/sessions/{session_id}/runs", response_model=Page[PublicRunResource])
@@ -122,12 +154,7 @@ async def stream_run(
     """Replay durable events after Last-Event-ID, then wait for commit notifications."""
 
     public = await PublicRunService.read(db, user_id, session_id, run_id)
-    try:
-        initial_sequence = int(last_event_id or "0")
-        if initial_sequence < 0:
-            raise ValueError
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Last-Event-ID must be a non-negative integer.") from exc
+    initial_sequence = parse_sequence(last_event_id)
 
     from api_service.services.run_stream_service import RunStreamHub, RunStreamResponse
     application = getattr(request, 'app', None)

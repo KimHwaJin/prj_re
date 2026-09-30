@@ -167,7 +167,7 @@ def hold_idle(monkeypatch, resource):
 
 async def post_run(h):
     return await h.client.post(f'/api/v1/sessions/{h.session_id}/runs',headers={**headers(h.user['user_id']),'Idempotency-Key':str(uuid4())},
-                              json={'input':{'messages':[{'role':'user','content':'race'}]}})
+                              json={'input':{'content': [{'type': 'text', 'text': 'race'}]}})
 
 
 @pytest.mark.asyncio
@@ -270,7 +270,7 @@ async def test_opposite_moves_and_different_session_admission_do_not_serialize(r
         # Shared project barrier must not serialize independent sessions.
         response=await asyncio.wait_for(h.client.post(f'/api/v1/sessions/{same_project}/runs',
             headers={**headers(h.user['user_id']),'Idempotency-Key':'independent'},
-            json={'input':{'messages':[{'role':'user','content':'independent'}]}}),3)
+            json={'input':{'content': [{'type': 'text', 'text': 'independent'}]}}),3)
         assert response.status_code==202,response.text
 
 
@@ -381,8 +381,8 @@ async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
             entered.set(); await release.wait()
         return result
     monkeypatch.setattr(TaskEventService,'append',held)
-    resuming=asyncio.create_task(h.client.post(endpoint+'/resume',headers={**headers(h.user['user_id']),'Idempotency-Key':'resume'},
-        json={'resume_token':current['resume_token'],'command':{'approved':True}}))
+    resuming=asyncio.create_task(h.client.post(f'/api/v1/sessions/{h.session_id}/runs',headers={**headers(h.user['user_id']),'Idempotency-Key':'resume'},
+        json={'run_id':first['id'], 'resume_token':current['resume_token'],'command':{'resume':{'action':'approve_plan','plan_id':'test-plan','plan_revision':1}}}))
     moving=None
     try:
         await asyncio.wait_for(entered.wait(),5)

@@ -1,92 +1,91 @@
 # 공개 Run API 계약
 
-019 구현 / 022 Task 진단 계약 반영 · 2026-09-29
+038 구현 · 2026-09-30. 현재 새 분석 Runtime은 **답변 또는 실행 계획 승인 저장까지** 연결한다. 승인 후 `success`는 계획 단계의 성공이며 Executor 실행 성공이 아니다. `result.final_response.status=plan_approved`로 구분한다. 다음 작업에서 승인 뒤 Executor 그래프를 연결한다.
 
-`run_id`(응답 필드 `id`)는 최초 접수부터 여러 HITL과 Executor 최종 결과까지 유지한다. 내부 `agent_runs.run_id`는 실행 구간 ID이며, 공개 ID는 `agent_runs.public_run_id`다. 초기 구간에서는 두 값이 같다. 프론트는 `task_id`나 `checkpoint_run_id`로 재개 대상을 조립하지 않는다.
+## 요청·재개
 
-## 호출 순서
+등록된 공개 사용자 ID를 `X-User-Id`로 보낸다. 새 입력과 HITL 응답 모두 같은 경로를 사용한다.
 
-모든 호출에 등록된 사용자의 `X-User-Id`를 보낸다. 최초 생성과 각 재개 명령에 `Idempotency-Key`를 보낸다. 한 명령을 네트워크 오류로 재전송할 때는 키와 body를 모두 유지하며, 다음 승인 응답에는 새 키를 사용한다.
-
-1. `POST /api/v1/sessions/{session_id}/runs`
+`POST /api/v1/sessions/{session_id}/runs`
 
 ```json
-{"input":{"messages":[{"role":"user","content":"불량 예측 분석"}]}}
+{"input":{"content":[{"type":"text","text":"데이터 품질을 분석해줘"}]},"main_model_name":"default"}
 ```
 
-202와 `id=R`, `status=pending`, `Location=/api/v1/sessions/{session_id}/runs/R`를 받는다.
+`main_model_name`은 선택 사항이며 시작 시 서버의 모델 catalog에서 고정한다. 동일 Run의 resume에서는 모델을 변경할 수 없다. 모델 alias는 실제 모델명이 아니라 등록된 이름이다. `input`과 `command`는 둘 중 하나만 보낸다. `input.messages`, 임의 metadata, 별도 `/runs/{run_id}/resume` 경로는 새 공개 계약에서 제거했다.
 
-2. `GET /api/v1/sessions/{session_id}/runs/R`
+202 응답에는 안정된 공개 `id`, 상태와 Location이 있다. `Idempotency-Key`는 필수이며 최대 255자다. 네트워크 재전송에는 **동일 키·동일 body**, 다음 액션에는 새 키를 사용한다. 같은 키를 다른 명령에 사용하면 409다. 재전송은 접수 당시 snapshot이 아니라 해당 Run의 현재 상태를 반환한다.
+
+계획 대기 GET 또는 SSE의 `interaction.opened/updated`에서 계획·버전·현재 `resume_token`을 얻는다.
 
 ```json
 {
-  "id":"R",
-  "status":"waiting_input",
-  "resume_token":"현재 승인 대기에서 받은 UUID",
-  "interrupt":[{"kind":"USER_APPROVAL"}],
-  "completed_at":null
+  "run_id":"공개 Run UUID",
+  "resume_token":"현재 대기의 UUID",
+  "command":{"resume":{
+    "action":"approve_plan",
+    "plan_id":"선택한 계획 UUID",
+    "plan_revision":1,
+    "input_values":{"dataset":"default-nce"},
+    "step_changes":[],
+    "execution_overrides":{}
+  }}
 }
 ```
 
-예시는 설명용 발췌다. 실제 ID/token은 UUID이며 다른 timestamp·진단 필드도 응답한다. `resume_token`은 상태에서 받은 값을 그대로 돌려주는 승인 단계 식별자다. 인증 수단이 아니며 다음 승인 단계에서 바뀐다.
+`edit_plan`은 수정한 화면을 다시 열고 `approve_plan`은 최종 수정과 승인을 함께 적용한다. 계획 후보 하나를 선택한다. editable 입력만 수정하고 Tool 인자 수정은 `step_changes=[{"step_id":"outliers","parameter":"method","value":"iqr"}]`로 보낸다. 이전 단계 결과로 연결된 DataFrame 등은 편집할 수 없다.
 
-3. `POST /api/v1/sessions/{session_id}/runs/R/resume`
+`excluded_step_ids`는 보내면 전체 제외 목록을 교체하고, 생략하면 기존 제외를 유지한다. 의존성이나 판단 근거를 깨뜨리는 제외는 422다. 빈 문자열, 미입력, JSON null은 서로 다르며 입력 schema가 결정한다. 미확정 필수 입력은 화면에 비어 있고 승인 전 입력해야 한다. 수정 후 변경된 계획의 revision은 증가한다. 오래된 token/revision은 409, 올바르지 않은 schema·데이터 범위·단계 제외는 422다. **API에서 검증에 실패하면 resume token을 소비하거나 Worker를 접수하지 않는다.**
+
+세션이 실행 중이거나 Executor를 기다리면 새 입력/사용자 resume를 거절한다. 다른 세션은 독립적으로 사용할 수 있다. 현재 단계에서 자연어로 전체 계획을 다시 생성하는 resume 액션은 아직 연결하지 않았다. 취소 후 새 요청으로 다시 제안받을 수 있다.
+
+## 스트림
+
+`POST /api/v1/sessions/{session_id}/runs/stream`은 위와 같은 body·헤더로 접수하고 SSE를 연결한다. 응답 `X-Run-Id`, `Location`으로 공개 Run을 확인한다. 연결 종료 후에도 Worker는 계속 실행한다. 동일 키·body로 POST 재연결하면 새 실행을 만들지 않는다.
+
+기존 Run에 연결하거나 재접속하려면 `GET /api/v1/sessions/{session_id}/runs/{run_id}/stream`을 사용한다. 브라우저 EventSource에서 사용자 헤더를 넣기 어려우므로 fetch 기반 SSE 클라이언트를 사용한다. `Last-Event-ID`는 마지막 durable sequence(0 이상의 정수)이며 구간을 넘어 이어진다. PostgreSQL 이벤트가 원본이며 LISTEN/NOTIFY와 프로세스 공유 cache로 연결마다 빠르게 DB를 폴링하지 않는다. HTTP 응답 대기 중 DB 세션을 보유하지 않는다.
 
 ```json
-{"command":{"approved":true},"resume_token":"조회에서 받은 UUID"}
+{
+  "schema_version":1,
+  "type":"interaction.opened",
+  "sequence":5,
+  "session_id":"세션 UUID",
+  "run_id":"공개 Run UUID",
+  "occurred_at":"2026-09-30T00:00:00+00:00",
+  "data":{
+    "interaction_id":"승인 화면 UUID",
+    "revision":1,
+    "kind":"plan_review",
+    "status":"open",
+    "resume_token":"현재 대기 UUID",
+    "summary":"계획과 입력값을 확인하고 승인해 주세요.",
+    "payload":{"plans":[],"notices":[]}
+  }
+}
 ```
 
-202 응답의 `id`와 Location은 계속 R이다. 현재 승인이 끝났거나 다른 단계의 token이면 409다. 동일 키·동일 body 재전송은 새 실행을 만들지 않고 해당 공개 Run의 **현재 상태**를 반환한다. 처음 접수 당시의 응답 snapshot을 고정 재생하는 방식은 아니다. 같은 키를 다른 body/다른 Run에 재사용하면 409다. 마이그레이션 이전의 resume 키는 새 token 계약과 동일한 명령인지 증명할 수 없어 재사용을 거절한다. 기존 대기 상태를 조회하고 새 token/body/키로 재개한다.
+위 plans 빈 배열은 envelope 설명용이며 실제 plan_review는 한 개 이상의 후보를 갖는다.
 
-4. Executor 제출 후 같은 GET에 `waiting_executor`가 표시된다. `resume_token=null`이며 사용자 resume와 같은 세션의 새 Run은 거절한다. 외부 완료 이벤트가 반영되면 같은 R이 `success/error/canceled` 등 최종 상태로 바뀌고 `result`에 Agent 응답이 담긴다. `completed_at`은 전체 작업이 끝났을 때만 설정된다.
+| 이벤트 | 화면 사용 |
+|---|---|
+| message.completed | user/assistant 대화, channel=answer/commentary |
+| activity.started/completed/updated | 진행 과정의 제목과 작업 ID |
+| interaction.opened/updated | 우측 계획·파라미터 승인 화면 |
+| interaction.resolved | 승인 화면 닫기, 승인 계획 표시 |
+| run.updated | 큐·실행·최종 상태 변경 |
+| run.snapshot | 현재 GET 상태와 cursor를 재동기화 |
 
-## 공개 상태
+Durable 이벤트에는 SSE `id`와 envelope sequence가 같다. `run.snapshot`은 현재 조회 결과로 durable 이벤트가 아니며 `sequence/id/occurred_at` 없이 `cursor`를 제공한다. Snapshot 자체의 cursor로 저장된 이벤트 처리 완료를 추정하지 않는다. `data`는 확장 가능한 객체이고 알 수 없는 이벤트는 sequence를 기록하고 무시할 수 있다. LLM이 생성하는 내부 JSON 토큰, Tool 소스 코드, 체크포인트 state는 스트림에 그대로 보내지 않는다. 기존 저장된 `task.*`, `agent.event`도 새 envelope의 요약으로 변환한다. 모델 자체의 구조화 JSON을 문자 단위로 보여주는 token stream은 이 Runtime에서 비활성화했다.
 
-| 상태 | 의미 | 사용자 동작 |
-|---|---|---|
-| pending | 실행 큐/확인된 실패 재시도 대기 | 대기, 취소 요청 |
-| running | Agent 실행 중 | 대기, 취소 요청 |
-| waiting_input | 현재 HITL 응답 대기 | token과 함께 resume 또는 취소 |
-| waiting_executor | 장기 Executor 결과 대기 | 결과 대기; 사용자 resume 불가 |
-| recovery_required | 이전 실행 종료/소유권 확인 필요 | 자동 재실행·세션 해제 불가 |
-| success/error/timeout/canceled | 전체 작업 종료 | 같은 세션에서 새 Run 가능 |
+## 조회·취소·진단
 
-`attempt_count`/`next_attempt_at`는 현재 내부 실행 구간의 재시도 진단값이다. 전체 구간 수가 아니다. Task/checkpoint 진단 필드는 기존 연계 확인용으로 남겨 두지만 프론트 제어에 필요하지 않다. 기존 내부 Run URL의 GET/join은 공개 루트의 최신 상태를 반환하는 별칭이다.
+GET `.../runs`, `.../runs/{id}`, `.../runs/{id}/logs`, `.../runs/{id}/join`은 유지한다. join은 즉시 조회 별칭이다. task_id/checkpoint_run_id는 호환 진단 필드이며 클라이언트가 재개 대상을 만들 때 사용하지 않는다. 공개 ID는 여러 승인 구간에서 유지하고 내부 invocation ID는 구간마다 달라진다.
 
-## 목록·로그·이벤트
+POST `.../runs/{id}/cancel`은 기존 취소 처리와 실행 종료 확인을 유지한다. Executor 대기 중 로컬 상태만 종료하는 취소는 여전히 거절한다. Task는 조회 진단만 제공한다.
 
-- `GET .../runs`: 내부 구간마다 항목을 만들지 않고 논리 Run당 하나. 최초 접수 시간 기준으로 기존 cursor pagination을 사용한다.
-- `GET .../runs/R/logs`: 모든 구간의 로그를 모아 반환하며 응답 `run_id`는 R로 정규화한다. 기존 log_id와 저장된 내부 구간 관계는 보존한다.
-- `GET .../runs/R/join`: 기존과 동일하게 즉시 상태 조회하는 별칭이다. 완료까지 HTTP 요청을 붙잡는 기능은 추가하지 않았다.
-- `GET .../runs/R/stream`: 기존 SSE를 전체 Run 범위로 연결한다. HITL에서도 연결을 유지할 수 있고 재접속 시 같은 URL을 사용한다. `Last-Event-ID`는 durable Task 이벤트의 단조 증가 sequence다. 구간을 넘겨 재생하며 최종 상태와 남은 이벤트를 전달한 후 닫는다.
-- SSE `run.state`는 현재 GET과 같은 상태 snapshot이고 durable ID를 발행하지 않는다. 클라이언트는 durable 이벤트의 마지막 ID를 보관한다. backlog를 먼저 재생한 뒤 상태 snapshot을 전달한다. 하위 호환을 위해 기존 `task.*` 이벤트명/구간 상태 payload는 유지하며 프론트의 전체 실행 상태는 `run.state`를 사용한다.
-- SSE 구현은 여전히 서버 내부 DB 폴링이다. PostgreSQL LISTEN/NOTIFY 전환이나 폴링 부하 개선을 이번 성과로 주장하지 않는다. 연결 대기/yield 동안 DB session은 닫혀 있다.
+## 파일 입력·배포 이행
 
-## 취소
+입력 계약에는 `{"type":"image","file_id":"UUID"}`, `{"type":"file","file_id":"UUID"}` 참조 형식을 마련했지만 업로드·소유권 검증·text-only/VLM 처리가 미구현이므로 현재 422로 명확히 거절한다. 전달되지 않은 첨부를 무시하고 분석한 척하지 않는다.
 
-`POST .../runs/R/cancel`은 최신 내부 구간/Task에 적용한다. 실행 중이면 실제 중단 확인까지 상태·세션 보호를 유지한다. 사용자 응답 대기 중 취소는 즉시 종료하며 반복 취소는 같은 canceled 상태를 반환한다.
-
-Executor에 이미 제출한 작업은 외부 취소 확인 계약을 구현하지 않았으므로 cancel에 409를 반환한다. 로컬 Task만 취소하여 외부 작업이 살아 있는 세션을 해제하지 않는다. Task cancel 경로는 022에서 제거했으며 취소는 이 Run 경로만 사용한다.
-
-## 기존 클라이언트 변경
-
-- `POST .../runs`의 command/metadata.resume_run_id 재개 방식은 종료한다. `/runs/R/resume`과 `resume_token`으로 바꾼다.
-- 공개 상태 `interrupted` 검사는 `waiting_input`/`waiting_executor`로 분리한다.
-- Task GET은 [진단 API](task-diagnostics-api.md)로 유지한다. Task resume/cancel/stream은 제거되어 404이며 Runs로 통일한다. Task 목록·내부 구간 이력은 cursor Page 응답이고, 내부 invocation_id와 공개 public_run_id를 구분한다. 관리자 진단은 별도 /admin 경로다.
-- 현재 공유 부하 시나리오 `scripts/loadtest/scenario.py`는 새 계약을 사용한다. 사전 생성된 테스트 관리자를 `DTEST_LOADTEST_ADMIN_USER_ID`로 지정한다. 과거 진단/벤치마크는 저장된 정확한 이전 commit을 비교하는 자료이므로 일괄 치환하지 않는다.
-- 내부 데모 UI의 전면 연계 수정은 이번 범위가 아니다.
-
-## 배포와 데이터 이관
-
-1. API·Run Worker·Executor 이벤트 Worker를 drain/중지한다. 종료 불명 작업의 자동 재실행은 금지한다.
-2. DB backup 후 동일 설정 snapshot으로 `python -m alembic -c alembic.crud.ini upgrade head`를 실행한다.
-3. 0021은 기존 Task root 또는 같은 세션의 유효한 checkpoint root로 public_run_id를 채운다. 잘못된 UUID나 타 세션의 metadata 참조는 연결 근거로 사용하지 않는다. 모호한 비루트 연결이나 같은 공개 ID에 서로 다른 Task/event sequence가 존재하면 명시적으로 실패하므로 데이터를 확인한 뒤 재실행한다.
-4. 새 코드만 기동하고 알려진 기존 Run/대기 상태를 GET으로 검증한다. 구 코드와 신 코드의 혼합 writer 배포는 지원하지 않는다.
-
-기존 내부 Run/Task/메시지/log/체크포인트/Executor binding ID는 바꾸지 않는다. 체크포인트 테이블 migration은 추가하지 않는다. 0021 downgrade는 새 컬럼/인덱스/FK만 제거하며 기존 행을 합치거나 삭제하지 않는다. 외부 대기는 DB 행과 체크포인트에 보존되고 실행 슬롯/DB 연결을 유지하지 않는다.
-
-## Run별 모델 선택
-
-최초 접수의 `main_model_name`은 등록 별칭이며 생략 시 기본 모델이다. 응답의
-`main_model_name`/`model_revision`은 HITL과 Executor 이벤트 동안 고정된다.
-[등록 방법·재개·배포 정책](run-model-selection.md)을 참고한다.
+038의 그래프 node/state 계약은 이전 Agent와 다르다. **이전 그래프의 pending/대기 Run 및 checkpoint를 새 Runtime으로 자동 이어 실행하지 않는다.** 새 Runtime 전환은 기존 실행을 정리하고 새 세션/테스트 DB에서 검증한 뒤 진행한다. 실제 Gaia 제공 router, Executor 이벤트 재개, pgvector 추천·Workflow CRUD, 프로젝트 메모리, 전체 UI는 후속 단계다. 과거 벤치마크는 해당 이전 commit을 재현하는 자료로 보존한다. 현재 공용 loadtest는 계획 승인 대기만 측정하며 submit 모드는 아직 거절한다.

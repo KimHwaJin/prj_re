@@ -530,7 +530,7 @@ class RunService:
         # transaction). Only plain values cross the graph execution boundary.
         await db.commit()
 
-        token_events = LLMTokenEventBuffer(task_id=execution_task_id, run_id=execution_run_id)
+        token_events = LLMTokenEventBuffer(task_id=execution_task_id, run_id=execution_run_id, expose_tokens=False)
         token_events.start()
         try:
             try:
@@ -740,6 +740,10 @@ class RunService:
             await db.refresh(run)
             return run
         RunService._finish_run(run, status, interrupt=interrupt_payload(state))
+        if state.get('agent_runtime') == 'agentic-planning-v1':
+            run.metadata_json = {**(run.metadata_json or {}), '_agent_runtime': 'agentic-planning-v1',
+                                 '_plan_reviews': state.get('reviews', []),
+                                 '_approved_plan': state.get('approved_snapshot')}
         run.agent_response = {
             "route": route,
             "final_response": state.get("final_response"),

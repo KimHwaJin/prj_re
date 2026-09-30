@@ -1,0 +1,208 @@
+{
+  "schema_version": "2.0-draft",
+  "workflow_id": "quality_review",
+  "definition_version": 1,
+  "name": "저장된 데이터의 품질과 이상치 후보 확인",
+  "description": "레포에 존재하는 Tool만 참조하는 정의 예제. 데이터 경로는 실행 시 검증된 참조에서 해석한다.",
+  "goal": "기본 품질과 기술 통계를 확인하고 필요한 경우 이상치 후보를 설명한다.",
+  "tags": [
+    "quality",
+    "eda"
+  ],
+  "inputs": {
+    "dataset": {
+      "title": "분석 데이터",
+      "description": "실행 가능한 Parquet 파일의 검증된 참조. 원본 경로를 사용자가 임의로 지정하는 API가 아니다.",
+      "kind": "data_reference",
+      "required": true,
+      "editable": true,
+      "value_schema": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "load",
+      "skill_id": "data_load",
+      "tool_id": "data_load",
+      "description": "검증된 데이터 참조를 로드한다.",
+      "depends_on": [],
+      "arguments": {
+        "parquet_path": {
+          "source": "workflow_input",
+          "name": "dataset"
+        }
+      }
+    },
+    {
+      "id": "profile",
+      "skill_id": "data_quality_check",
+      "tool_id": "profile_data",
+      "description": "기본 구조와 결측 상태를 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    },
+    {
+      "id": "statistics",
+      "skill_id": "data_quality_check",
+      "tool_id": "compute_statistics",
+      "description": "컬럼별 기술 통계를 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    },
+    {
+      "id": "outliers",
+      "skill_id": "data_quality_check",
+      "tool_id": "detect_outliers",
+      "description": "원본을 수정하지 않고 이상치 후보를 확인한다.",
+      "depends_on": [
+        "load",
+        "profile",
+        "statistics"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        },
+        "method": {
+          "source": "agent_decision",
+          "decision_id": "outlier_method"
+        }
+      },
+      "when": {
+        "op": "eq",
+        "left": {
+          "source": "agent_decision",
+          "decision_id": "inspect_outliers"
+        },
+        "right": {
+          "source": "literal",
+          "value": true
+        }
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "inspect_outliers",
+      "after_steps": [
+        "profile",
+        "statistics"
+      ],
+      "instruction": "품질 결과와 기술 통계에 비추어 이상치 후보 확인이 유효한지 판단한다. 근거가 부족하면 사용자에게 확인하고, 추측으로 실행하지 않는다.",
+      "output_schema": {
+        "type": "boolean"
+      }
+    },
+    {
+      "id": "outlier_method",
+      "after_steps": [
+        "profile",
+        "statistics"
+      ],
+      "instruction": "이상치 탐지가 필요한 경우 Skill 지침과 통계 결과에 맞는 방법을 선택한다.",
+      "output_schema": {
+        "type": "string",
+        "enum": [
+          "iqr",
+          "zscore",
+          "isolation_forest"
+        ]
+      }
+    }
+  ],
+  "execution": {
+    "mode": "MULTI",
+    "repair_level": 0,
+    "max_repair_attempts": 0,
+    "review_mode": "decision_boundary"
+  },
+  "expected_outputs": [
+    {
+      "id": "profile_result",
+      "kind": "analysis_result",
+      "description": "기본 품질 결과",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "profile",
+        "selector": [
+          "profile"
+        ]
+      },
+      "format": "native"
+    },
+    {
+      "id": "statistics_result",
+      "kind": "analysis_result",
+      "description": "컬럼별 통계",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "statistics",
+        "selector": [
+          "statistics"
+        ]
+      },
+      "format": "native"
+    },
+    {
+      "id": "outlier_result",
+      "kind": "analysis_result",
+      "description": "실행한 경우 이상치 후보",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "outliers",
+        "selector": []
+      },
+      "format": "native",
+      "when": {
+        "op": "eq",
+        "left": {
+          "source": "agent_decision",
+          "decision_id": "inspect_outliers"
+        },
+        "right": {
+          "source": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "id": "report",
+      "kind": "report",
+      "description": "실제로 실행한 단계의 근거로 작성한 Markdown 보고서",
+      "required": true,
+      "source": {
+        "source": "agent_report",
+        "evidence_steps": [
+          "profile",
+          "statistics",
+          "outliers"
+        ]
+      },
+      "format": "markdown"
+    }
+  ]
+}

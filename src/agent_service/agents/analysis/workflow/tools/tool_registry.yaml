@@ -33,6 +33,7 @@ tools:
     packages:
     - pandas
   extract_data:
+    availability: test_only
     category: data_io
     function_name: extract_data
     source: data_io/extract_data.py
@@ -111,6 +112,7 @@ tools:
           selector: '["cache_key"]'
     packages: []
   transform_nce:
+    availability: test_only
     category: data_io
     function_name: transform_nce
     source: data_io/transform_nce.py
@@ -172,6 +174,7 @@ tools:
     packages:
     - pandas
   transform_wt:
+    availability: test_only
     category: data_io
     function_name: transform_wt
     source: data_io/transform_wt.py

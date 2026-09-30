@@ -61,7 +61,12 @@ async def start_and_project(graph, config, graph_input, *, user_id, project_id,
         ), "initial_request_identity": identity, "initial_request_receipt": None}
         await mark_started(run_id=run_id, session_factory=session_factory)
         with span("graph.invoke"):
-            await graph.ainvoke(prepared, config=config, durability="sync")
+            if getattr(graph, 'name', None) == 'agentic-planning-v1':
+                async for emitted in graph.astream(prepared, config=config, stream_mode='values', durability='sync'):
+                    await projection.persist_graph_state(emitted, user_id=user_id, session_factory=session_factory,
+                                                         dispatcher=dispatcher, agent_run_id=run_id, trigger_message_id=trigger_message_id)
+            else:
+                await graph.ainvoke(prepared, config=config, durability="sync")
         snapshot = await graph.aget_state(config)
         require_finished(snapshot, identity)
     try:

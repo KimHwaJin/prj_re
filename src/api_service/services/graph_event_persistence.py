@@ -573,6 +573,10 @@ class GraphPersistenceDispatcher:
         *,
         context: GraphPersistenceContext,
     ) -> GraphPersistenceResult:
+        if state.get('agent_runtime') == 'agentic-planning-v1':
+            from api_service.services.plan_event_persistence import persist_plan_events
+            persisted = await persist_plan_events(db, state, context)
+            return GraphPersistenceResult(cursor=cursor, persisted=persisted, skipped=[])
         events, next_cursor = extract_graph_events(
             state,
             cursor,

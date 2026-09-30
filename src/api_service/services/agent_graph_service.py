@@ -66,93 +66,33 @@ class AgentGraphRuntime:
 
     def _load_graph_inputs(self) -> tuple[Any, Any, str]:
         try:
-            from agent_service.agents.analysis.dependencies import create_llm_dependencies
+            from agent_service.agents.analysis.planning.runtime import PlanningRuntime
         except ImportError as exc:
             raise RuntimeError(
                 f"Agent graph dependencies are not available: {exc}"
             ) from exc
 
         agent_settings = load_agent_settings()
-        dependencies = create_llm_dependencies(agent_settings)
+        dependencies = PlanningRuntime(agent_settings)
         checkpointer = (settings.graph_checkpointer or "postgres").strip().lower()
         return dependencies, agent_settings, checkpointer
 
     @asynccontextmanager
     async def _graph_context(self) -> AsyncIterator[Any]:
         with span("runtime.dependencies"):
-            dependencies, agent_settings, checkpointer = self._load_graph_inputs()
-        try:
-            from langgraph.checkpoint.memory import InMemorySaver
-
-            from api_service.agent_worker.api_bridge import ApiWorkerBridge
-            from agent_service.agents.analysis.graph import (
-                build_analysis_workflow_graph,
-            )
-            from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-            from api_service.services.workflow_persistence import workflow_store_from_environment
-            from api_service.worker import Settings as WorkerSettings
-        except ImportError as exc:
-            raise RuntimeError(
-                f"Agent graph dependencies are not available: {exc}"
-            ) from exc
-
-        from integrations.executor.client import ExecutorClient
-        async with ExecutorClient(agent_settings) as executor_client:
-            if checkpointer == "postgres":
-                async with AsyncExitStack() as stack:
-                    try:
-                        with span("runtime.bridge_open"):
-                            worker_bridge = await stack.enter_async_context(
-                                ApiWorkerBridge(self._worker_settings(WorkerSettings))
-                            )
-                    except Exception:
-                        logger.exception(
-                            "connection_open_failed component=worker_postgres_bridge"
-                        )
-                        raise
-                    try:
-                        with span("runtime.checkpointer_open"):
-                            graph_checkpointer = await stack.enter_async_context(
-                                create_checkpointer(
-                                    database_url=agent_settings.checkpoint_db_uri,
-                                    setup_on_start=agent_settings.checkpoint_setup_on_start,
-                                )
-                            )
-                    except Exception:
-                        logger.exception(
-                            "connection_open_failed component=checkpoint_postgres"
-                        )
-                        raise
-                    with span("runtime.graph_build"):
-                        graph = build_analysis_workflow_graph(
-                            dependencies,
-                            agent_settings,
-                            executor_client=executor_client,
-                            checkpointer=graph_checkpointer,
-                            bindings=worker_bridge.bindings,
-                            workflow_store=workflow_store_from_environment(),
-                        )
-                    self._observed_pools = (
-                        (worker_bridge.pool, "bridge_pool"),
-                        (graph_checkpointer.conn, "checkpoint_pool"),
-                    )
-                    yield graph
-                return
-
-            if checkpointer == "memory":
-                yield build_analysis_workflow_graph(
-                    dependencies,
-                    agent_settings,
-                    executor_client=executor_client,
-                    checkpointer=InMemorySaver(),
-                    workflow_store=workflow_store_from_environment(),
-                )
-                return
-
-            raise RuntimeError(
-                "GRAPH_CHECKPOINTER must be 'memory' or 'postgres', "
-                f"got {checkpointer!r}"
-            )
+            planning, agent_settings, kind = await asyncio.to_thread(self._load_graph_inputs)
+        from agent_service.agents.analysis.planning.graph import build_planning_graph
+        from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+        from langgraph.checkpoint.memory import InMemorySaver
+        if kind == 'postgres':
+            async with create_checkpointer(database_url=agent_settings.checkpoint_db_uri,
+                                           setup_on_start=agent_settings.checkpoint_setup_on_start) as saver:
+                self._observed_pools = ((saver.conn, 'checkpoint_pool'),)
+                yield build_planning_graph(planning, checkpointer=saver)
+        elif kind == 'memory':
+            yield build_planning_graph(planning, checkpointer=InMemorySaver())
+        else:
+            raise RuntimeError("GRAPH_CHECKPOINTER must be postgres or memory")
 
     def start(self) -> None:
         """Accept borrows for a new lifespan, without opening any connections."""

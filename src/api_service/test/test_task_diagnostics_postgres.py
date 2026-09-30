@@ -266,7 +266,11 @@ async def test_removed_commands_openapi_and_message_deferral(resources):
         assert path not in paths
         result = await h.client.request(method.upper(),f'/api/v1/tasks/{tid}/{suffix}',headers=headers(h.user['user_id']))
         assert result.status_code == 404
-        assert '/api/v1/sessions/{session_id}/runs/{run_id}/'+suffix in paths
+    assert '/api/v1/sessions/{session_id}/runs/{run_id}/resume' not in paths
+    assert 'post' in paths['/api/v1/sessions/{session_id}/runs']
+    assert 'post' in paths['/api/v1/sessions/{session_id}/runs/stream']
+    assert 'post' in paths['/api/v1/sessions/{session_id}/runs/{run_id}/cancel']
+    assert 'get' in paths['/api/v1/sessions/{session_id}/runs/{run_id}/stream']
     assert not paths['/api/v1/tasks/{task_id}']['get'].get('deprecated',False)
     assert 'post' in paths['/api/v1/messages']
     assert 'patch' in paths['/api/v1/messages/{message_id}']

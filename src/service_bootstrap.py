@@ -190,6 +190,8 @@ def attach_service(
             from api_service.services.agent_graph_service import runtime
             runtime.start()
             try:
+                from api_service.observability.phoenix import setup_phoenix
+                await asyncio.to_thread(setup_phoenix, settings.agent)
                 await background.start()
                 log.info("service_started profile=%s", settings.profile)
                 yield state
@@ -202,6 +204,8 @@ def attach_service(
                     await stream_hub.close()
                     await background.stop()
                     await close_resources()
+                    from api_service.observability.phoenix import shutdown_phoenix
+                    await asyncio.to_thread(shutdown_phoenix)
                 await protected_cleanup(shutdown())
 
     app.router.lifespan_context = combined_lifespan
