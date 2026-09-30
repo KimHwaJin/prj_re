@@ -1,0 +1,781 @@
+{
+  "$defs": {
+    "DecisionView": {
+      "additionalProperties": false,
+      "properties": {
+        "decision_id": {
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "evidence_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Steps",
+          "type": "array"
+        },
+        "guidance": {
+          "title": "Guidance",
+          "type": "string"
+        },
+        "value_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "title": "Value Schema"
+        },
+        "status": {
+          "const": "deferred",
+          "default": "deferred",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decision_id",
+        "evidence_steps",
+        "guidance",
+        "value_schema"
+      ],
+      "title": "DecisionView",
+      "type": "object"
+    },
+    "InputView": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "parameter",
+            "data_reference"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "editable": {
+          "title": "Editable",
+          "type": "boolean"
+        },
+        "value_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "title": "Value Schema"
+        },
+        "origin": {
+          "enum": [
+            "agent",
+            "workflow_default",
+            "user",
+            "unresolved"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "has_value": {
+          "title": "Has Value",
+          "type": "boolean"
+        },
+        "value": {
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "name",
+        "title",
+        "description",
+        "kind",
+        "required",
+        "editable",
+        "value_schema",
+        "origin",
+        "has_value"
+      ],
+      "title": "InputView",
+      "type": "object"
+    },
+    "InteractionData": {
+      "additionalProperties": false,
+      "properties": {
+        "interaction_id": {
+          "format": "uuid",
+          "title": "Interaction Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "plan_review",
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "const": "open",
+          "title": "Status",
+          "type": "string"
+        },
+        "resume_token": {
+          "format": "uuid",
+          "title": "Resume Token",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ReviewPayload"
+        }
+      },
+      "required": [
+        "interaction_id",
+        "revision",
+        "kind",
+        "status",
+        "resume_token",
+        "summary",
+        "payload"
+      ],
+      "title": "InteractionData",
+      "type": "object"
+    },
+    "InteractionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "type": {
+          "enum": [
+            "interaction.opened",
+            "interaction.updated"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "occurred_at": {
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/InteractionData"
+        }
+      },
+      "required": [
+        "type",
+        "sequence",
+        "session_id",
+        "run_id",
+        "occurred_at",
+        "data"
+      ],
+      "title": "InteractionEvent",
+      "type": "object"
+    },
+    "InteractionResolvedEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "type": {
+          "const": "interaction.resolved",
+          "title": "Type",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "session_id": {
+          "format": "uuid",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "occurred_at": {
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/$defs/ResolutionData"
+        }
+      },
+      "required": [
+        "type",
+        "sequence",
+        "session_id",
+        "run_id",
+        "occurred_at",
+        "data"
+      ],
+      "title": "InteractionResolvedEvent",
+      "type": "object"
+    },
+    "OutputView": {
+      "additionalProperties": false,
+      "properties": {
+        "output_id": {
+          "title": "Output Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "excluded_by_user"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "output_id",
+        "kind",
+        "description",
+        "status"
+      ],
+      "title": "OutputView",
+      "type": "object"
+    },
+    "ParameterView": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "workflow_input",
+            "literal",
+            "step_reference",
+            "deferred",
+            "system_context"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "editable": {
+          "title": "Editable",
+          "type": "boolean"
+        },
+        "value": {
+          "default": null,
+          "title": "Value"
+        },
+        "value_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value Schema"
+        },
+        "input_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Name"
+        },
+        "step_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Step Id"
+        },
+        "selector": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selector"
+        },
+        "decision_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decision Id"
+        },
+        "guidance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Guidance"
+        },
+        "context_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Key"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "editable"
+      ],
+      "title": "ParameterView",
+      "type": "object"
+    },
+    "PlanView": {
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "plan_revision": {
+          "title": "Plan Revision",
+          "type": "integer"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "definition_version": {
+          "title": "Definition Version",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "goal": {
+          "title": "Goal",
+          "type": "string"
+        },
+        "skills": {
+          "items": {
+            "$ref": "#/$defs/SkillView"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/InputView"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/StepView"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "decisions": {
+          "items": {
+            "$ref": "#/$defs/DecisionView"
+          },
+          "title": "Decisions",
+          "type": "array"
+        },
+        "execution": {
+          "$ref": "#/$defs/PolicyView"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/OutputView"
+          },
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plan_id",
+        "plan_revision",
+        "workflow_id",
+        "definition_version",
+        "name",
+        "goal",
+        "skills",
+        "inputs",
+        "steps",
+        "decisions",
+        "execution",
+        "outputs"
+      ],
+      "title": "PlanView",
+      "type": "object"
+    },
+    "PolicyView": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "SINGLE",
+            "MULTI"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "repair_level": {
+          "title": "Repair Level",
+          "type": "integer"
+        },
+        "max_repair_attempts": {
+          "title": "Max Repair Attempts",
+          "type": "integer"
+        },
+        "review_mode": {
+          "title": "Review Mode",
+          "type": "string"
+        },
+        "review_interval_tools": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Interval Tools"
+        },
+        "allowed_modes": {
+          "items": {
+            "enum": [
+              "SINGLE",
+              "MULTI"
+            ],
+            "type": "string"
+          },
+          "title": "Allowed Modes",
+          "type": "array"
+        },
+        "repair_level_limit": {
+          "title": "Repair Level Limit",
+          "type": "integer"
+        },
+        "max_repair_attempts_limit": {
+          "title": "Max Repair Attempts Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mode",
+        "repair_level",
+        "max_repair_attempts",
+        "review_mode",
+        "allowed_modes",
+        "repair_level_limit",
+        "max_repair_attempts_limit"
+      ],
+      "title": "PolicyView",
+      "type": "object"
+    },
+    "ResolutionData": {
+      "additionalProperties": false,
+      "properties": {
+        "interaction_id": {
+          "format": "uuid",
+          "title": "Interaction Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "plan_review",
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "const": "resolved",
+          "title": "Status",
+          "type": "string"
+        },
+        "resolution": {
+          "const": "approved",
+          "title": "Resolution",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ResolutionPayload"
+        }
+      },
+      "required": [
+        "interaction_id",
+        "revision",
+        "kind",
+        "status",
+        "resolution",
+        "payload"
+      ],
+      "title": "ResolutionData",
+      "type": "object"
+    },
+    "ResolutionPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "approved_plan": {
+          "$ref": "#/$defs/PlanView"
+        },
+        "notices": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notices",
+          "type": "array"
+        }
+      },
+      "required": [
+        "approved_plan"
+      ],
+      "title": "ResolutionPayload",
+      "type": "object"
+    },
+    "ReviewPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "plans": {
+          "items": {
+            "$ref": "#/$defs/PlanView"
+          },
+          "minItems": 1,
+          "title": "Plans",
+          "type": "array"
+        },
+        "notices": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notices",
+          "type": "array"
+        }
+      },
+      "required": [
+        "plans"
+      ],
+      "title": "ReviewPayload",
+      "type": "object"
+    },
+    "SkillView": {
+      "additionalProperties": false,
+      "properties": {
+        "skill_id": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "skill_id",
+        "name",
+        "description"
+      ],
+      "title": "SkillView",
+      "type": "object"
+    },
+    "StepView": {
+      "additionalProperties": false,
+      "properties": {
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "skill_id": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "tool_id": {
+          "title": "Tool Id",
+          "type": "string"
+        },
+        "function_name": {
+          "title": "Function Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/$defs/ParameterView"
+          },
+          "title": "Parameters",
+          "type": "array"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "excluded"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_id",
+        "skill_id",
+        "tool_id",
+        "function_name",
+        "description",
+        "depends_on",
+        "parameters",
+        "status"
+      ],
+      "title": "StepView",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/InteractionEvent"
+    },
+    {
+      "$ref": "#/$defs/InteractionResolvedEvent"
+    }
+  ]
+}

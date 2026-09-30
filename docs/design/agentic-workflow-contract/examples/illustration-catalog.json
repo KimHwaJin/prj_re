@@ -1,0 +1,76 @@
+{
+  "catalog_scope": "illustration_only",
+  "description": "설명용 카탈로그. Python 소스가 없으며 실제 등록·실행에 사용할 수 없다.",
+  "skills": {
+    "demo.data_io": {
+      "tools": [
+        "demo.load_data",
+        "demo.save_data"
+      ]
+    },
+    "demo.eda": {
+      "tools": [
+        "demo.inspect_data",
+        "demo.analyze"
+      ]
+    },
+    "demo.preprocessing": {
+      "tools": [
+        "demo.preprocess"
+      ]
+    }
+  },
+  "tools": {
+    "demo.load_data": {
+      "parameters": [
+        "query"
+      ],
+      "required_parameters": [
+        "query"
+      ],
+      "allows_extra_arguments": false
+    },
+    "demo.inspect_data": {
+      "parameters": [
+        "data"
+      ],
+      "required_parameters": [
+        "data"
+      ],
+      "allows_extra_arguments": false
+    },
+    "demo.preprocess": {
+      "parameters": [
+        "data",
+        "strategy"
+      ],
+      "required_parameters": [
+        "data",
+        "strategy"
+      ],
+      "allows_extra_arguments": false
+    },
+    "demo.analyze": {
+      "parameters": [
+        "data",
+        "target_column"
+      ],
+      "required_parameters": [
+        "data",
+        "target_column"
+      ],
+      "allows_extra_arguments": false
+    },
+    "demo.save_data": {
+      "parameters": [
+        "data",
+        "output_dir"
+      ],
+      "required_parameters": [
+        "data",
+        "output_dir"
+      ],
+      "allows_extra_arguments": false
+    }
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "scope": "offline contracts, generated code and local tiny-data Tool execution; no LLM/HTTP/DB/Executor service",
+  "passed": true,
+  "checks": [
+    {
+      "name": "public_schema_and_no_source",
+      "passed": true,
+      "detail": {
+        "source_hidden": true,
+        "storage_paths_hidden": true
+      }
+    },
+    {
+      "name": "initial_operation_stops_before_judgment",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "next_sequence_continues",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "approved_parameter_override",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "docstring_only_source_change",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "all_generated_code_parses",
+      "passed": true,
+      "detail": [
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "name": "false_branch_produces_no_empty_operation",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "missing_required_input_is_blank",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "resolved_event_contains_approved_revision",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "name": "invalid_method_override_rejected",
+      "passed": true,
+      "detail": "parameter override outside approved schema"
+    },
+    {
+      "name": "object_reference_edit_rejected",
+      "passed": true,
+      "detail": "reference/system/literal parameter is not editable in this prototype"
+    },
+    {
+      "name": "broken_dependency_exclusion_rejected",
+      "passed": true,
+      "detail": "exclusion breaks dependencies of profile; replan required"
+    },
+    {
+      "name": "decision_evidence_exclusion_rejected",
+      "passed": true,
+      "detail": "exclusion breaks dependencies of outliers; replan required"
+    },
+    {
+      "name": "single_with_deferred_decisions_rejected",
+      "passed": true,
+      "detail": "invalid edited definition: ['SINGLE cannot contain post-result decisions or conditional steps in this draft']"
+    },
+    {
+      "name": "repair_limit_rejected",
+      "passed": true,
+      "detail": "repair attempts exceed service limit"
+    },
+    {
+      "name": "stale_token_rejected",
+      "passed": true,
+      "detail": "stale resume token"
+    },
+    {
+      "name": "stale_revision_rejected",
+      "passed": true,
+      "detail": "stale plan revision"
+    },
+    {
+      "name": "client_code_rejected",
+      "passed": true,
+      "detail": "1 validation error for ResumeRequest\ncommand.resume.code\n  Extra inputs are not permitted [type=extra_forbidden, input_value=\"print('unregistered')\", input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden"
+    },
+    {
+      "name": "client_identity_override_rejected",
+      "passed": true,
+      "detail": "1 validation error for ResumeRequest\nuser_id\n  Extra inputs are not permitted [type=extra_forbidden, input_value='another-user', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/extra_forbidden"
+    },
+    {
+      "name": "consumed_interaction_rejected",
+      "passed": true,
+      "detail": "interaction already consumed"
+    },
+    {
+      "name": "decision_without_evidence_rejected",
+      "passed": true,
+      "detail": "decision evidence not complete"
+    },
+    {
+      "name": "unresolved_decision_cannot_finalize",
+      "passed": true,
+      "detail": "unresolved decisions remain; do not finalize"
+    },
+    {
+      "name": "dataset_scope_rejected",
+      "passed": true,
+      "detail": "dataset belongs to another user"
+    },
+    {
+      "name": "approved_snapshot_tampering_rejected",
+      "passed": true,
+      "detail": "approved snapshot changed"
+    },
+    {
+      "name": "leaf_exclusion_updates_outputs",
+      "passed": true,
+      "detail": {
+        "revision": 2,
+        "excluded_output_visible": true,
+        "no_automatic_execution": true
+      }
+    },
+    {
+      "name": "false_condition_does_not_require_unused_parameter_decision",
+      "passed": true,
+      "detail": {
+        "method_not_requested": true,
+        "no_empty_operation": true
+      }
+    },
+    {
+      "name": "parameter_remains_editable_after_edit",
+      "passed": true,
+      "detail": {
+        "second_edit_applied": true,
+        "final_revision": 3
+      }
+    },
+    {
+      "name": "excluded_steps_preserved_when_omitted",
+      "passed": true,
+      "detail": {
+        "exclusion_preserved": true
+      }
+    },
+    {
+      "name": "explicit_null_is_distinct_from_missing",
+      "passed": true,
+      "detail": {
+        "has_value": true,
+        "explicit_null_preserved": true
+      }
+    },
+    {
+      "name": "declared_literal_parameter_is_editable",
+      "passed": true,
+      "detail": {
+        "declared_literal_control": true,
+        "approved_value": "zscore"
+      }
+    },
+    {
+      "name": "actual_tool_execution_on_small_fixture",
+      "passed": true,
+      "detail": {
+        "rows": 12,
+        "columns": 2,
+        "operation_sequences": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            3
+          ]
+        ],
+        "outlier_indices": [
+          11
+        ],
+        "text_observations": 4,
+        "dataframe_preview_rows": 5,
+        "note": "Same compiler and frozen repository functions; resource resolver uses a temporary local file, not the illustrative Executor path."
+      }
+    }
+  ]
+}

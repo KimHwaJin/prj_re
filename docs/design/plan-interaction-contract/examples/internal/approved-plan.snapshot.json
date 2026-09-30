@@ -1,0 +1,184 @@
+{
+  "schema_version": "plan-snapshot-1-draft",
+  "run_id": "44444444-4444-4444-8444-444444444444",
+  "plan_id": "plan-quality-review",
+  "plan_revision": 2,
+  "workflow_id": "quality_review",
+  "definition_version": 1,
+  "steps": [
+    {
+      "id": "load",
+      "skill_id": "data_load",
+      "tool_id": "data_load",
+      "description": "검증된 데이터 참조를 로드한다.",
+      "depends_on": [],
+      "arguments": {
+        "parquet_path": {
+          "source": "workflow_input",
+          "name": "dataset"
+        }
+      }
+    },
+    {
+      "id": "profile",
+      "skill_id": "data_quality_check",
+      "tool_id": "profile_data",
+      "description": "기본 구조와 결측 상태를 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    },
+    {
+      "id": "statistics",
+      "skill_id": "data_quality_check",
+      "tool_id": "compute_statistics",
+      "description": "컬럼별 기술 통계를 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    },
+    {
+      "id": "outliers",
+      "skill_id": "data_quality_check",
+      "tool_id": "detect_outliers",
+      "description": "원본을 수정하지 않고 이상치 후보를 확인한다.",
+      "depends_on": [
+        "load",
+        "profile",
+        "statistics"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        },
+        "method": {
+          "source": "literal",
+          "value": "iqr"
+        }
+      },
+      "when": {
+        "op": "eq",
+        "left": {
+          "source": "agent_decision",
+          "decision_id": "inspect_outliers"
+        },
+        "right": {
+          "source": "literal",
+          "value": true
+        }
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "inspect_outliers",
+      "after_steps": [
+        "profile",
+        "statistics"
+      ],
+      "instruction": "품질 결과와 기술 통계에 비추어 이상치 후보 확인이 유효한지 판단한다. 근거가 부족하면 사용자에게 확인하고, 추측으로 실행하지 않는다.",
+      "output_schema": {
+        "type": "boolean"
+      }
+    }
+  ],
+  "input_values": {
+    "dataset": "dataset-demo"
+  },
+  "input_kinds": {
+    "dataset": "data_reference"
+  },
+  "execution": {
+    "mode": "MULTI",
+    "repair_level": 0,
+    "max_repair_attempts": 0,
+    "review_mode": "decision_boundary"
+  },
+  "skill_sources": {
+    "data_load": {
+      "markdown": "---\nname: data_load\ndescription: 사용자 데이터 선택 조건으로 원천 데이터를 추출하고 데이터 유형별 wide 분석 형식으로 변환하는 workflow step을 설계할 때 사용하는 skill.\n---\n\n# Data Load\n\n## capabilities\n\n- 사용자 선택 조건을 `extract_data`에 전달\n- NCE 데이터를 `transform_nce`로 wide 형식 변환\n- WT 데이터를 `transform_wt`로 wide 형식 변환\n- `DATA_MOCK=true`에서는 준비된 wide Parquet을 `data_load`로 직접 로드\n- 변환한 데이터를 다음 Skill에 전달\n\n## limitations\n\n- 현재 로컬 환경에서는 mock wide Parquet을 사용\n- 결합, 표본 추출, 품질 진단과 정제를 수행하지 않음\n\n## when_to_use\n\n- 분석할 NCE 또는 WT 데이터가 선택된 경우\n\n## not_for\n\n- 이미 메모리에 준비된 DataFrame만 사용하는 경우\n\n## typical_previous_skill\n\n- 없음\n\n## typical_next_skills\n\n- `data_quality_check`\n\n## Tool list\n\n| Tool | 실행 방식 | 실행 조건 | condition_tool | 역할 |\n|---|---|---|---|---|\n| `extract_data` | 항상 실행 | 데이터 선택 조건이 확정된 경우 | 없음 | 원천 데이터 추출 |\n| `transform_nce` | 항상 실행 | `data_type=nce` | 없음 | NCE wide 데이터 생성 |\n| `transform_wt` | 항상 실행 | WT 계열 data type | 없음 | WT wide 데이터 생성 |\n| `data_load` | 항상 실행 | `DATA_MOCK=true` | 없음 | wide mock Parquet 직접 로드 |\n",
+      "sha256": "0a0ae554a2402c982c9b24ffedf6e1aca037ae75e34438c452a6491e511ecaa5"
+    },
+    "data_quality_check": {
+      "markdown": "---\nname: data_quality_check\ndescription: 데이터 구조, 결측률, 기술 통계와 이상치 후보를 진단하는 workflow step을 설계할 때 사용하는 skill. profile_data, compute_statistics, detect_outliers의 실행 여부와 진단 결과의 후속 전달을 결정한다.\n---\n\n# Data Quality Check\n\n## capabilities\n\n- 데이터 행·열과 결측 상태 확인\n- 컬럼별 기술 통계 계산\n- 수치형 컬럼의 이상치 후보 진단\n\n## limitations\n\n- 원본 데이터를 변경하지 않음\n- 이상치 후보를 자동 제거하지 않음\n\n## when_to_use\n\n- 데이터 로드 또는 준비 후 품질 상태를 진단할 때\n- 정제 Tool 실행 여부의 근거가 필요할 때\n\n## not_for\n\n- 결측치 대체, 이상치 제거 또는 모델 학습\n\n## typical_previous_skill\n\n- `data_load`\n\n## typical_next_skills\n\n- 없음\n\n## Tool list\n\n| Tool | 실행 방식 | 실행 조건 | condition_tool | 역할 |\n|---|---|---|---|---|\n| `profile_data` | 항상 실행 | 입력 데이터가 준비된 경우 | 없음 | 기본 구조와 결측 상태 확인 |\n| `compute_statistics` | 항상 실행 | 입력 데이터가 준비된 경우 | 없음 | 기술 통계 계산 |\n| `detect_outliers` | 항상 실행 | 수치형 컬럼의 이상치 진단이 필요한 경우 | 없음 | 제거 전 이상치 후보 생성 |\n\n",
+      "sha256": "8da9f7b6c3488f2a06ab6d8d38995a6e94c7f23f16296c231c5232612fb33cd5"
+    }
+  },
+  "excluded_step_ids": [],
+  "user_actions": [
+    {
+      "action": "approve_plan",
+      "plan_id": "plan-quality-review",
+      "plan_revision": 1,
+      "step_changes": [
+        {
+          "step_id": "outliers",
+          "parameter": "method",
+          "value": "iqr"
+        }
+      ]
+    }
+  ],
+  "tool_sources": {
+    "data_load": {
+      "function_name": "data_load",
+      "code": "def data_load(parquet_path: str = None):\n\n\n\n\n\n\n\n\n    from pathlib import Path\n\n    import pandas as pd\n\n    if parquet_path is None:\n        raise ValueError(\"parquet_path를 입력해주세요.\")\n\n    path = Path(parquet_path).expanduser()\n    if not path.is_file():\n        raise FileNotFoundError(f\"Parquet 파일을 찾을 수 없습니다: {path}\")\n\n    df = pd.read_parquet(path)\n    print(f\"shape: {df.shape}\")\n\n    return df\n",
+      "source_sha256": "ca654c0b1bf97fd4ddaf47b1255c742af7264922cd6d1a673a20f35970b10029",
+      "code_sha256": "bbea538f69f7ad7313227498bb0f7f344429812f11bedad0efa54a3eb2526410"
+    },
+    "profile_data": {
+      "function_name": "profile_data",
+      "code": "def profile_data(\n    data: object = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n    import pandas as pd\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\")\n\n    row_count = len(df)\n    column_count = len(df.columns)\n    total_cell_count = row_count * column_count\n\n    if total_cell_count == 0:\n        missing_rate = 0.0\n    else:\n        missing_count = int(df.isna().sum().sum())\n        missing_rate = missing_count / total_cell_count\n\n    return {\n        \"profile\": {\n            \"row_count\": row_count,\n            \"column_count\": column_count,\n            \"missing_rate\": round(missing_rate, 4),\n        }\n    }\n",
+      "source_sha256": "fd58f00aa04a488a1df0fa22a182a6374172a6813cf80666f96ff84c375c71ac",
+      "code_sha256": "fe2af41b2447a5d99475f4040efe4cd3228a49d2608cc87c69986e68373ca486"
+    },
+    "compute_statistics": {
+      "function_name": "compute_statistics",
+      "code": "def compute_statistics(\n    data: object = None,\n    columns: list = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n    import pandas as pd\n\n    # dict 컬럼-배열 형식을 Dataframe으로 변환\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\n            \"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\"\n        )\n\n    if columns is None:\n        numeric_columns = list(df.select_dtypes(include=\"number\").columns)\n        categorical_columns = list(\n            df.select_dtypes(include=[\"object\", \"category\", \"string\", \"bool\"]).columns\n        )\n        selected_columns = numeric_columns + [\n            column for column in categorical_columns if column not in numeric_columns\n        ]\n    else:\n        if not isinstance(columns, list):\n            raise TypeError(\"columns는 컬럼명으로 구성된 list이거나 None이어야 합니다.\")\n\n        missing_columns = [column for column in columns if column not in df.columns]\n        if missing_columns:\n            raise ValueError(f\"데이터에 없는 컬럼입니다: {missing_columns}\")\n        selected_columns = columns\n\n    statistics = {}\n\n    for column in selected_columns:\n        series = df[column]\n\n        if pd.api.types.is_numeric_dtype(series.dtype) and not pd.api.types.is_bool_dtype(\n            series.dtype\n        ):\n            statistics[column] = series.describe().to_dict()\n            continue\n\n        non_null_series = series.dropna()\n        value_counts = non_null_series.value_counts()\n        statistics[column] = {\n            \"count\": int(non_null_series.count()),\n            \"unique\": int(non_null_series.nunique()),\n            \"top\": value_counts.index[0] if not value_counts.empty else None,\n            \"freq\": int(value_counts.iloc[0]) if not value_counts.empty else None,\n        }\n\n    return {\"statistics\": statistics}\n",
+      "source_sha256": "09e21b63c7ec8a153579db151bb841371b11f309c1666b98ab3e606cdfcc1eb8",
+      "code_sha256": "ca96bfd13fc54c4574c707668da81eaacf861b93bfe4414063f288792c72aac7"
+    },
+    "detect_outliers": {
+      "function_name": "detect_outliers",
+      "code": "def detect_outliers(\n        data: object = None,\n        method: str = \"iqr\",\n        columns: list = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n\n\n    import pandas as pd\n    import numpy as np\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\")\n\n    method = str(method).lower()\n    valid_methods = {\"iqr\", \"zscore\", \"isolation_forest\"}\n    if method not in valid_methods:\n        raise ValueError(f\"method는 {sorted(valid_methods)} 중 하나여야 합니다.\")\n\n    if columns is None:\n        selected_columns = [\n            column\n            for column in df.select_dtypes(include=[np.number]).columns\n            if not pd.api.types.is_bool_dtype(df[column].dtype)\n        ]\n    else:\n        if not isinstance(columns, list):\n            raise TypeError(\"columns는 컬럼명으로 구성된 list이거나 None이어야 합니다.\")\n\n        selected_columns = list(dict.fromkeys(columns))\n        missing_columns = [\n            column for column in selected_columns if column not in df.columns\n        ]\n        if missing_columns:\n            raise ValueError(f\"데이터에 없는 컬럼입니다: {missing_columns}\")\n\n        non_numeric_columns = [\n            column\n            for column in selected_columns\n            if not pd.api.types.is_numeric_dtype(df[column].dtype)\n            or pd.api.types.is_bool_dtype(df[column].dtype)\n        ]\n        if non_numeric_columns:\n            raise TypeError(\n                f\"이상치 탐지 컬럼은 수치형이어야 합니다: {non_numeric_columns}\"\n            )\n\n    if not selected_columns:\n        raise ValueError(\"이상치를 탐지할 수치형 컬럼이 없습니다.\")\n\n    outlier_mask = pd.Series(False, index=df.index, dtype=bool)\n    column_report = {}\n\n    if method == \"iqr\":\n        for column in selected_columns:\n            series = df[column]\n            finite_series = series.replace([np.inf, -np.inf], np.nan)\n            first_quartile = finite_series.quantile(0.25)\n            third_quartile = finite_series.quantile(0.75)\n            iqr = third_quartile - first_quartile\n            lower_bound = first_quartile - 1.5 * iqr\n            upper_bound = third_quartile + 1.5 * iqr\n\n            column_mask = (\n                (series < lower_bound)\n                | (series > upper_bound)\n                | np.isinf(series)\n            ).fillna(False)\n            outlier_mask |= column_mask\n\n            column_report[column] = {\n                \"lower_bound\": (\n                    None if pd.isna(lower_bound) else float(lower_bound)\n                ),\n                \"upper_bound\": (\n                    None if pd.isna(upper_bound) else float(upper_bound)\n                ),\n                \"outlier_count\": int(column_mask.sum()),\n            }\n\n    elif method == \"zscore\":\n        for column in selected_columns:\n            series = df[column]\n            finite_series = series.replace([np.inf, -np.inf], np.nan)\n            mean = finite_series.mean()\n            standard_deviation = finite_series.std(ddof=0)\n\n            if pd.isna(standard_deviation) or standard_deviation == 0:\n                column_mask = pd.Series(False, index=df.index, dtype=bool)\n            else:\n                z_scores = (finite_series - mean).abs() / standard_deviation\n                column_mask = (z_scores > 3).fillna(False)\n\n            column_mask |= np.isinf(series)\n            outlier_mask |= column_mask\n\n            column_report[column] = {\n                \"mean\": None if pd.isna(mean) else float(mean),\n                \"standard_deviation\": (\n                    None\n                    if pd.isna(standard_deviation)\n                    else float(standard_deviation)\n                ),\n                \"outlier_count\": int(column_mask.sum()),\n            }\n\n    elif method == \"isolation_forest\" and len(df) > 0:\n        from sklearn.ensemble import IsolationForest\n\n        model_data = df[selected_columns].replace([np.inf, -np.inf], np.nan)\n        model_data = model_data.fillna(model_data.median()).fillna(0.0)\n\n        model = IsolationForest(\n            n_estimators=100,\n            contamination=\"auto\",\n            random_state=42,\n        )\n        predictions = model.fit_predict(model_data)\n        outlier_mask = pd.Series(predictions == -1, index=df.index, dtype=bool)\n\n        infinite_rows = np.isinf(\n            df[selected_columns].to_numpy(dtype=float, na_value=np.nan)\n        ).any(axis=1)\n        outlier_mask |= pd.Series(infinite_rows, index=df.index, dtype=bool)\n\n    outlier_indices = df.index[outlier_mask].tolist()\n    outlier_count = int(outlier_mask.sum())\n    row_count = len(df)\n\n    outlier_report = {\n        \"method\": method,\n        \"columns\": selected_columns,\n        \"row_count\": row_count,\n        \"outlier_count\": outlier_count,\n        \"outlier_rate\": round(outlier_count / row_count, 4) if row_count else 0.0,\n        \"column_report\": column_report,\n    }\n\n    if method == \"isolation_forest\":\n        outlier_report[\"parameters\"] = {\n            \"n_estimators\": 100,\n            \"contamination\": \"auto\",\n            \"random_state\": 42,\n        }\n\n    return {\n        \"outlier_indices\": outlier_indices,\n        \"outlier_report\": outlier_report,\n    }\n",
+      "source_sha256": "f5cb8ea5dd946c9e4d8f42bae3fa3d11d93d267dad7a873ee80c0bab3ccfe7e6",
+      "code_sha256": "83907280de24351f91aa8bf0f7b4afb4a62883fbf2c557919a2cbdbe018906bb"
+    }
+  },
+  "context": {
+    "run_id": "44444444-4444-4444-8444-444444444444",
+    "session_id": "55555555-5555-4555-8555-555555555555",
+    "project_id": "66666666-6666-4666-8666-666666666666",
+    "task_id": "77777777-7777-4777-8777-777777777777",
+    "user_id": "user-demo",
+    "kernel_profile": "default",
+    "operation_wait_timeout_seconds": 600,
+    "max_repair_attempts": 3,
+    "max_repair_level": 4,
+    "dataset_refs": {
+      "dataset-demo": {
+        "scope": "PROJECT",
+        "owner_user_id": "user-demo",
+        "project_id": "66666666-6666-4666-8666-666666666666",
+        "resolved_path": "/executor-data/demo/quality.parquet"
+      }
+    }
+  },
+  "approval_sha256": "6ad8cbfe9ed6779e512cff89ddd65d32c064658b267d48cdacd134592dfaa00b"
+}

@@ -13,6 +13,12 @@
 - [변경·검증·남은 작업](../improvements/005-agent-package-layout.md)
 - [LLM 비동기 전환·취소 검증](../improvements/006-agent-async-llm.md)
 
+## 신규 Agent 설계 초안
+
+[Workflow JSON 계약 초안](../design/agentic-workflow-contract/README.md)은 결과 기반 판단·조건·입력 연결·승인과 산출물의 새 규격이다. 현재 실행 코드와 별개의 설계 초안이며 API·compiler에서 아직 지원하지 않는다. 실제 등록 자산 예제와 미구현 목표 예제를 구분하고 오프라인 검증 범위를 명시했다.
+
+[계획 승인·Executor 제출 계약](../design/plan-interaction-contract/README.md)은 Workflow 정의를 코드 없는 HITL 화면과 수정·승인 body, 소스가 고정된 제출 계획으로 연결하는 개발용 prototype이다. 작은 Parquet와 실제 등록 함수를 로컬에서 검증했고 Executor 요청 모델을 별도로 확인했다. API·DB·Graph에는 아직 연결하지 않았다.
+
 ## 지금 분석 Agent를 수정하는 방법
 
 1. `src/agent_service/agents/analysis/graph.py`에서 실행 흐름을 확인한다. 업무 상태는 `state.py`, 노드는 `nodes/`다.

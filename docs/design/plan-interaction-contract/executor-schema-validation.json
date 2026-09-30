@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "python": "3.12.13",
+  "scope": "actual current Executor Pydantic request models only; no service/API/DB/runtime validation",
+  "source_sha256": {
+    "src/executor_service/interfaces/http/schemas.py": "a5b0be43e62d793e225e9d2cba9fd1419b43f34ca06f459689dd324152d66b1f",
+    "src/executor_service/interfaces/_contracts/execution_inputs.py": "b2ecef00aff3429d4bb378460465dc5e0601c70fed083311ec646030d3f2b336",
+    "src/executor_service/execution_specs.py": "21322de8ee33ec62d31ad409160e628b38f0100de04e0c0695205e064e87ae28"
+  },
+  "checks": [
+    {
+      "name": "executor-submit.request.json",
+      "passed": true,
+      "model": "ExecutionSubmitRequest"
+    },
+    {
+      "name": "executor-operation.request.json",
+      "passed": true,
+      "model": "ExecutionOperationCreateRequest"
+    },
+    {
+      "name": "executor-finalize.request.json",
+      "passed": true,
+      "model": "ExecutionFinalizeRequest"
+    },
+    {
+      "name": "missing_multi_wait_timeout",
+      "passed": true,
+      "expected_rejection": true
+    },
+    {
+      "name": "wrong_operation_wrapper",
+      "passed": true,
+      "expected_rejection": true
+    },
+    {
+      "name": "noncontiguous_sequences",
+      "passed": true,
+      "expected_rejection": true
+    }
+  ]
+}

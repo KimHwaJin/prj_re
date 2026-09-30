@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "ExecutionOverrides": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "SINGLE",
+                "MULTI"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "repair_level": {
+          "anyOf": [
+            {
+              "maximum": 4,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repair Level"
+        },
+        "max_repair_attempts": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Repair Attempts"
+        }
+      },
+      "title": "ExecutionOverrides",
+      "type": "object"
+    },
+    "ParameterChange": {
+      "additionalProperties": false,
+      "properties": {
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "parameter": {
+          "title": "Parameter",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value"
+        }
+      },
+      "required": [
+        "step_id",
+        "parameter",
+        "value"
+      ],
+      "title": "ParameterChange",
+      "type": "object"
+    },
+    "PlanAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "edit_plan",
+            "approve_plan"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "plan_id": {
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "plan_revision": {
+          "minimum": 1,
+          "title": "Plan Revision",
+          "type": "integer"
+        },
+        "input_values": {
+          "additionalProperties": true,
+          "title": "Input Values",
+          "type": "object"
+        },
+        "step_changes": {
+          "items": {
+            "$ref": "#/$defs/ParameterChange"
+          },
+          "title": "Step Changes",
+          "type": "array"
+        },
+        "excluded_step_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Step Ids",
+          "type": "array"
+        },
+        "execution_overrides": {
+          "$ref": "#/$defs/ExecutionOverrides"
+        }
+      },
+      "required": [
+        "action",
+        "plan_id",
+        "plan_revision"
+      ],
+      "title": "PlanAction",
+      "type": "object"
+    },
+    "ResumeCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "$ref": "#/$defs/PlanAction"
+        }
+      },
+      "required": [
+        "resume"
+      ],
+      "title": "ResumeCommand",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "resume_token": {
+      "format": "uuid",
+      "title": "Resume Token",
+      "type": "string"
+    },
+    "command": {
+      "$ref": "#/$defs/ResumeCommand"
+    }
+  },
+  "required": [
+    "run_id",
+    "resume_token",
+    "command"
+  ],
+  "title": "ResumeRequest",
+  "type": "object"
+}

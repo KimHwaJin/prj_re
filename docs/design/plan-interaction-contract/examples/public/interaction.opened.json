@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "type": "interaction.opened",
+  "sequence": 58,
+  "session_id": "55555555-5555-4555-8555-555555555555",
+  "run_id": "44444444-4444-4444-8444-444444444444",
+  "occurred_at": "2026-09-30T00:00:00Z",
+  "data": {
+    "interaction_id": "22222222-2222-4222-8222-222222222222",
+    "revision": 1,
+    "kind": "plan_review",
+    "status": "open",
+    "resume_token": "11111111-1111-4111-8111-111111111111",
+    "summary": "계획과 입력값을 확인하고 승인해 주세요.",
+    "payload": {
+      "plans": [
+        {
+          "plan_id": "plan-quality-review",
+          "plan_revision": 1,
+          "workflow_id": "quality_review",
+          "definition_version": 1,
+          "name": "저장된 데이터의 품질과 이상치 후보 확인",
+          "goal": "기본 품질과 기술 통계를 확인하고 필요한 경우 이상치 후보를 설명한다.",
+          "skills": [
+            {
+              "skill_id": "data_load",
+              "name": "data_load",
+              "description": "사용자 데이터 선택 조건으로 원천 데이터를 추출하고 데이터 유형별 wide 분석 형식으로 변환하는 workflow step을 설계할 때 사용하는 skill."
+            },
+            {
+              "skill_id": "data_quality_check",
+              "name": "data_quality_check",
+              "description": "데이터 구조, 결측률, 기술 통계와 이상치 후보를 진단하는 workflow step을 설계할 때 사용하는 skill. profile_data, compute_statistics, detect_outliers의 실행 여부와 진단 결과의 후속 전달을 결정한다."
+            }
+          ],
+          "inputs": [
+            {
+              "name": "dataset",
+              "title": "분석 데이터",
+              "description": "실행 가능한 Parquet 파일의 검증된 참조. 원본 경로를 사용자가 임의로 지정하는 API가 아니다.",
+              "kind": "data_reference",
+              "required": true,
+              "editable": true,
+              "value_schema": {
+                "type": "string",
+                "minLength": 1
+              },
+              "origin": "agent",
+              "has_value": true,
+              "value": "dataset-demo"
+            }
+          ],
+          "steps": [
+            {
+              "step_id": "load",
+              "skill_id": "data_load",
+              "tool_id": "data_load",
+              "function_name": "data_load",
+              "description": "검증된 데이터 참조를 로드한다.",
+              "depends_on": [],
+              "parameters": [
+                {
+                  "name": "parquet_path",
+                  "kind": "workflow_input",
+                  "editable": false,
+                  "input_name": "dataset"
+                }
+              ],
+              "status": "planned"
+            },
+            {
+              "step_id": "profile",
+              "skill_id": "data_quality_check",
+              "tool_id": "profile_data",
+              "function_name": "profile_data",
+              "description": "기본 구조와 결측 상태를 확인한다.",
+              "depends_on": [
+                "load"
+              ],
+              "parameters": [
+                {
+                  "name": "data",
+                  "kind": "step_reference",
+                  "editable": false,
+                  "step_id": "load",
+                  "selector": []
+                }
+              ],
+              "status": "planned"
+            },
+            {
+              "step_id": "statistics",
+              "skill_id": "data_quality_check",
+              "tool_id": "compute_statistics",
+              "function_name": "compute_statistics",
+              "description": "컬럼별 기술 통계를 확인한다.",
+              "depends_on": [
+                "load"
+              ],
+              "parameters": [
+                {
+                  "name": "data",
+                  "kind": "step_reference",
+                  "editable": false,
+                  "step_id": "load",
+                  "selector": []
+                }
+              ],
+              "status": "planned"
+            },
+            {
+              "step_id": "outliers",
+              "skill_id": "data_quality_check",
+              "tool_id": "detect_outliers",
+              "function_name": "detect_outliers",
+              "description": "원본을 수정하지 않고 이상치 후보를 확인한다.",
+              "depends_on": [
+                "load",
+                "profile",
+                "statistics"
+              ],
+              "parameters": [
+                {
+                  "name": "data",
+                  "kind": "step_reference",
+                  "editable": false,
+                  "step_id": "load",
+                  "selector": []
+                },
+                {
+                  "name": "method",
+                  "kind": "deferred",
+                  "editable": true,
+                  "value_schema": {
+                    "type": "string",
+                    "enum": [
+                      "iqr",
+                      "zscore",
+                      "isolation_forest"
+                    ]
+                  },
+                  "decision_id": "outlier_method",
+                  "guidance": "이상치 탐지가 필요한 경우 Skill 지침과 통계 결과에 맞는 방법을 선택한다."
+                }
+              ],
+              "when": {
+                "op": "eq",
+                "left": {
+                  "source": "agent_decision",
+                  "decision_id": "inspect_outliers"
+                },
+                "right": {
+                  "source": "literal",
+                  "value": true
+                }
+              },
+              "status": "planned"
+            }
+          ],
+          "decisions": [
+            {
+              "decision_id": "inspect_outliers",
+              "evidence_steps": [
+                "profile",
+                "statistics"
+              ],
+              "guidance": "품질 결과와 기술 통계에 비추어 이상치 후보 확인이 유효한지 판단한다. 근거가 부족하면 사용자에게 확인하고, 추측으로 실행하지 않는다.",
+              "value_schema": {
+                "type": "boolean"
+              },
+              "status": "deferred"
+            },
+            {
+              "decision_id": "outlier_method",
+              "evidence_steps": [
+                "profile",
+                "statistics"
+              ],
+              "guidance": "이상치 탐지가 필요한 경우 Skill 지침과 통계 결과에 맞는 방법을 선택한다.",
+              "value_schema": {
+                "type": "string",
+                "enum": [
+                  "iqr",
+                  "zscore",
+                  "isolation_forest"
+                ]
+              },
+              "status": "deferred"
+            }
+          ],
+          "execution": {
+            "mode": "MULTI",
+            "repair_level": 0,
+            "max_repair_attempts": 0,
+            "review_mode": "decision_boundary",
+            "allowed_modes": [
+              "MULTI"
+            ],
+            "repair_level_limit": 4,
+            "max_repair_attempts_limit": 3
+          },
+          "outputs": [
+            {
+              "output_id": "profile_result",
+              "kind": "analysis_result",
+              "description": "기본 품질 결과",
+              "status": "planned"
+            },
+            {
+              "output_id": "statistics_result",
+              "kind": "analysis_result",
+              "description": "컬럼별 통계",
+              "status": "planned"
+            },
+            {
+              "output_id": "outlier_result",
+              "kind": "analysis_result",
+              "description": "실행한 경우 이상치 후보",
+              "status": "planned"
+            },
+            {
+              "output_id": "report",
+              "kind": "report",
+              "description": "실제로 실행한 단계의 근거로 작성한 Markdown 보고서",
+              "status": "planned"
+            }
+          ]
+        }
+      ],
+      "notices": []
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "idempotency_key": "44444444-4444-4444-8444-444444444444:plan:2:operation:1",
+  "lifecycle": {
+    "operation_mode": "MULTI",
+    "operation_wait_timeout_seconds": 600
+  },
+  "trigger": {
+    "type": "INTERACTIVE",
+    "actor": {
+      "type": "AGENT",
+      "id": "analysis"
+    }
+  },
+  "runtime": {
+    "type": "JUPYTER",
+    "profile": "default"
+  },
+  "context": {
+    "user_id": "user-demo",
+    "task_id": "77777777-7777-4777-8777-777777777777",
+    "project_id": "66666666-6666-4666-8666-666666666666",
+    "session_id": "55555555-5555-4555-8555-555555555555",
+    "workflow_id": "quality_review"
+  },
+  "operation": {
+    "spec": {
+      "schema_version": "1.0",
+      "steps": [
+        {
+          "sequence": 0,
+          "payload": {
+            "type": "PYTHON_EXECUTE",
+            "source": {
+              "type": "INLINE",
+              "content": "def data_load(parquet_path: str = None):\n\n\n\n\n\n\n\n\n    from pathlib import Path\n\n    import pandas as pd\n\n    if parquet_path is None:\n        raise ValueError(\"parquet_path를 입력해주세요.\")\n\n    path = Path(parquet_path).expanduser()\n    if not path.is_file():\n        raise FileNotFoundError(f\"Parquet 파일을 찾을 수 없습니다: {path}\")\n\n    df = pd.read_parquet(path)\n    print(f\"shape: {df.shape}\")\n\n    return df\n\ndef _dtest_observe(value, depth=0):\n    if isinstance(value, float) and not __import__(\"math\").isfinite(value):\n        return {\"type\": \"float\", \"value\": None, \"non_finite\": str(value)}\n    if value is None or isinstance(value, (bool, int, float)):\n        return value\n    if isinstance(value, str):\n        return value if len(value) <= 240 else {\"type\": \"str\", \"text\": value[:240], \"truncated\": True}\n    if depth >= 3:\n        return {\"type\": type(value).__name__, \"truncated\": True}\n    if type(value).__name__ == \"DataFrame\":\n        return {\"type\": \"DataFrame\", \"shape\": list(value.shape),\n                \"columns\": [str(item) for item in list(value.columns[:10])],\n                \"preview\": _dtest_observe(value.iloc[:5, :10].to_dict(orient=\"records\"), depth + 1),\n                \"truncated\": len(value) > 5 or len(value.columns) > 10}\n    if isinstance(value, dict):\n        selected = list(__import__(\"itertools\").islice(value.items(), 12))\n        return {\"type\": \"dict\", \"items\": {str(key)[:120]: _dtest_observe(item, depth + 1) for key, item in selected},\n                \"truncated\": len(value) > len(selected)}\n    if isinstance(value, (list, tuple)):\n        return {\"type\": type(value).__name__, \"items\": [_dtest_observe(item, depth + 1) for item in value[:5]],\n                \"truncated\": len(value) > 5}\n    return {\"type\": type(value).__name__}\n\n_dtest_result_0cf67fc72b3c = data_load(parquet_path='/executor-data/demo/quality.parquet')\nprint('DTEST_OBSERVATION ' + __import__('json').dumps({'step_id': 'load', 'summary': _dtest_observe(_dtest_result_0cf67fc72b3c)}, ensure_ascii=False, default=str))\n"
+            }
+          },
+          "lineage": {
+            "skill_name": "data_load",
+            "tool_name": "data_load",
+            "input_parameters": {
+              "parquet_path": "dataset-demo"
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "payload": {
+            "type": "PYTHON_EXECUTE",
+            "source": {
+              "type": "INLINE",
+              "content": "def profile_data(\n    data: object = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n    import pandas as pd\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\")\n\n    row_count = len(df)\n    column_count = len(df.columns)\n    total_cell_count = row_count * column_count\n\n    if total_cell_count == 0:\n        missing_rate = 0.0\n    else:\n        missing_count = int(df.isna().sum().sum())\n        missing_rate = missing_count / total_cell_count\n\n    return {\n        \"profile\": {\n            \"row_count\": row_count,\n            \"column_count\": column_count,\n            \"missing_rate\": round(missing_rate, 4),\n        }\n    }\n\ndef _dtest_observe(value, depth=0):\n    if isinstance(value, float) and not __import__(\"math\").isfinite(value):\n        return {\"type\": \"float\", \"value\": None, \"non_finite\": str(value)}\n    if value is None or isinstance(value, (bool, int, float)):\n        return value\n    if isinstance(value, str):\n        return value if len(value) <= 240 else {\"type\": \"str\", \"text\": value[:240], \"truncated\": True}\n    if depth >= 3:\n        return {\"type\": type(value).__name__, \"truncated\": True}\n    if type(value).__name__ == \"DataFrame\":\n        return {\"type\": \"DataFrame\", \"shape\": list(value.shape),\n                \"columns\": [str(item) for item in list(value.columns[:10])],\n                \"preview\": _dtest_observe(value.iloc[:5, :10].to_dict(orient=\"records\"), depth + 1),\n                \"truncated\": len(value) > 5 or len(value.columns) > 10}\n    if isinstance(value, dict):\n        selected = list(__import__(\"itertools\").islice(value.items(), 12))\n        return {\"type\": \"dict\", \"items\": {str(key)[:120]: _dtest_observe(item, depth + 1) for key, item in selected},\n                \"truncated\": len(value) > len(selected)}\n    if isinstance(value, (list, tuple)):\n        return {\"type\": type(value).__name__, \"items\": [_dtest_observe(item, depth + 1) for item in value[:5]],\n                \"truncated\": len(value) > 5}\n    return {\"type\": type(value).__name__}\n\n_dtest_result_1900eab6c028 = profile_data(data=_dtest_result_0cf67fc72b3c)\nprint('DTEST_OBSERVATION ' + __import__('json').dumps({'step_id': 'profile', 'summary': _dtest_observe(_dtest_result_1900eab6c028)}, ensure_ascii=False, default=str))\n"
+            }
+          },
+          "lineage": {
+            "skill_name": "data_quality_check",
+            "tool_name": "profile_data",
+            "input_parameters": {
+              "data": {
+                "step_id": "load",
+                "selector": []
+              }
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "payload": {
+            "type": "PYTHON_EXECUTE",
+            "source": {
+              "type": "INLINE",
+              "content": "def compute_statistics(\n    data: object = None,\n    columns: list = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n    import pandas as pd\n\n    # dict 컬럼-배열 형식을 Dataframe으로 변환\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\n            \"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\"\n        )\n\n    if columns is None:\n        numeric_columns = list(df.select_dtypes(include=\"number\").columns)\n        categorical_columns = list(\n            df.select_dtypes(include=[\"object\", \"category\", \"string\", \"bool\"]).columns\n        )\n        selected_columns = numeric_columns + [\n            column for column in categorical_columns if column not in numeric_columns\n        ]\n    else:\n        if not isinstance(columns, list):\n            raise TypeError(\"columns는 컬럼명으로 구성된 list이거나 None이어야 합니다.\")\n\n        missing_columns = [column for column in columns if column not in df.columns]\n        if missing_columns:\n            raise ValueError(f\"데이터에 없는 컬럼입니다: {missing_columns}\")\n        selected_columns = columns\n\n    statistics = {}\n\n    for column in selected_columns:\n        series = df[column]\n\n        if pd.api.types.is_numeric_dtype(series.dtype) and not pd.api.types.is_bool_dtype(\n            series.dtype\n        ):\n            statistics[column] = series.describe().to_dict()\n            continue\n\n        non_null_series = series.dropna()\n        value_counts = non_null_series.value_counts()\n        statistics[column] = {\n            \"count\": int(non_null_series.count()),\n            \"unique\": int(non_null_series.nunique()),\n            \"top\": value_counts.index[0] if not value_counts.empty else None,\n            \"freq\": int(value_counts.iloc[0]) if not value_counts.empty else None,\n        }\n\n    return {\"statistics\": statistics}\n\ndef _dtest_observe(value, depth=0):\n    if isinstance(value, float) and not __import__(\"math\").isfinite(value):\n        return {\"type\": \"float\", \"value\": None, \"non_finite\": str(value)}\n    if value is None or isinstance(value, (bool, int, float)):\n        return value\n    if isinstance(value, str):\n        return value if len(value) <= 240 else {\"type\": \"str\", \"text\": value[:240], \"truncated\": True}\n    if depth >= 3:\n        return {\"type\": type(value).__name__, \"truncated\": True}\n    if type(value).__name__ == \"DataFrame\":\n        return {\"type\": \"DataFrame\", \"shape\": list(value.shape),\n                \"columns\": [str(item) for item in list(value.columns[:10])],\n                \"preview\": _dtest_observe(value.iloc[:5, :10].to_dict(orient=\"records\"), depth + 1),\n                \"truncated\": len(value) > 5 or len(value.columns) > 10}\n    if isinstance(value, dict):\n        selected = list(__import__(\"itertools\").islice(value.items(), 12))\n        return {\"type\": \"dict\", \"items\": {str(key)[:120]: _dtest_observe(item, depth + 1) for key, item in selected},\n                \"truncated\": len(value) > len(selected)}\n    if isinstance(value, (list, tuple)):\n        return {\"type\": type(value).__name__, \"items\": [_dtest_observe(item, depth + 1) for item in value[:5]],\n                \"truncated\": len(value) > 5}\n    return {\"type\": type(value).__name__}\n\n_dtest_result_49d4843163a7 = compute_statistics(data=_dtest_result_0cf67fc72b3c)\nprint('DTEST_OBSERVATION ' + __import__('json').dumps({'step_id': 'statistics', 'summary': _dtest_observe(_dtest_result_49d4843163a7)}, ensure_ascii=False, default=str))\n"
+            }
+          },
+          "lineage": {
+            "skill_name": "data_quality_check",
+            "tool_name": "compute_statistics",
+            "input_parameters": {
+              "data": {
+                "step_id": "load",
+                "selector": []
+              }
+            }
+          }
+        }
+      ]
+    },
+    "metadata": {
+      "plan_id": "plan-quality-review",
+      "plan_revision": 2,
+      "logical_steps": [
+        {
+          "sequence": 0,
+          "plan_step_id": "load"
+        },
+        {
+          "sequence": 1,
+          "plan_step_id": "profile"
+        },
+        {
+          "sequence": 2,
+          "plan_step_id": "statistics"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "public_run_id": "44444444-4444-4444-8444-444444444444",
+    "approval_sha256": "6ad8cbfe9ed6779e512cff89ddd65d32c064658b267d48cdacd134592dfaa00b"
+  }
+}

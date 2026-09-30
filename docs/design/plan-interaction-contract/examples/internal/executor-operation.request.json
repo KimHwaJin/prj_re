@@ -1,0 +1,44 @@
+{
+  "idempotency_key": "44444444-4444-4444-8444-444444444444:plan:2:operation:2",
+  "expected_version": 4,
+  "spec": {
+    "schema_version": "1.0",
+    "steps": [
+      {
+        "sequence": 3,
+        "payload": {
+          "type": "PYTHON_EXECUTE",
+          "source": {
+            "type": "INLINE",
+            "content": "def detect_outliers(\n        data: object = None,\n        method: str = \"iqr\",\n        columns: list = None,\n) -> dict[str, object]:\n\n\n\n\n\n\n\n\n\n\n    import pandas as pd\n    import numpy as np\n\n    if data is None:\n        raise ValueError(\"data를 입력해주세요.\")\n\n    if isinstance(data, pd.DataFrame):\n        df = data.copy()\n    elif isinstance(data, dict):\n        df = pd.DataFrame(data)\n    else:\n        raise TypeError(\"data는 pandas DataFrame 또는 dict 형식이어야 합니다.\")\n\n    method = str(method).lower()\n    valid_methods = {\"iqr\", \"zscore\", \"isolation_forest\"}\n    if method not in valid_methods:\n        raise ValueError(f\"method는 {sorted(valid_methods)} 중 하나여야 합니다.\")\n\n    if columns is None:\n        selected_columns = [\n            column\n            for column in df.select_dtypes(include=[np.number]).columns\n            if not pd.api.types.is_bool_dtype(df[column].dtype)\n        ]\n    else:\n        if not isinstance(columns, list):\n            raise TypeError(\"columns는 컬럼명으로 구성된 list이거나 None이어야 합니다.\")\n\n        selected_columns = list(dict.fromkeys(columns))\n        missing_columns = [\n            column for column in selected_columns if column not in df.columns\n        ]\n        if missing_columns:\n            raise ValueError(f\"데이터에 없는 컬럼입니다: {missing_columns}\")\n\n        non_numeric_columns = [\n            column\n            for column in selected_columns\n            if not pd.api.types.is_numeric_dtype(df[column].dtype)\n            or pd.api.types.is_bool_dtype(df[column].dtype)\n        ]\n        if non_numeric_columns:\n            raise TypeError(\n                f\"이상치 탐지 컬럼은 수치형이어야 합니다: {non_numeric_columns}\"\n            )\n\n    if not selected_columns:\n        raise ValueError(\"이상치를 탐지할 수치형 컬럼이 없습니다.\")\n\n    outlier_mask = pd.Series(False, index=df.index, dtype=bool)\n    column_report = {}\n\n    if method == \"iqr\":\n        for column in selected_columns:\n            series = df[column]\n            finite_series = series.replace([np.inf, -np.inf], np.nan)\n            first_quartile = finite_series.quantile(0.25)\n            third_quartile = finite_series.quantile(0.75)\n            iqr = third_quartile - first_quartile\n            lower_bound = first_quartile - 1.5 * iqr\n            upper_bound = third_quartile + 1.5 * iqr\n\n            column_mask = (\n                (series < lower_bound)\n                | (series > upper_bound)\n                | np.isinf(series)\n            ).fillna(False)\n            outlier_mask |= column_mask\n\n            column_report[column] = {\n                \"lower_bound\": (\n                    None if pd.isna(lower_bound) else float(lower_bound)\n                ),\n                \"upper_bound\": (\n                    None if pd.isna(upper_bound) else float(upper_bound)\n                ),\n                \"outlier_count\": int(column_mask.sum()),\n            }\n\n    elif method == \"zscore\":\n        for column in selected_columns:\n            series = df[column]\n            finite_series = series.replace([np.inf, -np.inf], np.nan)\n            mean = finite_series.mean()\n            standard_deviation = finite_series.std(ddof=0)\n\n            if pd.isna(standard_deviation) or standard_deviation == 0:\n                column_mask = pd.Series(False, index=df.index, dtype=bool)\n            else:\n                z_scores = (finite_series - mean).abs() / standard_deviation\n                column_mask = (z_scores > 3).fillna(False)\n\n            column_mask |= np.isinf(series)\n            outlier_mask |= column_mask\n\n            column_report[column] = {\n                \"mean\": None if pd.isna(mean) else float(mean),\n                \"standard_deviation\": (\n                    None\n                    if pd.isna(standard_deviation)\n                    else float(standard_deviation)\n                ),\n                \"outlier_count\": int(column_mask.sum()),\n            }\n\n    elif method == \"isolation_forest\" and len(df) > 0:\n        from sklearn.ensemble import IsolationForest\n\n        model_data = df[selected_columns].replace([np.inf, -np.inf], np.nan)\n        model_data = model_data.fillna(model_data.median()).fillna(0.0)\n\n        model = IsolationForest(\n            n_estimators=100,\n            contamination=\"auto\",\n            random_state=42,\n        )\n        predictions = model.fit_predict(model_data)\n        outlier_mask = pd.Series(predictions == -1, index=df.index, dtype=bool)\n\n        infinite_rows = np.isinf(\n            df[selected_columns].to_numpy(dtype=float, na_value=np.nan)\n        ).any(axis=1)\n        outlier_mask |= pd.Series(infinite_rows, index=df.index, dtype=bool)\n\n    outlier_indices = df.index[outlier_mask].tolist()\n    outlier_count = int(outlier_mask.sum())\n    row_count = len(df)\n\n    outlier_report = {\n        \"method\": method,\n        \"columns\": selected_columns,\n        \"row_count\": row_count,\n        \"outlier_count\": outlier_count,\n        \"outlier_rate\": round(outlier_count / row_count, 4) if row_count else 0.0,\n        \"column_report\": column_report,\n    }\n\n    if method == \"isolation_forest\":\n        outlier_report[\"parameters\"] = {\n            \"n_estimators\": 100,\n            \"contamination\": \"auto\",\n            \"random_state\": 42,\n        }\n\n    return {\n        \"outlier_indices\": outlier_indices,\n        \"outlier_report\": outlier_report,\n    }\n\ndef _dtest_observe(value, depth=0):\n    if isinstance(value, float) and not __import__(\"math\").isfinite(value):\n        return {\"type\": \"float\", \"value\": None, \"non_finite\": str(value)}\n    if value is None or isinstance(value, (bool, int, float)):\n        return value\n    if isinstance(value, str):\n        return value if len(value) <= 240 else {\"type\": \"str\", \"text\": value[:240], \"truncated\": True}\n    if depth >= 3:\n        return {\"type\": type(value).__name__, \"truncated\": True}\n    if type(value).__name__ == \"DataFrame\":\n        return {\"type\": \"DataFrame\", \"shape\": list(value.shape),\n                \"columns\": [str(item) for item in list(value.columns[:10])],\n                \"preview\": _dtest_observe(value.iloc[:5, :10].to_dict(orient=\"records\"), depth + 1),\n                \"truncated\": len(value) > 5 or len(value.columns) > 10}\n    if isinstance(value, dict):\n        selected = list(__import__(\"itertools\").islice(value.items(), 12))\n        return {\"type\": \"dict\", \"items\": {str(key)[:120]: _dtest_observe(item, depth + 1) for key, item in selected},\n                \"truncated\": len(value) > len(selected)}\n    if isinstance(value, (list, tuple)):\n        return {\"type\": type(value).__name__, \"items\": [_dtest_observe(item, depth + 1) for item in value[:5]],\n                \"truncated\": len(value) > 5}\n    return {\"type\": type(value).__name__}\n\n_dtest_result_81e2d3c92e49 = detect_outliers(data=_dtest_result_0cf67fc72b3c, method='iqr')\nprint('DTEST_OBSERVATION ' + __import__('json').dumps({'step_id': 'outliers', 'summary': _dtest_observe(_dtest_result_81e2d3c92e49)}, ensure_ascii=False, default=str))\n"
+          }
+        },
+        "lineage": {
+          "skill_name": "data_quality_check",
+          "tool_name": "detect_outliers",
+          "input_parameters": {
+            "data": {
+              "step_id": "load",
+              "selector": []
+            },
+            "method": "iqr"
+          }
+        }
+      }
+    ]
+  },
+  "actor": {
+    "type": "AGENT",
+    "id": "analysis"
+  },
+  "metadata": {
+    "public_run_id": "44444444-4444-4444-8444-444444444444",
+    "plan_revision": 2,
+    "logical_steps": [
+      {
+        "sequence": 3,
+        "plan_step_id": "outliers"
+      }
+    ]
+  }
+}

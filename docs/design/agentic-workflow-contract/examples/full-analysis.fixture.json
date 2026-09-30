@@ -1,0 +1,214 @@
+{
+  "schema_version": "2.0-draft",
+  "workflow_id": "demo.full_analysis",
+  "definition_version": 1,
+  "name": "원천 로드부터 전처리와 분석까지의 목표 흐름",
+  "description": "계약 설명용 fixture. demo.* Skill과 Tool은 실제 카탈로그에 등록되어 있지 않으며 실행하거나 추천 풀에 등록할 수 없다.",
+  "goal": "데이터 확인 후 전처리를 결정하고 분석하며, 후속 분석에 필요한 데이터를 저장한다.",
+  "inputs": {
+    "query": {
+      "title": "원천 조회 조건",
+      "description": "제품·생산라인·기간을 사용자가 확인한다.",
+      "kind": "parameter",
+      "required": true,
+      "editable": true,
+      "value_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "product": {
+            "type": "string",
+            "minLength": 1
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1
+          },
+          "start_date": {
+            "type": "string",
+            "minLength": 1
+          },
+          "end_date": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "product",
+          "line",
+          "start_date",
+          "end_date"
+        ]
+      }
+    },
+    "target_column": {
+      "title": "분석 대상 컬럼",
+      "description": "사용자 요청에서 확정할 값. 실제 컬럼 존재 여부는 데이터 확인 후 검증한다.",
+      "kind": "parameter",
+      "required": true,
+      "editable": true,
+      "value_schema": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "load",
+      "skill_id": "demo.data_io",
+      "tool_id": "demo.load_data",
+      "description": "MinIO에 있으면 로드하고 없으면 레이크에서 가져오는 등록 Tool을 사용한다.",
+      "depends_on": [],
+      "arguments": {
+        "query": {
+          "source": "workflow_input",
+          "name": "query"
+        }
+      }
+    },
+    {
+      "id": "inspect",
+      "skill_id": "demo.eda",
+      "tool_id": "demo.inspect_data",
+      "description": "데이터 구조와 품질을 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    },
+    {
+      "id": "preprocess",
+      "skill_id": "demo.preprocessing",
+      "tool_id": "demo.preprocess",
+      "description": "승인된 선택 범위에서 결정한 방법으로 전처리한다.",
+      "depends_on": [
+        "load",
+        "inspect"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        },
+        "strategy": {
+          "source": "agent_decision",
+          "decision_id": "missing_strategy"
+        }
+      }
+    },
+    {
+      "id": "analyze",
+      "skill_id": "demo.eda",
+      "tool_id": "demo.analyze",
+      "description": "전처리 데이터로 분석한다.",
+      "depends_on": [
+        "preprocess"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "preprocess",
+          "selector": []
+        },
+        "target_column": {
+          "source": "workflow_input",
+          "name": "target_column"
+        }
+      }
+    },
+    {
+      "id": "save",
+      "skill_id": "demo.data_io",
+      "tool_id": "demo.save_data",
+      "description": "계획에 선언된 전처리 데이터만 후속 분석용으로 저장한다.",
+      "depends_on": [
+        "preprocess",
+        "analyze"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "preprocess",
+          "selector": []
+        },
+        "output_dir": {
+          "source": "system_context",
+          "key": "dataset_output_dir"
+        }
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "missing_strategy",
+      "after_steps": [
+        "inspect"
+      ],
+      "instruction": "결측 현황과 분석 목적을 고려해 처리 방법을 선택한다. 결과 해석이 부족하거나 허용된 방법이 부적절하면 재계획 또는 사용자 확인으로 전환한다.",
+      "output_schema": {
+        "type": "string",
+        "enum": [
+          "drop",
+          "median",
+          "most_frequent"
+        ]
+      }
+    }
+  ],
+  "execution": {
+    "mode": "MULTI",
+    "repair_level": 0,
+    "max_repair_attempts": 0,
+    "review_mode": "decision_boundary"
+  },
+  "expected_outputs": [
+    {
+      "id": "analysis",
+      "kind": "analysis_result",
+      "description": "분석 결과",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "analyze",
+        "selector": []
+      },
+      "format": "native"
+    },
+    {
+      "id": "dataset",
+      "kind": "dataset",
+      "description": "저장된 전처리 파일 참조. 등록 API 방식은 아직 미정이다.",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "save",
+        "selector": [
+          "file_path"
+        ]
+      },
+      "format": "parquet"
+    },
+    {
+      "id": "report",
+      "kind": "report",
+      "description": "관찰 결과에 근거한 Markdown 리포트",
+      "required": true,
+      "source": {
+        "source": "agent_report",
+        "evidence_steps": [
+          "inspect",
+          "analyze"
+        ]
+      },
+      "format": "markdown"
+    }
+  ]
+}

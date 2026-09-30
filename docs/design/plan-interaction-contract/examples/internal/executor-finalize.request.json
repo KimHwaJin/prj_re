@@ -1,0 +1,8 @@
+{
+  "idempotency_key": "44444444-4444-4444-8444-444444444444:finalize",
+  "expected_version": 7,
+  "actor": {
+    "type": "AGENT",
+    "id": "analysis"
+  }
+}

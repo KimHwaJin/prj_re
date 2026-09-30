@@ -1,0 +1,190 @@
+{
+  "schema_version": "2.0-draft",
+  "scope": "offline schema and semantic validation only; no LLM, Tool, API, DB or Executor execution",
+  "passed": true,
+  "checks": [
+    {
+      "name": "repository_example",
+      "expected_valid": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "full_analysis_illustration",
+      "expected_valid": true,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "illustration_rejected_by_real_catalog",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "analyze: unregistered skill demo.eda",
+        "analyze: unregistered tool demo.analyze",
+        "inspect: unregistered skill demo.eda",
+        "inspect: unregistered tool demo.inspect_data",
+        "load: unregistered skill demo.data_io",
+        "load: unregistered tool demo.load_data",
+        "preprocess: unregistered skill demo.preprocessing",
+        "preprocess: unregistered tool demo.preprocess",
+        "save: unregistered skill demo.data_io",
+        "save: unregistered tool demo.save_data"
+      ]
+    },
+    {
+      "name": "source_code_in_workflow",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "Additional properties are not allowed ('code' was unexpected)\n\nFailed validating \"additionalProperties\" in schema[\"$defs\"][\"step\"]\n\nOn instance[\"steps\"][0]:\n    {\"arguments\":{\"parquet_path\":{\"name\":\"dataset\",\"source\":\"workflow_input\"}},\"code\":\"print('unregistered')\",\"depends_on\":[],\"description\":\"검증된 데이터 참조를 로드한다.\",\"id\":\"load\",\"skill_id\":\"data_load\",\"tool_id\":\"data_load\"}"
+      ]
+    },
+    {
+      "name": "ambiguous_parameter_binding",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "{\"name\":\"dataset\",\"source\":\"workflow_input\",\"value\":\"/tmp/arbitrary\"} is not valid under any of the schemas listed in the 'oneOf' keyword\n\nFailed validating \"oneOf\" in schema[\"$defs\"][\"binding\"]\n\nOn instance[\"steps\"][0][\"arguments\"][\"parquet_path\"]:\n    {\"name\":\"dataset\",\"source\":\"workflow_input\",\"value\":\"/tmp/arbitrary\"}"
+      ]
+    },
+    {
+      "name": "dependency_cycle",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "dependency cycle at load",
+        "dependency cycle at outliers",
+        "dependency cycle at profile",
+        "dependency cycle at statistics"
+      ]
+    },
+    {
+      "name": "unknown_input",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "load: unknown input missing_input"
+      ]
+    },
+    {
+      "name": "unknown_tool_argument",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "load: unknown tool arguments ['unexpected']"
+      ]
+    },
+    {
+      "name": "unknown_decision",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "outliers: unknown decision unknown"
+      ]
+    },
+    {
+      "name": "decision_before_evidence",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "outliers: decision inspect_outliers is consumed before evidence steps complete",
+        "outliers: decision outlier_method is consumed before evidence steps complete"
+      ]
+    },
+    {
+      "name": "unguarded_conditional_output",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "output outlier_result: conditional output outliers needs the same explicit guard"
+      ]
+    },
+    {
+      "name": "post_result_decision_in_single",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "SINGLE cannot contain post-result decisions or conditional steps in this draft"
+      ]
+    },
+    {
+      "name": "duplicate_step_id",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "duplicate step id"
+      ]
+    },
+    {
+      "name": "invalid_input_default",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "input dataset: default does not satisfy value_schema"
+      ]
+    },
+    {
+      "name": "missing_review_interval",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "every_n_tools requires review_interval_tools"
+      ]
+    },
+    {
+      "name": "unknown_operator",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "{\"left\":{\"decision_id\":\"inspect_outliers\",\"source\":\"agent_decision\"},\"op\":\"python_eval\",\"right\":{\"source\":\"literal\",\"value\":true}} is not valid under any of the schemas listed in the 'oneOf' keyword\n\nFailed validating \"oneOf\" in schema[\"$defs\"][\"condition\"]\n\nOn instance[\"steps\"][3][\"when\"]:\n    {\"left\":{\"decision_id\":\"inspect_outliers\",\"source\":\"agent_decision\"},\"op\":\"python_eval\",\"right\":{\"source\":\"literal\",\"value\":true}}"
+      ]
+    },
+    {
+      "name": "invalid_decision_schema",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "decision inspect_outliers: invalid embedded JSON Schema: \"python\" is not valid under any of the schemas listed in the 'anyOf' keyword\n\nFailed validating \"anyOf\" in schema[\"properties\"][\"type\"]\n\nOn instance[\"type\"]:\n    \"python\""
+      ]
+    },
+    {
+      "name": "external_schema_reference",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "input dataset: embedded schema references are not supported"
+      ]
+    },
+    {
+      "name": "editable_object_reference",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "profile: object/input/system references cannot be edited as Tool parameter values"
+      ]
+    },
+    {
+      "name": "control_without_argument",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "profile: parameter control requires an explicit argument binding: missing"
+      ]
+    },
+    {
+      "name": "missing_required_tool_argument",
+      "expected_valid": false,
+      "passed": true,
+      "errors": [
+        "load: missing tool arguments ['query']"
+      ]
+    },
+    {
+      "name": "fixed_steps_single",
+      "expected_valid": true,
+      "passed": true,
+      "errors": []
+    }
+  ]
+}
