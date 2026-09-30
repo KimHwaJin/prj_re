@@ -6,7 +6,7 @@
 
 현재 작업 브랜치: `feature/agentic-executor-runtime` (039). 038의 `2f54b09`에서 분기했다. 036~037 계약은 베이스에 병합됐고, 038~039는 이 파생 이력에 있다. 039는 승인 계획의 실제 Executor 제출·관찰·후속 Operation·리포트·Finalize를 구현하고 실제 서비스 연계·전체 688개 회귀·wheel 검증을 완료했다. 새 기능은 아직 베이스 병합·원격 push·배포하지 않았다.
 038 구현·검증 기록 commit: `0eb34ed314668743de1354f1433e12733144a97a`.
-039 구현·검증 기록: [작업 결과](039-agentic-executor-runtime.md).
+039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [작업 결과](039-agentic-executor-runtime.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`

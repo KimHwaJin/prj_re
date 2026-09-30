@@ -78,5 +78,6 @@
     "Artifact report registration",
     "All natural-language interpretation claims"
   ],
-  "runtime_changes": "Existing Compose and original dirty checkout preserved; temporary HTTP test server stopped"
+  "runtime_changes": "Existing Compose and original dirty checkout preserved; temporary HTTP test server stopped",
+  "implementation_commit": "065ec2599a1e6e3762461fe127cf9a909b2c49f6"
 }
