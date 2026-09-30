@@ -71,6 +71,7 @@ class PlanningRuntime:
                                                max_candidates=self.settings.max_plan_candidates,
                                                discovery_max_rounds=self.settings.agent_discovery_max_rounds,
                                                repair_limit=self.settings.agent_repair_level_limit,repair_attempts=self.settings.agent_max_repair_attempts,
+                                               session_context_max_chars=self.settings.agent_session_analysis_max_chars,
                                                structured_output_mode=spec.structured_output_mode)
         return await self.agents[key].ainvoke({
             'request': state['user_request'], 'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
@@ -121,5 +122,6 @@ class PlanningRuntime:
                     raise ValueError('Invalid execution-local plan: ' + str(exc)) from exc
             self.revision_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)), self.catalog,
                 discovery_max_rounds=self.settings.agent_discovery_max_rounds,
+                session_context_max_chars=self.settings.agent_session_analysis_max_chars,
                 structured_output_mode=spec.structured_output_mode, validate_response=validate_response)
         return await self.revision_agents[key].ainvoke(payload, context=context)

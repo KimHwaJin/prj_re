@@ -12,6 +12,7 @@ from service_contracts.plan_projection import plan_view
 from service_contracts.plan_interaction import validate_plan_revision
 from agent_service.agents.analysis.planning.proposals import validate_revision_reply
 from agent_service.middleware.prompt_json import StructuredResponseError
+from agent_service.runtime.session_analysis import analysis_for_owner
 
 
 RUNTIME_VERSION = 'agentic-planning-v1'
@@ -37,6 +38,7 @@ class PlanningState(TypedDict, total=False):
     initial_request_receipt: dict | None
     user_resume_receipt: dict | None
     history: list[dict]
+    last_analysis_context: dict | None
     public_events: list[dict]
     reviews: list[dict]
     plan_views: list[dict]
@@ -65,6 +67,7 @@ class PlanningState(TypedDict, total=False):
     execution_decisions: dict
     pending_decisions: list[dict]
     decision_review: dict | None
+    execution_review_validation_error: str | None
     observations: list[dict]
     execution_status: str
     execution_error: dict | str | None
@@ -112,7 +115,8 @@ def build_planning_graph(runtime, *, checkpointer):
                 'dataset_output_dir':f"/workspace/pv/user/{state['user_id']}/project/{state['project_id']}/data",
                 'execution_id':None,'executor_operation_number':0,'next_step_sequence':0,
                 'completed_steps':[],'skipped_steps':[],'execution_decisions':{},'pending_decisions':[],
-                'decision_review':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
+                'decision_review':None,'execution_review_validation_error':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
+                'last_analysis_context':analysis_for_owner(state.get('last_analysis_context'),state,runtime.settings.agent_session_analysis_max_chars),
                 'execution_snapshot':None,'failed_step_ids':[],'repair_attempts':0,'repair_max_attempts':0,
                 'repair_authorized_level':0,'repair_candidate':None,'repair_review':None,'repair_history':[],
                 'repair_action':'','repair_stop_reason':None,'repair_validation_error':None,
@@ -127,7 +131,8 @@ def build_planning_graph(runtime, *, checkpointer):
     async def converse(state):
         context = AgentContext(user_id=state['user_id'], project_id=state['project_id'], session_id=state['session_id'],
                                project_system_prompt=state.get('project_system_prompt', ''),
-                               project_prompt_version=state.get('project_prompt_version'), model_selection=state['model_selection'])
+                               project_prompt_version=state.get('project_prompt_version'), model_selection=state['model_selection'],
+                               session_analysis_context=state.get('last_analysis_context'))
         datasets = visible_datasets(runtime.datasets, state)
         reply = await runtime.respond(state, context, [{'dataset_id': key, 'title': item['title'], 'description': item.get('description', ''), 'scope': item['scope']}
                                                       for key, item in datasets.items()])
@@ -223,7 +228,7 @@ def build_planning_graph(runtime, *, checkpointer):
     async def revise(state):
         context = AgentContext(user_id=state['user_id'],project_id=state['project_id'],session_id=state['session_id'],
             project_system_prompt=state.get('project_system_prompt',''),project_prompt_version=state.get('project_prompt_version'),
-            model_selection=state['model_selection'])
+            model_selection=state['model_selection'], session_analysis_context=state.get('last_analysis_context'))
         datasets = visible_datasets(runtime.datasets,state)
         visible = [{'dataset_id':key,'title':item['title'],'description':item.get('description',''),'scope':item['scope']} for key,item in datasets.items()]
         try:

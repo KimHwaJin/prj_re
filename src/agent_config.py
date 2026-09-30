@@ -182,6 +182,9 @@ class AgentSettings:
     agent_discovery_max_rounds: int = 4
     # Only same-session conversation is supplied; oldest messages are trimmed.
     agent_history_message_limit: int = 40
+    # Latest terminal analysis supplied to follow-up model calls, measured as serialized JSON chars.
+    # 0 disables it; full reports/results remain in Run/Executor records, independent of this excerpt.
+    agent_session_analysis_max_chars: int = 16000
     # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
     analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
     # Text evidence supplied to the text-only model per Step; full output remains on Executor PV.
@@ -342,6 +345,9 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
     discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
     history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
+    session_analysis_limit = int(env.get('AGENT_SESSION_ANALYSIS_MAX_CHARS', '16000'))
+    if session_analysis_limit != 0 and not 2048 <= session_analysis_limit <= 64000:
+        raise ValueError('AGENT_SESSION_ANALYSIS_MAX_CHARS must be 0 or 2048..64000')
     observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
     max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
     plan_revisions = int(env.get('AGENT_MAX_PLAN_REVISIONS', '5'))
@@ -363,6 +369,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
                 for key, value in datasets.items()}
     return AgentSettings(
         max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
+        agent_session_analysis_max_chars=session_analysis_limit,
         agent_discovery_max_rounds=discovery_rounds,
         analysis_datasets=datasets,
         agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,

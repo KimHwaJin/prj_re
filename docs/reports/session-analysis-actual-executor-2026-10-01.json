@@ -1,0 +1,87 @@
+{
+  "passed": true,
+  "real_llm": true,
+  "initial_plan_fixture": true,
+  "namespace": "agentic-exec-08e5ef9c13",
+  "planning_seconds": 0.374,
+  "approval_to_wait_seconds": 0.228,
+  "execution_seconds": 39.197,
+  "status_history": [
+    "waiting_executor",
+    "success"
+  ],
+  "operation_count": 2,
+  "terminal_event_seen": true,
+  "final_status": "success",
+  "completed_analysis_context": {
+    "source_run_id": "547a959f-f51b-415d-bc8e-a6b32a0d097b",
+    "step_ids": [
+      "load",
+      "profile",
+      "statistics",
+      "outliers"
+    ],
+    "serialized_chars": 11003,
+    "omitted_observations": 0,
+    "report_truncated": false
+  },
+  "followup_context_deliveries": [
+    {
+      "execution_id": "bbf8f707-41c4-4cef-8b92-58182e133eba",
+      "source_run_id": "547a959f-f51b-415d-bc8e-a6b32a0d097b",
+      "step_ids": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "serialized_chars": 11003,
+      "omitted_observations": 0
+    },
+    {
+      "execution_id": "bbf8f707-41c4-4cef-8b92-58182e133eba",
+      "source_run_id": "547a959f-f51b-415d-bc8e-a6b32a0d097b",
+      "step_ids": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "serialized_chars": 11003,
+      "omitted_observations": 0
+    }
+  ],
+  "followup_created_execution": false,
+  "phoenix_trace_count": 11,
+  "same_session_submission_status": 409,
+  "same_session_after_completion_status": 202,
+  "report_status": "ready",
+  "followups": [
+    {
+      "request": "방금 분석에서 나온 기초 통계와 이상치 판단을 실제 결과에 근거해서 비전문가에게 설명해줘. 확인하지 않은 원인은 단정하지 말고, 코드 실행이나 새 분석 계획은 필요 없어.",
+      "status": "success",
+      "seconds": 24.434,
+      "result_status": "answer",
+      "answer_chars": 2259,
+      "answer_contains_markdown_heading": true
+    },
+    {
+      "request": "방금 결과를 비전문가용 Markdown 리포트로 다시 작성해줘. 데이터 로드 과정 설명은 빼고 기초 통계 해석과 한계를 부각해줘. 새 계산이나 코드 실행은 하지 말고, 파일이나 Artifact 등록을 했다고 말하지 마.",
+      "status": "success",
+      "seconds": 24.226,
+      "result_status": "answer",
+      "answer_chars": 2584,
+      "answer_contains_markdown_heading": true
+    }
+  ],
+  "spot_checked_actual_facts": {
+    "shape": [
+      10000,
+      8
+    ],
+    "method": "iqr",
+    "outlier_count": 109,
+    "outlier_rate": 0.0109
+  },
+  "semantic_scope": "Flow/context delivery verified; selected counts compared with actual evidence. All narrative, rounding and causal interpretations are not automatically validated."
+}

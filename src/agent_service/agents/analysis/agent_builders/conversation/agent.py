@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from agent_service.factory import build_role_agent, json_output
-from agent_service.middleware import ProjectPromptMiddleware
+from agent_service.middleware import ProjectPromptMiddleware, SessionAnalysisMiddleware
 from agent_service.middleware.discovery import MetadataDiscoveryMiddleware
 from service_contracts.plan_review import new_review
 from service_contracts.workflow_validation import workflow_schema
@@ -46,10 +46,10 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
     return Reply
 
 
-def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3):
+def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000):
     schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts)
     prompt = load_prompt(__package__) + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
-                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
+                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), SessionAnalysisMiddleware(max_chars=session_context_max_chars), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
                             output_type=schema, decode=json_output(schema),
                             structured_output_mode=structured_output_mode, max_validation_attempts=3)

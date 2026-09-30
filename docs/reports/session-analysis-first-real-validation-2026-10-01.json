@@ -1,0 +1,42 @@
+{
+  "passed": false,
+  "real_llm": true,
+  "initial_plan_fixture": true,
+  "namespace": "agentic-exec-8ded9fd177",
+  "planning_seconds": 0.39,
+  "approval_to_wait_seconds": 0.212,
+  "error_type": "AssertionError",
+  "first_attempt_review_responses": [
+    {
+      "choices": [
+        {
+          "decision_id": "inspect_outliers",
+          "value": true,
+          "evidence_steps": [
+            "profile",
+            "statistics"
+          ]
+        },
+        {
+          "decision_id": "outlier_method",
+          "value": "iqr",
+          "evidence_steps": [
+            "statistics"
+          ]
+        }
+      ],
+      "needs_user_input": false
+    }
+  ],
+  "required_evidence_steps": {
+    "inspect_outliers": [
+      "profile",
+      "statistics"
+    ],
+    "outlier_method": [
+      "profile",
+      "statistics"
+    ]
+  },
+  "cause": "outlier_method omitted required profile evidence. Existing node rejected the proposal and cleared prefilled choices, but did not give the model a contract correction attempt."
+}

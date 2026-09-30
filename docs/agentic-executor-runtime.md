@@ -145,3 +145,4 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_executor_http
 ```
 
 settings-file은 비밀 값을 Git에 넣지 않은 flat JSON 중앙 설정 mapping이다. DATABASE_URL은 로컬 agentic_runtime_test, CHECKPOINT_DB_URI는 로컬 agentic_checkpoint_test를 지정한다. EXECUTOR_BASE_URL은 로컬 8000, EXECUTOR_SHARED_RESULT_ROOT는 host에서 읽을 수 있는 executor/shared_dir이며 ANALYSIS_DATASETS에 default-nce Jupyter 경로를 선언한다. 실제 모델에는 MODEL_NAME/API_BASE_URL/MODEL_API_KEY 및 Phoenix 설정을 추가한다. 파일 접근 권한은 600으로 둔다. 이 harness는 로컬 Redis 6379와 기본 kernel profile을 사용하고 매 시험 전용 namespace/group을 만든다. 기존 Executor 이벤트 stream이나 다른 consumer group을 변경하지 않는다. 원천 파일은 수정하지 않지만 새 notebook/execution 결과는 Executor에 생성된다. 부하 테스트나 운영 배포 스크립트가 아니다.
+043에서 terminal 이후의 실제 관찰·결정값·리포트를 제한된 세션 문맥으로 보관하고 후속 conversation/plan_revision에 연결했다. [후속 분석 문맥 안내](agentic-session-analysis-context.md)를 참고한다. execution_review의 근거·값 검증 실패는 최대 두 번의 모델 응답 시도 안에서 정정하고, 여전히 실패하면 HITL을 유지한다. Dataset 등록 API는 연결하지 않았다.

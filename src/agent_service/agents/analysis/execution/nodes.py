@@ -17,6 +17,7 @@ from .compiler import ready_batch,compile_steps,materialize_steps,validate_decis
 from .report import render_evidence_markdown
 from .repair_policy import effective_snapshot
 from .repair_nodes import RepairNodes
+from agent_service.runtime.session_analysis import capture_analysis
 
 
 class ExecutionNodes:
@@ -155,9 +156,16 @@ class ExecutionNodes:
 
     async def review(self,state):
         snapshot=effective_snapshot(state)
-        response=await self.runtime.execution_role('review',state,{'goal':snapshot['document']['goal'],
-            'pending_decisions':state.get('pending_decisions',[]),'observations':self.role_facts(state),
-            'skills':snapshot['skill_sources'],'approved_steps':[{k:s[k] for k in ('id','tool_id','description')} for s in snapshot['steps']]})
+        error=None
+        try:
+            response=await self.runtime.execution_role('review',state,{'goal':snapshot['document']['goal'],
+                'pending_decisions':state.get('pending_decisions',[]),'observations':self.role_facts(state),
+                'skills':snapshot['skill_sources'],'approved_steps':[{k:s[k] for k in ('id','tool_id','description')} for s in snapshot['steps']]})
+        except StructuredResponseError as exc:
+            from agent_service.agents.analysis.agent_builders.execution_review.agent import ReviewResponse
+            error=str(exc)[:2000]
+            response=ReviewResponse(choices=[],needs_user_input=True,
+                message='실행 결과에 근거한 판단값을 검증하지 못했습니다. 다음 단계의 입력값을 확인해 주세요.')
         proposed={choice.decision_id:choice.value for choice in response.choices}
         pending={d['id']:d for d in state.get('pending_decisions',[])}
         safe=(len(proposed)==len(response.choices) and proposed.keys()<=pending.keys()
@@ -176,10 +184,10 @@ class ExecutionNodes:
                 'payload':{'decisions':[{'decision_id':d['id'],'guidance':d['instruction'],'evidence_steps':d['after_steps'],
                     'value_schema':d['output_schema'],'has_value':d['id'] in proposed,**({'value':proposed[d['id']]} if d['id'] in proposed else {})} for d in pending.values()]}}
             DecisionInteractionData.model_validate(review)
-            return {'decision_review':review,'execution_phase':'decision_wait',
+            return {'decision_review':review,'execution_phase':'decision_wait','execution_review_validation_error':error,
                 'public_events':[*state.get('public_events',[]),self.event(state,'interaction.opened',review)]}
         decisions={**state.get('execution_decisions',{}),**proposed}
-        return {'execution_decisions':decisions,'pending_decisions':[], 'execution_phase':'select',
+        return {'execution_decisions':decisions,'pending_decisions':[], 'execution_phase':'select','execution_review_validation_error':None,
             'public_events':[*state.get('public_events',[]),self.event(state,'message.completed',{'role':'assistant','channel':'commentary',
                 'content':[{'type':'text','text':response.message}]})]}
 
@@ -261,6 +269,7 @@ class ExecutionNodes:
             'report':{'format':'markdown','content':text,'evidence_steps':report_evidence,
                 'status':report_status,'validation_scope':'step_ids_and_rendered_facts','artifact_registration':'deferred'} if wants_report else None}
         return {'final_response':final,'report_status':report_status,
+            'last_analysis_context':capture_analysis(state,snapshot,final,self.runtime.settings.agent_session_analysis_max_chars),
             'public_events':[*state.get('public_events',[]),self.event(state,'message.completed',{'role':'assistant','channel':'answer',
                 'content':[{'type':'text','text':text}]})]}
 

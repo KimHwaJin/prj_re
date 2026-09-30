@@ -26,6 +26,8 @@ with ZipFile(wheel) as archive:
     assert not any(n.startswith(('agent_service/agents/analysis/prompts/', 'agent_service/agents/analysis/resources/')) for n in names)
     assert 'agent_service/agents/analysis/workflow/workflows/workflow_lifecycle.md' in names
     assert 'agent_service/agents/analysis/workflow/skills/generate_skill_index.py' in names
+    assert 'agent_service/runtime/session_analysis.py' in names
+    assert 'agent_service/middleware/session_analysis.py' in names
     assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
     archive.extractall(installed)
 sys.path.insert(0, str(installed))

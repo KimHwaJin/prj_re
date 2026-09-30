@@ -15,7 +15,10 @@ parser.add_argument('--settings-file', required=True, type=Path, help='Private f
 parser.add_argument('--output', required=True, type=Path, help='Result JSON path; contains observations/report, never configuration secrets.')
 parser.add_argument('--real', action='store_true', help='Use supplied real model settings instead of explicit mock.')
 parser.add_argument('--port', type=int, default=18091)
+parser.add_argument('--fixture-plan',action='store_true',help='Use an explicit registered quality-review initial plan; execution/review/report still follow the selected provider.')
+parser.add_argument('--followup-checks',action='store_true',help='After completion, test real-model explanation and Markdown revision on the same session without resubmission. Requires --real.')
 args = parser.parse_args()
+assert not args.followup_checks or args.real, 'Follow-up semantic checks require the real model; mock output is not evidence of understanding'
 root = Path(__file__).resolve().parents[2]
 config = json.loads(args.settings_file.read_text())
 real_mode = args.real
@@ -56,7 +59,35 @@ with tempfile.TemporaryDirectory(prefix='agentic-exec-migrations-') as directory
         if outcome.returncode: raise RuntimeError('Isolated migration failed: '+outcome.stderr[-2000:])
 settings=load_settings(config=config,environ={})
 app=create_app(settings)
-summary={'real_llm':real_mode,'namespace':namespace,'port':args.port,'passed':False}
+summary={'real_llm':real_mode,'initial_plan_fixture':args.fixture_plan,'namespace':namespace,'port':args.port,'passed':False}
+if args.fixture_plan:
+    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
+    old_respond=PlanningRuntime.respond
+    async def fixed_initial_plan(self,state,context,datasets):
+        if state['user_request'].startswith('default-nce 데이터의 품질, 기본 통계, 이상치를 분석하고'):
+            document=json.loads((root/'src/agent_service/agents/analysis/planning/fixtures/quality-review.json').read_text())
+            return reply_schema(self.catalog,1)(kind='plans',message='명시적인 등록 Tool 검증 계획입니다.',
+                plans=[{'definition':document,'input_values':{'dataset':'default-nce'}}])
+        return await old_respond(self,state,context,datasets)
+    PlanningRuntime.respond=fixed_initial_plan
+context_deliveries=[]
+if args.followup_checks:
+    from agent_service.middleware import SessionAnalysisMiddleware
+    old_wrap=SessionAnalysisMiddleware.awrap_model_call
+    async def observe_context(self,request,handler):
+        async def measured(actual):
+            import json
+            for message in actual.messages:
+                if message.id=='dtest-session-analysis-context':
+                    data=json.loads(message.content)['analysis']
+                    context_deliveries.append({'execution_id':data['execution_id'],'source_run_id':data['source_run_id'],
+                        'step_ids':[o['step_id'] for o in data['observations']],
+                        'serialized_chars':len(json.dumps(data,ensure_ascii=False,separators=(',',':'))),
+                        'omitted_observations':data['omitted_observations']})
+            return await handler(actual)
+        return await old_wrap(self,request,measured)
+    SessionAnalysisMiddleware.awrap_model_call=observe_context
 
 async def main():
     server=uvicorn.Server(uvicorn.Config(app,host='127.0.0.1',port=args.port,log_level='warning',access_log=False))
@@ -138,6 +169,45 @@ async def main():
             summary['sse_types']=sorted(set(line[7:] for line in stream.text.splitlines() if line.startswith('event: ')))
             assert 'message.completed' in summary['sse_types'] and 'interaction.resolved' in summary['sse_types']
             assert 'def data_load' not in stream.text and 'code_sha256' not in stream.text
+            if args.followup_checks:
+                from agent_config import build_langgraph_thread_id
+                async with runtime.open_graph() as graph:
+                    saved=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(sid)}})).values['last_analysis_context']
+                assert saved['payload']['execution_id']==final['execution_id']
+                summary['completed_analysis_context']={'source_run_id':saved['payload']['source_run_id'],
+                    'step_ids':[o['step_id'] for o in saved['payload']['observations']],
+                    'serialized_chars':len(json.dumps(saved['payload'],ensure_ascii=False,separators=(',',':'))),
+                    'omitted_observations':saved['payload']['omitted_observations'],
+                    'report_truncated':saved['payload']['report']['truncated']}
+                summary['followups']=[]
+                questions=[
+                    '방금 분석에서 나온 기초 통계와 이상치 판단을 실제 결과에 근거해서 비전문가에게 설명해줘. 확인하지 않은 원인은 단정하지 말고, 코드 실행이나 새 분석 계획은 필요 없어.',
+                    '방금 결과를 비전문가용 Markdown 리포트로 다시 작성해줘. 데이터 로드 과정 설명은 빼고 기초 통계 해석과 한계를 부각해줘. 새 계산이나 코드 실행은 하지 말고, 파일이나 Artifact 등록을 했다고 말하지 마.'
+                ]
+                for question in questions:
+                    clock=time.perf_counter();before=len(context_deliveries)
+                    r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},
+                        json={'input':{'content':[{'type':'text','text':question}]}})
+                    assert r.status_code==202,r.text
+                    following_id=r.json()['id']
+                    async with asyncio.timeout(240):
+                        while True:
+                            following=(await client.get(path+'/'+following_id,headers=headers)).json()
+                            if following['status'] not in ('pending','running'):break
+                            await asyncio.sleep(.2)
+                    result=following.get('result') or {}
+                    summary['followups'].append({'request':question,'status':following['status'],
+                        'result':result.get('final_response'),'seconds':round(time.perf_counter()-clock,3)})
+                    assert following['status']=='success' and result['final_response']['status']=='answer',following
+                    async with runtime.open_graph() as graph:
+                        current=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(sid)}})).values
+                    assert current['execution_id'] is None and current['executor_operation_number']==0
+                    assert current['last_analysis_context']['payload']['execution_id']==final['execution_id']
+                    deliveries=context_deliveries[before:]
+                    assert deliveries and all(d['execution_id']==final['execution_id'] and d['source_run_id']==rid for d in deliveries)
+                    assert all(d['serialized_chars']<=settings.agent.agent_session_analysis_max_chars for d in deliveries)
+                summary['followup_context_deliveries']=context_deliveries
+                summary['followup_created_execution']=False
             r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':'안녕하세요'}]}})
             summary['same_session_after_completion_status']=r.status_code
             assert r.status_code==202,r.text

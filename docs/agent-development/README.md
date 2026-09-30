@@ -17,6 +17,8 @@
 
 ## 신규 Agent 설계 초안
 
+043은 [완료 분석의 후속 대화 전달](../agentic-session-analysis-context.md)을 구현했다. 같은 세션의 최근 실제 근거만 middleware로 전달하며 project_memory·파일 Registry와 구분한다. 결과 판단의 근거 ID·값 검증도 create_agent 재검증에 연결했다.
+
 [전처리 데이터 등록·조회 계약](../design/dataset-registry-contract/README.md)은 Executor 개발자와 합의할 042 초안이다. 실제 파일 정보는 Executor, 의미 설명은 Agent가 맡으며 범위·버전을 고정한다. 아직 동적 Dataset API/provider는 연결하지 않았다.
 
 [Workflow JSON 계약 초안](../design/agentic-workflow-contract/README.md)은 결과 기반 판단·조건·입력 연결·승인과 산출물의 새 규격이다. 현재 실행 코드와 별개의 설계 초안이며 API·compiler에서 아직 지원하지 않는다. 실제 등록 자산 예제와 미구현 목표 예제를 구분하고 오프라인 검증 범위를 명시했다.
