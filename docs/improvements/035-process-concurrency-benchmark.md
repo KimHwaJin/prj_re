@@ -1,6 +1,6 @@
 # 035 — API 프로세스·Run 동시 실행 수 비교
 
-- 상태: 21회 실측·독립 검산·보고서 완료 / 베이스 병합·배포 미수행
+- 상태: 21회 실측·독립 검산·보고서 완료 / 베이스 병합 완료·배포 미수행
 - 브랜치: `feature/process-concurrency-benchmark`
 - 서비스 기준 소스: `c3534f0` (034 완료)
 - 날짜: 2026-09-30
@@ -71,4 +71,4 @@ Service DB pool은 프로세스당 10/overflow 0, checkpoint 최대 4, bridge 4�
 - [독립 검산](../reports/process-concurrency-benchmark-2026-09-30/independent-checks.json), [환경](../reports/process-concurrency-benchmark-2026-09-30/environment.json)
 - [재현 절차](../../scripts/benchmarks/process_scaling/README.md)
 
-작업 commit은 이 문서를 포함하는 `feature/process-concurrency-benchmark` 기록으로 추적한다. 베이스 병합·원격 push·운영 배포는 수행하지 않았다.
+작업 commit `a1e2f82`를 2026-09-30 사용자 요청으로 `feature/refactor-base`에 fast-forward 병합했다. 028~035를 함께 반영했으며 충돌·추가 코드 변경은 없었다. `feature/process-concurrency-benchmark` 브랜치는 보존했다. 원격 push·운영 배포는 수행하지 않았다.

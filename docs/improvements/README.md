@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-현재 작업 브랜치: `feature/process-concurrency-benchmark` (035 프로세스·동시 실행 비교 완료). 028~035는 베이스 미병합. 027의 `ea871a1`까지 베이스에 병합했다. 원격 push·배포 미수행.
+현재 브랜치: `feature/refactor-base`. 사용자 요청으로 028~035의 `a1e2f82`까지 fast-forward 병합했다. 충돌·추가 코드 변경 없이 8개 작업 commit을 반영했고 파생 브랜치는 보존했다. 병합 상태 기록은 별도 문서 commit으로 남긴다. 원격 push·배포 미수행.
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -49,12 +49,12 @@
 | 027 | LLM 토큰 버퍼 상한·시간 기준 저장 | 구현·격리 PostgreSQL/전체 회귀/오프라인 비교/패키지 검증 완료 / 배포 미수행 | 2026-09-29 | [작업 기록](027-token-event-buffer.md) |
 | 028 | 현재 실행 경로 LLM·큐·내부 처리 지연 분해 | 1·10·30·50명 계측·원본 검산·보고서 완료 / 운영 코드 변경·배포 미수행 | 2026-09-29 | [측정·판단·다음 방향](028-runtime-latency-profile.md) |
 | 029 | 상태 저장·재시도·프로세스 장애 복구 검토 | 격리 재현·기존 보호 장치 검증·보고서 완료 / 운영 결함 수정·배포 미수행 | 2026-09-29 | [검토·증거·다음 우선순위](029-state-recovery-review.md) |
-| 030 | 사용자 resume 입력 재사용 방지·checkpoint 기반 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-29 | [변경·검증·제한](030-resume-checkpoint-recovery.md) |
-| 031 | 최초 입력 재전달 방지·checkpoint 기반 결과 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [변경·검증·제한](031-initial-checkpoint-recovery.md) |
-| 032 | Agent 로그·대응 이벤트 원자 저장·멱등 복구 | 구현·격리 PostgreSQL/마이그레이션/회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](032-log-event-atomicity.md) |
-| 033 | 결과 저장 DB 왕복 축소·동일 조건 A/B | 1차 개선·1/10명 A/B·전체 회귀/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](033-projection-db-roundtrips.md) |
-| 034 | 결과 단위 검증 공유·배치 저장 | 구현·격리 PostgreSQL/전체 회귀·1/10명 A/B/wheel 검증 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](034-projection-batch-storage.md) |
-| 035 | API 프로세스·Run 동시 실행 수 비교 | 21회 실측·독립 검산·보고서 완료 / 베이스 병합·배포 미수행 | 2026-09-30 | [작업 기록](035-process-concurrency-benchmark.md) |
+| 030 | 사용자 resume 입력 재사용 방지·checkpoint 기반 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-29 | [변경·검증·제한](030-resume-checkpoint-recovery.md) |
+| 031 | 최초 입력 재전달 방지·checkpoint 기반 결과 저장 복구 | 구현·격리 PostgreSQL/회귀/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [변경·검증·제한](031-initial-checkpoint-recovery.md) |
+| 032 | Agent 로그·대응 이벤트 원자 저장·멱등 복구 | 구현·격리 PostgreSQL/마이그레이션/회귀/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](032-log-event-atomicity.md) |
+| 033 | 결과 저장 DB 왕복 축소·동일 조건 A/B | 1차 개선·1/10명 A/B·전체 회귀/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](033-projection-db-roundtrips.md) |
+| 034 | 결과 단위 검증 공유·배치 저장 | 구현·격리 PostgreSQL/전체 회귀·1/10명 A/B/wheel 검증 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](034-projection-batch-storage.md) |
+| 035 | API 프로세스·Run 동시 실행 수 비교 | 21회 실측·독립 검산·보고서 완료 / 베이스 병합 완료·배포 미수행 | 2026-09-30 | [작업 기록](035-process-concurrency-benchmark.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
