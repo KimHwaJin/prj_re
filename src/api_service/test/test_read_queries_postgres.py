@@ -25,6 +25,10 @@ from api_service.test.test_user_identity_postgres import database_url, harness, 
 def trace_reads(h):
     reads = []
     def finished(conn, cursor, statement, parameters, context, executemany):
+        # Fixture substitutes a DB lookup for Redis; do not count that artificial
+        # query. The production active-user/role/admission query is still counted.
+        if context.execution_options.get('test_identity_lookup'):
+            return
         if statement.lstrip().upper().startswith('SELECT'):
             reads.append({'sql': statement, 'rows': cursor.rowcount,
                           'columns': [column[0] for column in cursor.description]})

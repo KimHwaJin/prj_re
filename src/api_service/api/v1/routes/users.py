@@ -3,8 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_service.core.auth import Actor, get_current_actor, require_admin
 from api_service.core.database import get_db
-from api_service.schemas.common.user_schema import UserCreate, UserRead, UserUpdate
+from api_service.schemas.common.user_schema import UserCreate, UserRead, UserMe, UserUpdate
 from api_service.services.user_service import UserService
+from service_auth.sso.dependencies import get_login_session
+from service_auth.sso.sessions import LoginSession
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -18,9 +20,12 @@ async def create_user(payload: UserCreate, response: Response,
 
 
 # Register before the public string ID route.
-@router.get("/me", response_model=UserRead)
-async def read_me(actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)):
-    return await UserService.read(db, actor, actor.public_user_id)
+@router.get("/me", response_model=UserMe)
+async def read_me(response: Response, actor: Actor = Depends(get_current_actor),
+                  db: AsyncSession = Depends(get_db), session: LoginSession = Depends(get_login_session)):
+    user = await UserService.read(db, actor, actor.public_user_id)
+    response.headers["Cache-Control"] = "no-store"
+    return UserMe(**user.model_dump(), csrf_token=session.csrf_token, login_expires_at=session.expires_at)
 
 
 @router.get("/{user_id}", response_model=UserRead)

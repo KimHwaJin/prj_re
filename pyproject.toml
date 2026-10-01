@@ -63,7 +63,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["api_service*", "agent_service*", "service_contracts*", "service_runtime*", "integrations*", "devtools*"]
+include = ["api_service*", "agent_service*", "service_contracts*", "service_runtime*", "service_auth*", "integrations*", "devtools*"]
 exclude = ["api_service.test*", "agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]

@@ -9,9 +9,9 @@ dtest 프로젝트 공유
 
 Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 
-현재 사용자용 API는 `X-User-Id` 문자열 헤더를 사용하며 Bearer UUID 및 공개 사용자 가입/이름 조회 방식은 제거했다. 먼저 DB 마이그레이션과 최초 관리자 초기화를 수행한다. [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 현재 계약으로 참고한다.
+현재 사용자용 API는 SSO 확인 후 발급하는 쿠키 로그인 세션으로 호출자를 식별한다. `X-User-Id`만 보내는 요청은 인증되지 않는다. 최초 직원은 일반 사용자와 기본 프로젝트로 자동 등록하며 역할·소유권·내부 UUID는 DB에서 관리한다. 사내 SDK 소스는 포함하지 않았고 폐쇄망에서 연결 함수 두 곳을 구현해야 실제 SSO 로그인이 가능하다. [SSO 적용·Swagger 테스트 가이드](docs/sso-authentication.md), [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 참고한다.
 
-아래의 기존 Docker·데모·Locust 안내는 이전 실행 환경 기록이다. 해당 클라이언트의 Bearer 및 자동 가입 흐름은 새 사용자 계약으로 아직 이관하지 않았으므로 이 브랜치에서 그대로 호환된다고 보지 않는다. 기존 실행 컨테이너는 변경하지 않았다.
+아래의 기존 Docker·Locust 안내는 이전 실행 환경 기록이다. 헤더로 사용자를 선택하는 과거 부하테스트·진단 클라이언트는 현재 SSO API와 그대로 호환되지 않으며 쿠키·CSRF 세션 입력으로 이관해야 한다. 현재 내부 데모와 Swagger는 쿠키·CSRF를 사용한다. 기존 실행 컨테이너는 변경하지 않았다.
 
 ## 로컬 Docker 개발 환경
 

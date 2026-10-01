@@ -7,3 +7,11 @@ service:
     server_port: 8000
   checkpoint:
     checkpoint_setup_on_start: false
+  auth:
+    # 사내 SDK는 폐쇄망에서 module:factory로 연결. 미설정 로그인은 503이며 헤더 우회는 없다.
+    # SSO_ADAPTER_FACTORY, SSO_PUBLIC_API_ORIGIN, SSO_FRONTEND_ORIGIN,
+    # SSO_ALLOWED_ORIGINS는 환경별 파일 또는 환경변수로 주입한다.
+    sso_auto_register: true
+    sso_session_ttl_seconds: 1800  # 고정 30분. 요청으로 연장되지 않는다.
+    sso_redis_max_connections: 8  # 기존 Redis 서버 사용, Streams 연결풀과 별도.
+    sso_allowed_return_roots: ["/", "/projects"]

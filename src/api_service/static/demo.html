@@ -3,15 +3,16 @@
 <title>분석 Agent 내부 테스트</title>
 <style>body{font:15px system-ui;margin:24px;background:#f4f6f8;color:#172234}main{display:grid;grid-template-columns:1fr 1fr;gap:20px}section{background:white;padding:20px;border-radius:12px}input,textarea,button{font:inherit;padding:8px;box-sizing:border-box}input,textarea{width:100%;margin:6px 0}textarea{min-height:110px}button{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere}article{border:1px solid #ccc;padding:12px;margin:12px 0;border-radius:8px}.notice{color:#58677b}@media(max-width:800px){main{grid-template-columns:1fr}}</style>
 <h1>분석 Agent 내부 테스트</h1>
-<p class="notice">Swagger에서 등록한 User ID와 Session ID를 입력하세요. 현재 단계는 계획 승인까지이며 Executor 실행은 연결하지 않았습니다.</p>
-<label>User ID<input id="user" placeholder="등록된 public user_id"></label>
+<p class="notice">SSO 로그인 후 본인 Session ID를 입력하세요. Executor 실행 여부는 서버 설정을 따릅니다.</p>
+<p><a href="/api/v1/auth/login/sso">SSO 로그인</a> · <button id="identity">로그인 상태 확인</button> · <button id="logout">로그아웃</button> <span id="user"></span></p>
 <label>Session ID<input id="session" placeholder="UUID"></label>
 <main><section><h2>대화·진행</h2><textarea id="message" placeholder="분석 요청 또는 질문"></textarea><button id="start">요청 보내기</button> <button id="reconnect">SSE 재연결</button><p id="status"></p><div id="messages"></div><details><summary>이벤트 확인</summary><pre id="events"></pre></details></section>
 <section><h2>계획 확인·승인</h2><p>Skill, Tool 함수명과 파라미터만 표시합니다. 아래 JSON으로 입력값·편집 가능한 파라미터·제외 단계·실행 정책을 수정할 수 있습니다.</p><div id="plans"></div></section></main>
 <script>
 const $=id=>document.getElementById(id);
-let runId=null,cursor=0,token=null,controller=null;
-function headers(key){return {'X-User-Id':$('user').value.trim(),'Content-Type':'application/json',...(key?{'Idempotency-Key':key}:{})};}
+let runId=null,cursor=0,token=null,controller=null,csrfToken=null;
+async function identity(){csrfToken=null;const response=await fetch('/api/v1/users/me',{credentials:'same-origin',cache:'no-store'});if(!response.ok){$('user').textContent='로그인이 필요합니다';throw new Error('SSO 로그인 후 다시 시도하세요.');}const user=await response.json();csrfToken=user.csrf_token;$('user').textContent=user.user_name+' · '+user.role;}
+function headers(key){return {'Content-Type':'application/json',...(csrfToken?{'X-CSRF-Token':csrfToken}:{}),...(key?{'Idempotency-Key':key}:{})};}
 function path(){return '/api/v1/sessions/'+encodeURIComponent($('session').value.trim())+'/runs';}
 function notice(text){$('status').textContent=text;}
 function display(type,data){$('events').textContent+=type+' '+JSON.stringify(data)+'\n';
@@ -21,8 +22,11 @@ function display(type,data){$('events').textContent+=type+' '+JSON.stringify(dat
  if(type==='interaction.resolved'){$('plans').replaceChildren();notice('계획 승인 완료 · 실제 실행 전');}
 }
 function render(interaction){$('plans').replaceChildren();for(const plan of interaction.payload.plans){const article=document.createElement('article');const title=document.createElement('h3');title.textContent=plan.name;article.append(title);const pre=document.createElement('pre');pre.textContent=JSON.stringify(plan,null,2);article.append(pre);const area=document.createElement('textarea');area.value=JSON.stringify({action:'edit_plan',plan_id:plan.plan_id,plan_revision:plan.plan_revision,input_values:Object.fromEntries(plan.inputs.filter(i=>i.editable&&i.has_value).map(i=>[i.name,i.value])),step_changes:[],excluded_step_ids:plan.steps.filter(s=>s.status==='excluded').map(s=>s.step_id),execution_overrides:{}},null,2);article.append(area);for(const [label,action] of [['수정 반영','edit_plan'],['최종 승인','approve_plan']]){const button=document.createElement('button');button.textContent=label;button.onclick=async()=>{try{const value=JSON.parse(area.value);value.action=action;await post({run_id:runId,resume_token:token,command:{resume:value}});}catch(error){notice(error.message);}};article.append(button);}$('plans').append(article);}}
-async function stream(url,options){if(controller)controller.abort();controller=new AbortController();const response=await fetch(url,{...options,signal:controller.signal});if(!response.ok){throw new Error(await response.text());}runId=response.headers.get('X-Run-Id')||runId;const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let boundary;while((boundary=buffer.indexOf('\n\n'))>=0){const packet=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);let type='',data=[],id=null;for(const line of packet.split('\n')){if(line.startsWith('event: '))type=line.slice(7);if(line.startsWith('data: '))data.push(line.slice(6));if(line.startsWith('id: '))id=Number(line.slice(4));}if(data.length){display(type,JSON.parse(data.join('\n')));if(id!==null)cursor=id;}}}}
-async function post(body){notice('접수·실행 대기');await stream(path()+'/stream',{method:'POST',headers:headers(crypto.randomUUID()),body:JSON.stringify(body)});}
+async function stream(url,options){if(controller)controller.abort();controller=new AbortController();const response=await fetch(url,{...options,credentials:'same-origin',signal:controller.signal});if(!response.ok){throw new Error(await response.text());}runId=response.headers.get('X-Run-Id')||runId;const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let boundary;while((boundary=buffer.indexOf('\n\n'))>=0){const packet=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);let type='',data=[],id=null;for(const line of packet.split('\n')){if(line.startsWith('event: '))type=line.slice(7);if(line.startsWith('data: '))data.push(line.slice(6));if(line.startsWith('id: '))id=Number(line.slice(4));}if(data.length){display(type,JSON.parse(data.join('\n')));if(id!==null)cursor=id;}}}}
+async function post(body){if(!csrfToken)await identity();notice('접수·실행 대기');await stream(path()+'/stream',{method:'POST',headers:headers(crypto.randomUUID()),body:JSON.stringify(body)});}
 $('start').onclick=()=>{runId=null;cursor=0;post({input:{content:[{type:'text',text:$('message').value}]}}).catch(e=>notice(e.message));};
 $('reconnect').onclick=()=>{if(runId)stream(path()+'/'+runId+'/stream',{headers:{...headers(),'Last-Event-ID':String(cursor)}}).catch(e=>notice(e.message));};
+$('identity').onclick=()=>identity().catch(e=>notice(e.message));
+$('logout').onclick=async()=>{try{if(!csrfToken)await identity();const response=await fetch('/api/v1/auth/logout',{method:'POST',credentials:'same-origin',headers:headers()});if(!response.ok)throw new Error(await response.text());csrfToken=null;if(controller)controller.abort();$('user').textContent='로그아웃';notice('로그아웃했습니다.');}catch(error){notice(error.message);}};
+identity().catch(e=>notice(e.message));
 </script></html>

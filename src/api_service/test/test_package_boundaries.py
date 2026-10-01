@@ -18,7 +18,7 @@ def imports(path):
             yield from (alias.name for alias in node.names)
 
 
-@pytest.mark.parametrize('package', ['agent_service', 'integrations', 'service_contracts', 'service_runtime'])
+@pytest.mark.parametrize('package', ['agent_service', 'integrations', 'service_contracts', 'service_runtime', 'service_auth'])
 def test_shared_and_agent_packages_do_not_depend_on_api(package):
     forbidden = {'app', 'api_service'}
     if package != 'agent_service':

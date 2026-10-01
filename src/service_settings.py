@@ -33,7 +33,7 @@ ALIASES = {
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
-GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics"}
+GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics", "auth"}
 # Extra settings consumed by the legacy Agent adapter, outside the API model.
 AGENT_KEYS = set("""
 APP_ENV MODEL_MOCK_DELAY_MS MODEL_TEMPERATURE MODEL_PROVIDER MODEL_NAME
@@ -168,6 +168,7 @@ class ServiceSettings:
     api: Any
     agent: Any
     worker: Any
+    sso: Any
     profile: str
     event_worker_enabled: bool
     workflow_database_url: str | None = field(repr=False)
@@ -187,6 +188,8 @@ class ServiceSettings:
             "event_worker_enabled": self.event_worker_enabled,
             "shutdown_drain_seconds": self.shutdown_drain_seconds,
             "shutdown_timeout_seconds": self.shutdown_timeout_seconds,
+            "identity_mode": "sso_cookie",
+            "sso_adapter_configured": bool(self.sso.adapter_factory),
             "settings_sources": dict(self.sources),
         }
 
@@ -208,6 +211,7 @@ def load_settings(
     from config import Settings as APISettings
     from agent_config import _agent_settings_from_mapping
     from event_worker_settings import Settings as WorkerSettings
+    from service_auth.sso.settings import SsoSettings
 
     env = dict(os.environ if environ is None else environ)
     selected = profile or env.get("APP_ENV", "dev")
@@ -216,7 +220,8 @@ def load_settings(
         raise ConfigurationError("APP_ENV must select dev, stg or prd")
     api_fields = {name: _api_key(name, info) for name, info in APISettings.model_fields.items()}
     worker_keys = {"EW_" + name.upper() for name in WorkerSettings.model_fields}
-    known = set(api_fields.values()) | worker_keys | AGENT_KEYS | EXTRA_KEYS
+    sso_keys = {"SSO_" + name.upper() for name in SsoSettings.model_fields}
+    known = set(api_fields.values()) | worker_keys | AGENT_KEYS | EXTRA_KEYS | sso_keys
     sources: dict[str, str] = {}
     merged: dict[str, Any] = {}
 
@@ -251,6 +256,22 @@ def load_settings(
         missing = {"DATABASE_URL", "CHECKPOINT_DB_URI"} - merged.keys()
         if missing:
             raise ConfigurationError("Deployment requires explicit " + ", ".join(sorted(missing)))
+    sso_input = {name: merged["SSO_" + name.upper()] for name in SsoSettings.model_fields
+                 if "SSO_" + name.upper() in merged}
+    sso_input.setdefault("namespace", f"dtest-agent:{selected}:sso")
+    for name in ("allowed_origins", "allowed_return_roots"):
+        if isinstance(sso_input.get(name), str):
+            try:
+                sso_input[name] = json.loads(sso_input[name])
+            except ValueError:
+                raise ConfigurationError("Invalid SSO list setting: " + name.upper()) from None
+    try:
+        sso = SsoSettings.model_validate(sso_input)
+    except ValidationError as exc:
+        fields = ", ".join(".".join(map(str, e["loc"])) for e in exc.errors())
+        raise ConfigurationError(f"Invalid SSO settings: {fields}") from None
+    if "SSO_NAMESPACE" not in merged:
+        sources["SSO_NAMESPACE"] = "derived from APP_ENV"
     if "MODEL_PROVIDER" in merged and merged["MODEL_PROVIDER"] not in {"mock", "openai_compatible"}:
         raise ConfigurationError("Unsupported MODEL_PROVIDER")
     api_input = {name: merged[key] for name, key in api_fields.items() if key in merged}
@@ -337,7 +358,7 @@ def load_settings(
     if not isinstance(mock_root, (str, Path)) or not str(mock_root).strip():
         raise ConfigurationError("Invalid path setting: MOCK_DATA_ROOT")
     return ServiceSettings(
-        api=api, agent=agent, worker=worker, profile=selected,
+        api=api, agent=agent, worker=worker, sso=sso, profile=selected,
         event_worker_enabled=_boolean(merged.get("EVENT_WORKER_ENABLED", False), "EVENT_WORKER_ENABLED"),
         workflow_database_url=workflow_url if workflow_enabled else None,
         mock_data_root=Path(mock_root),

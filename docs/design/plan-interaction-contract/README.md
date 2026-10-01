@@ -1,5 +1,7 @@
 # 계획 승인과 Executor 제출 계약 초안
 
+> 2026-10-01 사용자 식별 변경: 아래 `X-User-Id` 계약은 이전 결정 기록이다. 현재 서비스는 SSO 로그인 쿠키와 변경 요청의 `X-CSRF-Token`을 사용하며, [현재 SSO 계약](../../sso-authentication.md)을 우선한다. Run/계획/데이터 body와 내부 UUID 소유권은 유지한다. Gaia body의 user_id를 검증된 로그인 신원으로 신뢰하지 않는다.
+
 이 문서는 Workflow 정의를 프론트의 계획 확인 화면, 사용자 수정·승인 요청, 내부 실행 계획과 Executor 요청으로 연결한다. 프론트는 코드나 전체 Workflow를 다시 보내지 않고 계획 ID·버전과 허용된 수정만 제출한다. 서버는 최종 계획을 검증하고 소스를 고정한 뒤 실행 요청을 생성한다.
 
 상태는 **개발용 계약 prototype 검증 완료, 서비스 미연결**이다. 생성된 예제는 현재 공개 Run API나 SSE에서 실제로 반환되는 형식이 아니다. `scripts/design/plan_contract_prototype.py`는 오프라인 설계 검증 도구이며 production compiler, Agent 노드 또는 운영 CLI가 아니다. LLM·API 서버·DB·Executor 서비스·Gaia를 호출하지 않았다.

@@ -4,7 +4,7 @@
 
 ## 요청·재개
 
-등록된 공개 사용자 ID를 `X-User-Id`로 보낸다. 새 입력과 HITL 응답 모두 같은 경로를 사용한다.
+SSO 로그인 쿠키와 `X-CSRF-Token`을 보낸다. `X-User-Id` 단독 인증은 제거했다. 새 입력과 HITL 응답 모두 같은 경로를 사용한다. [인증·Swagger 테스트](sso-authentication.md)를 참고한다.
 
 `POST /api/v1/sessions/{session_id}/runs`
 
@@ -100,7 +100,7 @@ POST `.../runs/{id}/cancel`은 기존 취소 처리와 실행 종료 확인을 �
 
 ## 실행 전 재작성·추가 질문
 
-041에서는 같은 POST `/api/v1/sessions/{session_id}/runs`에 자연어 피드백을 보낸다. 기존 X-User-Id/Idempotency-Key, 현재 run_id/resume_token을 사용한다.
+041에서는 같은 POST `/api/v1/sessions/{session_id}/runs`에 자연어 피드백을 보낸다. 로그인 쿠키·X-CSRF-Token·Idempotency-Key, 현재 run_id/resume_token을 사용한다.
 
 ```json
 {"run_id":"공개 Run UUID","resume_token":"현재 token UUID","command":{"resume":{"action":"replan","interaction_id":"현재 화면 UUID","revision":1,"feedback":"이 후보들 대신 다른 전처리 방법으로 분석해 주세요."}}}

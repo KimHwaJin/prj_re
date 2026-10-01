@@ -72,6 +72,8 @@ async def planning(test_config, monkeypatch):
         async with factory() as db:
             yield db
     app.dependency_overrides[get_db] = request_db
+    from api_service.test.auth_double import install_business_identity_double
+    install_business_identity_double(app, factory)
     graph_runtime.start()
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:
         h = SimpleNamespace(client=client, factory=factory, app=app)

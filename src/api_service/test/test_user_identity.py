@@ -27,19 +27,23 @@ def test_patch_rejects_empty_null_or_identity_change(data):
         UserUpdate.model_validate(data)
 
 
-def test_every_user_api_documents_header_identity(monkeypatch):
+def test_every_user_api_documents_cookie_identity(monkeypatch):
     import service_settings
     from service_bootstrap import create_app
     monkeypatch.setattr(service_settings, "_snapshot", None)
     app = create_app(service_settings.load_settings(config={"AGENT_WORKER_ENABLED": False,
         "TASK_RECONCILER_ENABLED": False}, environ={}))
     schema = app.openapi()
-    assert schema["components"]["securitySchemes"] == {
-        "UserIdentity": {"type": "apiKey", "in": "header", "name": "X-User-Id"}}
+    scheme = schema["components"]["securitySchemes"]["LoginSession"]
+    assert scheme["type"] == "apiKey" and scheme["in"] == "cookie" and scheme["name"] == "dtest_session"
+    assert "UserIdentity" not in schema["components"]["securitySchemes"]
     for path, operations in schema["paths"].items():
         if path.startswith("/api/v1/"):
             for method, operation in operations.items():
                 if method in {"get", "post", "patch", "delete", "put"}:
-                    assert operation["security"] == [{"UserIdentity": []}], (path, method)
+                    if path == "/api/v1/auth/login/sso":
+                        assert not operation.get("security")
+                    else:
+                        assert operation["security"] == [{"LoginSession": []}], (path, method)
     assert "/api/v1/users/me" in schema["paths"]
     assert "/api/v1/users/by-name/{user_name}" not in schema["paths"]

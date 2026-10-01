@@ -4,7 +4,7 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 작업 브랜치: `feature/agentic-answer-grounding` (044). 043의 `0bd7b28`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~044는 파생 이력에 있다. 044는 후속 설명/Markdown의 출력 항목을 검증하고 서버가 실제 값 표를 렌더링한다. 전체 834개 회귀·실제 Executor/LLM 연계를 통과했다. 실제 후속 지연 증가와 정성 표현의 과장은 남은 보완으로 기록했다. Dataset API 연계는 보류하며 베이스 병합·원격 push·배포는 수행하지 않았다.
+현재 작업 브랜치: `feature/sso-auth` (045). 044의 문서 commit `8b89dc75407fb10cbace5b764376d2eb0688f842`에서 분기했다. 045는 재사용 가능한 SSO 세션·API 인증·Swagger 연결을 구현한다. 사내 SDK는 외부로 공유하지 않고 폐쇄망에서 두 함수를 연결한다. 실제 사내 SSO 왕복은 아직 검증하지 않았다. 베이스 병합·원격 push·배포는 수행하지 않았다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
 041 구현 commit: `7035a0edb93ec354a13acf3114e8f800ede84c8c`. [작업 결과](041-agentic-plan-revision.md).
@@ -72,6 +72,7 @@
 | 042 | 전처리 데이터 등록·조회·범위·버전 계약 초안 | 오프라인 계약/관련 127개 검증, 실제 Executor API·Agent 연계 미구현 | 2026-10-01 | [042 기록](042-dataset-registry-contract.md) |
 | 043 | 완료 분석의 후속 대화 문맥·결과 판단 검증 | 구현·801개 회귀·실제 Executor/LLM·후속 대화·wheel 검증, 베이스 미병합 | 2026-10-01 | [043 기록](043-session-analysis-context.md) |
 | 044 | 후속 설명·보고서의 실제 근거·수치 | 값 근거·전체 회귀·실제 연계 완료 / 정성·후속 성능 보완 필요 | 2026-10-01 | [작업 결과](044-agentic-answer-grounding.md) |
+| 045 | SSO 쿠키 인증·Redis 로그인 세션·Swagger | 서비스 구현·881개 회귀·wheel 검증 완료 / 사내 SDK 연결·실제 SSO 검증 필요 | 2026-10-01 | [작업 기록](045-sso-authentication.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
@@ -100,7 +101,7 @@
 - CRUD 사용자 리뷰: 실행 중 세션 이동/삭제 제한, 상세 조회의 불필요한 하위 조회 제거, 기본 프로젝트 DELETE 거절 방향을 승인했다. Message CUD는 편의 API이며 운영 필수 사용 시나리오에서 제외한다. 메시지 저장은 Runs/내부 실행에서 수행한다. 사용자 삭제 시 하위 데이터도 함께 숨기는 정책을 유지한다. 공개 실행 기능은 Runs로 집중하고 별도 Tasks API는 필요성 검토 후 기능 이관/제거 후보로 둔다. 내부 전체 작업 상태·재개 연결·세션 점유 책임을 검토 없이 삭제하지 않는다. [항목별 리뷰](../reports/crud-api-review-2026-09-28.md)를 참고한다.
 
 - Agent 최초 접수 시 main_model_name이 없으면 기본 LLM, 있으면 등록된 모델을 선택하고 Task/resume에 고정한다. 나머지 플랫폼 선택 옵션은 이번 범위에서 제외한다.
-- 사용자 식별은 플랫폼과 독립적인 X-User-Id 공통 헤더로 통일한다. 비밀번호·로그인·토큰 발급은 만들지 않는다. 등록/활성 여부와 DB의 admin/user 역할·자원 소유권을 검사한다. /users/me는 조회이며 사용자 등록/수정/비활성화는 관리자 전용, 최초 관리자는 배포 초기화에서 생성한다. [확정 인터페이스](../design/platform-user-api-contract-2026-09-28.md)는 설계 기록이며 구현 완료가 아니다. 내부 데모는 운영 요구/필수 호환 범위에서 제외한다.
+- 2026-10-01 SSO 요청으로 다음 초기 결정은 대체되었다. 현재는 로그인 쿠키·CSRF·SSO 최초 일반 사용자 등록을 사용한다. [현재 계약](../sso-authentication.md)을 우선한다. 이전 결정: 사용자 식별은 플랫폼과 독립적인 X-User-Id 공통 헤더로 통일한다. 비밀번호·로그인·토큰 발급은 만들지 않는다. 등록/활성 여부와 DB의 admin/user 역할·자원 소유권을 검사한다. /users/me는 조회이며 사용자 등록/수정/비활성화는 관리자 전용, 최초 관리자는 배포 초기화에서 생성한다. [확정 인터페이스](../design/platform-user-api-contract-2026-09-28.md)는 설계 기록이며 구현 완료가 아니다. 내부 데모는 운영 요구/필수 호환 범위에서 제외한다.
 - 플랫폼의 workflow 목록·`/api/v1/{workflow}/run`·src/workflows의 일반 객체 ainvoke 호출은 사용자 설명이며 필수 준수 규격이 아니다. 우리 API의 durable 접수·Worker·resume·상태 계약을 우선한다. 플랫폼도 연계할 경우 공통 접수 adapter로 연결하고 실제 graph 실행은 Worker에서만 수행한다. async 메서드라는 사실과 접수 후 background 실행의 보장은 구분한다.
 - API·Agent 소스는 api_service와 agent_service 형제 패키지로 분리하는 것을 권장 구조로 한다. agent_service 안에 공통 runtime과 업무별 agents를 둔다. 양쪽이 상대 구현을 직접 import하지 않도록 공통 계약·저장 port와 bootstrap 주입 경계를 둔다. 소스 분리를 별도 Pod/프로세스 배포로 해석하지 않는다.
 - 업무 Agent를 같은 레포에 추가하고 API에서 선택할 수 있게 공통 API·Agent 계약/registry·Runtime·업무 패키지를 분리한다. Agent별 Worker/풀을 복제하지 않는다. 선택된 agent_id/버전/checkpoint 참조를 task에 고정하고 사용자/이벤트 resume가 같은 대상을 사용한다. 동일 세션 잠금은 Agent 종류를 바꿔도 유지한다. [다중 업무 Agent 확장 설계](../design/extensible-agent-runtime-2026-09-28.md)를 초기 런타임 교체에 반영한다.

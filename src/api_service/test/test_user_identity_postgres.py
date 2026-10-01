@@ -98,6 +98,8 @@ async def harness(database_url, monkeypatch):
                 await db.rollback()
                 raise
     app.dependency_overrides[get_db] = request_db
+    from api_service.test.auth_double import install_business_identity_double
+    install_business_identity_double(app, factory)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         yield SimpleNamespace(client=client, factory=factory, app=app, engine=engine)
     await engine.dispose()
@@ -279,7 +281,8 @@ async def test_deletion_waits_for_admitted_run_then_rejects(harness):
     async with h.factory() as admitted:
         row = await admitted.scalar(select(UserModel).where(UserModel.public_user_id == "user-a"))
         actor = Actor(row.user_id, row.public_user_id, row.role)
-        await get_current_user_id(actor.public_user_id, admitted)  # Real FOR SHARE admission.
+        from api_service.test.auth_double import session_for_public_id
+        await get_current_user_id(await session_for_public_id(admitted, actor.public_user_id), admitted)  # Real FOR SHARE admission.
         deleting = asyncio.create_task(h.client.delete("/api/v1/users/user-a", headers=headers()))
         try:
             await asyncio.sleep(.1)
@@ -371,7 +374,8 @@ async def test_new_admission_waits_for_deletion_then_fails(harness):
 
         async def new_request():
             async with h.factory() as db:
-                return await get_current_user_id(actor.public_user_id, db)
+                from api_service.test.auth_double import session_for_public_id
+                return await get_current_user_id(await session_for_public_id(db, actor.public_user_id), db)
 
         entering = asyncio.create_task(new_request())
         try:

@@ -158,6 +158,7 @@ def attach_service(
     router=None,
     background_factories: dict[str, Callable] | None = None,
     close_resources: Callable[[], Awaitable[None]] = _close_resources,
+    sso_docs_path: str = "/service/docs",
 ):
     """Attach once; preserve the app's existing and included-router lifespans.
 
@@ -171,6 +172,13 @@ def attach_service(
         from api_service.api.v1.router import api_router
         router = api_router
     app.include_router(router, prefix=settings.api.api_v1_prefix)
+    from service_auth.sso.runtime import attach_sso
+    from service_auth.sso.swagger import attach_swagger
+    from api_service.services.sso_user_service import SsoUserDirectory
+    sso = attach_sso(app, settings=settings.sso,
+        users=SsoUserDirectory(auto_register=settings.sso.auto_register),
+        redis_url=settings.api.redis_url, api_prefix=settings.api.api_v1_prefix, docs_path=sso_docs_path)
+    attach_swagger(app, sso, docs_path=sso_docs_path)
     previous_lifespan = app.router.lifespan_context
     stop_event = asyncio.Event()
     background = BackgroundRuntime(
@@ -201,11 +209,14 @@ def attach_service(
                 # resources beneath a live graph.
                 from service_runtime.cleanup import protected_cleanup
                 async def shutdown():
-                    await stream_hub.close()
-                    await background.stop()
-                    await close_resources()
-                    from api_service.observability.phoenix import shutdown_phoenix
-                    await asyncio.to_thread(shutdown_phoenix)
+                    try:
+                        await stream_hub.close()
+                        await background.stop()
+                        await close_resources()
+                        from api_service.observability.phoenix import shutdown_phoenix
+                        await asyncio.to_thread(shutdown_phoenix)
+                    finally:
+                        await sso.close()
                 await protected_cleanup(shutdown())
 
     app.router.lifespan_context = combined_lifespan
@@ -225,8 +236,8 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     configure(settings)
     from api_service.core.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
 
-    app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0")
-    attach_service(app, settings)
+    app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0", docs_url=None)
+    attach_service(app, settings, sso_docs_path="/docs" if platform_app is None else "/service/docs")
     # Service handlers require request_id. Preserve one from platform middleware.
     @app.middleware("http")
     async def request_id(request: Request, call_next):

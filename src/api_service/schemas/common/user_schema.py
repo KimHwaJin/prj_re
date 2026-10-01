@@ -49,3 +49,9 @@ class UserRead(ORMModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None
+
+
+class UserMe(UserRead):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    csrf_token: str
+    login_expires_at: int

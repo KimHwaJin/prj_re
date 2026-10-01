@@ -22,7 +22,7 @@ with ZipFile(wheel) as archive:
     names = archive.namelist()
     assert not any('/tests/' in n or n.startswith('api_service/test/') for n in names)
     assert not any(n.startswith('app/') for n in names)
-    assert all(any(n.startswith(package + '/') for n in names) for package in ('api_service', 'agent_service', 'service_contracts', 'service_runtime', 'integrations'))
+    assert all(any(n.startswith(package + '/') for n in names) for package in ('api_service', 'agent_service', 'service_contracts', 'service_runtime', 'service_auth', 'integrations'))
     assert not any(n.startswith(('agent_service/agents/analysis/prompts/', 'agent_service/agents/analysis/resources/')) for n in names)
     assert 'agent_service/agents/analysis/workflow/workflows/workflow_lifecycle.md' in names
     assert 'agent_service/agents/analysis/workflow/skills/generate_skill_index.py' in names
@@ -89,6 +89,8 @@ settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED'
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
 paths = app.openapi()['paths']
+assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
+assert '/api/v1/auth/login/sso' in paths and '/api/v1/auth/logout' in paths
 assert any(p.endswith('/runs') for p in paths)
 assert '/api/v1/tasks/{task_id}' in paths
 assert '/api/v1/admin/tasks/{task_id}' in paths

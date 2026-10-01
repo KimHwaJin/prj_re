@@ -148,3 +148,10 @@ Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀
 
 
 041의 `AGENT_FREE_PLAN_ENABLED`(기본 true), `AGENT_FREE_PLAN_REQUIRE_APPROVAL`(기본 true), `AGENT_MAX_PLAN_REVISIONS`(기본 5, 1~20)도 `service.agent`에서 중앙 주입한다. 실행 전 사용자 재작성 이후의 자유 코드 허용/확인과 Run 공통 재작성·질문 답변 횟수이며 실행 실패 수정 설정과 독립이다. 승인 생략은 완전한 자유 후보 하나에만 적용한다. [재작성 설정과 예외](agentic-plan-revision.md#중앙-설정)를 따른다.
+
+## 045 SSO 설정
+
+`service.auth`의 `SSO_*` 설정도 같은 중앙 loader에서 YAML > env > 기본값으로 주입한다.
+SDK factory·API/프론트 origin·SSO 허용 주소는 실제 환경에서 제공해야 한다. 미설정 로그인은
+503이며 X-User-Id 우회는 없다. 자동 일반 사용자 등록, 고정 로그인 TTL, 쿠키 정책, 로그인
+Redis 연결풀의 설정·주석과 Swagger 테스트는 [SSO 가이드](sso-authentication.md)를 따른다.

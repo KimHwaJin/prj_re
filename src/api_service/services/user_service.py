@@ -33,7 +33,7 @@ class UserService:
         # Re-read after waiting: the request's original Actor can be stale.
         user = await UserRepository.get_by_public_id(db, actor.public_user_id, active_only=True, for_update=True)
         if user is None:
-            raise HTTPException(401, "A registered, active X-User-Id is required.")
+            raise HTTPException(401, "A registered, active user is required.")
         if user.role != UserRole.ADMIN:
             raise HTTPException(403, "Administrator role is required.")
 

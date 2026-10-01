@@ -1,5 +1,7 @@
 # 전처리 데이터 등록·조회 계약 초안
 
+> 2026-10-01 사용자 식별 변경: 아래 `X-User-Id` 계약은 이전 결정 기록이다. 현재 서비스는 SSO 로그인 쿠키와 변경 요청의 `X-CSRF-Token`을 사용하며, [현재 SSO 계약](../../sso-authentication.md)을 우선한다. Run/계획/데이터 body와 내부 UUID 소유권은 유지한다. Gaia body의 user_id를 검증된 로그인 신원으로 신뢰하지 않는다.
+
 상태: **042, `dataset-registry.v1-draft` — 오프라인 계약 검증 완료, 실제 API·저장소 연계 미구현.** Executor에 아직 전처리 데이터 등록·조회 명세가 없다는 확인에 따라, 먼저 양쪽 개발자가 사용할 계약을 제안한다. 이 문서의 경로는 사용할 수 있는 API 목록이 아니다.
 
 권장안은 **Executor가 실제 파일 정보를 확인하고, Agent가 분석 의미를 덧붙여 전용 Dataset API에 등록하는 방식**이다. 코드 제출 API의 metadata를 파일 생성 명령으로 바꾸지 않는다. 현업 Tool 개발자는 기존처럼 승인된 저장 Tool에서 Parquet를 저장하며 별도 `data.json`을 작성하지 않는다.
