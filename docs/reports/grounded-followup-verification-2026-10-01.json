@@ -2,7 +2,7 @@
   "date": "2026-10-01",
   "branch": "feature/agentic-answer-grounding",
   "base_commit": "0bd7b2881838e29b132120200f57e8ae60eb29b5",
-  "implementation_commit": "pending",
+  "implementation_commit": "d3bf72e6a4e7b35dc6699413710dd6f36104441e",
   "full_regression": {
     "passed": 834,
     "warnings": 78,

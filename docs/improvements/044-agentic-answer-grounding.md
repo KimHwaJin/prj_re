@@ -6,7 +6,7 @@
 | 시작일 / 완료일 | 2026-10-01 / 2026-10-01 |
 | 브랜치 | feature/agentic-answer-grounding |
 | 기준 commit | 0bd7b2881838e29b132120200f57e8ae60eb29b5 — 043에서 분기 |
-| 구현 commit | 검증 후 기록 |
+| 구현 commit | d3bf72e6a4e7b35dc6699413710dd6f36104441e |
 
 ## 문제와 방향
 
