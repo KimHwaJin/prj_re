@@ -5,7 +5,8 @@
 | 날짜 | 2026-10-01 |
 | 작업 브랜치 | feature/public-run-id-contract |
 | 기준 commit | fa33605e56ea4cb86c7dac3cb740f946d3b8c49e |
-| 상태 | 구현·API 회귀 571개 검증 완료 / 병합·게시 예정 |
+| 구현 commit | 5651121b908fcc99a4de1489b8149286e62d4505 |
+| 상태 | 구현·API 회귀 571개 검증 완료 / 베이스 병합·원격 게시 확인 |
 
 ## 문제와 변경
 
@@ -21,7 +22,7 @@ API 응답의 구형 `id` alias는 제공하지 않는다. 클라이언트는 Ru
 
 - 실제 PostgreSQL 및 SSO/SSE 핵심 회귀 **130 passed**, 106.10초. Public Run·SSO 쿠키·조회·사용자·CRUD 경계를 검증했다. 여러 차례 resume한 공개 ID, Location, SSE envelope/data/X-Run-Id 일치 및 구형 id 필드 부재를 확인했다.
 - 위 다섯 모듈을 제외한 나머지 API 회귀 **441 passed**, 11 warnings, 272.11초. Worker·동시성·취소·checkpoint 복구·계획/수정 승인·Executor 이벤트·SSE를 포함한다. 합계 **571 passed**, 중복 실행 없이 두 묶음으로 수행했다. 경고는 checkpointer가 없는 graph의 기존 durability 안내다.
-- 두 묶음 모두 localhost의 격리된 agentic_regression_test만 사용했다. LLM·Executor는 테스트 double이며 사내 SSO SDK도 double이다. 최초 수명이 긴 외부 실행이 실제로 돌아간 결과로 해석하지 않는다.
+- 두 묶음 모두 localhost의 격리된 agentic_regression_test만 사용했다. LLM·Executor는 테스트 double이며 사내 SSO SDK도 double이다.
 - JSONC 24개, 주석 필드 5,161개: 주석 제거 후 대응 JSON과 동일. Run 응답 예제·snapshot을 실제 Pydantic 모델로 검증했다.
 - 이전 OpenAPI/payload schema와 비교해 검증 계약 변경이 PublicRunResource의 id → run_id 한 항목뿐임을 확인했다. 문서 재생성은 idempotent하다.
 - 실행용 및 문서용 Workflow schema 원문을 유지했다. LLM 프롬프트·Agent 그래프·실행 동시성·DB 풀·Executor 제출 방식은 변경하지 않았다.
@@ -33,4 +34,4 @@ API 응답의 구형 `id` alias는 제공하지 않는다. 클라이언트는 Ru
 
 ## 통합·게시
 
-검증 통과 후 feature/refactor-base에 fast-forward 병합하고 베이스·파생 브랜치만 origin=KimHwaJin/prj_re에 게시한다. 원본 사용자 checkout, 기존 브랜치와 외부 서비스 설정은 유지한다. 게시 완료는 실제 원격 SHA 확인 후 기록한다.
+2026-10-01에 `5651121b908fcc99a4de1489b8149286e62d4505`까지 `feature/refactor-base`에 fast-forward 병합하고 베이스·`feature/public-run-id-contract`를 origin=KimHwaJin/prj_re에 atomic push했다. 두 원격 브랜치의 SHA 일치를 확인했다. 이 확인 기록은 베이스의 후속 문서 커밋으로 보존하며 최신 베이스 HEAD는 Git 원격 참조를 따른다. 원본 사용자 checkout, 기존 브랜치와 외부 서비스 설정은 유지했다. 서비스 배포·강제 push·기존 브랜치 삭제는 수행하지 않았다.
