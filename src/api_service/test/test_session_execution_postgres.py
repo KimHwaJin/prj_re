@@ -58,7 +58,7 @@ async def test_api_claim_excludes_fast_event_until_full_finalization(runtime, mo
             await ownership.run_event_owned(event(h.session_id), call)
         call.assert_not_awaited()
         owner = await row(h, h.session_id)
-        assert owner.owner_id == UUID(queued['id']) and owner.token is not None
+        assert owner.owner_id == UUID(queued['run_id']) and owner.token is not None
     finally:
         release.set(); await task
     await ownership.run_event_owned(event(h.session_id), call)
@@ -79,12 +79,12 @@ async def test_event_blocks_same_session_claim_without_blocking_other_sessions(r
         first = await enqueue(h)
         second = await enqueue(h,other)
         item = await worker.claim_one()
-        assert item.claim.run_id == UUID(second['id'])
+        assert item.claim.run_id == UUID(second['run_id'])
         assert await worker.claim_one() is None
     finally:
         release.set(); await task
     item = await worker.claim_one()
-    assert item.claim.run_id == UUID(first['id']) and item.claim.attempt == 1
+    assert item.claim.run_id == UUID(first['run_id']) and item.claim.attempt == 1
 
 
 @pytest.mark.asyncio

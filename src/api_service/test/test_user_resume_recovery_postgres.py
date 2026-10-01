@@ -110,7 +110,7 @@ async def snapshot(h, public_id):
 async def waiting(h):
     queued = await enqueue(h)
     await execute()
-    current = await state(h, queued['id'])
+    current = await state(h, queued['run_id'])
     assert current['status'] == 'waiting_input'
     return current
 
@@ -119,10 +119,10 @@ async def waiting(h):
 async def test_retry_repairs_saved_result_without_answering_next_question(real_graph, monkeypatch, failure):
     h = real_graph
     current = await waiting(h)
-    original_target = (await snapshot(h, current['id'])).tasks[0].interrupts[0].id
+    original_target = (await snapshot(h, current['run_id'])).tasks[0].interrupts[0].id
     answer = {'approved': True, 'marker': 'first-only'}
     assert (await resume(h, current, command=answer)).status_code == 202
-    before, _ = await rows(h, current['id'])
+    before, _ = await rows(h, current['run_id'])
     assert before.metadata_json['_resume_target'] == original_target
     if failure == 'projection':
         original = projection._persist_state
@@ -139,10 +139,10 @@ async def test_retry_repairs_saved_result_without_answering_next_question(real_g
             return await original(*args, **kwargs)
         monkeypatch.setattr(TaskEventService, 'append_for_run', staticmethod(fail_once))
     await execute()
-    run, _ = await rows(h, current['id'])
+    run, _ = await rows(h, current['run_id'])
     assert run.status == AgentRunStatus.PENDING
     assert run.failure['stage'] == 'state_projection'
-    middle = await snapshot(h, current['id'])
+    middle = await snapshot(h, current['run_id'])
     assert middle.values['answer1']['resume']['input_values']['legacy'] == answer and 'answer2' not in middle.values
     assert middle.values['user_resume_receipt']['command_id'] == str(run.run_id)
     assert middle.tasks[0].interrupts[0].value['stage'] == 2
@@ -153,20 +153,20 @@ async def test_retry_repairs_saved_result_without_answering_next_question(real_g
     monkeypatch.setattr(new_runtime, '_graph_context', old_runtime._graph_context)
     monkeypatch.setattr(graphs, 'runtime', new_runtime)
     await execute()
-    final = await snapshot(h, current['id'])
-    run, task = await rows(h, current['id'])
+    final = await snapshot(h, current['run_id'])
+    run, task = await rows(h, current['run_id'])
     assert final.values['answer1']['resume']['input_values']['legacy'] == answer and 'answer2' not in final.values
     assert h.review_calls['one'] == 1 and h.review_calls['two'] == 0
     assert run.attempt_count == 2 and run.status == AgentRunStatus.INTERRUPTED
     assert not task.recovery_required
-    public = await state(h, current['id'])
+    public = await state(h, current['run_id'])
     assert public['status'] == 'waiting_input' and public['interrupt'][0]['stage'] == 2
     # A new actual user answer, with a new command identity, can still finish.
     assert (await resume(h, public, command={'marker': 'second-only'})).status_code == 202
     await execute()
-    final = await snapshot(h, current['id'])
+    final = await snapshot(h, current['run_id'])
     assert final.values['answer2']['resume']['input_values']['legacy'] == {'marker': 'second-only'}
-    assert (await state(h, current['id']))['status'] == 'success'
+    assert (await state(h, current['run_id']))['status'] == 'success'
 
 
 async def test_dispatched_without_receipt_is_not_replayed(real_graph):
@@ -175,13 +175,13 @@ async def test_dispatched_without_receipt_is_not_replayed(real_graph):
     h.review_calls['reject'] = True
     assert (await resume(h, current)).status_code == 202
     await execute()
-    run, _ = await rows(h, current['id'])
+    run, _ = await rows(h, current['run_id'])
     assert run.status == AgentRunStatus.PENDING and run.metadata_json['_resume_started']
     await execute()
-    run, task = await rows(h, current['id'])
+    run, task = await rows(h, current['run_id'])
     assert h.review_calls['one'] == 1
     assert task.recovery_required
-    assert (await state(h, current['id']))['status'] == 'recovery_required'
+    assert (await state(h, current['run_id']))['status'] == 'recovery_required'
 
 
 @pytest.mark.parametrize('corruption', ['target', 'missing_legacy_target'])
@@ -196,7 +196,7 @@ async def test_wrong_or_missing_target_never_dispatches(real_graph, corruption):
     assert (await resume(h, current)).status_code == 202
     await execute()
     assert h.review_calls['one'] == 0
-    assert (await state(h, current['id']))['status'] == 'recovery_required'
+    assert (await state(h, current['run_id']))['status'] == 'recovery_required'
 
 
 async def test_final_commit_response_loss_does_not_requeue_or_duplicate_event(real_graph, monkeypatch):
@@ -213,7 +213,7 @@ async def test_final_commit_response_loss_does_not_requeue_or_duplicate_event(re
         return result
     monkeypatch.setattr(TaskEventService, 'append_for_run', staticmethod(lose_commit_response))
     await execute()
-    run, task = await rows(h, current['id'])
+    run, task = await rows(h, current['run_id'])
     assert run.status == AgentRunStatus.INTERRUPTED and run.attempt_count == 1
     assert not task.recovery_required and await worker.claim_one() is None
     async with h.factory() as db:
@@ -252,17 +252,17 @@ async def test_ambiguous_or_exhausted_recovery_never_becomes_success(real_graph,
         await execute()
         if mode == 'bad_receipt':
             async with graphs.runtime.open_graph() as graph:
-                config = graphs.graph_config(h.session_id, current['id'])
+                config = graphs.graph_config(h.session_id, current['run_id'])
                 saved = await graph.aget_state(config)
                 await graph.aupdate_state(config, {'user_resume_receipt': {
                     **saved.values['user_resume_receipt'], 'digest': 'wrong'}})
         await execute()
     assert h.review_calls['one'] == (0 if mode == 'dispatch_commit_lost' else 1)
     assert h.review_calls['two'] == 0
-    run, task = await rows(h, current['id'])
+    run, task = await rows(h, current['run_id'])
     assert task.recovery_required and run.status == AgentRunStatus.RUNNING
     assert execution_health.healthy
-    assert (await state(h, current['id']))['status'] == 'recovery_required'
+    assert (await state(h, current['run_id']))['status'] == 'recovery_required'
 
 
 async def test_quarantined_resume_does_not_stop_other_sessions(real_graph):
@@ -274,7 +274,7 @@ async def test_quarantined_resume_does_not_stop_other_sessions(real_graph):
     assert (await resume(h, current)).status_code == 202
     await execute()
     await execute()
-    assert (await state(h, current['id']))['status'] == 'recovery_required'
+    assert (await state(h, current['run_id']))['status'] == 'recovery_required'
     assert execution_health.healthy
     async with h.factory() as db:
         owner = await db.get(SessionExecutionModel, UUID(h.session_id))
@@ -282,7 +282,7 @@ async def test_quarantined_resume_does_not_stop_other_sessions(real_graph):
     sid = await add_session(h, h.user)
     other = await enqueue(h, sid)
     await execute()
-    run, task = await rows(h, other['id'])
+    run, task = await rows(h, other['run_id'])
     assert run.status == AgentRunStatus.INTERRUPTED and not task.recovery_required
     assert await worker.claim_one() is None
 

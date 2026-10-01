@@ -136,7 +136,7 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
             state = (await h.client.get(f'/api/v1/sessions/{sid}/runs', headers=headers(h.user['user_id']))).json()['items'][0]
             response = await h.client.post(f"/api/v1/sessions/{sid}/runs",
                 headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-                json={'run_id':state['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': state['resume_token']})
+                json={'run_id':state['run_id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': state['resume_token']})
             assert response.status_code == 202, response.text
             queued.append(response.json())
     jobs = [asyncio.create_task(execute_queued()) for _ in queued]
@@ -150,7 +150,7 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
             await crud_round(h)
         # Include Run state polling and same-session admission protection.
         for sid, q in zip(sessions, queued):
-            response = await h.client.get(f"/api/v1/sessions/{sid}/runs/{q['id']}", headers=headers(h.user['user_id']))
+            response = await h.client.get(f"/api/v1/sessions/{sid}/runs/{q['run_id']}", headers=headers(h.user['user_id']))
             assert response.status_code == 200 and response.json()['status'] == 'running', response.text
         blocked = await h.client.post(f'/api/v1/sessions/{sessions[0]}/runs',
             headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
@@ -164,7 +164,7 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
         await asyncio.wait_for(asyncio.gather(*jobs), 5)
         await graph_runtime.shutdown()
     for q in queued:
-        run, task = await rows(h, q['id'])
+        run, task = await rows(h, q['run_id'])
         assert run.status == (AgentRunStatus.SUCCESS if resume else AgentRunStatus.INTERRUPTED)
         assert task.status == (TaskStatus.SUCCESS if resume else TaskStatus.WAITING_INPUT)
         assert not task.recovery_required and task.graph_task_id is not None
@@ -256,11 +256,11 @@ async def test_cancel_api_remains_usable_with_one_connection_while_graph_waits(s
     job = asyncio.create_task(execute_queued())
     try:
         await asyncio.wait_for(gate.ready.wait(), 5)
-        response = await h.client.post(f"/api/v1/sessions/{h.session_id}/runs/{queued['id']}/cancel",
+        response = await h.client.post(f"/api/v1/sessions/{h.session_id}/runs/{queued['run_id']}/cancel",
             headers=headers(h.user['user_id']), json={'reason': 'test cancellation'})
         assert response.status_code == 202, response.text
         await asyncio.wait_for(asyncio.shield(job), 5)
-        run, task = await rows(h, queued['id'])
+        run, task = await rows(h, queued['run_id'])
         assert run.status == AgentRunStatus.CANCELED and task.status == TaskStatus.CANCELED
         assert not task.recovery_required and execution_health.healthy
         await crud_round(h)
@@ -332,7 +332,7 @@ async def test_dispatcher_fills_slots_without_retaining_connections(small_pool, 
         await crud_round(h)
         async with h.factory() as db:
             statuses = list(await db.scalars(select(AgentRunModel.status).where(
-                AgentRunModel.run_id.in_([UUID(q['id']) for q in queued]))))
+                AgentRunModel.run_id.in_([UUID(q['run_id']) for q in queued]))))
         assert statuses.count(AgentRunStatus.RUNNING) == slots
         assert statuses.count(AgentRunStatus.PENDING) == 1
         assert len(gate.entered) == slots
@@ -342,5 +342,5 @@ async def test_dispatcher_fills_slots_without_retaining_connections(small_pool, 
         await graph_runtime.shutdown()
     assert len(gate.entered) == slots
     assert execution_health.healthy
-    pending, _ = await rows(h, queued[-1]['id'])
+    pending, _ = await rows(h, queued[-1]['run_id'])
     assert pending.status == AgentRunStatus.PENDING

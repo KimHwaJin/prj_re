@@ -62,12 +62,12 @@ async def test_drain_finishes_active_runs_releases_owners_and_leaves_queue(runti
         release.set()
         await background.stop()
     for index in range(2):
-        run,task=await rows(h,queued[index]['id'])
+        run,task=await rows(h,queued[index]['run_id'])
         assert run.status==(AgentRunStatus.INTERRUPTED if kind else AgentRunStatus.SUCCESS)
         assert task.status==(TaskStatus.WAITING_INPUT if kind else TaskStatus.SUCCESS)
         record=await owner(h,sessions[index])
         assert record.token is None and not record.recovery_required
-    pending,task=await rows(h,queued[2]['id'])
+    pending,task=await rows(h,queued[2]['run_id'])
     assert pending.status==AgentRunStatus.PENDING and pending.attempt_count==0
     assert await owner(h,sessions[2]) is None
     assert execution_health.healthy and not canceled
@@ -88,7 +88,7 @@ async def test_deadline_exceeded_retains_recovery_ownership(runtime,monkeypatch)
                                  stop_event=stop,drain_timeout=.1)
     await background.start();await asyncio.wait_for(entered.wait(),5)
     await background.stop()
-    run,task=await rows(h,queued['id'])
+    run,task=await rows(h,queued['run_id'])
     record=await owner(h,h.session_id)
     assert stopped.is_set() and record.token is not None and record.recovery_required
     assert task.recovery_required and not execution_health.healthy
@@ -112,7 +112,7 @@ async def test_stop_during_committing_claim_finishes_owned_call_normally(runtime
                                  stop_event=stop,drain_timeout=2)
     await background.start();await asyncio.wait_for(acquired.wait(),5)
     background.request_stop();release.set();await background.stop()
-    run,task=await rows(h,queued['id'])
+    run,task=await rows(h,queued['run_id'])
     assert run.status==AgentRunStatus.SUCCESS and not task.recovery_required
     assert (await owner(h,h.session_id)).token is None
     graph.assert_awaited_once()

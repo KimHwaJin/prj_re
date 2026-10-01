@@ -115,7 +115,7 @@ async def test_stale_claim_rejected_before_graph_without_quarantining_new_owner(
         await worker.execute_claimed(item)
     await drain_recorders()
     graph.assert_not_awaited()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.RUNNING and run.attempt_count == item.claim.attempt + 1
     assert task.lock_token == new_token and not task.recovery_required and run.failure is None
 
@@ -135,7 +135,7 @@ async def test_expired_claim_never_starts_graph(runtime, monkeypatch):
         await worker.execute_claimed(item)
     await drain_recorders()
     graph.assert_not_awaited()
-    _, task = await rows(h, queued['id'])
+    _, task = await rows(h, queued['run_id'])
     assert task.recovery_required
 
 
@@ -151,7 +151,7 @@ async def test_late_success_cannot_finish_new_owners_run(runtime, monkeypatch):
     with pytest.raises(ExecutionNeedsRecovery):
         await worker.execute_claimed(item)
     await drain_recorders()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.RUNNING and task.status == TaskStatus.RUNNING
     assert not task.recovery_required and task.completed_at is None
 
@@ -174,7 +174,7 @@ async def test_heartbeat_uses_captured_token_after_owner_changes(runtime, monkey
     with pytest.raises(ExecutionNeedsRecovery):
         await asyncio.wait_for(worker.execute_claimed(item), 3)
     await drain_recorders()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert stopped.is_set() and not task.recovery_required
     assert run.attempt_count == item.claim.attempt + 1
     async with h.factory() as db:
@@ -193,5 +193,5 @@ async def test_replaying_completed_claim_does_not_execute_graph_again(runtime, m
         await worker.execute_claimed(item)
     await drain_recorders()
     assert graph.await_count == 1
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.SUCCESS and not task.recovery_required

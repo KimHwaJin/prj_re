@@ -1,4 +1,5 @@
 """Cookie-authenticated API with real isolated PostgreSQL; corporate SDK is an explicit double."""
+import json
 import asyncio
 from uuid import UUID, uuid4
 
@@ -150,7 +151,7 @@ async def test_cookie_run_resume_and_get_post_sse_keep_existing_contract(plannin
     assert (await h.client.post(h.path,headers={"Idempotency-Key":"missing-csrf"},json=body)).status_code==403
     response=await h.client.post(h.path,headers=headers,json=body)
     assert response.status_code==202,response.text
-    rid=response.json()["id"]
+    rid=response.json()["run_id"]
     await execute()
     waiting=(await h.client.get(h.path+"/"+rid)).json()
     assert waiting["status"]=="waiting_input"
@@ -166,6 +167,10 @@ async def test_cookie_run_resume_and_get_post_sse_keep_existing_contract(plannin
     streamed=await asyncio.wait_for(h.client.post(h.path+"/stream",headers=headers,json=approval),5)
     assert streamed.status_code==200 and streamed.headers["x-run-id"]==rid
     assert "event: run.snapshot" in streamed.text
+    snapshots = [json.loads(line[6:]) for line in streamed.text.splitlines()
+                 if line.startswith("data: ") and json.loads(line[6:]).get("type") == "run.snapshot"]
+    assert snapshots and all(item["run_id"] == rid == item["data"]["run_id"] for item in snapshots)
+    assert all("id" not in item["data"] for item in snapshots)
     assert (await h.client.post("/api/v1/auth/logout",headers={"X-CSRF-Token":me["csrf_token"]})).status_code==204
     assert (await h.client.get(h.path+"/"+rid+"/stream")).status_code==401
     await h.app.state.sso.close()

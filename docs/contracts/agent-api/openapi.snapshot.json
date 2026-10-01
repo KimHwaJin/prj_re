@@ -1404,11 +1404,11 @@
             "title": "Model Revision",
             "description": "Run에 고정된 모델 설정 revision. Workflow나 승인 화면의 revision과 별개다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
-          "id": {
+          "run_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id",
-            "description": "공개 Run UUID. 전체 흐름과 사용자 재개에서 같은 Run을 식별한다. 필수 필드."
+            "title": "Run Id",
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
           },
           "session_id": {
             "type": "string",
@@ -1603,7 +1603,7 @@
         },
         "type": "object",
         "required": [
-          "id",
+          "run_id",
           "session_id",
           "status",
           "attempt_count",

@@ -23,7 +23,7 @@ pytestmark = pytest.mark.asyncio
 
 
 async def setup_state(h, *, user_message=False):
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     state = {'session_id': h.session_id, 'project_id': h.user['default_project_id'],
              'run_id': str(rid), 'user_request': 'test request', 'messages': [
                  {'role': 'assistant', 'name': f'answer{i}', 'content': f'result {i}'}

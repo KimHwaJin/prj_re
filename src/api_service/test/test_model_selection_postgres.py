@@ -78,7 +78,7 @@ async def test_default_explicit_replay_and_rejected_models_leave_no_rows(runtime
     explicit=await start(h,name="alpha",sid=await add_session(h,h.user))
     assert explicit.json()["main_model_name"]=="alpha"
     async with h.factory() as db:
-        root=await db.get(Run,UUID(first.json()["id"]))
+        root=await db.get(Run,UUID(first.json()["run_id"]))
         pin=root.metadata_json["_model_selection"]
         assert pin==catalog.select().model_dump()
         assert set(pin)=={"name","revision"}
@@ -96,7 +96,7 @@ async def test_retry_and_resume_keep_initial_choice_after_default_changes(runtim
     await execute()
     use_catalog(monkeypatch,"beta")
     await execute()
-    current=await state(h,first["id"])
+    current=await state(h,first["run_id"])
     assert current["status"]=="waiting_input"
     use_catalog(monkeypatch,"alpha")
     accepted=await resume(h,current)
@@ -104,7 +104,7 @@ async def test_retry_and_resume_keep_initial_choice_after_default_changes(runtim
     await execute()
     pin=catalog.select("beta").model_dump()
     assert all(c.kwargs["model_selection"]==pin for c in initial.await_args_list+resumed.await_args_list)
-    assert (await state(h,first["id"]))["main_model_name"]=="beta"
+    assert (await state(h,first["run_id"]))["main_model_name"]=="beta"
     async with h.factory() as db:
         records=list(await db.scalars(select(Run)))
         assert len(records)==2 and all(r.metadata_json["_model_selection"]==pin for r in records)
@@ -118,23 +118,23 @@ async def test_unavailable_resume_is_conflict_without_queue_side_effects(runtime
     monkeypatch.setattr(runs,"ainvoke_user_turn",AsyncMock(return_value=waiting()))
     first=(await start(h,key="original")).json()
     await execute()
-    current=await state(h,first["id"])
+    current=await state(h,first["run_id"])
     if change=="removed":
         use_catalog(monkeypatch,"beta",{"beta":ENTRIES["beta"]})
     elif change=="changed":
         use_catalog(monkeypatch,entries={**ENTRIES,"alpha":{"provider":"mock","model_name":"new-model"}})
     else:
         async with h.factory() as db:
-            root=await db.get(Run,UUID(first["id"]))
+            root=await db.get(Run,UUID(first["run_id"]))
             root.metadata_json={k:v for k,v in root.metadata_json.items() if k!="_model_selection"}
             await db.commit()
     failed=await resume(h,current)
     assert failed.status_code==409,failed.text
-    assert (await state(h,first["id"]))["status"]=="waiting_input"
+    assert (await state(h,first["run_id"]))["status"]=="waiting_input"
     assert (await start(h,key="original")).status_code==202
     async with h.factory() as db:
         assert await db.scalar(select(func.count()).select_from(Run))==1
-    canceled=await h.client.post(path(h,first["id"])+"/cancel",headers=headers(h.user["user_id"]),json={})
+    canceled=await h.client.post(path(h,first["run_id"])+"/cancel",headers=headers(h.user["user_id"]),json={})
     assert canceled.status_code==202 and canceled.json()["status"]=="canceled"
 
 
@@ -148,7 +148,7 @@ async def test_model_removed_after_admission_fails_once_before_graph(runtime,mon
     use_catalog(monkeypatch,"beta",{"beta":ENTRIES["beta"]})
     await execute()
     invoked.assert_not_called()
-    current=await state(h,first["id"])
+    current=await state(h,first["run_id"])
     assert current["status"]=="error" and current["failure"]["code"]=="RUN_MODEL_UNAVAILABLE"
     assert current["attempt_count"]==1
     assert await worker.claim_one() is None
@@ -207,14 +207,14 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
             rt=fresh_runtime()
             try:
                 await execute()
-                current=await state(h,first["id"])
+                current=await state(h,first["run_id"])
                 assert current["status"]=="waiting_input",current
                 await rt.shutdown()
                 use_catalog(monkeypatch,"alpha",specs)
                 rt=fresh_runtime()
                 assert (await resume(h,current)).status_code==202
                 await execute()
-                current=await state(h,first["id"])
+                current=await state(h,first["run_id"])
                 assert current["status"]=="waiting_executor",current
                 await rt.shutdown()
                 rt=fresh_runtime()
@@ -233,7 +233,7 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
                     await run_event_owned(context,handle)
                     # Delivery replay must not trigger a second report LLM call.
                     await run_event_owned(context,handle)
-                done=await state(h,first["id"])
+                done=await state(h,first["run_id"])
                 assert done["status"]=="success",done
                 assert done["main_model_name"]=="beta"
                 assert len(calls)==3 and all(call["model"]=="model-b" for call in calls)

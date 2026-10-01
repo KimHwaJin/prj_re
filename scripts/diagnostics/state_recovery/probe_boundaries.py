@@ -99,7 +99,7 @@ async def two_interrupts(h, monkeypatch):
 
 
 async def test_log_commit_then_event_failure_is_not_repaired_by_replay(runtime,monkeypatch):
-    h=runtime; queued=await enqueue(h); rid=UUID(queued['id'])
+    h=runtime; queued=await enqueue(h); rid=UUID(queued['run_id'])
     payload=dict(run_id=rid,event_key='review-event',agent_name='review',node='node',event='result',kind='result',payload={'synthetic':True})
     original=TaskEventService.append_for_run
     async def unavailable(*args,**kwargs): raise SQLAlchemyError('injected event write failure')
@@ -119,7 +119,7 @@ async def test_projection_failure_retries_consumed_resume_on_next_interrupt(runt
     h=runtime; current=service_settings.get_settings()
     monkeypatch.setattr(service_settings,'_snapshot',replace(current,api=current.api.model_copy(update={'agent_worker_max_retries':1})))
     async with two_interrupts(h,monkeypatch) as rt:
-        queued=await enqueue(h); await execute(); first=await state(h,queued['id'])
+        queued=await enqueue(h); await execute(); first=await state(h,queued['run_id'])
         assert first['status']=='waiting_input'
         command={'approved':True,'marker':'first-question-only'}
         assert (await resume(h,first,command=command)).status_code==202
@@ -132,16 +132,16 @@ async def test_projection_failure_retries_consumed_resume_on_next_interrupt(runt
             return await persist(value,**kwargs)
         monkeypatch.setattr(projection,'_persist_state',fail_after_checkpoint)
         await execute()
-        run,task=await rows(h,queued['id'])
+        run,task=await rows(h,queued['run_id'])
         assert run.status==AgentRunStatus.PENDING and run.failure['retry_scheduled']
         async with rt.open_graph() as graph:
-            middle=await graph.aget_state(graphs.graph_config(h.session_id,queued['id']))
+            middle=await graph.aget_state(graphs.graph_config(h.session_id,queued['run_id']))
             assert middle.values['answer1']==command and 'answer2' not in middle.values
             assert middle.tasks[0].interrupts[0].value['stage']==2
         await execute()
         async with rt.open_graph() as graph:
-            final=await graph.aget_state(graphs.graph_config(h.session_id,queued['id']))
-        run,task=await rows(h,queued['id'])
+            final=await graph.aget_state(graphs.graph_config(h.session_id,queued['run_id']))
+        run,task=await rows(h,queued['run_id'])
         assert final.values['answer1']==final.values['answer2']==command
         assert run.status==AgentRunStatus.SUCCESS and run.attempt_count==2
         evidence('resume_replay_crosses_interrupt',user_resume_requests=1,automatic_attempts=run.attempt_count,
@@ -158,9 +158,9 @@ async def test_final_projection_error_leaves_running_until_stale_reconciler(runt
             return await original(*args,**kwargs)
         monkeypatch.setattr(TaskEventService,'append_for_run',staticmethod(fail_final))
         await execute()
-        run,task=await rows(h,queued['id']); public=await state(h,queued['id'])
+        run,task=await rows(h,queued['run_id']); public=await state(h,queued['run_id'])
         async with rt.open_graph() as graph:
-            saved=await graph.aget_state(graphs.graph_config(h.session_id,queued['id']))
+            saved=await graph.aget_state(graphs.graph_config(h.session_id,queued['run_id']))
         async with h.factory() as db:
             owner=await db.get(SessionExecutionModel,UUID(h.session_id))
             owner_released=owner.token is None
@@ -170,7 +170,7 @@ async def test_final_projection_error_leaves_running_until_stale_reconciler(runt
         assert owner_released and execution_health.healthy and await worker.claim_one() is None
         async with h.factory() as db:
             affected=await TaskService.reconcile_stale(db,now=utc_now()+timedelta(days=1))
-        _,after=await rows(h,queued['id'])
+        _,after=await rows(h,queued['run_id'])
         assert after.recovery_required and len(affected)==1
         evidence('final_projection_gap',checkpoint='input_wait_stage_1',api_before_reconciler=public['status'],
                  worker_claimable=False,process_healthy=True,session_execution_owner_released=owner_released,
@@ -214,13 +214,13 @@ async def test_hard_process_exit_preserves_owner_without_automatic_requeue(runti
     assert result.returncode==17 and 'CLAIM_COMMITTED' in result.stdout, result.stderr
     async with h.factory() as db:
         affected=await TaskService.reconcile_stale(db,now=utc_now()+timedelta(days=1))
-    run,task=await rows(h,queued['id'])
+    run,task=await rows(h,queued['run_id'])
     async with h.factory() as db: owner=await db.get(SessionExecutionModel,UUID(h.session_id))
     assert owner.token is not None and not owner.recovery_required
     assert await worker.claim_one() is None
     assert len(affected)==(1 if kind=='api_run' else 0)
     assert task.recovery_required==(kind=='api_run')
-    public=await state(h,queued['id'])
+    public=await state(h,queued['run_id'])
     assert public['status']==('recovery_required' if kind=='api_run' else 'waiting_executor')
     evidence(f'process_exit_{kind}',child_exit_code=17,durable_owner_retained=True,
              owner_recovery_flag=owner.recovery_required,task_status=task.status.value,

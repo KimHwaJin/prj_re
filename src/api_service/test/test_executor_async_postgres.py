@@ -38,16 +38,16 @@ async def test_possible_submission_blocks_retry_and_keeps_session_locked(runtime
             running=asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
             await asyncio.wait_for(received.wait(),3)
             if failure=="cancel_api":
-                requested=await h.client.post(path(h,first["id"])+"/cancel",headers=headers(h.user["user_id"]),json={"reason":"stop"})
+                requested=await h.client.post(path(h,first["run_id"])+"/cancel",headers=headers(h.user["user_id"]),json={"reason":"stop"})
                 assert requested.status_code==202,requested.text
             elif failure=="shutdown": running.cancel()
             with pytest.raises((ExecutionNeedsRecovery,asyncio.CancelledError)):
                 await asyncio.wait_for(running,3)
-            run,task=await wait_until_recovery(h,first["id"])
+            run,task=await wait_until_recovery(h,first["run_id"])
             assert task.recovery_required and task.lock_token is not None
             assert run.status not in {AgentRunStatus.SUCCESS,AgentRunStatus.CANCELED}
             assert run.failure["retry_scheduled"] is False
-            current=await state(h,first["id"])
+            current=await state(h,first["run_id"])
             assert current["status"]=="recovery_required"
             blocked=await h.client.post(path(h),headers={**headers(h.user["user_id"]),"Idempotency-Key":str(uuid4())},
                 json={"input":{'content': [{'type': 'text', 'text': "new"}]}})
@@ -69,7 +69,7 @@ async def test_known_http_rejection_is_terminal_without_recovery_or_retries(runt
             monkeypatch.setattr(runs,"ainvoke_user_turn",graph)
             first=await enqueue(h)
             await worker.execute_claimed(await worker.claim_one())
-            run,task=await rows(h,first["id"])
+            run,task=await rows(h,first["run_id"])
             assert run.status==AgentRunStatus.ERROR and task.status==TaskStatus.ERROR
             assert not task.recovery_required and task.lock_token is None
             assert run.attempt_count==1 and len(server.requests)==1
@@ -92,10 +92,10 @@ async def test_accepted_submission_yields_executor_wait_without_holding_owner(ru
             monkeypatch.setattr(runs,"ainvoke_user_turn",graph)
             first=await enqueue(h)
             await worker.execute_claimed(await worker.claim_one())
-            run,task=await rows(h,first["id"])
+            run,task=await rows(h,first["run_id"])
             assert run.status==AgentRunStatus.INTERRUPTED and task.status==TaskStatus.WAITING_INPUT
             assert task.lock_token is None and not task.recovery_required
-            assert (await state(h,first["id"]))["status"]=="waiting_executor"
+            assert (await state(h,first["run_id"]))["status"]=="waiting_executor"
             assert len(server.requests)==1 and server.active==0
             assert await worker.claim_one() is None
 

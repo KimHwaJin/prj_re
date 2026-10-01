@@ -94,7 +94,7 @@ async def trial(n,label,scenario,slots):
      for step,command in enumerate([None,'mock',{'objective':'EDA service comparison'},{'candidate_number':1}]):
       body={'input':{'messages':[{'role':'user','content':'불량 예측 서비스 비교'}]}} if command is None else {'command':command,'resume_token':previous}
       path=f"/api/v1/sessions/{se['id']}/runs" if command is None else f"/api/v1/sessions/{se['id']}/runs/{rid}/resume"
-      t=time.perf_counter();r=await request('POST',path,i,'run_post',json=body);rid=r['id'];polls=0
+      t=time.perf_counter();r=await request('POST',path,i,'run_post',json=body);rid=r.get('run_id', r.get('id'));polls=0
       accepted=time.perf_counter()
       async with clients[i].stream('GET',f"/api/v1/sessions/{se['id']}/runs/{rid}/stream",headers=users[i]['headers']) as stream:
        stream.raise_for_status();event_kind=None

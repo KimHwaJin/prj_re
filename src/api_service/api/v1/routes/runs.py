@@ -38,7 +38,7 @@ async def create_run(
     if len(idempotency_key) > 255:
         raise HTTPException(status_code=422, detail="Idempotency-Key must not exceed 255 characters.")
     run = await submit_request(db, user_id, session_id, payload, idempotency_key)
-    response.headers["Location"] = f"/api/v1/sessions/{session_id}/runs/{run.id}"
+    response.headers["Location"] = f"/api/v1/sessions/{session_id}/runs/{run.run_id}"
     return run
 
 
@@ -72,9 +72,9 @@ async def create_run_stream(
     run = await submit_request(db, user_id, session_id, payload, idempotency_key)
     from api_service.services.run_stream_service import RunStreamResponse
     response = RunStreamResponse(request.app.state.run_stream_hub, request,
-        (user_id, session_id, run.id), sequence)
-    response.headers['Location'] = f'/api/v1/sessions/{session_id}/runs/{run.id}'
-    response.headers['X-Run-Id'] = str(run.id)
+        (user_id, session_id, run.run_id), sequence)
+    response.headers['Location'] = f'/api/v1/sessions/{session_id}/runs/{run.run_id}'
+    response.headers['X-Run-Id'] = str(run.run_id)
     return response
 
 
@@ -124,11 +124,11 @@ async def list_run_logs(
         await db.scalars(
             select(AgentRunLogModel)
             .join(AgentRunModel, AgentRunModel.run_id == AgentRunLogModel.run_id)
-            .where(AgentRunModel.public_run_id == public.id)
+            .where(AgentRunModel.public_run_id == public.run_id)
             .order_by(AgentRunLogModel.created_at, AgentRunLogModel.log_id)
         )
     ).all()
-    return [AgentRunLogResource.model_validate(log).model_copy(update={"run_id": public.id}) for log in logs]
+    return [AgentRunLogResource.model_validate(log).model_copy(update={"run_id": public.run_id}) for log in logs]
 
 
 @router.get("/sessions/{session_id}/runs/{run_id}/join", response_model=PublicRunResource)
@@ -162,11 +162,11 @@ async def stream_run(
     hub = RunStreamHub(settings, session_factory=lambda: get_session_factory()()) if owned else application.state.run_stream_hub
 
     if not owned:
-        return RunStreamResponse(hub, request, (user_id, session_id, public.id), initial_sequence)
+        return RunStreamResponse(hub, request, (user_id, session_id, public.run_id), initial_sequence)
 
     async def event_generator():
         try:
-            async with hub.subscribe(user_id, session_id, public.id) as entry:
+            async with hub.subscribe(user_id, session_id, public.run_id) as entry:
                 async for chunk in hub.stream(request, entry, initial_sequence):
                     yield chunk
         finally:

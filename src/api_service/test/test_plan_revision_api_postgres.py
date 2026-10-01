@@ -25,7 +25,7 @@ async def test_feedback_admission_stale_tokens_replay_question_restart_and_free_
     graph=build_planning_graph(runtime,checkpointer=saver);graph_runtime.override_graph(graph)
     started=await submit(h,{'input':{'content':[{'type':'text','text':'합계를 내줘'}]}})
     assert started.status_code==202,started.text
-    rid=started.json()['id'];await execute();run=await read(h,rid)
+    rid=started.json()['run_id'];await execute();run=await read(h,rid)
     old_plan=run['interrupt'][0]['payload']['plans'][0]
     def body(run,feedback):
         form=run['interrupt'][0]
@@ -47,7 +47,7 @@ async def test_feedback_admission_stale_tokens_replay_question_restart_and_free_
     graph_runtime.override_graph(build_planning_graph(runtime,checkpointer=saver))
     assert (await submit(h,body(question_run,'2로 나눠주세요'),key='answer-once')).status_code==202
     await execute();revised=await read(h,rid)
-    assert revised['id']==rid and revised['status']=='waiting_input'
+    assert revised['run_id']==rid and revised['status']=='waiting_input'
     plan=revised['interrupt'][0]['payload']['plans'][0]
     assert plan['execution_kind']=='free_code' and not plan['workflow_eligible']
     assert (await submit(h,body(revised,'다시 해주세요'))).status_code==422

@@ -371,7 +371,7 @@ async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
         'routing_result':{'route':'analysis'},'__interrupt__':[SimpleNamespace(value={'kind':'USER_APPROVAL'})]}))
     first=await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
-    endpoint=f"/api/v1/sessions/{h.session_id}/runs/{first['id']}"
+    endpoint=f"/api/v1/sessions/{h.session_id}/runs/{first['run_id']}"
     current=(await h.client.get(endpoint,headers=headers(h.user['user_id']))).json()
     entered,release=asyncio.Event(),asyncio.Event()
     original=TaskEventService.append
@@ -382,7 +382,7 @@ async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
         return result
     monkeypatch.setattr(TaskEventService,'append',held)
     resuming=asyncio.create_task(h.client.post(f'/api/v1/sessions/{h.session_id}/runs',headers={**headers(h.user['user_id']),'Idempotency-Key':'resume'},
-        json={'run_id':first['id'], 'resume_token':current['resume_token'],'command':{'resume':{'action':'approve_plan','plan_id':'test-plan','plan_revision':1}}}))
+        json={'run_id':first['run_id'], 'resume_token':current['resume_token'],'command':{'resume':{'action':'approve_plan','plan_id':'test-plan','plan_revision':1}}}))
     moving=None
     try:
         await asyncio.wait_for(entered.wait(),5)
@@ -391,7 +391,7 @@ async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
     finally:
         release.set()
     resumed,moved=await asyncio.wait_for(asyncio.gather(resuming,moving),5)
-    assert resumed.status_code==202 and resumed.json()['id']==first['id'],resumed.text
+    assert resumed.status_code==202 and resumed.json()['run_id']==first['run_id'],resumed.text
     assert moved.status_code==409,moved.text
 
 

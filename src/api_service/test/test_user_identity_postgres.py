@@ -345,7 +345,7 @@ async def test_header_maps_run_admission_to_internal_uuid_and_sse(harness, monke
         headers={**headers("user-a"), "Idempotency-Key": "new-run"},
         json={"input": {'content': [{'type': 'text', 'text': "hello"}]}})
     assert result.status_code == 202, result.text
-    run_id = result.json()["id"]
+    run_id = result.json()["run_id"]
     async with h.factory() as db:
         stored_user = await db.scalar(select(UserModel).where(UserModel.public_user_id == "user-a"))
         run = await db.get(AgentRunModel, UUID(run_id))

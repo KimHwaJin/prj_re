@@ -63,7 +63,7 @@ async def uid(h):
 
 async def test_new_log_returns_generated_values_without_followup_reads(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     args = dict(run_id=rid, event_key='perf', agent_name='analysis', node='node', event='result', kind='result', payload={'result':'ok'})
     with count_db(h, 'new_log') as count:
         async with h.factory() as db:
@@ -100,7 +100,7 @@ async def test_message_response_keeps_db_generated_fields_and_idempotency(runtim
 
 async def test_link_graph_task_noop_does_not_commit_and_conflicts_remain_rejected(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     graph_id = uuid4()
     with count_db(h, 'new_task_link') as count:
         async with h.factory() as db:

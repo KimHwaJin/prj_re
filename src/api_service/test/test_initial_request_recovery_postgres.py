@@ -146,9 +146,9 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
                 raise SQLAlchemyError('graph result lost after checkpoint')
             monkeypatch.setattr(graph, 'ainvoke', once)
     await execute()
-    run, _ = await rows(h, queued['id'])
+    run, _ = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.PENDING and run.metadata_json['_initial_started']
-    snapshot = await saved(h, queued['id'])
+    snapshot = await saved(h, queued['run_id'])
     assert snapshot.values['initial_request_receipt']['command_id'] == str(run.run_id)
     if failure != 'graph_response':
         assert run.failure['code'] == 'INITIAL_PROJECTION_FAILED'
@@ -159,7 +159,7 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
     # Recovery must not reload mutable project prompts or invoke the model.
     monkeypatch.setattr(initial, 'read_project_snapshot', AsyncMock(side_effect=AssertionError('project reloaded')))
     await execute()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.attempt_count == 2 and not task.recovery_required
     assert h.calls['entry'] == h.calls['model'] == 1
     if failure == 'log_event':
@@ -170,13 +170,13 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
                 TaskEventModel.run_id == run.run_id, TaskEventModel.event_type == 'agent.event'))).all())
             assert len(logs) == len(events) == 1
             assert events[0].agent_run_log_id == logs[0].log_id
-    public = await state(h, queued['id'])
+    public = await state(h, queued['run_id'])
     assert public['status'] == ('success' if terminal else 'waiting_input')
-    assert 'answer' not in (await saved(h, queued['id'])).values
+    assert 'answer' not in (await saved(h, queued['run_id'])).values
     if not terminal:
         assert (await resume(h, public, command={'approved': True})).status_code == 202
         await execute()
-        assert (await state(h, queued['id']))['status'] == 'success'
+        assert (await state(h, queued['run_id']))['status'] == 'success'
         assert h.calls['entry'] == h.calls['model'] == 1
 
 
@@ -194,7 +194,7 @@ async def test_uncertain_initial_never_repeats_entry_or_model(real_initial, monk
         monkeypatch.setattr(initial, 'mark_started', once)
     elif failure == 'legacy':
         async with h.factory() as db:
-            run = await db.get(AgentRunModel, UUID(queued['id']))
+            run = await db.get(AgentRunModel, UUID(queued['run_id']))
             run.metadata_json = {k:v for k,v in run.metadata_json.items() if k != '_initial_protocol'}
             await db.commit()
     else:
@@ -207,16 +207,16 @@ async def test_uncertain_initial_never_repeats_entry_or_model(real_initial, monk
     if failure not in ('legacy', 'budget'):
         if failure == 'receipt_mismatch':
             async with graphs.runtime.open_graph() as graph:
-                cfg = graphs.graph_config(h.session_id, queued['id'])
+                cfg = graphs.graph_config(h.session_id, queued['run_id'])
                 snapshot = await graph.aget_state(cfg)
                 await graph.aupdate_state(cfg, {'initial_request_receipt': {
                     **snapshot.values['initial_request_receipt'], 'digest': 'wrong'}})
         await execute()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert task.recovery_required and execution_health.healthy
     assert h.calls['entry'] == (0 if failure in ('legacy','marker_response') else 1)
     assert h.calls['model'] <= 1
-    assert (await state(h, queued['id']))['status'] == 'recovery_required'
+    assert (await state(h, queued['run_id']))['status'] == 'recovery_required'
     assert await worker.claim_one() is None
 
 
@@ -234,7 +234,7 @@ async def test_final_commit_response_loss_has_one_terminal_event(real_initial, m
         return result
     monkeypatch.setattr(TaskEventService, 'append_for_run', staticmethod(once))
     await execute()
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.SUCCESS and not task.recovery_required
     assert run.attempt_count == 1 and await worker.claim_one() is None
     async with h.factory() as db:
@@ -246,12 +246,12 @@ async def test_new_run_in_same_session_is_not_confused_with_previous_receipt(rea
     h = real_initial
     first = await enqueue(h)
     await execute()
-    response = await h.client.post(path(h, first['id'])+'/cancel', headers=headers(h.user['user_id']), json={})
+    response = await h.client.post(path(h, first['run_id'])+'/cancel', headers=headers(h.user['user_id']), json={})
     assert response.status_code == 202
     second = await enqueue(h)
     await execute()
-    assert (await state(h, second['id']))['status'] == 'waiting_input'
-    assert (await saved(h, second['id'])).values['initial_request_receipt']['command_id'] == second['id']
+    assert (await state(h, second['run_id']))['status'] == 'waiting_input'
+    assert (await saved(h, second['run_id'])).values['initial_request_receipt']['command_id'] == second['run_id']
     assert h.calls['entry'] == h.calls['model'] == 2
 
 

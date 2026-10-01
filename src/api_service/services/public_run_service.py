@@ -40,7 +40,7 @@ def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
     return PublicRunResource(
         main_model_name=(root.model_selection or {}).get("name"),
         model_revision=(root.model_selection or {}).get("revision"),
-        id=root.run_id, session_id=root.session_id, status=status,
+        run_id=root.run_id, session_id=root.session_id, status=status,
         resume_token=latest.run_id if status == "waiting_input" and not (task and task.cancel_requested_at) else None,
         interrupt=latest.interrupt if status in {"waiting_input", "waiting_executor"} else None,
         failure=latest.failure, result=latest.agent_response if terminal else None,
@@ -121,11 +121,11 @@ class PublicRunService:
         await PublicRunService.admission_lock(db, user_id, session_id)
         current = await PublicRunService.read(db, user_id, session_id, run_id)
         command = RunCreate(command=payload.command, metadata={
-            "resume_run_id": str(payload.resume_token), "_public_resume": str(current.id),
+            "resume_run_id": str(payload.resume_token), "_public_resume": str(current.run_id),
         })
         previous = await db.scalar(select(Run).where(Run.session_id == session_id, Run.idempotency_key == key))
         if previous is not None:
-            if previous.public_run_id != current.id:
+            if previous.public_run_id != current.run_id:
                 raise HTTPException(status_code=409, detail="Idempotency-Key belongs to another Run.")
             RunService.validate_replay(previous, command)
             return current
@@ -144,7 +144,7 @@ class PublicRunService:
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
                 await RunService.create(db,user_id,session_id,command,key)
-                return await PublicRunService.read(db,user_id,session_id,current.id)
+                return await PublicRunService.read(db,user_id,session_id,current.run_id)
             decision_review=latest.metadata_json.get('_decision_review')
             if decision_review:
                 from service_contracts.execution_review import validate_decision_action
@@ -156,7 +156,7 @@ class PublicRunService:
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
                 await RunService.create(db,user_id,session_id,command,key)
-                return await PublicRunService.read(db,user_id,session_id,current.id)
+                return await PublicRunService.read(db,user_id,session_id,current.run_id)
             revision_action=(payload.command or {}).get('resume')
             if isinstance(revision_action,dict) and revision_action.get('action') in {'replan','answer_clarification'}:
                 from service_contracts.plan_interaction import validate_plan_revision
@@ -170,7 +170,7 @@ class PublicRunService:
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
                 await RunService.create(db,user_id,session_id,command,key)
-                return await PublicRunService.read(db,user_id,session_id,current.id)
+                return await PublicRunService.read(db,user_id,session_id,current.run_id)
             from service_contracts.plan_review import patch_review
             from service_settings import get_settings
             session = await RunService._session(db, user_id, session_id)
@@ -187,7 +187,7 @@ class PublicRunService:
             except (ValueError, TypeError) as exc:
                 raise HTTPException(422, str(exc)) from exc
         await RunService.create(db, user_id, session_id, command, key)
-        return await PublicRunService.read(db, user_id, session_id, current.id)
+        return await PublicRunService.read(db, user_id, session_id, current.run_id)
 
     @staticmethod
     async def cancel(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID, payload: RunCancel) -> PublicRunResource:
@@ -205,8 +205,8 @@ class PublicRunService:
         if current.task_id:
             await RunService.cancel_task(db, user_id, current.task_id, payload.reason)
         else:
-            snapshots = await PublicRunService.snapshots(db, [current.id])
-            latest = await db.scalar(select(Run).where(Run.run_id == snapshots[current.id][1].run_id)
+            snapshots = await PublicRunService.snapshots(db, [current.run_id])
+            latest = await db.scalar(select(Run).where(Run.run_id == snapshots[current.run_id][1].run_id)
                                      .with_for_update().execution_options(populate_existing=True))
             if latest.status != AgentRunStatus.INTERRUPTED:
                 raise HTTPException(status_code=409, detail="Legacy Run has no Task; execution termination requires recovery.")
@@ -216,4 +216,4 @@ class PublicRunService:
             latest.cancel_reason = payload.reason
             RunService._finish_run(latest, AgentRunStatus.CANCELED)
             await db.commit()
-        return await PublicRunService.read(db, user_id, session_id, current.id)
+        return await PublicRunService.read(db, user_id, session_id, current.run_id)

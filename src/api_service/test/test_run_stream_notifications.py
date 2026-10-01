@@ -26,7 +26,7 @@ async def setup(h, **options):
     async with h.factory() as db:
         uid = await db.scalar(select(SessionModel.user_id).where(SessionModel.session_id==UUID(h.session_id)))
     cfg = get_settings().api.model_copy(update=options)
-    return RunStreamHub(cfg, session_factory=h.factory), (uid, UUID(h.session_id), UUID(run['id']))
+    return RunStreamHub(cfg, session_factory=h.factory), (uid, UUID(h.session_id), UUID(run['run_id']))
 
 
 async def changed(entry, generation):
@@ -256,7 +256,7 @@ async def test_real_http_auth_and_idle_stream_release_single_connection(small_po
     try:
         while not server.started:await asyncio.sleep(.01)
         async with httpx.AsyncClient(base_url=f'http://127.0.0.1:{sock.getsockname()[1]}',timeout=5) as client:
-            url=f'/api/v1/sessions/{h.session_id}/runs/{run["id"]}/stream'
+            url=f'/api/v1/sessions/{h.session_id}/runs/{run["run_id"]}/stream'
             async with client.stream('GET',url,headers=headers(h.user['user_id'])) as response:
                 assert response.status_code==200
                 lines=response.aiter_lines()

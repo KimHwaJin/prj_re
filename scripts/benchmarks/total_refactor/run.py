@@ -102,7 +102,7 @@ async def trial(n,label,scenario,slots):
       previous=None
       for step,command in enumerate([None,'mock',{'objective':'EDA service comparison'},{'candidate_number':1}]):
        body={'input':{'messages':[{'role':'user','content':'불량 예측 서비스 비교'}]}} if command is None else {'command':command,'metadata':{'resume_run_id':previous}}
-       t=time.perf_counter();r=await request('POST',f"/api/v1/sessions/{se['id']}/runs",i,'run_post',json=body);rid=r['id'];polls=0
+       t=time.perf_counter();r=await request('POST',f"/api/v1/sessions/{se['id']}/runs",i,'run_post',json=body);rid=r.get('run_id', r.get('id'));polls=0
        while r['status'] in ('pending','running'):
         await asyncio.sleep(1);polls+=1;r=await request('GET',f"/api/v1/sessions/{se['id']}/runs/{rid}",i,'run_get')
        actions=[x.get('name') for it in r.get('interrupt') or [] for x in it.get('action_requests',[])]

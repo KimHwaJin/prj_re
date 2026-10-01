@@ -32,14 +32,15 @@ def execute(request, headers, project_id, *, record, timeout=120, poll_seconds=0
     polls = 0
     while run['status'] in ('pending', 'running'):
         if time.monotonic() >= deadline:
-            raise TimeoutError(f'{session}/{run["id"]}: planning timed out')
+            raise TimeoutError(f'{session}/{run["run_id"]}: planning timed out')
         sleep(poll_seconds)
         polls += 1
-        run = request('GET', f'/api/v1/sessions/{session}/runs/{run["id"]}', headers=headers)
+        run = request('GET', f'/api/v1/sessions/{session}/runs/{run["run_id"]}', headers=headers)
     if run['status'] != 'waiting_input' or len(run.get('interrupt') or []) != 1 or run['interrupt'][0].get('kind') != 'plan_review':
-        raise RuntimeError(f'{session}/{run["id"]}: expected plan_review, received {run["status"]}')
+        raise RuntimeError(f'{session}/{run["run_id"]}: expected plan_review, received {run["status"]}')
     elapsed = (time.perf_counter() - begin) * 1000
-    observation = {k: run.get(k) for k in ('id', 'task_id', 'attempt_count', 'created_at', 'started_at', 'updated_at', 'status')}
+    # Preserve the historical report record key; HTTP Run resources use run_id.
+    observation = {'id': run['run_id'], **{k: run.get(k) for k in ('task_id', 'attempt_count', 'created_at', 'started_at', 'updated_at', 'status')}}
     observation.update(session_id=session, stage='plan_review', submitted_at=submitted_at,
                        observed_at=datetime.now(timezone.utc).isoformat(), poll_count=polls,
                        poll_seconds=poll_seconds, terminal=True, client_elapsed_ms=elapsed)

@@ -47,7 +47,7 @@ async def test_sse_comparison(runtime,monkeypatch):
                     targets=[]
                     for _ in range(count if scenario=='distinct_runs' else 1):
                         sid=await add_session(h,h.user);run=await enqueue(h,sid)
-                        targets.append((sid,run['id']))
+                        targets.append((sid,run.get('run_id', run.get('id'))))
                     if scenario=='same_run_tabs':targets*=count
                     ready=[asyncio.Event() for _ in targets];delivered=[asyncio.Event() for _ in targets]
                     received=[None]*count

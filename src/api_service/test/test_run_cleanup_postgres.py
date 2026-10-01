@@ -86,7 +86,7 @@ async def test_api_claim_graph_completion(runtime, monkeypatch):
     queued = await enqueue(h)
     item = await worker.claim_one()
     await worker.execute_claimed(item)
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.SUCCESS and run.attempt_count == 1
     assert task.status == TaskStatus.SUCCESS and task.lock_token is None
     assert not task.recovery_required and execution_health.healthy
@@ -99,7 +99,7 @@ async def test_confirmed_graph_error_keeps_existing_retry_policy(runtime, monkey
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(side_effect=ValueError('graph fault')))
     queued = await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.PENDING and run.failure['retry_scheduled']
     assert task.status == TaskStatus.PENDING and not task.recovery_required
     assert execution_health.healthy
@@ -122,16 +122,16 @@ async def test_actual_cancel_api_waits_for_graph_ack(runtime, monkeypatch):
     owner = asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
     try:
         await asyncio.wait_for(started.wait(), 2)
-        response = await h.client.post(f"/api/v1/sessions/{h.session_id}/runs/{queued['id']}/cancel",
+        response = await h.client.post(f"/api/v1/sessions/{h.session_id}/runs/{queued['run_id']}/cancel",
                                       headers=headers(h.user['user_id']), json={})
         assert response.status_code == 202
         await asyncio.wait_for(cleaning.wait(), 2)
-        run, task = await rows(h, queued['id'])
+        run, task = await rows(h, queued['run_id'])
         assert run.status == AgentRunStatus.RUNNING and task.lock_token is not None
     finally:
         release.set()
         await asyncio.wait_for(owner, 2)
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.CANCELED and task.status == TaskStatus.CANCELED
     assert task.lock_token is None and not task.recovery_required
     assert execution_health.healthy
@@ -157,7 +157,7 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
     queued = await enqueue(h)
     owner = asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
     try:
-        run, task = await wait_until_recovery(h, queued['id'])
+        run, task = await wait_until_recovery(h, queued['run_id'])
         assert run.failure['code'] == 'RUN_RECOVERY_REQUIRED' and not run.failure['retry_scheduled']
         assert run.status == AgentRunStatus.RUNNING and task.status == TaskStatus.RUNNING
         assert not owner.done() and not execution_health.healthy
@@ -169,8 +169,8 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
         assert response.status_code == 200 and response.json()['items'][0]['recovery_required'] is True
         async with h.factory() as db:
             with pytest.raises(ExecutionNeedsRecovery):
-                await RunService._lock_run_and_task(db, UUID(queued['id']))
-        response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["id"]}/cancel',
+                await RunService._lock_run_and_task(db, UUID(queued['run_id']))
+        response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["run_id"]}/cancel',
             headers=headers(h.user['user_id']), json={})
         assert response.status_code == 409
         with pytest.raises(ExecutionNeedsRecovery):
@@ -179,7 +179,7 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
         release.set()
         with pytest.raises(ExecutionNeedsRecovery):
             await asyncio.wait_for(owner, 2)
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert task.recovery_required and run.status == AgentRunStatus.RUNNING
     assert run.failure['message'] == 'cancel_watch_stop'
 
@@ -194,12 +194,12 @@ async def test_expired_lease_quarantines_not_requeues_and_preserves_cancel(runti
         await db.execute(update(TaskModel).values(lease_expires_at=past, cancel_requested_at=past))
         await db.execute(update(AgentRunModel).values(cancel_requested_at=past))
         await db.commit()
-    before_run, before_task = await rows(h, queued['id'])
+    before_run, before_task = await rows(h, queued['run_id'])
     async with h.factory() as db:
         assert await TaskService.reconcile_stale(db) == [before_task.task_id]
         assert await TaskService.reconcile_stale(db) == []
         assert not await TaskService.heartbeat(db, task_id=before_task.task_id, lock_token=before_task.lock_token)
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.RUNNING and run.attempt_count == 1
     assert task.status == TaskStatus.RUNNING and task.recovery_required
     assert task.cancel_requested_at == run.cancel_requested_at == past
@@ -215,7 +215,7 @@ async def test_queued_wait_is_not_expired_execution(runtime):
         await db.execute(update(TaskModel).values(lease_expires_at=utc_now() - timedelta(days=1)))
         await db.commit()
         assert await TaskService.reconcile_stale(db) == []
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.PENDING and not task.recovery_required
     assert await worker.claim_one() is not None
 
@@ -231,7 +231,7 @@ async def test_late_graph_success_cannot_overwrite_recovery(runtime, monkeypatch
     queued = await enqueue(h)
     with pytest.raises(ExecutionNeedsRecovery):
         await worker.execute_claimed(await worker.claim_one())
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert task.recovery_required and run.status == AgentRunStatus.RUNNING
 
 
@@ -252,7 +252,7 @@ async def test_shutdown_cancellation_persists_recovery_after_graph_stop(runtime,
     owner.cancel()
     with pytest.raises(asyncio.CancelledError):
         await asyncio.wait_for(owner, 2)
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert stopped.is_set() and task.recovery_required
     assert run.status == AgentRunStatus.RUNNING and not run.failure['retry_scheduled']
 
@@ -303,15 +303,15 @@ async def test_hitl_resume_keeps_normal_lifecycle(runtime, monkeypatch):
     monkeypatch.setattr(runs, 'ainvoke_resume', AsyncMock(return_value={'routing_result': {'route': 'analysis'}}))
     queued = await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.INTERRUPTED and task.status == TaskStatus.WAITING_INPUT
     response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs',
         headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
-        json={'run_id':queued['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': str(run.run_id)})
+        json={'run_id':queued['run_id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': str(run.run_id)})
     assert response.status_code == 202, response.text
     resumed = response.json()
     await worker.execute_claimed(await worker.claim_one())
-    run, finished_task = await rows(h, resumed['id'])
+    run, finished_task = await rows(h, resumed['run_id'])
     assert run.status == AgentRunStatus.SUCCESS and finished_task.status == TaskStatus.SUCCESS
     assert finished_task.task_id == task.task_id and not finished_task.recovery_required
     assert execution_health.healthy

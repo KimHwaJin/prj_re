@@ -143,7 +143,7 @@ async def trial(case,label,repeat):
                             payload={'input':{'messages':[{'role':'user','content':'불량 예측 서비스 비교'}]}} if command is None else {'command':command,'metadata':{'resume_run_id':previous}}
                             begin=time.perf_counter()
                             run=await request('POST',f"/api/v1/sessions/{se['id']}/runs",user,'run_post',json=payload)
-                            runid=run['id'];polls=0
+                            runid=run.get('run_id', run.get('id'));polls=0
                             while run['status'] in ('pending','running'):
                                 await asyncio.sleep(.5);polls+=1
                                 run=await request('GET',f"/api/v1/sessions/{se['id']}/runs/{runid}",user,'run_get')

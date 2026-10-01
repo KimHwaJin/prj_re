@@ -19,8 +19,8 @@ from api_service.test.test_log_event_atomicity_postgres import arguments
 @pytest.mark.asyncio
 async def test_upgrade_pairs_occurrences_repairs_missing_and_preserves_history(runtime, database_url, tmp_path):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
-    other = UUID((await enqueue(h, await add_session(h, h.user)))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
+    other = UUID((await enqueue(h, await add_session(h, h.user)))['run_id'])
     root = Path(__file__).resolve().parents[3]
     dsn = make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     config = tmp_path/'config.yml'

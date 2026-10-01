@@ -118,7 +118,7 @@ async def main():
                 sid=r.json()['id'];path='/api/v1/sessions/'+sid+'/runs'
                 r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':scenario}]}})
                 assert r.status_code==202,r.text
-                rid=r.json()['id'];record.update(session_id=sid,run_id=rid)
+                rid=r.json()['run_id'];record.update(session_id=sid,run_id=rid)
                 async def read():
                     response=await client.get(path+'/'+rid,headers=headers);assert response.status_code==200,response.text
                     return response.json()

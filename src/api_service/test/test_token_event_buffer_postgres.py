@@ -33,13 +33,13 @@ async def test_worker_hides_internal_model_tokens_and_replays_terminal_event(run
     monkeypatch.setattr(runs, 'ainvoke_user_turn', graph)
     queued = await enqueue(runtime)
     await worker.execute_claimed(await worker.claim_one())
-    run, task = await rows(runtime, queued['id'])
+    run, task = await rows(runtime, queued['run_id'])
     assert run.status == AgentRunStatus.SUCCESS and task.status == TaskStatus.SUCCESS
     async with runtime.factory() as db:
-        events = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['id']), sequence=0, limit=100)
+        events = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['run_id']), sequence=0, limit=100)
         deltas = [event for event in events if event.event_type == 'llm.token.delta']
         assert not deltas and events[-1].event_type == 'task.success'
-        replay = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['id']),
+        replay = await TaskEventService.list_after_public_run(db, run_id=UUID(queued['run_id']),
             sequence=events[0].sequence, limit=100)
         assert [event.sequence for event in replay] == [event.sequence for event in events if event.sequence > events[0].sequence]
     assert observed[0].consumer.done() and observed[0].buffered_bytes == 0
@@ -50,7 +50,7 @@ async def test_worker_hides_internal_model_tokens_and_replays_terminal_event(run
 @pytest.mark.asyncio
 async def test_real_db_row_lock_bounds_buffer_then_drains_without_loss(runtime, monkeypatch):
     queued = await enqueue(runtime)
-    run, task = await rows(runtime, queued['id'])
+    run, task = await rows(runtime, queued['run_id'])
     monkeypatch.setattr(tokens, 'settings', service_settings.get_settings().api.model_copy(update={
         'llm_token_buffer_max_bytes':32, 'llm_token_buffer_max_items':2,
         'llm_token_flush_characters':1,
@@ -91,7 +91,7 @@ async def test_real_db_row_lock_bounds_buffer_then_drains_without_loss(runtime, 
 @pytest.mark.asyncio
 async def test_real_db_write_timeout_rolls_back_and_is_not_success(runtime, monkeypatch):
     queued = await enqueue(runtime)
-    run, task = await rows(runtime, queued['id'])
+    run, task = await rows(runtime, queued['run_id'])
     monkeypatch.setattr(tokens, 'settings', service_settings.get_settings().api.model_copy(update={
         'llm_token_write_timeout_seconds':.03, 'llm_token_flush_characters':1,
     }))
@@ -142,7 +142,7 @@ async def test_worker_internal_tokens_never_invoke_failed_or_blocked_public_writ
     await asyncio.wait_for(worker.execute_claimed(await worker.claim_one()), 2)
     assert stopped.is_set()
     assert writes == []
-    run, task = await rows(runtime, queued['id'])
+    run, task = await rows(runtime, queued['run_id'])
     assert not task.recovery_required and task.lock_token is None
     assert run.status == AgentRunStatus.SUCCESS and task.status == TaskStatus.SUCCESS
     async with runtime.factory() as db:

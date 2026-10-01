@@ -89,7 +89,7 @@ async def test_http_read_measurements(harness, message_count):
     assert set(responses['project']) == {'id','name','system_prompt','prompt_version','is_default','created_at','updated_at'}
     assert set(responses['session']) == {'id','project_id','name','current_leaf_message_id','settings','created_at','updated_at'}
     assert responses['run'] == responses['run_alias']
-    assert responses['run']['id'] == str(roots[0])
+    assert responses['run']['run_id'] == str(roots[0])
     assert responses['run']['resume_token'] == str(latest_ids[0])
     assert responses['run']['status'] == 'waiting_input'
     assert responses['run']['result'] is None
@@ -136,7 +136,7 @@ async def test_run_page_boundaries_and_fixed_query_count(harness, sort, limit):
         assert response.status_code == 200, response.text
         body = response.json()
         assert len(reads) == 4  # No query per Run, even with many HITL invocations.
-        seen.extend(UUID(item['id']) for item in body['items'])
+        seen.extend(UUID(item['run_id']) for item in body['items'])
         assert all(item['status'] == 'waiting_input' for item in body['items'])
         if not body['page']['has_next']:
             assert body['page']['next_cursor'] is None

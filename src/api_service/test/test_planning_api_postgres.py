@@ -108,7 +108,7 @@ async def test_api_edit_restart_approval_replay_stream_and_private_snapshot(plan
     h = planning
     response = await submit(h, {'input': {'content': [{'type': 'text', 'text': '품질과 이상치를 분석해줘'}]}})
     assert response.status_code == 202, response.text
-    run_id = response.json()['id']
+    run_id = response.json()['run_id']
     await execute()
     waiting = await read(h, run_id)
     assert waiting['status'] == 'waiting_input', waiting
@@ -175,7 +175,7 @@ async def test_answer_unknown_model_invalid_attachments_and_old_route(planning):
     started = await submit(h, body)
     assert started.status_code == 202
     await execute()
-    final = await read(h, started.json()['id'])
+    final = await read(h, started.json()['run_id'])
     assert final['status'] == 'success' and final['result']['final_response']['status'] == 'answer'
-    removed = await h.client.post(h.path+'/'+final['id']+'/resume', headers=headers(h.user['user_id']), json={})
+    removed = await h.client.post(h.path+'/'+final['run_id']+'/resume', headers=headers(h.user['user_id']), json={})
     assert removed.status_code == 404

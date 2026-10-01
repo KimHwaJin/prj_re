@@ -166,7 +166,7 @@ approve_decisions의 values는 현재 payload.decisions의 decision_id를 모두
 
 | 필드 | 의미 |
 |---|---|
-| id / session_id | 안정된 공개 Run UUID / 세션 UUID |
+| run_id / session_id | 안정된 공개 Run UUID / 세션 UUID |
 | status | 공개 상태 |
 | main_model_name / model_revision | 시작 시 고정한 모델 alias / 설정 버전 |
 | resume_token | 사용자 입력 대기의 현재 토큰. 그 외 null |
@@ -194,7 +194,7 @@ approve_decisions의 values는 현재 payload.decisions의 decision_id를 모두
 | canceled | 취소 완료 |
 | recovery_required | 종료가 불확실하여 복구 필요 |
 
-다른 세션은 독립적으로 사용할 수 있다. 같은 세션은 실행·Executor 대기 중 입력을 잠그며 HITL에서는 현재 화면의 액션만 허용한다. 공개 Run 하나 안에서 내부 invocation이 바뀌더라도 id는 유지된다.
+다른 세션은 독립적으로 사용할 수 있다. 같은 세션은 실행·Executor 대기 중 입력을 잠그며 HITL에서는 현재 화면의 액션만 허용한다. 공개 Run 하나 안에서 내부 invocation이 바뀌더라도 run_id는 유지된다. REST 응답·요청·SSE의 실행 식별자는 모두 run_id다. 기존 REST 응답의 id 필드는 제거되었으므로 클라이언트도 run_id를 읽어야 한다. 프로젝트·세션의 id와 SSE 프레임의 id(이벤트 순번)는 그대로다.
 
 ## SSE 응답
 

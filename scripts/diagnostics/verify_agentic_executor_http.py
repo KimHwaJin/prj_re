@@ -126,7 +126,7 @@ async def main():
             started=time.perf_counter()
             r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':request}]}})
             assert r.status_code==202,r.text
-            rid=r.json()['id']; summary.update(run_id=rid,session_id=sid)
+            rid=r.json()['run_id']; summary.update(run_id=rid,session_id=sid)
             async def read():
                 response=await client.get(path+'/'+rid,headers=headers)
                 assert response.status_code==200,response.text
@@ -203,7 +203,7 @@ async def main():
                     r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},
                         json={'input':{'content':[{'type':'text','text':question}]}})
                     assert r.status_code==202,r.text
-                    following_id=r.json()['id']
+                    following_id=r.json()['run_id']
                     async with asyncio.timeout(240):
                         while True:
                             following=(await client.get(path+'/'+following_id,headers=headers)).json()
@@ -233,7 +233,7 @@ async def main():
             summary['same_session_after_completion_status']=r.status_code
             assert r.status_code==202,r.text
             if not real_mode:
-                next_id=r.json()['id']
+                next_id=r.json()['run_id']
                 async with asyncio.timeout(15):
                     while True:
                         following=(await client.get(path+'/'+next_id,headers=headers)).json()
@@ -244,7 +244,7 @@ async def main():
             else:
                 # Admission after completion is checked here. Execution of the next
                 # invocation is covered with real DB and an explicit model double.
-                await client.post(path+'/'+r.json()['id']+'/cancel',headers=headers,json={})
+                await client.post(path+'/'+r.json()['run_id']+'/cancel',headers=headers,json={})
         if real_mode:
             import api_service.observability.phoenix as phoenix
             provider=phoenix._tracer_provider

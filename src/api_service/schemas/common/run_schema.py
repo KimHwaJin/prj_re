@@ -90,7 +90,7 @@ class RunResume(BaseModel):
 class PublicRunResource(BaseModel):
     main_model_name: str | None = None
     model_revision: str | None = None
-    id: UUID
+    run_id: UUID = Field(description="Stable public Run ID across HITL resumes and Executor completion.")
     session_id: UUID
     status: Literal["pending", "running", "waiting_input", "waiting_executor",
                     "success", "error", "timeout", "canceled", "recovery_required"]

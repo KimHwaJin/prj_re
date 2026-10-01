@@ -38,7 +38,7 @@ async def post(h, session, body, key=None):
             state = (await h.client.get(f'{path}/{target}', headers=headers(h.user['user_id']))).json()
         else:
             state = (await h.client.get(path, headers=headers(h.user['user_id']))).json()['items'][0]
-        body = {'run_id': state['id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1, 'input_values':{'legacy':body['command']}}}, 'resume_token': target or state['resume_token'] or state['id']}
+        body = {'run_id': state['run_id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1, 'input_values':{'legacy':body['command']}}}, 'resume_token': target or state['resume_token'] or state['run_id']}
     return await h.client.post(path,
         headers={**headers(h.user['user_id']), 'Idempotency-Key': key or str(uuid4())}, json=body)
 
@@ -50,11 +50,11 @@ async def test_two_consumers_do_not_claim_the_same_run(runtime, monkeypatch):
     claims = await asyncio.gather(*(worker.claim_one() for _ in range(12)))
     claimed = [c for c in claims if c is not None]
     assert len(claimed) == len({c.claim.run_id for c in claimed}) == 8
-    assert {str(c.claim.run_id) for c in claimed} == {q['id'] for q in queued}
+    assert {str(c.claim.run_id) for c in claimed} == {q['run_id'] for q in queued}
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(return_value={'routing_result': {'route':'analysis'}}))
     await asyncio.gather(*(worker.execute_claimed(c) for c in claimed))
     for q in queued:
-        run, task = await rows(h, q['id'])
+        run, task = await rows(h, q['run_id'])
         assert run.status == AgentRunStatus.SUCCESS and run.attempt_count == 1
 
 
@@ -67,7 +67,7 @@ async def test_same_session_concurrent_admission_and_idempotency(runtime):
     other = await add_session(h, h.user)
     responses = await asyncio.gather(*(post(h, other, body, 'same-key') for _ in range(5)))
     assert all(r.status_code == 202 for r in responses)
-    assert len({r.json()['id'] for r in responses}) == 1
+    assert len({r.json()['run_id'] for r in responses}) == 1
 
 
 @pytest.mark.asyncio
@@ -79,7 +79,7 @@ async def test_wait_releases_execution_but_keeps_session_admission_locked(runtim
     }))
     queued = await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
-    run, task = await rows(h, queued['id'])
+    run, task = await rows(h, queued['run_id'])
     assert run.status == AgentRunStatus.INTERRUPTED
     assert task.status == TaskStatus.WAITING_INPUT and task.lock_token is None
     body = {'input': {'content': [{'type': 'text', 'text': 'another'}]}}
@@ -120,9 +120,9 @@ async def test_executor_completion_unlocks_session_once(runtime, monkeypatch, st
         await db.execute(update(TaskModel).where(TaskModel.task_id==UUID(queued['task_id'])).values(status=TaskStatus.WAITING_INPUT))
         await db.commit()
     await completion.synchronize_executor_completion(context, graph)
-    first_run, first_task = await rows(h,queued['id'])
+    first_run, first_task = await rows(h,queued['run_id'])
     await completion.synchronize_executor_completion(context, graph)
-    run, task = await rows(h,queued['id'])
+    run, task = await rows(h,queued['run_id'])
     assert task.last_event_sequence == first_task.last_event_sequence
     assert run.status == (AgentRunStatus.SUCCESS if status=='SUCCEEDED' else AgentRunStatus.ERROR)
     assert run.completed_at == first_run.completed_at
@@ -156,7 +156,7 @@ async def test_dispatcher_bounded_workload_comparison(runtime, monkeypatch):
             await execute(item)
             finished.append(item.claim.run_id)
         monkeypatch.setattr(worker, 'execute_claimed', observed_execute)
-        ids=[UUID(q['id']) for q in queued]
+        ids=[UUID(q['run_id']) for q in queued]
         async def complete():
             async with h.factory() as db:
                 states=(await db.scalars(select(AgentRunModel.status).where(AgentRunModel.run_id.in_(ids)))).all()
@@ -200,5 +200,5 @@ async def test_old_taskless_resume_cannot_bypass_executor_wait(runtime, monkeypa
     }))
     await enqueue(h)
     await worker.execute_claimed(await worker.claim_one())
-    response = await post(h,h.session_id,{'command':{'message':'bypass'},'metadata':{'resume_run_id':faq['id']}})
+    response = await post(h,h.session_id,{'command':{'message':'bypass'},'metadata':{'resume_run_id':faq['run_id']}})
     assert response.status_code == 409

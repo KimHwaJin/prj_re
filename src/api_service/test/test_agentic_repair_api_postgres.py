@@ -28,7 +28,7 @@ async def test_repair_admission_checksum_revision_restart_replay_and_public_proj
     runtime,calls=await make_runtime(agent,executor,level=1,proposed_level=2)
     saver=InMemorySaver();graph=build_planning_graph(runtime,checkpointer=saver);graph_runtime.override_graph(graph)
     response=await submit(h,{'input':{'content':[{'type':'text','text':'Transform values'}]}})
-    rid=response.json()['id'];await execute();run=await read(h,rid);view=run['interrupt'][0]['payload']['plans'][0]
+    rid=response.json()['run_id'];await execute();run=await read(h,rid);view=run['interrupt'][0]['payload']['plans'][0]
     assert (await submit(h,{'run_id':rid,'resume_token':run['resume_token'],
         'command':{'resume':{'action':'approve_plan','plan_id':view['plan_id'],'plan_revision':1}}})).status_code==202
     await execute()

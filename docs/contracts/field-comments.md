@@ -42,7 +42,7 @@
 
 | 필드 | 무엇을 식별하거나 갱신하는가 |
 |---|---|
-| run_id / Run.id | 사용자 요청부터 결과까지 이어지는 공개 실행 |
+| run_id | 사용자 요청부터 결과까지 이어지는 공개 실행 |
 | session_id | 대화 세션 |
 | checkpoint_run_id / task_id | 내부 상태 저장·업무 연결 |
 | workflow_id / definition_version | 재사용 정의와 그 변경 버전; 기존 관리 API의 DB UUID는 별도 |

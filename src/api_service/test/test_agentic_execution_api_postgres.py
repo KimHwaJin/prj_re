@@ -41,7 +41,7 @@ async def test_decision_form_validation_does_not_consume_token_and_projects_term
     graph = build_planning_graph(runtime, checkpointer=InMemorySaver())
     graph_runtime.override_graph(graph)
     response = await submit(h, {'input':{'content':[{'type':'text','text':'품질 분석'}]}})
-    rid = response.json()['id']
+    rid = response.json()['run_id']
     await execute()
     run = await read(h, rid)
     plan = run['interrupt'][0]['payload']['plans'][0]
@@ -79,7 +79,7 @@ async def test_decision_form_validation_does_not_consume_token_and_projects_term
     assert executor.calls[-1][0].endswith('/finalize')
     await deliver(executor.event('execution.completed',{'status':'SUCCEEDED','error':None}))
     final=await read(h,rid)
-    assert final['id']==rid and final['status']=='success'
+    assert final['run_id']==rid and final['status']=='success'
     assert final['result']['final_response']['status']=='analysis_completed'
     stream=await h.client.get(h.path+'/'+rid+'/stream',headers={'X-User-Id':h.user['user_id']})
     import json
@@ -91,6 +91,6 @@ async def test_decision_form_validation_does_not_consume_token_and_projects_term
     response=await submit(h,{'input':{'content':[{'type':'text','text':'새 분석 요청'}]}})
     assert response.status_code==202
     await execute()
-    new_run=await read(h,response.json()['id'])
-    assert new_run['status']=='waiting_input' and new_run['id']!=rid
+    new_run=await read(h,response.json()['run_id'])
+    assert new_run['status']=='waiting_input' and new_run['run_id']!=rid
     assert (await graph.aget_state({'configurable':{'thread_id':h.session_id}})).values['task_id']!=previous_task_id

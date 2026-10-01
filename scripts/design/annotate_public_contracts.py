@@ -315,7 +315,7 @@ def field_description(key, path=(), parent=None):
         if any(k in path for k in ('decisions', 'decision')): return 'Workflow 내부 Agent 판단의 고유 문자열 ID. agent_decision이 참조한다.'
         if any(k in path for k in ('expected_outputs', 'output')): return 'Workflow 내부 예상 산출물의 고유 문자열 ID.'
         if 'workflow' in path: return 'legacy Workflow 또는 Tool의 정의 ID. DB에 저장된 Workflow resource UUID와 구분한다.'
-        return '공개 Run UUID. 전체 흐름과 사용자 재개에서 같은 Run을 식별한다.'
+        return '해당 정의 내부의 고유 ID. 공개 Run의 식별자는 별도 run_id 필드다.'
     if key == 'status':
         if 'PublicRunResource' in path or 'responses' in path or parent.get('type') == 'run.snapshot' or 'checkpoint_run_id' in parent:
             return 'Run 상태: pending/running/waiting_input/waiting_executor/success/error/timeout/canceled/recovery_required. 접수·승인과 실행 완료는 구분한다.'

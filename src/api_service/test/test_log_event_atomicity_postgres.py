@@ -43,7 +43,7 @@ async def read(h, run_id):
 @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
 async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     baseline = (await read(h, rid))[2]
     append = TaskEventService.append_for_run
     async with h.factory() as db:
@@ -79,7 +79,7 @@ async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtim
 
 async def test_log_flush_failure_never_writes_event(runtime, monkeypatch):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     invalid = {**arguments(rid), 'node': 'x' * 101}
     append = AsyncMock()
     with monkeypatch.context() as patch:
@@ -97,7 +97,7 @@ async def test_log_flush_failure_never_writes_event(runtime, monkeypatch):
 @pytest.mark.parametrize('distinct', [False, True])
 async def test_concurrent_producers_preserve_key_identity_not_payload_identity(runtime, distinct):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     baseline = (await read(h, rid))[2]
     async def write(index):
         async with h.factory() as db:
@@ -113,7 +113,7 @@ async def test_concurrent_producers_preserve_key_identity_not_payload_identity(r
 
 async def test_existing_log_repairs_from_stored_payload_and_replays_once(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     async with h.factory() as db:
         log = AgentRunLogModel(**arguments(rid))
         db.add(log)
@@ -134,7 +134,7 @@ async def test_existing_log_repairs_from_stored_payload_and_replays_once(runtime
 
 async def test_no_task_keeps_log_only_and_later_attachment_can_repair(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     async with h.factory() as db:
         run = await db.get(AgentRunModel, rid)
         task_id = run.task_id
@@ -153,7 +153,7 @@ async def test_no_task_keeps_log_only_and_later_attachment_can_repair(runtime):
 
 async def test_database_unique_link_rejects_duplicate_event_without_consuming_sequence(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     async with h.factory() as db:
         log = await AgentRunLogService.create(db, **arguments(rid))
         log_id = log.log_id
@@ -169,7 +169,7 @@ async def test_database_unique_link_rejects_duplicate_event_without_consuming_se
 
 async def test_complete_pair_replay_is_read_only_and_keeps_original_content(runtime):
     h = runtime
-    rid = UUID((await enqueue(h))['id'])
+    rid = UUID((await enqueue(h))['run_id'])
     async with h.factory() as db:
         original = await AgentRunLogService.create(db, **arguments(rid))
         log_id = original.log_id
