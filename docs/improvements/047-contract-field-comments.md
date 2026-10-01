@@ -2,11 +2,11 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 주석·동일성·46개 회귀 검증 완료 / 병합·게시 예정 |
+| 상태 | 주석·동일성·46개 회귀 검증 완료 / 베이스 병합·원격 게시 확인 |
 | 날짜 | 2026-10-01 |
 | 작업 브랜치 | feature/contract-field-comments |
 | 기준 commit | 59f1e8082adbe11b081c2bd5d581440ccada2932 |
-| 구현 commit | 미커밋 |
+| 문서 commit | fabfe501e05a731e68aed8989db8f1ee1e45af18 |
 
 ## 문제와 변경
 
@@ -33,4 +33,4 @@
 
 ## 통합·게시
 
-사용자의 이전 게시 요청에 따라 문서 완료 후 베이스 통합 및 origin 게시를 진행한다. 실제 결과는 검증 후 기록한다. 원본 사용자 checkout과 외부 서비스는 유지한다.
+2026-10-01에 `fabfe501e05a731e68aed8989db8f1ee1e45af18`까지 `feature/refactor-base`에 fast-forward 병합했다. 베이스와 `feature/contract-field-comments`를 `origin=KimHwaJin/prj_re`에 atomic push하고 원격 두 브랜치 SHA 일치를 확인했다. 이 확인 기록은 베이스 후속 문서 커밋으로 유지한다. 원본 사용자 checkout과 외부 서비스는 유지했으며 배포·강제 push·기존 브랜치 삭제는 하지 않았다.

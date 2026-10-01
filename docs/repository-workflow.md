@@ -36,6 +36,8 @@ git push --set-upstream origin feature/next-work-item
 
 ## 게시 대상 브랜치
 
+047 필드 주석 작업도 2026-10-01에 추가 게시했다. `feature/contract-field-comments`의 `fabfe501e05a731e68aed8989db8f1ee1e45af18`를 베이스에 fast-forward 반영하고 두 원격 SHA 일치를 확인했다. 현재 보존 대상은 베이스 1개와 파생 46개이며, 아래 표들은 이전 게시 시점의 이력이다. [047 검증·게시 기록](improvements/047-contract-field-comments.md).
+
 2026-10-01 추가 게시: 038~046을 베이스에 `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289`까지 fast-forward 반영하고 아래 파생 9개와 함께 atomic push했다. 베이스 포함 10개 브랜치의 원격 SHA 일치를 확인했다. 이전 파생 36개는 보존하며, 베이스 1개와 전체 파생 45개를 관리한다. 이후 게시 기록 문서 커밋으로 이동한 베이스 HEAD는 Git의 원격 참조를 확인한다.
 
 | 추가 파생 브랜치 | 게시 확인 commit |
