@@ -12,6 +12,7 @@
 043 구현 commit: `cad68b5196dd8731768a5201a4d7564e9d4eb0af`. [작업 결과](043-session-analysis-context.md).
 044 구현 commit: `d3bf72e6a4e7b35dc6699413710dd6f36104441e`. [작업 결과](044-agentic-answer-grounding.md).
 045 구현 commit: `07e0397aa45dc9e43e7716a934683b3649a2d545`. [서비스 구현·검증·사내 연결 안내](045-sso-authentication.md).
+046 문서 commit: `fb21bba18cc90b808276d7e9fd0d223ad3638bb3`. [문서·예제·검증 기록](046-api-workflow-reference.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`

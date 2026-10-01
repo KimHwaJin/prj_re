@@ -6,7 +6,7 @@
 | 날짜 | 2026-10-01 |
 | 작업 브랜치 | feature/api-workflow-docs |
 | 기준 commit | 0e35b625644e904f8e7e0c5497d1d4a9cf07dedd — 045 |
-| 구현 commit | 미커밋 |
+| 문서 commit | fb21bba18cc90b808276d7e9fd0d223ad3638bb3 |
 
 ## 문제와 변경
 
