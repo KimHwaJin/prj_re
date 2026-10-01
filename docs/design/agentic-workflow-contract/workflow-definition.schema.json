@@ -81,7 +81,7 @@
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:dtest:workflow-definition:2.0-draft",
-  "title": "Workflow definition draft",
+  "title": "Registered analysis Workflow definition",
   "$defs": {
     "id": {
       "type": "string",
@@ -548,5 +548,5 @@
       "required": []
     }
   },
-  "$comment": "Design draft only. Not accepted by the current runtime compiler or Workflow POST API."
+  "$comment": "Used by the current agentic planning, approval and execution compiler. Workflow CRUD still uses the separate legacy 1.3 contract; this definition is not directly accepted by Workflow POST."
 }

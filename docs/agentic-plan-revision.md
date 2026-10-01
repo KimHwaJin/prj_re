@@ -27,7 +27,7 @@ flowchart TD
 
 ## 프론트 명령과 SSE
 
-X-User-Id와 Idempotency-Key를 기존대로 사용한다. 모든 후보를 거절하고 새 계획을 요청할 때는 plan_id 대신 **현재 interaction_id와 화면 revision**을 보낸다.
+SSO 로그인 쿠키·X-CSRF-Token과 Idempotency-Key를 기존대로 사용한다. 모든 후보를 거절하고 새 계획을 요청할 때는 plan_id 대신 **현재 interaction_id와 화면 revision**을 보낸다.
 
 ```json
 {

@@ -10,7 +10,7 @@ cd prj_re
 git fetch origin
 ```
 
-실제 `.env`, 개인 인증 정보, 가상 환경과 로컬 데이터는 Git에 포함되지 않는다. `.env.example`과 config 템플릿을 참고해 환경별 값을 별도로 준비한다. 실행·기동 설정은 [기동 가이드](configuration-bootstrap.md), Agent 개발 위치와 현재 이행 상태는 [Agent 개발 안내](agent-development/README.md)를 참고한다. 새 Workflow·HITL 계약은 아직 서비스에 연결되지 않은 초안이다.
+실제 `.env`, 개인 인증 정보, 가상 환경과 로컬 데이터는 Git에 포함되지 않는다. `.env.example`과 config 템플릿을 참고해 환경별 값을 별도로 준비한다. 실행·기동 설정은 [기동 가이드](configuration-bootstrap.md), Agent 개발 위치와 현재 이행 상태는 [Agent 개발 안내](agent-development/README.md)를 참고한다. 현재 [Agent API](public-run-api.md)와 [Workflow JSON](workflow-json-reference.md)을 먼저 확인한다. 계획·승인·Executor compiler는 새 정의를 사용하지만 Workflow CRUD·추천 풀 이행은 후속이다.
 
 ## 이후 작업과 통합
 

@@ -1,0 +1,3597 @@
+{
+  "RunRequest": {
+    "$defs": {
+      "ChatInput": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "file": "#/$defs/FileContent",
+                  "image": "#/$defs/ImageContent",
+                  "text": "#/$defs/TextContent"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/TextContent"
+                },
+                {
+                  "$ref": "#/$defs/ImageContent"
+                },
+                {
+                  "$ref": "#/$defs/FileContent"
+                }
+              ]
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Content",
+            "type": "array"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "ChatInput",
+        "type": "object"
+      },
+      "DecisionAction": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "approve_decisions",
+            "title": "Action",
+            "type": "string"
+          },
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "values": {
+            "additionalProperties": true,
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action",
+          "interaction_id",
+          "revision",
+          "values"
+        ],
+        "title": "DecisionAction",
+        "type": "object"
+      },
+      "ExecutionOverrides": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "SINGLE",
+                  "MULTI"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mode"
+          },
+          "repair_level": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Repair Level"
+          },
+          "max_repair_attempts": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Max Repair Attempts"
+          }
+        },
+        "title": "ExecutionOverrides",
+        "type": "object"
+      },
+      "FileContent": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "file",
+            "title": "Type",
+            "type": "string"
+          },
+          "file_id": {
+            "format": "uuid",
+            "title": "File Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "file_id"
+        ],
+        "title": "FileContent",
+        "type": "object"
+      },
+      "ImageContent": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "image",
+            "title": "Type",
+            "type": "string"
+          },
+          "file_id": {
+            "format": "uuid",
+            "title": "File Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "file_id"
+        ],
+        "title": "ImageContent",
+        "type": "object"
+      },
+      "ParameterChange": {
+        "additionalProperties": false,
+        "properties": {
+          "step_id": {
+            "title": "Step Id",
+            "type": "string"
+          },
+          "parameter": {
+            "title": "Parameter",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "step_id",
+          "parameter",
+          "value"
+        ],
+        "title": "ParameterChange",
+        "type": "object"
+      },
+      "PlanAction": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "edit_plan",
+              "approve_plan"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "plan_id": {
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "plan_revision": {
+            "minimum": 1,
+            "title": "Plan Revision",
+            "type": "integer"
+          },
+          "input_values": {
+            "additionalProperties": true,
+            "title": "Input Values",
+            "type": "object"
+          },
+          "step_changes": {
+            "items": {
+              "$ref": "#/$defs/ParameterChange"
+            },
+            "title": "Step Changes",
+            "type": "array"
+          },
+          "excluded_step_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Excluded Step Ids",
+            "type": "array"
+          },
+          "execution_overrides": {
+            "$ref": "#/$defs/ExecutionOverrides"
+          }
+        },
+        "required": [
+          "action",
+          "plan_id",
+          "plan_revision"
+        ],
+        "title": "PlanAction",
+        "type": "object"
+      },
+      "PlanRevisionAction": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "replan",
+              "answer_clarification"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "feedback": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Feedback",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "interaction_id",
+          "revision",
+          "feedback"
+        ],
+        "title": "PlanRevisionAction",
+        "type": "object"
+      },
+      "RepairAction": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "approve_repair",
+              "reject_repair"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "proposal_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Proposal Sha256",
+            "type": "string"
+          },
+          "allow_policy_escalation": {
+            "default": false,
+            "title": "Allow Policy Escalation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action",
+          "interaction_id",
+          "revision",
+          "proposal_sha256"
+        ],
+        "title": "RepairAction",
+        "type": "object"
+      },
+      "ResumeCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "resume": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PlanAction"
+              },
+              {
+                "$ref": "#/$defs/DecisionAction"
+              },
+              {
+                "$ref": "#/$defs/RepairAction"
+              },
+              {
+                "$ref": "#/$defs/PlanRevisionAction"
+              }
+            ],
+            "title": "Resume"
+          }
+        },
+        "required": [
+          "resume"
+        ],
+        "title": "ResumeCommand",
+        "type": "object"
+      },
+      "TextContent": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "text",
+            "title": "Type",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "title": "TextContent",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "input": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ChatInput"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "command": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ResumeCommand"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "run_id": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Run Id"
+      },
+      "resume_token": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Resume Token"
+      },
+      "main_model_name": {
+        "anyOf": [
+          {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9_.-]+$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Main Model Name"
+      }
+    },
+    "title": "RunRequest",
+    "type": "object"
+  },
+  "RunCancel": {
+    "properties": {
+      "reason": {
+        "anyOf": [
+          {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Reason"
+      }
+    },
+    "title": "RunCancel",
+    "type": "object"
+  },
+  "PublicRunResource": {
+    "properties": {
+      "main_model_name": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Main Model Name"
+      },
+      "model_revision": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Model Revision"
+      },
+      "id": {
+        "format": "uuid",
+        "title": "Id",
+        "type": "string"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "pending",
+          "running",
+          "waiting_input",
+          "waiting_executor",
+          "success",
+          "error",
+          "timeout",
+          "canceled",
+          "recovery_required"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "resume_token": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Resume Token"
+      },
+      "interrupt": {
+        "anyOf": [
+          {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Interrupt"
+      },
+      "failure": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Failure"
+      },
+      "result": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Result"
+      },
+      "recovery_required": {
+        "default": false,
+        "title": "Recovery Required",
+        "type": "boolean"
+      },
+      "checkpoint_run_id": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Checkpoint Run Id"
+      },
+      "task_id": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Task Id"
+      },
+      "attempt_count": {
+        "title": "Attempt Count",
+        "type": "integer"
+      },
+      "next_attempt_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Next Attempt At"
+      },
+      "cancel_reason": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Cancel Reason"
+      },
+      "cancel_requested_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Cancel Requested At"
+      },
+      "created_at": {
+        "format": "date-time",
+        "title": "Created At",
+        "type": "string"
+      },
+      "updated_at": {
+        "format": "date-time",
+        "title": "Updated At",
+        "type": "string"
+      },
+      "started_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Started At"
+      },
+      "completed_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Completed At"
+      }
+    },
+    "required": [
+      "id",
+      "session_id",
+      "status",
+      "attempt_count",
+      "created_at",
+      "updated_at"
+    ],
+    "title": "PublicRunResource",
+    "type": "object"
+  },
+  "AgentRunLogResource": {
+    "description": "프런트 진행 화면에서 표시할 Agent 실행 로그입니다.",
+    "properties": {
+      "log_id": {
+        "format": "uuid",
+        "title": "Log Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "event_key": {
+        "title": "Event Key",
+        "type": "string"
+      },
+      "agent_name": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Agent Name"
+      },
+      "node": {
+        "title": "Node",
+        "type": "string"
+      },
+      "event": {
+        "title": "Event",
+        "type": "string"
+      },
+      "kind": {
+        "title": "Kind",
+        "type": "string"
+      },
+      "payload": {
+        "additionalProperties": true,
+        "title": "Payload",
+        "type": "object"
+      },
+      "created_at": {
+        "format": "date-time",
+        "title": "Created At",
+        "type": "string"
+      }
+    },
+    "required": [
+      "log_id",
+      "run_id",
+      "event_key",
+      "agent_name",
+      "node",
+      "event",
+      "kind",
+      "payload",
+      "created_at"
+    ],
+    "title": "AgentRunLogResource",
+    "type": "object"
+  },
+  "RunEvent": {
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$",
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "additionalProperties": true,
+        "title": "Data",
+        "type": "object"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "RunEvent",
+    "type": "object"
+  },
+  "PlanView": {
+    "$defs": {
+      "DecisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "evidence_steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Steps",
+            "type": "array"
+          },
+          "guidance": {
+            "title": "Guidance",
+            "type": "string"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "status": {
+            "const": "deferred",
+            "default": "deferred",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "evidence_steps",
+          "guidance",
+          "value_schema"
+        ],
+        "title": "DecisionView",
+        "type": "object"
+      },
+      "InputView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "parameter",
+              "data_reference"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "origin": {
+            "enum": [
+              "agent",
+              "workflow_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "has_value": {
+            "title": "Has Value",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "description",
+          "kind",
+          "required",
+          "editable",
+          "value_schema",
+          "origin",
+          "has_value"
+        ],
+        "title": "InputView",
+        "type": "object"
+      },
+      "OutputView": {
+        "additionalProperties": false,
+        "properties": {
+          "output_id": {
+            "title": "Output Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded_by_user"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output_id",
+          "kind",
+          "description",
+          "status"
+        ],
+        "title": "OutputView",
+        "type": "object"
+      },
+      "ParameterView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "workflow_input",
+              "literal",
+              "step_reference",
+              "deferred",
+              "system_context"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value Schema"
+          },
+          "input_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Name"
+          },
+          "step_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Step Id"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decision Id"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Guidance"
+          },
+          "context_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Context Key"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "editable"
+        ],
+        "title": "ParameterView",
+        "type": "object"
+      },
+      "PolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "SINGLE",
+              "MULTI"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "repair_level": {
+            "title": "Repair Level",
+            "type": "integer"
+          },
+          "max_repair_attempts": {
+            "title": "Max Repair Attempts",
+            "type": "integer"
+          },
+          "review_mode": {
+            "title": "Review Mode",
+            "type": "string"
+          },
+          "review_interval_tools": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Review Interval Tools"
+          },
+          "allowed_modes": {
+            "items": {
+              "enum": [
+                "SINGLE",
+                "MULTI"
+              ],
+              "type": "string"
+            },
+            "title": "Allowed Modes",
+            "type": "array"
+          },
+          "repair_level_limit": {
+            "title": "Repair Level Limit",
+            "type": "integer"
+          },
+          "max_repair_attempts_limit": {
+            "title": "Max Repair Attempts Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mode",
+          "repair_level",
+          "max_repair_attempts",
+          "review_mode",
+          "allowed_modes",
+          "repair_level_limit",
+          "max_repair_attempts_limit"
+        ],
+        "title": "PolicyView",
+        "type": "object"
+      },
+      "SkillView": {
+        "additionalProperties": false,
+        "properties": {
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "name",
+          "description"
+        ],
+        "title": "SkillView",
+        "type": "object"
+      },
+      "StepView": {
+        "additionalProperties": false,
+        "properties": {
+          "step_id": {
+            "title": "Step Id",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "tool_id": {
+            "title": "Tool Id",
+            "type": "string"
+          },
+          "function_name": {
+            "title": "Function Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/$defs/ParameterView"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "when": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "When"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "skill_id",
+          "tool_id",
+          "function_name",
+          "description",
+          "depends_on",
+          "parameters",
+          "status"
+        ],
+        "title": "StepView",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "plan_id": {
+        "title": "Plan Id",
+        "type": "string"
+      },
+      "plan_revision": {
+        "title": "Plan Revision",
+        "type": "integer"
+      },
+      "workflow_id": {
+        "title": "Workflow Id",
+        "type": "string"
+      },
+      "execution_kind": {
+        "default": "registered",
+        "enum": [
+          "registered",
+          "free_code"
+        ],
+        "title": "Execution Kind",
+        "type": "string"
+      },
+      "workflow_eligible": {
+        "default": true,
+        "title": "Workflow Eligible",
+        "type": "boolean"
+      },
+      "approval_mode": {
+        "default": "user",
+        "enum": [
+          "user",
+          "configuration"
+        ],
+        "title": "Approval Mode",
+        "type": "string"
+      },
+      "definition_version": {
+        "title": "Definition Version",
+        "type": "integer"
+      },
+      "name": {
+        "title": "Name",
+        "type": "string"
+      },
+      "goal": {
+        "title": "Goal",
+        "type": "string"
+      },
+      "skills": {
+        "items": {
+          "$ref": "#/$defs/SkillView"
+        },
+        "title": "Skills",
+        "type": "array"
+      },
+      "inputs": {
+        "items": {
+          "$ref": "#/$defs/InputView"
+        },
+        "title": "Inputs",
+        "type": "array"
+      },
+      "steps": {
+        "items": {
+          "$ref": "#/$defs/StepView"
+        },
+        "title": "Steps",
+        "type": "array"
+      },
+      "decisions": {
+        "items": {
+          "$ref": "#/$defs/DecisionView"
+        },
+        "title": "Decisions",
+        "type": "array"
+      },
+      "execution": {
+        "$ref": "#/$defs/PolicyView"
+      },
+      "outputs": {
+        "items": {
+          "$ref": "#/$defs/OutputView"
+        },
+        "title": "Outputs",
+        "type": "array"
+      }
+    },
+    "required": [
+      "plan_id",
+      "plan_revision",
+      "workflow_id",
+      "definition_version",
+      "name",
+      "goal",
+      "skills",
+      "inputs",
+      "steps",
+      "decisions",
+      "execution",
+      "outputs"
+    ],
+    "title": "PlanView",
+    "type": "object"
+  },
+  "InteractionEvent": {
+    "$defs": {
+      "DecisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "evidence_steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Steps",
+            "type": "array"
+          },
+          "guidance": {
+            "title": "Guidance",
+            "type": "string"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "status": {
+            "const": "deferred",
+            "default": "deferred",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "evidence_steps",
+          "guidance",
+          "value_schema"
+        ],
+        "title": "DecisionView",
+        "type": "object"
+      },
+      "InputView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "parameter",
+              "data_reference"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "origin": {
+            "enum": [
+              "agent",
+              "workflow_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "has_value": {
+            "title": "Has Value",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "description",
+          "kind",
+          "required",
+          "editable",
+          "value_schema",
+          "origin",
+          "has_value"
+        ],
+        "title": "InputView",
+        "type": "object"
+      },
+      "InteractionData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "plan_review",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "open",
+            "title": "Status",
+            "type": "string"
+          },
+          "resume_token": {
+            "format": "uuid",
+            "title": "Resume Token",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/ReviewPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resume_token",
+          "summary",
+          "payload"
+        ],
+        "title": "InteractionData",
+        "type": "object"
+      },
+      "OutputView": {
+        "additionalProperties": false,
+        "properties": {
+          "output_id": {
+            "title": "Output Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded_by_user"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output_id",
+          "kind",
+          "description",
+          "status"
+        ],
+        "title": "OutputView",
+        "type": "object"
+      },
+      "ParameterView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "workflow_input",
+              "literal",
+              "step_reference",
+              "deferred",
+              "system_context"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value Schema"
+          },
+          "input_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Name"
+          },
+          "step_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Step Id"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decision Id"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Guidance"
+          },
+          "context_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Context Key"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "editable"
+        ],
+        "title": "ParameterView",
+        "type": "object"
+      },
+      "PlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "plan_id": {
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "plan_revision": {
+            "title": "Plan Revision",
+            "type": "integer"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          },
+          "execution_kind": {
+            "default": "registered",
+            "enum": [
+              "registered",
+              "free_code"
+            ],
+            "title": "Execution Kind",
+            "type": "string"
+          },
+          "workflow_eligible": {
+            "default": true,
+            "title": "Workflow Eligible",
+            "type": "boolean"
+          },
+          "approval_mode": {
+            "default": "user",
+            "enum": [
+              "user",
+              "configuration"
+            ],
+            "title": "Approval Mode",
+            "type": "string"
+          },
+          "definition_version": {
+            "title": "Definition Version",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "goal": {
+            "title": "Goal",
+            "type": "string"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/$defs/SkillView"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/$defs/InputView"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/$defs/StepView"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/$defs/DecisionView"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "execution": {
+            "$ref": "#/$defs/PolicyView"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/$defs/OutputView"
+            },
+            "title": "Outputs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plan_id",
+          "plan_revision",
+          "workflow_id",
+          "definition_version",
+          "name",
+          "goal",
+          "skills",
+          "inputs",
+          "steps",
+          "decisions",
+          "execution",
+          "outputs"
+        ],
+        "title": "PlanView",
+        "type": "object"
+      },
+      "PlanningRevisionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "used": {
+            "minimum": 0,
+            "title": "Used",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "free_code_allowed": {
+            "title": "Free Code Allowed",
+            "type": "boolean"
+          },
+          "free_code_require_approval": {
+            "title": "Free Code Require Approval",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "used",
+          "limit",
+          "free_code_allowed",
+          "free_code_require_approval"
+        ],
+        "title": "PlanningRevisionPolicy",
+        "type": "object"
+      },
+      "PolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "SINGLE",
+              "MULTI"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "repair_level": {
+            "title": "Repair Level",
+            "type": "integer"
+          },
+          "max_repair_attempts": {
+            "title": "Max Repair Attempts",
+            "type": "integer"
+          },
+          "review_mode": {
+            "title": "Review Mode",
+            "type": "string"
+          },
+          "review_interval_tools": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Review Interval Tools"
+          },
+          "allowed_modes": {
+            "items": {
+              "enum": [
+                "SINGLE",
+                "MULTI"
+              ],
+              "type": "string"
+            },
+            "title": "Allowed Modes",
+            "type": "array"
+          },
+          "repair_level_limit": {
+            "title": "Repair Level Limit",
+            "type": "integer"
+          },
+          "max_repair_attempts_limit": {
+            "title": "Max Repair Attempts Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mode",
+          "repair_level",
+          "max_repair_attempts",
+          "review_mode",
+          "allowed_modes",
+          "repair_level_limit",
+          "max_repair_attempts_limit"
+        ],
+        "title": "PolicyView",
+        "type": "object"
+      },
+      "ReviewPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "plans": {
+            "items": {
+              "$ref": "#/$defs/PlanView"
+            },
+            "minItems": 1,
+            "title": "Plans",
+            "type": "array"
+          },
+          "revision_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PlanningRevisionPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plans"
+        ],
+        "title": "ReviewPayload",
+        "type": "object"
+      },
+      "SkillView": {
+        "additionalProperties": false,
+        "properties": {
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "name",
+          "description"
+        ],
+        "title": "SkillView",
+        "type": "object"
+      },
+      "StepView": {
+        "additionalProperties": false,
+        "properties": {
+          "step_id": {
+            "title": "Step Id",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "tool_id": {
+            "title": "Tool Id",
+            "type": "string"
+          },
+          "function_name": {
+            "title": "Function Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/$defs/ParameterView"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "when": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "When"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "skill_id",
+          "tool_id",
+          "function_name",
+          "description",
+          "depends_on",
+          "parameters",
+          "status"
+        ],
+        "title": "StepView",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "enum": [
+          "interaction.opened",
+          "interaction.updated"
+        ],
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/InteractionData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "InteractionEvent",
+    "type": "object"
+  },
+  "InteractionResolvedEvent": {
+    "$defs": {
+      "DecisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "evidence_steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Steps",
+            "type": "array"
+          },
+          "guidance": {
+            "title": "Guidance",
+            "type": "string"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "status": {
+            "const": "deferred",
+            "default": "deferred",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "evidence_steps",
+          "guidance",
+          "value_schema"
+        ],
+        "title": "DecisionView",
+        "type": "object"
+      },
+      "InputView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "parameter",
+              "data_reference"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "origin": {
+            "enum": [
+              "agent",
+              "workflow_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "has_value": {
+            "title": "Has Value",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "description",
+          "kind",
+          "required",
+          "editable",
+          "value_schema",
+          "origin",
+          "has_value"
+        ],
+        "title": "InputView",
+        "type": "object"
+      },
+      "OutputView": {
+        "additionalProperties": false,
+        "properties": {
+          "output_id": {
+            "title": "Output Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded_by_user"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output_id",
+          "kind",
+          "description",
+          "status"
+        ],
+        "title": "OutputView",
+        "type": "object"
+      },
+      "ParameterView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "workflow_input",
+              "literal",
+              "step_reference",
+              "deferred",
+              "system_context"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value Schema"
+          },
+          "input_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Name"
+          },
+          "step_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Step Id"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decision Id"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Guidance"
+          },
+          "context_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Context Key"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "editable"
+        ],
+        "title": "ParameterView",
+        "type": "object"
+      },
+      "PlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "plan_id": {
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "plan_revision": {
+            "title": "Plan Revision",
+            "type": "integer"
+          },
+          "workflow_id": {
+            "title": "Workflow Id",
+            "type": "string"
+          },
+          "execution_kind": {
+            "default": "registered",
+            "enum": [
+              "registered",
+              "free_code"
+            ],
+            "title": "Execution Kind",
+            "type": "string"
+          },
+          "workflow_eligible": {
+            "default": true,
+            "title": "Workflow Eligible",
+            "type": "boolean"
+          },
+          "approval_mode": {
+            "default": "user",
+            "enum": [
+              "user",
+              "configuration"
+            ],
+            "title": "Approval Mode",
+            "type": "string"
+          },
+          "definition_version": {
+            "title": "Definition Version",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "goal": {
+            "title": "Goal",
+            "type": "string"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/$defs/SkillView"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/$defs/InputView"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/$defs/StepView"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/$defs/DecisionView"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "execution": {
+            "$ref": "#/$defs/PolicyView"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/$defs/OutputView"
+            },
+            "title": "Outputs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plan_id",
+          "plan_revision",
+          "workflow_id",
+          "definition_version",
+          "name",
+          "goal",
+          "skills",
+          "inputs",
+          "steps",
+          "decisions",
+          "execution",
+          "outputs"
+        ],
+        "title": "PlanView",
+        "type": "object"
+      },
+      "PolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "SINGLE",
+              "MULTI"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "repair_level": {
+            "title": "Repair Level",
+            "type": "integer"
+          },
+          "max_repair_attempts": {
+            "title": "Max Repair Attempts",
+            "type": "integer"
+          },
+          "review_mode": {
+            "title": "Review Mode",
+            "type": "string"
+          },
+          "review_interval_tools": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Review Interval Tools"
+          },
+          "allowed_modes": {
+            "items": {
+              "enum": [
+                "SINGLE",
+                "MULTI"
+              ],
+              "type": "string"
+            },
+            "title": "Allowed Modes",
+            "type": "array"
+          },
+          "repair_level_limit": {
+            "title": "Repair Level Limit",
+            "type": "integer"
+          },
+          "max_repair_attempts_limit": {
+            "title": "Max Repair Attempts Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mode",
+          "repair_level",
+          "max_repair_attempts",
+          "review_mode",
+          "allowed_modes",
+          "repair_level_limit",
+          "max_repair_attempts_limit"
+        ],
+        "title": "PolicyView",
+        "type": "object"
+      },
+      "ResolutionData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "plan_review",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "resolved",
+            "title": "Status",
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "approved",
+              "auto_approved"
+            ],
+            "title": "Resolution",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/ResolutionPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resolution",
+          "payload"
+        ],
+        "title": "ResolutionData",
+        "type": "object"
+      },
+      "ResolutionPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "approved_plan": {
+            "$ref": "#/$defs/PlanView"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "approved_plan"
+        ],
+        "title": "ResolutionPayload",
+        "type": "object"
+      },
+      "SkillView": {
+        "additionalProperties": false,
+        "properties": {
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "name",
+          "description"
+        ],
+        "title": "SkillView",
+        "type": "object"
+      },
+      "StepView": {
+        "additionalProperties": false,
+        "properties": {
+          "step_id": {
+            "title": "Step Id",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "tool_id": {
+            "title": "Tool Id",
+            "type": "string"
+          },
+          "function_name": {
+            "title": "Function Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/$defs/ParameterView"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "when": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "When"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "skill_id",
+          "tool_id",
+          "function_name",
+          "description",
+          "depends_on",
+          "parameters",
+          "status"
+        ],
+        "title": "StepView",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "const": "interaction.resolved",
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/ResolutionData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "InteractionResolvedEvent",
+    "type": "object"
+  },
+  "PlanningTransitionEvent": {
+    "$defs": {
+      "PlanningTransitionData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "plan_review",
+              "planning_question"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "resolved",
+            "title": "Status",
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "replanning",
+              "answered"
+            ],
+            "title": "Resolution",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/PlanningTransitionPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resolution",
+          "payload"
+        ],
+        "title": "PlanningTransitionData",
+        "type": "object"
+      },
+      "PlanningTransitionPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          }
+        },
+        "title": "PlanningTransitionPayload",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "const": "interaction.resolved",
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/PlanningTransitionData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "PlanningTransitionEvent",
+    "type": "object"
+  },
+  "DecisionInteractionEvent": {
+    "$defs": {
+      "DecisionField": {
+        "additionalProperties": false,
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "guidance": {
+            "title": "Guidance",
+            "type": "string"
+          },
+          "evidence_steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Steps",
+            "type": "array"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "title": "Value Schema"
+          },
+          "has_value": {
+            "title": "Has Value",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          }
+        },
+        "required": [
+          "decision_id",
+          "guidance",
+          "evidence_steps",
+          "value_schema",
+          "has_value"
+        ],
+        "title": "DecisionField",
+        "type": "object"
+      },
+      "DecisionInteractionData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "decision_review",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "open",
+            "title": "Status",
+            "type": "string"
+          },
+          "resume_token": {
+            "format": "uuid",
+            "title": "Resume Token",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/DecisionPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resume_token",
+          "summary",
+          "payload"
+        ],
+        "title": "DecisionInteractionData",
+        "type": "object"
+      },
+      "DecisionPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/$defs/DecisionField"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Decisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "decisions"
+        ],
+        "title": "DecisionPayload",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "const": "interaction.opened",
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/DecisionInteractionData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "DecisionInteractionEvent",
+    "type": "object"
+  },
+  "RepairInteractionEvent": {
+    "$defs": {
+      "ParameterView": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "workflow_input",
+              "literal",
+              "step_reference",
+              "deferred",
+              "system_context"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "editable": {
+            "title": "Editable",
+            "type": "boolean"
+          },
+          "value": {
+            "default": null,
+            "title": "Value"
+          },
+          "value_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Value Schema"
+          },
+          "input_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Name"
+          },
+          "step_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Step Id"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decision Id"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Guidance"
+          },
+          "context_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Context Key"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "editable"
+        ],
+        "title": "ParameterView",
+        "type": "object"
+      },
+      "RepairInteractionData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "repair_review",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "open",
+            "title": "Status",
+            "type": "string"
+          },
+          "resume_token": {
+            "format": "uuid",
+            "title": "Resume Token",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/RepairPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resume_token",
+          "summary",
+          "payload"
+        ],
+        "title": "RepairInteractionData",
+        "type": "object"
+      },
+      "RepairPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "proposal_sha256": {
+            "title": "Proposal Sha256",
+            "type": "string"
+          },
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "max_attempts": {
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "authorized_level": {
+            "title": "Authorized Level",
+            "type": "integer"
+          },
+          "required_level": {
+            "title": "Required Level",
+            "type": "integer"
+          },
+          "requires_policy_escalation": {
+            "title": "Requires Policy Escalation",
+            "type": "boolean"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "failed_step_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Failed Step Ids",
+            "type": "array"
+          },
+          "completed_step_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Completed Step Ids",
+            "type": "array"
+          },
+          "changed_step_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Step Ids",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/$defs/StepView"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "source_modified": {
+            "title": "Source Modified",
+            "type": "boolean"
+          },
+          "workflow_eligible": {
+            "title": "Workflow Eligible",
+            "type": "boolean"
+          },
+          "validation_scope": {
+            "const": "structure_and_bindings",
+            "default": "structure_and_bindings",
+            "title": "Validation Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal_sha256",
+          "attempt",
+          "max_attempts",
+          "authorized_level",
+          "required_level",
+          "requires_policy_escalation",
+          "summary",
+          "failed_step_ids",
+          "completed_step_ids",
+          "changed_step_ids",
+          "steps",
+          "source_modified",
+          "workflow_eligible"
+        ],
+        "title": "RepairPayload",
+        "type": "object"
+      },
+      "StepView": {
+        "additionalProperties": false,
+        "properties": {
+          "step_id": {
+            "title": "Step Id",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          },
+          "tool_id": {
+            "title": "Tool Id",
+            "type": "string"
+          },
+          "function_name": {
+            "title": "Function Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "parameters": {
+            "items": {
+              "$ref": "#/$defs/ParameterView"
+            },
+            "title": "Parameters",
+            "type": "array"
+          },
+          "when": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "When"
+          },
+          "status": {
+            "enum": [
+              "planned",
+              "excluded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step_id",
+          "skill_id",
+          "tool_id",
+          "function_name",
+          "description",
+          "depends_on",
+          "parameters",
+          "status"
+        ],
+        "title": "StepView",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "const": "interaction.opened",
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/RepairInteractionData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "RepairInteractionEvent",
+    "type": "object"
+  },
+  "ClarificationEvent": {
+    "$defs": {
+      "ClarificationData": {
+        "additionalProperties": false,
+        "properties": {
+          "interaction_id": {
+            "format": "uuid",
+            "title": "Interaction Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "planning_question",
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "const": "open",
+            "title": "Status",
+            "type": "string"
+          },
+          "resume_token": {
+            "format": "uuid",
+            "title": "Resume Token",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/ClarificationPayload"
+          }
+        },
+        "required": [
+          "interaction_id",
+          "revision",
+          "kind",
+          "status",
+          "resume_token",
+          "summary",
+          "payload"
+        ],
+        "title": "ClarificationData",
+        "type": "object"
+      },
+      "ClarificationPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "revision_policy": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PlanningRevisionPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "question": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "ClarificationPayload",
+        "type": "object"
+      },
+      "PlanningRevisionPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "used": {
+            "minimum": 0,
+            "title": "Used",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "free_code_allowed": {
+            "title": "Free Code Allowed",
+            "type": "boolean"
+          },
+          "free_code_require_approval": {
+            "title": "Free Code Require Approval",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "used",
+          "limit",
+          "free_code_allowed",
+          "free_code_require_approval"
+        ],
+        "title": "PlanningRevisionPolicy",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "type": {
+        "enum": [
+          "interaction.opened",
+          "interaction.updated"
+        ],
+        "title": "Type",
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 1,
+        "title": "Sequence",
+        "type": "integer"
+      },
+      "session_id": {
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "run_id": {
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "data": {
+        "$ref": "#/$defs/ClarificationData"
+      }
+    },
+    "required": [
+      "type",
+      "sequence",
+      "session_id",
+      "run_id",
+      "occurred_at",
+      "data"
+    ],
+    "title": "ClarificationEvent",
+    "type": "object"
+  }
+}

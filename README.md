@@ -5,7 +5,7 @@ dtest 프로젝트 공유
 
 ## 리팩토링 브랜치의 현재 실행 계약
 
-분석 Agent 구현은 `src/agent_service/agents/analysis/`에 있고 역할별 선언·독립 prompt는 `agent_builders/<role>/`에 둔다. 공개 API는 038~039의 새 계획/실행 Graph를 사용한다. 통합 Run 접수·HITL·SSE에 이어 실제 Executor 제출·결과 판단·후속 Operation·리포트·Finalize를 연결했다. [공개 API](docs/public-run-api.md), [Executor Runtime](docs/agentic-executor-runtime.md), [039 작업·검증 결과](docs/improvements/039-agentic-executor-runtime.md)를 현재 계약으로 참고한다. 루트 `app.py`와 중앙 설정/비동기 자원 수명을 유지한다. 기존 CLI/Graph의 이행, 자동 수정 단계, Workflow 추천·관리, 데이터 catalog·프로젝트 메모리는 후속이다.
+분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 새 규격·pgvector 추천, 동적 Dataset Registry, project_memory 자동 저장, Gaia adapter는 후속이다.
 
 Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 

@@ -1,0 +1,11 @@
+{
+  "input": {
+    "content": [
+      {
+        "type": "text",
+        "text": "분석 데이터의 품질과 이상치 후보를 확인하고 보고서를 작성해줘."
+      }
+    ]
+  },
+  "main_model_name": "default"
+}

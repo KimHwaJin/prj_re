@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.3",
+  "workflow": {
+    "id": "legacy_quality",
+    "name": "과거 저장 API 형식 예제",
+    "description": "신규 저작용 권장 형식이 아닌 기존 CRUD 구조 설명.",
+    "goal": "저장된 데이터 로드",
+    "status": "needs_input",
+    "execution_mode": "static",
+    "input_schema": {
+      "dataset_uri": {
+        "type": "str",
+        "required": true,
+        "allow_llm_inference": false,
+        "validation": []
+      }
+    },
+    "inputs": {},
+    "input_provenance": {},
+    "unresolved_inputs": [
+      {
+        "name": "dataset_uri",
+        "question": "분석할 데이터 참조를 확인해주세요.",
+        "required_for": [
+          "load"
+        ]
+      }
+    ],
+    "context": {},
+    "steps": [
+      {
+        "id": "load",
+        "order": 1,
+        "skill": "data_load",
+        "skill_source": "src/agent_service/agents/analysis/workflow/skills/data_io/data_load.md",
+        "depends_on": [],
+        "execution": "always",
+        "tools": [
+          {
+            "id": "load.data",
+            "order": 1,
+            "tool": "data_load",
+            "tool_origin": "registry",
+            "tool_source": "src/agent_service/agents/analysis/workflow/tools/data_io/data_load.py",
+            "selection_reason": "데이터 로드",
+            "execution": "always",
+            "arguments": {
+              "parquet_path": "dataset_uri"
+            },
+            "argument_sources": {
+              "parquet_path": "workflow_input"
+            },
+            "returns": {
+              "result_variable": "loaded_data",
+              "outputs": {
+                "data": {
+                  "selector": "$",
+                  "variable": "loaded_data"
+                }
+              }
+            }
+          }
+        ],
+        "outputs": {
+          "data": "load.data.data"
+        }
+      }
+    ],
+    "outputs": {
+      "data": "load.data.data"
+    }
+  }
+}

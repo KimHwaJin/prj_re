@@ -1,0 +1,92 @@
+{
+  "schema_version": "2.0-draft",
+  "workflow_id": "quality_basic",
+  "definition_version": 1,
+  "name": "기본 데이터 품질 확인",
+  "description": "현재 등록 data_load와 profile_data로 구성한 작성 예제.",
+  "goal": "데이터 기본 품질을 확인하고 실제 근거를 설명한다.",
+  "tags": [
+    "quality",
+    "eda"
+  ],
+  "inputs": {
+    "dataset": {
+      "title": "분석 데이터",
+      "description": "실행 가능한 Parquet 파일의 검증된 참조. 원본 경로를 사용자가 임의로 지정하는 API가 아니다.",
+      "kind": "data_reference",
+      "required": true,
+      "editable": true,
+      "value_schema": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "load",
+      "skill_id": "data_load",
+      "tool_id": "data_load",
+      "description": "검증된 데이터 참조를 로드한다.",
+      "depends_on": [],
+      "arguments": {
+        "parquet_path": {
+          "source": "workflow_input",
+          "name": "dataset"
+        }
+      }
+    },
+    {
+      "id": "profile",
+      "skill_id": "data_quality_check",
+      "tool_id": "profile_data",
+      "description": "기본 구조와 결측 상태를 확인한다.",
+      "depends_on": [
+        "load"
+      ],
+      "arguments": {
+        "data": {
+          "source": "step_output",
+          "step_id": "load",
+          "selector": []
+        }
+      }
+    }
+  ],
+  "decisions": [],
+  "execution": {
+    "mode": "MULTI",
+    "repair_level": 0,
+    "max_repair_attempts": 0,
+    "review_mode": "decision_boundary"
+  },
+  "expected_outputs": [
+    {
+      "id": "profile_result",
+      "kind": "analysis_result",
+      "description": "기본 품질 결과",
+      "required": true,
+      "source": {
+        "source": "step_output",
+        "step_id": "profile",
+        "selector": [
+          "profile"
+        ]
+      },
+      "format": "native"
+    },
+    {
+      "id": "report",
+      "kind": "report",
+      "description": "실제로 실행한 단계의 근거로 작성한 Markdown 보고서",
+      "required": true,
+      "source": {
+        "source": "agent_report",
+        "evidence_steps": [
+          "profile"
+        ]
+      },
+      "format": "markdown"
+    }
+  ]
+}

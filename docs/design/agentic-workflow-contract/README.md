@@ -1,5 +1,7 @@
 # Workflow JSON 설계 초안
 
+> 이 문서는 036~037 당시 설계·prototype 기록이다. 아래 runtime 미구현 문구는 당시 범위이며 현재 계획·승인·Executor compiler와 API는 구현되어 있다. [현재 구현 계약](../../workflow-json-reference.md)을 우선한다. 기존 Workflow CRUD·pgvector·동적 Dataset 등록·Gaia는 여전히 후속이다.
+
 > 2026-10-01 사용자 식별 변경: 아래 `X-User-Id` 계약은 이전 결정 기록이다. 현재 서비스는 SSO 로그인 쿠키와 변경 요청의 `X-CSRF-Token`을 사용하며, [현재 SSO 계약](../../sso-authentication.md)을 우선한다. Run/계획/데이터 body와 내부 UUID 소유권은 유지한다. Gaia body의 user_id를 검증된 로그인 신원으로 신뢰하지 않는다.
 
 이 문서는 현업 데이터 사이언티스트와 Agent 개발자가 같은 규격으로 Workflow를 정의하도록 하기 위한 계약 초안이다. 등록된 Skill과 Tool을 조합하는 실행 단계, 결과 기반 Agent 판단, 조건부 실행, 입력 연결과 기대 산출물을 정의한다. 실행 중 실제 데이터 객체는 Jupyter 커널에 남기고 JSON에는 참조만 기록한다.

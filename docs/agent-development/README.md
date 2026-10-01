@@ -2,7 +2,7 @@
 
 현재 분석 Agent의 최신 실행 안내: [계획 제안](../agentic-planning-runtime.md), [Executor 실행](../agentic-executor-runtime.md), [040 오류 수정](../agentic-execution-repair.md), [041 계획 재작성](../agentic-plan-revision.md). 오류 수정 역할의 선언·프롬프트는 analysis/agent_builders/execution_repair, 실행 노드는 analysis/execution/repair_nodes, 순수 검증은 repair_policy에 있다. 등록 workflow 자산 파일을 실행 중 변경하지 않는다. 실행 전 재작성 역할은 analysis/agent_builders/plan_revision, 전체·차이 계획 검증은 planning/proposals, 공통 함수 검증은 execution/sources에 있다. 역할마다 prompt를 별개로 보존한다.
 
-현재 구현 기준: 개선 기록 025. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory 자동 요약/저장과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
+패키지 분리의 기준 기록은 025이고 현재 공개 실행 계약은 [Agent API](../public-run-api.md), 정의 형식은 [Workflow JSON](../workflow-json-reference.md)을 따른다. 다음 문단의 025 역할 수는 당시 기록이다. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory 자동 요약/저장과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
@@ -21,9 +21,9 @@
 
 [전처리 데이터 등록·조회 계약](../design/dataset-registry-contract/README.md)은 Executor 개발자와 합의할 042 초안이다. 실제 파일 정보는 Executor, 의미 설명은 Agent가 맡으며 범위·버전을 고정한다. 아직 동적 Dataset API/provider는 연결하지 않았다.
 
-[Workflow JSON 계약 초안](../design/agentic-workflow-contract/README.md)은 결과 기반 판단·조건·입력 연결·승인과 산출물의 새 규격이다. 현재 실행 코드와 별개의 설계 초안이며 API·compiler에서 아직 지원하지 않는다. 실제 등록 자산 예제와 미구현 목표 예제를 구분하고 오프라인 검증 범위를 명시했다.
+[현재 Workflow JSON 안내](../workflow-json-reference.md)는 결과 기반 판단·조건·입력 연결·승인과 산출물을 설명한다. 2.0-draft는 현재 계획/승인/compiler에서 사용하며 기존 Workflow CRUD는 아직 1.3이다. [036 설계 당시 기록](../design/agentic-workflow-contract/README.md)과 실제 등록/설명용 자산을 구분한다.
 
-[계획 승인·Executor 제출 계약](../design/plan-interaction-contract/README.md)은 Workflow 정의를 코드 없는 HITL 화면과 수정·승인 body, 소스가 고정된 제출 계획으로 연결하는 개발용 prototype이다. 작은 Parquet와 실제 등록 함수를 로컬에서 검증했고 Executor 요청 모델을 별도로 확인했다. API·DB·Graph에는 아직 연결하지 않았다.
+[037 계획 승인·Executor 제출 기록](../design/plan-interaction-contract/README.md)은 당시 prototype 검증 이력이다. 현재 API·DB·Graph·Executor 연결은 [공개 계약](../public-run-api.md)과 038~045 개선 기록을 따른다. 현재의 미구현 범위를 prototype 문구로 판단하지 않는다.
 
 ## 지금 분석 Agent를 수정하는 방법
 

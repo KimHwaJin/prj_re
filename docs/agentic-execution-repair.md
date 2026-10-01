@@ -60,7 +60,7 @@ API·Event Worker는 같은 Graph와 모델 cache를 사용한다. 수정 판단
 
 ## 승인 화면과 API
 
-기존 POST `/api/v1/sessions/{session_id}/runs`, X-User-Id, Idempotency-Key를 사용한다. SSE `interaction.opened`에서 `data.kind=repair_review`를 받는다. payload에는 원인에 대한 짧은 변경 설명, 실패/성공/변경 Step ID, Skill·Tool·function 이름·파라미터와 필요한 수정 수준을 전달한다. Python 소스·원문 traceback은 화면에 주지 않는다.
+기존 POST `/api/v1/sessions/{session_id}/runs`, 로그인 쿠키·X-CSRF-Token, Idempotency-Key를 사용한다. SSE `interaction.opened`에서 `data.kind=repair_review`를 받는다. payload에는 원인에 대한 짧은 변경 설명, 실패/성공/변경 Step ID, Skill·Tool·function 이름·파라미터와 필요한 수정 수준을 전달한다. Python 소스·원문 traceback은 화면에 주지 않는다.
 
 ```json
 {
