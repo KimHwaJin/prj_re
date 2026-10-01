@@ -661,5 +661,13 @@
     },
     "openapi_paths": 36,
     "openapi_sha256": "cc6f1d371e93f77a91a28463daeaaf0932213cb67ab0a0d08999323af0beb80b"
+  },
+  "publication": {
+    "implementation_commit": "26275b6a199819945d8c9a51de09e8b2b22b501a",
+    "base_branch": "feature/refactor-base",
+    "feature_branch": "feature/conversation-performance",
+    "remote": "https://github.com/KimHwaJin/prj_re.git",
+    "both_remote_refs_verified_at_implementation_commit": true,
+    "deployed": false
   }
 }

@@ -35,4 +35,4 @@
 
 ## 통합·게시
 
-구현·최종 검증을 완료했다. 베이스 병합과 origin 게시 SHA는 게시 완료 후 기록한다.
+구현·검증 commit `26275b6a199819945d8c9a51de09e8b2b22b501a`을 `feature/refactor-base`에 fast-forward 병합했다. 베이스와 파생 `feature/conversation-performance`를 origin `https://github.com/KimHwaJin/prj_re.git`에 atomic push한 뒤 원격 두 SHA 일치를 확인했다. 파생 브랜치는 검증 당시 구현을 보존한다. 이 게시 결과는 베이스의 별도 문서 commit으로 기록한다. 배포나 기존 Docker 서비스 재기동은 수행하지 않았다.
