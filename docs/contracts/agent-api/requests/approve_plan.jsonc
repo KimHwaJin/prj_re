@@ -1,0 +1,46 @@
+// 필드별 한국어 설명. 문서용 JSONC이며 API 제출에는 같은 이름의 .json을 사용한다.
+{
+  // 사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다.
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  // 현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다.
+  "resume_token": "33333333-3333-4333-8333-333333333333",
+  // 기존 Run의 HITL 응답 명령 객체. 새 입력 input과 함께 보내지 않는다.
+  "command": {
+    // 현재 대기에 맞는 action과 필드를 담은 재개 명령. 아무 액션이나 모든 화면에 보낼 수 없다.
+    "resume": {
+      // 재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다.
+      "action": "approve_plan",
+      // 서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다.
+      "plan_id": "55555555-5555-4555-8555-555555555555",
+      // 계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다.
+      "plan_revision": 1,
+      // 계획의 입력 이름별 최종값. 전달한 키만 수정하고 기존의 다른 입력값은 유지한다.
+      "input_values": {
+        // Workflow 입력 이름 dataset. inputs는 정의, input_values는 해당 입력의 최종값이다.
+        "dataset": "default-nce"
+      },
+      // Tool 함수 인자 편집 목록. step_id·parameter·value로 수정 대상을 지정한다.
+      "step_changes": [
+        {
+          // 대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다.
+          "step_id": "outliers",
+          // 수정할 Tool 함수의 인자 이름. 편집 가능한 인자만 서버 검증을 통과한다.
+          "parameter": "method",
+          // 직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다.
+          "value": "iqr"
+        }
+      ],
+      // 사용자가 제외한 Step ID 목록. 필드를 보내면 전체 제외 목록을 교체하고 생략하면 기존 목록을 유지한다.
+      "excluded_step_ids": [],
+      // 사용자가 조정하는 실행 정책. 허용 mode·수정 수준·횟수 상한 내에서만 변경된다.
+      "execution_overrides": {
+        // SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다.
+        "mode": "MULTI",
+        // 허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다.
+        "repair_level": 0,
+        // 허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다.
+        "max_repair_attempts": 0
+      }
+    }
+  }
+}

@@ -2,32 +2,38 @@
 
 [Agent API 문서](../../public-run-api.md)의 완전한 요청·응답·SSE payload 예제다. 2026-10-01 `0e35b62` 코드의 Pydantic 및 계획 편집 validator로 검증했다. 숫자·ID·시각·모델·데이터는 설명용이며 실제 서버 출력 또는 실제 계정이 아니다. 사내 SDK·LLM·DB·Executor를 호출한 예제가 아니다.
 
+## 필드별 주석 읽기
+
+각 `.json` 옆의 `.jsonc`는 중첩 객체·배열 내부 필드까지 한국어 주석이 붙은 설명용 사본이다. 주석을 제외한 데이터는 원본과 같다. 실제 API에는 `.json`을 사용한다. [전체 주석 목록과 갱신 방법](../field-comments.md)을 참고한다.
+
+OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명은 문서 annotation이며 서버 모델이나 검증 규칙을 바꾸지 않는다. 현재 코드에서 schema를 다시 추출한 뒤 주석 생성 스크립트로 설명을 갱신한다.
+
 ## 기계 판독 파일
 
-- [openapi.snapshot.json](openapi.snapshot.json): 현재 app의 Run 8개 operation과 login/logout/me. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
-- [payload-schemas.json](payload-schemas.json): RunRequest, RunCancel, PublicRunResource, AgentRunLogResource, RunEvent, PlanView 및 typed interaction schema. 이 객체의 key별 JSON Schema를 독립 schema로 읽는다.
+- [openapi.snapshot.json](openapi.snapshot.json) · [필드 주석](openapi.snapshot.jsonc): 현재 app의 Run 8개 operation과 login/logout/me. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
+- [payload-schemas.json](payload-schemas.json) · [필드 주석](payload-schemas.jsonc): RunRequest, RunCancel, PublicRunResource, AgentRunLogResource, RunEvent, PlanView 및 typed interaction schema. 이 객체의 key별 JSON Schema를 독립 schema로 읽는다.
 
 ## 요청
 
 | 파일 | 액션 |
 |---|---|
-| [start.json](requests/start.json) | 새 요청 |
-| [edit_plan.json](requests/edit_plan.json) | 계획 편집 |
-| [approve_plan.json](requests/approve_plan.json) | 계획 최종 승인 |
-| [replan.json](requests/replan.json) | 자연어 재작성 |
-| [answer_clarification.json](requests/answer_clarification.json) | 추가 질문 답변 |
-| [approve_decisions.json](requests/approve_decisions.json) | 실행 결과 판단값 확인 |
-| [approve_repair.json](requests/approve_repair.json) | 수정과 권한 상승 명시 승인 |
-| [reject_repair.json](requests/reject_repair.json) | 수정 거절 |
-| [cancel.json](requests/cancel.json) | 별도 cancel API body |
+| [start.json](requests/start.json) · [필드 주석](requests/start.jsonc) | 새 요청 |
+| [edit_plan.json](requests/edit_plan.json) · [필드 주석](requests/edit_plan.jsonc) | 계획 편집 |
+| [approve_plan.json](requests/approve_plan.json) · [필드 주석](requests/approve_plan.jsonc) | 계획 최종 승인 |
+| [replan.json](requests/replan.json) · [필드 주석](requests/replan.jsonc) | 자연어 재작성 |
+| [answer_clarification.json](requests/answer_clarification.json) · [필드 주석](requests/answer_clarification.jsonc) | 추가 질문 답변 |
+| [approve_decisions.json](requests/approve_decisions.json) · [필드 주석](requests/approve_decisions.jsonc) | 실행 결과 판단값 확인 |
+| [approve_repair.json](requests/approve_repair.json) · [필드 주석](requests/approve_repair.jsonc) | 수정과 권한 상승 명시 승인 |
+| [reject_repair.json](requests/reject_repair.json) · [필드 주석](requests/reject_repair.jsonc) | 수정 거절 |
+| [cancel.json](requests/cancel.json) · [필드 주석](requests/cancel.jsonc) | 별도 cancel API body |
 
 각 JSON은 단독 POST body다. 요청 파일들을 배열로 묶어 제출하는 API가 아니다. 새 입력 또는 각 resume에 별도 Idempotency-Key를 적용하고 서버의 실제 ID/token/revision으로 교체한다. default-nce는 설명용 등록 데이터 참조로 실제 ANALYSIS_DATASETS에 같은 참조가 있어야 한다. replan/질문/decision/repair는 각기 다른 대기 화면 예제이며 하나의 실제 화면이 모든 action을 받는다는 뜻이 아니다.
 
 ## 응답과 이벤트
 
-- [pending](responses/pending.json), [waiting_input](responses/waiting_input.json): PublicRunResource 전체.
-- [plan_review](events/plan_review.json), [planning_question](events/planning_question.json), [decision_review](events/decision_review.json), [repair_review](events/repair_review.json): typed interaction envelope.
-- [message](events/message.json), [plan_resolved](events/plan_resolved.json), [run_snapshot](events/run_snapshot.json): 메시지·화면 종료·현재 상태.
+- [pending](responses/pending.json) · [필드 주석](responses/pending.jsonc), [waiting_input](responses/waiting_input.json) · [필드 주석](responses/waiting_input.jsonc): PublicRunResource 전체.
+- [plan_review](events/plan_review.json) · [필드 주석](events/plan_review.jsonc), [planning_question](events/planning_question.json) · [필드 주석](events/planning_question.jsonc), [decision_review](events/decision_review.json) · [필드 주석](events/decision_review.jsonc), [repair_review](events/repair_review.json) · [필드 주석](events/repair_review.jsonc): typed interaction envelope.
+- [message](events/message.json) · [필드 주석](events/message.jsonc), [plan_resolved](events/plan_resolved.json) · [필드 주석](events/plan_resolved.jsonc), [run_snapshot](events/run_snapshot.json) · [필드 주석](events/run_snapshot.jsonc): 메시지·화면 종료·현재 상태.
 
 events 파일은 SSE data의 JSON이다. 실제 전송 시 저장 이벤트에 id/event/data 행과 마지막 빈 줄을 붙인다. snapshot은 id 없는 event/data로 전송한다. 예제 sequence는 형식 설명용이며 한 E2E 실행의 실제 이벤트 이력은 아니다.
 

@@ -6,6 +6,8 @@
 
 [SSO 설정](sso-authentication.md), [Workflow JSON](workflow-json-reference.md), [검증된 JSON 예제와 schema](contracts/agent-api/README.md)를 함께 참고한다. 이미지·파일 입력과 Gaia adapter, 새 Workflow 관리 API·pgvector 추천, 동적 Dataset Registry는 아직 연결되지 않았다.
 
+본문 `jsonc` 예제와 [주석 파일 안내](contracts/field-comments.md)는 필드별 설명을 포함한다. API에 전송할 때는 주석 없는 `.json` 예제를 사용한다. 주석은 요청 필드가 아니다.
+
 ## API 목록
 
 기본 prefix는 `/api/v1`이고 `API_V1_PREFIX` 설정으로 바꿀 수 있다. 아래 경로는 prefix 뒤에 붙인다. session_id/run_id는 UUID다. 먼저 소유한 프로젝트와 세션을 생성해야 한다.
@@ -49,13 +51,21 @@ Idempotency-Key: <이번 액션의 고유 키>
 
 ## 새 요청
 
-```json
+```jsonc
 {
+  // 새 요청의 입력 객체. command와 함께 보내지 않는다. 현재 실제 입력은 text만 지원한다.
   "input": {
+    // 입력 또는 Agent 메시지의 콘텐츠 블록 배열. 블록의 type으로 형식을 구분한다.
     "content": [
-      {"type": "text", "text": "이 데이터의 품질과 이상치 후보를 분석하고 보고서를 작성해줘."}
+      {
+        // 콘텐츠 블록 형식. text는 문자열 본문, image/file은 향후 첨부 참조이며 현재 text만 실제 접수된다.
+        "type": "text",
+        // 사용자 입력 또는 Agent 메시지 본문 문자열.
+        "text": "이 데이터의 품질과 이상치 후보를 분석하고 보고서를 작성해줘."
+      }
     ]
   },
+  // 등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다.
   "main_model_name": "default"
 }
 ```
@@ -72,25 +82,40 @@ Idempotency-Key: <이번 액션의 고유 키>
 
 입력 schema에는 image/file 항목의 file_id UUID 참조도 있으나 현재 서버는 422로 거절한다. 업로드·소유권 검증·모델 전달이 미구현인 상태에서 첨부를 무시하고 분석하지 않는다.
 
-[새 요청 전체 예제](contracts/agent-api/requests/start.json).
+[새 요청 전체 예제](contracts/agent-api/requests/start.json) · [필드 주석](contracts/agent-api/requests/start.jsonc).
 
 ## HITL 재개
 
 같은 POST에 input 대신 command를 보낸다. input/command는 정확히 하나여야 한다. run_id와 resume_token이 필요하고 main_model_name은 재개에서 허용하지 않는다.
 
-```json
+```jsonc
 {
+  // 사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다.
   "run_id": "11111111-1111-4111-8111-111111111111",
+  // 현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다.
   "resume_token": "33333333-3333-4333-8333-333333333333",
+  // 기존 Run의 HITL 응답 명령 객체. 새 입력 input과 함께 보내지 않는다.
   "command": {
+    // 현재 대기에 맞는 action과 필드를 담은 재개 명령. 아무 액션이나 모든 화면에 보낼 수 없다.
     "resume": {
+      // 재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다.
       "action": "approve_plan",
+      // 서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다.
       "plan_id": "55555555-5555-4555-8555-555555555555",
+      // 계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다.
       "plan_revision": 1,
-      "input_values": {"dataset": "default-nce"},
+      // 계획의 입력 이름별 최종값. 전달한 키만 수정하고 기존의 다른 입력값은 유지한다.
+      "input_values": {
+        // Workflow 입력 이름 dataset. inputs는 정의, input_values는 해당 입력의 최종값이다.
+        "dataset": "default-nce"
+      },
+      // Tool 함수 인자 편집 목록. step_id·parameter·value로 수정 대상을 지정한다.
       "step_changes": [],
+      // 사용자가 제외한 Step ID 목록. 필드를 보내면 전체 제외 목록을 교체하고 생략하면 기존 목록을 유지한다.
       "excluded_step_ids": [],
-      "execution_overrides": {}
+      // 사용자가 조정하는 실행 정책. 허용 mode·수정 수준·횟수 상한 내에서만 변경된다.
+      "execution_overrides": {
+      }
     }
   }
 }
@@ -100,13 +125,13 @@ Idempotency-Key: <이번 액션의 고유 키>
 
 | action | 화면 kind | resume 객체 필드 | 전체 예제 |
 |---|---|---|---|
-| edit_plan | plan_review | plan_id, plan_revision, 선택적 편집 필드 | [요청](contracts/agent-api/requests/edit_plan.json) |
-| approve_plan | plan_review | edit_plan과 동일, 수정과 승인을 함께 적용 | [요청](contracts/agent-api/requests/approve_plan.json) |
-| replan | plan_review | interaction_id, revision, feedback | [요청](contracts/agent-api/requests/replan.json) |
-| answer_clarification | planning_question | interaction_id, revision, feedback | [요청](contracts/agent-api/requests/answer_clarification.json) |
-| approve_decisions | decision_review | interaction_id, revision, values | [요청](contracts/agent-api/requests/approve_decisions.json) |
-| approve_repair | repair_review | interaction_id, revision, proposal_sha256, allow_policy_escalation | [요청](contracts/agent-api/requests/approve_repair.json) |
-| reject_repair | repair_review | interaction_id, revision, proposal_sha256, 선택적 allow_policy_escalation | [요청](contracts/agent-api/requests/reject_repair.json) |
+| edit_plan | plan_review | plan_id, plan_revision, 선택적 편집 필드 | [요청](contracts/agent-api/requests/edit_plan.json) · [필드 주석](contracts/agent-api/requests/edit_plan.jsonc) |
+| approve_plan | plan_review | edit_plan과 동일, 수정과 승인을 함께 적용 | [요청](contracts/agent-api/requests/approve_plan.json) · [필드 주석](contracts/agent-api/requests/approve_plan.jsonc) |
+| replan | plan_review | interaction_id, revision, feedback | [요청](contracts/agent-api/requests/replan.json) · [필드 주석](contracts/agent-api/requests/replan.jsonc) |
+| answer_clarification | planning_question | interaction_id, revision, feedback | [요청](contracts/agent-api/requests/answer_clarification.json) · [필드 주석](contracts/agent-api/requests/answer_clarification.jsonc) |
+| approve_decisions | decision_review | interaction_id, revision, values | [요청](contracts/agent-api/requests/approve_decisions.json) · [필드 주석](contracts/agent-api/requests/approve_decisions.jsonc) |
+| approve_repair | repair_review | interaction_id, revision, proposal_sha256, allow_policy_escalation | [요청](contracts/agent-api/requests/approve_repair.json) · [필드 주석](contracts/agent-api/requests/approve_repair.jsonc) |
+| reject_repair | repair_review | interaction_id, revision, proposal_sha256, 선택적 allow_policy_escalation | [요청](contracts/agent-api/requests/reject_repair.json) · [필드 주석](contracts/agent-api/requests/reject_repair.jsonc) |
 
 ### 계획 편집과 승인
 
@@ -137,7 +162,7 @@ approve_decisions의 values는 현재 payload.decisions의 decision_id를 모두
 
 ## Run JSON 응답
 
-[전체 접수 응답 예제](contracts/agent-api/responses/pending.json), [계획 대기 응답 예제](contracts/agent-api/responses/waiting_input.json). 아래 표는 PublicRunResource의 모든 필드다. null 가능 여부·타입은 [schema](contracts/agent-api/payload-schemas.json)에서 확인한다.
+[전체 접수 응답 예제](contracts/agent-api/responses/pending.json) · [필드 주석](contracts/agent-api/responses/pending.jsonc), [계획 대기 응답 예제](contracts/agent-api/responses/waiting_input.json) · [필드 주석](contracts/agent-api/responses/waiting_input.jsonc). 아래 표는 PublicRunResource의 모든 필드다. null 가능 여부·타입은 [schema](contracts/agent-api/payload-schemas.json) · [필드 주석](contracts/agent-api/payload-schemas.jsonc)에서 확인한다.
 
 | 필드 | 의미 |
 |---|---|
@@ -195,7 +220,7 @@ data: {"schema_version":1,"type":"message.completed","sequence":5,"session_id":"
 
 activity.data는 확장 객체이며 모든 이벤트에 activity_id가 있다고 가정하지 않는다. answer 메시지 도착만으로 Run terminal을 판단하지 않는다. LLM 내부 구조화 JSON 토큰, 전체 graph state와 Tool 소스는 공개 SSE에 그대로 보내지 않는다.
 
-run.snapshot은 저장 이벤트가 아니다. schema_version/type/session_id/run_id/cursor/data만 있고 sequence/occurred_at/SSE id가 없다. [snapshot 예제](contracts/agent-api/events/run_snapshot.json). snapshot.cursor만 보고 이전 저장 이벤트를 모두 처리했다고 판단하지 않는다. 마지막으로 처리한 durable SSE id를 재접속 cursor로 사용한다. `: heartbeat`는 연결 유지용 comment다.
+run.snapshot은 저장 이벤트가 아니다. schema_version/type/session_id/run_id/cursor/data만 있고 sequence/occurred_at/SSE id가 없다. [snapshot 예제](contracts/agent-api/events/run_snapshot.json) · [필드 주석](contracts/agent-api/events/run_snapshot.jsonc). snapshot.cursor만 보고 이전 저장 이벤트를 모두 처리했다고 판단하지 않는다. 마지막으로 처리한 durable SSE id를 재접속 cursor로 사용한다. `: heartbeat`는 연결 유지용 comment다.
 
 연결 종료는 작업 취소가 아니다. terminal에서 남은 저장 이벤트와 snapshot을 전달한 뒤 stream을 종료한다. 상태 변경 시 DB 원본 이벤트를 읽고 LISTEN/NOTIFY·프로세스 공유 cache로 연결별 반복 SQL을 줄인다. HTTP 대기 중 인증용 DB transaction을 유지하지 않는다.
 
@@ -207,10 +232,10 @@ run.snapshot은 저장 이벤트가 아니다. schema_version/type/session_id/ru
 
 | kind | payload | 사용자 액션 | 예제 |
 |---|---|---|---|
-| plan_review | plans, notices, revision_policy | 편집·승인·재작성 | [이벤트](contracts/agent-api/events/plan_review.json) |
-| planning_question | question, notices, revision_policy | 추가 질문 답변 | [이벤트](contracts/agent-api/events/planning_question.json) |
-| decision_review | decisions | 결과 기반 값 확인 | [이벤트](contracts/agent-api/events/decision_review.json) |
-| repair_review | 수정 hash·권한·변경 단계·횟수·설명 | 수정 승인·거절 | [이벤트](contracts/agent-api/events/repair_review.json) |
+| plan_review | plans, notices, revision_policy | 편집·승인·재작성 | [이벤트](contracts/agent-api/events/plan_review.json) · [필드 주석](contracts/agent-api/events/plan_review.jsonc) |
+| planning_question | question, notices, revision_policy | 추가 질문 답변 | [이벤트](contracts/agent-api/events/planning_question.json) · [필드 주석](contracts/agent-api/events/planning_question.jsonc) |
+| decision_review | decisions | 결과 기반 값 확인 | [이벤트](contracts/agent-api/events/decision_review.json) · [필드 주석](contracts/agent-api/events/decision_review.jsonc) |
+| repair_review | 수정 hash·권한·변경 단계·횟수·설명 | 수정 승인·거절 | [이벤트](contracts/agent-api/events/repair_review.json) · [필드 주석](contracts/agent-api/events/repair_review.jsonc) |
 
 GET의 interrupt에서도 사용자 화면을 얻을 수 있다. decision/repair 대기 interrupt에는 task_id/execution_id 등 진단 정보가 추가될 수 있다. Executor 대기의 EXECUTOR_EVENT interrupt는 사용자 승인 화면이 아니다.
 
@@ -260,7 +285,7 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 로그 응답은 배열이고 log_id/run_id/event_key/agent_name/node/event/kind/payload/created_at을 담는다. 공개 run_id로 모아 반환하며 payload는 유연한 진단 객체다. 페이지 옵션은 없다. 사용자 UI의 주요 진행 표시는 SSE를 사용한다.
 
-취소 body는 선택적 reason(최대 1000자)을 갖는다. [예제](contracts/agent-api/requests/cancel.json). 202는 취소 요청 수락이며 실제 실행 중이면 협조적 종료를 확인한다. waiting_executor의 일반 cancel은 409로 거절한다. 이미 canceled이면 같은 상태를 반환하고 다른 terminal이면 409다. 로그아웃·쿠키 만료·SSE 단절은 작업 취소가 아니다.
+취소 body는 선택적 reason(최대 1000자)을 갖는다. [예제](contracts/agent-api/requests/cancel.json) · [필드 주석](contracts/agent-api/requests/cancel.jsonc). 202는 취소 요청 수락이며 실제 실행 중이면 협조적 종료를 확인한다. waiting_executor의 일반 cancel은 409로 거절한다. 이미 canceled이면 같은 상태를 반환하고 다른 terminal이면 409다. 로그아웃·쿠키 만료·SSE 단절은 작업 취소가 아니다.
 
 ## 오류와 현재 명세 제한
 
@@ -276,7 +301,7 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 일반 오류는 detail 문자열, FastAPI 입력 검증 오류는 detail 배열이다. SSE 한도 초과는 Retry-After:5를 제공한다. stream 접수 후 연결 한도로 거절되더라도 Run은 이미 접수됐을 수 있으므로 동일 key·body로 확인한다. 새 key로 무조건 재실행하지 않는다.
 
-현재 자동 OpenAPI는 SSE 응답을 application/json으로 표시하고 302 로그인도 JSON으로 표시한다. 실제 코드는 SSE text/event-stream과 브라우저 redirect다. 중첩 result/interrupt/event.data도 모두 엄격한 OpenAPI 응답으로 선언되지 않았다. 첨부 [OpenAPI snapshot](contracts/agent-api/openapi.snapshot.json)은 이 제한을 보존하며, [추가 public payload schema](contracts/agent-api/payload-schemas.json)와 실제 구현을 함께 확인한다. 이 문서 작업은 런타임 API annotation을 변경하지 않는다.
+현재 자동 OpenAPI는 SSE 응답을 application/json으로 표시하고 302 로그인도 JSON으로 표시한다. 실제 코드는 SSE text/event-stream과 브라우저 redirect다. 중첩 result/interrupt/event.data도 모두 엄격한 OpenAPI 응답으로 선언되지 않았다. 첨부 [OpenAPI snapshot](contracts/agent-api/openapi.snapshot.json) · [필드 주석](contracts/agent-api/openapi.snapshot.jsonc)은 이 제한을 보존하며, [추가 public payload schema](contracts/agent-api/payload-schemas.json) · [필드 주석](contracts/agent-api/payload-schemas.jsonc)와 실제 구현을 함께 확인한다. 이 문서 작업은 런타임 API annotation을 변경하지 않는다.
 
 기존 1.3 Graph/checkpoint에서 새 planning Runtime으로 자동 재개를 보장하지 않는다. 이전 미종료 Run을 정리하고 Graph 버전·자산 호환을 확인하여 전환한다. 실제 사내 SSO 왕복과 Gaia 제공 router는 별도 환경 검증이 남아 있다.
 

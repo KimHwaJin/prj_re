@@ -29,7 +29,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -77,7 +77,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "Idempotency-Key",
@@ -93,7 +94,8 @@
                 }
               ],
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다."
           },
           {
             "name": "X-CSRF-Token",
@@ -111,7 +113,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "requestBody": {
@@ -167,7 +169,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "limit",
@@ -179,7 +182,8 @@
               "minimum": 1,
               "default": 50,
               "title": "Limit"
-            }
+            },
+            "description": "목록 페이지 크기. 기본 50, 최대 200."
           },
           {
             "name": "cursor",
@@ -195,7 +199,8 @@
                 }
               ],
               "title": "Cursor"
-            }
+            },
+            "description": "다음 목록 페이지를 요청할 때 사용하는 토큰. SSE Last-Event-ID와 별개다."
           },
           {
             "name": "sort",
@@ -206,7 +211,8 @@
               "pattern": "^-?created_at$",
               "default": "-created_at",
               "title": "Sort"
-            }
+            },
+            "description": "목록 정렬. created_at 또는 -created_at으로 오름/내림차순을 선택한다."
           },
           {
             "name": "created_at_from",
@@ -223,7 +229,8 @@
                 }
               ],
               "title": "Created At From"
-            }
+            },
+            "description": "목록 생성 시각의 포함 하한."
           },
           {
             "name": "created_at_to",
@@ -240,7 +247,8 @@
                 }
               ],
               "title": "Created At To"
-            }
+            },
+            "description": "목록 생성 시각의 제외 상한."
           },
           {
             "name": "X-CSRF-Token",
@@ -258,7 +266,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -306,7 +314,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "Idempotency-Key",
@@ -322,7 +331,8 @@
                 }
               ],
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다."
           },
           {
             "name": "Last-Event-ID",
@@ -338,7 +348,8 @@
                 }
               ],
               "title": "Last-Event-Id"
-            }
+            },
+            "description": "클라이언트가 마지막으로 처리한 저장 SSE 순번. 그 다음 이벤트부터 재생한다."
           },
           {
             "name": "X-CSRF-Token",
@@ -356,7 +367,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "requestBody": {
@@ -412,7 +423,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "run_id",
@@ -422,7 +434,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Run Id"
-            }
+            },
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
           },
           {
             "name": "X-CSRF-Token",
@@ -440,7 +453,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -489,7 +502,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "run_id",
@@ -499,7 +513,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Run Id"
-            }
+            },
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
           },
           {
             "name": "X-CSRF-Token",
@@ -517,7 +532,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -569,7 +584,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "run_id",
@@ -579,7 +595,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Run Id"
-            }
+            },
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
           },
           {
             "name": "X-CSRF-Token",
@@ -597,7 +614,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -645,7 +662,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "run_id",
@@ -655,7 +673,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Run Id"
-            }
+            },
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
           },
           {
             "name": "X-CSRF-Token",
@@ -673,7 +692,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "requestBody": {
@@ -732,7 +751,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Session Id"
-            }
+            },
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
           },
           {
             "name": "run_id",
@@ -742,7 +762,8 @@
               "type": "string",
               "format": "uuid",
               "title": "Run Id"
-            }
+            },
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
           },
           {
             "name": "Last-Event-ID",
@@ -758,7 +779,8 @@
                 }
               ],
               "title": "Last-Event-Id"
-            }
+            },
+            "description": "클라이언트가 마지막으로 처리한 저장 SSE 순번. 그 다음 이벤트부터 재생한다."
           },
           {
             "name": "X-CSRF-Token",
@@ -776,7 +798,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -823,7 +845,8 @@
               "type": "string",
               "default": "/",
               "title": "Return To"
-            }
+            },
+            "description": "로그인 성공 후 돌아갈 허용된 경로/대상. 임의 외부 URL은 허용하지 않는다."
           },
           {
             "name": "target",
@@ -837,7 +860,8 @@
               "type": "string",
               "default": "app",
               "title": "Target"
-            }
+            },
+            "description": "로그인 복귀 대상. app은 프론트, docs는 서비스 Swagger이며 기본 app이다."
           }
         ],
         "responses": {
@@ -886,7 +910,7 @@
               "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
               "title": "X-Csrf-Token"
             },
-            "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests."
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
           }
         ],
         "responses": {
@@ -919,16 +943,19 @@
           "log_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Log Id"
+            "title": "Log Id",
+            "description": "저장된 Agent 로그 레코드 UUID. 필수 필드."
           },
           "run_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Run Id"
+            "title": "Run Id",
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
           },
           "event_key": {
             "type": "string",
-            "title": "Event Key"
+            "title": "Event Key",
+            "description": "로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드."
           },
           "agent_name": {
             "anyOf": [
@@ -939,29 +966,35 @@
                 "type": "null"
               }
             ],
-            "title": "Agent Name"
+            "title": "Agent Name",
+            "description": "로그를 발생시킨 Agent 이름. 필수 필드."
           },
           "node": {
             "type": "string",
-            "title": "Node"
+            "title": "Node",
+            "description": "로그를 발생시킨 그래프 노드 이름. 필수 필드."
           },
           "event": {
             "type": "string",
-            "title": "Event"
+            "title": "Event",
+            "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드."
           },
           "kind": {
             "type": "string",
-            "title": "Kind"
+            "title": "Kind",
+            "description": "Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드."
           },
           "payload": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Payload"
+            "title": "Payload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           }
         },
         "type": "object",
@@ -1006,7 +1039,8 @@
             "type": "array",
             "maxItems": 20,
             "minItems": 1,
-            "title": "Content"
+            "title": "Content",
+            "description": "입력 또는 Agent 메시지의 콘텐츠 블록 배열. 블록의 type으로 형식을 구분한다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1021,22 +1055,26 @@
           "action": {
             "type": "string",
             "const": "approve_decisions",
-            "title": "Action"
+            "title": "Action",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Interaction Id"
+            "title": "Interaction Id",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Revision"
+            "title": "Revision",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "values": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Values"
+            "title": "Values",
+            "description": "현재 판단 확인 화면의 decision_id별 최종값. 대기 중인 모든 판단을 빠짐없이 제출한다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1072,7 +1110,8 @@
                 "type": "null"
               }
             ],
-            "title": "Mode"
+            "title": "Mode",
+            "description": "SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "repair_level": {
             "anyOf": [
@@ -1085,7 +1124,8 @@
                 "type": "null"
               }
             ],
-            "title": "Repair Level"
+            "title": "Repair Level",
+            "description": "허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "max_repair_attempts": {
             "anyOf": [
@@ -1097,7 +1137,8 @@
                 "type": "null"
               }
             ],
-            "title": "Max Repair Attempts"
+            "title": "Max Repair Attempts",
+            "description": "허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "additionalProperties": false,
@@ -1109,12 +1150,14 @@
           "type": {
             "type": "string",
             "const": "file",
-            "title": "Type"
+            "title": "Type",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "file_id": {
             "type": "string",
             "format": "uuid",
-            "title": "File Id"
+            "title": "File Id",
+            "description": "향후 파일·이미지 첨부를 식별할 UUID. 현재 실제 Run 접수는 해당 입력을 422로 거절한다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1132,7 +1175,8 @@
               "$ref": "#/components/schemas/ValidationError"
             },
             "type": "array",
-            "title": "Detail"
+            "title": "Detail",
+            "description": "HTTP 오류의 상세 정보. validation 오류에서는 필드별 오류 목록이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "type": "object",
@@ -1143,12 +1187,14 @@
           "type": {
             "type": "string",
             "const": "image",
-            "title": "Type"
+            "title": "Type",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "file_id": {
             "type": "string",
             "format": "uuid",
-            "title": "File Id"
+            "title": "File Id",
+            "description": "향후 파일·이미지 첨부를 식별할 UUID. 현재 실제 Run 접수는 해당 입력을 422로 거절한다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1170,11 +1216,13 @@
                 "type": "null"
               }
             ],
-            "title": "Next Cursor"
+            "title": "Next Cursor",
+            "description": "다음 목록 페이지 요청에 사용할 cursor. 다음 페이지가 없으면 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "has_next": {
             "type": "boolean",
-            "title": "Has Next"
+            "title": "Has Next",
+            "description": "다음 목록 페이지가 존재하는지 표시한다. 필수 필드."
           }
         },
         "type": "object",
@@ -1190,10 +1238,12 @@
               "$ref": "#/components/schemas/PublicRunResource"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "현재 페이지에 포함된 공개 Run 목록. 필수 필드."
           },
           "page": {
-            "$ref": "#/components/schemas/PageInfo"
+            "$ref": "#/components/schemas/PageInfo",
+            "description": "목록 응답의 페이지 정보. 필수 필드."
           }
         },
         "type": "object",
@@ -1207,14 +1257,17 @@
         "properties": {
           "step_id": {
             "type": "string",
-            "title": "Step Id"
+            "title": "Step Id",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "parameter": {
             "type": "string",
-            "title": "Parameter"
+            "title": "Parameter",
+            "description": "수정할 Tool 함수의 인자 이름. 편집 가능한 인자만 서버 검증을 통과한다. 필수 필드."
           },
           "value": {
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1234,38 +1287,45 @@
               "edit_plan",
               "approve_plan"
             ],
-            "title": "Action"
+            "title": "Action",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "plan_id": {
             "type": "string",
-            "title": "Plan Id"
+            "title": "Plan Id",
+            "description": "서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다. 필수 필드."
           },
           "plan_revision": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Plan Revision"
+            "title": "Plan Revision",
+            "description": "계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다. 필수 필드."
           },
           "input_values": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Input Values"
+            "title": "Input Values",
+            "description": "계획의 입력 이름별 최종값. 전달한 키만 수정하고 기존의 다른 입력값은 유지한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_changes": {
             "items": {
               "$ref": "#/components/schemas/ParameterChange"
             },
             "type": "array",
-            "title": "Step Changes"
+            "title": "Step Changes",
+            "description": "Tool 함수 인자 편집 목록. step_id·parameter·value로 수정 대상을 지정한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "excluded_step_ids": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Excluded Step Ids"
+            "title": "Excluded Step Ids",
+            "description": "사용자가 제외한 Step ID 목록. 필드를 보내면 전체 제외 목록을 교체하고 생략하면 기존 목록을 유지한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "execution_overrides": {
-            "$ref": "#/components/schemas/ExecutionOverrides"
+            "$ref": "#/components/schemas/ExecutionOverrides",
+            "description": "사용자가 조정하는 실행 정책. 허용 mode·수정 수준·횟수 상한 내에서만 변경된다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "additionalProperties": false,
@@ -1285,23 +1345,27 @@
               "replan",
               "answer_clarification"
             ],
-            "title": "Action"
+            "title": "Action",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Interaction Id"
+            "title": "Interaction Id",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Revision"
+            "title": "Revision",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "feedback": {
             "type": "string",
             "maxLength": 4000,
             "minLength": 1,
-            "title": "Feedback"
+            "title": "Feedback",
+            "description": "계획 재작성 요청 또는 추가 질문 답변. 공백만 허용하지 않으며 최대 4000자다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1325,7 +1389,8 @@
                 "type": "null"
               }
             ],
-            "title": "Main Model Name"
+            "title": "Main Model Name",
+            "description": "등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "model_revision": {
             "anyOf": [
@@ -1336,17 +1401,20 @@
                 "type": "null"
               }
             ],
-            "title": "Model Revision"
+            "title": "Model Revision",
+            "description": "Run에 고정된 모델 설정 revision. Workflow나 승인 화면의 revision과 별개다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "공개 Run UUID. 전체 흐름과 사용자 재개에서 같은 Run을 식별한다. 필수 필드."
           },
           "session_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Session Id"
+            "title": "Session Id",
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
           },
           "status": {
             "type": "string",
@@ -1361,7 +1429,8 @@
               "canceled",
               "recovery_required"
             ],
-            "title": "Status"
+            "title": "Status",
+            "description": "Run 상태: pending/running/waiting_input/waiting_executor/success/error/timeout/canceled/recovery_required. 접수·승인과 실행 완료는 구분한다. 필수 필드."
           },
           "resume_token": {
             "anyOf": [
@@ -1373,7 +1442,8 @@
                 "type": "null"
               }
             ],
-            "title": "Resume Token"
+            "title": "Resume Token",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "interrupt": {
             "anyOf": [
@@ -1388,7 +1458,8 @@
                 "type": "null"
               }
             ],
-            "title": "Interrupt"
+            "title": "Interrupt",
+            "description": "Run이 대기 중인 사용자 확인 화면 목록. 보통 kind에 맞춰 UI를 구성한다. 현재 대기가 없으면 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "failure": {
             "anyOf": [
@@ -1400,7 +1471,8 @@
                 "type": "null"
               }
             ],
-            "title": "Failure"
+            "title": "Failure",
+            "description": "Run 실패 정보. 정상 또는 미실패 상태에서는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "result": {
             "anyOf": [
@@ -1412,12 +1484,14 @@
                 "type": "null"
               }
             ],
-            "title": "Result"
+            "title": "Result",
+            "description": "종료한 Run의 결과 객체. 미종료 시 null이며 route·final_response 등은 주 API 문서의 결과 규격을 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "recovery_required": {
             "type": "boolean",
             "title": "Recovery Required",
-            "default": false
+            "default": false,
+            "description": "자동 진행이 안전하지 않아 복구 판단이 필요한지 표시하는 값. 완료 성공으로 해석하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "checkpoint_run_id": {
             "anyOf": [
@@ -1429,7 +1503,8 @@
                 "type": "null"
               }
             ],
-            "title": "Checkpoint Run Id"
+            "title": "Checkpoint Run Id",
+            "description": "내부 LangGraph checkpoint 연결 식별자. 공개 Run ID나 session_id와 같은 의미로 사용하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "task_id": {
             "anyOf": [
@@ -1441,11 +1516,13 @@
                 "type": "null"
               }
             ],
-            "title": "Task Id"
+            "title": "Task Id",
+            "description": "내부 업무 Task 연결 UUID. 프론트 실행·재개 명령은 공개 Run API를 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "attempt_count": {
             "type": "integer",
-            "title": "Attempt Count"
+            "title": "Attempt Count",
+            "description": "Run 처리 시도 수. 모델 호출 수나 MULTI 오류 수정 횟수와는 별개다. 필수 필드."
           },
           "next_attempt_at": {
             "anyOf": [
@@ -1457,7 +1534,8 @@
                 "type": "null"
               }
             ],
-            "title": "Next Attempt At"
+            "title": "Next Attempt At",
+            "description": "다음 처리 시도 예정 시각. 해당 예약이 없으면 null이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "cancel_reason": {
             "anyOf": [
@@ -1468,7 +1546,8 @@
                 "type": "null"
               }
             ],
-            "title": "Cancel Reason"
+            "title": "Cancel Reason",
+            "description": "서버에 기록된 취소 사유. 취소 요청이 없으면 null이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "cancel_requested_at": {
             "anyOf": [
@@ -1480,17 +1559,20 @@
                 "type": "null"
               }
             ],
-            "title": "Cancel Requested At"
+            "title": "Cancel Requested At",
+            "description": "취소 요청 기록 시각. 실제 취소 완료 시각과 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           },
           "started_at": {
             "anyOf": [
@@ -1502,7 +1584,8 @@
                 "type": "null"
               }
             ],
-            "title": "Started At"
+            "title": "Started At",
+            "description": "Run 실행 시작 시각. 시작 전에는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "completed_at": {
             "anyOf": [
@@ -1514,7 +1597,8 @@
                 "type": "null"
               }
             ],
-            "title": "Completed At"
+            "title": "Completed At",
+            "description": "Run 종료 시각. 미종료 상태에서는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "type": "object",
@@ -1536,27 +1620,32 @@
               "approve_repair",
               "reject_repair"
             ],
-            "title": "Action"
+            "title": "Action",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Interaction Id"
+            "title": "Interaction Id",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Revision"
+            "title": "Revision",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "proposal_sha256": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$",
-            "title": "Proposal Sha256"
+            "title": "Proposal Sha256",
+            "description": "승인·거절할 수정 제안의 64자리 소문자 SHA-256. 다른 제안에 동의가 적용되지 않게 한다. 필수 필드."
           },
           "allow_policy_escalation": {
             "type": "boolean",
             "title": "Allow Policy Escalation",
-            "default": false
+            "default": false,
+            "description": "제안이 현재 수정 권한보다 높은 수준을 요구할 때 명시적으로 동의하는 값. 기본 false이며 시스템 상한은 넘을 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "additionalProperties": false,
@@ -1586,7 +1675,8 @@
                 "$ref": "#/components/schemas/PlanRevisionAction"
               }
             ],
-            "title": "Resume"
+            "title": "Resume",
+            "description": "현재 대기에 맞는 action과 필드를 담은 재개 명령. 아무 액션이나 모든 화면에 보낼 수 없다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1608,7 +1698,8 @@
                 "type": "null"
               }
             ],
-            "title": "Reason"
+            "title": "Reason",
+            "description": "사용자가 취소 API에 전달하는 사유. 선택 항목이며 최대 1000자다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "type": "object",
@@ -1624,7 +1715,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "새 요청의 입력 객체. command와 함께 보내지 않는다. 현재 실제 입력은 text만 지원한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "command": {
             "anyOf": [
@@ -1634,7 +1726,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "기존 Run의 HITL 응답 명령 객체. 새 입력 input과 함께 보내지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "run_id": {
             "anyOf": [
@@ -1646,7 +1739,8 @@
                 "type": "null"
               }
             ],
-            "title": "Run Id"
+            "title": "Run Id",
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "resume_token": {
             "anyOf": [
@@ -1658,7 +1752,8 @@
                 "type": "null"
               }
             ],
-            "title": "Resume Token"
+            "title": "Resume Token",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "main_model_name": {
             "anyOf": [
@@ -1672,7 +1767,8 @@
                 "type": "null"
               }
             ],
-            "title": "Main Model Name"
+            "title": "Main Model Name",
+            "description": "등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "additionalProperties": false,
@@ -1684,13 +1780,15 @@
           "type": {
             "type": "string",
             "const": "text",
-            "title": "Type"
+            "title": "Type",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "text": {
             "type": "string",
             "maxLength": 12000,
             "minLength": 1,
-            "title": "Text"
+            "title": "Text",
+            "description": "사용자 입력 또는 Agent 메시지 본문 문자열. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1705,14 +1803,17 @@
         "properties": {
           "user_id": {
             "type": "string",
-            "title": "User Id"
+            "title": "User Id",
+            "description": "서비스에 등록된 공개 사용자 식별자. 사내 SSO 연동 시 직원 식별자에 연결된다. 필수 필드."
           },
           "user_name": {
             "type": "string",
-            "title": "User Name"
+            "title": "User Name",
+            "description": "서비스 사용자 표시 이름. 필수 필드."
           },
           "role": {
-            "$ref": "#/components/schemas/UserRole"
+            "$ref": "#/components/schemas/UserRole",
+            "description": "메시지 작성자 또는 사용자 권한 구분. 메시지는 assistant/user 등, 사용자 조회는 admin/user다. 필수 필드."
           },
           "default_project_id": {
             "anyOf": [
@@ -1724,20 +1825,24 @@
                 "type": "null"
               }
             ],
-            "title": "Default Project Id"
+            "title": "Default Project Id",
+            "description": "사용자 기본 프로젝트 UUID. 최초 SSO 등록 시 생성되는 기본 프로젝트에 연결된다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "delete_yn": {
-            "$ref": "#/components/schemas/DeleteYN"
+            "$ref": "#/components/schemas/DeleteYN",
+            "description": "사용자 비활성/삭제 표시. Y/N을 구분하며 계정 권한과 별개다. 필수 필드."
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           },
           "deleted_at": {
             "anyOf": [
@@ -1749,15 +1854,18 @@
                 "type": "null"
               }
             ],
-            "title": "Deleted At"
+            "title": "Deleted At",
+            "description": "사용자가 비활성/삭제 처리된 시각. 해당하지 않으면 null이다. 필수 필드."
           },
           "csrf_token": {
             "type": "string",
-            "title": "Csrf Token"
+            "title": "Csrf Token",
+            "description": "로그인 세션의 CSRF 값. 변경 요청의 X-CSRF-Token 헤더에 넣으며 로그인 쿠키를 대체하지 않는다. 필수 필드."
           },
           "login_expires_at": {
             "type": "integer",
-            "title": "Login Expires At"
+            "title": "Login Expires At",
+            "description": "현재 서비스 로그인 세션의 만료 시각. 요청마다 자동 연장하지 않는다. 필수 필드."
           }
         },
         "type": "object",
@@ -1796,22 +1904,27 @@
               ]
             },
             "type": "array",
-            "title": "Location"
+            "title": "Location",
+            "description": "유효성 검증 오류가 발생한 위치 경로. body·필드명·배열 인덱스 등을 포함한다. 필수 필드."
           },
           "msg": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "유효성 검증 오류 설명. 필수 필드."
           },
           "type": {
             "type": "string",
-            "title": "Error Type"
+            "title": "Error Type",
+            "description": "유효성 검증 오류의 종류를 식별하는 문자열. 필수 필드."
           },
           "input": {
-            "title": "Input"
+            "title": "Input",
+            "description": "유효성 검증에 실패한 원래 입력값. 실제 오류 응답·로그에는 민감 정보 노출 여부를 확인한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "ctx": {
             "type": "object",
-            "title": "Context"
+            "title": "Context",
+            "description": "유효성 검증 오류의 부가 문맥. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "type": "object",

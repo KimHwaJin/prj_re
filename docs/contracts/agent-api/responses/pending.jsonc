@@ -1,0 +1,43 @@
+// 필드별 한국어 설명. 문서용 JSONC이며 API 제출에는 같은 이름의 .json을 사용한다.
+{
+  // 등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다.
+  "main_model_name": "default",
+  // Run에 고정된 모델 설정 revision. Workflow나 승인 화면의 revision과 별개다.
+  "model_revision": "docs-example",
+  // 공개 Run UUID. 전체 흐름과 사용자 재개에서 같은 Run을 식별한다.
+  "id": "11111111-1111-4111-8111-111111111111",
+  // 대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다.
+  "session_id": "22222222-2222-4222-8222-222222222222",
+  // Run 상태: pending/running/waiting_input/waiting_executor/success/error/timeout/canceled/recovery_required. 접수·승인과 실행 완료는 구분한다.
+  "status": "pending",
+  // 현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다.
+  "resume_token": null,
+  // Run이 대기 중인 사용자 확인 화면 목록. 보통 kind에 맞춰 UI를 구성한다. 현재 대기가 없으면 null일 수 있다.
+  "interrupt": null,
+  // Run 실패 정보. 정상 또는 미실패 상태에서는 null일 수 있다.
+  "failure": null,
+  // 종료한 Run의 결과 객체. 미종료 시 null이며 route·final_response 등은 주 API 문서의 결과 규격을 따른다.
+  "result": null,
+  // 자동 진행이 안전하지 않아 복구 판단이 필요한지 표시하는 값. 완료 성공으로 해석하지 않는다.
+  "recovery_required": false,
+  // 내부 LangGraph checkpoint 연결 식별자. 공개 Run ID나 session_id와 같은 의미로 사용하지 않는다.
+  "checkpoint_run_id": "11111111-1111-4111-8111-111111111111",
+  // 내부 업무 Task 연결 UUID. 프론트 실행·재개 명령은 공개 Run API를 사용한다.
+  "task_id": null,
+  // Run 처리 시도 수. 모델 호출 수나 MULTI 오류 수정 횟수와는 별개다.
+  "attempt_count": 0,
+  // 다음 처리 시도 예정 시각. 해당 예약이 없으면 null이다.
+  "next_attempt_at": null,
+  // 서버에 기록된 취소 사유. 취소 요청이 없으면 null이다.
+  "cancel_reason": null,
+  // 취소 요청 기록 시각. 실제 취소 완료 시각과 구분한다.
+  "cancel_requested_at": null,
+  // 이 자원이 생성된 시각. ISO 8601 문자열로 표현한다.
+  "created_at": "2026-10-01T00:00:00Z",
+  // 이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다.
+  "updated_at": "2026-10-01T00:00:00Z",
+  // Run 실행 시작 시각. 시작 전에는 null일 수 있다.
+  "started_at": null,
+  // Run 종료 시각. 미종료 상태에서는 null일 수 있다.
+  "completed_at": null
+}

@@ -4,7 +4,9 @@
 
 2026-10-01의 045까지 반영한 코드에서 확인했다. **현재 Agent 계획·승인·Executor compiler는 `2.0-draft` 정의를 사용하지만, 기존 `/api/v1/workflows` CRUD는 별도 1.3 모델을 사용한다.** 새 JSON을 기존 POST에 제출하여 추천 풀에 등록하는 이행은 아직 끝나지 않았다. 버전 문자열의 draft는 현재 유지된 계약 값이며 compiler 미구현을 뜻하지 않는다.
 
-[Agent 요청·응답](public-run-api.md), [원본 JSON Schema](../src/service_contracts/resources/workflow-definition.schema.json), [기본 예제](contracts/workflow/quality-basic.json), [조건부 예제](contracts/workflow/quality-conditional.json)를 함께 참고한다. 036 설계 기록보다 이 문서를 현재 구현 안내로 우선한다.
+[Agent 요청·응답](public-run-api.md), [원본 JSON Schema](../src/service_contracts/resources/workflow-definition.schema.json), [기본 예제](contracts/workflow/quality-basic.json) · [필드 주석](contracts/workflow/quality-basic.jsonc), [조건부 예제](contracts/workflow/quality-conditional.json) · [필드 주석](contracts/workflow/quality-conditional.jsonc)를 함께 참고한다. 036 설계 기록보다 이 문서를 현재 구현 안내로 우선한다.
+
+본문의 `jsonc` 예제는 각 필드를 주석으로 설명한다. 저장·등록·검증에는 주석 없는 `.json`을 사용한다. [주석 파일 안내](contracts/field-comments.md), [Workflow schema 주석](design/agentic-workflow-contract/workflow-definition.schema.jsonc)을 참고한다.
 
 ## 서로 다른 JSON을 구분하기
 
@@ -23,59 +25,151 @@ Workflow 대상은 등록된 Skill·Tool만의 조합이다. Agent의 실행별 
 
 ## 정의의 전체 형태
 
-```json
+```jsonc
 {
+  // 계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다.
   "schema_version": "2.0-draft",
+  // 재사용 Workflow 정의를 식별하는 문자열. 기존 Workflow 관리 API의 DB UUID와 구분한다.
   "workflow_id": "quality_basic",
+  // 동일 Workflow 정의의 변경 버전. 승인 화면 편집 횟수나 Run ID가 아니다.
   "definition_version": 1,
+  // 사용자에게 표시할 Workflow 또는 계획 이름. 고유 식별자는 workflow_id/plan_id로 별도 관리한다.
   "name": "기본 데이터 품질 확인",
+  // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
   "description": "등록된 로드·품질 확인 Tool을 조합한다.",
+  // Workflow 또는 계획이 달성하려는 분석 목표.
   "goal": "기본 품질을 확인하고 실제 근거를 설명한다.",
+  // 새 Workflow에서는 입력 이름별 정의 객체, PlanView에서는 입력 필드 목록, legacy에서는 실행 입력값 객체다.
   "inputs": {
+    // Workflow 입력 이름 dataset. inputs는 정의, input_values는 해당 입력의 최종값이다.
     "dataset": {
+      // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
       "title": "분석 데이터",
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "서비스가 접근을 확인한 데이터 참조",
+      // 입력 종류. parameter는 일반 값, data_reference는 서버가 접근을 확인한 데이터 참조다. 임의 파일 경로 입력과 구분한다.
       "kind": "data_reference",
+      // 업무 입력·산출물에서는 필요한지 나타내는 boolean. JSON Schema에서는 필수 필드 이름 배열이다.
       "required": true,
+      // 사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다.
       "editable": true,
-      "value_schema": {"type": "string", "minLength": 1}
+      // 입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다.
+      "value_schema": {
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string",
+        // 허용 문자열의 최소 길이.
+        "minLength": 1
+      }
     }
   },
+  // 분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다.
   "steps": [
     {
+      // Workflow 내부 Step의 고유 문자열 ID. depends_on·step_output이 참조한다.
       "id": "load",
+      // 레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다.
       "skill_id": "data_load",
+      // 레포에 등록된 실행 가능한 Tool의 고유 식별자.
       "tool_id": "data_load",
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "등록 데이터 참조를 로드한다.",
+      // 먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다.
       "depends_on": [],
-      "arguments": {"parquet_path": {"source": "workflow_input", "name": "dataset"}}
+      // 새 Workflow에서는 실제 함수 인자 이름별 binding. legacy에서는 인자 값 또는 참조가 들어간다.
+      "arguments": {
+        // Tool 함수 인자 parquet_path의 값/출처 binding.
+        "parquet_path": {
+          // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+          "source": "workflow_input",
+          // 참조할 Workflow 입력 키. 예제 dataset은 inputs.dataset에서 정의한 입력이다.
+          "name": "dataset"
+        }
+      }
     },
     {
+      // Workflow 내부 Step의 고유 문자열 ID. depends_on·step_output이 참조한다.
       "id": "profile",
+      // 레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다.
       "skill_id": "data_quality_check",
+      // 레포에 등록된 실행 가능한 Tool의 고유 식별자.
       "tool_id": "profile_data",
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "기본 구조와 결측 상태를 확인한다.",
-      "depends_on": ["load"],
-      "arguments": {"data": {"source": "step_output", "step_id": "load", "selector": []}}
+      // 먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다.
+      "depends_on": [
+        "load"
+      ],
+      // 새 Workflow에서는 실제 함수 인자 이름별 binding. legacy에서는 인자 값 또는 참조가 들어간다.
+      "arguments": {
+        // Tool 함수 인자 data의 값/출처 binding.
+        "data": {
+          // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+          "source": "step_output",
+          // 대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다.
+          "step_id": "load",
+          // 이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다.
+          "selector": []
+        }
+      }
     }
   ],
+  // 실행 결과를 보고 나중에 확정할 판단 목록. 정적 계획과 결과 기반 판단을 분리한다.
   "decisions": [],
-  "execution": {"mode": "MULTI", "repair_level": 0, "max_repair_attempts": 0, "review_mode": "decision_boundary"},
+  // 새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다.
+  "execution": {
+    // SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다.
+    "mode": "MULTI",
+    // 허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다.
+    "repair_level": 0,
+    // 허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다.
+    "max_repair_attempts": 0,
+    // 실행 결과 이후 확인 정책. decision_boundary/every_tool/every_n_tools을 구분한다. 일반적인 계획 최초 승인을 대체하지 않는다.
+    "review_mode": "decision_boundary"
+  },
+  // Workflow가 기대하는 분석 결과·데이터·보고서 선언. 선언만으로 파일이 생성되는 것은 아니다.
   "expected_outputs": [
     {
+      // Workflow 내부 예상 산출물의 고유 문자열 ID.
       "id": "profile_result",
+      // 산출물 종류. analysis_result는 분석 반환값, dataset은 저장 데이터, report는 보고서다.
       "kind": "analysis_result",
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "기본 품질 결과",
+      // 업무 입력·산출물에서는 필요한지 나타내는 boolean. JSON Schema에서는 필수 필드 이름 배열이다.
       "required": true,
-      "source": {"source": "step_output", "step_id": "profile", "selector": ["profile"]},
+      // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+      "source": {
+        // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+        "source": "step_output",
+        // 대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다.
+        "step_id": "profile",
+        // 이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다.
+        "selector": [
+          "profile"
+        ]
+      },
+      // 산출물 표현 형식 또는 Schema 형식 제약. 산출물은 native/parquet/markdown/html/json 등을 선언한다. 선언과 실제 저장 지원은 구분한다.
       "format": "native"
     },
     {
+      // Workflow 내부 예상 산출물의 고유 문자열 ID.
       "id": "report",
+      // 산출물 종류. analysis_result는 분석 반환값, dataset은 저장 데이터, report는 보고서다.
       "kind": "report",
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "실제 실행 근거로 작성한 보고서",
+      // 업무 입력·산출물에서는 필요한지 나타내는 boolean. JSON Schema에서는 필수 필드 이름 배열이다.
       "required": true,
-      "source": {"source": "agent_report", "evidence_steps": ["profile"]},
+      // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+      "source": {
+        // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+        "source": "agent_report",
+        // 판단 또는 보고서가 근거로 사용할 Step ID 목록. 실제 실행 결과를 사용한다.
+        "evidence_steps": [
+          "profile"
+        ]
+      },
+      // 산출물 표현 형식 또는 Schema 형식 제약. 산출물은 native/parquet/markdown/html/json 등을 선언한다. 선언과 실제 저장 지원은 구분한다.
       "format": "markdown"
     }
   ]
@@ -117,10 +211,25 @@ depends_on은 이전 단계 ID 배열이다. steps 배열 순서만으로 의존
 
 parameter_controls는 직접 값/later Agent decision 파라미터의 편집 정책이다.
 
-```json
+```jsonc
 {
+  // Tool 인자 이름별 편집 허용·값 schema. literal/판단 인자의 사용자 편집 규칙을 정의한다.
   "parameter_controls": {
-    "method": {"editable": true, "value_schema": {"type": "string", "enum": ["iqr", "zscore"]}}
+    // Tool 함수 인자 method의 사용자 편집 허용 및 값 Schema.
+    "method": {
+      // 사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다.
+      "editable": true,
+      // 입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다.
+      "value_schema": {
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string",
+        // 허용하는 값 목록.
+        "enum": [
+          "iqr",
+          "zscore"
+        ]
+      }
+    }
   }
 }
 ```
@@ -145,12 +254,28 @@ selector=[]는 전체 반환값, ["profile"]은 dict key, [0]은 tuple/list 위�
 
 ## 결과 기반 판단과 조건
 
-```json
+```jsonc
 {
+  // 이 결과 기반 Agent 판단의 고유 문자열 ID. agent_decision binding이 참조한다.
   "id": "outlier_method",
-  "after_steps": ["profile", "statistics"],
+  // Agent가 판단하기 전에 결과를 확보해야 하는 Step ID 목록.
+  "after_steps": [
+    "profile",
+    "statistics"
+  ],
+  // 결과를 읽고 판단값을 확정하는 Agent용 지침.
   "instruction": "품질과 통계 근거에 맞는 이상치 후보 탐지 방법을 선택한다.",
-  "output_schema": {"type": "string", "enum": ["iqr", "zscore", "isolation_forest"]}
+  // Agent 판단 결과값을 검증하는 JSON Schema. 예를 들어 boolean 또는 선택지 enum을 정의한다.
+  "output_schema": {
+    // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+    "type": "string",
+    // 허용하는 값 목록.
+    "enum": [
+      "iqr",
+      "zscore",
+      "isolation_forest"
+    ]
+  }
 }
 ```
 
@@ -158,11 +283,24 @@ decisions의 after_steps는 판단 전에 실제 실행 근거가 필요한 Step
 
 조건은 when에 작성한다. 조건이 false인 단계는 SKIPPED로 기록하고 조건을 평가할 수 없는 경우 false로 간주하지 않는다.
 
-```json
+```jsonc
 {
+  // 비교 연산자. eq/ne/gt/gte/lt/lte/in/not_in 중 schema가 허용한 값을 쓴다.
   "op": "eq",
-  "left": {"source": "agent_decision", "decision_id": "inspect_outliers"},
-  "right": {"source": "literal", "value": true}
+  // 조건 비교의 왼쪽 값 binding.
+  "left": {
+    // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+    "source": "agent_decision",
+    // 결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다.
+    "decision_id": "inspect_outliers"
+  },
+  // 조건 비교의 오른쪽 값 binding.
+  "right": {
+    // 값을 얻는 방식. workflow_input/literal/step_output/agent_decision/system_context, 보고서에서는 agent_report를 구분한다.
+    "source": "literal",
+    // 직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다.
+    "value": true
+  }
 }
 ```
 
@@ -170,7 +308,7 @@ op는 eq/ne/gt/gte/lt/lte/in/not_in이고 all/any/not으로 묶을 수 있다. o
 
 조건부 Step 출력을 사용하는 consumer/output에는 같은 명시적 when이 필요하다. 다른 조건이 논리적으로 동등한지 추론하지 않는다. 조건부 근거만을 사용하는 후속 decision, 복잡한 분기 합류, 일반 반복 루프는 현재 계약에서 지원하지 않는다. 순환 depends_on으로 반복을 흉내 내지 않는다.
 
-[조건부 전체 예제](contracts/workflow/quality-conditional.json)는 profile/statistics 결과 후 두 decision으로 이상치 실행 여부·방법을 정한다. 두 decision을 사용자에게 묻는 경우 values에는 둘 다 보내야 한다.
+[조건부 전체 예제](contracts/workflow/quality-conditional.json) · [필드 주석](contracts/workflow/quality-conditional.jsonc)는 profile/statistics 결과 후 두 decision으로 이상치 실행 여부·방법을 정한다. 두 decision을 사용자에게 묻는 경우 values에는 둘 다 보내야 한다.
 
 ## 실행 정책과 승인
 
@@ -214,7 +352,7 @@ MULTI는 목표 실행 완료 후 Finalize와 terminal 확인으로 커널을 �
 
 ## 기존 Workflow CRUD와 1.3 형식
 
-현재 `/api/v1/workflows`는 이전 WorkflowDefinition을 검증한다. [legacy-1.3 구조 예제](contracts/workflow/legacy-1.3.json)는 이 모델의 구조 설명용이며 신규 저작용 권장 규격이 아니다. schema_version wrapper가 있으면 document.workflow를 해석하며 raw definition도 받는다. 현재 service는 wrapper 버전을 WorkflowGeneratorOutput으로 엄격히 검증하지 않고 DB schema_version에 보관하므로 임의 버전 값으로 새 모델이 선택되는 것은 아니다.
+현재 `/api/v1/workflows`는 이전 WorkflowDefinition을 검증한다. [legacy-1.3 구조 예제](contracts/workflow/legacy-1.3.json) · [필드 주석](contracts/workflow/legacy-1.3.jsonc)는 이 모델의 구조 설명용이며 신규 저작용 권장 규격이 아니다. schema_version wrapper가 있으면 document.workflow를 해석하며 raw definition도 받는다. 현재 service는 wrapper 버전을 WorkflowGeneratorOutput으로 엄격히 검증하지 않고 DB schema_version에 보관하므로 임의 버전 값으로 새 모델이 선택되는 것은 아니다.
 
 | API | 현재 동작 |
 |---|---|

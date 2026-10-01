@@ -29,7 +29,8 @@
             "maxItems": 20,
             "minItems": 1,
             "title": "Content",
-            "type": "array"
+            "type": "array",
+            "description": "입력 또는 Agent 메시지의 콘텐츠 블록 배열. 블록의 type으로 형식을 구분한다. 필수 필드."
           }
         },
         "required": [
@@ -44,22 +45,26 @@
           "action": {
             "const": "approve_decisions",
             "title": "Action",
-            "type": "string"
+            "type": "string",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "values": {
             "additionalProperties": true,
             "title": "Values",
-            "type": "object"
+            "type": "object",
+            "description": "현재 판단 확인 화면의 decision_id별 최종값. 대기 중인 모든 판단을 빠짐없이 제출한다. 필수 필드."
           }
         },
         "required": [
@@ -88,7 +93,8 @@
               }
             ],
             "default": null,
-            "title": "Mode"
+            "title": "Mode",
+            "description": "SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "repair_level": {
             "anyOf": [
@@ -102,7 +108,8 @@
               }
             ],
             "default": null,
-            "title": "Repair Level"
+            "title": "Repair Level",
+            "description": "허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "max_repair_attempts": {
             "anyOf": [
@@ -115,7 +122,8 @@
               }
             ],
             "default": null,
-            "title": "Max Repair Attempts"
+            "title": "Max Repair Attempts",
+            "description": "허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "title": "ExecutionOverrides",
@@ -127,12 +135,14 @@
           "type": {
             "const": "file",
             "title": "Type",
-            "type": "string"
+            "type": "string",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "file_id": {
             "format": "uuid",
             "title": "File Id",
-            "type": "string"
+            "type": "string",
+            "description": "향후 파일·이미지 첨부를 식별할 UUID. 현재 실제 Run 접수는 해당 입력을 422로 거절한다. 필수 필드."
           }
         },
         "required": [
@@ -148,12 +158,14 @@
           "type": {
             "const": "image",
             "title": "Type",
-            "type": "string"
+            "type": "string",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "file_id": {
             "format": "uuid",
             "title": "File Id",
-            "type": "string"
+            "type": "string",
+            "description": "향후 파일·이미지 첨부를 식별할 UUID. 현재 실제 Run 접수는 해당 입력을 422로 거절한다. 필수 필드."
           }
         },
         "required": [
@@ -168,14 +180,17 @@
         "properties": {
           "step_id": {
             "title": "Step Id",
-            "type": "string"
+            "type": "string",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "parameter": {
             "title": "Parameter",
-            "type": "string"
+            "type": "string",
+            "description": "수정할 Tool 함수의 인자 이름. 편집 가능한 인자만 서버 검증을 통과한다. 필수 필드."
           },
           "value": {
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 필수 필드."
           }
         },
         "required": [
@@ -195,38 +210,45 @@
               "approve_plan"
             ],
             "title": "Action",
-            "type": "string"
+            "type": "string",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "plan_id": {
             "title": "Plan Id",
-            "type": "string"
+            "type": "string",
+            "description": "서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다. 필수 필드."
           },
           "plan_revision": {
             "minimum": 1,
             "title": "Plan Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다. 필수 필드."
           },
           "input_values": {
             "additionalProperties": true,
             "title": "Input Values",
-            "type": "object"
+            "type": "object",
+            "description": "계획의 입력 이름별 최종값. 전달한 키만 수정하고 기존의 다른 입력값은 유지한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_changes": {
             "items": {
               "$ref": "#/$defs/ParameterChange"
             },
             "title": "Step Changes",
-            "type": "array"
+            "type": "array",
+            "description": "Tool 함수 인자 편집 목록. step_id·parameter·value로 수정 대상을 지정한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "excluded_step_ids": {
             "items": {
               "type": "string"
             },
             "title": "Excluded Step Ids",
-            "type": "array"
+            "type": "array",
+            "description": "사용자가 제외한 Step ID 목록. 필드를 보내면 전체 제외 목록을 교체하고 생략하면 기존 목록을 유지한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "execution_overrides": {
-            "$ref": "#/$defs/ExecutionOverrides"
+            "$ref": "#/$defs/ExecutionOverrides",
+            "description": "사용자가 조정하는 실행 정책. 허용 mode·수정 수준·횟수 상한 내에서만 변경된다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -246,23 +268,27 @@
               "answer_clarification"
             ],
             "title": "Action",
-            "type": "string"
+            "type": "string",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "feedback": {
             "maxLength": 4000,
             "minLength": 1,
             "title": "Feedback",
-            "type": "string"
+            "type": "string",
+            "description": "계획 재작성 요청 또는 추가 질문 답변. 공백만 허용하지 않으며 최대 4000자다. 필수 필드."
           }
         },
         "required": [
@@ -283,27 +309,32 @@
               "reject_repair"
             ],
             "title": "Action",
-            "type": "string"
+            "type": "string",
+            "description": "재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다. 필수 필드."
           },
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "proposal_sha256": {
             "pattern": "^[a-f0-9]{64}$",
             "title": "Proposal Sha256",
-            "type": "string"
+            "type": "string",
+            "description": "승인·거절할 수정 제안의 64자리 소문자 SHA-256. 다른 제안에 동의가 적용되지 않게 한다. 필수 필드."
           },
           "allow_policy_escalation": {
             "default": false,
             "title": "Allow Policy Escalation",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "제안이 현재 수정 권한보다 높은 수준을 요구할 때 명시적으로 동의하는 값. 기본 false이며 시스템 상한은 넘을 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -333,7 +364,8 @@
                 "$ref": "#/$defs/PlanRevisionAction"
               }
             ],
-            "title": "Resume"
+            "title": "Resume",
+            "description": "현재 대기에 맞는 action과 필드를 담은 재개 명령. 아무 액션이나 모든 화면에 보낼 수 없다. 필수 필드."
           }
         },
         "required": [
@@ -348,13 +380,15 @@
           "type": {
             "const": "text",
             "title": "Type",
-            "type": "string"
+            "type": "string",
+            "description": "입력 콘텐츠 블록 종류 text/image/file. 현재 실제 접수는 text만 지원한다. 필수 필드."
           },
           "text": {
             "maxLength": 12000,
             "minLength": 1,
             "title": "Text",
-            "type": "string"
+            "type": "string",
+            "description": "사용자 입력 또는 Agent 메시지 본문 문자열. 필수 필드."
           }
         },
         "required": [
@@ -376,7 +410,8 @@
             "type": "null"
           }
         ],
-        "default": null
+        "default": null,
+        "description": "새 요청의 입력 객체. command와 함께 보내지 않는다. 현재 실제 입력은 text만 지원한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "command": {
         "anyOf": [
@@ -387,7 +422,8 @@
             "type": "null"
           }
         ],
-        "default": null
+        "default": null,
+        "description": "기존 Run의 HITL 응답 명령 객체. 새 입력 input과 함께 보내지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "run_id": {
         "anyOf": [
@@ -400,7 +436,8 @@
           }
         ],
         "default": null,
-        "title": "Run Id"
+        "title": "Run Id",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "resume_token": {
         "anyOf": [
@@ -413,7 +450,8 @@
           }
         ],
         "default": null,
-        "title": "Resume Token"
+        "title": "Resume Token",
+        "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "main_model_name": {
         "anyOf": [
@@ -428,7 +466,8 @@
           }
         ],
         "default": null,
-        "title": "Main Model Name"
+        "title": "Main Model Name",
+        "description": "등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       }
     },
     "title": "RunRequest",
@@ -447,7 +486,8 @@
           }
         ],
         "default": null,
-        "title": "Reason"
+        "title": "Reason",
+        "description": "사용자가 취소 API에 전달하는 사유. 선택 항목이며 최대 1000자다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       }
     },
     "title": "RunCancel",
@@ -465,7 +505,8 @@
           }
         ],
         "default": null,
-        "title": "Main Model Name"
+        "title": "Main Model Name",
+        "description": "등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "model_revision": {
         "anyOf": [
@@ -477,17 +518,20 @@
           }
         ],
         "default": null,
-        "title": "Model Revision"
+        "title": "Model Revision",
+        "description": "Run에 고정된 모델 설정 revision. Workflow나 승인 화면의 revision과 별개다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "id": {
         "format": "uuid",
         "title": "Id",
-        "type": "string"
+        "type": "string",
+        "description": "공개 Run UUID. 전체 흐름과 사용자 재개에서 같은 Run을 식별한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "status": {
         "enum": [
@@ -502,7 +546,8 @@
           "recovery_required"
         ],
         "title": "Status",
-        "type": "string"
+        "type": "string",
+        "description": "Run 상태: pending/running/waiting_input/waiting_executor/success/error/timeout/canceled/recovery_required. 접수·승인과 실행 완료는 구분한다. 필수 필드."
       },
       "resume_token": {
         "anyOf": [
@@ -515,7 +560,8 @@
           }
         ],
         "default": null,
-        "title": "Resume Token"
+        "title": "Resume Token",
+        "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "interrupt": {
         "anyOf": [
@@ -531,7 +577,8 @@
           }
         ],
         "default": null,
-        "title": "Interrupt"
+        "title": "Interrupt",
+        "description": "Run이 대기 중인 사용자 확인 화면 목록. 보통 kind에 맞춰 UI를 구성한다. 현재 대기가 없으면 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "failure": {
         "anyOf": [
@@ -544,7 +591,8 @@
           }
         ],
         "default": null,
-        "title": "Failure"
+        "title": "Failure",
+        "description": "Run 실패 정보. 정상 또는 미실패 상태에서는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "result": {
         "anyOf": [
@@ -557,12 +605,14 @@
           }
         ],
         "default": null,
-        "title": "Result"
+        "title": "Result",
+        "description": "종료한 Run의 결과 객체. 미종료 시 null이며 route·final_response 등은 주 API 문서의 결과 규격을 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "recovery_required": {
         "default": false,
         "title": "Recovery Required",
-        "type": "boolean"
+        "type": "boolean",
+        "description": "자동 진행이 안전하지 않아 복구 판단이 필요한지 표시하는 값. 완료 성공으로 해석하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "checkpoint_run_id": {
         "anyOf": [
@@ -575,7 +625,8 @@
           }
         ],
         "default": null,
-        "title": "Checkpoint Run Id"
+        "title": "Checkpoint Run Id",
+        "description": "내부 LangGraph checkpoint 연결 식별자. 공개 Run ID나 session_id와 같은 의미로 사용하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "task_id": {
         "anyOf": [
@@ -588,11 +639,13 @@
           }
         ],
         "default": null,
-        "title": "Task Id"
+        "title": "Task Id",
+        "description": "내부 업무 Task 연결 UUID. 프론트 실행·재개 명령은 공개 Run API를 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "attempt_count": {
         "title": "Attempt Count",
-        "type": "integer"
+        "type": "integer",
+        "description": "Run 처리 시도 수. 모델 호출 수나 MULTI 오류 수정 횟수와는 별개다. 필수 필드."
       },
       "next_attempt_at": {
         "anyOf": [
@@ -605,7 +658,8 @@
           }
         ],
         "default": null,
-        "title": "Next Attempt At"
+        "title": "Next Attempt At",
+        "description": "다음 처리 시도 예정 시각. 해당 예약이 없으면 null이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "cancel_reason": {
         "anyOf": [
@@ -617,7 +671,8 @@
           }
         ],
         "default": null,
-        "title": "Cancel Reason"
+        "title": "Cancel Reason",
+        "description": "서버에 기록된 취소 사유. 취소 요청이 없으면 null이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "cancel_requested_at": {
         "anyOf": [
@@ -630,17 +685,20 @@
           }
         ],
         "default": null,
-        "title": "Cancel Requested At"
+        "title": "Cancel Requested At",
+        "description": "취소 요청 기록 시각. 실제 취소 완료 시각과 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "created_at": {
         "format": "date-time",
         "title": "Created At",
-        "type": "string"
+        "type": "string",
+        "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
       },
       "updated_at": {
         "format": "date-time",
         "title": "Updated At",
-        "type": "string"
+        "type": "string",
+        "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
       },
       "started_at": {
         "anyOf": [
@@ -653,7 +711,8 @@
           }
         ],
         "default": null,
-        "title": "Started At"
+        "title": "Started At",
+        "description": "Run 실행 시작 시각. 시작 전에는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "completed_at": {
         "anyOf": [
@@ -666,7 +725,8 @@
           }
         ],
         "default": null,
-        "title": "Completed At"
+        "title": "Completed At",
+        "description": "Run 종료 시각. 미종료 상태에서는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       }
     },
     "required": [
@@ -686,16 +746,19 @@
       "log_id": {
         "format": "uuid",
         "title": "Log Id",
-        "type": "string"
+        "type": "string",
+        "description": "저장된 Agent 로그 레코드 UUID. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "event_key": {
         "title": "Event Key",
-        "type": "string"
+        "type": "string",
+        "description": "로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드."
       },
       "agent_name": {
         "anyOf": [
@@ -706,29 +769,35 @@
             "type": "null"
           }
         ],
-        "title": "Agent Name"
+        "title": "Agent Name",
+        "description": "로그를 발생시킨 Agent 이름. 필수 필드."
       },
       "node": {
         "title": "Node",
-        "type": "string"
+        "type": "string",
+        "description": "로그를 발생시킨 그래프 노드 이름. 필수 필드."
       },
       "event": {
         "title": "Event",
-        "type": "string"
+        "type": "string",
+        "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드."
       },
       "kind": {
         "title": "Kind",
-        "type": "string"
+        "type": "string",
+        "description": "Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드."
       },
       "payload": {
         "additionalProperties": true,
         "title": "Payload",
-        "type": "object"
+        "type": "object",
+        "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
       },
       "created_at": {
         "format": "date-time",
         "title": "Created At",
-        "type": "string"
+        "type": "string",
+        "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
       }
     },
     "required": [
@@ -752,36 +821,43 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$",
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
         "additionalProperties": true,
         "title": "Data",
-        "type": "object"
+        "type": "object",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -802,18 +878,21 @@
         "properties": {
           "decision_id": {
             "title": "Decision Id",
-            "type": "string"
+            "type": "string",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 필수 필드."
           },
           "evidence_steps": {
             "items": {
               "type": "string"
             },
             "title": "Evidence Steps",
-            "type": "array"
+            "type": "array",
+            "description": "판단 또는 보고서가 근거로 사용할 Step ID 목록. 실제 실행 결과를 사용한다. 필수 필드."
           },
           "guidance": {
             "title": "Guidance",
-            "type": "string"
+            "type": "string",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -825,13 +904,15 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "status": {
             "const": "deferred",
             "default": "deferred",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 단계의 판단 상태. deferred는 실행 결과를 본 후 확정함을 뜻한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -848,15 +929,18 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "Workflow inputs의 입력 키. input_values의 동일 키로 최종값을 제출한다. 필수 필드."
           },
           "title": {
             "title": "Title",
-            "type": "string"
+            "type": "string",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -864,15 +948,18 @@
               "data_reference"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "입력 종류. parameter는 일반 값, data_reference는 서버가 접근을 확인한 데이터 참조다. 임의 파일 경로 입력과 구분한다. 필수 필드."
           },
           "required": {
             "title": "Required",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "이 입력 또는 산출물이 업무 실행에 필요한지 표시하는 boolean. 필드 자체의 필수 여부와 구분한다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -884,7 +971,8 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "origin": {
             "enum": [
@@ -894,15 +982,18 @@
               "unresolved"
             ],
             "title": "Origin",
-            "type": "string"
+            "type": "string",
+            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -924,15 +1015,18 @@
         "properties": {
           "output_id": {
             "title": "Output Id",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 보여주는 예상 산출물의 ID. 필수 필드."
           },
           "kind": {
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 종류. analysis_result는 분석 반환값, dataset은 저장 데이터, report는 보고서다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "status": {
             "enum": [
@@ -940,7 +1034,8 @@
               "excluded_by_user"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 계획 상태. planned 또는 excluded_by_user로 구분한다. 필수 필드."
           }
         },
         "required": [
@@ -957,7 +1052,8 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -968,15 +1064,18 @@
               "system_context"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "value_schema": {
             "anyOf": [
@@ -992,7 +1091,8 @@
               }
             ],
             "default": null,
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "input_name": {
             "anyOf": [
@@ -1004,7 +1104,8 @@
               }
             ],
             "default": null,
-            "title": "Input Name"
+            "title": "Input Name",
+            "description": "이 인자가 참조하는 Workflow 입력 이름. 값은 대응하는 입력 필드에서 편집한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_id": {
             "anyOf": [
@@ -1016,7 +1117,8 @@
               }
             ],
             "default": null,
-            "title": "Step Id"
+            "title": "Step Id",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "selector": {
             "anyOf": [
@@ -1038,7 +1140,8 @@
               }
             ],
             "default": null,
-            "title": "Selector"
+            "title": "Selector",
+            "description": "이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "decision_id": {
             "anyOf": [
@@ -1050,7 +1153,8 @@
               }
             ],
             "default": null,
-            "title": "Decision Id"
+            "title": "Decision Id",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "guidance": {
             "anyOf": [
@@ -1062,7 +1166,8 @@
               }
             ],
             "default": null,
-            "title": "Guidance"
+            "title": "Guidance",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "context_key": {
             "anyOf": [
@@ -1074,7 +1179,8 @@
               }
             ],
             "default": null,
-            "title": "Context Key"
+            "title": "Context Key",
+            "description": "서버가 제공하는 실행 문맥 키. user_id/project_id/session_id/dataset_output_dir 등의 참조다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -1094,19 +1200,23 @@
               "MULTI"
             ],
             "title": "Mode",
-            "type": "string"
+            "type": "string",
+            "description": "SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다. 필수 필드."
           },
           "repair_level": {
             "title": "Repair Level",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다. 필수 필드."
           },
           "max_repair_attempts": {
             "title": "Max Repair Attempts",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다. 필수 필드."
           },
           "review_mode": {
             "title": "Review Mode",
-            "type": "string"
+            "type": "string",
+            "description": "실행 결과 이후 확인 정책. decision_boundary/every_tool/every_n_tools을 구분한다. 일반적인 계획 최초 승인을 대체하지 않는다. 필수 필드."
           },
           "review_interval_tools": {
             "anyOf": [
@@ -1118,7 +1228,8 @@
               }
             ],
             "default": null,
-            "title": "Review Interval Tools"
+            "title": "Review Interval Tools",
+            "description": "review_mode=every_n_tools에서 몇 개 Tool마다 확인할지 정하는 값. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "allowed_modes": {
             "items": {
@@ -1129,15 +1240,18 @@
               "type": "string"
             },
             "title": "Allowed Modes",
-            "type": "array"
+            "type": "array",
+            "description": "현재 계획·서버 정책이 사용자에게 허용하는 실행 mode 목록. 필수 필드."
           },
           "repair_level_limit": {
             "title": "Repair Level Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 수준의 시스템 상한. 필수 필드."
           },
           "max_repair_attempts_limit": {
             "title": "Max Repair Attempts Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 횟수의 시스템 상한. 필수 필드."
           }
         },
         "required": [
@@ -1157,15 +1271,18 @@
         "properties": {
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           }
         },
         "required": [
@@ -1181,37 +1298,44 @@
         "properties": {
           "step_id": {
             "title": "Step Id",
-            "type": "string"
+            "type": "string",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "tool_id": {
             "title": "Tool Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 실행 가능한 Tool의 고유 식별자. 필수 필드."
           },
           "function_name": {
             "title": "Function Name",
-            "type": "string"
+            "type": "string",
+            "description": "Executor에서 실행할 Tool의 Python 함수 이름. 함수 본문은 공개 계획에 포함하지 않는다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "depends_on": {
             "items": {
               "type": "string"
             },
             "title": "Depends On",
-            "type": "array"
+            "type": "array",
+            "description": "먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다. 필수 필드."
           },
           "parameters": {
             "items": {
               "$ref": "#/$defs/ParameterView"
             },
             "title": "Parameters",
-            "type": "array"
+            "type": "array",
+            "description": "사용자에게 보여주는 Tool 함수 인자 목록. kind와 editable에 따라 값 표시·편집 UI를 구성한다. 필수 필드."
           },
           "when": {
             "anyOf": [
@@ -1224,7 +1348,8 @@
               }
             ],
             "default": null,
-            "title": "When"
+            "title": "When",
+            "description": "단계 또는 산출물의 조건. false이면 해당 항목을 실행/요구하지 않으며 자유 Python 조건문을 입력하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "status": {
             "enum": [
@@ -1232,7 +1357,8 @@
               "excluded"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 Step 상태. planned는 포함, excluded는 사용자가 제외한 단계다. 필수 필드."
           }
         },
         "required": [
@@ -1253,15 +1379,18 @@
     "properties": {
       "plan_id": {
         "title": "Plan Id",
-        "type": "string"
+        "type": "string",
+        "description": "서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다. 필수 필드."
       },
       "plan_revision": {
         "title": "Plan Revision",
-        "type": "integer"
+        "type": "integer",
+        "description": "계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다. 필수 필드."
       },
       "workflow_id": {
         "title": "Workflow Id",
-        "type": "string"
+        "type": "string",
+        "description": "재사용 Workflow 정의를 식별하는 문자열. 기존 Workflow 관리 API의 DB UUID와 구분한다. 필수 필드."
       },
       "execution_kind": {
         "default": "registered",
@@ -1270,12 +1399,14 @@
           "free_code"
         ],
         "title": "Execution Kind",
-        "type": "string"
+        "type": "string",
+        "description": "registered는 등록 자산 조합, free_code는 실행별 자유 코드가 포함된 계획이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "workflow_eligible": {
         "default": true,
         "title": "Workflow Eligible",
-        "type": "boolean"
+        "type": "boolean",
+        "description": "등록된 Skill·Tool만의 재사용 Workflow로 인정할 수 있는지 표시한다. 실행 성공과 별개이며 수정 소스·자유 코드는 적격이 아닐 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "approval_mode": {
         "default": "user",
@@ -1284,57 +1415,67 @@
           "configuration"
         ],
         "title": "Approval Mode",
-        "type": "string"
+        "type": "string",
+        "description": "user는 사용자 승인, configuration은 설정에 따른 승인 처리다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "definition_version": {
         "title": "Definition Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "동일 Workflow 정의의 변경 버전. 승인 화면 편집 횟수나 Run ID가 아니다. 필수 필드."
       },
       "name": {
         "title": "Name",
-        "type": "string"
+        "type": "string",
+        "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
       },
       "goal": {
         "title": "Goal",
-        "type": "string"
+        "type": "string",
+        "description": "Workflow 또는 계획이 달성하려는 분석 목표. 필수 필드."
       },
       "skills": {
         "items": {
           "$ref": "#/$defs/SkillView"
         },
         "title": "Skills",
-        "type": "array"
+        "type": "array",
+        "description": "계획에 사용되는 등록 Skill 정보 목록. Skill은 Tool 묶음과 사용 지침을 제공한다. 필수 필드."
       },
       "inputs": {
         "items": {
           "$ref": "#/$defs/InputView"
         },
         "title": "Inputs",
-        "type": "array"
+        "type": "array",
+        "description": "새 Workflow에서는 입력 이름별 정의 객체, PlanView에서는 입력 필드 목록, legacy에서는 실행 입력값 객체다. 필수 필드."
       },
       "steps": {
         "items": {
           "$ref": "#/$defs/StepView"
         },
         "title": "Steps",
-        "type": "array"
+        "type": "array",
+        "description": "분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다. 필수 필드."
       },
       "decisions": {
         "items": {
           "$ref": "#/$defs/DecisionView"
         },
         "title": "Decisions",
-        "type": "array"
+        "type": "array",
+        "description": "실행 결과를 보고 나중에 확정할 판단 목록. 정적 계획과 결과 기반 판단을 분리한다. 필수 필드."
       },
       "execution": {
-        "$ref": "#/$defs/PolicyView"
+        "$ref": "#/$defs/PolicyView",
+        "description": "새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다. 필수 필드."
       },
       "outputs": {
         "items": {
           "$ref": "#/$defs/OutputView"
         },
         "title": "Outputs",
-        "type": "array"
+        "type": "array",
+        "description": "PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다. 필수 필드."
       }
     },
     "required": [
@@ -1361,18 +1502,21 @@
         "properties": {
           "decision_id": {
             "title": "Decision Id",
-            "type": "string"
+            "type": "string",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 필수 필드."
           },
           "evidence_steps": {
             "items": {
               "type": "string"
             },
             "title": "Evidence Steps",
-            "type": "array"
+            "type": "array",
+            "description": "판단 또는 보고서가 근거로 사용할 Step ID 목록. 실제 실행 결과를 사용한다. 필수 필드."
           },
           "guidance": {
             "title": "Guidance",
-            "type": "string"
+            "type": "string",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -1384,13 +1528,15 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "status": {
             "const": "deferred",
             "default": "deferred",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 단계의 판단 상태. deferred는 실행 결과를 본 후 확정함을 뜻한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -1407,15 +1553,18 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "Workflow inputs의 입력 키. input_values의 동일 키로 최종값을 제출한다. 필수 필드."
           },
           "title": {
             "title": "Title",
-            "type": "string"
+            "type": "string",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -1423,15 +1572,18 @@
               "data_reference"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "입력 종류. parameter는 일반 값, data_reference는 서버가 접근을 확인한 데이터 참조다. 임의 파일 경로 입력과 구분한다. 필수 필드."
           },
           "required": {
             "title": "Required",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "이 입력 또는 산출물이 업무 실행에 필요한지 표시하는 boolean. 필드 자체의 필수 여부와 구분한다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -1443,7 +1595,8 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "origin": {
             "enum": [
@@ -1453,15 +1606,18 @@
               "unresolved"
             ],
             "title": "Origin",
-            "type": "string"
+            "type": "string",
+            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -1484,34 +1640,41 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "const": "plan_review",
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "open",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resume_token": {
             "format": "uuid",
             "title": "Resume Token",
-            "type": "string"
+            "type": "string",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 필수 필드."
           },
           "summary": {
             "title": "Summary",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 표시할 핵심 설명. 실제 상세 정보는 payload나 관련 필드를 함께 확인한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/ReviewPayload"
+            "$ref": "#/$defs/ReviewPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -1531,15 +1694,18 @@
         "properties": {
           "output_id": {
             "title": "Output Id",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 보여주는 예상 산출물의 ID. 필수 필드."
           },
           "kind": {
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 종류. analysis_result는 분석 반환값, dataset은 저장 데이터, report는 보고서다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "status": {
             "enum": [
@@ -1547,7 +1713,8 @@
               "excluded_by_user"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 계획 상태. planned 또는 excluded_by_user로 구분한다. 필수 필드."
           }
         },
         "required": [
@@ -1564,7 +1731,8 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -1575,15 +1743,18 @@
               "system_context"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "value_schema": {
             "anyOf": [
@@ -1599,7 +1770,8 @@
               }
             ],
             "default": null,
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "input_name": {
             "anyOf": [
@@ -1611,7 +1783,8 @@
               }
             ],
             "default": null,
-            "title": "Input Name"
+            "title": "Input Name",
+            "description": "이 인자가 참조하는 Workflow 입력 이름. 값은 대응하는 입력 필드에서 편집한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_id": {
             "anyOf": [
@@ -1623,7 +1796,8 @@
               }
             ],
             "default": null,
-            "title": "Step Id"
+            "title": "Step Id",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "selector": {
             "anyOf": [
@@ -1645,7 +1819,8 @@
               }
             ],
             "default": null,
-            "title": "Selector"
+            "title": "Selector",
+            "description": "이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "decision_id": {
             "anyOf": [
@@ -1657,7 +1832,8 @@
               }
             ],
             "default": null,
-            "title": "Decision Id"
+            "title": "Decision Id",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "guidance": {
             "anyOf": [
@@ -1669,7 +1845,8 @@
               }
             ],
             "default": null,
-            "title": "Guidance"
+            "title": "Guidance",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "context_key": {
             "anyOf": [
@@ -1681,7 +1858,8 @@
               }
             ],
             "default": null,
-            "title": "Context Key"
+            "title": "Context Key",
+            "description": "서버가 제공하는 실행 문맥 키. user_id/project_id/session_id/dataset_output_dir 등의 참조다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -1697,15 +1875,18 @@
         "properties": {
           "plan_id": {
             "title": "Plan Id",
-            "type": "string"
+            "type": "string",
+            "description": "서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다. 필수 필드."
           },
           "plan_revision": {
             "title": "Plan Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다. 필수 필드."
           },
           "workflow_id": {
             "title": "Workflow Id",
-            "type": "string"
+            "type": "string",
+            "description": "재사용 Workflow 정의를 식별하는 문자열. 기존 Workflow 관리 API의 DB UUID와 구분한다. 필수 필드."
           },
           "execution_kind": {
             "default": "registered",
@@ -1714,12 +1895,14 @@
               "free_code"
             ],
             "title": "Execution Kind",
-            "type": "string"
+            "type": "string",
+            "description": "registered는 등록 자산 조합, free_code는 실행별 자유 코드가 포함된 계획이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "workflow_eligible": {
             "default": true,
             "title": "Workflow Eligible",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록된 Skill·Tool만의 재사용 Workflow로 인정할 수 있는지 표시한다. 실행 성공과 별개이며 수정 소스·자유 코드는 적격이 아닐 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "approval_mode": {
             "default": "user",
@@ -1728,57 +1911,67 @@
               "configuration"
             ],
             "title": "Approval Mode",
-            "type": "string"
+            "type": "string",
+            "description": "user는 사용자 승인, configuration은 설정에 따른 승인 처리다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "definition_version": {
             "title": "Definition Version",
-            "type": "integer"
+            "type": "integer",
+            "description": "동일 Workflow 정의의 변경 버전. 승인 화면 편집 횟수나 Run ID가 아니다. 필수 필드."
           },
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
           },
           "goal": {
             "title": "Goal",
-            "type": "string"
+            "type": "string",
+            "description": "Workflow 또는 계획이 달성하려는 분석 목표. 필수 필드."
           },
           "skills": {
             "items": {
               "$ref": "#/$defs/SkillView"
             },
             "title": "Skills",
-            "type": "array"
+            "type": "array",
+            "description": "계획에 사용되는 등록 Skill 정보 목록. Skill은 Tool 묶음과 사용 지침을 제공한다. 필수 필드."
           },
           "inputs": {
             "items": {
               "$ref": "#/$defs/InputView"
             },
             "title": "Inputs",
-            "type": "array"
+            "type": "array",
+            "description": "새 Workflow에서는 입력 이름별 정의 객체, PlanView에서는 입력 필드 목록, legacy에서는 실행 입력값 객체다. 필수 필드."
           },
           "steps": {
             "items": {
               "$ref": "#/$defs/StepView"
             },
             "title": "Steps",
-            "type": "array"
+            "type": "array",
+            "description": "분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다. 필수 필드."
           },
           "decisions": {
             "items": {
               "$ref": "#/$defs/DecisionView"
             },
             "title": "Decisions",
-            "type": "array"
+            "type": "array",
+            "description": "실행 결과를 보고 나중에 확정할 판단 목록. 정적 계획과 결과 기반 판단을 분리한다. 필수 필드."
           },
           "execution": {
-            "$ref": "#/$defs/PolicyView"
+            "$ref": "#/$defs/PolicyView",
+            "description": "새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다. 필수 필드."
           },
           "outputs": {
             "items": {
               "$ref": "#/$defs/OutputView"
             },
             "title": "Outputs",
-            "type": "array"
+            "type": "array",
+            "description": "PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다. 필수 필드."
           }
         },
         "required": [
@@ -1804,21 +1997,25 @@
           "used": {
             "minimum": 0,
             "title": "Used",
-            "type": "integer"
+            "type": "integer",
+            "description": "이번 계획 흐름에서 사용한 재작성 횟수. 필수 필드."
           },
           "limit": {
             "maximum": 20,
             "minimum": 1,
             "title": "Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용된 계획 재작성 횟수 상한. 목록 조회 query의 limit와 구분한다. 필수 필드."
           },
           "free_code_allowed": {
             "title": "Free Code Allowed",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록 Tool 조합으로 해결되지 않을 때 자유 코드 계획을 허용하는지 표시한다. 필수 필드."
           },
           "free_code_require_approval": {
             "title": "Free Code Require Approval",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "자유 코드 계획을 실행하기 전에 사용자 승인을 요구하는지 표시한다. 필수 필드."
           }
         },
         "required": [
@@ -1839,19 +2036,23 @@
               "MULTI"
             ],
             "title": "Mode",
-            "type": "string"
+            "type": "string",
+            "description": "SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다. 필수 필드."
           },
           "repair_level": {
             "title": "Repair Level",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다. 필수 필드."
           },
           "max_repair_attempts": {
             "title": "Max Repair Attempts",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다. 필수 필드."
           },
           "review_mode": {
             "title": "Review Mode",
-            "type": "string"
+            "type": "string",
+            "description": "실행 결과 이후 확인 정책. decision_boundary/every_tool/every_n_tools을 구분한다. 일반적인 계획 최초 승인을 대체하지 않는다. 필수 필드."
           },
           "review_interval_tools": {
             "anyOf": [
@@ -1863,7 +2064,8 @@
               }
             ],
             "default": null,
-            "title": "Review Interval Tools"
+            "title": "Review Interval Tools",
+            "description": "review_mode=every_n_tools에서 몇 개 Tool마다 확인할지 정하는 값. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "allowed_modes": {
             "items": {
@@ -1874,15 +2076,18 @@
               "type": "string"
             },
             "title": "Allowed Modes",
-            "type": "array"
+            "type": "array",
+            "description": "현재 계획·서버 정책이 사용자에게 허용하는 실행 mode 목록. 필수 필드."
           },
           "repair_level_limit": {
             "title": "Repair Level Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 수준의 시스템 상한. 필수 필드."
           },
           "max_repair_attempts_limit": {
             "title": "Max Repair Attempts Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 횟수의 시스템 상한. 필수 필드."
           }
         },
         "required": [
@@ -1906,7 +2111,8 @@
             },
             "minItems": 1,
             "title": "Plans",
-            "type": "array"
+            "type": "array",
+            "description": "사용자에게 제시하는 코드 없는 PlanView 후보 목록. 설정된 최대 후보 수 범위에서 제시된다. 필수 필드."
           },
           "revision_policy": {
             "anyOf": [
@@ -1917,14 +2123,16 @@
                 "type": "null"
               }
             ],
-            "default": null
+            "default": null,
+            "description": "계획 재작성 횟수 및 자유 코드 전환 정책의 현재 적용값. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "notices": {
             "items": {
               "type": "string"
             },
             "title": "Notices",
-            "type": "array"
+            "type": "array",
+            "description": "화면에 함께 알려줄 안내 문자열 목록. 빈 배열이면 추가 안내가 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -1938,15 +2146,18 @@
         "properties": {
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           }
         },
         "required": [
@@ -1962,37 +2173,44 @@
         "properties": {
           "step_id": {
             "title": "Step Id",
-            "type": "string"
+            "type": "string",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "tool_id": {
             "title": "Tool Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 실행 가능한 Tool의 고유 식별자. 필수 필드."
           },
           "function_name": {
             "title": "Function Name",
-            "type": "string"
+            "type": "string",
+            "description": "Executor에서 실행할 Tool의 Python 함수 이름. 함수 본문은 공개 계획에 포함하지 않는다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "depends_on": {
             "items": {
               "type": "string"
             },
             "title": "Depends On",
-            "type": "array"
+            "type": "array",
+            "description": "먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다. 필수 필드."
           },
           "parameters": {
             "items": {
               "$ref": "#/$defs/ParameterView"
             },
             "title": "Parameters",
-            "type": "array"
+            "type": "array",
+            "description": "사용자에게 보여주는 Tool 함수 인자 목록. kind와 editable에 따라 값 표시·편집 UI를 구성한다. 필수 필드."
           },
           "when": {
             "anyOf": [
@@ -2005,7 +2223,8 @@
               }
             ],
             "default": null,
-            "title": "When"
+            "title": "When",
+            "description": "단계 또는 산출물의 조건. false이면 해당 항목을 실행/요구하지 않으며 자유 Python 조건문을 입력하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "status": {
             "enum": [
@@ -2013,7 +2232,8 @@
               "excluded"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 Step 상태. planned는 포함, excluded는 사용자가 제외한 단계다. 필수 필드."
           }
         },
         "required": [
@@ -2036,7 +2256,8 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "enum": [
@@ -2044,29 +2265,35 @@
           "interaction.updated"
         ],
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/InteractionData"
+        "$ref": "#/$defs/InteractionData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -2087,18 +2314,21 @@
         "properties": {
           "decision_id": {
             "title": "Decision Id",
-            "type": "string"
+            "type": "string",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 필수 필드."
           },
           "evidence_steps": {
             "items": {
               "type": "string"
             },
             "title": "Evidence Steps",
-            "type": "array"
+            "type": "array",
+            "description": "판단 또는 보고서가 근거로 사용할 Step ID 목록. 실제 실행 결과를 사용한다. 필수 필드."
           },
           "guidance": {
             "title": "Guidance",
-            "type": "string"
+            "type": "string",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -2110,13 +2340,15 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "status": {
             "const": "deferred",
             "default": "deferred",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 단계의 판단 상태. deferred는 실행 결과를 본 후 확정함을 뜻한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -2133,15 +2365,18 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "Workflow inputs의 입력 키. input_values의 동일 키로 최종값을 제출한다. 필수 필드."
           },
           "title": {
             "title": "Title",
-            "type": "string"
+            "type": "string",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -2149,15 +2384,18 @@
               "data_reference"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "입력 종류. parameter는 일반 값, data_reference는 서버가 접근을 확인한 데이터 참조다. 임의 파일 경로 입력과 구분한다. 필수 필드."
           },
           "required": {
             "title": "Required",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "이 입력 또는 산출물이 업무 실행에 필요한지 표시하는 boolean. 필드 자체의 필수 여부와 구분한다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -2169,7 +2407,8 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "origin": {
             "enum": [
@@ -2179,15 +2418,18 @@
               "unresolved"
             ],
             "title": "Origin",
-            "type": "string"
+            "type": "string",
+            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -2209,15 +2451,18 @@
         "properties": {
           "output_id": {
             "title": "Output Id",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 보여주는 예상 산출물의 ID. 필수 필드."
           },
           "kind": {
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 종류. analysis_result는 분석 반환값, dataset은 저장 데이터, report는 보고서다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "status": {
             "enum": [
@@ -2225,7 +2470,8 @@
               "excluded_by_user"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "산출물 계획 상태. planned 또는 excluded_by_user로 구분한다. 필수 필드."
           }
         },
         "required": [
@@ -2242,7 +2488,8 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -2253,15 +2500,18 @@
               "system_context"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "value_schema": {
             "anyOf": [
@@ -2277,7 +2527,8 @@
               }
             ],
             "default": null,
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "input_name": {
             "anyOf": [
@@ -2289,7 +2540,8 @@
               }
             ],
             "default": null,
-            "title": "Input Name"
+            "title": "Input Name",
+            "description": "이 인자가 참조하는 Workflow 입력 이름. 값은 대응하는 입력 필드에서 편집한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_id": {
             "anyOf": [
@@ -2301,7 +2553,8 @@
               }
             ],
             "default": null,
-            "title": "Step Id"
+            "title": "Step Id",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "selector": {
             "anyOf": [
@@ -2323,7 +2576,8 @@
               }
             ],
             "default": null,
-            "title": "Selector"
+            "title": "Selector",
+            "description": "이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "decision_id": {
             "anyOf": [
@@ -2335,7 +2589,8 @@
               }
             ],
             "default": null,
-            "title": "Decision Id"
+            "title": "Decision Id",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "guidance": {
             "anyOf": [
@@ -2347,7 +2602,8 @@
               }
             ],
             "default": null,
-            "title": "Guidance"
+            "title": "Guidance",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "context_key": {
             "anyOf": [
@@ -2359,7 +2615,8 @@
               }
             ],
             "default": null,
-            "title": "Context Key"
+            "title": "Context Key",
+            "description": "서버가 제공하는 실행 문맥 키. user_id/project_id/session_id/dataset_output_dir 등의 참조다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -2375,15 +2632,18 @@
         "properties": {
           "plan_id": {
             "title": "Plan Id",
-            "type": "string"
+            "type": "string",
+            "description": "서버가 생성한 계획 후보 ID. 사용자 선택·편집·승인 시 현재 화면의 값을 그대로 보낸다. 필수 필드."
           },
           "plan_revision": {
             "title": "Plan Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "계획 편집 버전. 현재 화면 값과 다르면 stale 요청으로 거절된다. 필수 필드."
           },
           "workflow_id": {
             "title": "Workflow Id",
-            "type": "string"
+            "type": "string",
+            "description": "재사용 Workflow 정의를 식별하는 문자열. 기존 Workflow 관리 API의 DB UUID와 구분한다. 필수 필드."
           },
           "execution_kind": {
             "default": "registered",
@@ -2392,12 +2652,14 @@
               "free_code"
             ],
             "title": "Execution Kind",
-            "type": "string"
+            "type": "string",
+            "description": "registered는 등록 자산 조합, free_code는 실행별 자유 코드가 포함된 계획이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "workflow_eligible": {
             "default": true,
             "title": "Workflow Eligible",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록된 Skill·Tool만의 재사용 Workflow로 인정할 수 있는지 표시한다. 실행 성공과 별개이며 수정 소스·자유 코드는 적격이 아닐 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "approval_mode": {
             "default": "user",
@@ -2406,57 +2668,67 @@
               "configuration"
             ],
             "title": "Approval Mode",
-            "type": "string"
+            "type": "string",
+            "description": "user는 사용자 승인, configuration은 설정에 따른 승인 처리다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "definition_version": {
             "title": "Definition Version",
-            "type": "integer"
+            "type": "integer",
+            "description": "동일 Workflow 정의의 변경 버전. 승인 화면 편집 횟수나 Run ID가 아니다. 필수 필드."
           },
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
           },
           "goal": {
             "title": "Goal",
-            "type": "string"
+            "type": "string",
+            "description": "Workflow 또는 계획이 달성하려는 분석 목표. 필수 필드."
           },
           "skills": {
             "items": {
               "$ref": "#/$defs/SkillView"
             },
             "title": "Skills",
-            "type": "array"
+            "type": "array",
+            "description": "계획에 사용되는 등록 Skill 정보 목록. Skill은 Tool 묶음과 사용 지침을 제공한다. 필수 필드."
           },
           "inputs": {
             "items": {
               "$ref": "#/$defs/InputView"
             },
             "title": "Inputs",
-            "type": "array"
+            "type": "array",
+            "description": "새 Workflow에서는 입력 이름별 정의 객체, PlanView에서는 입력 필드 목록, legacy에서는 실행 입력값 객체다. 필수 필드."
           },
           "steps": {
             "items": {
               "$ref": "#/$defs/StepView"
             },
             "title": "Steps",
-            "type": "array"
+            "type": "array",
+            "description": "분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다. 필수 필드."
           },
           "decisions": {
             "items": {
               "$ref": "#/$defs/DecisionView"
             },
             "title": "Decisions",
-            "type": "array"
+            "type": "array",
+            "description": "실행 결과를 보고 나중에 확정할 판단 목록. 정적 계획과 결과 기반 판단을 분리한다. 필수 필드."
           },
           "execution": {
-            "$ref": "#/$defs/PolicyView"
+            "$ref": "#/$defs/PolicyView",
+            "description": "새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다. 필수 필드."
           },
           "outputs": {
             "items": {
               "$ref": "#/$defs/OutputView"
             },
             "title": "Outputs",
-            "type": "array"
+            "type": "array",
+            "description": "PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다. 필수 필드."
           }
         },
         "required": [
@@ -2485,19 +2757,23 @@
               "MULTI"
             ],
             "title": "Mode",
-            "type": "string"
+            "type": "string",
+            "description": "SINGLE은 제출 계획을 한 실행 단위로, MULTI는 결과 판단·후속 Operation을 포함한 흐름으로 실행한다. 조건/decision은 MULTI가 필요하다. 필수 필드."
           },
           "repair_level": {
             "title": "Repair Level",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 자율성 수준 0~4. 상세 단계별 권한은 오류 수정 Runtime 문서를 따른다. 필수 필드."
           },
           "max_repair_attempts": {
             "title": "Max Repair Attempts",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용하는 오류 수정 시도 수. 무한 반복을 허용하지 않으며 서버 상한 이하만 가능하다. 필수 필드."
           },
           "review_mode": {
             "title": "Review Mode",
-            "type": "string"
+            "type": "string",
+            "description": "실행 결과 이후 확인 정책. decision_boundary/every_tool/every_n_tools을 구분한다. 일반적인 계획 최초 승인을 대체하지 않는다. 필수 필드."
           },
           "review_interval_tools": {
             "anyOf": [
@@ -2509,7 +2785,8 @@
               }
             ],
             "default": null,
-            "title": "Review Interval Tools"
+            "title": "Review Interval Tools",
+            "description": "review_mode=every_n_tools에서 몇 개 Tool마다 확인할지 정하는 값. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "allowed_modes": {
             "items": {
@@ -2520,15 +2797,18 @@
               "type": "string"
             },
             "title": "Allowed Modes",
-            "type": "array"
+            "type": "array",
+            "description": "현재 계획·서버 정책이 사용자에게 허용하는 실행 mode 목록. 필수 필드."
           },
           "repair_level_limit": {
             "title": "Repair Level Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 수준의 시스템 상한. 필수 필드."
           },
           "max_repair_attempts_limit": {
             "title": "Max Repair Attempts Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "사용자가 조정할 수 있는 오류 수정 횟수의 시스템 상한. 필수 필드."
           }
         },
         "required": [
@@ -2549,22 +2829,26 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "const": "plan_review",
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "resolved",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resolution": {
             "enum": [
@@ -2572,10 +2856,12 @@
               "auto_approved"
             ],
             "title": "Resolution",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 처리 결과. approved/auto_approved/replanning/answered/rejected 등으로 화면 처리를 구분한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/ResolutionPayload"
+            "$ref": "#/$defs/ResolutionPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -2593,14 +2879,16 @@
         "additionalProperties": false,
         "properties": {
           "approved_plan": {
-            "$ref": "#/$defs/PlanView"
+            "$ref": "#/$defs/PlanView",
+            "description": "승인된 계획의 공개 PlanView. 실행에 필요한 소스까지 고정한 내부 approved snapshot과 다르며 Python 코드를 노출하지 않는다. 필수 필드."
           },
           "notices": {
             "items": {
               "type": "string"
             },
             "title": "Notices",
-            "type": "array"
+            "type": "array",
+            "description": "화면에 함께 알려줄 안내 문자열 목록. 빈 배열이면 추가 안내가 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -2614,15 +2902,18 @@
         "properties": {
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           }
         },
         "required": [
@@ -2638,37 +2929,44 @@
         "properties": {
           "step_id": {
             "title": "Step Id",
-            "type": "string"
+            "type": "string",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "tool_id": {
             "title": "Tool Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 실행 가능한 Tool의 고유 식별자. 필수 필드."
           },
           "function_name": {
             "title": "Function Name",
-            "type": "string"
+            "type": "string",
+            "description": "Executor에서 실행할 Tool의 Python 함수 이름. 함수 본문은 공개 계획에 포함하지 않는다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "depends_on": {
             "items": {
               "type": "string"
             },
             "title": "Depends On",
-            "type": "array"
+            "type": "array",
+            "description": "먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다. 필수 필드."
           },
           "parameters": {
             "items": {
               "$ref": "#/$defs/ParameterView"
             },
             "title": "Parameters",
-            "type": "array"
+            "type": "array",
+            "description": "사용자에게 보여주는 Tool 함수 인자 목록. kind와 editable에 따라 값 표시·편집 UI를 구성한다. 필수 필드."
           },
           "when": {
             "anyOf": [
@@ -2681,7 +2979,8 @@
               }
             ],
             "default": null,
-            "title": "When"
+            "title": "When",
+            "description": "단계 또는 산출물의 조건. false이면 해당 항목을 실행/요구하지 않으며 자유 Python 조건문을 입력하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "status": {
             "enum": [
@@ -2689,7 +2988,8 @@
               "excluded"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 Step 상태. planned는 포함, excluded는 사용자가 제외한 단계다. 필수 필드."
           }
         },
         "required": [
@@ -2712,34 +3012,41 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "const": "interaction.resolved",
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/ResolutionData"
+        "$ref": "#/$defs/ResolutionData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -2761,12 +3068,14 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -2774,12 +3083,14 @@
               "planning_question"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "resolved",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resolution": {
             "enum": [
@@ -2787,10 +3098,12 @@
               "answered"
             ],
             "title": "Resolution",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 처리 결과. approved/auto_approved/replanning/answered/rejected 등으로 화면 처리를 구분한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/PlanningTransitionPayload"
+            "$ref": "#/$defs/PlanningTransitionPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -2812,7 +3125,8 @@
               "type": "string"
             },
             "title": "Notices",
-            "type": "array"
+            "type": "array",
+            "description": "화면에 함께 알려줄 안내 문자열 목록. 빈 배열이면 추가 안내가 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "title": "PlanningTransitionPayload",
@@ -2825,34 +3139,41 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "const": "interaction.resolved",
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/PlanningTransitionData"
+        "$ref": "#/$defs/PlanningTransitionData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -2873,18 +3194,21 @@
         "properties": {
           "decision_id": {
             "title": "Decision Id",
-            "type": "string"
+            "type": "string",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 필수 필드."
           },
           "guidance": {
             "title": "Guidance",
-            "type": "string"
+            "type": "string",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 필수 필드."
           },
           "evidence_steps": {
             "items": {
               "type": "string"
             },
             "title": "Evidence Steps",
-            "type": "array"
+            "type": "array",
+            "description": "판단 또는 보고서가 근거로 사용할 Step ID 목록. 실제 실행 결과를 사용한다. 필수 필드."
           },
           "value_schema": {
             "anyOf": [
@@ -2896,15 +3220,18 @@
                 "type": "boolean"
               }
             ],
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -2923,34 +3250,41 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "const": "decision_review",
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "open",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resume_token": {
             "format": "uuid",
             "title": "Resume Token",
-            "type": "string"
+            "type": "string",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 필수 필드."
           },
           "summary": {
             "title": "Summary",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 표시할 핵심 설명. 실제 상세 정보는 payload나 관련 필드를 함께 확인한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/DecisionPayload"
+            "$ref": "#/$defs/DecisionPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -2975,7 +3309,8 @@
             "maxItems": 100,
             "minItems": 1,
             "title": "Decisions",
-            "type": "array"
+            "type": "array",
+            "description": "실행 결과를 보고 나중에 확정할 판단 목록. 정적 계획과 결과 기반 판단을 분리한다. 필수 필드."
           }
         },
         "required": [
@@ -2991,34 +3326,41 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "const": "interaction.opened",
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/DecisionInteractionData"
+        "$ref": "#/$defs/DecisionInteractionData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -3039,7 +3381,8 @@
         "properties": {
           "name": {
             "title": "Name",
-            "type": "string"
+            "type": "string",
+            "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
           },
           "kind": {
             "enum": [
@@ -3050,15 +3393,18 @@
               "system_context"
             ],
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드."
           },
           "editable": {
             "title": "Editable",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "사용자가 수정할 수 있는지 표시한다. true여도 value_schema 및 실행 정책 검증을 통과해야 한다. 필수 필드."
           },
           "value": {
             "default": null,
-            "title": "Value"
+            "title": "Value",
+            "description": "직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "value_schema": {
             "anyOf": [
@@ -3074,7 +3420,8 @@
               }
             ],
             "default": null,
-            "title": "Value Schema"
+            "title": "Value Schema",
+            "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "input_name": {
             "anyOf": [
@@ -3086,7 +3433,8 @@
               }
             ],
             "default": null,
-            "title": "Input Name"
+            "title": "Input Name",
+            "description": "이 인자가 참조하는 Workflow 입력 이름. 값은 대응하는 입력 필드에서 편집한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "step_id": {
             "anyOf": [
@@ -3098,7 +3446,8 @@
               }
             ],
             "default": null,
-            "title": "Step Id"
+            "title": "Step Id",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "selector": {
             "anyOf": [
@@ -3120,7 +3469,8 @@
               }
             ],
             "default": null,
-            "title": "Selector"
+            "title": "Selector",
+            "description": "이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "decision_id": {
             "anyOf": [
@@ -3132,7 +3482,8 @@
               }
             ],
             "default": null,
-            "title": "Decision Id"
+            "title": "Decision Id",
+            "description": "결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "guidance": {
             "anyOf": [
@@ -3144,7 +3495,8 @@
               }
             ],
             "default": null,
-            "title": "Guidance"
+            "title": "Guidance",
+            "description": "Agent 판단 또는 지연 파라미터 선택에 적용할 지침. 사용자에게 선택 근거와 함께 보여줄 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "context_key": {
             "anyOf": [
@@ -3156,7 +3508,8 @@
               }
             ],
             "default": null,
-            "title": "Context Key"
+            "title": "Context Key",
+            "description": "서버가 제공하는 실행 문맥 키. user_id/project_id/session_id/dataset_output_dir 등의 참조다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -3173,34 +3526,41 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "const": "repair_review",
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "open",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resume_token": {
             "format": "uuid",
             "title": "Resume Token",
-            "type": "string"
+            "type": "string",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 필수 필드."
           },
           "summary": {
             "title": "Summary",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 표시할 핵심 설명. 실제 상세 정보는 payload나 관련 필드를 함께 확인한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/RepairPayload"
+            "$ref": "#/$defs/RepairPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -3220,73 +3580,87 @@
         "properties": {
           "proposal_sha256": {
             "title": "Proposal Sha256",
-            "type": "string"
+            "type": "string",
+            "description": "승인·거절할 수정 제안의 64자리 소문자 SHA-256. 다른 제안에 동의가 적용되지 않게 한다. 필수 필드."
           },
           "attempt": {
             "title": "Attempt",
-            "type": "integer"
+            "type": "integer",
+            "description": "현재 제시된 수정 시도 번호. 수정 이력·횟수 상한과 함께 확인한다. 필수 필드."
           },
           "max_attempts": {
             "title": "Max Attempts",
-            "type": "integer"
+            "type": "integer",
+            "description": "현재 오류 수정 흐름에 적용된 최대 시도 수. 필수 필드."
           },
           "authorized_level": {
             "title": "Authorized Level",
-            "type": "integer"
+            "type": "integer",
+            "description": "현재 사용자·정책이 승인한 오류 수정 수준. 필수 필드."
           },
           "required_level": {
             "title": "Required Level",
-            "type": "integer"
+            "type": "integer",
+            "description": "이번 수정 제안을 수행하는 데 필요한 최소 수정 수준. 필수 필드."
           },
           "requires_policy_escalation": {
             "title": "Requires Policy Escalation",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "이번 제안에 현재 승인 수준보다 높은 권한이 필요한지 표시한다. 필수 필드."
           },
           "summary": {
             "title": "Summary",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 표시할 핵심 설명. 실제 상세 정보는 payload나 관련 필드를 함께 확인한다. 필수 필드."
           },
           "failed_step_ids": {
             "items": {
               "type": "string"
             },
             "title": "Failed Step Ids",
-            "type": "array"
+            "type": "array",
+            "description": "수정 제안의 원인이 된 실패 Step ID 목록. 필수 필드."
           },
           "completed_step_ids": {
             "items": {
               "type": "string"
             },
             "title": "Completed Step Ids",
-            "type": "array"
+            "type": "array",
+            "description": "이미 완료된 Step ID 목록. 무조건 다시 실행할 대상으로 보지 않는다. 필수 필드."
           },
           "changed_step_ids": {
             "items": {
               "type": "string"
             },
             "title": "Changed Step Ids",
-            "type": "array"
+            "type": "array",
+            "description": "이번 수정 제안에서 변경되는 Step ID 목록. 필수 필드."
           },
           "steps": {
             "items": {
               "$ref": "#/$defs/StepView"
             },
             "title": "Steps",
-            "type": "array"
+            "type": "array",
+            "description": "분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다. 필수 필드."
           },
           "source_modified": {
             "title": "Source Modified",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록 함수 원문을 수정하는 제안인지 표시한다. Workflow 적격 여부에 영향을 준다. 필수 필드."
           },
           "workflow_eligible": {
             "title": "Workflow Eligible",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록된 Skill·Tool만의 재사용 Workflow로 인정할 수 있는지 표시한다. 실행 성공과 별개이며 수정 소스·자유 코드는 적격이 아닐 수 있다. 필수 필드."
           },
           "validation_scope": {
             "const": "structure_and_bindings",
             "default": "structure_and_bindings",
             "title": "Validation Scope",
-            "type": "string"
+            "type": "string",
+            "description": "제안이나 결과에 대해 검증한 범위. 의미적 정확성이나 Python sandbox 보장을 뜻하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -3312,37 +3686,44 @@
         "properties": {
           "step_id": {
             "title": "Step Id",
-            "type": "string"
+            "type": "string",
+            "description": "대상 Step의 ID. 편집 대상으로 지정하거나 이전 결과·의존성·근거를 참조할 때 쓴다. 필수 필드."
           },
           "skill_id": {
             "title": "Skill Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 Skill의 고유 식별자. 그 Skill에 속한 Tool을 참조해야 한다. 필수 필드."
           },
           "tool_id": {
             "title": "Tool Id",
-            "type": "string"
+            "type": "string",
+            "description": "레포에 등록된 실행 가능한 Tool의 고유 식별자. 필수 필드."
           },
           "function_name": {
             "title": "Function Name",
-            "type": "string"
+            "type": "string",
+            "description": "Executor에서 실행할 Tool의 Python 함수 이름. 함수 본문은 공개 계획에 포함하지 않는다. 필수 필드."
           },
           "description": {
             "title": "Description",
-            "type": "string"
+            "type": "string",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 필수 필드."
           },
           "depends_on": {
             "items": {
               "type": "string"
             },
             "title": "Depends On",
-            "type": "array"
+            "type": "array",
+            "description": "먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다. 필수 필드."
           },
           "parameters": {
             "items": {
               "$ref": "#/$defs/ParameterView"
             },
             "title": "Parameters",
-            "type": "array"
+            "type": "array",
+            "description": "사용자에게 보여주는 Tool 함수 인자 목록. kind와 editable에 따라 값 표시·편집 UI를 구성한다. 필수 필드."
           },
           "when": {
             "anyOf": [
@@ -3355,7 +3736,8 @@
               }
             ],
             "default": null,
-            "title": "When"
+            "title": "When",
+            "description": "단계 또는 산출물의 조건. false이면 해당 항목을 실행/요구하지 않으며 자유 Python 조건문을 입력하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "status": {
             "enum": [
@@ -3363,7 +3745,8 @@
               "excluded"
             ],
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "계획 Step 상태. planned는 포함, excluded는 사용자가 제외한 단계다. 필수 필드."
           }
         },
         "required": [
@@ -3386,34 +3769,41 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "const": "interaction.opened",
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/RepairInteractionData"
+        "$ref": "#/$defs/RepairInteractionData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [
@@ -3435,34 +3825,41 @@
           "interaction_id": {
             "format": "uuid",
             "title": "Interaction Id",
-            "type": "string"
+            "type": "string",
+            "description": "현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다. 필수 필드."
           },
           "revision": {
             "minimum": 1,
             "title": "Revision",
-            "type": "integer"
+            "type": "integer",
+            "description": "HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다. 필수 필드."
           },
           "kind": {
             "const": "planning_question",
             "title": "Kind",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 종류. plan_review=계획, planning_question=추가 질문, decision_review=결과 판단, repair_review=오류 수정 확인이다. 필수 필드."
           },
           "status": {
             "const": "open",
             "title": "Status",
-            "type": "string"
+            "type": "string",
+            "description": "HITL 화면 상태. open은 응답 대기, resolved는 해당 확인 절차 종료다. 필수 필드."
           },
           "resume_token": {
             "format": "uuid",
             "title": "Resume Token",
-            "type": "string"
+            "type": "string",
+            "description": "현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다. 필수 필드."
           },
           "summary": {
             "title": "Summary",
-            "type": "string"
+            "type": "string",
+            "description": "사용자에게 표시할 핵심 설명. 실제 상세 정보는 payload나 관련 필드를 함께 확인한다. 필수 필드."
           },
           "payload": {
-            "$ref": "#/$defs/ClarificationPayload"
+            "$ref": "#/$defs/ClarificationPayload",
+            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
           }
         },
         "required": [
@@ -3489,20 +3886,23 @@
                 "type": "null"
               }
             ],
-            "default": null
+            "default": null,
+            "description": "계획 재작성 횟수 및 자유 코드 전환 정책의 현재 적용값. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "question": {
             "maxLength": 12000,
             "minLength": 1,
             "title": "Question",
-            "type": "string"
+            "type": "string",
+            "description": "Agent가 사용자에게 묻는 추가 질문 본문. 필수 필드."
           },
           "notices": {
             "items": {
               "type": "string"
             },
             "title": "Notices",
-            "type": "array"
+            "type": "array",
+            "description": "화면에 함께 알려줄 안내 문자열 목록. 빈 배열이면 추가 안내가 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           }
         },
         "required": [
@@ -3517,21 +3917,25 @@
           "used": {
             "minimum": 0,
             "title": "Used",
-            "type": "integer"
+            "type": "integer",
+            "description": "이번 계획 흐름에서 사용한 재작성 횟수. 필수 필드."
           },
           "limit": {
             "maximum": 20,
             "minimum": 1,
             "title": "Limit",
-            "type": "integer"
+            "type": "integer",
+            "description": "허용된 계획 재작성 횟수 상한. 목록 조회 query의 limit와 구분한다. 필수 필드."
           },
           "free_code_allowed": {
             "title": "Free Code Allowed",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "등록 Tool 조합으로 해결되지 않을 때 자유 코드 계획을 허용하는지 표시한다. 필수 필드."
           },
           "free_code_require_approval": {
             "title": "Free Code Require Approval",
-            "type": "boolean"
+            "type": "boolean",
+            "description": "자유 코드 계획을 실행하기 전에 사용자 승인을 요구하는지 표시한다. 필수 필드."
           }
         },
         "required": [
@@ -3550,7 +3954,8 @@
         "const": 1,
         "default": 1,
         "title": "Schema Version",
-        "type": "integer"
+        "type": "integer",
+        "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
       },
       "type": {
         "enum": [
@@ -3558,29 +3963,35 @@
           "interaction.updated"
         ],
         "title": "Type",
-        "type": "string"
+        "type": "string",
+        "description": "SSE 이벤트 이름. interaction.opened/updated/resolved 등 이벤트 처리 종류를 구분한다. 필수 필드."
       },
       "sequence": {
         "minimum": 1,
         "title": "Sequence",
-        "type": "integer"
+        "type": "integer",
+        "description": "저장 SSE 이벤트의 순번. 실제 전송의 id 및 재연결 Last-Event-ID에 대응한다. 필수 필드."
       },
       "session_id": {
         "format": "uuid",
         "title": "Session Id",
-        "type": "string"
+        "type": "string",
+        "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
       },
       "run_id": {
         "format": "uuid",
         "title": "Run Id",
-        "type": "string"
+        "type": "string",
+        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
       },
       "occurred_at": {
         "title": "Occurred At",
-        "type": "string"
+        "type": "string",
+        "description": "저장 이벤트 발생 시각. 현재 상태 snapshot에는 없는 필드다. 필수 필드."
       },
       "data": {
-        "$ref": "#/$defs/ClarificationData"
+        "$ref": "#/$defs/ClarificationData",
+        "description": "SSE 이벤트의 실제 payload. type/kind에 따라 메시지·HITL·현재 Run 상태 등 구조가 달라진다. 필수 필드."
       }
     },
     "required": [

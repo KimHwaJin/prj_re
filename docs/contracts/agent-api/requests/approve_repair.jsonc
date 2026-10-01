@@ -1,0 +1,23 @@
+// 필드별 한국어 설명. 문서용 JSONC이며 API 제출에는 같은 이름의 .json을 사용한다.
+{
+  // 사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다.
+  "run_id": "11111111-1111-4111-8111-111111111111",
+  // 현재 사용자 재개 대상을 확인하는 UUID 토큰. 서버가 내려준 최신 값을 사용한다. 로그인 인증 토큰이 아니다.
+  "resume_token": "33333333-3333-4333-8333-333333333333",
+  // 기존 Run의 HITL 응답 명령 객체. 새 입력 input과 함께 보내지 않는다.
+  "command": {
+    // 현재 대기에 맞는 action과 필드를 담은 재개 명령. 아무 액션이나 모든 화면에 보낼 수 없다.
+    "resume": {
+      // 재개 행위 종류. edit_plan/approve_plan/replan/answer_clarification/approve_decisions/approve_repair/reject_repair 중 현재 화면에 맞는 값을 쓴다.
+      "action": "approve_repair",
+      // 현재 HITL 확인 화면을 식별하는 UUID. 질문·판단·수정 액션은 이 화면을 대상으로 한다.
+      "interaction_id": "44444444-4444-4444-8444-444444444444",
+      // HITL 화면 버전. plan_revision 및 Workflow definition_version과 별개다.
+      "revision": 1,
+      // 승인·거절할 수정 제안의 64자리 소문자 SHA-256. 다른 제안에 동의가 적용되지 않게 한다.
+      "proposal_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      // 제안이 현재 수정 권한보다 높은 수준을 요구할 때 명시적으로 동의하는 값. 기본 false이며 시스템 상한은 넘을 수 없다.
+      "allow_policy_escalation": true
+    }
+  }
+}

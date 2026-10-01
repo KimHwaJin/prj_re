@@ -1,0 +1,127 @@
+// 필드별 한국어 설명. 문서용 JSONC이며 API 제출에는 같은 이름의 .json을 사용한다.
+{
+  // 계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다.
+  "schema_version": "1.3",
+  // 기존 1.3 문서의 실제 Workflow 정의 wrapper. 새 2.0-draft는 이 wrapper 없이 루트에 정의한다.
+  "workflow": {
+    // legacy Workflow 또는 Tool의 정의 ID. DB에 저장된 Workflow resource UUID와 구분한다.
+    "id": "legacy_quality",
+    // 해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다.
+    "name": "과거 저장 API 형식 예제",
+    // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+    "description": "신규 저작용 권장 형식이 아닌 기존 CRUD 구조 설명.",
+    // Workflow 또는 계획이 달성하려는 분석 목표.
+    "goal": "저장된 데이터 로드",
+    // 이 객체의 현재 상태. Run 실행 상태, HITL open/resolved, 계획 Step planned/excluded 등 문맥별로 값이 다르다.
+    "status": "needs_input",
+    // legacy Workflow의 실행 모드. 새 규격 execution.mode와 구분한다.
+    "execution_mode": "static",
+    // legacy 입력 이름별 타입·필수 여부·추론·검증 규칙.
+    "input_schema": {
+      // legacy 입력 이름 dataset_uri의 타입·필수 여부·추론 규칙.
+      "dataset_uri": {
+        // 콘텐츠 블록에서는 text/image/file, SSE envelope에서는 이벤트 이름을 구분한다. 이 객체의 실제 값을 기준으로 해석한다.
+        "type": "str",
+        // 업무 입력·산출물에서는 필요한지 나타내는 boolean. JSON Schema에서는 필수 필드 이름 배열이다.
+        "required": true,
+        // legacy 입력을 LLM이 추론하여 채워도 되는지 정의한다.
+        "allow_llm_inference": false,
+        // legacy 입력에 적용할 검증 규칙 목록.
+        "validation": []
+      }
+    },
+    // 새 Workflow에서는 입력 이름별 정의 객체, PlanView에서는 입력 필드 목록, legacy에서는 실행 입력값 객체다.
+    "inputs": {
+    },
+    // legacy 입력값의 출처를 기록하는 객체.
+    "input_provenance": {
+    },
+    // legacy에서 아직 정해지지 않은 입력의 질문 목록.
+    "unresolved_inputs": [
+      {
+        // 해당 입력·계획·Skill·함수 인자 등의 이름. binding의 name은 Workflow 입력 키를 참조한다.
+        "name": "dataset_uri",
+        // Agent가 사용자에게 묻는 추가 질문 본문.
+        "question": "분석할 데이터 참조를 확인해주세요.",
+        // 이 입력이 필요한 legacy Step/Tool 참조 목록.
+        "required_for": [
+          "load"
+        ]
+      }
+    ],
+    // legacy 실행에 사용하는 추가 문맥 객체.
+    "context": {
+    },
+    // 분석 단계 목록. 새 Workflow의 Step은 하나의 등록 Tool을 참조하며 depends_on으로 선후관계를 정한다.
+    "steps": [
+      {
+        // Workflow 내부 Step의 고유 문자열 ID. depends_on·step_output이 참조한다.
+        "id": "load",
+        // legacy Step/Tool 표시·실행 순서 번호. 새 규격은 의존성 관계를 사용한다.
+        "order": 1,
+        // legacy에서 참조하는 Skill 이름.
+        "skill": "data_load",
+        // legacy Skill 문서 소스 경로. 새 정의는 skill_id를 사용한다.
+        "skill_source": "src/agent_service/agents/analysis/workflow/skills/data_io/data_load.md",
+        // 먼저 완료되어야 하는 Step ID 목록. 단순 배열 순서와 구분되며 순환 의존성은 허용하지 않는다.
+        "depends_on": [],
+        // 새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다.
+        "execution": "always",
+        // legacy Step 내부에 배치한 Tool 목록. 새 Step의 단일 tool_id와 구분한다.
+        "tools": [
+          {
+            // Workflow 내부 Step의 고유 문자열 ID. depends_on·step_output이 참조한다.
+            "id": "load.data",
+            // legacy Step/Tool 표시·실행 순서 번호. 새 규격은 의존성 관계를 사용한다.
+            "order": 1,
+            // legacy에서 실행할 Tool 함수 이름.
+            "tool": "data_load",
+            // legacy Tool의 출처 구분. 예제 registry는 등록 자산을 의미한다.
+            "tool_origin": "registry",
+            // legacy Tool 함수 소스 경로. 새 정의는 tool_id로 등록 자산을 해석한다.
+            "tool_source": "src/agent_service/agents/analysis/workflow/tools/data_io/data_load.py",
+            // legacy에서 이 Tool을 선택한 이유.
+            "selection_reason": "데이터 로드",
+            // 새 Workflow/PlanView에서는 실행 정책 객체. legacy Step/Tool에서는 실행 조건 값이다.
+            "execution": "always",
+            // 새 Workflow에서는 실제 함수 인자 이름별 binding. legacy에서는 인자 값 또는 참조가 들어간다.
+            "arguments": {
+              // Tool 함수 인자 parquet_path의 값/출처 binding.
+              "parquet_path": "dataset_uri"
+            },
+            // legacy 함수 인자 이름별 값의 출처 구분.
+            "argument_sources": {
+              // Tool 함수 인자 parquet_path의 legacy 값 출처.
+              "parquet_path": "workflow_input"
+            },
+            // legacy Tool 반환값을 변수·출력으로 연결하는 규칙.
+            "returns": {
+              // legacy Tool 반환값 전체를 보관할 변수 이름.
+              "result_variable": "loaded_data",
+              // PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다.
+              "outputs": {
+                // legacy 출력 이름 data와 결과 참조/변수의 연결.
+                "data": {
+                  // 이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다.
+                  "selector": "$",
+                  // legacy 반환값 또는 추출값을 연결할 변수 이름.
+                  "variable": "loaded_data"
+                }
+              }
+            }
+          }
+        ],
+        // PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다.
+        "outputs": {
+          // legacy 출력 이름 data와 결과 참조/변수의 연결.
+          "data": "load.data.data"
+        }
+      }
+    ],
+    // PlanView에서는 예상 산출물 목록. legacy에서는 출력 이름과 결과 참조의 매핑이다.
+    "outputs": {
+      // legacy 출력 이름 data와 결과 참조/변수의 연결.
+      "data": "load.data.data"
+    }
+  }
+}

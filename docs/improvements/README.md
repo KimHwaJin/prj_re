@@ -4,7 +4,7 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 45개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 개발 기준: `feature/refactor-base`. 2026-10-01에 038~046을 `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289`까지 fast-forward 통합하고 베이스·새 파생 9개 브랜치를 origin에 게시했다. 원격 10개 브랜치 SHA가 로컬과 일치함을 확인했다. 현재 작업 트리도 베이스를 사용한다. [046 통합·검증 기록](046-api-workflow-reference.md)과 [현재 Agent API](../public-run-api.md)·[Workflow JSON](../workflow-json-reference.md)을 따른다. 아래 항목·기록의 이전 병합/게시 상태는 각 작업 완료 당시의 이력이다. 사내 SDK와 후속 기능의 미구현 상태는 유지된다.
+현재 작업 브랜치: `feature/contract-field-comments` (047). `feature/refactor-base`의 `59f1e8082adbe11b081c2bd5d581440ccada2932`에서 분기했다. API·Workflow의 모든 필드에 문맥별 한국어 주석을 추가하고 JSON/JSONC 동일성과 schema 검증 규칙을 확인한다. 038~046의 병합·게시 이력은 [046 기록](046-api-workflow-reference.md)을 따른다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
 041 구현 commit: `7035a0edb93ec354a13acf3114e8f800ede84c8c`. [작업 결과](041-agentic-plan-revision.md).
@@ -76,6 +76,7 @@
 | 044 | 후속 설명·보고서의 실제 근거·수치 | 값 근거·전체 회귀·실제 연계 완료 / 정성·후속 성능 보완 필요 | 2026-10-01 | [작업 결과](044-agentic-answer-grounding.md) |
 | 045 | SSO 쿠키 인증·Redis 로그인 세션·Swagger | 서비스 구현·881개 회귀·wheel 검증 완료 / 사내 SDK 연결·실제 SSO 검증 필요 | 2026-10-01 | [작업 기록](045-sso-authentication.md) |
 | 046 | Agent API·Workflow JSON 현재 명세·예제 | 문서·schema·예제·97개 회귀/wheel 검증 완료 / 베이스 병합·원격 게시 확인 | 2026-10-01 | [작업 기록](046-api-workflow-reference.md) |
+| 047 | API·Workflow 전체 필드 주석 | 주석·동일성·46개 회귀 검증 완료 / 병합·게시 예정 | 2026-10-01 | [작업 기록](047-contract-field-comments.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
