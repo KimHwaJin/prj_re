@@ -2,9 +2,9 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
+작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 45개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 작업 브랜치: `feature/api-workflow-docs` (046). 045의 검증 완료 문서 commit `0e35b625644e904f8e7e0c5497d1d4a9cf07dedd`에서 분기했다. Agent API 전체와 새 Workflow JSON/기존 CRUD 차이를 현재 코드 기준으로 정리하고 요청·응답·SSE 예제와 schema를 검증한다. 038~045가 이 브랜치의 조상으로 포함되어 있으며 문서 완료 후 feature/refactor-base에 통합하고 origin에 게시한다. 사내 SDK와 후속 기능의 미구현 상태는 각 안내를 따른다.
+현재 개발 기준: `feature/refactor-base`. 2026-10-01에 038~046을 `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289`까지 fast-forward 통합하고 베이스·새 파생 9개 브랜치를 origin에 게시했다. 원격 10개 브랜치 SHA가 로컬과 일치함을 확인했다. 현재 작업 트리도 베이스를 사용한다. [046 통합·검증 기록](046-api-workflow-reference.md)과 [현재 Agent API](../public-run-api.md)·[Workflow JSON](../workflow-json-reference.md)을 따른다. 아래 항목·기록의 이전 병합/게시 상태는 각 작업 완료 당시의 이력이다. 사내 SDK와 후속 기능의 미구현 상태는 유지된다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
 041 구현 commit: `7035a0edb93ec354a13acf3114e8f800ede84c8c`. [작업 결과](041-agentic-plan-revision.md).
@@ -69,13 +69,13 @@
 | 037 | 계획 승인 화면·수정 요청·Executor 제출 계약 | 개발용 prototype·오프라인/소규모 Tool/Executor 요청 모델 검증 완료 / 서비스 미연결·베이스 병합 완료 | 2026-09-30 | [작업 기록](037-plan-interaction-executor-contract.md) |
 | 038 | 실제 모델 기반 계획·HITL·통합 Run/SSE Runtime | 계획 승인 단계 구현·실제 모델/DB/SSE/Phoenix·회귀/wheel 검증 완료 / Executor 이행 전 | 2026-09-30 | [변경·검증·제한](038-agentic-planning-runtime.md) |
 | 039 | 승인 snapshot의 Executor 실행·결과 판단·decision HITL·리포트 | 구현·실제 서비스/688 회귀/wheel 검증 완료, 미배포 | 2026-09-30 | [작업 기록](039-agentic-executor-runtime.md) |
-| 040 | MULTI 실패 분석·수정 승인·후속 실행 | 구현/712개 회귀·실제 Executor 8개·실제 수정 모델/wheel 검증, 베이스 미병합 | 2026-10-01 | [040 기록](040-agentic-execution-repair.md) |
-| 041 | 실행 전 자연어 재작성·추가 질문·자유 코드 계획 | 구현/727 회귀·실제 Executor 5개·실제 재작성 모델·wheel 검증, 베이스 미병합 | 2026-10-01 | [041 기록](041-agentic-plan-revision.md) |
+| 040 | MULTI 실패 분석·수정 승인·후속 실행 | 구현/712개 회귀·실제 Executor 8개·실제 수정 모델/wheel 검증, 베이스 병합·게시 완료 | 2026-10-01 | [040 기록](040-agentic-execution-repair.md) |
+| 041 | 실행 전 자연어 재작성·추가 질문·자유 코드 계획 | 구현/727 회귀·실제 Executor 5개·실제 재작성 모델·wheel 검증, 베이스 병합·게시 완료 | 2026-10-01 | [041 기록](041-agentic-plan-revision.md) |
 | 042 | 전처리 데이터 등록·조회·범위·버전 계약 초안 | 오프라인 계약/관련 127개 검증, 실제 Executor API·Agent 연계 미구현 | 2026-10-01 | [042 기록](042-dataset-registry-contract.md) |
-| 043 | 완료 분석의 후속 대화 문맥·결과 판단 검증 | 구현·801개 회귀·실제 Executor/LLM·후속 대화·wheel 검증, 베이스 미병합 | 2026-10-01 | [043 기록](043-session-analysis-context.md) |
+| 043 | 완료 분석의 후속 대화 문맥·결과 판단 검증 | 구현·801개 회귀·실제 Executor/LLM·후속 대화·wheel 검증, 베이스 병합·게시 완료 | 2026-10-01 | [043 기록](043-session-analysis-context.md) |
 | 044 | 후속 설명·보고서의 실제 근거·수치 | 값 근거·전체 회귀·실제 연계 완료 / 정성·후속 성능 보완 필요 | 2026-10-01 | [작업 결과](044-agentic-answer-grounding.md) |
 | 045 | SSO 쿠키 인증·Redis 로그인 세션·Swagger | 서비스 구현·881개 회귀·wheel 검증 완료 / 사내 SDK 연결·실제 SSO 검증 필요 | 2026-10-01 | [작업 기록](045-sso-authentication.md) |
-| 046 | Agent API·Workflow JSON 현재 명세·예제 | 문서·schema·예제·97개 회귀/wheel 검증 완료 / 베이스 통합·원격 게시 예정 | 2026-10-01 | [작업 기록](046-api-workflow-reference.md) |
+| 046 | Agent API·Workflow JSON 현재 명세·예제 | 문서·schema·예제·97개 회귀/wheel 검증 완료 / 베이스 병합·원격 게시 확인 | 2026-10-01 | [작업 기록](046-api-workflow-reference.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

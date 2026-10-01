@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 문서·예제·schema·관련 회귀/wheel 검증 완료 / 통합·게시 예정 |
+| 상태 | 문서·예제·schema·관련 회귀/wheel 검증 완료 / 베이스 병합·원격 게시 확인 |
 | 날짜 | 2026-10-01 |
 | 작업 브랜치 | feature/api-workflow-docs |
 | 기준 commit | 0e35b625644e904f8e7e0c5497d1d4a9cf07dedd — 045 |
@@ -33,4 +33,8 @@ API·LLM·DB·Executor의 새로운 부하/E2E 실행은 이번 문서 작업 �
 
 ## 통합과 게시
 
-기준 feature/refactor-base에 038~046을 통합하고 origin=KimHwaJin/prj_re에 관련 새 파생 브랜치와 베이스를 게시할 예정이다. 실제 통합·원격 SHA 확인 후 결과를 기록한다. 원본 feature/total_merge_v1 checkout의 사용자 변경, legacy-origin, 컨테이너·DB·Executor는 수정하지 않는다. 강제 push·브랜치 삭제는 수행하지 않는다.
+2026-10-01에 `feature/refactor-base`의 `680c6d253cf789a42d5a56a7a06a69d0fb9aa4aa`부터 038~046 누적 작업을 `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289`까지 fast-forward 통합했다. 충돌이나 추가 실행 코드 변경은 없었다.
+
+베이스와 새 파생 브랜치 9개를 `origin=https://github.com/KimHwaJin/prj_re.git`에 atomic push했다. `git ls-remote --heads`로 10개 원격 SHA가 로컬과 모두 일치함을 확인했다. 파생 브랜치별 게시 SHA는 [저장소 작업 안내](../repository-workflow.md)에 남긴다. 이 문서의 게시 확인 기록은 베이스의 후속 문서 커밋으로 관리한다.
+
+원본 `feature/total_merge_v1` checkout의 사용자 변경, legacy-origin, 컨테이너·DB·Executor는 유지했다. 강제 push·브랜치 삭제·배포는 수행하지 않았다. 사내 SSO SDK 실제 연결, Dataset Registry 및 새 Workflow CRUD/pgvector 등의 후속 구현 제한은 이번 게시로 해소되지 않는다.

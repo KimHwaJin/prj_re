@@ -36,6 +36,22 @@ git push --set-upstream origin feature/next-work-item
 
 ## 게시 대상 브랜치
 
+2026-10-01 추가 게시: 038~046을 베이스에 `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289`까지 fast-forward 반영하고 아래 파생 9개와 함께 atomic push했다. 베이스 포함 10개 브랜치의 원격 SHA 일치를 확인했다. 이전 파생 36개는 보존하며, 베이스 1개와 전체 파생 45개를 관리한다. 이후 게시 기록 문서 커밋으로 이동한 베이스 HEAD는 Git의 원격 참조를 확인한다.
+
+| 추가 파생 브랜치 | 게시 확인 commit |
+|---|---|
+| `feature/agentic-analysis-runtime` | `2f54b094354c9ed02eff56a1fa655eb0843d662c` |
+| `feature/agentic-answer-grounding` | `8b89dc75407fb10cbace5b764376d2eb0688f842` |
+| `feature/agentic-execution-repair` | `d8e6525845d8dca73988edd554a1167c96948c13` |
+| `feature/agentic-executor-runtime` | `199d4faa472a2c66c1ee1fbbadaa53b56df782a0` |
+| `feature/agentic-plan-revision` | `e5fc1d9fa38364bb376847f622323f2eee7949c8` |
+| `feature/agentic-session-analysis-context` | `0bd7b2881838e29b132120200f57e8ae60eb29b5` |
+| `feature/api-workflow-docs` | `51c80b2eff35142fb3fd7d2a56bcdeaf9dbb2289` |
+| `feature/dataset-registry-contract` | `71c40710fa34909fdc7b2de0b16faafeb0fff76d` |
+| `feature/sso-auth` | `0e35b625644e904f8e7e0c5497d1d4a9cf07dedd` |
+
+[046 문서·예제·검증 및 게시 기록](improvements/046-api-workflow-reference.md)을 참고한다. 다음 표는 2026-09-30 최초 이관 당시 기록이다.
+
 2026-09-30 이관 대상은 베이스 1개와 관련 파생 36개, 총 37개다. 아래 commit은 이관 시점의 파생 브랜치 끝이다. 베이스에는 저장소 정리 문서 커밋이 추가되므로 고정 SHA 대신 현재 기준 브랜치로 표시한다. 이후 작업으로 이동하는 최신 HEAD는 원격 브랜치를 확인한다.
 
 | 브랜치 | 이관 시점 commit |

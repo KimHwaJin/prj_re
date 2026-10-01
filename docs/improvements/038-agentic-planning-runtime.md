@@ -1,5 +1,7 @@
 # 038. 실제 모델 기반 계획·HITL·통합 Run/SSE
 
+> 후속 통합 기록 (2026-10-01): 이 작업은 038~046과 함께 `feature/refactor-base`에 fast-forward 반영되고 `origin=KimHwaJin/prj_re`에 게시되었다. 파생 브랜치도 보존·게시했으며 원격 SHA 일치를 확인했다. 아래의 미병합·push 미수행 문구는 당시 완료 시점 기록이다. 배포·후속 기능 상태는 그대로다. [통합·검증 기록](046-api-workflow-reference.md).
+
 | 항목 | 내용 |
 |---|---|
 | 상태 | 계획 승인 저장 단계 구현·실제 모델/DB/SSE/Phoenix·회귀/wheel 검증 완료 |
