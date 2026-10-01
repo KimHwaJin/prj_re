@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-01",
+  "trials": [
+    {
+      "trial": "actual",
+      "passed": false,
+      "analysis_execution_seconds": 43.779,
+      "analysis_succeeded": true,
+      "followup_failed": true,
+      "cause": "Placeholder indices exceeded the trimmed fact list and prose still contained copied numeric values",
+      "final_run_projection": "recovery_required",
+      "production_executor_changes": false
+    },
+    {
+      "trial": "actual-second",
+      "passed": false,
+      "analysis_execution_seconds": 36.83,
+      "analysis_succeeded": true,
+      "followup_failed": true,
+      "cause": "Reply exceeded the provisional selector limit: 44 selected facts vs 32 allowed",
+      "final_run_projection": "recovery_required",
+      "production_executor_changes": false
+    }
+  ],
+  "not_counted_as_passes": true
+}

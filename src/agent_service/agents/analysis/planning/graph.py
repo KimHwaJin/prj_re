@@ -148,13 +148,19 @@ def build_planning_graph(runtime, *, checkpointer):
             # Validate proposed data references with exactly the same rules as user edits.
             patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1}, datasets=runtime.datasets, context=state)
             reviews.append(review)
+        from ..execution.grounding import grounded_message
+        # Explicit mock-provider responses intentionally have no LLM grounding contract.
+        if runtime.models.resolve(state['model_selection']).provider == 'mock' and getattr(reply, 'grounding', None) is None:
+            message = reply.message
+        else:
+            message = grounded_message(reply, context, max_chars=runtime.settings.agent_session_analysis_max_chars)
         channel = 'commentary' if reviews else 'answer'
         activity = next(e['envelope']['data']['activity_id'] for e in state['public_events'] if e['envelope']['type'] == 'activity.started')
         events = [*state['public_events'], public_event(state, 'activity.completed', {'activity_id': activity, 'kind': 'planning', 'title': '답변 또는 계획을 준비했습니다.'}),
-                  public_event(state, 'message.completed', {'role': 'assistant', 'channel': channel, 'content': [{'type': 'text', 'text': reply.message}]})]
+                  public_event(state, 'message.completed', {'role': 'assistant', 'channel': channel, 'content': [{'type': 'text', 'text': message}]})]
         return {'reviews': reviews, 'routing_result': {'route': 'analysis' if reviews else 'faq'}, 'public_events': events,
-                'history': [*state['history'], {'role': 'assistant', 'content': reply.message}][-runtime.settings.agent_history_message_limit:],
-                'final_response': None if reviews else {'status': 'answer', 'message': reply.message}}
+                'history': [*state['history'], {'role': 'assistant', 'content': message}][-runtime.settings.agent_history_message_limit:],
+                'final_response': None if reviews else {'status': 'answer', 'message': message}}
 
     def publish_review(state):
         owner = (state.get('user_resume_receipt') or {}).get('command_id', state['agent_run_id'])

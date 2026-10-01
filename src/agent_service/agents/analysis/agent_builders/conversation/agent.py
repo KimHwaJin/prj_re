@@ -10,6 +10,7 @@ from agent_service.middleware.discovery import MetadataDiscoveryMiddleware
 from service_contracts.plan_review import new_review
 from service_contracts.workflow_validation import workflow_schema
 from .._prompts import load_prompt
+from ...execution.grounding import AnswerGrounding, grounded_message
 
 
 class Proposal(BaseModel):
@@ -23,6 +24,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'plans']
         message: str = Field(min_length=1, max_length=12000)
+        grounding: AnswerGrounding | None = None
         plans: list[Proposal] = Field(default_factory=list, max_length=max_candidates)
 
         @model_validator(mode='after')
@@ -49,7 +51,9 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
 def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000):
     schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts)
     prompt = load_prompt(__package__) + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
+    def validate_response(reply, request):
+        grounded_message(reply, request.runtime.context, max_chars=session_context_max_chars)
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
                             tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), SessionAnalysisMiddleware(max_chars=session_context_max_chars), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
                             output_type=schema, decode=json_output(schema),
-                            structured_output_mode=structured_output_mode, max_validation_attempts=3)
+                            structured_output_mode=structured_output_mode, max_validation_attempts=3, validate_response=validate_response)

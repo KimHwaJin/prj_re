@@ -71,8 +71,22 @@ if args.fixture_plan:
                 plans=[{'definition':document,'input_values':{'dataset':'default-nce'}}])
         return await old_respond(self,state,context,datasets)
     PlanningRuntime.respond=fixed_initial_plan
+grounding_deliveries=[]
 context_deliveries=[]
 if args.followup_checks:
+    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from agent_service.agents.analysis.execution.grounding import completed_context, fact_value
+    before_grounding_respond=PlanningRuntime.respond
+    async def observe_grounding(self,state,context,datasets):
+        reply=await before_grounding_respond(self,state,context,datasets)
+        g=getattr(reply,'grounding',None)
+        if g is not None and g.scope=='analysis':
+            payload=completed_context(context,self.settings.agent_session_analysis_max_chars)
+            observations={o['step_id']:o for o in payload['observations']}
+            grounding_deliveries.append({'source_run_id':g.source_run_id,'evidence_steps':g.evidence_steps,
+                'facts':[{'step_id':f.step_id,'path':f.path,'rendered_value':fact_value(observations[f.step_id],f.path)} for f in g.facts]})
+        return reply
+    PlanningRuntime.respond=observe_grounding
     from agent_service.middleware import SessionAnalysisMiddleware
     old_wrap=SessionAnalysisMiddleware.awrap_model_call
     async def observe_context(self,request,handler):
@@ -185,7 +199,7 @@ async def main():
                     '방금 결과를 비전문가용 Markdown 리포트로 다시 작성해줘. 데이터 로드 과정 설명은 빼고 기초 통계 해석과 한계를 부각해줘. 새 계산이나 코드 실행은 하지 말고, 파일이나 Artifact 등록을 했다고 말하지 마.'
                 ]
                 for question in questions:
-                    clock=time.perf_counter();before=len(context_deliveries)
+                    clock=time.perf_counter();before=len(context_deliveries);grounding_before=len(grounding_deliveries)
                     r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},
                         json={'input':{'content':[{'type':'text','text':question}]}})
                     assert r.status_code==202,r.text
@@ -201,6 +215,13 @@ async def main():
                     assert following['status']=='success' and result['final_response']['status']=='answer',following
                     async with runtime.open_graph() as graph:
                         current=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(sid)}})).values
+                    grounded=grounding_deliveries[grounding_before:]
+                    assert len(grounded)==1 and grounded[0]['source_run_id']==rid
+                    message=result['final_response']['message']
+                    assert '{{fact:' not in message and '근거 Step:' in message
+                    assert current['history'][-1]['content']==message
+                    assert all(f['rendered_value'] in message for f in grounded[0]['facts'])
+                    summary['followups'][-1]['grounding']=grounded[0]
                     assert current['execution_id'] is None and current['executor_operation_number']==0
                     assert current['last_analysis_context']['payload']['execution_id']==final['execution_id']
                     deliveries=context_deliveries[before:]

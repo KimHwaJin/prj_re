@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-01",
+  "base_commit": "0bd7b2881838e29b132120200f57e8ae60eb29b5",
+  "implementation_commit": "pending",
+  "passed": true,
+  "real_llm": true,
+  "initial_plan_fixture": true,
+  "model": "qwen38-27b-nvfp4",
+  "source_run_id": "7de85af3-5d87-47e0-9e92-7abf300d4e7f",
+  "execution_id": "f78662c8-c5e1-485a-9079-4e4e3d626af9",
+  "planning_seconds": 0.371,
+  "approval_to_terminal_seconds": 27.553,
+  "operation_count": 2,
+  "executor_finalized": true,
+  "initial_report_status": "ready",
+  "followup_created_execution": false,
+  "context": {
+    "source_run_id": "7de85af3-5d87-47e0-9e92-7abf300d4e7f",
+    "step_ids": [
+      "load",
+      "profile",
+      "statistics",
+      "outliers"
+    ],
+    "serialized_chars": 11130,
+    "omitted_observations": 0,
+    "report_truncated": false
+  },
+  "followups": [
+    {
+      "status": "success",
+      "seconds": 75.217,
+      "source_run_id": "7de85af3-5d87-47e0-9e92-7abf300d4e7f",
+      "evidence_steps": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "verified_fact_count": 38,
+      "sample_verified_facts": [
+        {
+          "step_id": "profile",
+          "path": [
+            "profile",
+            "row_count"
+          ],
+          "rendered_value": "10000"
+        },
+        {
+          "step_id": "profile",
+          "path": [
+            "profile",
+            "column_count"
+          ],
+          "rendered_value": "8"
+        },
+        {
+          "step_id": "outliers",
+          "path": [
+            "outlier_report",
+            "outlier_count"
+          ],
+          "rendered_value": "109"
+        },
+        {
+          "step_id": "outliers",
+          "path": [
+            "outlier_report",
+            "outlier_rate"
+          ],
+          "rendered_value": "0.0109"
+        }
+      ],
+      "model_calls": 4,
+      "metadata_model_calls": 2,
+      "response_attempts": 2,
+      "model_seconds": 74.855,
+      "input_tokens_total": 46856,
+      "output_tokens_total": 3958,
+      "same_history_and_final_text": true,
+      "unresolved_placeholders": false,
+      "facts_match_selected_actual_fields": true
+    },
+    {
+      "status": "success",
+      "seconds": 125.503,
+      "source_run_id": "7de85af3-5d87-47e0-9e92-7abf300d4e7f",
+      "evidence_steps": [
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "verified_fact_count": 49,
+      "sample_verified_facts": [
+        {
+          "step_id": "profile",
+          "path": [
+            "profile",
+            "row_count"
+          ],
+          "rendered_value": "10000"
+        },
+        {
+          "step_id": "profile",
+          "path": [
+            "profile",
+            "column_count"
+          ],
+          "rendered_value": "8"
+        },
+        {
+          "step_id": "outliers",
+          "path": [
+            "outlier_report",
+            "outlier_count"
+          ],
+          "rendered_value": "109"
+        },
+        {
+          "step_id": "outliers",
+          "path": [
+            "outlier_report",
+            "outlier_rate"
+          ],
+          "rendered_value": "0.0109"
+        }
+      ],
+      "model_calls": 4,
+      "metadata_model_calls": 2,
+      "response_attempts": 2,
+      "model_seconds": 125.26,
+      "input_tokens_total": 61248,
+      "output_tokens_total": 8872,
+      "same_history_and_final_text": true,
+      "unresolved_placeholders": false,
+      "facts_match_selected_actual_fields": true
+    }
+  ],
+  "phoenix_traces": 17,
+  "temporary_port_closed": true,
+  "manual_review": {
+    "rewrite_does_not_cite_load_step": true,
+    "no_new_compute_or_artifact_registration_claim": true,
+    "uniform_normal_distribution_not_asserted_as_confirmed": true,
+    "causal_explanation_states_unconfirmed": true,
+    "remaining_qualitative_limits": [
+      "Middle-quartile interval was described as containing most values; it represents the middle half.",
+      "The most common process was described as overwhelming; observed frequency alone does not justify that adjective.",
+      "Good overall data quality and right-tail shape are broader interpretations than the supplied summary alone proves."
+    ]
+  },
+  "scope": "Value selection/rendering provenance and scenario review; not complete semantic truth verification, latency A/B or load testing."
+}

@@ -4,12 +4,13 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 36개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 작업 브랜치: `feature/agentic-session-analysis-context` (043). 042의 `71c4071`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~043은 파생 이력에 있다. 043은 완료된 같은 세션 분석 근거를 후속 conversation/plan_revision middleware에 전달하고 결과 판단의 근거·값 검증을 모델 재검증에 연결했다. 전체 회귀 801개·실제 Executor/LLM·후속 설명/Markdown 재작성·패키지 검증을 완료했다. Dataset 등록 API 연계는 보류한다. 베이스 병합·원격 push·배포는 수행하지 않았다.
+현재 작업 브랜치: `feature/agentic-answer-grounding` (044). 043의 `0bd7b28`에서 분기했다. 036~037 계약은 베이스에 병합됐고 038~044는 파생 이력에 있다. 044는 후속 설명/Markdown의 출력 항목을 검증하고 서버가 실제 값 표를 렌더링한다. 전체 834개 회귀·실제 Executor/LLM 연계를 통과했다. 실제 후속 지연 증가와 정성 표현의 과장은 남은 보완으로 기록했다. Dataset API 연계는 보류하며 베이스 병합·원격 push·배포는 수행하지 않았다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
 040 구현 commit: `3b18207cad5c583c347a8cbcf64579dd5028c543`. 구현·검증 기록: [작업 결과](040-agentic-execution-repair.md).
 041 구현 commit: `7035a0edb93ec354a13acf3114e8f800ede84c8c`. [작업 결과](041-agentic-plan-revision.md).
 042 계약 구현 commit: `5beefcfefa23b8350e17c7253cbad0abf9891dd6`. [작업 결과](042-dataset-registry-contract.md).
 043 구현 commit: `cad68b5196dd8731768a5201a4d7564e9d4eb0af`. [작업 결과](043-session-analysis-context.md).
+044 구현 commit: 검증 후 기록. [작업 결과](044-agentic-answer-grounding.md).
 시작일: 2026-09-28  
 출발 브랜치: `feature/load_test_v1`  
 출발 commit: `dad1d6c27e32e2aeb0a616bfeb8368cab1fd6e6b`
@@ -70,6 +71,7 @@
 | 041 | 실행 전 자연어 재작성·추가 질문·자유 코드 계획 | 구현/727 회귀·실제 Executor 5개·실제 재작성 모델·wheel 검증, 베이스 미병합 | 2026-10-01 | [041 기록](041-agentic-plan-revision.md) |
 | 042 | 전처리 데이터 등록·조회·범위·버전 계약 초안 | 오프라인 계약/관련 127개 검증, 실제 Executor API·Agent 연계 미구현 | 2026-10-01 | [042 기록](042-dataset-registry-contract.md) |
 | 043 | 완료 분석의 후속 대화 문맥·결과 판단 검증 | 구현·801개 회귀·실제 Executor/LLM·후속 대화·wheel 검증, 베이스 미병합 | 2026-10-01 | [043 기록](043-session-analysis-context.md) |
+| 044 | 후속 설명·보고서의 실제 근거·수치 | 값 근거·전체 회귀·실제 연계 완료 / 정성·후속 성능 보완 필요 | 2026-10-01 | [작업 결과](044-agentic-answer-grounding.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

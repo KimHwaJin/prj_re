@@ -1,11 +1,11 @@
 """Evidence-grounded Markdown reports, generated through create_agent middleware."""
 from pydantic import BaseModel,ConfigDict,Field
 import json
-import re
 from langchain_core.messages import HumanMessage
 from agent_service.factory import build_role_agent,json_output
 from agent_service.middleware import ProjectPromptMiddleware
 from .._prompts import load_prompt
+from ...execution.grounding import validate_interpretation
 
 
 class ReportResponse(BaseModel):
@@ -21,16 +21,7 @@ def validate_evidence(response, request):
     if not set(response.evidence_steps) <= allowed:
         raise ValueError('evidence_steps must use the exact successful observation.step_id values. '
                          'Allowed IDs: '+json.dumps(sorted(allowed)))
-    narrative=response.markdown
-    for observation in payload['observations']:
-        for key in ('step_id','tool_id'):
-            narrative=narrative.replace(observation[key],'')
-    numeric=re.search(r'\d+',narrative)
-    if numeric or re.search(r'^\s*\|',narrative,re.MULTILINE):
-        fragment=narrative[max(0,numeric.start()-12):numeric.end()+30] if numeric else 'Markdown table'
-        raise ValueError('Write interpretation only: no numeric metrics, numbered headings, or tables. '
-                         'Verified quantitative facts are rendered by the server. Use unnumbered headings. '
-                         'Remove this numeric fragment or table and describe it qualitatively: '+repr(fragment))
+    validate_interpretation(response.markdown, payload['observations'])
 
 
 def build_agent(model, *, structured_output_mode='prompt_json'):

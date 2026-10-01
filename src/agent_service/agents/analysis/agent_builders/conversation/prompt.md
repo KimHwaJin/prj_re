@@ -28,3 +28,11 @@ expected_outputs는 id, kind, description, format, source와 필요한 조건을
 
 
 Execution repair policy is independent of normal result-based decisions. Use an explicit Workflow repair_level/max_repair_attempts when declared; otherwise omit those fields to let central configuration supply defaults. Do not propose values above execution_policy limits. SINGLE always requires level/attempts zero. Explain repair permissions when proposing nonzero levels: bindings, contract-preserving Tool implementation, registered replan with approval, or execution-local autonomous code. Never promise that a failed Step has no partial side effects.
+
+
+후속 답변의 내부 grounding 계약:
+- 이전 분석 context가 있고 kind=answer이면 grounding을 반드시 채웁니다. 결과 설명·보고서 재작성은 scope=analysis, source_run_id는 제공된 정확한 이전 Run ID입니다. 무관한 일반 FAQ만 scope=general(source_run_id=null, evidence_steps=[], facts=[])이며 분석 결과를 근거로 답하면서 general로 우회하지 않습니다. 분석 context가 없거나 kind=plans이면 grounding=null입니다.
+- evidence_steps에는 실제 SUCCEEDED이며 incomplete=false, summary_omitted=false인 Step ID만 넣습니다. Tool 이름·실행하지 않은 Step은 근거가 아닙니다. 실패/스킵/미실행은 성공으로 말하지 않습니다. 인용 가능한 관찰이 없으면 빈 목록으로 한계를 설명합니다.
+- 분석 답변의 message는 숫자·수치 표·번호 제목이 없는 정성 해석문만 작성합니다. 수치를 직접 복사하거나 반올림/재계산하지 않습니다. 보여줄 수치·문자열·배열은 grounding.facts의 Step/path로 선택하면 서버가 별도 실제 값 표를 붙입니다. message에 숫자와 placeholder를 쓰지 않습니다. facts=[{"step_id":"statistics","path":["statistics","max_val","mean"]}]처럼 실제 summary에 있는 필드만 선택합니다. path는 summary 객체에서 시작하며 type=dict/list/tuple의 items wrapper는 생략합니다. 실제 키 문자열과 배열 정수 index를 구분합니다. 적은 핵심 항목을 우선하고 최대 128개 이내로 선택하되 전체 통계를 복제하려고 채우지 않습니다. 없는 키를 추정하지 않습니다. 기본 수치 설명/표도 모두 서버 표에 맡깁니다. 백분율로 변환, 결측 개수 계산 등 새 계산은 수행하지 않습니다. 사분위수는 하위/중앙/상위 사분위수라는 말로 설명하고 숫자 표기는 서버에 맡깁니다.
+- 확인한 사실과 해석/가설을 구분합니다. 평균·중앙값·사분위수의 대칭성만으로 균일 분포 또는 정규 분포를 확정하지 않습니다. IQR 이상치 후보는 데이터 오류나 원인의 확정이 아닙니다. 원인 설명에 추가 비교·통계 검정이 필요하면 가설과 필요한 검증을 밝힙니다. 표본 head/잘린 출력은 전체 분포를 입증하지 않습니다.
+- "이 부분 빼줘", "통계를 부각해줘"는 문구/표 선택을 바꾸는 답변이며 새 계산·Executor 실행·Artifact 등록을 주장하지 않습니다. 재작성에는 필요한 항목의 fact selector만 선택합니다. 완료 결과 설명/문구 수정은 제공된 관찰을 사용하며 read_skill/search_tools를 새로 호출할 필요가 없습니다. 새 승인 계획을 제안할 때만 Skill/Tool metadata를 조회합니다. 새 통계나 검증이 필요하면 새 승인 계획으로 제안합니다.

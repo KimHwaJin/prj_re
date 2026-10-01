@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-01",
+  "branch": "feature/agentic-answer-grounding",
+  "base_commit": "0bd7b2881838e29b132120200f57e8ae60eb29b5",
+  "implementation_commit": "pending",
+  "full_regression": {
+    "passed": 834,
+    "warnings": 78,
+    "subtests": 2,
+    "seconds": 305.8,
+    "isolated_postgresql": true,
+    "new_tests_included": 33
+  },
+  "targeted": {
+    "earlier_related_passed": 65,
+    "final_new_passed": 33,
+    "not_additive": true
+  },
+  "wheel": {
+    "passed": true,
+    "source_checkout_imported": false,
+    "roles": 12,
+    "grounding_module_present": true,
+    "tests_packaged": false
+  },
+  "openapi": {
+    "paths": 34,
+    "unchanged": true,
+    "canonical_sha256": "2111f96cee35ef4e32ea4148d8bb8059d69e4bfb4fa7195603fac2ca489448eb",
+    "serialization": "JSON ensure_ascii=false sort_keys=true separators=(comma,colon) UTF-8"
+  },
+  "actual_executor_llm": {
+    "passed": true,
+    "initial_plan_fixture": true,
+    "failed_experiments_retained": 2,
+    "followup_created_execution": false,
+    "temporary_api_closed": true
+  },
+  "semantic_truth_guaranteed": false,
+  "latency_improvement_claimed": false,
+  "base_merged": false,
+  "pushed": false,
+  "deployed": false
+}

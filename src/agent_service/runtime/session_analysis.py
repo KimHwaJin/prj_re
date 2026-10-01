@@ -14,7 +14,8 @@ def bounded_analysis(payload, max_chars):
     result = {k:payload[k] for k in ('source_run_id','execution_id','status')}
     goal = payload.get('goal','')
     result.update(goal=goal[:1000], goal_truncated=len(goal)>1000 or payload.get('goal_truncated',False),
-        dataset_references=[], decisions={}, observations=[],
+        dataset_references=[], decisions={}, observations=[], step_outcomes=[],
+        omitted_step_outcomes=payload.get('omitted_step_outcomes',0),
         omitted_dataset_references=payload.get('omitted_dataset_references',0),
         omitted_decisions=payload.get('omitted_decisions',0),
         omitted_observations=payload.get('omitted_observations',0),
@@ -33,6 +34,10 @@ def bounded_analysis(payload, max_chars):
         candidate = {**result, 'decisions':{**result['decisions'],key:value}}
         if fits(candidate, max_chars//2):result = candidate
         else:result['omitted_decisions'] += 1
+    for row in payload.get('step_outcomes',[]):
+        candidate = {**result, 'step_outcomes':[*result['step_outcomes'],row]}
+        if fits(candidate, max_chars//2):result = candidate
+        else:result['omitted_step_outcomes'] += 1
     # Prefer the latest result; keep the original order of retained Steps.
     for row in reversed(payload.get('observations',[])):
         candidate = {**result, 'observations':[row,*result['observations']]}
@@ -79,6 +84,10 @@ def capture_analysis(state, snapshot, final, max_chars):
             for name,item in snapshot.get('dataset_bindings',{}).items()],
         'decisions':state.get('execution_decisions',{}),
         'observations':final['observations'],
+        'step_outcomes':[{'step_id':step['id'],'tool_id':step['tool_id'],
+            'status':'SKIPPED' if step['id'] in final.get('skipped_steps',[]) else
+                next((o['status'] for o in reversed(final['observations']) if o['step_id']==step['id']), 'NOT_EXECUTED')}
+            for step in snapshot['steps']],
         'report':{'status':(final.get('report') or {}).get('status','not_requested'),
             'excerpt':(final.get('report') or {}).get('content','')}}
     return {'schema_version':1,
