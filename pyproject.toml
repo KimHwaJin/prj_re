@@ -69,7 +69,7 @@ exclude = ["api_service.test*", "agent_service.agents.*.tests*"]
 [tool.setuptools.package-data]
 api_service = ["**/*.md", "**/*.yaml", "static/*.html"]
 service_contracts = ["resources/*.json"]
-"agent_service.agents.analysis" = ["agent_builders/*/prompt.md", "schemas/**/*.md"]
+"agent_service.agents.analysis" = ["agent_builders/*/*.md", "schemas/**/*.md"]
 "agent_service.agents.analysis.planning" = ["fixtures/*.json"]
 
 "agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]

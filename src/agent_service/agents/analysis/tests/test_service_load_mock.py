@@ -115,7 +115,7 @@ def test_planning_load_scenario_and_unconnected_executor_guard():
         calls.append((path, kwargs.get('json')))
         if path.endswith('/sessions'):
             return {'id': str(uuid4())}
-        return {'id': public_id, 'status': 'waiting_input', 'resume_token': str(uuid4()),
+        return {'run_id': public_id, 'status': 'waiting_input', 'resume_token': str(uuid4()),
                 'interrupt': [{'kind': 'plan_review', 'payload': {'plans': []}}]}
     result = execute(request, {}, 'project', record=lambda *a: None)
     assert len(result['runs']) == 1 and result['execution_id'] is None

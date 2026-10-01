@@ -29,6 +29,8 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/agents/analysis/execution/grounding.py' in names
     assert 'agent_service/runtime/session_analysis.py' in names
     assert 'agent_service/middleware/session_analysis.py' in names
+    assert 'agent_service/middleware/planning_contract.py' in names
+    assert 'agent_service/agents/analysis/agent_builders/conversation/planning_prompt.md' in names
     assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
     archive.extractall(installed)
 sys.path.insert(0, str(installed))

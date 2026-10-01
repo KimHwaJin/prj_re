@@ -33,3 +33,9 @@
 검증이 보장하는 것은 **이 owner의 실제 성공 관찰에서 선택한 항목을 원래 값대로 출력한다는 것**이다. 모델이 잘못된 항목에 올바른 숫자를 붙이거나 의미를 잘못 설명할 수 있다. scope를 general로 잘못 분류하는 행위도 자연어 의미를 이해해 자동 판별하지 않는다. 숫자를 한글로 쓰거나 근거 문자열에 숫자 설명이 포함된 경우까지 의미 검증하는 정리 엔진은 아니다.
 
 최초 보고서·후속 답변 prompt는 관찰과 해석/가설을 구분한다. 평균/중앙값/사분위수의 대칭성만으로 균일·정규 분포를 단정하거나 IQR 후보를 데이터 오류/원인으로 확정하지 않도록 한다. 서버는 해석 범위와 실패·출력 제한을 표시한다. **citation 통과를 통계적 정당성, 인과관계 또는 정답 보장으로 해석하지 않는다.** 실제 모델 응답의 시나리오 검토는 별도로 기록한다. VLM, 신규 계산, 데이터 등록, project_memory, Artifact 시점은 이번 범위가 아니다.
+
+## 후속 답변과 계획 문맥의 분리 (049)
+
+동일 Conversation create_agent의 첫 모델 요청에는 짧은 답변 지침·완료 분석 근거·Reply Schema를 주고 메타데이터 도구와 전체 Workflow Schema는 제외한다. 기존 결과 설명과 Markdown 보고서 수정은 이 단계에서 answer로 반환한다. 새 계산은 내부 `kind=planning`, 등록 `skill_ids`, `plans=[]`, `grounding=null`로 Skill을 선택한다. PlanningContractMiddleware가 표준 ToolNode에서 Skill을 읽고 그 다음 요청에 `planning_prompt.md`와 전체 계획 계약을 붙인다. 이후 최종 answer/plans를 반환한다. 별도 분류 LLM 호출이나 공개 API 필드 추가가 아니다.
+
+phase는 이번 invocation의 실제 메타데이터 Tool 응답으로 판단하며 공유 Agent에 세션별 상태를 저장하지 않는다. 선택 단계도 실제 Skill 등록 검증을 거친다. 계획 제안은 기존처럼 사용자 승인 대상이며 메타데이터 조회 자체는 Executor 실행이 아니다. [049 측정](reports/conversation-performance-2026-10-02.md)에서 조회·토큰 비용은 줄었으나 설명 답변은 수치 본문 정정 때문에 지연이 줄지 않았다. 수치 검증은 그대로다.

@@ -1,0 +1,665 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-02",
+  "baseline_commit": "59eec1f66f04bb63c21abd6720b0d03d76c19b0d",
+  "candidate_branch": "feature/conversation-performance",
+  "scope": "fixed private snapshot replay through production create_agent + grounding; excludes API/DB/queue/Executor",
+  "runs": [
+    {
+      "label": "after",
+      "case": "explanation",
+      "iteration": 1,
+      "input_sha256": "166bf718817df6a506a94175543b5787b0c7e8cffaf0b09e752f573cba58e251",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 27,
+      "evidence_steps": [
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 2822,
+      "seconds": 66.0783,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 22.6951,
+          "message_chars": 17488,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 6846,
+          "output_tokens": 1719
+        },
+        {
+          "planning_selection": false,
+          "seconds": 23.3473,
+          "message_chars": 23070,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 8786,
+          "output_tokens": 1841
+        },
+        {
+          "planning_selection": false,
+          "seconds": 20.0061,
+          "message_chars": 28931,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 10730,
+          "output_tokens": 1838
+        }
+      ],
+      "model_calls": 3,
+      "planning_selections": 0,
+      "metadata_calls": 0,
+      "model_seconds": 66.0485,
+      "input_tokens": 26362,
+      "output_tokens": 5398,
+      "tokens_available": true
+    },
+    {
+      "label": "before",
+      "case": "explanation",
+      "iteration": 1,
+      "input_sha256": "166bf718817df6a506a94175543b5787b0c7e8cffaf0b09e752f573cba58e251",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 45,
+      "evidence_steps": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3751,
+      "seconds": 56.3319,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 10.3878,
+          "message_chars": 27852,
+          "planning_contract": true,
+          "tools": [
+            "read_skill"
+          ],
+          "input_tokens": 10310,
+          "output_tokens": 600
+        },
+        {
+          "planning_selection": false,
+          "seconds": 3.2309,
+          "message_chars": 31349,
+          "planning_contract": true,
+          "tools": [
+            "read_skill"
+          ],
+          "input_tokens": 11692,
+          "output_tokens": 29
+        },
+        {
+          "planning_selection": false,
+          "seconds": 23.7875,
+          "message_chars": 31678,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 11464,
+          "output_tokens": 1768
+        },
+        {
+          "planning_selection": false,
+          "seconds": 18.8938,
+          "message_chars": 37130,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13400,
+          "output_tokens": 1724
+        }
+      ],
+      "model_calls": 4,
+      "planning_selections": 0,
+      "metadata_calls": 2,
+      "model_seconds": 56.3,
+      "input_tokens": 46866,
+      "output_tokens": 4121,
+      "tokens_available": true
+    },
+    {
+      "label": "before",
+      "case": "report_revision",
+      "iteration": 1,
+      "input_sha256": "bdcc9bee6cc978eb809f6575da9bccce92f0b2a20c3cb96ec08416fb73be7d23",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 36,
+      "evidence_steps": [
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3687,
+      "seconds": 108.684,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 23.5936,
+          "message_chars": 31583,
+          "planning_contract": true,
+          "tools": [
+            "search_tools"
+          ],
+          "input_tokens": 11795,
+          "output_tokens": 1539
+        },
+        {
+          "planning_selection": false,
+          "seconds": 21.6767,
+          "message_chars": 35198,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13350,
+          "output_tokens": 1514
+        },
+        {
+          "planning_selection": false,
+          "seconds": 3.3001,
+          "message_chars": 39166,
+          "planning_contract": true,
+          "tools": [
+            "search_tools"
+          ],
+          "input_tokens": 14963,
+          "output_tokens": 25
+        },
+        {
+          "planning_selection": false,
+          "seconds": 31.983,
+          "message_chars": 35527,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13118,
+          "output_tokens": 2523
+        },
+        {
+          "planning_selection": false,
+          "seconds": 28.0934,
+          "message_chars": 42948,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 15860,
+          "output_tokens": 1826
+        }
+      ],
+      "model_calls": 5,
+      "planning_selections": 0,
+      "metadata_calls": 2,
+      "model_seconds": 108.6468,
+      "input_tokens": 69086,
+      "output_tokens": 7427,
+      "tokens_available": true
+    },
+    {
+      "label": "after",
+      "case": "report_revision",
+      "iteration": 1,
+      "input_sha256": "bdcc9bee6cc978eb809f6575da9bccce92f0b2a20c3cb96ec08416fb73be7d23",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 38,
+      "evidence_steps": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3539,
+      "seconds": 64.3086,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 34.2575,
+          "message_chars": 21219,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 8331,
+          "output_tokens": 3060,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 30.0223,
+          "message_chars": 30981,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 11618,
+          "output_tokens": 2331,
+          "validation": "passed"
+        }
+      ],
+      "model_calls": 2,
+      "planning_selections": 0,
+      "metadata_calls": 0,
+      "model_seconds": 64.2798,
+      "input_tokens": 19949,
+      "output_tokens": 5391,
+      "tokens_available": true
+    },
+    {
+      "label": "before",
+      "case": "explanation",
+      "iteration": 2,
+      "input_sha256": "166bf718817df6a506a94175543b5787b0c7e8cffaf0b09e752f573cba58e251",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 40,
+      "evidence_steps": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3346,
+      "seconds": 49.589,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 10.3924,
+          "message_chars": 27852,
+          "planning_contract": true,
+          "tools": [
+            "read_skill"
+          ],
+          "input_tokens": 10310,
+          "output_tokens": 609
+        },
+        {
+          "planning_selection": false,
+          "seconds": 3.2374,
+          "message_chars": 31343,
+          "planning_contract": true,
+          "tools": [
+            "read_skill"
+          ],
+          "input_tokens": 11701,
+          "output_tokens": 29
+        },
+        {
+          "planning_selection": false,
+          "seconds": 18.029,
+          "message_chars": 31672,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 11473,
+          "output_tokens": 1677,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 17.8858,
+          "message_chars": 36741,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13286,
+          "output_tokens": 1625,
+          "validation": "passed"
+        }
+      ],
+      "model_calls": 4,
+      "planning_selections": 0,
+      "metadata_calls": 2,
+      "model_seconds": 49.5446,
+      "input_tokens": 46770,
+      "output_tokens": 3940,
+      "tokens_available": true
+    },
+    {
+      "label": "after",
+      "case": "explanation",
+      "iteration": 2,
+      "input_sha256": "166bf718817df6a506a94175543b5787b0c7e8cffaf0b09e752f573cba58e251",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 19,
+      "evidence_steps": [
+        "load",
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 2205,
+      "seconds": 50.8435,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 20.547,
+          "message_chars": 17488,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 6846,
+          "output_tokens": 1479,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 14.5886,
+          "message_chars": 22314,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 8542,
+          "output_tokens": 1416,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 15.6712,
+          "message_chars": 26817,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 10060,
+          "output_tokens": 1411,
+          "validation": "passed"
+        }
+      ],
+      "model_calls": 3,
+      "planning_selections": 0,
+      "metadata_calls": 0,
+      "model_seconds": 50.8068,
+      "input_tokens": 25448,
+      "output_tokens": 4306,
+      "tokens_available": true
+    },
+    {
+      "label": "after",
+      "case": "report_revision",
+      "iteration": 2,
+      "input_sha256": "bdcc9bee6cc978eb809f6575da9bccce92f0b2a20c3cb96ec08416fb73be7d23",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 36,
+      "evidence_steps": [
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3283,
+      "seconds": 57.0564,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 32.6829,
+          "message_chars": 21219,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 8331,
+          "output_tokens": 2901,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 24.3486,
+          "message_chars": 30527,
+          "planning_contract": false,
+          "tools": [],
+          "input_tokens": 11461,
+          "output_tokens": 2247,
+          "validation": "passed"
+        }
+      ],
+      "model_calls": 2,
+      "planning_selections": 0,
+      "metadata_calls": 0,
+      "model_seconds": 57.0315,
+      "input_tokens": 19792,
+      "output_tokens": 5148,
+      "tokens_available": true
+    },
+    {
+      "label": "before",
+      "case": "report_revision",
+      "iteration": 2,
+      "input_sha256": "bdcc9bee6cc978eb809f6575da9bccce92f0b2a20c3cb96ec08416fb73be7d23",
+      "model": "qwen38-27b-nvfp4",
+      "temperature": 0.2,
+      "thinking": false,
+      "measurement_scope": "production create_agent.ainvoke + grounding validation; no API/DB/Executor",
+      "passed": true,
+      "kind": "answer",
+      "fact_count": 36,
+      "evidence_steps": [
+        "profile",
+        "statistics",
+        "outliers"
+      ],
+      "answer_chars": 3657,
+      "seconds": 95.4291,
+      "calls": [
+        {
+          "planning_selection": false,
+          "seconds": 22.5808,
+          "message_chars": 31583,
+          "planning_contract": true,
+          "tools": [
+            "search_tools"
+          ],
+          "input_tokens": 11795,
+          "output_tokens": 1554
+        },
+        {
+          "planning_selection": false,
+          "seconds": 15.6113,
+          "message_chars": 35231,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13365,
+          "output_tokens": 1529
+        },
+        {
+          "planning_selection": false,
+          "seconds": 3.3462,
+          "message_chars": 39232,
+          "planning_contract": true,
+          "tools": [
+            "search_tools"
+          ],
+          "input_tokens": 14993,
+          "output_tokens": 25
+        },
+        {
+          "planning_selection": false,
+          "seconds": 32.1435,
+          "message_chars": 35560,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 13133,
+          "output_tokens": 2539,
+          "validation": "copied_numeric_text"
+        },
+        {
+          "planning_selection": false,
+          "seconds": 21.6954,
+          "message_chars": 43015,
+          "planning_contract": true,
+          "tools": [],
+          "input_tokens": 15890,
+          "output_tokens": 1806,
+          "validation": "passed"
+        }
+      ],
+      "model_calls": 5,
+      "planning_selections": 0,
+      "metadata_calls": 2,
+      "model_seconds": 95.3772,
+      "input_tokens": 69176,
+      "output_tokens": 7453,
+      "tokens_available": true
+    }
+  ],
+  "means": {
+    "explanation": {
+      "before": {
+        "seconds": 52.9604,
+        "model_calls": 4,
+        "metadata_calls": 2,
+        "input_tokens": 46818,
+        "output_tokens": 4030.5
+      },
+      "after": {
+        "seconds": 58.4609,
+        "model_calls": 3,
+        "metadata_calls": 0,
+        "input_tokens": 25905,
+        "output_tokens": 4852
+      }
+    },
+    "report_revision": {
+      "before": {
+        "seconds": 102.0566,
+        "model_calls": 5,
+        "metadata_calls": 2,
+        "input_tokens": 69131,
+        "output_tokens": 7440
+      },
+      "after": {
+        "seconds": 60.6825,
+        "model_calls": 2,
+        "metadata_calls": 0,
+        "input_tokens": 19870.5,
+        "output_tokens": 5269.5
+      }
+    }
+  },
+  "limitations": [
+    "Two repeats per case and revision; no concurrent-user throughput claim",
+    "Shared real model resources were not controlled; temperature=0.2",
+    "Input source snapshot and model credentials are private and not committed",
+    "Returned prose and fact selection differ; successful grounding is not semantic correctness",
+    "Explanation latency increased due to numeric-text correction calls"
+  ],
+  "discarded_pilot": {
+    "change": "smaller prompt and lazy schema without metadata selection boundary",
+    "before_seconds": 64.8449,
+    "after_seconds": 93.6938,
+    "before_metadata_calls": 2,
+    "after_metadata_calls": 2,
+    "result": "discarded; not included in final comparison"
+  },
+  "new_plan_smoke": {
+    "passed": true,
+    "model": "qwen38-27b-nvfp4",
+    "scope": "real model -> registered Skill metadata -> validated plan; no API/DB/Executor",
+    "kind": "plans",
+    "plan_count": 1,
+    "tool_ids": [
+      [
+        "data_load",
+        "profile_data",
+        "compute_statistics",
+        "detect_outliers"
+      ]
+    ],
+    "seconds": 31.8553,
+    "calls": [
+      {
+        "planning_selection": true,
+        "seconds": 2.8395,
+        "message_chars": 5705,
+        "planning_contract": false,
+        "tools": [],
+        "input_tokens": 1967,
+        "output_tokens": 111
+      },
+      {
+        "planning_selection": false,
+        "seconds": 5.2625,
+        "message_chars": 19399,
+        "planning_contract": true,
+        "tools": [
+          "search_tools"
+        ],
+        "input_tokens": 6544,
+        "output_tokens": 33
+      },
+      {
+        "planning_selection": false,
+        "seconds": 5.736,
+        "message_chars": 21168,
+        "planning_contract": true,
+        "tools": [
+          "search_tools"
+        ],
+        "input_tokens": 7114,
+        "output_tokens": 31
+      },
+      {
+        "planning_selection": false,
+        "seconds": 2.2118,
+        "message_chars": 21515,
+        "planning_contract": true,
+        "tools": [
+          "search_tools"
+        ],
+        "input_tokens": 7255,
+        "output_tokens": 31
+      },
+      {
+        "planning_selection": false,
+        "seconds": 15.763,
+        "message_chars": 21844,
+        "planning_contract": true,
+        "tools": [],
+        "input_tokens": 7029,
+        "output_tokens": 967
+      }
+    ],
+    "executor_submissions": 0
+  },
+  "validation": {
+    "full_regression_passed": 890,
+    "subtests_passed": 2,
+    "warnings": 88,
+    "seconds": 391.4,
+    "targeted_passed": 73,
+    "package_smoke": {
+      "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+      "source_checkout_imported": false,
+      "api_openapi_paths": 36,
+      "mock_graph_execution_steps": 4,
+      "removed_agent_packages_in_wheel": false,
+      "unified_workflow_package_present": true,
+      "tests_in_wheel": false,
+      "resources_present": true,
+      "role_prompts_present": 12,
+      "production_builders_constructed": true,
+      "create_agent_roles": 12,
+      "role_checkpointers_disabled": true
+    },
+    "openapi_paths": 36,
+    "openapi_sha256": "cc6f1d371e93f77a91a28463daeaaf0932213cb67ab0a0d08999323af0beb80b"
+  }
+}

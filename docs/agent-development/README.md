@@ -15,6 +15,12 @@
 - [변경·검증·남은 작업](../improvements/005-agent-package-layout.md)
 - [LLM 비동기 전환·취소 검증](../improvements/006-agent-async-llm.md)
 
+## Conversation의 답변·계획 요청 경계 (049)
+
+`analysis/agent_builders/conversation/agent.py`는 하나의 create_agent 루프다. 같은 폴더 `prompt.md`는 첫 판단·답변용, `planning_prompt.md`는 등록 Skill을 선택한 뒤 상세 계획을 만들 때만 사용한다. 공용 `agent_service/middleware/planning_contract.py`가 첫 모델 요청에서 metadata tools를 비우고, 내부 `planning`+`skill_ids`를 표준 ToolNode의 read_skill로 연결한다. 다음 모델 요청에만 상세 Workflow 계약과 메타데이터 도구가 들어간다. 별도 분류 모델 호출, 사용자 API나 업무 Agent 등록 API가 아니다.
+
+캐시된 Agent의 공유 상태에 phase를 저장하지 않고 invocation 메시지에서 실제 조회 완료를 확인한다. 새 실행은 기존 승인 경계를 유지한다. 후속 설명은 기존 SessionAnalysisMiddleware와 grounding 검증을 사용한다. 역할 prompt는 둘 다 wheel에 포함한다. [변경·검증·성능 한계](../improvements/049-conversation-performance.md)를 참고한다.
+
 ## 신규 Agent 설계 초안
 
 043은 [완료 분석의 후속 대화 전달](../agentic-session-analysis-context.md)을 구현했다. 같은 세션의 최근 실제 근거만 middleware로 전달하며 project_memory·파일 Registry와 구분한다. 결과 판단의 근거 ID·값 검증도 create_agent 재검증에 연결했다.

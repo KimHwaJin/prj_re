@@ -15,7 +15,10 @@ async def test_repeated_skill_query_forces_answer_and_context_remains_isolated()
     async def handle(request):
         body = json.loads(request.content)
         calls.append(body)
-        if body.get('tools'):
+        if not any(m['role']=='tool' for m in body['messages']):
+            message = {'role':'assistant','content':json.dumps({'kind':'planning','message':'계획을 준비합니다.','skill_ids':['data_quality_check'],'plans':[]})}
+            reason = 'stop'
+        elif body.get('tools'):
             message = {'role': 'assistant', 'content': '', 'tool_calls': [{'id': f'query-{len(calls)}',
                 'type': 'function', 'function': {'name': 'read_skill', 'arguments': '{"skill_id":"data_quality_check"}'}}]}
             reason = 'tool_calls'
@@ -30,7 +33,7 @@ async def test_repeated_skill_query_forces_answer_and_context_remains_isolated()
         for i in range(2):
             result = await agent.ainvoke({'request': '분석해줘'}, context=AgentContext(project_system_prompt='PROJECT RULE'))
             assert result.kind == 'answer'
-    assert len(calls) == 6  # read, duplicate receipt, forced synthesis, per independent invocation
+    assert len(calls) == 6  # selection/read, duplicate receipt, forced synthesis, per invocation
     for body in calls:
         assert body['messages'][0]['content'].count('PROJECT RULE') == 1
     assert all(not calls[i].get('tools') for i in (2, 5))
