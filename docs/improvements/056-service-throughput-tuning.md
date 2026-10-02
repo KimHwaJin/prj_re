@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·로컬 비교·관련 회귀 완료 / 베이스 병합·게시 대기 |
+| 상태 | 구현·로컬 비교·관련 회귀 완료 / 베이스 병합·origin 게시 확인 |
 | 시작일 / 완료일 | 2026-10-03 / 2026-10-03 |
 | 브랜치 | feature/service-throughput-tuning |
 | 출발 commit | 59d690a2dd07e454443691fb18e34d0829b683fa |
@@ -46,4 +46,4 @@ Agent source/graph/prompt/skill/tool, Executor, 패키지 의존성, migration �
 
 ## 통합·게시
 
-구현은 파생브랜치에서 검증한 뒤 feature/refactor-base로 fast-forward 병합하고 origin에 base/feature를 함께 게시한다. 현재 미커밋, 병합·push 전이다. 사용자원래checkout·환경·기존컨테이너를 바꾸지 않는다.
+2026-10-03 구현·검증 commit `2822ed58887803ab9aa822a1b48ef0e31daaf7ae`를 `feature/refactor-base`로 fast-forward 병합하고 베이스·`feature/service-throughput-tuning`을 origin에 atomic push했다. 원격 두 구현 SHA 일치를 확인했다. 파생 브랜치는 구현 commit에 보존하고 이 게시 기록은 베이스의 후속 commit에 남긴다. 배포·기존 서비스 재기동은 하지 않았다. 원래 checkout HEAD/status/.env/기존316개 파일은 동일하다.

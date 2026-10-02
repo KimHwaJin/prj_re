@@ -6,6 +6,8 @@
 
 현재 개발 기준: `feature/refactor-base`. 056에서 LLM을 제외한 현재 서비스 처리량을 분석하고 SQL 준비 캐시·이벤트 batch·로그인 pool·SSE frame 정리를 개선했다. 실행 한도16의 시간차이는 작으며 한도32의 설정효과와 분리한다. [056 기록](056-service-throughput-tuning.md), [보고서](../reports/service-throughput-2026-10-03/report.html), [설정 가이드](../service-throughput-settings.md)를 따른다. 실제 모델·Executor 흐름 검증은 [055](055-authenticated-executor-flow.md), memory 정책은 [053](053-project-memory-policy.md)이며 남은 범위는 [후속 목록](backlog.md)에 보존한다.
 
+056 통합 이력: 구현 `2822ed58887803ab9aa822a1b48ef0e31daaf7ae`를 베이스에 fast-forward 병합하고 베이스·`feature/service-throughput-tuning`을 origin에 atomic push했다. 주 비교29회/856사용자·관련 회귀182개와 독립 검산377개를 확인했다. 설정은 opt-in이며 기존 서비스 재기동·배포는 수행하지 않았다. [056 기록](056-service-throughput-tuning.md)을 따른다.
+
 055 통합 이력: 구현 `2cd081c1d83f31dd99ab13fada08b131ce72ecc5`를 베이스에 fast-forward 병합하고 베이스·`feature/api-executor-flow-verification`을 origin에 게시했다. 실제 모델·Executor·후속 문맥·Store와 132개 관련 회귀를 확인했다. 데이터 입력 누락 및 로컬 커널 의존성 문제는 보고서·후속 목록에 남겼다. [055 기록](055-authenticated-executor-flow.md)을 따른다.
 
 054 통합 이력: 구현 `66ffaedbf4ad3fdc1dcb3c4f3487b2932e77b5d8`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 전체 884회귀와 이전 소스 PostgreSQL HITL 재개·wheel·Studio HTTP 검증을 통과했다. [054 기록](054-agent-runtime-cleanup.md)을 따른다.
@@ -97,7 +99,7 @@
 | 053 | 프로젝트 메모리 저장 한도·역할별 입력 예산·지속적인 주제 갱신 | 구현·959회귀·실제 LLM/Store 6개 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [053 기록](053-project-memory-policy.md) |
 | 054 | 이전 설문형 Agent 제거·현재 graph로 개발 도구·검증 통합 | 구현·884회귀·PG 재개·wheel·Studio 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [054 기록](054-agent-runtime-cleanup.md) |
 | 055 | 현재 쿠키 인증 API·실제 모델·Executor·후속 문맥·메모리 연계 검증 | 구현·실제 연계·132관련회귀 완료 / 베이스 병합·origin 게시 확인 | 2026-10-03 | [055 기록](055-authenticated-executor-flow.md) |
-| 056 | LLM 제외 서비스 처리량·SQL/풀/SSE 개선 및 opt-in 설정 | 구현·29측정·관련 회귀 완료 / 베이스 병합·게시 대기 | 2026-10-03 | [056 기록](056-service-throughput-tuning.md) |
+| 056 | LLM 제외 서비스 처리량·SQL/풀/SSE 개선 및 opt-in 설정 | 구현·29측정·관련 회귀 완료 / 베이스 병합·origin 게시 확인 | 2026-10-03 | [056 기록](056-service-throughput-tuning.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
