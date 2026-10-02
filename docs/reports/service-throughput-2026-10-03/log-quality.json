@@ -1,0 +1,205 @@
+[
+  {
+    "measurement_set": "service-throughput-baseline5-v3-v3-20261003",
+    "trial": "flow-u1-c16-d5000-r1",
+    "gc_connection_warning_count": 4,
+    "traceback_count": 2,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-baseline5-v3-v3-20261003",
+    "trial": "flow-u10-c16-d5000-r1",
+    "gc_connection_warning_count": 20,
+    "traceback_count": 10,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-baseline5-v3-v3-20261003",
+    "trial": "flow-u30-c16-d5000-r1",
+    "gc_connection_warning_count": 52,
+    "traceback_count": 27,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-baseline5-v3-v3-20261003",
+    "trial": "flow-u50-c16-d5000-r1",
+    "gc_connection_warning_count": 80,
+    "traceback_count": 40,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-shield0-20261003",
+    "trial": "flow-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-shield0-20261003",
+    "trial": "flow-u50-c16-d0-r2",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-stable-shield0-final-20261003",
+    "trial": "flow-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-cache-shield0-final-20261003",
+    "trial": "flow-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-delivery-shield0-final-20261003",
+    "trial": "flow-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-delivery-shield0-final-20261003",
+    "trial": "flow-u50-c16-d0-r2",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u1-c16-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u1-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u10-c16-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u10-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u30-c16-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u30-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u50-c16-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-final-20261003",
+    "trial": "flow-u50-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-delivery5-final-20261003",
+    "trial": "flow-u1-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-delivery5-final-20261003",
+    "trial": "flow-u50-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-final5-repeat-final-20261003",
+    "trial": "flow-u50-c32-d5000-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-stable-final-20261003",
+    "trial": "crud-u1-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-stable-final-20261003",
+    "trial": "crud-u10-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-stable-final-20261003",
+    "trial": "crud-u30-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-stable-final-20261003",
+    "trial": "crud-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-final-final-20261003",
+    "trial": "crud-u1-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-final-final-20261003",
+    "trial": "crud-u10-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-final-final-20261003",
+    "trial": "crud-u30-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  },
+  {
+    "measurement_set": "service-throughput-crud-final-final-20261003",
+    "trial": "crud-u50-c16-d0-r1",
+    "gc_connection_warning_count": 0,
+    "traceback_count": 0,
+    "error_log_count": 0
+  }
+]

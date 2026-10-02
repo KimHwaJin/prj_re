@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "validation": "passed",
+  "package": "passed",
+  "verification": "structural_only",
+  "enhanced_browser_qa": "not_run_no_installed_chromium_headless",
+  "source_dialog": "not_verified",
+  "blocks": 16,
+  "charts": 1,
+  "tables": 2
+}

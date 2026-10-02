@@ -166,6 +166,13 @@ class RunStreamHub:
             await self._stop_listener()
 
     async def read(self, entry, sequence):
+        # A subscriber can disconnect during pool checkout or a SQL await.
+        # Own the entire short DB frame in a separate task: complete/check in
+        # its connection before propagating cancellation to the stream owner.
+        # Cache/authorization/generation checks remain inside the same frame.
+        return await protected_cleanup(self._read_frame(entry, sequence))
+
+    async def _read_frame(self, entry, sequence):
         # Serialize reads for this authorized Run, including simultaneous tabs.
         async with entry.lock:
             generation = entry.generation

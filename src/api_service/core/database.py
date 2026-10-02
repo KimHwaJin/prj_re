@@ -38,10 +38,9 @@ def get_engine() -> AsyncEngine:
             # which causes the server-side connection reset observed on Windows.
             connect_args={
                 "ssl": False,
-                # SQLAlchemy's asyncpg dialect otherwise caches prepared
-                # statements per physical connection.  Disable that cache for
-                # this local PostgreSQL instance while diagnosing resets.
-                "prepared_statement_cache_size": 0,
+                # Connection-local, bounded and deployment-selectable. Keep 0
+                # for environments requiring uncached prepared statements.
+                "prepared_statement_cache_size": settings.database_prepared_statement_cache_size,
             },
         )
         install_sql_timings(_engine)

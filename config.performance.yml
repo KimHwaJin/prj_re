@@ -1,0 +1,27 @@
+# Opt-in service throughput profile, measured on the local single-process service.
+# Merge this service block into the selected dev/stg/prd YAML, or select this file
+# with SERVICE_CONFIG_FILE and supply the remaining DB/SSO/model/Executor settings.
+# Explicit YAML beats env. This file does not restart/deploy the running service.
+service:
+  runtime:
+    # Per process. Additional Uvicorn workers/Pods multiply slots and DB pools.
+    agent_worker_concurrency: 32
+    # Preserve the default idle claim/cancel checks; no extra idle polling.
+    agent_worker_poll_interval_seconds: 0.25
+    task_cancel_poll_interval_seconds: 0.25
+    # Event-driven SSE reconciliation. 0.1 delivered sooner but cost more during bursts.
+    sse_poll_interval_seconds: 0.5
+    sse_reconcile_interval_seconds: 15
+  database:
+    database_pool_size: 10
+    database_max_overflow: 0  # Hard CRUD connection bound, even during a burst.
+    database_pool_timeout_seconds: 10
+    # Per physical CRUD connection; 0 disables. Tested against direct PostgreSQL.
+    database_prepared_statement_cache_size: 100
+  checkpoint:
+    checkpoint_pool_min_size: 1
+    checkpoint_pool_max_size: 4
+  auth:
+    # Short login queries wait within the bounded pool; do not multiply connections.
+    sso_redis_max_connections: 8
+    sso_redis_timeout_seconds: 3

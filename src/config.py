@@ -18,6 +18,9 @@ class Settings(BaseModel):
     database_max_overflow: int = 10
     database_pool_timeout_seconds: float = 30.0
     database_pool_recycle_seconds: int = 300
+    # Per physical asyncpg connection. 0 preserves the diagnostic legacy behavior.
+    # Direct PostgreSQL deployments can opt into a bounded prepared-statement cache.
+    database_prepared_statement_cache_size: int = Field(default=0, ge=0, le=1000)
     # run.py에서 사용하는 로컬 Uvicorn 설정입니다.
     server_host: str = "127.0.0.1"
     server_port: int = 8000

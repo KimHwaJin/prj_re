@@ -1,0 +1,16 @@
+{
+  "related": {
+    "passed": 182,
+    "warnings": 3,
+    "seconds": 108.67
+  },
+  "settings_with_4_new_checks": {
+    "passed": 42,
+    "seconds": 1.68
+  },
+  "note": "Separate suites overlap; not additive. 3warnings are existing no-checkpointer durability fixture warnings.",
+  "final_settings_asgi_cancellation_capture": {
+    "passed": 54,
+    "seconds": 1.53
+  }
+}

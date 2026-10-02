@@ -66,3 +66,36 @@ async def test_blocking_stream_pool_does_not_occupy_login_pool(redis_pair):
     finally:
         blocking.cancel()
         await asyncio.gather(blocking,return_exceptions=True)
+
+@pytest.mark.asyncio
+async def test_owned_login_pool_waits_with_bounded_capacity_and_timeout(redis_pair):
+    """A burst waits for capacity; exhausted deadlines still fail closed."""
+    from fastapi import FastAPI,HTTPException
+    from service_auth.sso.runtime import attach_sso
+    from service_auth.sso.settings import SsoSettings
+    from redis.asyncio import BlockingConnectionPool
+    login,streams,store,namespace,cleanup=redis_pair
+    runtime=attach_sso(FastAPI(),settings=SsoSettings(namespace=namespace+':bounded',
+        redis_max_connections=1,redis_timeout_seconds=.2),users=object(),adapter=object(),
+        redis_url=os.environ['DTEST_SSO_TEST_REDIS_URL'],api_prefix='/api/v1',docs_path='/docs')
+    client=runtime._owned_redis;pool=client.connection_pool
+    assert isinstance(pool,BlockingConnectionPool) and pool.max_connections==1
+    sid,expected=await runtime.sessions.create('bounded-user',60)
+    key=runtime.sessions._key(sid)
+    try:
+        held=await pool.get_connection()
+        pending=asyncio.create_task(runtime.sessions.read(sid))
+        await asyncio.sleep(.025);assert not pending.done()
+        await pool.release(held)
+        assert await asyncio.wait_for(pending,1)==expected
+        held=await pool.get_connection()
+        try:
+            with pytest.raises(HTTPException) as rejected:
+                await asyncio.wait_for(runtime.sessions.read(sid),1)
+            assert rejected.value.status_code==503
+        finally:await pool.release(held)
+        assert await runtime.sessions.read(sid)==expected
+    finally:
+        await client.delete(key)
+        await runtime.close()
+        assert not pool._in_use_connections and all(not c.is_connected for c in pool._available_connections)

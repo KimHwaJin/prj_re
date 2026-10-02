@@ -1,0 +1,6 @@
+{
+  "successful_measurement_sets_cleanup_verified": 10,
+  "remaining_service_perf_databases": 0,
+  "existing_database_not_reset_by_benchmark": true,
+  "existing_containers_not_restarted": true
+}

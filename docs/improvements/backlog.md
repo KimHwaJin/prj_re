@@ -36,7 +36,7 @@
 
 이전 설문형 graph와 전용 역할을 제거하고 CLI·Studio·시각화를 현재 PlanningRuntime으로 통합했다. 현재 개발은 [054 기록](054-agent-runtime-cleanup.md)을 따른다. 과거 고정 commit의 벤치마크는 당시 재현용이며 현재 SSO·typed HITL·Executor 연계 부하 시험을 대신하지 않는다.
 
-055에서 실제 Runs API의 cookie/CSRF→실제 모델 계획/편집/승인→실제 Executor→후속 질문/Markdown→official Store/새 세션 참조를 연결해 검증했다. [055 기록](055-authenticated-executor-flow.md)을 따른다. 반복 부하를 측정하려면 현재 인증·HITL·접수 모드를 지원하는 별도 harness 정리가 필요하다. 모델 호출 최적화·Registry·운영 보완의 기존 보류는 유지한다.
+055에서 실제 Runs API의 cookie/CSRF→실제 모델 계획/편집/승인→실제 Executor→후속 질문/Markdown→official Store/새 세션 참조를 연결해 검증했다. [055 기록](055-authenticated-executor-flow.md)을 따른다. 056에서 현재 인증·HITL·접수 모드를 지원하는 서비스-only harness와1/10/30/50명 비교를 구현했다. 실제 Executor 포함 용량은 이 결과와 구별한다. 모델 호출 최적화·Registry·운영 보완의 기존 보류는 유지한다.
 
 ## 055에서 확인한 입력·커널 점검
 
@@ -45,3 +45,15 @@
 - 명확히 지정한 trusted dataset의 input_values 자동 채움: 첫 실제 계획에서 default-nce 요청에도 필수 dataset_id가 비었고 approval은 422로 차단됐다. 다음 실제 계획에서는 채워졌다. 단순 ID 언급을 선택·승인으로 자동 간주하거나 API 필수값 검증을 풀지 않는다. prompt/schema/응답 검증의 원인과 required/has_value=false의 프론트 제출 UX를 함께 검토한다. 현재 진단의 테스트 사용자가 빈 참조를 명시하여 승인하는 동작과 모델 자동 채움을 분리한다.
 - 커널 프로파일 의존성: 로컬 default Jupyter의 sklearn 부재로 isolation_forest가 실패했고, 승인한 level 1·1회 범위에서 함수 원문 유지/method=zscore 재실행이 성공했다. 실제 배포 kernel spec/library와 등록 Tool의 조건부 라이브러리를 대조한다. Agent/API 이미지의 package 설치를 Jupyter 가용성으로 해석하지 않는다. 코드/Tool/커널 정보 어디에서 가용성을 제공할지 검토하고 Executor 이미지 수정은 별도 요청 범위로 정한다.
 - 보고서 Artifact/노트북 셀 등록은 별도 정책 결정이 필요하며 현재 completion은 artifact_registration=deferred다. Markdown 응답·Run 문맥 보존과 파일 등록을 구분한다.
+
+## 056 서비스 처리량 후보 이후 배포·연계 용량 검증
+
+상태: 로컬 service-only 코드·설정 후보 완료, 운영 용량 미확정. [056](056-service-throughput-tuning.md)·[상세 근거](../reports/service-throughput-2026-10-03/README.md)·[설정](../service-throughput-settings.md)을 따른다. 모델 호출 최적화는 기존 보류를 유지한다.
+
+- 실제 Kubernetes Pod CPU/memory 제한에서 단일process 한도16/32를 비교한다. 모델 병목은 별도 구분하고 실제모델 동시 허용량을 확인한다. 플랫폼 replica수를 제어하는 정책을 전제로 삼지 않는다.
+- 같은PostgreSQL 인스턴스에 붙는 모든 pool/API·Agent·Executor·배치·replica 연결 예산을 확인한다. pool10/overflow0만으로전체상한이생기는것은아니다.
+- 실제 Executor 제출·결과event/SSE·후속질문·Store와memory읽기/자동갱신 경로도 모델을제외하여용량측정한다. 현재056의종료는plan_approved이고 actual Executor시험은아니다.
+- 실제유입률과계획편집·후속질문·동시탭비율에맞는지속부하를확인한다. 유한50명burst처리량을안정도착률로환산하지않는다.
+- 현재flow SQL약390회/사용자의목적별분포를검토한다. 추가비용이입증되면권한·원자성·멱등성을보존하는개선을선택한다. 설정한도확대와SQL개선을같은성과로합산하지않는다.
+
+본시험용profile은 자동적용/배포하지않았다. 원래checkout·.env·기존컨테이너유지.

@@ -8,11 +8,6 @@ import json
 import logging
 from pathlib import Path
 from typing import Callable, Awaitable, Any
-from uuid import uuid4
-
-from fastapi import Request
-
-
 from service_settings import ServiceSettings, configure, get_settings, load_settings
 
 log = logging.getLogger(__name__)
@@ -233,7 +228,7 @@ def attach_service(
 
 def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     """Local factory or explicit attachment to an already assembled platform app."""
-    from fastapi import FastAPI, HTTPException, Request
+    from fastapi import FastAPI, HTTPException
     from fastapi.exceptions import RequestValidationError
     from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 
@@ -243,14 +238,9 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
     app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0", docs_url=None)
     attach_service(app, settings, sso_docs_path="/docs" if platform_app is None else "/service/docs")
-    # Service handlers require request_id. Preserve one from platform middleware.
-    @app.middleware("http")
-    async def request_id(request: Request, call_next):
-        if not getattr(request.state, "request_id", None):
-            request.state.request_id = request.headers.get("X-Request-ID") or f"req_{uuid4().hex}"
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request.state.request_id
-        return response
+    # Preserve a platform ID; avoid introducing stream cancellation scopes.
+    from service_runtime.request_id import RequestIdMiddleware
+    app.add_middleware(RequestIdMiddleware)
 
     if platform_app is None:
         app.add_exception_handler(HTTPException, http_exception_handler)

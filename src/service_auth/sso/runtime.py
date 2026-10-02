@@ -7,7 +7,7 @@ from urllib.parse import urlencode, urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
-from redis.asyncio import Redis
+from redis.asyncio import Redis, BlockingConnectionPool
 
 from .adapter import load_adapter
 from .contracts import SsoAdapter, UserDirectory, VerifiedEmployee
@@ -134,10 +134,15 @@ def attach_sso(app, *, settings: SsoSettings, users: UserDirectory, redis_url: s
     adapter = adapter if adapter is not None else load_adapter(settings)
     owned = None
     if redis is None:
-        owned = redis = Redis.from_url(redis_url, decode_responses=True,
+        # Short bursts wait for one of the bounded login connections rather
+        # than immediately failing normal authenticated requests with 503.
+        # The pool wait and socket I/O each retain an explicit finite deadline.
+        pool = BlockingConnectionPool.from_url(redis_url, decode_responses=True,
             max_connections=settings.redis_max_connections,
+            timeout=settings.redis_timeout_seconds,
             socket_connect_timeout=settings.redis_timeout_seconds,
             socket_timeout=settings.redis_timeout_seconds)
+        owned = redis = Redis.from_pool(pool)  # Own/close the pool with the runtime.
     runtime = SsoRuntime(settings, adapter, users, RedisSessions(redis, settings.namespace),
                          api_prefix=api_prefix, docs_path=docs_path, owned_redis=owned)
     app.state.sso = runtime

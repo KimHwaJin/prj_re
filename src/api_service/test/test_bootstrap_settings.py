@@ -93,6 +93,26 @@ def test_defaults_do_not_diverge():
     assert settings.api.llm_temperature == settings.agent.model_temperature
 
 
+def test_statement_cache_is_opt_in_and_selected_profile_wins():
+    assert local_settings().api.database_prepared_statement_cache_size == 0
+    profile = load_settings(
+        config_path=ROOT / "config.performance.yml",
+        environ={"DATABASE_PREPARED_STATEMENT_CACHE_SIZE": "0"},
+    )
+    assert profile.api.database_prepared_statement_cache_size == 100
+    assert profile.api.agent_worker_concurrency == 32
+    assert profile.api.database_pool_size == 10
+    assert profile.api.database_max_overflow == 0
+    assert profile.agent.checkpoint_pool_max_size == 4
+
+
+@pytest.mark.parametrize("value", [-1, 1001, "invalid"])
+def test_statement_cache_invalid_config_cannot_fall_back(value):
+    with pytest.raises(ConfigurationError):
+        load_settings(config={"DATABASE_PREPARED_STATEMENT_CACHE_SIZE": value},
+                      environ={"DATABASE_PREPARED_STATEMENT_CACHE_SIZE": "100"})
+
+
 def test_unknown_yaml_key_fails_while_unrelated_environment_is_ignored():
     with pytest.raises(ConfigurationError, match="Unknown service setting"):
         load_settings(config={"service": {"llm": {"modle_name": "typo"}}}, environ={})

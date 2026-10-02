@@ -1,0 +1,29 @@
+{
+  "scenario": "flow",
+  "users": 50,
+  "concurrency": 16,
+  "mock_delay_ms": 0,
+  "source_commit": "59d690a2dd07e454443691fb18e34d0829b683fa",
+  "completed_users": 45,
+  "errors": [
+    "HTTPStatusError",
+    "HTTPStatusError",
+    "HTTPStatusError",
+    "HTTPStatusError",
+    "HTTPStatusError"
+  ],
+  "workers": 135,
+  "http_status_counts": {
+    "200": 135,
+    "201": 90,
+    "202": 135,
+    "503": 5
+  },
+  "session_owners": 0,
+  "recovery_tasks": 0,
+  "gc_warning_text_occurrences": 76,
+  "capture_sha256": "774a1f3c154aec671fcc6f8172c0cd712edabe5c581c2916ae4746c62d134240",
+  "source_capture_private": true,
+  "excluded_from_success_averages": true,
+  "note": "503 exception detail not captured; blocking pool saturation regression separately proves immediate-capacity mechanism. Warning text occurrences are not distinct leaked connections."
+}

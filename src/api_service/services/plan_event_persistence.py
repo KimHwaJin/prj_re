@@ -6,6 +6,7 @@ from api_service.services.agent_run_log_service import AgentRunLogService
 from api_service.services.message_service import MessageService
 from api_service.services.run_service import RunService
 from api_service.services import resource_lifecycle
+from api_service.services.graph_result_batch import GraphResultBatch
 
 
 async def persist_plan_events(db, state, context):
@@ -23,6 +24,9 @@ async def persist_plan_events(db, state, context):
                 db, context.user_id, UUID(context.session_id),
                 expected_project_id=UUID(state['project_id']), for_update=True,
             )
+        # All Run barriers were acquired before the Session/Task lock order.
+        # Capabilities are local to this projection transaction, never cached.
+        batches = {owner: GraphResultBatch(db, context.user_id, session, owner) for owner in owners}
         persisted = []
         for event in events:
             envelope = event['envelope']
@@ -45,7 +49,7 @@ async def persist_plan_events(db, state, context):
             log = await AgentRunLogService.create(
                 db, run_id=owner, event_key='public:' + event['event_id'],
                 agent_name='analysis_conversation', node='planning', event=envelope['type'],
-                kind='public_event', payload=envelope, commit=False,
+                kind='public_event', payload=envelope, commit=False, batch=batches[owner],
             )
             persisted.append({'event_id': event['event_id'], 'log_id': str(log.log_id)})
         await db.commit()
