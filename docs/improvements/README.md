@@ -6,6 +6,8 @@
 
 현재 개발 기준: `feature/refactor-base`. 053에서 공식 Store 기반 프로젝트 메모리의 설정 가능한 저장 한도·역할별 입력 예산·지속적인 주제 갱신 정책을 구현하고 최종 검증을 마쳤다. [053 작업 기록](053-project-memory-policy.md), [현재 메모리 계약](../project-memory.md)을 따른다. 모델 호출 횟수 최적화는 [후속 목록](backlog.md)에 보류한다.
 
+053 통합 이력: 구현 `aa3416b1845d72309deea0c873f82b25cbce6b29`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 원격 구현 SHA 일치를 확인했다. [053 구현·검증·게시 기록](053-project-memory-policy.md)을 따른다.
+
 052 통합 이력: 구현 `bf82d9357351293f4300319b00b5324aac8f66a9`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 원격 구현 SHA 일치를 확인했다. [052 구현·검증·게시 기록](052-langgraph-project-memory-store.md)을 따른다.
 
 051 통합 이력: 구현 `6e9222364ba777cb406e1e1d4ebd1d01c5d4c1c2`, 게시 기록 `cba215f4adce281ff21f9f62ccd5d0e751bec02d`. 당시 전용 PostgreSQL 저장소·932회귀·실제 모델 세 사례·wheel을 검증했다. 현재 backend는 052가 대체한다.
@@ -88,7 +90,7 @@
 | 050 | 후속 답변의 짧은 근거 ID·수치 분리 계약·중복 표 축소 | 구현·실모델 A/B·908회귀·최종 경계84/wheel 검증·베이스 병합·origin 게시 완료 | 2026-10-02 | [050 기록](050-compact-answer-facts.md) |
 | 051 | 프로젝트 공유 메모리 저장·읽기·미들웨어·원문 추출 | 구현·932회귀·실제 모델 세 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [051 기록](051-project-memory-runtime.md) |
 | 052 | 프로젝트 메모리 공식 LangGraph Store 전환·전용 저장소 제거 | 구현·937회귀·실제 LLM/Store/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [052 기록](052-langgraph-project-memory-store.md) |
-| 053 | 프로젝트 메모리 저장 한도·역할별 입력 예산·지속적인 주제 갱신 | 구현·959회귀·실제 LLM/Store 6개 사례/wheel 검증 완료 / 통합·게시 준비 | 2026-10-02 | [053 기록](053-project-memory-policy.md) |
+| 053 | 프로젝트 메모리 저장 한도·역할별 입력 예산·지속적인 주제 갱신 | 구현·959회귀·실제 LLM/Store 6개 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [053 기록](053-project-memory-policy.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

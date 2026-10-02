@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·전체 회귀·실제 모델 6개 사례·wheel 검증 완료, 통합·게시 준비 |
+| 상태 | 구현·검증·베이스 병합·origin 게시 완료 |
 | 시작일 | 2026-10-02 |
 | 브랜치 | feature/project-memory-policy |
 | 출발 commit | effe70351e5656c402a168adffaf6089273613c2 |
@@ -54,4 +54,4 @@ prompt 예산 중 하나가 0이면 Agent 읽기/자동 갱신을 중단한다. 
 
 DB schema는 052의 0025 그대로이며 추가 migration은 없다. 최신 서비스 DB가 이미 0025면 코드/설정만 적용한다. 0025 이전이면 052의 API/Worker drain→Alembic upgrade head→새 코드 기동 순서를 따른다. 기존 source에 quote/intent가 없는 항목도 읽는다.
 
-기존 원래 checkout과 .env/Docker/외부 서비스 DB를 변경하지 않았다. 구현을 feature/refactor-base에 통합하고 파생 브랜치를 보존하여 origin에 게시한 후 SHA를 기록한다.
+구현 commit: `aa3416b1845d72309deea0c873f82b25cbce6b29`. `feature/project-memory-policy`를 `feature/refactor-base`에 fast-forward 병합하고 두 브랜치를 origin에 atomic push했다. 원격 두 브랜치가 구현 SHA와 일치함을 확인했다. 이 게시 기록은 베이스의 후속 문서 commit으로 남기며 파생 브랜치는 구현 commit을 보존한다. 원래 사용자 checkout·.env는 변경하지 않았다.
