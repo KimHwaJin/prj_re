@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·전체 회귀·격리 DB/실제 모델/패키지 검증 완료, 통합·게시 대기 |
+| 상태 | 구현·전체 회귀·격리 DB/실제 모델/패키지 검증 완료, 베이스 병합·origin 게시 완료 |
 | 시작일 | 2026-10-02 |
 | 브랜치 | feature/project-memory-runtime |
 | 출발 commit | f8d559f1710d0a1efe12056171989db0c281dc5e |
@@ -56,4 +56,6 @@ ProjectMemory는 AgentContext의 선택적 Protocol만 정의되어 있었다. �
 
 ## 통합과 게시
 
-코드·문서·검증을 완료했다. 구현 commit과 원격 게시 결과는 통합 직후 추가한다. 사용자가 승인한 feature 파생→베이스 통합→origin 게시 방식을 따른다.
+구현 commit: `6e9222364ba777cb406e1e1d4ebd1d01c5d4c1c2`. `feature/project-memory-runtime`의 검증된 38개 파일을 `feature/refactor-base`에 fast-forward 병합하고 두 브랜치를 origin에 atomic push했다. 원격 베이스와 파생 브랜치가 이 구현 SHA로 일치함을 확인했다. 이후 베이스의 별도 문서 commit에 통합·게시 결과를 기록한다. 파생 브랜치는 구현 commit을 보존한다.
+
+원본 `feature/total_merge_v1` checkout의 HEAD·변경 상태·추적 파일·`.env`는 이전 상태로 유지한다. 실제 배포·운영 DB migration은 수행하지 않았다.
