@@ -37,4 +37,4 @@ Conversation은 같은 create_agent와 기존 미들웨어 경계를 사용한�
 
 ## 통합·게시
 
-검증 완료 후 베이스 병합과 origin 게시 SHA를 기록한다. 기존 사용자 checkout과 Docker 서비스는 유지한다.
+구현·검증 commit `5e22b9868a33fb5c2f52e4e855e7592dca2ba68a`을 `feature/refactor-base`에 fast-forward 병합했다. 베이스·파생 `feature/grounded-answer-efficiency`를 origin `https://github.com/KimHwaJin/prj_re.git`에 atomic push한 뒤 원격 두 SHA 일치를 확인했다. 파생 브랜치는 당시 검증 구현을 보존한다. 게시 결과는 베이스의 별도 문서 commit으로 남긴다. 기존 사용자 checkout과 Docker 서비스는 유지했으며 배포·서비스 재기동은 수행하지 않았다.
