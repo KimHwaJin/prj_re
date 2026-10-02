@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·전체 회귀·실제 모델/Store·wheel 검증 완료, 통합·게시 준비 |
+| 상태 | 구현·검증·베이스 병합·origin 게시 완료 |
 | 시작일 | 2026-10-02 |
 | 브랜치 | feature/project-memory-langgraph-store |
 | 출발 commit | cba215f4adce281ff21f9f62ccd5d0e751bec02d |
@@ -70,4 +70,4 @@ SQLAlchemy/asyncpg와 공식 Store/psycopg는 driver가 달라 풀을 직접 공
 
 ## 통합·게시
 
-최종 검증과 구현 commit 후 기록한다. feature 파생 브랜치는 보존하고 검증한 코드·문서를 feature/refactor-base에 통합하여 origin에 게시한다.
+구현 commit: `bf82d9357351293f4300319b00b5324aac8f66a9`. `feature/project-memory-langgraph-store`를 `feature/refactor-base`에 fast-forward 병합하고 두 브랜치를 origin에 atomic push했다. 원격 두 브랜치가 구현 SHA와 일치함을 확인했다. 이 게시 기록은 베이스의 후속 문서 commit으로 남기며 파생 브랜치는 구현 commit을 보존한다. 원래 사용자 checkout·.env는 변경하지 않았다.

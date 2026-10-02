@@ -6,6 +6,8 @@
 
 현재 개발 기준: `feature/refactor-base`. 052에서 프로젝트 메모리를 공식 LangGraph Store로 전환하고 전체 검증을 마쳤다. 전용 ORM backend/shim을 제거했고 기존 데이터는 0025로 이전한다. [052 작업 기록](052-langgraph-project-memory-store.md), [현재 메모리 계약](../project-memory.md)을 따른다. 모델 호출 횟수 최적화는 [후속 목록](backlog.md)에 보류한다.
 
+052 통합 이력: 구현 `bf82d9357351293f4300319b00b5324aac8f66a9`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 원격 구현 SHA 일치를 확인했다. [052 구현·검증·게시 기록](052-langgraph-project-memory-store.md)을 따른다.
+
 051 통합 이력: 구현 `6e9222364ba777cb406e1e1d4ebd1d01c5d4c1c2`, 게시 기록 `cba215f4adce281ff21f9f62ccd5d0e751bec02d`. 당시 전용 PostgreSQL 저장소·932회귀·실제 모델 세 사례·wheel을 검증했다. 현재 backend는 052가 대체한다.
 
 050 통합 이력: 050 후속 답변의 짧은 근거 선택·수치 분리 개선을 `5e22b9868a33fb5c2f52e4e855e7592dca2ba68a`까지 fast-forward 병합하고 베이스·파생 `feature/grounded-answer-efficiency`를 origin에 게시했다. 원격 두 SHA 일치, 전체 회귀 908개와 subtest 2개 통과, 최종 경계 84개·실제 모델 A/B·신규 계획·wheel 검증을 확인했다. 설명은 평균 28.20→10.76초, 호출 2→1이었고 보고서는 정정 1회가 남았다. 기존 보고서 검증 실패도 별도로 기록했다. [050 변경·측정·게시 기록](050-compact-answer-facts.md)을 따른다. 049 게시 이력은 [049 기록](049-conversation-performance.md)에 보존한다.
@@ -85,7 +87,7 @@
 | 049 | 후속 설명·보고서 답변의 메타데이터·계획 문맥 비용 축소 | 구현·실모델 A/B 8회·실제 신규 계획·890회귀/wheel 검증·베이스 병합·origin 게시 완료 | 2026-10-02 | [049 기록](049-conversation-performance.md) |
 | 050 | 후속 답변의 짧은 근거 ID·수치 분리 계약·중복 표 축소 | 구현·실모델 A/B·908회귀·최종 경계84/wheel 검증·베이스 병합·origin 게시 완료 | 2026-10-02 | [050 기록](050-compact-answer-facts.md) |
 | 051 | 프로젝트 공유 메모리 저장·읽기·미들웨어·원문 추출 | 구현·932회귀·실제 모델 세 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [051 기록](051-project-memory-runtime.md) |
-| 052 | 프로젝트 메모리 공식 LangGraph Store 전환·전용 저장소 제거 | 구현·937회귀·실제 LLM/Store/wheel 검증 완료 / 통합·게시 준비 | 2026-10-02 | [052 기록](052-langgraph-project-memory-store.md) |
+| 052 | 프로젝트 메모리 공식 LangGraph Store 전환·전용 저장소 제거 | 구현·937회귀·실제 LLM/Store/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [052 기록](052-langgraph-project-memory-store.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
