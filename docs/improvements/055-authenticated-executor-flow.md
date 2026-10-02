@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·연계·관련 회귀 검증 완료, 베이스 통합·게시 예정 |
+| 상태 | 구현·연계·관련 회귀 검증 완료, 베이스 병합·origin 게시 확인 |
 | 시작일 / 완료일 | 2026-10-02 / 2026-10-03 |
 | 브랜치 | feature/api-executor-flow-verification |
 | 출발 commit | dd867afc9c0f4e612fd248d07f4af212994fb930 |
@@ -54,4 +54,6 @@ SSE 31개·cursor=16 이후 15개 재전송, 초기 Markdown report ready/6217�
 
 ## 적용·통합·게시
 
-추가 dependency·환경변수·Alembic migration·운영 config 변경이 없다. 진단의 SSO 설정과 auto_context는 해당 임시 프로세스에만 주입한다. 기준 베이스에서 feature/api-executor-flow-verification으로 작업하며 검증 완료 후 fast-forward 병합·origin 게시 SHA를 기록한다.
+추가 dependency·환경변수·Alembic migration·운영 config 변경이 없다. 진단의 SSO 설정과 auto_context는 해당 임시 프로세스에만 주입한다. 기준 베이스에서 feature/api-executor-flow-verification으로 작업한 뒤 검증을 완료하여 아래 commit으로 통합·게시했다.
+
+2026-10-03 구현·검증 commit `2cd081c1d83f31dd99ab13fada08b131ce72ecc5`를 `feature/refactor-base`에 fast-forward 병합하고 베이스·`feature/api-executor-flow-verification`을 origin에 atomic push했다. 원격 두 구현 SHA 일치를 확인했다. 파생 브랜치는 해당 구현 commit에 보존하고 통합 이력 문서는 베이스의 후속 commit에 기록한다. 배포는 수행하지 않았다.
