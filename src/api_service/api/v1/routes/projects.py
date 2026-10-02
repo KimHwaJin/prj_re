@@ -85,11 +85,11 @@ from fastapi import Header, HTTPException, Query, Path as PathParam
 from uuid import uuid4
 from service_contracts.project_memory import MemoryChange, MemorySection, MemoryConflict, MemoryLimit
 from api_service.schemas.common.project_memory_schema import MemoryPut, MemoryResource, MemoryWriteResult
-from api_service.services.project_memory_service import ProjectMemoryService
+from api_service.services.project_memory_policy import ProjectMemoryPolicy
 
 @router.get('/{project_id}/memory',response_model=MemoryResource,response_model_exclude_none=True)
 async def read_project_memory(project_id:UUID,user_id:UUID=Depends(get_current_user_id),db:AsyncSession=Depends(get_db)):
-    return await ProjectMemoryService(db=db).read(user_id,project_id)
+    return await ProjectMemoryPolicy(db=db).read(user_id,project_id)
 
 async def write_memory(user_id,project_id,section,key,payload,idempotency_key,*,db,delete=False):
     try:
@@ -99,7 +99,7 @@ async def write_memory(user_id,project_id,section,key,payload,idempotency_key,*,
     if idempotency_key is not None and (not idempotency_key.strip() or not 1 <= len(idempotency_key) <= 100):
         raise HTTPException(422,'Invalid Idempotency-Key')
     try:
-        return await ProjectMemoryService(db=db).apply(user_id,project_id,[change.model_dump()],
+        return await ProjectMemoryPolicy(db=db).apply(user_id,project_id,[change.model_dump()],
             source_id='user:'+str(user_id)+':'+(idempotency_key or str(uuid4())),source={'kind':'user_edit'},delete=delete)
     except MemoryConflict as exc: raise HTTPException(409,str(exc)) from exc
     except MemoryLimit as exc: raise HTTPException(422,str(exc)) from exc

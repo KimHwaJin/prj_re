@@ -1,11 +1,11 @@
 # 프로젝트 공유 메모리
 
-`project_memory`는 한 프로젝트의 여러 세션에서 참고할 배경과 선호를 항목별로 보존한다. 현재 세션의 대화 이력·완료 분석의 관찰·프로젝트 `system_prompt`와 별개다. 저장소는 서비스의 기존 `DATABASE_URL` PostgreSQL과 SQLAlchemy 풀을 사용한다. LangGraph checkpoint DB나 새 Redis namespace·벡터 DB를 추가하지 않는다.
+`project_memory`는 한 프로젝트의 여러 세션에서 참고할 배경과 선호를 항목별로 보존한다. 현재 세션의 대화 이력·완료 분석의 관찰·프로젝트 `system_prompt`와 별개다. 저장소는 **공식 LangGraph `AsyncPostgresStore`**이며 서비스의 기존 `DATABASE_URL` PostgreSQL을 사용한다. `create_agent(store=...)`와 외부 LangGraph의 `compile(store=...)`에 같은 Store를 주입한다. 체크포인트 DB나 Redis·벡터 DB를 추가하지 않는다. 051의 전용 ORM 저장소는 052에서 제거했다.
 
 ## 사용하는 흐름
 
 1. 소유한 프로젝트에 메모리를 명시적으로 등록하거나 `auto_context` 설정에서 현재 사용자 발언의 배경·선호를 추출한다.
-2. API Run Worker 또는 Executor Event Worker가 역할 Agent를 호출할 때, 서비스가 owner/project/session/source Run에 묶인 접근 객체를 주입한다.
+2. API Run Worker 또는 Executor Event Worker가 역할 Agent를 호출할 때, 서비스가 공유 Store와 owner/project/session/source Run에 묶인 정책 객체를 주입한다. 미들웨어는 `runtime.store`를 이용한다.
 3. 공통 `ProjectMemoryMiddleware.abefore_agent`가 역할 호출당 한 번 읽고 연결을 돌려준다. 모델 요청·JSON 정정 재시도에는 같은 snapshot을 사용한다.
 4. 다른 세션의 다음 역할 호출은 최신 snapshot을 다시 읽는다. 공유 Agent 객체나 전역 변수에 프로젝트별 메모리를 캐시하지 않는다.
 5. 메모리는 `HumanMessage` 참조 데이터로 주입한다. 승인·실행 명령·검증된 현재 분석 결과로 취급하지 않는다. 현재 요청과 원본 관찰이 우선한다.
@@ -23,7 +23,14 @@
 
 각 항목은 `(project_id, section, key)`로 식별하며 content, version, is_deleted, source, updated_at을 갖는다. key는 같은 주제를 수정할 안정적인 영문 키다. 한 프로젝트 최대 64개 key(삭제 표시 포함), 문서 JSON 최대 16000자, 항목 본문 최대 1000자다. 자동으로 오래된 항목을 지우지 않는다. 한도에 도달하면 기존 항목을 짧게 수정하거나 삭제했던 키를 명시적으로 재사용한다.
 
-`project_memories`는 현재 항목과 삭제 버전을 저장한다. `project_memory_receipts`는 쓰기 출처별 digest와 결과를 저장해 동일 요청의 중복 적용을 막는다. 별도 전체 변경 이력 테이블은 이번 범위에 포함하지 않았다. 삭제 표시와 receipt의 유지 기간·운영 정리는 후속이다.
+공식 Store의 `store` 테이블에 항목과 삭제 버전을 JSON 문서로 저장한다. `store_migrations`는 공식 Store schema 이력이다. 애플리케이션의 ORM 모델이나 별도 BaseStore 구현은 없다.
+
+| 문서 | namespace | key |
+|---|---|---|
+| 메모리 항목 | (`dtest`, `project_memory`, 내부 user UUID, project UUID, section) | 안정적인 주제 key |
+| 중복 요청 기록 | (`dtest`, `project_memory_receipts`, 내부 user UUID, project UUID) | 출처 ID의 SHA-256 |
+
+중복 요청 기록도 같은 공식 Store에 source_id·digest·결과를 저장한다. receipt namespace는 모델의 프로젝트 메모리 조회에 포함하지 않는다. namespace는 분리 표식이며 권한 검사 자체가 아니다. 서비스는 활성 사용자/프로젝트 소유권·source Run을 검사하고, 반환된 항목의 namespace와 JSON 내부 식별자도 검증한다. 별도 전체 변경 이력 테이블은 이번 범위에 포함하지 않았다. 삭제 표시와 receipt의 유지 기간·운영 정리는 후속이다.
 
 ## 설정
 
@@ -97,7 +104,9 @@ section은 위 표의 네 값이고, key는 영문 소문자로 시작하는 `[a
 
 자동 저장은 검증된 최종 응답 이후 `aafter_agent`에서 실행한다. 동일 source Run의 conversation 쓰기는 동일 출처 ID를 사용한다. 같은 항목의 동시 갱신은 한쪽만 통과하며, 충돌 시 이전 내용을 임의로 덮어쓰거나 별도 LLM을 호출해 다시 결정하지 않는다. 갱신 결과는 public `activity.started/completed`의 project_memory 활동과 답변 Run 결과의 `final_response.project_memory`에서 확인한다. 계획 후보가 있는 경우 활동 이벤트와 내부 graph 결과를 사용한다. 내부 memory_updates와 메모리 문서 자체를 SSE에 그대로 공개하지 않는다.
 
-처리 중 DB 연결은 모델 대기 동안 유지하지 않는다. 자동 추출의 추가 출력 계약이 기존 모델 응답 길이나 재검증에 미치는 일반적인 비용은 이번 기능 검증으로 확정하지 않았다. 모델 호출 횟수 최적화는 [후속 목록](improvements/backlog.md)에 보류되어 있다.
+처리 중 DB 연결은 모델 대기 동안 유지하지 않는다. 공식 Store는 psycopg를 사용하며 기존 CRUD 엔진은 asyncpg를 사용하므로 풀을 직접 공유하지 않는다. API 프로세스당 하나의 Store runtime이 lazy psycopg 풀을 소유한다. 최소 연결 0, 최대 `min(2, DATABASE_POOL_SIZE)`, 대기 timeout은 `DATABASE_POOL_TIMEOUT_SECONDS`다. 새 URL/별도 환경변수는 없으며 **Pod DB 예산에는 CRUD 풀·checkpoint 풀·bridge 풀과 이 최대 2개 연결을 각각 합산**해야 한다. Store 자체의 TTL/자동 만료와 embedding/벡터 검색은 켜지 않는다.
+
+쓰기 트랜잭션에서는 공식 `AsyncPostgresStore(connection)`과 공개 `abatch()`를 사용한다. 항목과 receipt가 동일한 psycopg 트랜잭션에 커밋된다. 기존 서비스 DB 세션이 사용자·프로젝트·Task 점유 barrier를 저장 완료까지 유지해 삭제나 오래된 Worker와 경쟁하지 않는다. 다른 driver 세션 두 개의 분산 쓰기를 만드는 것이 아니다. CRUD 세션은 권한/lock만 담당하고 메모리 변경은 Store 트랜잭션 하나에서만 수행한다. 자동 추출의 추가 출력 계약이 기존 모델 응답 길이나 재검증에 미치는 일반적인 비용은 이번 기능 검증으로 확정하지 않았다. 모델 호출 횟수 최적화는 [후속 목록](improvements/backlog.md)에 보류되어 있다.
 
 ## 반영과 검증
 
@@ -107,6 +116,10 @@ section은 위 표의 네 값이고, key는 영문 소문자로 시작하는 `[a
 PYTHONPATH=src python -m alembic -c alembic.crud.ini upgrade head
 ```
 
-새 head는 `20261002_0024`다. 0023까지의 기존 프로젝트/세션/Run과 checkpoint는 수정하지 않고 메모리 두 테이블만 추가한다. downgrade는 메모리와 receipt를 삭제하므로 저장된 공유 지식을 보존해야 하는 운영 환경에서 임의로 실행하지 않는다.
+새 head는 `20261002_0025`다. pinned `langgraph-checkpoint-postgres==3.1.2`의 기본 Store schema 0..3을 Alembic에서 준비한다. `store.setup()`을 기동 중 호출하지 않는다. 실제 메모리와 receipt를 0024 테이블에서 공식 Store로 이전한 뒤 `project_memories`, `project_memory_receipts`를 제거한다. 기존 content·version·삭제 표시·출처·갱신 시각·동일 요청 결과를 보존한다. 새 환경도 Alembic head 하나로 준비한다. 0024 파일은 이미 게시된 migration 이력이므로 삭제하지 않는다.
 
-테스트와 실제 모델 확인의 범위는 [051 작업 기록](improvements/051-project-memory-runtime.md)을 참고한다. 이 변경으로 기존 Docker 컨테이너나 운영 DB를 재기동·마이그레이션하지 않았다. 장기 실행 종료 후 새로운 파일/수치 근거 연결, 프로젝트 간 공유, 프로젝트 협업 권한, 자동 결과 요약은 별도 범위다.
+0025→0024 downgrade는 이 프로젝트 메모리 namespace를 이전 테이블로 복원하며 다른 Store 문서/공식 테이블은 유지한다. 더 이전의 0024→0023은 기존 migration에 따라 메모리를 삭제한다. 기존 서비스와 checkpoint 이력은 변경하지 않는다. 배포 중 옛 코드와 새 코드가 서로 다른 저장소에 쓰지 않도록 관련 API/Worker를 중지·drain한 뒤 migration과 새 버전 배포를 완료한다. 혼합 버전 동시 기동은 지원하지 않는다.
+
+`api_service/core/memory_store.py`는 풀 수명, `service_contracts/memory_store.py`는 namespace·JSON 읽기, `api_service/services/project_memory_policy.py`는 소유권·버전·동시성·출처·receipt 정책을 담당한다. 제거된 `project_memory_service.py`/전용 모델의 호환 shim은 없다.
+
+테스트와 실제 모델 확인의 범위는 [052 Store 전환 기록](improvements/052-langgraph-project-memory-store.md)을 참고한다. 이 변경으로 기존 Docker 컨테이너나 운영 DB를 재기동·마이그레이션하지 않았다. 장기 실행 종료 후 새로운 파일/수치 근거 연결, 프로젝트 간 공유, 프로젝트 협업 권한, 자동 결과 요약은 별도 범위다.

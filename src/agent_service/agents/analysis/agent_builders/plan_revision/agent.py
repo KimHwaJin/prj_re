@@ -9,7 +9,7 @@ import json
 from langchain.tools import tool
 
 
-def build_agent(model, catalog, *, discovery_max_rounds=4, structured_output_mode='prompt_json', validate_response=None,session_context_max_chars=16000):
+def build_agent(model, catalog, *, discovery_max_rounds=4, structured_output_mode='prompt_json', validate_response=None,session_context_max_chars=16000, store=None):
     @tool
     def read_tool_source(tool_id: str) -> dict:
         """Read a deployed analysis function for execution-local modification; never executes Python."""
@@ -20,4 +20,4 @@ def build_agent(model, catalog, *, discovery_max_rounds=4, structured_output_mod
         tools=[*catalog.metadata_tools(),read_tool_source], middleware=[ProjectPromptMiddleware(), SessionAnalysisMiddleware(max_chars=session_context_max_chars), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds,
             final_instruction='Return exactly RevisionReply JSON: kind, message, plans with definition/input_values/functions; ask clarification when needed.')],
         output_type=RevisionReply, decode=json_output(RevisionReply), structured_output_mode=structured_output_mode,
-        max_validation_attempts=2, validate_response=validate_response)
+        max_validation_attempts=2, validate_response=validate_response, store=store)

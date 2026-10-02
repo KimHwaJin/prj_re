@@ -7,7 +7,7 @@ from service_runtime.model_selection import build_catalog
 
 
 class PlanningRuntime:
-    def __init__(self, settings, catalog=None, *, executor=None, bindings=None, project_memory_factory=None):
+    def __init__(self, settings, catalog=None, *, executor=None, bindings=None, memory_policy_factory=None,store=None):
         self.settings = settings
         self.catalog = catalog or AssetCatalog()
         self.models = settings.model_catalog or build_catalog(settings)
@@ -17,12 +17,13 @@ class PlanningRuntime:
         self.bindings = bindings
         self.execution_agents = {}
         self.revision_agents = {}
-        self.project_memory_factory = project_memory_factory
+        self.memory_policy_factory = memory_policy_factory
+        self.store = store
 
     def bind_context(self, state, context):
-        if self.project_memory_factory is None or self.settings.agent_project_memory_mode == 'off':
+        if self.memory_policy_factory is None or self.settings.agent_project_memory_mode == 'off':
             return context
-        return replace(context,project_memory=self.project_memory_factory(state),
+        return replace(context,project_memory_policy=self.memory_policy_factory(state),
                        project_memory_auto_write=self.settings.agent_project_memory_mode=='auto_context')
 
     @property
@@ -62,9 +63,9 @@ class PlanningRuntime:
                         raise ValueError('can_repair=false must not contain execution changes')
                 self.execution_agents[key]=build_agent(create_chat_model(spec.apply(self.settings)),self.catalog,
                     discovery_max_rounds=self.settings.agent_discovery_max_rounds,enable_discovery=discovery,
-                    structured_output_mode=spec.structured_output_mode,validate_response=validate_repair)
+                    structured_output_mode=spec.structured_output_mode,validate_response=validate_repair, store=self.store)
             else:
-                self.execution_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)),structured_output_mode=spec.structured_output_mode)
+                self.execution_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)),structured_output_mode=spec.structured_output_mode, store=self.store)
         return await self.execution_agents[key].ainvoke(payload,context=context)
 
     async def respond(self, state, context, dataset_catalog):
@@ -82,7 +83,7 @@ class PlanningRuntime:
                                                discovery_max_rounds=self.settings.agent_discovery_max_rounds,
                                                repair_limit=self.settings.agent_repair_level_limit,repair_attempts=self.settings.agent_max_repair_attempts,
                                                session_context_max_chars=self.settings.agent_session_analysis_max_chars,
-                                               structured_output_mode=spec.structured_output_mode)
+                                               structured_output_mode=spec.structured_output_mode, store=self.store)
         return await self.agents[key].ainvoke({
             'request': state['user_request'], 'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
             'available_skills': self.catalog.public_skills(), 'dataset_catalog': dataset_catalog,
@@ -134,5 +135,5 @@ class PlanningRuntime:
             self.revision_agents[key] = build_agent(create_chat_model(spec.apply(self.settings)), self.catalog,
                 discovery_max_rounds=self.settings.agent_discovery_max_rounds,
                 session_context_max_chars=self.settings.agent_session_analysis_max_chars,
-                structured_output_mode=spec.structured_output_mode, validate_response=validate_response)
+                structured_output_mode=spec.structured_output_mode, validate_response=validate_response, store=self.store)
         return await self.revision_agents[key].ainvoke(payload, context=context)

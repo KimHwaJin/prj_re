@@ -4,9 +4,18 @@ from uuid import UUID,uuid4
 import pytest
 from sqlalchemy import select,func
 from api_service.test.test_user_identity_postgres import database_url,harness,initialize,add_user,add_session,headers
-from api_service.services.project_memory_service import ProjectMemoryService
-from api_service.models.common.project_memory_model import ProjectMemoryModel,ProjectMemoryReceiptModel
+from api_service.services.project_memory_policy import ProjectMemoryPolicy
+from service_contracts.memory_store import receipt_namespace
+from api_service.core.memory_store import runtime as store_runtime
+from langgraph.store.postgres import AsyncPostgresStore
+import pytest_asyncio
 from service_contracts.project_memory import MemoryConflict,MemoryLimit
+
+@pytest_asyncio.fixture(autouse=True)
+async def store_lifecycle():
+    store_runtime.start()
+    yield
+    await store_runtime.shutdown()
 
 async def setup(h):
     await initialize(h)
@@ -14,7 +23,7 @@ async def setup(h):
     async with h.factory() as db:
         from api_service.models.common.user_model import UserModel
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==user['user_id']))
-    return user,uid,UUID(user['default_project_id']),ProjectMemoryService(session_factory=h.factory)
+    return user,uid,UUID(user['default_project_id']),ProjectMemoryPolicy(session_factory=h.factory)
 
 def change(key='style',content='간결한 보고서',version=0,section='report_preferences'):
     return {'section':section,'key':key,'content':content,'expected_version':version}
@@ -55,8 +64,8 @@ async def test_concurrent_same_topic_one_wins_different_topics_both_survive_and_
     assert replay['entries'][0]['version']==1
     state=await service.read(uid,pid)
     assert {e['key'] for e in state['entries']}=={'same','left','right'}
-    async with h.factory() as db:
-        assert await db.scalar(select(func.count()).select_from(ProjectMemoryReceiptModel))==3
+    async with store_runtime.open_store() as store:
+        assert len(await store.asearch(receipt_namespace(uid,pid),limit=10))==3
 
 @pytest.mark.asyncio
 async def test_batch_atomicity_size_bound_and_soft_delete(harness):
@@ -94,11 +103,12 @@ async def test_bound_source_checks_and_same_project_cross_session_read(harness):
     r1=await run(s1,'one');r2=await run(s2,'two')
     first=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':s1,'run_id':r1})
     second=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':s2,'run_id':r2})
-    await first.apply([change()])
-    assert (await second.read(str(pid)))['entries'][0]['content']=='간결한 보고서'
+    async with store_runtime.open_store() as store:
+        await first.apply(store,[change()])
+        assert (await second.read(store))['entries'][0]['content']=='간결한 보고서'
     invalid=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':s2,'run_id':r1})
-    with pytest.raises(ValueError,match='source Run'):await invalid.read(str(pid))
-    with pytest.raises(ValueError,match='invocation'):await first.read(str(uuid4()))
+    async with store_runtime.open_store() as store:
+        with pytest.raises(ValueError,match='source Run'):await invalid.read(store)
 
 @pytest.mark.asyncio
 async def test_migration_downgrade_upgrade_preserves_existing_project(harness,database_url,tmp_path):
@@ -136,8 +146,10 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         'API_BASE_URL':'http://llm.invalid/v1','AGENT_PROJECT_MEMORY_MODE':'auto_context'},environ={}).agent
     current=service_settings.get_settings()
     monkeypatch.setattr(service_settings,'_snapshot',replace(current,agent=real_shape))
-    service=ProjectMemoryService(session_factory=h.factory)
-    runtime=PlanningRuntime(real_shape,project_memory_factory=service.for_context)
+    service=ProjectMemoryPolicy(session_factory=h.factory)
+    async with store_runtime.open_store() as store:
+        assert isinstance(store, AsyncPostgresStore)
+    runtime=PlanningRuntime(real_shape,memory_policy_factory=service.for_context,store=store)
     seen=[]
     async def handle(request):
         body=json.loads(request.content)
@@ -148,7 +160,7 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         return response({'role':'assistant','content':json.dumps({'kind':'answer','message':'간결한 원인·행동 중심 보고서 선호를 참고하겠습니다.','grounding':{'scope':'general'},'memory_updates':update,'plans':[]},ensure_ascii=False)})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
         selection=runtime.models.select().model_dump()
-        runtime.agents[(selection['name'],selection['revision'])]=build_agent(model(client),runtime.catalog)
+        runtime.agents[(selection['name'],selection['revision'])]=build_agent(model(client),runtime.catalog,store=store)
         graph=build_planning_graph(runtime,checkpointer=InMemorySaver());graph_runtime.override_graph(graph)
         first=await submit(h,{'input':{'content':[{'type':'text','text':quote}]}})
         assert first.status_code==202,first.text
@@ -195,17 +207,22 @@ async def test_memory_snapshot_releases_only_connection_before_model_wait(small_
     async with h.factory() as db:
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==h.user['user_id']))
     pid=h.user['default_project_id']
-    source=ProjectMemoryService(session_factory=h.factory).for_context({'user_id':str(uid),'project_id':pid,'session_id':h.session_id,'run_id':queued['run_id']})
+    source=ProjectMemoryPolicy(session_factory=h.factory).for_context({'user_id':str(uid),'project_id':pid,'session_id':h.session_id,'run_id':queued['run_id']})
     entered=asyncio.Event();release=asyncio.Event()
     async def handle(request):
         entered.set();await release.wait()
         return response({'role':'assistant','content':json.dumps({'kind':'answer','message':'일반 답변','grounding':{'scope':'general'},'plans':[],'memory_updates':[]})})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-        agent=build_agent(model(client),AssetCatalog())
-        job=asyncio.create_task(agent.ainvoke({'request':'질문'},context=AgentContext(user_id=str(uid),project_id=pid,session_id=h.session_id,project_memory=source)))
+        async with store_runtime.open_store() as store:
+            assert isinstance(store, AsyncPostgresStore)
+        agent=build_agent(model(client),AssetCatalog(),store=store)
+        job=asyncio.create_task(agent.ainvoke({'request':'질문'},context=AgentContext(user_id=str(uid),project_id=pid,session_id=h.session_id,project_memory_policy=source)))
         try:
             await asyncio.wait_for(entered.wait(),3)
             assert h.engine.pool.checkedout()==0
+            stats=store.conn.get_stats()
+            assert stats.get('requests_waiting',0)==0
+            assert stats['pool_available']==stats['pool_size']
             path=f'/api/v1/projects/{pid}/memory/report_preferences/style'
             result=await h.client.put(path,headers=headers(h.user['user_id']),json={'content':'간결하게','expected_version':0})
             assert result.status_code==200,result.text
@@ -227,8 +244,76 @@ async def test_stale_worker_claim_cannot_commit_memory(runtime):
     async with h.factory() as db:
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==h.user['user_id']))
         task=await db.get(TaskModel,item.claim.task_id);task.lock_token=uuid4();await db.commit()
-    service=ProjectMemoryService(session_factory=h.factory)
+    service=ProjectMemoryPolicy(session_factory=h.factory)
     bound=service.for_context({'user_id':str(uid),'project_id':h.user['default_project_id'],'session_id':h.session_id,'run_id':queued['run_id']})
     with bind_execution_claim(item.claim),pytest.raises(ExecutionNeedsRecovery):
-        await bound.apply([change()])
+        async with store_runtime.open_store() as store:
+            await bound.apply(store,[change()])
     assert (await service.read(uid,h.user['default_project_id']))['entries']==[]
+
+
+@pytest.mark.asyncio
+async def test_official_store_batch_rolls_back_memory_and_receipt_on_failure(harness, monkeypatch):
+    h=harness;user,uid,pid,policy=await setup(h)
+    from langgraph.store.base import PutOp
+    original=AsyncPostgresStore.abatch
+    async def broken(self, ops):
+        ops=list(ops)
+        if any(isinstance(op,PutOp) for op in ops):
+            await original(self,ops[:1])
+            raise RuntimeError('injected failure after actual Store put')
+        return await original(self,ops)
+    with monkeypatch.context() as patch:
+        patch.setattr(AsyncPostgresStore,'abatch',broken)
+        with pytest.raises(RuntimeError,match='injected failure'):
+            await policy.apply(uid,pid,[change()],source_id='rollback',source={'kind':'user_edit'})
+    assert (await policy.read(uid,pid))['entries']==[]
+    async with store_runtime.open_store() as store:
+        assert await store.asearch(receipt_namespace(uid,pid))==[]
+    assert (await policy.apply(uid,pid,[change()],source_id='rollback',source={'kind':'user_edit'}))['entries'][0]['version']==1
+
+@pytest.mark.asyncio
+async def test_store_migration_preserves_legacy_topics_receipts_and_unrelated_namespaces(harness,database_url,tmp_path):
+    h=harness;user,uid,pid,policy=await setup(h)
+    # Round-trip 0025 -> 0024 -> 0025 with live topic, tombstone and replay result.
+    first=await policy.apply(uid,pid,[change()],source_id='first',source={'kind':'user_edit'})
+    await policy.apply(uid,pid,[change(version=1)],source_id='delete',source={'kind':'user_edit'},delete=True)
+    await policy.apply(uid,pid,[change('other',section='background')],source_id='other',source={'kind':'user_edit'})
+    # Python isoformat keeps six fractional digits; PG JSON timestamp rendering
+    # trims trailing zeroes. Force both fractional/whole-second cases so this
+    # migration equality check cannot depend on the wall-clock microsecond.
+    from service_contracts.memory_store import memory_namespace
+    async with store_runtime.open_store() as store:
+        for entry in (await policy.read(uid,pid))['entries']:
+            entry['updated_at']='2026-10-02T00:00:00.123400+00:00' if entry['key']=='other' else '2026-10-02T00:00:00+00:00'
+            await store.aput((*memory_namespace(uid,pid),entry['section']),entry['key'],entry)
+    before=await policy.read(uid,pid)
+    async with store_runtime.open_store() as store:
+        await store.aput(('another_application',),'keep',{'preserved':True})
+        await store.aput(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep',{'preserved':True})
+    import os,subprocess,sys,psycopg
+    from pathlib import Path
+    from sqlalchemy.engine import make_url
+    root=Path(__file__).resolve().parents[3]
+    raw=make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    config=tmp_path/'store-migration.yml'
+    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+raw+'\n')
+    env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'APP_ENV':'dev','PYTHONPATH':str(root/'src')}
+    for direction,revision in [('downgrade','20261002_0024'),('upgrade','head')]:
+        proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)
+        assert proc.returncode==0,proc.stderr
+        if direction=='downgrade':
+            with psycopg.connect(raw) as db:
+                assert db.execute('SELECT count(*) FROM project_memories WHERE project_id=%s',(pid,)).fetchone()[0]==2
+                assert db.execute('SELECT count(*) FROM project_memory_receipts WHERE project_id=%s',(pid,)).fetchone()[0]==3
+    after=await policy.read(uid,pid)
+    assert after==before
+    assert await policy.apply(uid,pid,[change()],source_id='first',source={'kind':'user_edit'})==first
+    async with store_runtime.open_store() as store:
+        assert (await store.aget(('another_application',),'keep')).value=={'preserved':True}
+        await store.adelete(('another_application',),'keep')
+        assert (await store.aget(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep')).value=={'preserved':True}
+        await store.adelete(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep')
+    with psycopg.connect(raw) as db:
+        assert db.execute("SELECT to_regclass('project_memories'),to_regclass('project_memory_receipts')").fetchone()==(None,None)
+        assert [v[0] for v in db.execute('SELECT v FROM store_migrations ORDER BY v')]==[0,1,2,3]

@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
 from agent_service.context import AgentContext
 from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent, reply_schema
 from agent_service.agents.analysis.planning.catalog import AssetCatalog
@@ -31,7 +32,9 @@ def value(updates=None):
         'grounding':{'scope':'general'},'memory_updates':updates or []}
 
 def provider(record=None,conflict=False):
-    async def read(key):return copy.deepcopy(record or snapshot())
+    async def read(store):
+        assert isinstance(store, InMemoryStore)
+        return copy.deepcopy(record or snapshot())
     return SimpleNamespace(read=AsyncMock(side_effect=read),apply=AsyncMock(side_effect=MemoryConflict('changed') if conflict else None,
                                       return_value={'status':'saved','entries':[{'section':'report_preferences','key':'style','version':1}]}))
 
@@ -44,12 +47,12 @@ async def test_one_read_retries_no_durable_write_before_validation_and_no_extra_
         # First extraction is fabricated and must never be written.
         updates=[proposal(content='가짜 선호',quote='가짜 선호')] if len(calls)==1 else [proposal()]
         return response({'role':'assistant','content':json.dumps(value(updates),ensure_ascii=False)})
-    ctx=AgentContext(user_id='u',project_id='p',session_id='s',project_memory=memory,project_memory_auto_write=True)
+    ctx=AgentContext(user_id='u',project_id='p',session_id='s',project_memory_policy=memory,project_memory_auto_write=True)
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-        result=await build_agent(model(client),AssetCatalog(),structured_output_mode=mode).ainvoke({'request':QUOTE},context=ctx)
+        result=await build_agent(model(client),AssetCatalog(),structured_output_mode=mode,store=InMemoryStore()).ainvoke({'request':QUOTE},context=ctx)
     assert len(calls)==2 and memory.read.await_count==1 and memory.apply.await_count==1
     assert result._memory_result['status']=='saved'
-    assert 'quote' not in memory.apply.call_args.args[0][0]
+    assert 'quote' not in memory.apply.call_args.args[1][0]
     assert all(sum('"reference_type": "project_memory"' in str(m['content']) for m in body['messages'])==1 for body in calls)
     assert all('Workflow definition JSON Schema' not in body['messages'][0]['content'] for body in calls)
 
@@ -63,7 +66,7 @@ async def test_one_read_retries_no_durable_write_before_validation_and_no_extra_
     (proposal(expected_version=1),True,{'section':'report_preferences','key':'style','content':QUOTE,'version':1,'is_deleted':False}),
 ])
 def test_invalid_sharing_proposals_are_rejected(change,mode,entry):
-    ctx=AgentContext(user_id='u',project_id='p',project_memory=provider(),project_memory_auto_write=mode)
+    ctx=AgentContext(user_id='u',project_id='p',project_memory_policy=provider(),project_memory_auto_write=mode)
     from langchain_core.messages import HumanMessage
     request=SimpleNamespace(runtime=SimpleNamespace(context=ctx),state={'project_memory_snapshot':snapshot(entries=[entry] if entry else [])},
                             messages=[HumanMessage(content=json.dumps({'request':QUOTE+' 결과는 109 /workspace/pv/private.parquet'}))])
@@ -83,10 +86,10 @@ async def test_cached_agent_concurrent_projects_and_next_invocation_fresh_read()
         await asyncio.sleep(.01)
         return response({'role':'assistant','content':json.dumps(value())})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-        agent=build_agent(model(client),AssetCatalog())
-        await asyncio.gather(*(agent.ainvoke({'request':p},context=AgentContext(user_id='u',project_id=p,project_memory=store)) for p,store in [('p1',one),('p2',two)]))
-        one.read.side_effect=lambda key:snapshot('p1',entries=[{'section':'background','key':'purpose','content':'fresh','version':2,'is_deleted':False}])
-        await agent.ainvoke({'request':'next'},context=AgentContext(user_id='u',project_id='p1',project_memory=one))
+        agent=build_agent(model(client),AssetCatalog(),store=InMemoryStore())
+        await asyncio.gather(*(agent.ainvoke({'request':p},context=AgentContext(user_id='u',project_id=p,project_memory_policy=store)) for p,store in [('p1',one),('p2',two)]))
+        one.read.side_effect=lambda store:snapshot('p1',entries=[{'section':'background','key':'purpose','content':'fresh','version':2,'is_deleted':False}])
+        await agent.ainvoke({'request':'next'},context=AgentContext(user_id='u',project_id='p1',project_memory_policy=one))
     assert set(seen)=={('p1','p1','one'),('p2','p2','two'),('next','p1','fresh')}
     assert one.read.await_count==2 and two.read.await_count==1
     assert one.apply.await_count==two.apply.await_count==0
@@ -98,11 +101,11 @@ async def test_wrong_owner_snapshot_and_conflict_do_not_publish_success():
         calls.append(request)
         return response({'role':'assistant','content':json.dumps(value([proposal()]))})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-        agent=build_agent(model(client),AssetCatalog())
+        agent=build_agent(model(client),AssetCatalog(),store=InMemoryStore())
         with pytest.raises(ValueError,match='owner'):
-            await agent.ainvoke({'request':QUOTE},context=AgentContext(user_id='u',project_id='p',project_memory=wrong))
+            await agent.ainvoke({'request':QUOTE},context=AgentContext(user_id='u',project_id='p',project_memory_policy=wrong))
         memory=provider(conflict=True)
-        reply=await agent.ainvoke({'request':QUOTE},context=AgentContext(user_id='u',project_id='p',project_memory=memory,project_memory_auto_write=True))
+        reply=await agent.ainvoke({'request':QUOTE},context=AgentContext(user_id='u',project_id='p',project_memory_policy=memory,project_memory_auto_write=True))
     assert len(calls)==1 and reply._memory_result['status']=='not_saved'
 
 @pytest.mark.asyncio
@@ -132,8 +135,20 @@ def test_settings_priority_and_runtime_binding(mode):
     configured=load_settings(config={'MODEL_PROVIDER':'mock','AGENT_PROJECT_MEMORY_MODE':mode},environ={'AGENT_PROJECT_MEMORY_MODE':'off'})
     assert configured.agent.agent_project_memory_mode==mode
     factory=Mock(return_value=provider())
-    runtime=PlanningRuntime(configured.agent,project_memory_factory=factory)
+    runtime=PlanningRuntime(configured.agent,memory_policy_factory=factory)
     context=runtime.bind_context({'user_id':'u','project_id':'p','session_id':'s','run_id':'r'},AgentContext(user_id='u',project_id='p'))
-    assert (context.project_memory is not None)==(mode!='off')
+    assert (context.project_memory_policy is not None)==(mode!='off')
     assert context.project_memory_auto_write==(mode=='auto_context')
     assert factory.call_count==(0 if mode=='off' else 1)
+
+
+@pytest.mark.asyncio
+async def test_native_store_namespaces_are_read_and_identity_checked():
+    from service_contracts.memory_store import read_memory, memory_namespace
+    store=InMemoryStore()
+    entry={'section':'background','key':'purpose','content':'품질 분석','version':1,'is_deleted':False}
+    await store.aput((*memory_namespace('u','p'),'background'),'purpose',entry)
+    await store.aput((*memory_namespace('other','p'),'background'),'purpose',{**entry,'content':'다른 사용자'})
+    assert (await read_memory(store,'u','p'))['entries']==[entry]
+    await store.aput((*memory_namespace('u','p'),'background'),'purpose',{**entry,'key':'wrong'})
+    with pytest.raises(ValueError,match='identity'):await read_memory(store,'u','p')

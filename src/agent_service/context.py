@@ -3,10 +3,10 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 
-class ProjectMemory(Protocol):
-    """A project-scoped repository supplied by the service; no global keys."""
-    async def read(self, project_id: str) -> dict: ...
-    async def apply(self, changes: list[dict]) -> dict: ...
+class ProjectMemoryPolicy(Protocol):
+    """Owner/source/version policy around runtime.store; not a storage backend."""
+    async def read(self, store) -> dict: ...
+    async def apply(self, store, changes: list[dict]) -> dict: ...
 
 
 @dataclass(frozen=True)
@@ -20,5 +20,5 @@ class AgentContext:
     model_selection: dict[str, str] | None = None
     # Bounded completed evidence for this exact user/project/session, never shared Agent state.
     session_analysis_context: dict | None = field(default=None, repr=False, compare=False)
-    project_memory: ProjectMemory | None = field(default=None, repr=False, compare=False)
+    project_memory_policy: ProjectMemoryPolicy | None = field(default=None, repr=False, compare=False)
     project_memory_auto_write: bool = False

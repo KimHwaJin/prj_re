@@ -17,8 +17,8 @@ class ProjectMemoryMiddleware(AgentMiddleware):
 
     async def abefore_agent(self, state, runtime):
         context=runtime.context
-        provider=getattr(context,'project_memory',None)
-        snapshot=await provider.read(context.project_id) if provider is not None else None
+        provider=getattr(context,'project_memory_policy',None)
+        snapshot=await provider.read(runtime.store) if provider is not None and runtime.store is not None else None
         if snapshot is not None:
             if snapshot.get('user_id')!=context.user_id or snapshot.get('project_id')!=context.project_id:
                 raise ValueError('Project memory owner does not match invocation')
@@ -40,14 +40,14 @@ class ProjectMemoryMiddleware(AgentMiddleware):
         return await handler(request.override(messages=[*messages[:index],message,*messages[index:]]))
 
     async def aafter_agent(self, state, runtime):
-        provider=getattr(runtime.context,'project_memory',None)
-        if provider is None or self.extract_changes is None:
+        provider=getattr(runtime.context,'project_memory_policy',None)
+        if provider is None or runtime.store is None or self.extract_changes is None:
             return None
         changes=self.extract_changes(state)
         if not changes:
             return None
         try:
-            result=await provider.apply(changes)
+            result=await provider.apply(runtime.store, changes)
         except (MemoryConflict,MemoryLimit) as exc:
             result={'status':'not_saved','reason':str(exc),'entries':[]}
         return {'project_memory_write_result':result}

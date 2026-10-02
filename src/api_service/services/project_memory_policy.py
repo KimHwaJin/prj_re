@@ -1,34 +1,24 @@
 """Owner-checked short transactions; no model call while holding a DB connection."""
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from langgraph.store.base import GetOp, SearchOp, PutOp
+from langgraph.store.postgres import AsyncPostgresStore
+from psycopg_pool import AsyncConnectionPool
+from service_contracts.memory_store import memory_namespace, receipt_namespace, receipt_key, read_memory, memory_entries, MAX_TOPICS, MAX_MEMORY_CHARS
 import hashlib
 import json
 from uuid import UUID
 from sqlalchemy import select
-from fastapi import HTTPException
 from api_service.core.database import short_session
 from api_service.core.enums import DeleteYN
-from api_service.models.common.project_model import ProjectModel
-from api_service.models.common.user_model import UserModel
-from api_service.models.common.project_memory_model import ProjectMemoryModel, ProjectMemoryReceiptModel
 from api_service.services.resource_lifecycle import lock_projects
 from service_contracts.project_memory import MemoryChange, MemoryConflict, MemoryLimit
 
-MAX_TOPICS = 64
-MAX_MEMORY_CHARS = 16000
-
-def public_item(row):
-    return {'section':row.section, 'key':row.key, 'content':row.content, 'version':row.version,
-            'is_deleted':row.is_deleted, 'source':row.source, 'updated_at':row.updated_at.isoformat()}
-
-def document(user_id, project_id, rows):
-    return {'schema_version':1, 'user_id':str(user_id), 'project_id':str(project_id),
-            'entries':[public_item(row) for row in rows]}
-
-class ProjectMemoryService:
-    def __init__(self, *, session_factory=None, db=None):
+class ProjectMemoryPolicy:
+    def __init__(self, *, session_factory=None, db=None, store=None):
         self.session_factory = session_factory
         self.db = db
+        self.store = store
 
     @asynccontextmanager
     async def session(self):
@@ -38,16 +28,22 @@ class ProjectMemoryService:
             async with short_session(self.session_factory) as db:
                 yield db
 
+    @asynccontextmanager
+    async def storage(self):
+        if self.store is not None:
+            yield self.store
+        else:
+            from api_service.core.memory_store import runtime
+            async with runtime.open_store() as store:
+                yield store
+
     async def read(self, user_id, project_id):
         user_id, project_id = UUID(str(user_id)), UUID(str(project_id))
         async with self.session() as db:
-            exists = await db.scalar(select(ProjectModel.project_id).join(UserModel, UserModel.user_id==ProjectModel.user_id).where(
-                ProjectModel.project_id==project_id, ProjectModel.user_id==user_id, ProjectModel.delete_yn==DeleteYN.N,
-                UserModel.delete_yn==DeleteYN.N))
-            if exists is None: raise HTTPException(404, 'Project not found.')
-            rows = list(await db.scalars(select(ProjectMemoryModel).where(ProjectMemoryModel.project_id==project_id)
-                                        .order_by(ProjectMemoryModel.section, ProjectMemoryModel.key)))
-            return document(user_id, project_id, rows)
+            # Shared project barrier makes deletion and ownership changes linearizable.
+            await lock_projects(db, user_id, [project_id])
+            async with self.storage() as store:
+                return await read_memory(store, user_id, project_id)
 
     async def apply(self, user_id, project_id, changes, *, source_id, source, delete=False):
         user_id, project_id = UUID(str(user_id)), UUID(str(project_id))
@@ -74,45 +70,65 @@ class ProjectMemoryService:
                 run,task=row
                 TaskService.assert_execution_owner(run,task)
                 if str(run.public_run_id)!=source.get('run_id'): raise MemoryConflict('Memory source does not match the executing Run')
-            receipt=await db.get(ProjectMemoryReceiptModel,(project_id,source_id))
+            async with self.storage() as store:
+                if not isinstance(store, AsyncPostgresStore):
+                    raise TypeError('Durable project writes require the official AsyncPostgresStore')
+                # Public constructor + abatch on an explicitly borrowed connection:
+                # item writes and receipt commit in ONE PostgreSQL transaction.
+                # Service user/project/Task locks above remain held until it commits.
+                if isinstance(store.conn, AsyncConnectionPool):
+                    async with store.conn.connection() as conn:
+                        return await self.apply_transaction(conn, user_id, project_id, changes, source_id, source, digest, delete)
+                return await self.apply_transaction(store.conn, user_id, project_id, changes, source_id, source, digest, delete)
+
+    async def apply_transaction(self, conn, user_id, project_id, changes, source_id, source, digest, delete):
+        namespace = memory_namespace(user_id, project_id)
+        receipts = receipt_namespace(user_id, project_id)
+        async with conn.transaction():
+            transactional_store = AsyncPostgresStore(conn)
+            receipt, items = await transactional_store.abatch([
+                GetOp(receipts, receipt_key(source_id)), SearchOp(namespace, limit=MAX_TOPICS + 1)])
             if receipt is not None:
-                if receipt.digest != digest: raise MemoryConflict('Memory source identity was reused with different content')
-                return receipt.result
-            rows=list(await db.scalars(select(ProjectMemoryModel).where(ProjectMemoryModel.project_id==project_id)))
-            topics={(row.section,row.key):row for row in rows}
-            written=[]
+                if receipt.value['digest'] != digest:
+                    raise MemoryConflict('Memory source identity was reused with different content')
+                return receipt.value['result']
+            entries = memory_entries(items, user_id, project_id)
+            topics = {(row['section'], row['key']): row for row in entries}
+            written, ops = [], []
             for change in changes:
-                row=topics.get((change.section,change.key))
-                if change.expected_version != (row.version if row else 0): raise MemoryConflict('Memory topic changed; read its latest version before writing')
-                if delete and row is None: raise MemoryConflict('Cannot delete a missing topic')
-                if row is None:
-                    row=ProjectMemoryModel(project_id=project_id,section=change.section,key=change.key,version=0)
-                    db.add(row);rows.append(row);topics[(change.section,change.key)]=row
-                row.content='' if delete else change.content
-                row.version+=1;row.is_deleted=delete;row.source=source;row.updated_at=datetime.now(timezone.utc)
-                written.append({'section':row.section,'key':row.key,'version':row.version,'is_deleted':delete})
-            # Tombstones retain versions to prevent stale create/delete/recreate overwrites.
-            if len(rows)>MAX_TOPICS or len(json.dumps(document(user_id,project_id,rows),ensure_ascii=False))>MAX_MEMORY_CHARS:
+                row = topics.get((change.section, change.key))
+                if change.expected_version != (row['version'] if row else 0):
+                    raise MemoryConflict('Memory topic changed; read its latest version before writing')
+                if delete and row is None:
+                    raise MemoryConflict('Cannot delete a missing topic')
+                row = {'section': change.section, 'key': change.key, 'content': '' if delete else change.content,
+                    'version': (row['version'] if row else 0) + 1, 'is_deleted': delete,
+                    'source': source, 'updated_at': datetime.now(timezone.utc).isoformat()}
+                topics[(change.section, change.key)] = row
+                ops.append(PutOp((*namespace, change.section), change.key, row))
+                written.append({k: row[k] for k in ('section', 'key', 'version', 'is_deleted')})
+            document = {'schema_version': 1, 'user_id': str(user_id), 'project_id': str(project_id), 'entries': list(topics.values())}
+            if len(topics) > MAX_TOPICS or len(json.dumps(document, ensure_ascii=False)) > MAX_MEMORY_CHARS:
                 raise MemoryLimit('Project memory is full; edit or shorten existing topics')
-            result={'status':'saved','entries':written}
-            db.add(ProjectMemoryReceiptModel(project_id=project_id,source_id=source_id,digest=digest,result=result))
-            await db.commit()
+            result = {'status': 'saved', 'entries': written}
+            ops.append(PutOp(receipts, receipt_key(source_id), {'source_id': source_id, 'digest': digest, 'result': result}))
+            await transactional_store.abatch(ops)
             return result
 
     def for_context(self, state):
-        return BoundProjectMemory(self,state)
+        return BoundMemoryPolicy(self,state)
 
-class BoundProjectMemory:
+class BoundMemoryPolicy:
     """The Agent supplies changes, never a different owner or project key."""
     def __init__(self, service, state):
         self.service=service
         self.user_id=str(state['user_id']);self.project_id=str(state['project_id']);self.session_id=str(state['session_id'])
         self.run_id=str(state.get('public_run_id') or state['run_id'])
 
-    async def read(self, project_id):
-        if str(project_id)!=self.project_id: raise ValueError('Memory project does not match invocation')
+    async def read(self, store):
         await self.require_source()
-        return await self.service.read(self.user_id,self.project_id)
+        policy = ProjectMemoryPolicy(session_factory=self.service.session_factory, db=self.service.db, store=store)
+        return await policy.read(self.user_id,self.project_id)
 
     async def require_source(self):
         from api_service.models.common.session_model import SessionModel
@@ -124,9 +140,10 @@ class BoundProjectMemory:
                 AgentRunModel.run_id==UUID(self.run_id)))
             if valid is None: raise ValueError('Memory source Run does not belong to this user/project/session')
 
-    async def apply(self, changes):
+    async def apply(self, store, changes):
         await self.require_source()
         # Only user-request quotes are supplied; no session observations or file summaries.
-        return await self.service.apply(self.user_id,self.project_id,changes,
+        policy = ProjectMemoryPolicy(session_factory=self.service.session_factory, db=self.service.db, store=store)
+        return await policy.apply(self.user_id,self.project_id,changes,
             source_id=self.run_id+':conversation',
             source={'kind':'user_request','run_id':self.run_id,'session_id':self.session_id})

@@ -10,7 +10,7 @@ def validate_memory_proposals(reply,request):
     updates=getattr(reply,'memory_updates',[])
     if not updates:return
     context=request.runtime.context
-    if not getattr(context,'project_memory_auto_write',False) or getattr(context,'project_memory',None) is None:
+    if not getattr(context,'project_memory_auto_write',False) or getattr(context,'project_memory_policy',None) is None:
         raise ValueError('Automatic project memory writes are disabled; memory_updates must be empty')
     if reply.kind=='planning':raise ValueError('Planning selection must not write memory')
     snapshot=request.state.get('project_memory_snapshot')

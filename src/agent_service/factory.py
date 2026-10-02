@@ -89,6 +89,7 @@ def build_role_agent(
     structured_output_mode: str = "prompt_json",
     max_validation_attempts: int = 3,
     validate_response: Callable | None = None,
+    store=None,
 ) -> RoleAgent:
     policies = list(middleware)
     from agent_service.middleware.project_memory import ProjectMemoryMiddleware
@@ -123,6 +124,7 @@ def build_role_agent(
         context_schema=AgentContext,
         middleware=policies,
         checkpointer=False,
+        store=store,
         **kwargs,
     )
     return RoleAgent(

@@ -15,11 +15,12 @@ def build_agent_graph(
     bindings: ExecutionBindings,
     checkpointer: Any,
     executor_client: Any = None,
+    store: Any = None,
 ) -> Any:
     """Compile the service graph with Worker bindings and its checkpointer."""
 
     settings = load_agent_settings()
-    from api_service.services.project_memory_service import ProjectMemoryService
+    from api_service.services.project_memory_policy import ProjectMemoryPolicy
     runtime=PlanningRuntime(settings,executor=executor_client,bindings=bindings,
-                            project_memory_factory=ProjectMemoryService().for_context)
+                            memory_policy_factory=ProjectMemoryPolicy().for_context, store=store)
     return build_planning_graph(runtime,checkpointer=checkpointer)

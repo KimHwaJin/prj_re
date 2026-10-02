@@ -18,8 +18,6 @@ from api_service.models.common.task_event_model import TaskEventModel
 
 __all__ = [
     "Base",
-    "ProjectMemoryModel",
-    "ProjectMemoryReceiptModel",
     "UserModel",
     "ProjectModel",
     "ProjectMemberModel",
@@ -40,5 +38,3 @@ __all__ = [
 
 
 from api_service.models.common.session_execution_model import SessionExecutionModel
-
-from api_service.models.common.project_memory_model import ProjectMemoryModel, ProjectMemoryReceiptModel

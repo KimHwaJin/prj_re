@@ -24,8 +24,8 @@ def validate_evidence(response, request):
     validate_interpretation(response.markdown, payload['observations'])
 
 
-def build_agent(model, *, structured_output_mode='prompt_json'):
+def build_agent(model, *, structured_output_mode='prompt_json', store=None):
     return build_role_agent(model,name='analysis_execution_report',system_prompt=load_prompt(__package__),
         tools=[],middleware=[ProjectPromptMiddleware()],output_type=ReportResponse,decode=json_output(ReportResponse),
         structured_output_mode=structured_output_mode,max_validation_attempts=2,
-        validate_response=validate_evidence)
+        validate_response=validate_evidence, store=store)

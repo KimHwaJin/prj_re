@@ -274,7 +274,13 @@ async def test_planning_api_runtime_does_not_open_executor_client(monkeypatch):
     import agent_service.agents.analysis.planning.graph as module
     from unittest.mock import Mock
     runtime = AgentGraphRuntime()
-    dependency = object()
+    from api_service.core.memory_store import runtime as store_runtime
+    from langgraph.store.memory import InMemoryStore
+    @asynccontextmanager
+    async def open_store():
+        yield InMemoryStore()
+    monkeypatch.setattr(store_runtime, 'open_store', open_store)
+    dependency = SimpleNamespace(store=None)
     monkeypatch.setattr(runtime, '_load_graph_inputs', lambda: (dependency, settings(), 'memory'))
     executor = Mock(side_effect=AssertionError('Planning must not open Executor HTTP'))
     monkeypatch.setattr(api, 'ExecutorClient', executor)
@@ -285,6 +291,7 @@ async def test_planning_api_runtime_does_not_open_executor_client(monkeypatch):
     async with runtime.open_graph() as second:
         assert second is graph
     assert build.call_count == 1
+    assert isinstance(dependency.store, InMemoryStore)
     executor.assert_not_called()
     await runtime.shutdown()
 
@@ -294,7 +301,13 @@ async def test_planning_api_runtime_build_failure_has_no_executor_resources(monk
     from api_service.services.agent_graph_service import AgentGraphRuntime
     import agent_service.agents.analysis.planning.graph as module
     runtime = AgentGraphRuntime()
-    monkeypatch.setattr(runtime, '_load_graph_inputs', lambda: (None, settings(), 'memory'))
+    from api_service.core.memory_store import runtime as store_runtime
+    from langgraph.store.memory import InMemoryStore
+    @asynccontextmanager
+    async def open_store():
+        yield InMemoryStore()
+    monkeypatch.setattr(store_runtime, 'open_store', open_store)
+    monkeypatch.setattr(runtime, '_load_graph_inputs', lambda: (SimpleNamespace(store=None), settings(), 'memory'))
     def fail(*args, **kwargs):
         raise ValueError('graph build failure')
     monkeypatch.setattr(module, 'build_planning_graph', fail)

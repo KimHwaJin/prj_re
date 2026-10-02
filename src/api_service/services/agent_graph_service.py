@@ -73,8 +73,8 @@ class AgentGraphRuntime:
             ) from exc
 
         agent_settings = load_agent_settings()
-        from api_service.services.project_memory_service import ProjectMemoryService
-        dependencies = PlanningRuntime(agent_settings, project_memory_factory=ProjectMemoryService().for_context)
+        from api_service.services.project_memory_policy import ProjectMemoryPolicy
+        dependencies = PlanningRuntime(agent_settings, memory_policy_factory=ProjectMemoryPolicy().for_context)
         checkpointer = (settings.graph_checkpointer or "postgres").strip().lower()
         return dependencies, agent_settings, checkpointer
 
@@ -85,24 +85,30 @@ class AgentGraphRuntime:
         from agent_service.agents.analysis.planning.graph import build_planning_graph
         from agent_service.runtime.langgraph.checkpointer import create_checkpointer
         from langgraph.checkpoint.memory import InMemorySaver
-        if kind == 'postgres':
-            async with AsyncExitStack() as stack:
-                saver=await stack.enter_async_context(create_checkpointer(database_url=agent_settings.checkpoint_db_uri,
-                                           setup_on_start=agent_settings.checkpoint_setup_on_start))
-                pools=[(saver.conn,'checkpoint_pool')]
+        from api_service.core.memory_store import runtime as store_runtime
+        async with AsyncExitStack() as stack:
+            if agent_settings.agent_project_memory_mode != 'off':
+                planning.store = await stack.enter_async_context(store_runtime.open_store())
+            if kind == 'postgres':
+                saver = await stack.enter_async_context(create_checkpointer(database_url=agent_settings.checkpoint_db_uri,
+                    setup_on_start=agent_settings.checkpoint_setup_on_start))
+                pools = [(saver.conn, 'checkpoint_pool')]
                 if agent_settings.executor_submit_enabled:
                     from integrations.executor.client import ExecutorClient
                     from api_service.agent_worker.api_bridge import ApiWorkerBridge
-                    planning.executor=await stack.enter_async_context(ExecutorClient(agent_settings))
-                    bridge=await stack.enter_async_context(ApiWorkerBridge(self._worker_settings()))
-                    planning.bindings=bridge.bindings
-                    pools.append((bridge.pool,'bridge_pool'))
-                self._observed_pools = tuple(pools)
-                yield build_planning_graph(planning, checkpointer=saver)
-        elif kind == 'memory':
-            yield build_planning_graph(planning, checkpointer=InMemorySaver())
-        else:
-            raise RuntimeError("GRAPH_CHECKPOINTER must be postgres or memory")
+                    planning.executor = await stack.enter_async_context(ExecutorClient(agent_settings))
+                    bridge = await stack.enter_async_context(ApiWorkerBridge(self._worker_settings()))
+                    planning.bindings = bridge.bindings
+                    pools.append((bridge.pool, 'bridge_pool'))
+            elif kind == 'memory':
+                saver, pools = InMemorySaver(), []
+            else:
+                raise RuntimeError('GRAPH_CHECKPOINTER must be postgres or memory')
+            store_pool = getattr(planning.store, 'conn', None)
+            if store_pool is not None:
+                pools.append((store_pool, 'memory_store_pool'))
+            self._observed_pools = tuple(pools)
+            yield build_planning_graph(planning, checkpointer=saver)
 
     def start(self) -> None:
         """Accept borrows for a new lifespan, without opening any connections."""

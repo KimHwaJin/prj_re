@@ -26,7 +26,7 @@
 
 현재 `definition.py`, `projection.py`, 업무 Agent registry는 아직 구현하지 않았다. 006에서 구성요소·LLM 호출은 `await ainvoke()`로 전환했고 그래프 호출도 `ainvoke`/`astream`을 사용한다. HTTP·파일·Workflow DB 전체 전환은 남아 있으며, 이번에 비동기로 바꾼 혼합 노드의 기존 I/O만 `run_sync`로 종료를 추적한다. [개발 안내](../../../../docs/agent-development/README.md)가 현재와 목표 계약을 구분한다.
 
-008에서 역할별 선언과 프롬프트를 함께 배치했다. 프롬프트는 동일한 내용이어도 역할마다 별개 파일로 유지한다. tools/catalog.py는 분석 공용이며 모델에 자동 노출하지 않는다. 011에서 7개 LLM 역할을 공통 create_agent로 통일하고 프로젝트 prompt/JSON 미들웨어를 적용했다. 011 당시 project_memory는 접근 계약만 정의했다. 현재 051에서는 PostgreSQL 항목 저장·읽기·현재 사용자 원문 추출을 연결했으며 생성형 자동 요약은 후속이다. [현재 메모리 계약](../../../../docs/project-memory.md)을 따른다.
+008에서 역할별 선언과 프롬프트를 함께 배치했다. 프롬프트는 동일한 내용이어도 역할마다 별개 파일로 유지한다. tools/catalog.py는 분석 공용이며 모델에 자동 노출하지 않는다. 011에서 7개 LLM 역할을 공통 create_agent로 통일하고 프로젝트 prompt/JSON 미들웨어를 적용했다. 011 당시 project_memory는 접근 계약만 정의했다. 현재 052에서는 공식 LangGraph Store를 create_agent/runtime.store에 연결하며 051의 현재 사용자 원문 추출 범위는 유지한다. 생성형 자동 요약은 후속이다. [현재 메모리 계약](../../../../docs/project-memory.md)을 따른다.
 
 010에서 기존 app/workflow의 skills·tools·workflows를 이 패키지의 workflow/ 아래로 통합했다. [Workflow 유지보수 안내](workflow/README.md)에서 자산·생성기와 기존 처리 모듈의 역할을 확인한다.
 

@@ -73,8 +73,18 @@ async def graph_context(service, worker, *, use_shared_graph):
         database_url=service.agent.checkpoint_db_uri,
         setup_on_start=service.agent.checkpoint_setup_on_start,
     ) as checkpointer:
-        yield await asyncio.to_thread(build_agent_graph, bindings=worker.bindings,
-            checkpointer=checkpointer, executor_client=executor_client)
+        from api_service.core.memory_store import MemoryStoreRuntime
+        store_runtime = MemoryStoreRuntime()
+        from contextlib import AsyncExitStack
+        try:
+            async with AsyncExitStack() as stack:
+                store = None
+                if service.agent.agent_project_memory_mode != 'off':
+                    store = await stack.enter_async_context(store_runtime.open_store())
+                yield await asyncio.to_thread(build_agent_graph, bindings=worker.bindings,
+                    checkpointer=checkpointer, executor_client=executor_client, store=store)
+        finally:
+            await store_runtime.shutdown()
 
 
 async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None = None,

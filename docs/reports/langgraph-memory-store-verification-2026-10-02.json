@@ -1,0 +1,52 @@
+{
+  "model": "qwen38-27b-nvfp4",
+  "backend": "official AsyncPostgresStore, actual scratch PostgreSQL, production create_agent",
+  "scope": "real model + Store policy + SQL persistence; identity test double, direct Agent invoke; no queue Worker/Executor/Phoenix E2E",
+  "cases": [
+    {
+      "case": "save",
+      "passed": true,
+      "model_calls": 2,
+      "seconds": 7.929,
+      "error_type": null
+    },
+    {
+      "case": "next_session",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 3.667,
+      "error_type": null
+    },
+    {
+      "case": "manual_no_auto",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 4.012,
+      "error_type": null
+    }
+  ],
+  "restart_persistence": true,
+  "executor_submissions": 0,
+  "passed": true,
+  "baseline_commit": "cba215f4adce281ff21f9f62ccd5d0e751bec02d",
+  "verification_date": "2026-10-02",
+  "feature_branch": "feature/project-memory-langgraph-store",
+  "performance_comparison": false,
+  "full_regression": {
+    "passed": 937,
+    "subtests_passed": 2,
+    "warnings": 99,
+    "seconds": 413.43
+  },
+  "package_verification": {
+    "source_checkout_imported": false,
+    "roles": 12,
+    "openapi_paths": 38,
+    "mock_steps": 4
+  },
+  "public_contract_verification": {
+    "documented_paths": 12,
+    "schemas": 28,
+    "validation_contract_unchanged": true
+  }
+}

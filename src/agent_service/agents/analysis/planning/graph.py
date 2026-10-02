@@ -297,5 +297,5 @@ def build_planning_graph(runtime, *, checkpointer):
         wire_execution(builder,runtime,public_event)
     builder.add_conditional_edges('apply_review',review_route)
     builder.add_conditional_edges('revise_plan',review_route)
-    graph = builder.compile(checkpointer=checkpointer, name=RUNTIME_VERSION)
+    graph = builder.compile(checkpointer=checkpointer, store=runtime.store, name=RUNTIME_VERSION)
     return graph

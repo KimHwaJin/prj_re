@@ -66,7 +66,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
     return Reply
 
 
-def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000):
+def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000,store=None):
     schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts)
     prompt = load_prompt(__package__)
     planning_prompt = files(__package__).joinpath('planning_prompt.md').read_text(encoding='utf-8') + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
@@ -86,4 +86,4 @@ def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, str
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
                             tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), memory_policy, planning, SessionAnalysisMiddleware(max_chars=session_context_max_chars, evidence_view=compact_evidence_view), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
                             output_type=schema, decode=decode,
-                            structured_output_mode=structured_output_mode, max_validation_attempts=3, validate_response=validate_response)
+                            structured_output_mode=structured_output_mode, max_validation_attempts=3, validate_response=validate_response, store=store)

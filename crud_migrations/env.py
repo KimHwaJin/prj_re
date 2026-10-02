@@ -29,6 +29,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
         compare_type=True,
         compare_server_default=True,
     )
@@ -36,10 +37,17 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def include_object(obj, name, type_, reflected, compare_to):
+    # Official LangGraph Store owns its SQL schema; never propose deleting it
+    # merely because application ORM metadata intentionally has no Store models.
+    return not (type_ == 'table' and name in {'store', 'store_migrations'} and reflected and compare_to is None)
+
+
 def do_run_migrations(connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
+        include_object=include_object,
         compare_type=True,
         compare_server_default=True,
     )

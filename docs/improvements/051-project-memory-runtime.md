@@ -1,5 +1,7 @@
 # 051 프로젝트 공유 메모리 저장과 미들웨어 연결
 
+이 문서는 당시 구현의 이력이다. 사용자 요청으로 저장·접근 구조를 [052 공식 LangGraph Store](052-langgraph-project-memory-store.md)로 전환하고 전용 ORM 저장소를 제거했다. 현재 소스·배포 migration은 [현재 계약](../project-memory.md)을 따른다.
+
 | 항목 | 내용 |
 |---|---|
 | 상태 | 구현·전체 회귀·격리 DB/실제 모델/패키지 검증 완료, 베이스 병합·origin 게시 완료 |

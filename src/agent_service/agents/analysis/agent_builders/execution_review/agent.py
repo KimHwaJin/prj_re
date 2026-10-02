@@ -44,7 +44,7 @@ def validate_choices(response, request):
         raise ValueError('Resolve all pending decision IDs or set needs_user_input=true and explain missing evidence')
 
 
-def build_agent(model, *, structured_output_mode='prompt_json'):
+def build_agent(model, *, structured_output_mode='prompt_json', store=None):
     return build_role_agent(model,name='analysis_execution_review',system_prompt=load_prompt(__package__),
         tools=[],middleware=[ProjectPromptMiddleware()],output_type=ReviewResponse,decode=json_output(ReviewResponse),
-        structured_output_mode=structured_output_mode,max_validation_attempts=2,validate_response=validate_choices)
+        structured_output_mode=structured_output_mode,max_validation_attempts=2,validate_response=validate_choices, store=store)

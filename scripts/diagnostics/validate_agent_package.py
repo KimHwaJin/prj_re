@@ -31,7 +31,11 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/middleware/session_analysis.py' in names
     assert 'agent_service/middleware/project_memory.py' in names
     assert 'service_contracts/project_memory.py' in names
-    assert 'api_service/services/project_memory_service.py' in names
+    assert 'api_service/services/project_memory_policy.py' in names
+    assert 'api_service/core/memory_store.py' in names
+    assert 'service_contracts/memory_store.py' in names
+    assert 'api_service/services/project_memory_service.py' not in names
+    assert 'api_service/models/common/project_memory_model.py' not in names
     assert 'agent_service/middleware/planning_contract.py' in names
     assert 'agent_service/agents/analysis/agent_builders/conversation/planning_prompt.md' in names
     assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
