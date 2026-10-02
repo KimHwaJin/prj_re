@@ -2,8 +2,12 @@
 import re
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from agent_service.runtime.session_analysis import analysis_for_owner
-from .report import cell
+from agent_service.runtime.session_analysis import analysis_for_owner, encoded
+from .report import cell, render_evidence_markdown
+
+
+# Upper bound for the transient model catalogue; stored evidence is not trimmed here.
+MAX_CATALOG_FACTS = 512
 
 
 class FactReference(BaseModel):
@@ -20,6 +24,9 @@ class AnswerGrounding(BaseModel):
     source_run_id: str | None = None
     evidence_steps: list[str] = Field(default_factory=list, max_length=32)
     facts: list[FactReference] = Field(default_factory=list, max_length=128)
+    # Ephemeral references in this owner's bounded evidence; never persisted IDs.
+    fact_ids: list[StrictStr] = Field(default_factory=list, max_length=128,
+        description='Select exact IDs from the current analysis.fact_catalog; values are rendered by the server. Do not copy numbers into message.')
 
 
 def completed_context(context, max_chars):
@@ -71,6 +78,105 @@ def fact_value(observation, path):
     return rendered
 
 
+def limited_summary(value):
+    if isinstance(value, dict):
+        return bool(value.get('truncated')) or any(limited_summary(v) for v in value.values())
+    return isinstance(value, list) and any(limited_summary(v) for v in value)
+
+
+def compact_evidence(evidence, *, max_chars=16000):
+    """A bounded model view and private ID -> exact Step/path map, rebuilt per call.
+
+    Stored observations stay untouched. Only an exactly reconstructed server
+    evidence suffix is removed from the report; model-authored prose is retained.
+    The catalogue reuses fact_value's completeness, path and scalar size rules.
+    """
+    observations = list({o['step_id']:o for o in evidence['observations']}.values())
+    result = {**evidence, 'observations':[{**{k:v for k,v in o.items() if k != 'summary'}, 'summary_limited':limited_summary(o.get('summary'))} for o in observations],
+              'fact_catalog':{}, 'fact_catalog_limited':False}
+    report = dict(evidence.get('report', {}))
+    successful = [o for o in evidence['observations'] if o.get('status') == 'SUCCEEDED']
+    suffix = '\n\n' + render_evidence_markdown(successful)
+    excerpt = report.get('excerpt', '')
+    if excerpt.endswith(suffix):
+        report.update(excerpt=excerpt[:-len(suffix)], server_evidence_table_in_catalog=True)
+    result['report'] = report
+    if len(encoded(result)) > max_chars:
+        # Rare metadata-heavy records retain the old bounded view and selectors.
+        return evidence, {}
+
+    def leaves(value, path):
+        while isinstance(value, dict) and value.get('type') in {'dict','list','tuple'} and 'items' in value:
+            value = value['items']
+        if len(path) > 20:
+            return
+        scalar = lambda v: v is None or type(v) in (str, int, float, bool)
+        if scalar(value) or (isinstance(value, list) and len(value) <= 16 and all(scalar(v) for v in value)):
+            yield path, value
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                if isinstance(key, str):
+                    yield from leaves(item, [*path, key])
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                yield from leaves(item, [*path, index])
+
+    def identifier(index):
+        # Alphabetic IDs avoid encouraging numbered headings in qualitative prose.
+        letters = ''
+        while True:
+            index, digit = divmod(index, 26)
+            letters = chr(ord('a') + digit) + letters
+            if not index:
+                return 'f_' + letters
+            index -= 1
+
+    registry = {}
+    for observation in observations:
+        if observation.get('status') != 'SUCCEEDED' or observation.get('incomplete') or observation.get('summary_omitted') or observation.get('summary') is None:
+            continue
+        for path, value in leaves(observation['summary'], []):
+            if len(registry) == MAX_CATALOG_FACTS:
+                result['fact_catalog_limited'] = True
+                return result, registry
+            try:
+                fact_value(observation, path)
+            except ValueError:
+                result['fact_catalog_limited'] = True
+                continue
+            key = identifier(len(registry))
+            reference = FactReference(step_id=observation['step_id'], path=path)
+            # Group by Step; do not repeat its ID or a long Step/path per fact.
+            row = {'label':'.'.join(str(k) for k in path) if path else '(summary)', 'value':value}
+            group = {**result['fact_catalog'].get(reference.step_id, {}), key:row}
+            candidate = {**result, 'fact_catalog':{**result['fact_catalog'], reference.step_id:group}}
+            if len(encoded(candidate)) <= max_chars:
+                result = candidate
+                registry[key] = reference
+            else:
+                result['fact_catalog_limited'] = True
+    return result, registry
+
+
+def compact_evidence_view(evidence, *, max_chars=16000):
+    """Role-owned projection injected into the reusable session middleware."""
+    return compact_evidence(evidence, max_chars=max_chars)[0]
+
+
+def selected_facts(grounding, evidence, *, max_chars=16000):
+    """Resolve model-selected IDs only against the current owner/source record."""
+    if grounding.facts and grounding.fact_ids:
+        raise ValueError('Use fact_ids or legacy facts, never both')
+    if not grounding.fact_ids:
+        return grounding.facts, False
+    if len(set(grounding.fact_ids)) != len(grounding.fact_ids):
+        raise ValueError('fact_ids must be distinct')
+    view, registry = compact_evidence(evidence, max_chars=max_chars)
+    if not set(grounding.fact_ids) <= registry.keys():
+        raise ValueError('Choose exact fact_ids from this source analysis fact_catalog')
+    return [registry[key] for key in grounding.fact_ids], view.get('fact_catalog_limited', False)
+
+
 def grounded_message(reply, context, *, max_chars=16000):
     """Used both by outer validation middleware and the graph publication boundary."""
     evidence = completed_context(context, max_chars)
@@ -84,7 +190,7 @@ def grounded_message(reply, context, *, max_chars=16000):
     if grounding is None:
         return reply.message
     if grounding.scope == 'general':
-        if grounding.source_run_id is not None or grounding.evidence_steps or grounding.facts:
+        if grounding.source_run_id is not None or grounding.evidence_steps or grounding.facts or grounding.fact_ids:
             raise ValueError('General FAQ must not cite analysis evidence')
         if '{{fact:' in reply.message:
             raise ValueError('General FAQ cannot contain fact placeholders')
@@ -100,7 +206,8 @@ def grounded_message(reply, context, *, max_chars=16000):
     if '{{fact:' in reply.message:
         raise ValueError('Do not put fact placeholders in message; the server renders grounding.facts separately')
     rows = []
-    for fact in grounding.facts:
+    references, catalog_limited = selected_facts(grounding, evidence, max_chars=max_chars)
+    for fact in references:
         if fact.step_id not in grounding.evidence_steps:
             raise ValueError('Every fact Step must be included in evidence_steps')
         value = fact_value(observations[fact.step_id], fact.path)
@@ -115,11 +222,7 @@ def grounded_message(reply, context, *, max_chars=16000):
     text += '\n해석 범위: 저장된 출력에 근거한 설명이며, 원인이나 전체 분포가 검증되었다는 뜻은 아닙니다.'
     if evidence.get('status') == 'analysis_failed':
         text += '\n이전 분석은 실패했습니다. 성공한 부분의 관찰을 전체 분석 성공으로 해석하지 마세요.'
-    def limited(value):
-        if isinstance(value, dict):
-            return bool(value.get('truncated')) or any(limited(v) for v in value.values())
-        return isinstance(value, list) and any(limited(v) for v in value)
-    if any(evidence.get(k) for k in ('omitted_observations','omitted_step_outcomes')) or any(o.get('summary_omitted') or o.get('incomplete') or limited(o.get('summary')) for o in observations.values()):
+    if catalog_limited or any(evidence.get(k) for k in ('omitted_observations','omitted_step_outcomes')) or any(o.get('summary_omitted') or o.get('incomplete') or limited_summary(o.get('summary')) for o in observations.values()):
         text += '\n일부 관찰이 생략되거나 제한되어 있습니다. 표시되지 않은 결과를 확인한 것으로 간주하지 마세요.'
     if len(text)>24000:
         raise ValueError('Rendered answer exceeds its bounded text budget')

@@ -21,6 +21,12 @@
 
 캐시된 Agent의 공유 상태에 phase를 저장하지 않고 invocation 메시지에서 실제 조회 완료를 확인한다. 새 실행은 기존 승인 경계를 유지한다. 후속 설명은 기존 SessionAnalysisMiddleware와 grounding 검증을 사용한다. 역할 prompt는 둘 다 wheel에 포함한다. [변경·검증·성능 한계](../improvements/049-conversation-performance.md)를 참고한다.
 
+## Conversation의 완료 근거 출력 (050)
+
+Conversation에서 SessionAnalysisMiddleware의 `evidence_view=compact_evidence_view`로 source/owner가 확인된 완료 분석을 짧은 근거 목록으로 전달한다. `execution/grounding.py`의 `compact_evidence()`는 일시적인 모델용 view와 ID→Step/path 연결을 만들며 원본 상태를 수정하지 않는다. Reply의 `grounding.fact_ids`를 검증·해석한 뒤 기존 실제 값 표를 붙인다. 긴 `facts` selector도 읽지만 새 prompt는 ID 선택을 우선한다. 재사용 Agent나 전역 상태에 세션별 목록을 저장하지 않는다.
+
+기본 SessionAnalysisMiddleware의 evidence_view는 None이므로 다른 역할에 자동 적용되지 않는다. 보고서 표는 현재 서버 표와 정확히 일치하는 suffix만 중복 제거한다. 본문 숫자 오류를 그대로 거절하며 prompt와 JSON Schema 필드 설명에 그 계약을 함께 선언한다. 공개 API·SSE와 DB migration은 변경하지 않았다. [짧은 근거 ID의 의미와 한도](../agentic-answer-grounding.md), [050 작업 기록](../improvements/050-compact-answer-facts.md)을 참고한다.
+
 ## 신규 Agent 설계 초안
 
 043은 [완료 분석의 후속 대화 전달](../agentic-session-analysis-context.md)을 구현했다. 같은 세션의 최근 실제 근거만 middleware로 전달하며 project_memory·파일 Registry와 구분한다. 결과 판단의 근거 ID·값 검증도 create_agent 재검증에 연결했다.

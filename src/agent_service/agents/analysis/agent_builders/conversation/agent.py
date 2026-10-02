@@ -12,7 +12,7 @@ from agent_service.middleware.planning_contract import PlanningContractMiddlewar
 from service_contracts.plan_review import new_review
 from service_contracts.workflow_validation import workflow_schema
 from .._prompts import load_prompt
-from ...execution.grounding import AnswerGrounding, grounded_message
+from ...execution.grounding import AnswerGrounding, grounded_message, compact_evidence_view
 
 
 class Proposal(BaseModel):
@@ -25,7 +25,10 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
     class Reply(BaseModel):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'planning', 'plans']
-        message: str = Field(min_length=1, max_length=12000)
+        message: str = Field(min_length=1, max_length=12000, description=
+            'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
+            'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
+            'For plans or unrelated general FAQ, ordinary text is allowed.')
         grounding: AnswerGrounding | None = None
         plans: list[Proposal] = Field(default_factory=list, max_length=max_candidates)
         skill_ids: list[str] = Field(default_factory=list, max_length=20)
@@ -68,6 +71,6 @@ def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, str
             raise ValueError('Skill metadata is already available; return a final answer or plans, not another planning selection')
         grounded_message(reply, request.runtime.context, max_chars=session_context_max_chars)
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
-                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), planning, SessionAnalysisMiddleware(max_chars=session_context_max_chars), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
+                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), planning, SessionAnalysisMiddleware(max_chars=session_context_max_chars, evidence_view=compact_evidence_view), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
                             output_type=schema, decode=json_output(schema),
                             structured_output_mode=structured_output_mode, max_validation_attempts=3, validate_response=validate_response)

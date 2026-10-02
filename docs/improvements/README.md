@@ -2,7 +2,7 @@
 
 고아 기준 브랜치: `feature/refactor-base`
 
-작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 48개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
+작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 49개를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
 현재 개발 기준: `feature/refactor-base`. 049 Conversation의 메타데이터·계획 문맥 비용 개선을 `26275b6a199819945d8c9a51de09e8b2b22b501a`까지 fast-forward 병합하고 베이스·파생 `feature/conversation-performance`를 origin에 게시했다. 원격 두 SHA 일치, 전체 회귀 890개와 subtest 2개 통과, 실제 모델 A/B 8회·신규 계획·wheel 검증을 확인했다. 설명 답변의 지연은 아직 줄지 않았다. [049 변경·측정·게시 기록](049-conversation-performance.md)을 따른다. 048 공개 Run 식별자 게시 이력은 [048 기록](048-public-run-id-contract.md)에 보존한다.
 039 구현·검증 기록 commit: `065ec2599a1e6e3762461fe127cf9a909b2c49f6`. [039 작업 결과](039-agentic-executor-runtime.md).
@@ -79,6 +79,7 @@
 | 047 | API·Workflow 전체 필드 주석 | 주석·동일성·46개 회귀/wheel 검증 완료 / 베이스 병합·원격 게시 확인 | 2026-10-01 | [작업 기록](047-contract-field-comments.md) |
 | 048 | 공개 Run 식별자 run_id 통일 | 구현·API 회귀 571개 검증 완료 / 베이스 병합·원격 게시 확인 | 2026-10-01 | [작업 기록](048-public-run-id-contract.md) |
 | 049 | 후속 설명·보고서 답변의 메타데이터·계획 문맥 비용 축소 | 구현·실모델 A/B 8회·실제 신규 계획·890회귀/wheel 검증·베이스 병합·origin 게시 완료 | 2026-10-02 | [049 기록](049-conversation-performance.md) |
+| 050 | 후속 답변의 짧은 근거 ID·수치 분리 계약·중복 표 축소 | 구현·실모델 A/B·908회귀·최종 경계84/wheel 검증 완료, 병합·게시 예정 | 2026-10-02 | [050 기록](050-compact-answer-facts.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
