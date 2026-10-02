@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·검증 완료, 베이스 통합·게시 예정 |
+| 상태 | 구현·검증·베이스 병합·origin 게시 완료 |
 | 시작일 | 2026-10-02 |
 | 브랜치 | feature/agent-runtime-cleanup |
 | 출발 commit | 2878195647faf2ec752a92502b4d14c621ad5a65 |
@@ -43,6 +43,8 @@ analysis/workflow의 README를 제외한 44개 파일은 byte hash로 동일함�
 - 문서화한 12개 API path·28개 schema를 현재 OpenAPI validation과 대조하여 동일함을 확인했다. 패키지 Python 337개 AST와 production import를 검사했으며 이전 graph 절대 import가 없다. 제공 Gaia router 초안은 패키지 검증 대상에서 제외했다.
 - Workflow 자산·Compiler 44개와 현재 prompt 6개를 hash로 대조했다. 모델 factory 함수 AST도 원본과 동일하다. 원래 사용자 checkout의 HEAD/status/.env/기존 파일 316개를 대조하여 변경이 없음을 확인했다.
 
+최종 git diff 검사에서 테스트 파일 세 개의 불필요한 EOF 빈 줄을 제거했다. 의미 변경은 없으며 관련 25개를 다시 실행하여 2.24초/18경고로 통과했다. 전체 884개 결과와 합산하지 않는다.
+
 초기 관련 시험의 두 진단 helper 호출에 checkpointer 인자가 빠져 있던 점, fake Executor가 제출 Step ID 목록을 응답하지 않던 점, 전환 진단에서 승인 전 snapshot None을 읽던 점을 수정한 뒤 최종 시험을 통과했다. 기본 sandbox의 localhost socket 제한은 실제 loopback 검증 권한으로 해결했다. 배포 서비스 오류나 성능 개선으로 보고하지 않는다.
 
 실제 LLM/외부 Executor E2E·Phoenix·종합 부하나 성능 A/B는 이번 검증에 포함하지 않는다. 처리량 향상을 주장하지 않는다.
@@ -53,4 +55,4 @@ analysis/workflow의 README를 제외한 44개 파일은 byte hash로 동일함�
 
 ## 적용·통합·게시
 
-추가 Alembic migration이나 기존 데이터를 지우는 작업은 없다. 운영 배포와 Docker 재기동은 하지 않는다. 구현·검증 후 베이스 fast-forward 병합과 origin 게시 SHA를 기록한다.
+추가 Alembic migration이나 기존 데이터를 지우는 작업은 없다. 운영 배포와 Docker 재기동은 하지 않는다. 구현 commit: `66ffaedbf4ad3fdc1dcb3c4f3487b2932e77b5d8`. `feature/agent-runtime-cleanup`을 `feature/refactor-base`에 fast-forward 병합하고 두 브랜치를 origin에 atomic push했다. 원격 두 브랜치가 구현 SHA와 일치함을 확인했다. 이 게시 기록은 베이스의 후속 문서 commit으로 남기고 파생 브랜치는 구현 commit을 보존한다. 사용자 checkout·.env는 그대로 유지했다.
