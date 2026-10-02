@@ -12,9 +12,9 @@ from langchain_openai import ChatOpenAI
 import service_settings
 from agent_service.context import AgentContext
 from service_runtime.model_selection import ModelSelectionError, build_catalog, validate_checkpoint_selection
-from agent_service.agents.analysis import dependencies
-from agent_service.agents.analysis.tests.test_agent_middleware import response, ROLES
-from agent_service.agents.analysis.testing.mock_dependencies import workflow_plan
+import agent_service.agents.analysis.planning.runtime as runtime_module
+from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from agent_service.agents.analysis.tests.test_agent_middleware import response, ROLES, role_payload
 from api_service.services.run_service import RunService
 from api_service.schemas.common.run_schema import RunCreate, RunResume
 from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
@@ -89,9 +89,6 @@ def test_legacy_idempotency_hash_preserved_and_explicit_choice_distinct():
         RunResume(command={},resume_token="00000000-0000-0000-0000-000000000000",main_model_name="beta")
 
 
-ROLE_ATTRS={"routing":"routing_agent","intent_classifier":"analysis_intent_agent",
-    "faq":"faq_agent","report_writer":"report_agent","skill_selector":"skill_selector_agent",
-    "conditional_decider":"conditional_decision_agent","workflow_generator":"workflow_agent"}
 
 
 @pytest.mark.asyncio
@@ -116,12 +113,17 @@ async def test_all_roles_route_concurrently_without_shared_model_mutation(monkey
                 constructions.append(settings.model_name)
                 return ChatOpenAI(model=settings.model_name,api_key="test",base_url=settings.api_base_url,
                                   max_retries=0,http_async_client=ac,http_client=sc)
-            monkeypatch.setattr(dependencies,"create_chat_model",create)
-            deps=dependencies.create_llm_dependencies(snapshot.agent)
-            agent=getattr(deps,ROLE_ATTRS[role])
-            await asyncio.gather(*(agent.ainvoke({"user_request":name},context=AgentContext(
-                project_system_prompt="RULE_"+name,
-                model_selection=snapshot.agent.model_catalog.select(name).model_dump())) for name in specs))
+            monkeypatch.setattr(runtime_module,"create_chat_model",create)
+            runtime=PlanningRuntime(snapshot.agent)
+            async def invoke(name):
+                state={'user_id':'u','project_id':'p','session_id':name,'run_id':name,'user_request':'hello',
+                    'planning_revision_count':0,'project_system_prompt':'RULE_'+name,
+                    'model_selection':snapshot.agent.model_catalog.select(name).model_dump()}
+                context=AgentContext(project_system_prompt=state['project_system_prompt'],model_selection=state['model_selection'])
+                if role=='conversation':return await runtime.respond(state,context,[])
+                if role=='plan_revision':return await runtime.revise(state,context,[])
+                return await runtime.execution_role(role.removeprefix('execution_'),state,role_payload(role))
+            await asyncio.gather(*(invoke(name) for name in specs))
     assert constructions==["model-a","model-b"]
     assert {call["model"] for call in calls}=={"model-a","model-b"}
     for call in calls:
@@ -129,8 +131,7 @@ async def test_all_roles_route_concurrently_without_shared_model_mutation(monkey
         other="beta" if own=="alpha" else "alpha"
         assert "RULE_"+own in call["messages"][0]["content"]
         assert "RULE_"+other not in call["messages"][0]["content"]
-        if role in {"workflow_generator","skill_selector","conditional_decider"}:
-            assert ("response_format" in call)==(own=="beta")
+        assert ("response_format" in call)==(own=="beta")
 
 
 @pytest.mark.asyncio

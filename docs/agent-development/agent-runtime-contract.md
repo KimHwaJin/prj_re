@@ -1,93 +1,76 @@
 # 역할별 Agent 선언·실행 문맥·미들웨어
 
-011 기준으로 routing, intent_classifier, skill_selector, workflow_generator, conditional_decider, faq, report_writer의 실제 모델 호출은 모두 create_agent를 통과한다. 분석의 LangGraph가 업무 순서·사용자 승인·Executor 대기를 관리한다.
+054 기준으로 분석 LangGraph는 새 요청·계획 승인·Executor 대기·결과 판단·재작성·수정을 관리하고, 다섯 내부 역할은 LangChain create_agent로 모델을 호출한다. 업무 실행 builder는 `planning/graph.py` 하나다.
 
-## 수정할 파일
+## 파일과 선언
 
 ```text
 agent_service/
-  context.py                 AgentContext, ProjectMemory 접근 Protocol
-  factory.py                 create_agent 조립·역할 응답 변환
-  middleware/
-    project_prompt.py        매 모델 요청에 프로젝트 지시문 추가
-    prompt_json.py           JSON 검증·제한된 재시도
+  context.py                  요청별 AgentContext
+  factory.py                  공통 create_agent·응답 변환
+  runtime/model_factory.py    설정된 OpenAI 호환 모델 생성
+  middleware/                 프로젝트 prompt·JSON·탐색·세션 근거·메모리
   agents/analysis/
-    agent_builders/<role>/
-      agent.py               해당 역할의 도구·미들웨어·출력 계약 선언
-      prompt.md              역할별 독립 기본 프롬프트
-    context.py               checkpoint snapshot → AgentContext
-    components/interfaces.py async 호출 Protocol·Pydantic 결과 검증
-    nodes/                   역할 Agent 호출과 업무 결과 처리
-    workflow/                기존 처리 모듈·skills·tools·workflows
+    planning/graph.py         PlanningState와 새 요청·HITL
+    planning/runtime.py       고정 모델/역할 캐시와 context·Store 주입
+    planning/catalog.py       Skill/Tool 조회 도구
+    execution/                실제 제출·관찰·판단·수정·보고서
+    agent_builders/<role>/     agent.py·독립 prompt.md
+    workflow/                 기존 업무 자산·1.3 관리/컴파일 지원
 ```
-
-## Agent를 선언하는 방법
 
 ```python
 from agent_service.factory import build_role_agent, json_output
 from agent_service.middleware import ProjectPromptMiddleware
 
-def build_agent(model, *, structured_output_mode="prompt_json"):
+def build_agent(model, *, structured_output_mode="prompt_json", store=None):
     return build_role_agent(
-        model,
-        name="my_role",
-        system_prompt=load_prompt(__package__),
-        tools=[],
-        middleware=[ProjectPromptMiddleware()],
-        output_type=MyOutput,
+        model, name="my_role", system_prompt=load_prompt(__package__),
+        tools=[], middleware=[ProjectPromptMiddleware()],
+        output_type=MyOutput, decode=json_output(MyOutput),
         structured_output_mode=structured_output_mode,
-        max_validation_attempts=3,
-        decode=json_output(MyOutput),
+        max_validation_attempts=3, store=store,
     )
 ```
 
-`load_prompt`와 `MyOutput`은 해당 역할의 프롬프트 로더와 Pydantic 스키마를 import한다. 도구·미들웨어는 역할 파일에서 명시적으로 선택한다. 공용 tools에 있다는 이유로 자동 노출하지 않는다. 현재 7개 역할의 tools는 빈 목록이며 카탈로그 문서 조회는 기존처럼 바깥 노드가 통제한다.
+load_prompt/MyOutput은 해당 역할의 로더·Pydantic schema를 import한다. 역할별 prompt는 독립 파일로 유지한다. builder는 주입받은 모델·Store를 사용하며 import 시 모델·풀을 만들지 않는다. 노드는 역할을 `await agent.ainvoke(payload, context=context)`로 호출한다. 삭제한 dependencies/ainvoke_typed/설문형 노드로 우회하지 않는다.
 
-역할별 prompt.md는 내용이 같아도 별개 파일로 관리한다. 공통 factory에는 역할별 업무 지시문을 넣지 않는다. 모델·DB 풀·Worker를 builder 내부에서 새로 생성하지 않는다.
+## 현재 역할 계약
 
-## 실행 문맥과 상태
-
-노드는 `await agent.ainvoke(payload, context=context_from_state(state))` 또는 같은 context를 전달하는 `ainvoke_typed`를 사용한다. RoleAgent는 payload를 사용자 메시지로 변환하고 create_agent 결과를 역할의 반환형으로 변환한다. 직접 모델을 호출하지 않는다.
-
-| 항목 | 전달·보존 방식 |
-|---|---|
-| user_id/project_id/session_id | AgentContext로 전달; 자동 프롬프트 삽입하지 않음 |
-| 프로젝트 system_prompt·버전 | 서비스가 신규 사용자 턴 실행 시 DB에서 조회 → 외부 graph의 JSON 상태에 snapshot → 매 내부 호출의 AgentContext |
-| 실제 모델명 | factory에 주입된 모델에서 가져와 AgentContext.model_name 제공 |
-| runtime.store와 project_memory_policy | 공식 AsyncPostgresStore를 create_agent에 연결, 요청별 정책은 소유권·버전·출처 검사; 역할별 입력 예산과 현재 원문을 근거로 한 짧은 주제 갱신은 053 기준 |
-
-프로젝트 지시문은 ProjectPromptMiddleware가 역할 기본 지시문 뒤에 추가한다. 공유 Agent 객체나 원본 메시지를 수정하지 않으므로 프로젝트 간 동시 호출에 섞이지 않는다. JSON 재시도도 미들웨어를 다시 통과하며 같은 지시문을 중복 누적하지 않는다.
-
-신규 사용자 턴을 시작할 때 최신 프로젝트 프롬프트를 읽는다. 같은 턴의 HITL 및 Executor 이벤트 재개는 기존 snapshot을 사용한다. 프로젝트 프롬프트를 수정해도 진행 중인 턴에 즉시 반영하지 않으며 다음 신규 턴부터 적용한다. snapshot이 없는 이전 체크포인트는 서비스의 사용자/Executor 재개 경계에서 한 번 조회해 보완한다. `""`도 유효한 snapshot으로 취급한다.
-
-개발용 graph 직접 실행은 DB 조회를 자동 수행하지 않는다. 프로젝트 정책을 검증하려면 초기 state에 project_system_prompt/project_prompt_version을 넣는다. API는 요청 본문의 값을 그대로 신뢰하지 않고 세션·사용자·프로젝트를 확인해 서버에서 읽는다.
-
-## 응답 규격과 재시도
-
-| 역할 | 반환 계약 | 재시도 책임 |
+| 역할 | 반환 schema / 책임 | 호출 구성 |
 |---|---|---|
-| routing / intent_classifier | 기존 label 검증 → Pydantic 결과 | 잘못된 label은 실패 |
-| skill_selector / conditional_decider | Pydantic JSON | prompt_json은 최대 3회, provider_json_schema는 ProviderStrategy |
-| workflow_generator | WorkflowPlanOutput | 역할 호출은 1회; 기존 바깥 노드가 JSON·업무 검증을 최대 3회 수행 |
-| faq / report_writer | answer/content 문자열 dict | 빈 응답은 실패 |
+| conversation | Reply: 답변·Skill 선택·등록 자산 계획·선택적 memory_updates | PlanningContract·metadata 탐색·세션 근거·메모리, 의미 검증 최대 3회 |
+| plan_revision | RevisionReply: plans/clarification·기존 계획 patch·실행별 함수 | Skill/Tool 및 함수 원문 조회, 세션 근거, 최대 2회 |
+| execution_review | ReviewResponse: choices/needs_user_input/message | 제공된 성공 관찰·승인된 decision 검증, 최대 2회 |
+| execution_report | ReportResponse: markdown/evidence_steps | 관찰 Step ID·수치 제약, 최대 2회 |
+| execution_repair | RepairResponse: can_repair·변경 제안·근거 | 허용 수준에 따른 탐색, 수정 정책 검증, 최대 2회 |
 
-prompt_json은 tool calling이나 provider JSON Schema 지원을 강제하지 않는다. provider_json_schema는 `ProviderStrategy(..., strict=True)`를 명시한다. 자동 ToolStrategy 전환은 하지 않는다. provider의 스키마 검증 예외는 기존 Workflow 노드가 재시도할 수 있도록 ValueError로 변환한다. 전송 장애는 기존 SDK 설정을 따르며 취소를 응답 검증 재시도로 바꾸지 않는다.
+prompt_json은 PromptJsonMiddleware로 출력 schema·의미를 검증한다. provider_json_schema는 명시적 ProviderStrategy이며 가능한 의미 검증은 동일한 재시도 middleware를 거친다. 전송 오류·취소를 출력 재시도로 바꾸지 않는다. 횟수는 역할의 검증 시도 상한이며 metadata 도구 탐색 횟수나 SDK 전송 retry와 다르다.
 
-## 체크포인트와 버전 제약
+Conversation의 메타데이터 탐색과 Executor 분석 함수 실행은 구분한다. 계획 승인 전 Executor를 생성하지 않으며, 승인 후 등록 함수의 docstring만 제거한 코드를 제출한다. [실행 규격](../workflow-json-reference.md), [Executor 연결](../agentic-executor-runtime.md)을 따른다.
 
-내부 역할 Agent는 `checkpointer=False`로 호출 단위 상태만 갖는다. 영속화는 외부 업무 graph가 담당한다. 사용자 HITL과 Executor 대기를 내부 Agent에 중복 추가하지 않는다.
+## 문맥·모델·수명
 
-고정된 LangGraph 1.2.11에서 외부 `durability="sync"`가 영속화 없는 내부 graph에 상속되면 `_put_checkpoint_fut` 예외가 발생한다. 공통 RoleAgent에서 공개 API의 `durability="async"`를 명시해 상속을 차단한다. 내부에 saver가 없으므로 저장 모드 자체는 효과가 없다는 라이브러리 경고가 발생할 수 있다. 외부 graph의 sync 저장 정책은 유지하며 전역 경고 억제나 라이브러리 내부 패치는 하지 않는다. 버전 업그레이드 시 Executor 재개 회귀를 유지하면서 이 우회를 재검토한다.
+| 항목 | 보존 방식 |
+|---|---|
+| user_id/project_id/session_id | 서비스가 소유권을 검증한 뒤 state/context로 전달 |
+| system_prompt와 버전 | 신규 사용자 턴에서 읽은 snapshot을 HITL/Executor 재개에도 사용 |
+| 모델 pin | Run의 name/revision을 resolve, 진행 중 default 변경으로 교체하지 않음 |
+| 세션 분석 근거 | 같은 세션 완료 분석의 원본 관찰·source, 현재 요청으로 새로 bind |
+| 프로젝트 메모리 | 공식 runtime.store + 요청별 소유권/버전 정책, 역할별 입력 예산 |
 
-## 동기 I/O가 남아 있는 노드
+PlanningRuntime은 허용 모델별 역할을 캐시한다. 사용자별 mutable context를 공유 인스턴스에 보관하지 않는다. create_agent 생성에도 같은 공식 Store를 전달하며 bind_context가 매 요청마다 정책과 한도를 주입한다. 원시 Store aput으로 API·Worker 권한/버전 검사를 우회하지 않는다.
 
-012에서는 분석 graph의 동기 I/O 노드를 `add_io_node`로 등록한다. 기존 `run_sync`를 사용해 스레드 작업이 끝나기 전에 graph 취소가 완료되지 않도록 관리한다. async 노드 내부에서는 동기 I/O를 직접 호출하지 않는다. HTTP/DB/파일 구현의 native async 전환, 자원별 대기 기한과 동시성 예산은 후속이며, 이미 수행한 외부 작업의 롤백이나 강제 종료 후 복구를 보장하는 경계는 아니다. [검증·I/O 목록](../improvements/012-agent-flow-validation.md)을 참고한다.
+ProjectPromptMiddleware는 기본 역할 prompt 뒤에 프로젝트 snapshot을 넣고 재시도에서 중복하지 않는다. 서비스 신규 턴/재개 경계가 DB 접근을 담당하며 Agent는 DB를 직접 조회하지 않는다. snapshot 없는 호환 상태 보완과 공개 API 모델 검증은 기존 서비스 어댑터 책임이다.
 
-## 다음 단계
+내부 역할은 checkpointer=False, 외부 graph는 서비스의 PostgreSQL saver·동일 session thread_id를 사용한다. 고정 LangGraph 버전에서 외부 sync durability 상속을 피하는 RoleAgent의 durability=async를 유지한다. 이 값은 내부 저장을 켠다는 뜻이 아니다. 경고를 전역으로 숨기지 않는다.
 
-052에서 project_memory 저장소를 공식 LangGraph Store로 전환했다. runtime.store를 읽고 요청별 정책으로 항목 버전·출처를 검사하며 053의 원문을 근거로 한 지속적인 주제 갱신과 입력 예산 정책을 적용한다. [현재 계약](../project-memory.md)을 따른다. 053에서 역할별 입력 예산과 지속적인 주제 갱신 정책을 추가했다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name 선택과 재개 모델 고정은 023에서 구현했다. [모델 선택 계약](../run-model-selection.md)을 따른다.
+Executor API는 runtime 소유 비동기 Client를 빌려 접수 결과까지만 기다린다. 실제 실행 대기는 외부 graph interrupt로 종료한다. 파일/PV 읽기·쓰기는 기존 보호된 run_sync를 사용하며 취소됐다고 진행 중 thread를 버리지 않는다.
 
-공식 API 참고: [미들웨어](https://docs.langchain.com/oss/python/langchain/middleware/custom), [구조화 출력](https://docs.langchain.com/oss/python/langchain/structured-output), [create_agent](https://reference.langchain.com/python/langchain/agents/factory/create_agent).
+## 개발 도구·호환
 
-024에서는 Executor HTTP를 runtime 소유 AsyncClient로 전환했다. 파일/PV/WorkflowStore는
-기존 run_sync 경계에 남는다. [HTTP 호출·불확실 제출 계약](../executor-http-runtime.md)을 따른다.
+devtools.analysis.runtime/cli와 langgraph_dev는 외부 호출 없는 mock 계획 실행이다. 시각화는 같은 builder의 전체 실행 분기를 포함하고 Executor 객체는 호출 불가능한 topology 표식이다. 실제 권한·큐·Store·Redis·Executor 검증은 Runs API를 사용한다. 전용 서비스 DB 풀을 여는 개발용 compiled_postgres_graph는 제거했다.
+
+054는 현재 노드 이름·state 필드·runtime 버전을 유지한다. 조건부 분기 목적지는 검사·그림용으로 명시했으며 같은 execution_phase가 같은 노드를 선택한다. 과거 설문형 그래프의 checkpoint는 이미 현재 Runtime과 별개이며 자동 이행을 지원하지 않는다.
+
+[메모리 한도·갱신·역할 정책](../project-memory.md), [Run별 모델 선택](../run-model-selection.md), [현재 공개 API](../public-run-api.md)를 따른다. 새로운 업무 Agent registry·자동 전체 요약·동적 Dataset 연계는 후속이다.

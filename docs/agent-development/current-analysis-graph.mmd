@@ -1,0 +1,78 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	receive(receive)
+	conversation(conversation)
+	publish_review(publish_review)
+	await_review(await_review)
+	apply_review(apply_review)
+	revise_plan(revise_plan)
+	execution_select(execution_select)
+	execution_submit(execution_submit)
+	execution_register(execution_register)
+	execution_wait(execution_wait)
+	execution_receipt(execution_receipt)
+	execution_process_event(execution_process_event)
+	execution_review(execution_review)
+	execution_decision_wait(execution_decision_wait)
+	execution_decision_applied(execution_decision_applied)
+	execution_finalize(execution_finalize)
+	execution_cancel(execution_cancel)
+	execution_report(execution_report)
+	execution_repair_propose(execution_repair_propose)
+	execution_repair_wait(execution_repair_wait)
+	execution_repair_applied(execution_repair_applied)
+	execution_repair_apply(execution_repair_apply)
+	execution_repair_reject(execution_repair_reject)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> receive;
+	apply_review -.-> execution_select;
+	apply_review -.-> publish_review;
+	apply_review -.-> revise_plan;
+	await_review --> apply_review;
+	conversation -.-> __end__;
+	conversation -.-> publish_review;
+	execution_cancel --> execution_wait;
+	execution_decision_applied -.-> execution_process_event;
+	execution_decision_applied -.-> execution_select;
+	execution_decision_wait --> execution_decision_applied;
+	execution_finalize --> execution_wait;
+	execution_process_event -.-> execution_cancel;
+	execution_process_event -.-> execution_repair_propose;
+	execution_process_event -.-> execution_report;
+	execution_process_event -.-> execution_review;
+	execution_process_event -.-> execution_select;
+	execution_process_event -.-> execution_wait;
+	execution_receipt --> execution_process_event;
+	execution_register --> execution_wait;
+	execution_repair_applied -.-> execution_process_event;
+	execution_repair_applied -.-> execution_repair_apply;
+	execution_repair_applied -.-> execution_repair_reject;
+	execution_repair_apply -.-> execution_select;
+	execution_repair_propose -.-> execution_cancel;
+	execution_repair_propose -.-> execution_repair_apply;
+	execution_repair_propose -.-> execution_repair_wait;
+	execution_repair_reject -.-> execution_cancel;
+	execution_repair_wait --> execution_repair_applied;
+	execution_review -.-> execution_decision_wait;
+	execution_review -.-> execution_select;
+	execution_select -.-> execution_cancel;
+	execution_select -.-> execution_finalize;
+	execution_select -.-> execution_review;
+	execution_select -.-> execution_submit;
+	execution_select -.-> execution_wait;
+	execution_submit --> execution_register;
+	execution_wait --> execution_receipt;
+	publish_review --> await_review;
+	receive --> conversation;
+	revise_plan -.-> execution_select;
+	revise_plan -.-> publish_review;
+	execution_report --> __end__;
+	revise_plan -.-> revise_plan;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

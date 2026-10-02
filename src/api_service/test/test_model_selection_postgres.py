@@ -22,8 +22,9 @@ import api_service.services.run_service as runs
 import api_service.services.agent_graph_service as graphs
 import api_service.services.executor_completion as completion
 from service_runtime.model_selection import build_catalog, validate_checkpoint_selection
-from agent_service.agents.analysis import dependencies
-from agent_service.agents.analysis.context import context_from_state
+import agent_service.agents.analysis.planning.runtime as runtime_module
+from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from agent_service.context import AgentContext
 from agent_service.agents.analysis.tests.test_agent_middleware import response
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
@@ -163,31 +164,39 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
     calls=[]
     async def transport(request):
         body=json.loads(request.content); calls.append(body)
-        return response("Answer by "+body["model"])
+        value=json.loads(body['messages'][-1]['content'])
+        if 'observations' in value:
+            answer={'markdown':'# Interpretation','evidence_steps':[]}
+        else:
+            answer={'kind':'answer','message':'Answer by '+body['model'],'plans':[],'grounding':{'scope':'general'}}
+        return response(json.dumps(answer))
     graph_task,execution,command,event_id=[uuid4() for _ in range(4)]
     async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as ac:
         with httpx.Client(transport=httpx.MockTransport(lambda _: (_ for _ in ()).throw(AssertionError("sync HTTP")))) as sc:
             def model(settings):
                 return ChatOpenAI(model=settings.model_name,api_key="test",base_url=settings.api_base_url,
                     max_retries=0,http_async_client=ac,http_client=sc)
-            monkeypatch.setattr(dependencies,"create_chat_model",model)
+            monkeypatch.setattr(runtime_module,"create_chat_model",model)
             def build(saver):
-                deps=dependencies.create_llm_dependencies(service_settings.get_settings().agent)
+                runtime=PlanningRuntime(service_settings.get_settings().agent)
+                def context(s):
+                    return AgentContext(**{k:s[k] for k in ('user_id','project_id','session_id','model_selection')},
+                        project_system_prompt=s.get('project_system_prompt',''),project_prompt_version=s.get('project_prompt_version'))
                 @record_initial_request
                 async def first(s):
-                    await deps.faq_agent.ainvoke({"user_request":"first"},context=context_from_state(s))
+                    await runtime.respond({**s,"user_request":"first"},context(s),[])
                     return {**s,"routing_result":{"route":"analysis"},"task_id":str(graph_task),"execution_id":str(execution),
                             "ew_pending":{"command_id":str(command)}}
                 @record_user_resume
                 async def approval(s):
                     user_interrupt({"kind":"USER_APPROVAL"})
-                    await deps.faq_agent.ainvoke({"user_request":"after approval"},context=context_from_state(s))
+                    await runtime.respond({**s,"user_request":"after approval"},context(s),[])
                     return s
                 async def external(s):
                     interrupt({"kind":"EXECUTOR_EVENT","task_id":str(graph_task),"execution_id":str(execution)})
-                    report=await deps.report_agent.ainvoke({"user_request":"report"},context=context_from_state(s))
+                    report=await runtime.execution_role("report",s,{"observations":[]})
                     return {**s,"execution_status":"SUCCEEDED","ew_receipts":{str(command):str(event_id)},
-                            "final_response":report}
+                            "final_response":report.model_dump()}
                 builder=StateGraph(dict)
                 for name,node in [("first",first),("approval",approval),("external",external)]: builder.add_node(name,node)
                 for a,b in [(START,"first"),("first","approval"),("approval","external"),("external",END)]: builder.add_edge(a,b)

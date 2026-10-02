@@ -1,171 +1,67 @@
 # Agent 개발 안내
 
-현재 분석 Agent의 최신 실행 안내: [계획 제안](../agentic-planning-runtime.md), [Executor 실행](../agentic-executor-runtime.md), [040 오류 수정](../agentic-execution-repair.md), [041 계획 재작성](../agentic-plan-revision.md). 오류 수정 역할의 선언·프롬프트는 analysis/agent_builders/execution_repair, 실행 노드는 analysis/execution/repair_nodes, 순수 검증은 repair_policy에 있다. 등록 workflow 자산 파일을 실행 중 변경하지 않는다. 실행 전 재작성 역할은 analysis/agent_builders/plan_revision, 전체·차이 계획 검증은 planning/proposals, 공통 함수 검증은 execution/sources에 있다. 역할마다 prompt를 별개로 보존한다.
+054 기준으로 현재 API·Worker·로컬 개발 도구는 `analysis/planning/graph.py`의 같은 builder를 사용한다. 실제 역할은 conversation, plan_revision, execution_review, execution_report, execution_repair 다섯 개다. 이전 routing/intent_classifier/skill_selector/workflow_generator/conditional_decider/faq/report_writer와 설문형 그래프는 제거했다. [파일별 책임](../../src/agent_service/agents/analysis/README.md), [서비스 경계](../architecture/service-layout.md), [선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
-패키지 분리의 기준 기록은 025이고 현재 공개 실행 계약은 [Agent API](../public-run-api.md), 정의 형식은 [Workflow JSON](../workflow-json-reference.md)을 따른다. 다음 문단의 025 역할 수는 당시 기록이다. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory는 052에서 공식 LangGraph AsyncPostgresStore로 전환했다. 053에서 원문 출처를 보존한 지속적인 주제 정리·역할별 입력 예산을 구현했다. 전체 메모리 자동 요약과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
+## 수정 위치
 
-- [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
-- [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
-- [005 당시 이동·삭제 목록](analysis-layout-inventory.json)
-- [012 업무 흐름 회귀·I/O 취소 수명](../improvements/012-agent-flow-validation.md)
-- [011 Agent 실행·미들웨어 통일](../improvements/011-agent-middleware.md)
-- [010 분석 Workflow 패키지 통합](../improvements/010-unify-analysis-workflow.md)
-- [009 기존 Workflow 작업 위치 복원](../improvements/009-preserve-workflow-package.md)
-- [008 역할별 선언·프롬프트 구조](../improvements/008-agent-builders-layout.md)
-- [변경·검증·남은 작업](../improvements/005-agent-package-layout.md)
-- [LLM 비동기 전환·취소 검증](../improvements/006-agent-async-llm.md)
+1. 새 요청·HITL·계획 재작성은 `planning/graph.py`, 실행·관찰·판단·보고서는 `execution/nodes.py`, 오류 수정 연결은 `execution/repair_nodes.py`다. 외부 State는 `planning/graph.py`의 PlanningState다.
+2. 역할 선언은 `agent_builders/<role>/agent.py`, 독립 기본 지시문은 같은 폴더 `prompt.md`다. Conversation의 상세 계획 지시문은 `planning_prompt.md`다.
+3. 모델 선택·캐시·문맥 주입은 `planning/runtime.py`, 전송용 모델 생성은 공통 `agent_service/runtime/model_factory.py`다. 노드에서 전역 기본 모델을 다시 읽지 않는다.
+4. 업무 자산은 계속 **`analysis/workflow/{skills,tools,workflows}/`**에서 관리한다. 새 Runtime이 Agent에 제공하는 조회 도구는 `planning/catalog.py`의 AssetCatalog다. `analysis/tools/catalog.py`와 `workflow/*.py`는 기존 1.3 Workflow 관리·컴파일 지원이다.
+5. 공개 API와 Workflow/Executor 계약은 `service_contracts`, HTTP/PV 어댑터는 `integrations/executor`, CRUD·Worker 점유·DB 조립은 `api_service`다. Agent에서 API 구현을 import하지 않는다.
 
-## Conversation의 답변·계획 요청 경계 (049)
+## 역할을 추가·변경하는 방법
 
-`analysis/agent_builders/conversation/agent.py`는 하나의 create_agent 루프다. 같은 폴더 `prompt.md`는 첫 판단·답변용, `planning_prompt.md`는 등록 Skill을 선택한 뒤 상세 계획을 만들 때만 사용한다. 공용 `agent_service/middleware/planning_contract.py`가 첫 모델 요청에서 metadata tools를 비우고, 내부 `planning`+`skill_ids`를 표준 ToolNode의 read_skill로 연결한다. 다음 모델 요청에만 상세 Workflow 계약과 메타데이터 도구가 들어간다. 별도 분류 모델 호출, 사용자 API나 업무 Agent 등록 API가 아니다.
+`agent_builders/<role>/`에 `agent.py`, `prompt.md`, `__init__.py`를 둔다. 내용이 같아도 다른 역할의 prompt를 공유하지 않는다. 공용 `build_role_agent`로 모델·tools·middleware·출력 schema·검증을 명시한다. 모델/풀 생성, 설정 재로딩, 직접 DB 접근을 builder에 넣지 않는다.
 
-캐시된 Agent의 공유 상태에 phase를 저장하지 않고 invocation 메시지에서 실제 조회 완료를 확인한다. 새 실행은 기존 승인 경계를 유지한다. 후속 설명은 기존 SessionAnalysisMiddleware와 grounding 검증을 사용한다. 역할 prompt는 둘 다 wheel에 포함한다. [변경·검증·성능 한계](../improvements/049-conversation-performance.md)를 참고한다.
+같은 업무 흐름에 새 역할이 필요하면 `PlanningRuntime`에서 해당 builder 선택·모델 pin·Store 주입·요청별 context를 연결하고 실제 노드에서 호출한다. 폴더만 추가한다고 실행되지는 않는다. 이는 다중 업무 Agent registry 추가와 별개다. 새 역할의 메모리 분류는 `runtime/memory_selection.py`에서 검토하고 wheel에 prompt가 포함되는지 검사한다.
 
-## Conversation의 완료 근거 출력 (050)
+현재 역할의 tools는 구분된다. Conversation에는 Skill/Tool 메타데이터 조회가 있으며, PlanRevision은 실행별 수정을 위한 함수 원문 조회도 허용한다. Repair는 허용 수준에 따라 탐색을 켠다. Review/Report는 제공된 관찰을 해석한다. 이 LangChain 도구들은 분석 함수를 실행하는 Tool이 아니다. 분석 함수는 사용자 승인 snapshot에서 Executor로 제출한다.
 
-Conversation에서 SessionAnalysisMiddleware의 `evidence_view=compact_evidence_view`로 source/owner가 확인된 완료 분석을 짧은 근거 목록으로 전달한다. `execution/grounding.py`의 `compact_evidence()`는 일시적인 모델용 view와 ID→Step/path 연결을 만들며 원본 상태를 수정하지 않는다. Reply의 `grounding.fact_ids`를 검증·해석한 뒤 기존 실제 값 표를 붙인다. 긴 `facts` selector도 읽지만 새 prompt는 ID 선택을 우선한다. 재사용 Agent나 전역 상태에 세션별 목록을 저장하지 않는다.
+## 실행·확인
 
-기본 SessionAnalysisMiddleware의 evidence_view는 None이므로 다른 역할에 자동 적용되지 않는다. 보고서 표는 현재 서버 표와 정확히 일치하는 suffix만 중복 제거한다. 본문 숫자 오류를 그대로 거절하며 prompt와 JSON Schema 필드 설명에 그 계약을 함께 선언한다. 공개 API·SSE와 DB migration은 변경하지 않았다. [짧은 근거 ID의 의미와 한도](../agentic-answer-grounding.md), [050 작업 기록](../improvements/050-compact-answer-facts.md)을 참고한다.
-
-## 신규 Agent 설계 초안
-
-043은 [완료 분석의 후속 대화 전달](../agentic-session-analysis-context.md)을 구현했다. 같은 세션의 최근 실제 근거만 middleware로 전달하며 project_memory·파일 Registry와 구분한다. 결과 판단의 근거 ID·값 검증도 create_agent 재검증에 연결했다.
-
-[전처리 데이터 등록·조회 계약](../design/dataset-registry-contract/README.md)은 Executor 개발자와 합의할 042 초안이다. 실제 파일 정보는 Executor, 의미 설명은 Agent가 맡으며 범위·버전을 고정한다. 아직 동적 Dataset API/provider는 연결하지 않았다.
-
-[현재 Workflow JSON 안내](../workflow-json-reference.md)는 결과 기반 판단·조건·입력 연결·승인과 산출물을 설명한다. 2.0-draft는 현재 계획/승인/compiler에서 사용하며 기존 Workflow CRUD는 아직 1.3이다. [036 설계 당시 기록](../design/agentic-workflow-contract/README.md)과 실제 등록/설명용 자산을 구분한다.
-
-[037 계획 승인·Executor 제출 기록](../design/plan-interaction-contract/README.md)은 당시 prototype 검증 이력이다. 현재 API·DB·Graph·Executor 연결은 [공개 계약](../public-run-api.md)과 038~045 개선 기록을 따른다. 현재의 미구현 범위를 prototype 문구로 판단하지 않는다.
-
-## 지금 분석 Agent를 수정하는 방법
-
-1. `src/agent_service/agents/analysis/graph.py`에서 실행 흐름을 확인한다. 업무 상태는 `state.py`, 노드는 `nodes/`다.
-2. 역할별 Agent는 `agent_builders/<role>/agent.py`의 `build_agent()`에서 수정한다. 기본 프롬프트는 같은 폴더의 `prompt.md`이며 내용이 같아도 다른 역할의 파일을 참조하거나 합치지 않는다. `dependencies.py`는 공유 모델과 각 builder의 결과를 연결한다. 기존 `components/specs.py`는 제거했다. 이 builder 패키지는 API에서 선택할 업무 Agent registry가 아니다.
-3. **src/agent_service/agents/analysis/workflow/**에서 Workflow 관련 코드를 관리한다. 기존 skills/·tools/·workflows/ 하위 구조와 생성기를 유지하고, 같은 패키지의 Python 모듈에서 해석·컴파일·코드 생성을 담당한다. Agent가 호출하는 LangChain 카탈로그 도구는 analysis/tools/catalog.py다.
-4. `tests/`에서 업무 회귀를 실행한다. 서비스 상태·소유권·DB 테스트는 `src/api_service/test/`에 있다.
-
-Python 3.11과 잠금파일 의존성을 사용한다. 설치 후 CLI는 `dtest-agent`, 소스 체크아웃에서는 `python cli.py --help`다. API는 기존대로 루트 `python app.py`로 실행한다. CLI는 개발용 그래프 직접 실행 도구이며 서비스의 durable queue/세션 소유권을 검증하는 도구가 아니다.
+Python 3.11과 잠금 의존성을 사용한다. 실제 서비스는 `python app.py` 또는 `dtest-agent-api`로 실행하며 요청·resume는 [Runs API](../public-run-api.md)를 따른다. SSO·쿠키·CSRF는 [인증 가이드](../sso-authentication.md)를 따른다.
 
 ```sh
-# 외부 LLM 없이 승인·제출 경계를 확인하는 검증
-PYTHONPATH=src python -m pytest \
-  src/agent_service/agents/analysis/tests/test_service_load_mock.py \
-  src/agent_service/agents/analysis/tests/test_resource_layout.py -q
+# 배포 설정/.env/외부 서비스 없이 현재 계획→HITL을 확인
+python cli.py --request "데이터의 품질과 이상치를 분석해줘"
+python cli.py --interactive
 
-# 카탈로그 생성은 명시적으로 실행한다. 서버가 시작할 때 다시 쓰지 않는다.
+# 현재 계획·MULTI·판단·수정 분기 전체를 .mmd로 출력 (외부 호출 없음)
+PYTHONPATH=src python -m devtools.analysis.visualization --output /tmp/analysis-current.mmd
+
+# 현재 builder의 offline mock Studio 진입점
+langgraph dev
+
+# 관련 회귀: 실제 DB 테스트는 별도의 전용 테스트 DB 설정 필요
+PYTHONPATH=src python -m pytest src/agent_service/agents/analysis/tests -q
+```
+
+CLI는 typed HITL action JSON을 받으며 현재 plan_id/plan_revision을 출력한다. `approve_plan` 등을 action object로 입력한다. 기본 mock에서는 최종 `plan_approved`까지이고 Executor·DB·Redis·로그인·project_memory 연계는 없다. Studio가 saver를 제공하며 `langgraph_dev.py`는 서비스 Worker/SSO/Redis 바인딩을 함께 띄우지 않는다. 운영 기동이나 장기 실행 검증에 이 도구를 사용하지 않는다.
+
+시각화에서는 LangGraph 분기 목적지를 명시한다. 실행 노드·선택 로직은 동일하지만 과거 다이어그램에서 빠졌던 조건부 연결이 표시된다. [생성한 현재 그래프](current-analysis-graph.mmd)는 코드 생성 결과이며 의미 변경 시 다시 생성한다.
+
+## Skill·Tool 유지보수
+
+```sh
 python src/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
 python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py
 ```
 
-생성기 기본 출력은 통합 패키지의 `src/agent_service/agents/analysis/workflow/skills/skill_index.yaml`, `src/agent_service/agents/analysis/workflow/tools/tool_registry.yaml`이다. `--output`으로 임시 파일에 생성·비교할 수 있다. `tmp/`의 Skill/Tool은 기존과 동일하게 카탈로그 생성에서 제외된다. 예전 Skill/Tool의 누락으로 실패하는 테스트가 남아 있으므로 전체 테스트가 모두 통과한다고 해석하면 안 된다.
+생성기는 `--output`으로 임시 파일에 비교할 수 있고 기동 시 자산을 다시 쓰지 않는다. tmp 자산·원래 docstring·import 포함 함수와 Skill Markdown을 보존한다. `availability=test_only` Tool은 현재 실제 계획 후보에서 제외된다. [Workflow 유지보수 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 따른다.
 
-## 역할별 선언 패키지
+등록 함수는 docstring만 제거하고 필요한 import를 포함한 원문을 승인 snapshot에 고정한다. 사용자에게 보여주는 plan_view에는 함수 이름·설명·입력·Skill을 표시하고 코드는 제외한다. 이미 승인된 실행을 현재 배포 Tool로 재생성하지 않는다.
 
-```text
-analysis/
-  agent_builders/
-    routing/                 agent.py + prompt.md + __init__.py
-    intent_classifier/       agent.py + prompt.md + __init__.py
-    skill_selector/          agent.py + prompt.md + __init__.py
-    workflow_generator/      agent.py + prompt.md + __init__.py
-    conditional_decider/     agent.py + prompt.md + __init__.py
-    faq/                     agent.py + prompt.md + __init__.py
-    report_writer/           agent.py + prompt.md + __init__.py
-  tools/catalog.py           분석 업무의 공용 도구
-  schemas/                   그래프와 구성요소가 공유하는 업무 계약
-  components/interfaces.py   async 호출 계약·Pydantic 결과 검증 (직접 LLM 어댑터 제거)
-  dependencies.py            공유 모델 → builder → 그래프 의존성 연결
-```
+## 문맥·근거·메모리
 
-builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 시점에 만들지 않는다. 7개 역할 모두 공통 factory의 create_agent를 사용한다. 각 builder에 tools, middleware, 출력 규격을 명시하고 RoleAgent는 node payload/결과 변환만 담당한다. 공통 JSON 모드는 검증 미들웨어 또는 명시적인 ProviderStrategy를 사용한다.
+ProjectPromptMiddleware는 프로젝트 system_prompt snapshot을 매 모델 요청에 넣는다. JSON retry에서도 중복하지 않고 프로젝트 간 요청이 섞이지 않는다. 내부 create_agent는 checkpointer=False, 외부 업무 graph가 HITL/이력/Executor 대기를 저장한다. async 호출·취소 전파와 보호된 run_sync 수명은 유지한다.
 
-전용 스키마나 도구가 생기면 해당 역할 폴더에 추가한다. 여러 노드와 Agent가 쓰는 Workflow/승인/조건 결과 스키마는 공통 schemas에 유지했다. 공용 tools에 있다는 이유로 모든 Agent에 자동 제공하지 않는다. 현재 read_skill_documents는 graph 노드가 직접 호출하며 Workflow 모델에 제공하는 tools는 빈 목록이다. 이 정책을 바꾸는 것은 별도 동작 변경이다.
+Conversation의 첫 판단은 짧은 prompt로 수행하고, 선택한 Skill 조회 뒤 상세 planning_prompt를 사용한다. SessionAnalysisMiddleware는 같은 세션의 완료 근거를 전달한다. `execution/grounding.py`는 실제 근거 ID·값을 확인하고 서버가 수치 표를 렌더링한다. [후속 문맥](../agentic-session-analysis-context.md), [근거 계약](../agentic-answer-grounding.md)을 따른다.
 
-여러 업무 Agent가 실제 공유하는 도구가 생길 때 agent_service/tools로 올린다. 현재는 분석 카탈로그만 확인되어 analysis/tools를 유지했고 빈 공용 패키지는 만들지 않았다. Executor용 Python 소스(src/agent_service/agents/analysis/workflow/tools)는 LLM에 제공할 LangChain Tool과 다른 개념이다.
+ProjectMemoryMiddleware는 공식 Store의 프로젝트 배경·선호를 별도 참조 메시지로 제공한다. 소유권·버전·출처를 정책으로 검사하고 역할별 입력 예산을 적용한다. Conversation만 선택적 auto_context에서 현재 발언에 근거한 갱신을 제안한다. [현재 메모리 설정·정책](../project-memory.md)을 따른다. Store 전체 자동 요약·Executor 결과 자동 공유는 아직 구현하지 않았다.
 
-프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 역할별 기본 prompt.md 7개는 원문을 유지한다. 프로젝트 system_prompt는 ProjectPromptMiddleware가 각 모델 요청에 별도로 추가하며, project_memory 저장·읽기·역할별 입력 예산·원문을 근거로 한 짧은 주제 갱신은 [053 현재 계약](../project-memory.md)을 따른다. 전체 메모리의 주기적 자동 요약은 미구현이다.
+## 계약과 보류
 
-실제 LLM을 호출하지 않는 WorkflowRecommender와 file_lookup placeholder에는 가짜 builder나 prompt를 만들지 않는다. 기존 미사용 recommender prompt는 [참고 자료](reference-prompts/workflow_recommender_prompt.md)로 옮겼다.
+[Workflow JSON](../workflow-json-reference.md)의 실행 규격은 2.0-draft이며 기존 관리 CRUD는 1.3이다. [전처리 데이터 Registry](../design/dataset-registry-contract/README.md)는 Executor API 대기다. Gaia 등록 adapter, 첨부/VLM, 다중 업무 Agent registry는 후속이다. 보고서 모델 호출 횟수 최적화·운영 에러 대응은 [후속 목록](../improvements/backlog.md)의 우선순위를 유지한다.
 
-새 prompt가 wheel에 포함되는지 반드시 확인한다. 패키지 이동 후 로컬 build/에는 삭제한 소스가 남을 수 있으므로 깨끗한 빌드 디렉토리에서 빌드한다. `scripts/diagnostics/validate_agent_package.py`는 설치 파일만 사용해 7개 프롬프트, 실제 builder 조립, Mock 승인/재개를 검증한다.
-
-## 개발 계약의 목표와 현재 이행 상태
-
-아래는 이후 공통 계약이 구현될 때 적용할 표준이다. 아직 존재하지 않는 `definition.py`를 추가하는 것만으로 새 Agent가 서비스에서 호출되지는 않는다.
-
-| 개발 항목 | 목표 계약 | 현재 상태 |
-|---|---|---|
-| Agent 등록 | id·호환 버전·스키마·factory를 코드 목록에 등록 | 미구현, 현재 분석 graph 직접 연결 |
-| 실행 | I/O 노드는 async, 모델은 실제 ainvoke, 순수 변환은 def 허용 | LLM·Mock 및 소비 노드 전환 완료, 다른 I/O는 이행 중 |
-| 설정 | settings 스키마만 선언, bootstrap이 중앙 설정 주입 | 중앙 resolver 완료, AgentSettings 세분화는 후속 |
-| LLM | 기본 모델/선택 모델을 서비스가 주입 | 기본 모델 factory 및 실제 모델명 context 제공, 요청별 모델 선택 registry는 후속 |
-| 프로젝트 문맥 | 모든 모델 호출에 system_prompt 적용, project_memory는 프로젝트 범위로 관리 | prompt snapshot 유지, 052의 runtime.store·owner-bound 정책·공식 PostgreSQL Store 연결 |
-| 파일 | 주입된 ArtifactStore 사용, PV 산출물과 코드 리소스 구분 | artifacts.py의 기존 동기 저장 유지 |
-| Executor | 주입된 port를 사용하고 멱등성·접수 결과 보존 | 기존 클라이언트/Worker 경계 유지 |
-| 상태 | Agent별 JSON 상태, 공통 결과/대기 projection | 분석 상태만 이동, 공통 projection은 후속 |
-| 자원 | Agent가 풀·Worker·lease·세션 잠금을 생성/변경하지 않음 | 기존 서비스 자원 수명 유지 |
-
-새 개발에서 API 라우터나 DB 풀을 Agent 패키지 안에 추가하지 않는다. `asyncio.create_task()`로 추적되지 않는 일을 남기거나, `async def` 안에서 동기 HTTP/LLM을 직접 호출하지 않는다. 기존 동기 I/O는 native async 전환 대상이다. 분석 graph에 연결할 때는 `add_io_node`로 등록하여 취소가 진행 중인 스레드 작업을 남긴 채 완료되지 않도록 한다. 순수 계산·상태 변환과 I/O 없는 interrupt는 일반 노드로 둘 수 있다. 이미 async인 노드에서는 동기 I/O를 직접 호출하지 않고 기존 `run_sync` 경계를 유지한다. 이 방식은 이벤트 루프 정지를 피하고 작업 수명을 관리하지만, 스레드 사용량·I/O 종료 시간의 상한을 보장하지는 않는다.
-
-## 006 이후 호출 방법
-
-```python
-class MyComponent:
-    async def ainvoke(self, payload, *, context=None):
-        response = await self.role_agent.ainvoke(payload, context=context)
-        return response
-
-result = await component.ainvoke(payload)
-state = await graph.ainvoke(graph_input, config)
-async for update in graph.astream(graph_input, config):
-    ...
-```
-
-`InvokableAgent`/`invoke_typed` 대신 `AsyncInvokableAgent`/`await ainvoke_typed`를 사용한다. 동기 invoke fallback은 없다. 개발용 `compiled_postgres_graph`도 `async with`로 연다. CLI 최상위의 asyncio.run 외에는 노드/모델 내부에 새 event loop를 만들지 않는다.
-
-테스트 대역도 async ainvoke를 구현하고 AsyncMock을 사용한다. 지연은 asyncio.sleep이며 CancelledError를 잡아 정상 결과나 검증 재시도로 바꾸지 않는다. 임의의 모델은 ainvoke 메서드가 있어도 내부에서 sync fallback을 사용할 수 있으므로, 새 provider는 실제 비동기 전송과 취소 전파를 검증해야 한다.
-
-현재 혼합 노드에 사용한 `runtime.blocking.run_sync`는 기존 동기 작업의 이행용이다. 이벤트 루프 밖에서 실행하고 취소 후에도 실제 완료를 기다리지만 전용 ArtifactStore/비동기 DB/HTTP를 대체하는 최종 표준이 아니다. 사용하지 않는 다른 동기 노드까지 보호하지 않으며, 이미 시작한 외부 부작용을 되돌리지 않는다.
-
-## checkpoint 및 리소스 호환
-
-- 그래프 노드 이름·edge·thread 식별·HITL 응답 의미는 유지한다. 011에서 JSON 상태에 project_system_prompt/project_prompt_version snapshot 필드를 추가했다.
-- 010 이후 새 Workflow는 `agent_service/agents/analysis/workflow/{tools,skills}/...` 경로를 생성한다.
-- 기존 `app/workflow/{tools,skills}/...`와 005~008의 `agent_service/agents/analysis/resources/...` 저장 경로는 같은 원본 자산으로 연결한다. assets 사본이나 symlink를 두지 않는다.
-- 경로 호환은 과거 Tool 내용/버전의 보존을 뜻하지 않는다. 이미 생성된 Notebook 코드·Executor 제출 payload를 임의로 다시 생성하거나 멱등성 키를 바꾸면 안 된다.
-- 진행 중인 모든 과거 버전의 DB checkpoint를 검증한 것은 아니다. 별도 Agent 버전·배포 중 재개 호환 검증은 남아 있다.
-
-## Agent 개발자 인계 시 확인할 사항
-
-이동 목록으로 담당 파일을 찾고, 프롬프트/Tool 변경이 생성 카탈로그와 맞는지 확인한다. 카탈로그에 없는 파일을 등록된 기능이라고 설명하지 않는다. graph 노드 이름이나 state 구조 변경은 단순 소스 리팩토링과 달리 기존 checkpoint의 재개 호환을 검토한다. 장기 Executor 대기 중 배포될 수 있으므로 이미지 태그와 Agent 호환 버전은 구분해야 한다.
-
-## 기존 Workflow 패키지 유지 원칙
-
-[analysis/workflow 작업 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 따른다. 사용자가 유지하려던 것은 skills·tools·workflows의 패키지 구성이다. 009의 app/workflow 위치 고정 해석은 010에서 정정했다. 원본 자산은 이 패키지 한 곳에서 관리하고, 005·009 기록은 당시 이력으로 보존한다.
-
-### Run별 LLM 선택
-
-역할 Agent 생성은 공통 dependencies 카탈로그 경로를 사용한다. 노드에서
-`context_from_state(state)`를 `ainvoke(..., context=...)`로 전달하면 Run에 고정된
-모델과 프로젝트 프롬프트를 함께 사용한다. 개별 노드에서 전역 기본 모델을
-새로 읽거나 모델 클라이언트를 생성하지 않는다.
-[API·설정·장기 Run 정책](../run-model-selection.md)을 참고한다.
-
-### Executor HTTP 호출
-
-제출·추가 실행·종료·결과 조회·보고서 업로드는 공유 ExecutorClient의 async 경로를 사용한다.
-[자원 소유권·취소·멱등성 계약](../executor-http-runtime.md)을 참고한다.
-
-### 새 분석 Runtime의 실제 실행
-
-공개 API·Executor Event Worker는 039의 planning/graph.py와 execution/{compiler,nodes}.py를 사용한다. 결과 판단은 agent_builders/execution_review, 리포트는 agent_builders/execution_report에 선언과 독립 prompt를 둔다. 등록 함수 원문 보존, 실제 관찰, 사용자 decision_review, 자원 수명은 [실행 개발 안내](../agentic-executor-runtime.md)를 따른다. 기존 CLI/graph의 이행 여부와 구분한다.
-
-## 프로젝트 메모리 공식 Store 연결·입력/갱신 정책 053
-
-`ProjectMemoryMiddleware`는 공통 factory에서 모든 create_agent 역할에 추가된다. 서비스가 `create_agent(store=...)`에 공식 Store를 연결하며 미들웨어는 `runtime.store`를 사용한다. per-invocation `AgentContext.project_memory_policy`는 활성 소유권·Run 출처·조건부 쓰기 검사만 담당하고 Store를 대체하지 않는다. Store/정책이 없는 독립 호출에서는 읽지 않는다. Conversation만 최종 `memory_updates`에서 갱신을 제안하며 판단·보고서·repair·재작성 역할은 읽기만 한다.
-
-Store 객체는 프로세스 수명으로 공유하지만 요청별 snapshot과 owner는 Agent 캐시에 보관하지 않는다. `PlanningRuntime(store=..., memory_policy_factory=...)`가 모델 역할 선언에 Store를 전달하고 `bind_context`가 각 요청의 정책을 만든다. 실제 저장은 `api_service/core/memory_store.py`의 공식 Store가 담당한다. `api_service/services/project_memory_policy.py`는 CRUD/Worker 검사를 연결하는 서비스 정책이며 Agent 패키지를 import하지 않는다. 계약은 `service_contracts/memory_store.py`와 `service_contracts/project_memory.py`에 있다. 신규 메모리 쓰기는 원시 Store `aput()`으로 버전/권한 검사를 우회하지 않고 정책을 거친다.
-
-Store 사용만으로 요약·추출이 자동 구현되지는 않는다. 원문을 근거로 한 지속적인 주제 갱신·manual 기본값은 [현재 메모리 계약](../project-memory.md)을 따른다. 공식 Store에 향후 다른 Agent 메모리 문서를 저장할 수 있지만 이번 구현은 프로젝트 메모리와 관련 receipt만 사용한다. Workflow 추천 JSON·원시 파일·실행 출력 전체를 Store로 이전하지 않는다.
-
-053의 `AgentContext.project_memory_limits`는 중앙 설정에서 주입한 immutable MemoryLimits다. `memory_selection.ROLE_SECTIONS`에서 신규 역할의 허용 분류를 검토하고, 입력 예산은 저장 한도와 분리해 유지한다. 모델에 제공된 일부 참조만으로 Store 전체를 덮어쓰지 않는다. Conversation 응답 schema도 configured max_updates/topic_max_chars를 사용한다.
+과거 성능 비교 도구는 고정 과거 commit의 설문형 그래프를 재현하는 도구다. 현재 Agent 측정으로 해석하지 않는다. [벤치마크 구분](../../scripts/benchmarks/README.md)을 따른다. 과거 노드/CLI import를 현재 경로로 유지하는 shim은 없다. 054 이전 설문형 checkpoint 자동 이행은 이번 범위에 포함되지 않으며 현재 `agentic-planning-v1` HITL 재개는 별도로 검증한다.

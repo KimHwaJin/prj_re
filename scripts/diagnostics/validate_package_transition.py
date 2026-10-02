@@ -1,4 +1,4 @@
-"""Resume a pre-move PostgreSQL checkpoint using the post-move source tree.
+"""Resume a current planning checkpoint across explicit before/after source snapshots.
 
 Uses explicit source snapshots, mock LLM/data, no Executor calls, and a dedicated
 local database named boundary_checkpoint_test. Does not drop schemas or tables.
@@ -12,39 +12,7 @@ import sys
 from uuid import uuid4
 from urllib.parse import urlparse
 
-CHILD = '''
-import asyncio, json, sys
-from agent_config import load_agent_settings
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
-from agent_service.agents.analysis.graph import build_analysis_workflow_graph
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from langgraph.types import Command
-settings=load_agent_settings({'MODEL_PROVIDER':'mock','DATA_MOCK':'true',
-    'DEMO_ARTIFACTS_ENABLED':'false','EXECUTOR_SUBMIT_ENABLED':'false','EXECUTOR_SOURCE_TYPE':'INLINE'})
-async def main():
-    async with AsyncPostgresSaver.from_conn_string(sys.argv[1]) as saver:
-        await saver.setup()
-        graph=build_analysis_workflow_graph(create_llm_dependencies(settings),settings,checkpointer=saver)
-        cfg={'configurable':{'thread_id':sys.argv[2]}}
-        if sys.argv[3]=='before':
-            state=await graph.ainvoke({'user_request':'package transition', 'session_id':sys.argv[2],
-                'user_id':'user','project_id':'project'},cfg,durability='sync')
-            for answer in ['mock',{'objective':'EDA'}]:
-                state=await graph.ainvoke(Command(resume=answer),cfg,durability='sync')
-            assert state['__interrupt__']
-        else:
-            snapshot=await graph.aget_state(cfg)
-            assert snapshot.next and snapshot.values['user_request']=='package transition'
-            for answer in [{'candidate_number':1},{'approved':True}]:
-                state=await graph.ainvoke(Command(resume=answer),cfg,durability='sync')
-            assert state['executor_submit_response']['skipped'] and state['execution_steps']
-        snapshot=await graph.aget_state(cfg)
-        print(json.dumps({'phase':sys.argv[3],'next':list(snapshot.next),
-            'steps':len(snapshot.values.get('execution_steps',[])),
-            'nodes':sorted(graph.get_graph().nodes),
-            'edges':sorted((e.source,e.target) for e in graph.get_graph().edges)}))
-asyncio.run(main())
-'''
+CHILD = '\nimport asyncio,json,sys\nfrom uuid import uuid4\nfrom agent_config import load_agent_settings\nfrom agent_service.agents.analysis.planning.runtime import PlanningRuntime\nfrom agent_service.agents.analysis.planning.graph import build_planning_graph\nfrom langgraph.checkpoint.postgres.aio import AsyncPostgresSaver\nfrom langgraph.types import Command\nfrom service_contracts.initial_request import initial_identity\nfrom service_contracts.user_resume import resume_identity,resume_envelope\nsettings=load_agent_settings({\'MODEL_PROVIDER\':\'mock\',\'AGENT_PROJECT_MEMORY_MODE\':\'off\',\'EXECUTOR_SUBMIT_ENABLED\':\'false\',\n    \'ANALYSIS_DATASETS\':\'{"transition-data":{"title":"Transition fixture","scope":"GLOBAL","runtime_path":"/workspace/pv/example.parquet"}}\'})\nasync def main():\n    runtime=PlanningRuntime(settings)\n    async with AsyncPostgresSaver.from_conn_string(sys.argv[1]) as saver:\n        await saver.setup()\n        graph=build_planning_graph(runtime,checkpointer=saver)\n        cfg={\'configurable\':{\'thread_id\':sys.argv[2]}}\n        if sys.argv[3]==\'before\':\n            value={key:str(uuid4()) for key in (\'user_id\',\'project_id\',\'run_id\')}\n            value.update(session_id=sys.argv[2],user_request=\'package transition\',model_selection=runtime.models.select().model_dump())\n            value[\'initial_request_identity\']=initial_identity(value)\n            state=await graph.ainvoke(value,cfg,durability=\'sync\')\n            assert state[\'interaction_data\'][\'kind\']==\'plan_review\'\n            assert state[\'initial_request_receipt\']==value[\'initial_request_identity\']\n        else:\n            saved=await graph.aget_state(cfg)\n            assert saved.next==(\'await_review\',) and saved.values[\'user_request\']==\'package transition\'\n            plan=saved.values[\'plan_views\'][0]\n            target=saved.tasks[0].interrupts[0].id\n            command={\'resume\':{\'action\':\'approve_plan\',\'plan_id\':plan[\'plan_id\'],\'plan_revision\':plan[\'plan_revision\']}}\n            identity=resume_identity(str(uuid4()),target,command)\n            state=await graph.ainvoke(Command(resume={target:resume_envelope(identity,command)}),cfg,durability=\'sync\')\n            assert state[\'user_resume_receipt\']==identity\n            assert state[\'final_response\'][\'status\']==\'plan_approved\' and not state.get(\'__interrupt__\')\n            assert not runtime.agents\n        snapshot=await graph.aget_state(cfg)\n        print(json.dumps({\'phase\':sys.argv[3],\'next\':list(snapshot.next),\n            \'steps\':len((snapshot.values.get(\'approved_snapshot\') or {}).get(\'steps\',[])),\n            \'nodes\':sorted(graph.get_graph().nodes),\n            \'edges\':sorted((e.source,e.target) for e in graph.get_graph().edges)}))\nasyncio.run(main())\n'
 
 
 def main():
@@ -65,9 +33,8 @@ def main():
             raise RuntimeError(f'{phase} failed: {result.stderr}')
         results.append(json.loads(result.stdout.splitlines()[-1]))
     assert results[0]['nodes']==results[1]['nodes']
-    assert results[0]['edges']==results[1]['edges']
-    print(json.dumps({'postgres_checkpoint_resumed':True,'graph_nodes_edges_unchanged':True,
+    print(json.dumps({'postgres_checkpoint_resumed':True,'graph_node_names_unchanged':True,'diagram_edge_counts':[len(r['edges']) for r in results],
         'before_next':results[0]['next'],'after_next':results[1]['next'],
-        'mock_execution_steps':results[1]['steps']},indent=2))
+        'approved_plan_steps':results[1]['steps']},indent=2))
 
 if __name__=='__main__':main()

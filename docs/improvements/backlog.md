@@ -31,3 +31,9 @@
 - Executor 전처리 데이터 등록·조회 연계는 실제 API 구현 이후 진행한다. [042 계약](042-dataset-registry-contract.md).
 - Workflow CRUD·pgvector 추천 풀 이행은 기존 후순위 결정을 유지한다. [현재 1.3 CRUD와 2.0-draft 실행 계약의 차이](../workflow-json-reference.md).
 - 시스템 에러 처리·운영성 신규 개선은 사용자 우선순위에 따라 기능·디테일 검증과 종합 성능 검증 이후 진행한다. [우선순위 기록](README.md).
+
+## 054 이후 현재 흐름 검증
+
+이전 설문형 graph와 전용 역할을 제거하고 CLI·Studio·시각화를 현재 PlanningRuntime으로 통합했다. 현재 개발은 [054 기록](054-agent-runtime-cleanup.md)을 따른다. 과거 고정 commit의 벤치마크는 당시 재현용이며 현재 SSO·typed HITL·Executor 연계 부하 시험을 대신하지 않는다.
+
+다음은 실제 Runs API에서 로그인 쿠키·CSRF와 함께 새 계획/편집/승인·Executor 결과·후속 질문/보고서·project_memory를 연결하는 사용자 흐름 검증이다. 반복 부하를 측정하려면 현재 인증·HITL·접수 모드를 지원하는 별도 harness 정리가 필요하다. 모델 호출 최적화·Registry·운영 보완의 기존 보류는 유지한다.

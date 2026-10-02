@@ -5,14 +5,8 @@ import tempfile
 from pathlib import Path
 
 from agent_config import load_agent_settings
-from agent_service.agents.analysis.nodes.generate_workflow import make_add_current_workflow_candidate
 from service_contracts.workflow import effective_workflow_snapshot, reusable_workflow_snapshot
-from agent_service.agents.analysis.nodes.generate_report import (
-    _compact_report_payload,
-    _build_step_results_from_history,
-    build_report_artifact_request,
-    execution_is_reportable,
-)
+
 
 
 class _RecordingStore:
@@ -25,35 +19,6 @@ class _RecordingStore:
 
 
 class WorkflowPersistenceTests(unittest.TestCase):
-    def test_report_payload_truncates_large_text_and_omits_binary_images(self):
-        large_text = "A" * 20_000
-        compact = _compact_report_payload(
-            {
-                "status": "SUCCEEDED",
-                "outputs": [
-                    {"output_type": "stream", "text": large_text},
-                    {
-                        "output_type": "display_data",
-                        "data": {
-                            "image/png": "base64-data" * 10_000,
-                            "text/plain": large_text,
-                        },
-                    },
-                ],
-            }
-        )
-
-        self.assertEqual(compact["status"], "SUCCEEDED")
-        self.assertLess(len(compact["outputs"][0]["text"]), len(large_text))
-        self.assertIn("리포트 입력에서", compact["outputs"][0]["text"])
-        self.assertEqual(
-            compact["outputs"][1]["data"]["image/png"],
-            "<binary image omitted>",
-        )
-        self.assertLess(
-            len(compact["outputs"][1]["data"]["text/plain"]),
-            len(large_text),
-        )
 
     def test_reusable_snapshot_clears_execution_bound_inputs(self):
         workflow = {
@@ -130,128 +95,10 @@ class WorkflowPersistenceTests(unittest.TestCase):
             "runtime_decision", workflow["workflow"]["steps"][0]["tools"][0]
         )
 
-    def test_generated_candidate_is_saved_and_carries_catalog_id(self):
-        store = _RecordingStore()
-        node = make_add_current_workflow_candidate(store)
-        state = {
-            "session_id": "session-1",
-            "task_id": "task-1",
-            "analysis_intent": {"intent": "failure_prediction"},
-            "workflow_revision": 2,
-            "workflow_origin": "generated",
-            "workflow_candidates": [],
-            "workflow": {
-                "workflow": {
-                    "id": "wf-1",
-                    "status": "needs_input",
-                }
-            },
-        }
 
-        update = node(state)
 
-        self.assertIsNotNone(store.saved)
-        self.assertEqual(store.saved["revision"], 2)
-        self.assertEqual(
-            update["workflow_candidates"][0]["catalog_id"],
-            "8cdf246a-1e4b-57fa-9012-66d7bf970f22",
-        )
 
-    def test_report_uses_executed_cell_result_pairs(self):
-        results = _build_step_results_from_history(
-            task_id="task-1",
-            execution_id="execution-1",
-            execution_steps=[
-                {
-                    "sequence": 3,
-                    "payload": {"source": {"path": "/pv/cell-3.py"}},
-                    "lineage": {
-                        "skill_name": "eda",
-                        "tool_name": "boxplot_eda",
-                        "input_parameters": {
-                            "step_id": "eda",
-                            "tool_id": "eda.boxplot",
-                        },
-                    },
-                }
-            ],
-            result_history=[
-                {
-                    "tool_id": "eda.boxplot",
-                    "result": {
-                        "status": "SUCCEEDED",
-                        "cell_index": 3,
-                        "outputs": [{"type": "text", "text": "done"}],
-                    },
-                }
-            ],
-        )
 
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].sequence, 3)
-        self.assertEqual(results[0].tool_id, "eda.boxplot")
-        self.assertEqual(results[0].code_path, "/pv/cell-3.py")
-        self.assertEqual(results[0].raw_payload["outputs"][0]["text"], "done")
-
-    def test_report_requires_successful_latest_results_and_no_failures(self):
-        state = {
-            "execution_status": "SUCCEEDED",
-            "executor_result_history": [
-                {
-                    "tool_id": "tool-a",
-                    "result": {"status": "NOT_EXECUTED"},
-                },
-                {"tool_id": "tool-a", "result": {"status": "SUCCEEDED"}},
-                {"tool_id": "tool-b", "result": {"status": "SUCCEEDED"}},
-            ],
-        }
-        self.assertTrue(execution_is_reportable(state))
-        state["executor_result_history"].append(
-            {"tool_id": "tool-c", "result": {"status": "FAILED"}}
-        )
-        self.assertFalse(execution_is_reportable(state))
-
-    def test_inline_report_artifact_request(self):
-        settings = load_agent_settings(
-            {
-                "MODEL_NAME": "test",
-                "EXECUTOR_REPORT_SOURCE_TYPE": "INLINE",
-            }
-        )
-        payload, staged_path = build_report_artifact_request(
-            settings,
-            execution_id="execution-1",
-            task_id="task-1",
-            workflow_id="workflow-1",
-            content="# 분석 결과",
-        )
-
-        self.assertIsNone(staged_path)
-        self.assertEqual(payload["source"]["type"], "INLINE")
-        self.assertEqual(payload["source"]["content"], "# 분석 결과")
-        self.assertTrue(payload["append_to_notebook"])
-
-    def test_path_report_artifact_is_staged_under_shared_pv(self):
-        with tempfile.TemporaryDirectory() as temporary_root:
-            settings = load_agent_settings(
-                {
-                    "MODEL_NAME": "test",
-                    "EXECUTOR_REPORT_SOURCE_TYPE": "PATH",
-                    "EXECUTOR_SHARED_INPUT_ROOT": temporary_root,
-                }
-            )
-            payload, staged_path = build_report_artifact_request(
-                settings,
-                execution_id="execution-1",
-                task_id="task-1",
-                workflow_id="workflow-1",
-                content="# 분석 결과",
-            )
-
-            self.assertEqual(payload["source"]["type"], "PATH")
-            self.assertFalse(Path(payload["source"]["path"]).is_absolute())
-            self.assertEqual(len(payload["source"]["sha256"]), 64)
-            self.assertEqual(Path(staged_path).read_text(), "# 분석 결과")
 
 
 if __name__ == "__main__":

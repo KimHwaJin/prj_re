@@ -284,8 +284,21 @@ def wire_execution(builder,runtime,event_factory):
     routes={k:'execution_'+v for k,v in {'submit':'submit','review':'review','finalize':'finalize','wait':'wait','select':'select',
         'cancel':'cancel','report':'report','decision_wait':'decision_wait','event':'process_event',
         'repair_propose':'repair_propose','repair_wait':'repair_wait','repair_apply':'repair_apply','repair_reject':'repair_reject'}.items()}
-    for name in ('select','process_event','review','decision_applied','repair_propose','repair_applied','repair_apply','repair_reject'):
-        builder.add_conditional_edges('execution_'+name,lambda s:routes[s['execution_phase']])
+    # Declaring destinations adds graph inspection metadata without changing the
+    # existing execution_phase → node routing or persisted node names.
+    destinations = {
+        'select': ('submit', 'review', 'finalize', 'wait', 'cancel'),
+        'process_event': ('report', 'wait', 'repair_propose', 'cancel', 'select', 'review'),
+        'review': ('decision_wait', 'select'),
+        'decision_applied': ('event', 'select'),
+        'repair_propose': ('cancel', 'repair_apply', 'repair_wait'),
+        'repair_applied': ('event', 'repair_apply', 'repair_reject'),
+        'repair_apply': ('select',),
+        'repair_reject': ('cancel',),
+    }
+    for name, phases in destinations.items():
+        builder.add_conditional_edges('execution_'+name,lambda s:routes[s['execution_phase']],
+                                      [routes[phase] for phase in phases])
     builder.add_edge('execution_repair_wait','execution_repair_applied')
     builder.add_edge('execution_submit','execution_register')
     builder.add_edge('execution_register','execution_wait')

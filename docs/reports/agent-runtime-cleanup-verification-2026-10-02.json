@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-02",
+  "baseline_commit": "2878195647faf2ec752a92502b4d14c621ad5a65",
+  "scope": "Retire previous questionnaire runtime and align current development and verification entrypoints. No deployment or performance claim.",
+  "full_regression": {
+    "passed": 884,
+    "warnings": 81,
+    "seconds": 413.27,
+    "skipped": 0,
+    "failed": 0,
+    "local_database": "agentic_regression_test",
+    "redis": "loopback test instance"
+  },
+  "related_regression": {
+    "passed": 376,
+    "warnings": 78,
+    "seconds": 28.06,
+    "not_additive_to_full": true
+  },
+  "postgres_source_transition": {
+    "postgres_checkpoint_resumed": true,
+    "graph_node_names_unchanged": true,
+    "diagram_edge_counts": [
+      3,
+      12
+    ],
+    "before_next": [
+      "await_review"
+    ],
+    "after_next": [],
+    "approved_plan_steps": 4
+  },
+  "wheel": {
+    "wheel": "dtest_agent-0.1.0-py3-none-any.whl",
+    "source_checkout_imported": false,
+    "api_openapi_paths": 38,
+    "current_approved_plan_steps": 4,
+    "retired_graph_packages_absent": true,
+    "unified_workflow_package_present": true,
+    "tests_in_wheel": false,
+    "resources_present": true,
+    "role_prompts_present": 5,
+    "production_builders_constructed": true,
+    "create_agent_roles": 5,
+    "role_checkpointers_disabled": true
+  },
+  "studio": {
+    "studio_server_started": true,
+    "health": {
+      "ok": true
+    },
+    "runs_wait_plan_review": true,
+    "plan_steps": 4,
+    "executor_submitted": false,
+    "tracing_disabled": true
+  },
+  "topology": {
+    "full_graph_nodes": 25,
+    "full_diagram_edges": 44,
+    "runtime_version": "agentic-planning-v1"
+  },
+  "static_validation": {
+    "packaged_python_files_ast_valid": 337,
+    "retired_absolute_imports_in_production": 0,
+    "provided_gaia_router_draft_excluded": true
+  },
+  "preserved": {
+    "changed_files": 106,
+    "deleted": 62,
+    "added": 7,
+    "workflow_asset_files_unchanged": 44,
+    "current_prompt_files_unchanged": 6,
+    "model_factory_body_unchanged": true
+  },
+  "public_contract": {
+    "application_paths": 38,
+    "documented_paths": 12,
+    "documented_schemas": 28,
+    "validation_unchanged": true
+  },
+  "notes": [
+    "Previous 959-test suite included retired questionnaire tests; test totals are not equivalent coverage or performance measurements.",
+    "Existing durability warnings for stateless internal graphs are not suppressed.",
+    "Historical fixed-commit benchmark drivers remain archival; comprehensive current authenticated load harness is deferred.",
+    "Five current role prompts and workflow assets unchanged; no actual LLM/Executor/Phoenix E2E or performance A/B in this task.",
+    "Transition diagnostic null approved_snapshot bug was fixed and final cross-source check passed."
+  ]
+}

@@ -5,7 +5,7 @@ dtest 프로젝트 공유
 
 ## 리팩토링 브랜치의 현재 실행 계약
 
-분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 새 규격·pgvector 추천, 동적 Dataset Registry, project_memory 자동 저장, Gaia adapter는 후속이다.
+분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 새 규격·pgvector 추천, 동적 Dataset Registry, Gaia adapter는 후속이다. 프로젝트 메모리는 공식 LangGraph Store·설정 가능한 입력/저장 예산·선택적 auto_context 정책을 구현했다. [Agent 개발 안내](docs/agent-development/README.md)는 현재 다섯 역할과 실행 경로를 설명한다.
 
 Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 
@@ -50,22 +50,13 @@ uv run dtest-agent-api
 있습니다. DB/Redis/checkpoint 연결은 `DATABASE_URL`, `REDIS_URL`,
 `CHECKPOINT_DB_URI` 및 기존 `EW_*` 환경변수로 덮어쓸 수 있습니다.
 
-## Local Redis event worker
-
-Executor 제출 후 LangGraph run은 interrupt 상태로 종료됩니다. Redis event
-worker가 Executor 완료 이벤트를 소비하고 같은 thread/checkpoint를 resume합니다.
-로컬 테스트할 때는 migration이 적용된 PostgreSQL과 Redis가 필요하며,
-두 터미널에서 각각 실행합니다.
+## 현재 Agent 개발 확인
 
 ```bash
-langgraph dev
+python cli.py --request "데이터 품질 분석 계획을 제안해줘"
+PYTHONPATH=src python -m devtools.analysis.visualization --output /tmp/analysis-current.mmd
 ```
 
-```bash
-set -a
-source .env
-set +a
-PYTHONPATH=src ../.venv311/bin/python -m api_service.agent_worker.worker_main
-```
+CLI와 `langgraph dev`는 같은 현재 builder의 offline mock 계획·승인 확인이다. `.env`·실제 LLM·Executor·서비스 DB·Redis·SSO를 사용하지 않는다. 실제 Runs/Redis 완료 연계는 `python app.py`로 실행하는 서비스와 [API 계약](docs/public-run-api.md)을 따른다. `langgraph dev`와 이벤트 Worker를 함께 띄운다고 서비스 연계가 되는 구조로 안내하지 않는다.
 
-현재 패키지 경계와 Agent 개발 위치는 [서비스 구조](docs/architecture/service-layout.md)를 참고하세요.
+현재 패키지 경계와 Agent 개발 위치는 [서비스 구조](docs/architecture/service-layout.md)를 참고한다.

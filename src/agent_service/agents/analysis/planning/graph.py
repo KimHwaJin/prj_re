@@ -289,13 +289,17 @@ def build_planning_graph(runtime, *, checkpointer):
     builder.add_node('revise_plan',revise)
     builder.add_edge(START, 'receive')
     builder.add_edge('receive', 'conversation')
-    builder.add_conditional_edges('conversation', lambda s: 'publish_review' if s['reviews'] else END)
+    builder.add_conditional_edges('conversation', lambda s: 'publish_review' if s['reviews'] else END,
+                                  ['publish_review', END])
     builder.add_edge('publish_review', 'await_review')
     builder.add_edge('await_review', 'apply_review')
     if runtime.execution_enabled:
         from agent_service.agents.analysis.execution.nodes import wire_execution
         wire_execution(builder,runtime,public_event)
-    builder.add_conditional_edges('apply_review',review_route)
-    builder.add_conditional_edges('revise_plan',review_route)
+    # Explicit destinations keep the public graph diagram complete; node names and
+    # route selection remain the same as existing persisted checkpoints.
+    review_destinations = ['revise_plan', 'publish_review', 'execution_select' if runtime.execution_enabled else END]
+    builder.add_conditional_edges('apply_review',review_route,review_destinations)
+    builder.add_conditional_edges('revise_plan',review_route,review_destinations)
     graph = builder.compile(checkpointer=checkpointer, store=runtime.store, name=RUNTIME_VERSION)
     return graph

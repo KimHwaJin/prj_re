@@ -9,13 +9,11 @@ import unittest
 from pathlib import Path
 
 from agent_config import load_agent_settings
-from agent_service.agents.analysis.nodes.execution_results import make_collect_execution_results
 from agent_service.agents.analysis.workflow.execution_notebook_reader import (
     read_current_operation_results,
     read_current_operation_tool_results,
 )
 from integrations.executor.manifest import _safe_resolve
-from agent_service.agents.analysis.routers.orchestration_router import route_after_adaptive_results
 
 
 def _settings(**overrides):
@@ -259,31 +257,6 @@ class ExecutionResultTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(results[1]["result"]["status"], "NOT_EXECUTED")
         self.assertEqual(results[2]["role"], "workflow_outputs")
-        self.assertEqual(
-            route_after_adaptive_results(
-                {
-                    "execution_status": "FAILED",
-                    "executor_tool_results": results,
-                }
-            ),
-            "cancel_adaptive_execution",
-        )
-
-    async def test_failed_final_segment_is_cancelled_instead_of_finalized(self):
-        self.assertEqual(
-            route_after_adaptive_results(
-                {
-                    "execution_status": "FAILED",
-                    "executor_tool_results": [
-                        {
-                            "tool_id": "tool-1",
-                            "result": {"status": "FAILED"},
-                        }
-                    ],
-                }
-            ),
-            "cancel_adaptive_execution",
-        )
 
     async def test_notebook_cells_are_mapped_to_lineage_tool_ids(self):
         settings = _settings()
@@ -410,38 +383,6 @@ class ExecutionResultTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(results[0]["result"]["status"], "NOT_EXECUTED")
 
-    async def test_redis_event_results_feed_adaptive_observations(self):
-        tool_results = [
-            {
-                "tool_id": "quality.profile_data",
-                "result": {"outputs": [{"text": "missing_rate=0.1"}]},
-            }
-        ]
-        node = make_collect_execution_results(
-            _settings(),
-            adaptive=True,
-            read_results=lambda _settings, _state: tool_results,
-        )
-        update = await node(
-            {
-                "execution_id": "execution-1",
-                "execution_event": {
-                    "status": "WAITING_FOR_OPERATION",
-                    "state_version": 9,
-                },
-                "adaptive_observations": {},
-                "adaptive_executed_tool_ids": [],
-                "adaptive_generated_tool_ids": ["quality.profile_data"],
-            }
-        )
-
-        self.assertEqual(update["executor_state_version"], 9)
-        self.assertEqual(
-            update["adaptive_observations"]["quality.profile_data"],
-            tool_results[0]["result"],
-        )
-        self.assertNotIn("messages", update)
-        self.assertEqual(update["executor_tool_results"], tool_results)
 
 
 if __name__ == "__main__":

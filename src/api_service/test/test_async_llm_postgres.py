@@ -14,9 +14,8 @@ from sqlalchemy.engine import make_url
 from api_service.test.test_user_identity_postgres import database_url, harness
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from agent_service.factory import RoleAgent
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
-from agent_service.agents.analysis.graph import build_analysis_workflow_graph
-from agent_service.agents.analysis.tests.test_service_load_mock import mock_settings, action
+from devtools.analysis.runtime import local_runtime, local_input
+from agent_service.agents.analysis.planning.graph import build_planning_graph
 
 
 def checkpoint_url(database_url):
@@ -25,21 +24,23 @@ def checkpoint_url(database_url):
 
 @pytest.mark.asyncio
 async def test_async_analysis_resumes_approval_after_checkpoint_pool_restart(harness, database_url):
-    settings = mock_settings(EXECUTOR_SOURCE_TYPE='INLINE')
-    session = str(uuid4())
-    config = {'configurable': {'thread_id':session}}
+    runtime = local_runtime()
+    value = local_input(runtime, 'async checkpoint test')
+    config = {'configurable': {'thread_id':value['session_id']}}
     async with create_checkpointer(checkpoint_url(database_url), setup_on_start=True, min_size=1, max_size=2) as saver:
-        graph = build_analysis_workflow_graph(create_llm_dependencies(settings), settings, checkpointer=saver)
-        state = await graph.ainvoke({'user_request':'async checkpoint test','session_id':session,
-            'user_id':str(uuid4()),'project_id':str(uuid4())}, config)
-        for response in ['mock', {'objective':'EDA'}, {'candidate_number':1}]:
-            state = await graph.ainvoke(Command(resume=response), config)
-        assert action(state) == 'workflow_approval'
+        graph = build_planning_graph(runtime, checkpointer=saver)
+        state = await graph.ainvoke(value, config, durability='sync')
+        assert state['interaction_data']['kind'] == 'plan_review'
+        plan = state['plan_views'][0]
+        calls = next(iter(runtime.agents.values())).calls
     async with create_checkpointer(checkpoint_url(database_url), setup_on_start=False, min_size=1, max_size=2) as saver:
-        graph = build_analysis_workflow_graph(create_llm_dependencies(settings), settings, checkpointer=saver)
-        state = await graph.ainvoke(Command(resume={'approved':True}), config)
-        assert state['execution_steps']
-        assert state['executor_submit_response']['skipped']
+        runtime = local_runtime()
+        graph = build_planning_graph(runtime, checkpointer=saver)
+        state = await graph.ainvoke(Command(resume={'resume':{'action':'approve_plan',
+            'plan_id':plan['plan_id'],'plan_revision':plan['plan_revision']}}), config, durability='sync')
+        assert state['approved_snapshot']['steps'] and state['final_response']['status']=='plan_approved'
+        assert not runtime.agents and calls==1
+
 
 
 @pytest.mark.asyncio

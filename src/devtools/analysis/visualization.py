@@ -1,4 +1,4 @@
-"""Print or export the user-agent LangGraph as Mermaid syntax."""
+"""Print or export the current analysis LangGraph as Mermaid syntax."""
 
 from __future__ import annotations
 
@@ -30,40 +30,23 @@ def export_graph_mermaid(
     return path
 
 
-class _TopologyOnlyAgent:
-    """Agent stub used only to compile graph topology for visualization."""
-
-    async def ainvoke(self, payload: Any) -> Any:
-        raise RuntimeError("Topology-only agents must not be invoked")
+class _TopologyOnlyExecutor:
+    """Render execution nodes without an HTTP client or a callable Executor."""
+    def __getattr__(self, name):
+        raise RuntimeError("Topology-only Executor must not be invoked")
 
 
 def build_visualization_graph():
-    """Compile the graph without model credentials or a database connection."""
-    from agent_config import load_agent_settings
-    from agent_service.agents.analysis.dependencies import AgentDependencies
-    from agent_service.agents.analysis.graph import (
-        build_analysis_workflow_graph,
-    )
-
-    agent = _TopologyOnlyAgent()
-    dependencies = AgentDependencies(
-        routing_agent=agent,
-        analysis_intent_agent=agent,
-        workflow_recommender=agent,
-        workflow_agent=agent,
-        faq_agent=agent,
-        file_lookup_agent=agent,
-    )
-    return build_analysis_workflow_graph(
-        dependencies,
-        load_agent_settings(),
-        checkpointer=None,
-    )
+    """Show the complete current graph, including conditional MULTI/repair nodes."""
+    from devtools.analysis.runtime import local_runtime
+    from agent_service.agents.analysis.planning.graph import build_planning_graph
+    runtime = local_runtime(executor=_TopologyOnlyExecutor())
+    return build_planning_graph(runtime, checkpointer=None)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Print or save the user-agent LangGraph Mermaid diagram."
+        description="Print or save the current analysis LangGraph Mermaid diagram."
     )
     parser.add_argument(
         "-o",

@@ -2,7 +2,7 @@
 from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.outputs import ChatGeneration, ChatResult
-from agent_service.factory import build_role_agent, label_output, text_output, json_output
+from agent_service.factory import build_role_agent, text_output, json_output
 from agent_service.middleware import ProjectPromptMiddleware
 
 class AsyncTestChatModel(BaseChatModel):
@@ -25,7 +25,3 @@ def structured_agent(model, system_prompt, output_type, method="prompt_json", ma
     return build_role_agent(chat_model(model), name="test_json", system_prompt=system_prompt,
         tools=[], middleware=[ProjectPromptMiddleware()], output_type=output_type,
         structured_output_mode=method, max_validation_attempts=max_validation_attempts, decode=json_output(output_type))
-
-def label_agent(model, system_prompt, output_type, label_field, allowed_labels):
-    return build_role_agent(chat_model(model), name="test_label", system_prompt=system_prompt,
-        tools=[], middleware=[ProjectPromptMiddleware()], decode=label_output(output_type,label_field,allowed_labels))

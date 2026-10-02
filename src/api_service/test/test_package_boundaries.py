@@ -58,23 +58,20 @@ class NoAPI(importlib.abc.MetaPathFinder):
         if fullname.split('.')[0] in {'api_service', 'app'}:
             raise AssertionError('Agent imported API: ' + fullname)
 sys.meta_path.insert(0, NoAPI())
-from agent_config import load_agent_settings
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
-from agent_service.agents.analysis.graph import build_analysis_workflow_graph
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from devtools.analysis.runtime import local_runtime, local_input
+from agent_service.agents.analysis.planning.graph import build_planning_graph
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
-settings = load_agent_settings({'MODEL_PROVIDER':'mock', 'DATA_MOCK':'true',
-    'DEMO_ARTIFACTS_ENABLED':'false', 'EXECUTOR_SUBMIT_ENABLED':'false', 'EXECUTOR_SOURCE_TYPE':'INLINE'})
 async def main():
-    graph = build_analysis_workflow_graph(create_llm_dependencies(settings), settings, checkpointer=InMemorySaver())
-    cfg = {'configurable': {'thread_id': 'isolated-agent'}}
-    state = await graph.ainvoke({'user_request':'boundary smoke', 'session_id':'isolated-agent',
-        'user_id':'user', 'project_id':'project'}, cfg)
-    for answer in ['mock', {'objective':'EDA'}, {'candidate_number':1}, {'approved':True}]:
-        state = await graph.ainvoke(Command(resume=answer), cfg)
-    assert state['execution_steps']
-    assert state['executor_submit_response']['skipped']
+    runtime=local_runtime()
+    graph=build_planning_graph(runtime,checkpointer=InMemorySaver())
+    value=local_input(runtime,'boundary smoke')
+    cfg={'configurable':{'thread_id':value['session_id']}}
+    state=await graph.ainvoke(value,cfg)
+    plan=state['plan_views'][0]
+    state=await graph.ainvoke(Command(resume={'resume':{'action':'approve_plan',
+        'plan_id':plan['plan_id'],'plan_revision':plan['plan_revision']}}),cfg)
+    assert state['approved_snapshot']['steps'] and state['final_response']['status']=='plan_approved'
     assert not any(n == 'api_service' or n.startswith('api_service.') for n in sys.modules)
 asyncio.run(main())
 '''

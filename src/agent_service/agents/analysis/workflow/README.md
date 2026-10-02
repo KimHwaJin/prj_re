@@ -29,8 +29,10 @@ python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.p
 
 ## Agent와의 연결
 
-역할별 선언·독립 프롬프트는 ../agent_builders/에 있고 LangChain 카탈로그 도구는 ../tools/catalog.py다. 이 패키지의 tools/는 Executor 실행 코드 생성용 소스다. 모든 Tool을 LLM에 자동 제공하는 구조가 아니다.
+역할별 선언·독립 프롬프트는 ../agent_builders/에 있다. 현재 Agent의 탐색은 ../planning/catalog.py의 AssetCatalog를 사용한다. ../tools/catalog.py는 기존 1.3 Workflow 관리·컴파일 지원이다. 이 패키지의 tools/는 Executor 실행 코드 생성용 소스다. 모든 Tool을 LLM에 자동 제공하는 구조가 아니다.
 
 새 Workflow는 agent_service/agents/analysis/workflow/{skills,tools}/... 경로를 기록한다. 기존 app/workflow/{skills,tools}/...와 중간 리팩토링의 analysis/resources/{skills,executor_tools}/... 경로도 같은 파일로 연결한다. 자산 사본이나 과거 Python import 패키지를 별도로 유지하지 않는다. 외부 개발 스크립트에서 app.workflow를 import했다면 새 패키지 경로로 수정해야 한다.
 
 경로 호환은 과거 Tool 버전 전체의 보존을 뜻하지 않는다. 이미 제출된 Executor payload를 새 경로로 재생성하지 않는다. 생성 산출물의 공유 PV 경로는 이번 작업에서 바꾸지 않았다. workflows/workflow_lifecycle.md는 기존 정책 문서를 보존한 것으로 모든 단계의 구현 완료를 뜻하지 않는다.
+
+054에서 외부의 이전 설문형 그래프·노드를 제거했지만 이 패키지의 skills/tools/workflows 자산과 기존 Workflow 관리·컴파일 모듈은 보존했다. 새 승인 snapshot의 실제 코드 생성은 ../execution/compiler.py가 맡는다. 검색 placeholder인 workflow_recommender.py가 현재 pgvector 추천을 구현한 것으로 해석하지 않는다.

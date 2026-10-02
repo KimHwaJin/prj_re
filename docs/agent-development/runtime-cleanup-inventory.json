@@ -1,0 +1,132 @@
+{
+  "baseline_commit": "2878195647faf2ec752a92502b4d14c621ad5a65",
+  "meaning": "Deleted legacy runtime paths; historical Git commits preserve previous sources. This is not an automatic migration of questionnaire checkpoints.",
+  "deleted_paths": [
+    "scripts/diagnostics/checkpoint_coexistence.py",
+    "src/agent_service/agents/analysis/agent_builders/conditional_decider/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/conditional_decider/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/conditional_decider/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/faq/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/faq/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/faq/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/intent_classifier/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/intent_classifier/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/intent_classifier/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/report_writer/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/report_writer/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/report_writer/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/routing/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/routing/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/routing/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/skill_selector/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/skill_selector/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/skill_selector/prompt.md",
+    "src/agent_service/agents/analysis/agent_builders/workflow_generator/__init__.py",
+    "src/agent_service/agents/analysis/agent_builders/workflow_generator/agent.py",
+    "src/agent_service/agents/analysis/agent_builders/workflow_generator/prompt.md",
+    "src/agent_service/agents/analysis/artifacts.py",
+    "src/agent_service/agents/analysis/components/__init__.py",
+    "src/agent_service/agents/analysis/components/interfaces.py",
+    "src/agent_service/agents/analysis/context.py",
+    "src/agent_service/agents/analysis/dependencies.py",
+    "src/agent_service/agents/analysis/graph.py",
+    "src/agent_service/agents/analysis/hitl_protocol.py",
+    "src/agent_service/agents/analysis/message_utils.py",
+    "src/agent_service/agents/analysis/nodes/__init__.py",
+    "src/agent_service/agents/analysis/nodes/adaptive_execution.py",
+    "src/agent_service/agents/analysis/nodes/adaptive_executor.py",
+    "src/agent_service/agents/analysis/nodes/build_notebook_cell_code.py",
+    "src/agent_service/agents/analysis/nodes/demo_artifacts.py",
+    "src/agent_service/agents/analysis/nodes/execution_results.py",
+    "src/agent_service/agents/analysis/nodes/executor_request.py",
+    "src/agent_service/agents/analysis/nodes/flow_control.py",
+    "src/agent_service/agents/analysis/nodes/generate_report.py",
+    "src/agent_service/agents/analysis/nodes/generate_workflow.py",
+    "src/agent_service/agents/analysis/nodes/hitl.py",
+    "src/agent_service/agents/analysis/nodes/intent_classify.py",
+    "src/agent_service/agents/analysis/nodes/recommend_workflow.py",
+    "src/agent_service/agents/analysis/nodes/redis_execution_events.py",
+    "src/agent_service/agents/analysis/nodes/routing.py",
+    "src/agent_service/agents/analysis/nodes/service_queries.py",
+    "src/agent_service/agents/analysis/routers/__init__.py",
+    "src/agent_service/agents/analysis/routers/orchestration_router.py",
+    "src/agent_service/agents/analysis/schemas/agents/__init__.py",
+    "src/agent_service/agents/analysis/schemas/agents/orchestration_schema.py",
+    "src/agent_service/agents/analysis/schemas/agents/report_generator_schema.py",
+    "src/agent_service/agents/analysis/schemas/agents/workflow_generator_schema.py",
+    "src/agent_service/agents/analysis/schemas/agents/workflow_recommender_schema.py",
+    "src/agent_service/agents/analysis/state.py",
+    "src/agent_service/agents/analysis/testing/__init__.py",
+    "src/agent_service/agents/analysis/testing/mock_dependencies.py",
+    "src/agent_service/agents/analysis/tests/test_adaptive_execution_mvp.py",
+    "src/agent_service/agents/analysis/tests/test_executor_submit_toggle.py",
+    "src/agent_service/agents/analysis/tests/test_flow_lifecycle.py",
+    "src/agent_service/agents/analysis/tests/test_user_agent_graph.py",
+    "src/api_service/agent_worker/api_lifespan.py",
+    "src/devtools/analysis/checkpoint.py"
+  ],
+  "current_entrypoints": {
+    "api_worker": "agent_service.agents.analysis.planning.graph.build_planning_graph",
+    "model_factory": "agent_service.runtime.model_factory.create_chat_model",
+    "cli": "devtools.analysis.cli",
+    "studio": "langgraph_dev.graph",
+    "visualization": "devtools.analysis.visualization"
+  },
+  "invariant_test_migrations": [
+    {
+      "invariant": "Five current create_agent roles; project prompt; async HTTP; concurrent context isolation; structured output retry",
+      "tests": [
+        "test_agent_middleware.py",
+        "test_model_selection.py",
+        "test_model_selection_postgres.py"
+      ]
+    },
+    {
+      "invariant": "Actual PostgreSQL HITL pause, pool closure/reopen, addressed approval receipt, model pin across worker change",
+      "tests": [
+        "test_async_llm_postgres.py",
+        "test_model_selection_postgres.py",
+        "test_user_resume_receipt.py"
+      ]
+    },
+    {
+      "invariant": "Native HTTP Executor acceptance, receipt bindings, durable wait, idempotent mock submission",
+      "tests": [
+        "test_executor_async_http.py",
+        "test_service_load_mock.py"
+      ]
+    },
+    {
+      "invariant": "Async cancellation, managed sync resource lifetime, manifests, preserved legacy Workflow compiler/tools",
+      "tests": [
+        "test_async_llm.py",
+        "test_execution_results.py",
+        "test_mock_data_io.py",
+        "test_workflow_persistence.py",
+        "test_resource_layout.py"
+      ]
+    },
+    {
+      "invariant": "API/Worker build same current graph; package boundary; offline tooling and complete branch visualization",
+      "tests": [
+        "test_redis_execution_boundary.py",
+        "test_package_boundaries.py",
+        "test_devtools_runtime.py"
+      ]
+    }
+  ],
+  "preserved": [
+    "analysis/workflow asset and compiler files (44 files excluding README)",
+    "five current role prompts (6 files)",
+    "public API and Workflow validation contract",
+    "current graph node names, runtime version, state and receipt fields",
+    "historical reports and fixed-commit benchmark drivers"
+  ],
+  "deferred": [
+    "legacy Workflow CRUD 1.3 to execution 2.0-draft migration",
+    "SSO-authenticated full-service load harness with current HITL/Executor scenarios",
+    "Executor Dataset Registry implementation",
+    "model call count optimization",
+    "automatic questionnaire checkpoint migration"
+  ]
+}

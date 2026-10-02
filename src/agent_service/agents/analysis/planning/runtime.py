@@ -1,7 +1,7 @@
 """Per-process immutable assets and lazy, pinned model/Agent instances."""
 from dataclasses import replace
 from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
-from agent_service.agents.analysis.dependencies import create_chat_model
+from agent_service.runtime.model_factory import create_chat_model
 from agent_service.agents.analysis.planning.catalog import AssetCatalog
 from service_runtime.model_selection import build_catalog
 

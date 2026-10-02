@@ -27,16 +27,6 @@ def json_output(schema: type[BaseModel]):
     return decode
 
 
-def label_output(schema: type[BaseModel], field: str, labels: tuple[str, ...]):
-    def decode(result):
-        raw = last_text(result)
-        label = raw.strip().strip("`\"'").strip()
-        if label not in labels:
-            raise ValueError(f"Unexpected LLM label for {field}: {raw!r}")
-        return schema.model_validate({field: label, "reason": f"LLM classified the request as {label}."})
-    return decode
-
-
 def text_output(key: str):
     return lambda result: {key: last_text(result).strip()}
 

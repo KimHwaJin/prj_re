@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
-from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -37,9 +36,7 @@ def resolve_mock_data_path(data_type: str) -> Path:
     return mock_data_root / "data" / filename
 
 
-# Local/manual HITL test shortcut. Production frontends should resume the
-# interrupt with a DataSelectionResponse-shaped JSON object instead.
-TEST_DATA_SELECTION_TRIGGER = "mock"
+# Fixture for the retained legacy Workflow compiler; not a current Run/HITL input.
 TEST_DATA_SELECTION = {
     "data_count": 2,
     "datasets": [
@@ -68,13 +65,7 @@ TEST_DATA_SELECTION = {
     ],
 }
 
-LOCAL_MOCK_USER_ID = "mock-user-001"
-LOCAL_MOCK_PROJECT_ID = "mock-project-001"
-LOCAL_MOCK_SESSION_ID = "mock-session-001"
 
-# 현재 서비스에서 활성화한 분석 의도입니다. 향후 지원 범위를 넓힐 때
-# root_cause 또는 data_drift를 이 tuple에 추가하면 됩니다.
-ENABLED_ANALYSIS_INTENTS = ("failure_prediction","root_cause", "data_drift")
 
 
 def build_langgraph_thread_id(session_id: str) -> str:
@@ -85,18 +76,6 @@ def build_langgraph_thread_id(session_id: str) -> str:
     return normalized_session_id
 
 
-def build_local_mock_request_context(
-    *,
-    session_id: str = LOCAL_MOCK_SESSION_ID,
-) -> dict[str, str]:
-    """Return request-scoped IDs for local/manual graph tests only."""
-    return {
-        "user_id": LOCAL_MOCK_USER_ID,
-        "project_id": LOCAL_MOCK_PROJECT_ID,
-        "session_id": session_id,
-        "request_id": f"mock-request-{uuid4()}",
-        "thread_id": build_langgraph_thread_id(session_id),
-    }
 
 
 def _as_bool(value: str | None, default: bool) -> bool:
@@ -508,16 +487,10 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
 __all__ = [
     "AgentSettings",
     "DEFAULT_EXECUTOR_SHARED_INPUT_ROOT",
-    "ENABLED_ANALYSIS_INTENTS",
-    "LOCAL_MOCK_PROJECT_ID",
-    "LOCAL_MOCK_SESSION_ID",
-    "LOCAL_MOCK_USER_ID",
     "MOCK_DATA_PATH_BY_TYPE",
     "PROJECT_ROOT",
     "TEST_DATA_SELECTION",
-    "TEST_DATA_SELECTION_TRIGGER",
     "build_langgraph_thread_id",
-    "build_local_mock_request_context",
     "load_agent_settings",
     "resolve_mock_data_path",
 ]

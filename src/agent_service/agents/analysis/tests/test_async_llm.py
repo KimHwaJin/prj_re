@@ -15,15 +15,10 @@ from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel
 
 from agent_service.factory import RoleAgent
-from agent_service.agents.analysis.tests.model_helpers import text_agent, structured_agent, label_agent
+from agent_service.agents.analysis.tests.model_helpers import text_agent, structured_agent
 
 from agent_config import load_agent_settings
-from agent_service.agents.analysis.components.interfaces import (
-    ainvoke_typed,
-)
-from agent_service.agents.analysis.dependencies import create_chat_model
-from agent_service.agents.analysis.nodes.service_queries import make_faq_node
-from agent_service.agents.analysis.testing.mock_dependencies import ScriptedAgent
+from agent_service.runtime.model_factory import create_chat_model
 from agent_service.runtime.blocking import run_sync
 from api_service.services.run_service import RunService
 
@@ -79,7 +74,7 @@ async def test_legacy_sync_node_can_continue_after_run_reports_cancel(monkeypatc
 
 
 @pytest.mark.asyncio
-async def test_cancel_during_real_faq_node_stops_model_before_run_returns(monkeypatch):
+async def test_cancel_during_role_agent_stops_model_before_run_returns(monkeypatch):
     entered, closed = asyncio.Event(), asyncio.Event()
     submitted = []
     class Model:
@@ -91,7 +86,9 @@ async def test_cancel_during_real_faq_node_stops_model_before_run_returns(monkey
                 await asyncio.Event().wait()
             finally:
                 closed.set()
-    node = make_faq_node(SimpleNamespace(faq_agent=text_agent(Model(), 'answer')))
+    agent=text_agent(Model(), 'answer')
+    async def node(state):
+        return await agent.ainvoke(state)
     async def after(_state):
         submitted.append('submitted')
         return {}
@@ -127,8 +124,10 @@ async def test_two_sessions_enter_model_wait_concurrently():
 @pytest.mark.asyncio
 async def test_mock_delay_is_cancellable_without_late_response():
     calls = []
-    model = ScriptedAgent(lambda p: calls.append(p) or {'answer':'ok'}, 60000)
-    task = asyncio.create_task(model.ainvoke({}))
+    from agent_service.agents.analysis.planning.testing import MockConversation
+    from agent_service.agents.analysis.planning.catalog import AssetCatalog
+    model = MockConversation(AssetCatalog(), 60000)
+    task = asyncio.create_task(model.ainvoke({"request":"[answer] hello"}))
     await asyncio.sleep(0)
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -200,7 +199,10 @@ async def test_configured_provider_uses_async_http_only(monkeypatch, mode):
             else:
                 agent = (RoleAgent(create_agent(model=model, tools=[], checkpointer=False)) if mode == 'nested_agent'
                          else structured_agent(model, 'answer', Answer, method=mode))
-                assert (await ainvoke_typed(agent, {}, Answer)).answer == 'ok'
+                result=await agent.ainvoke({})
+                if mode=='nested_agent':
+                    result=Answer.model_validate_json(result['messages'][-1].content)
+                assert result.answer=='ok'
     assert len(calls) == 1
 
 

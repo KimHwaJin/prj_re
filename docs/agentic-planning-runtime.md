@@ -45,7 +45,7 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 
 새 자산은 등록 Tool·Skill membership, 함수 signature, docstring, 필요한 import를 함수 내부에 포함하는 규칙을 따른다. 승인 snapshot은 등록 함수에서 docstring만 제거한 코드와 hash 및 해당 Skill 원문을 내부에 저장한다. 실제 제출 compiler는 039의 analysis/execution/compiler.py에 연결했다. 038 당시에는 임의 Tool 수정·자유 코드 작성이 없었다. 041에서 [실행 전 재작성·질문·자유 코드 계획](agentic-plan-revision.md)을 같은 Run에 추가했다. 최초 계획은 여전히 등록 자산을 사용한다.
 
-새 Runtime은 API Run Worker에 연결했고 기존 graph.py/구 Agent builders/CLI는 이전 흐름의 검증과 차기 이행을 위해 남아 있다. 039에서 Executor event Worker도 새 PlanningRuntime/실행 그래프를 사용하도록 연결했다. **모두 새 흐름으로 바뀌었다고 보면 안 된다.** Executor 단계 이행 이후 실제 미사용 코드·개발 도구를 확인하여 제거한다. 제공 Gaia core/router는 수정하지 않았고 등록 객체 adapter는 후속 구현이다.
+054에서 이전 설문형 graph.py/전용 builders/nodes/CLI 경로를 제거했다. API·Executor 이벤트 Worker는 같은 PlanningRuntime/build_planning_graph를 사용하고 개발 CLI·Studio도 그 builder의 offline mock 실행이다. 기존 Workflow 자산과 1.3 관리·컴파일 기능은 보존했다. 제공 Gaia core/router는 수정하지 않았고 등록 객체 adapter는 후속 구현이다.
 
 ## 데이터와 설정
 

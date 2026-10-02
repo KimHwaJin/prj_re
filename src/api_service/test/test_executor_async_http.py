@@ -318,34 +318,37 @@ async def test_planning_api_runtime_build_failure_has_no_executor_resources(monk
 
 
 @pytest.mark.asyncio
-async def test_real_analysis_graph_uses_native_client_and_releases_at_executor_wait(tmp_path):
+async def test_current_graph_uses_native_client_and_releases_at_executor_wait(tmp_path):
     from dataclasses import replace
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.types import Command
-    from agent_service.agents.analysis.graph import build_analysis_workflow_graph
-    from agent_service.agents.analysis.tests.test_user_agent_graph import (
-        dependencies, settings as graph_settings, FakeExecutionBindings,
-        start_analysis, analysis_context, select_candidate,
-    )
-    execution=str(uuid4())
-    async def handle(request): return 202,{**receipt(),"execution_id":execution}
+    from devtools.analysis.runtime import local_runtime,local_input
+    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from agent_service.agents.analysis.planning.graph import build_planning_graph
+    execution=str(uuid4());registrations=[]
+    class Bindings:
+        async def register(self,**kwargs):registrations.append(kwargs)
+    async def handle(request):
+        body={**receipt(),'execution_id':execution}
+        body['operation']['steps']=[{'sequence':step['sequence'],'step_id':str(uuid4())} for step in request['body']['operation']['spec']['steps']]
+        return 202,body
     async with local_server(handle) as server:
-        cfg=replace(graph_settings(artifacts_root=tmp_path),executor_base_url=server.url,executor_source_type="INLINE")
-        deps,_,_=dependencies(); bindings=FakeExecutionBindings()
+        cfg=replace(local_runtime().settings,executor_base_url=server.url,executor_source_type='INLINE',executor_submit_enabled=True)
         async with api.ExecutorClient(cfg) as client:
-            graph=build_analysis_workflow_graph(deps,cfg,checkpointer=InMemorySaver(),bindings=bindings,executor_client=client)
-            config=await start_analysis(graph,str(uuid4()))
-            result=await graph.ainvoke(Command(resume=analysis_context()),config)
-            await select_candidate(graph,config,result)
+            runtime=PlanningRuntime(cfg,executor=client,bindings=Bindings())
+            graph=build_planning_graph(runtime,checkpointer=InMemorySaver())
+            value=local_input(runtime,'quality review');config={'configurable':{'thread_id':value['session_id']}}
+            state=await graph.ainvoke(value,config)
+            plan=state['plan_views'][0]
             with api.submission_scope():
-                waiting=await graph.ainvoke(Command(resume={"approved":True}),config)
-            assert waiting["__interrupt__"][0].value["kind"]=="EXECUTOR_EVENT"
-            assert len(server.requests)==len(bindings.registrations)==1
-            assert waiting["execution_id"]==execution
-            assert server.requests[0]["body"]["idempotency_key"]==waiting["idempotency_key"]
-            # The external job has not completed, yet ainvoke and its HTTP have.
+                waiting=await graph.ainvoke(Command(resume={'resume':{'action':'approve_plan','plan_id':plan['plan_id'],
+                    'plan_revision':plan['plan_revision']}}),config)
+            assert waiting['__interrupt__'][0].value['kind']=='EXECUTOR_EVENT'
+            assert len(server.requests)==len(registrations)==1
+            assert waiting['execution_id']==execution
+            assert server.requests[0]['body']['idempotency_key']==waiting['execution_command']['idempotency_key']
             assert server.active==0 and not client.http.is_closed
-            assert (await graph.aget_state(config)).next==("wait_executor_event",)
+            assert (await graph.aget_state(config)).next==('execution_wait',)
 
 
 @pytest.mark.asyncio

@@ -43,8 +43,7 @@ with ZipFile(wheel) as archive:
     archive.extractall(installed)
 sys.path.insert(0, str(installed))
 
-import agent_service.agents.analysis.graph as graph_module
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
+import agent_service.agents.analysis.planning.graph as graph_module
 from agent_service.agents.analysis.resource_paths import (
     TOOLS_ROOT, SKILL_INDEX_PATH, TOOL_REGISTRY_PATH, SOURCE_ROOT,
     TOOL_SOURCE_PREFIXES, resolve_tool_source,
@@ -62,8 +61,7 @@ assert (TOOLS_ROOT / 'eda/profile_data.py').is_file()
 assert SOURCE_ROOT == installed.resolve()
 for prefix in TOOL_SOURCE_PREFIXES:
     assert resolve_tool_source(prefix + 'eda/profile_data.py', installed) == TOOLS_ROOT / 'eda/profile_data.py'
-roles = ('routing', 'intent_classifier', 'skill_selector', 'workflow_generator',
-         'conditional_decider', 'faq', 'report_writer', 'conversation', 'execution_review', 'execution_report', 'execution_repair', 'plan_revision')
+roles = ('conversation', 'execution_review', 'execution_report', 'execution_repair', 'plan_revision')
 for role in roles:
     prompt = files(f'agent_service.agents.analysis.agent_builders.{role}').joinpath('prompt.md')
     assert prompt.read_text(encoding='utf-8').strip()
@@ -71,19 +69,16 @@ for role in roles:
 production_settings = load_agent_settings({'MODEL_PROVIDER': 'openai_compatible',
     'MODEL_NAME': 'package-smoke', 'MODEL_API_KEY': 'test-key',
     'API_BASE_URL': 'http://llm.invalid/v1'})
-production_deps = create_llm_dependencies(production_settings)
-assert production_deps.report_agent is not None
-assert production_deps.skill_selector_agent is not None
 from agent_service.factory import RoleAgent
-from agent_service.context import AgentContext
-for field in ('routing_agent', 'analysis_intent_agent', 'skill_selector_agent',
-              'workflow_agent', 'faq_agent', 'report_agent', 'conditional_decision_agent'):
-    role = getattr(production_deps, field)
-    assert isinstance(role, RoleAgent)
-    assert role.agent.checkpointer is False
+retired=('graph.py','dependencies.py','state.py','context.py','hitl_protocol.py','message_utils.py','artifacts.py')
+assert all('agent_service/agents/analysis/'+name not in names for name in retired)
+assert not any(n.startswith(('agent_service/agents/analysis/nodes/','agent_service/agents/analysis/routers/',
+    'agent_service/agents/analysis/components/','agent_service/agents/analysis/testing/','agent_service/agents/analysis/schemas/agents/')) for n in names)
+assert all('agent_service/agents/analysis/agent_builders/'+r+'/agent.py' not in names for r in
+    ('routing','intent_classifier','faq','report_writer','skill_selector','workflow_generator','conditional_decider'))
 from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent as build_conversation
 from agent_service.agents.analysis.planning.catalog import AssetCatalog
-from agent_service.agents.analysis.dependencies import create_chat_model
+from agent_service.runtime.model_factory import create_chat_model
 conversation = build_conversation(create_chat_model(production_settings), AssetCatalog())
 assert isinstance(conversation, RoleAgent) and conversation.agent.checkpointer is False
 from agent_service.agents.analysis.agent_builders.execution_review.agent import build_agent as build_review
@@ -116,19 +111,9 @@ assert files('service_contracts').joinpath('resources/workflow-definition.schema
 assert files('agent_service.agents.analysis.agent_builders.conversation').joinpath('prompt.md').is_file()
 assert files('agent_service.agents.analysis.planning').joinpath('fixtures/quality-review.json').is_file()
 
-agent_settings = load_agent_settings({'MODEL_PROVIDER':'mock', 'DATA_MOCK':'true',
-    'DEMO_ARTIFACTS_ENABLED':'false', 'EXECUTOR_SUBMIT_ENABLED':'false', 'EXECUTOR_SOURCE_TYPE':'INLINE'})
-
 async def smoke():
-    graph = graph_module.build_analysis_workflow_graph(create_llm_dependencies(agent_settings), agent_settings, checkpointer=InMemorySaver())
     session = str(uuid4())
     cfg={'configurable':{'thread_id':session}}
-    state = await graph.ainvoke({'user_request':'wheel smoke', 'session_id':session,
-        'user_id':str(uuid4()), 'project_id':str(uuid4())}, cfg)
-    for value in ['mock', {'objective':'EDA'}, {'candidate_number':1}, {'approved':True}]:
-        state = await graph.ainvoke(Command(resume=value), cfg)
-    assert state['execution_steps']
-    assert state['executor_submit_response']['skipped']
     from agent_service.agents.analysis.planning.runtime import PlanningRuntime
     from agent_service.agents.analysis.planning.graph import build_planning_graph
     planning_settings = load_settings(config={'MODEL_PROVIDER': 'mock', 'ANALYSIS_DATASETS': {
@@ -142,10 +127,16 @@ async def smoke():
         'plan_id':plan['plan_id'], 'plan_revision':plan['plan_revision']}}), cfg)
     assert state['approved_snapshot']['dataset_bindings']['dataset']['dataset_id'] == 'package-data'
     assert state['final_response']['status'] == 'plan_approved'
+    assert not any(n=='agent_service.agents.analysis.dependencies' or n.startswith('agent_service.agents.analysis.nodes.') for n in sys.modules)
+    from devtools.analysis.visualization import build_visualization_graph
+    topology=build_visualization_graph()
+    assert 'execution_wait' in topology.nodes and 'execution_repair_propose' in topology.nodes
+    from devtools.analysis.cli import public_result
+    assert 'tool_sources' not in json.dumps(public_result(state))
     return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
-    'api_openapi_paths':len(paths), 'mock_graph_execution_steps':asyncio.run(smoke()),
-    'removed_agent_packages_in_wheel':False, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
+    'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
+    'retired_graph_packages_absent':True, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
     'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

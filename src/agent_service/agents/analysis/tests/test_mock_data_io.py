@@ -12,7 +12,6 @@ from agent_service.agents.analysis.workflow.tools.data_io.extract_data import ex
 from agent_service.agents.analysis.workflow.tools.data_io.transform_nce import transform_nce
 from agent_service.agents.analysis.workflow.tools.data_io.transform_wt import transform_wt
 from agent_service.agents.analysis.workflow.data_load_steps import required_data_load_steps
-from agent_service.agents.analysis.schemas.agents.orchestration_schema import DataSelectionResponse
 
 
 class MockDataIoTest(unittest.TestCase):
@@ -91,20 +90,6 @@ class MockDataIoTest(unittest.TestCase):
         self.assertEqual(result["data_type"], "future_type")
         self.assertEqual(result["query_params"]["limit"], 0)
 
-    def test_selection_schema_rejects_unsupported_data_type(self):
-        selection = {
-            "data_count": 2,
-            "datasets": [
-                {"role": "x", "data_type": "csv", **self.query},
-                {
-                    "role": "y",
-                    "data_type": "wt_symbol",
-                    **{**self.query, "transform_op": "wt_fail_pivot"},
-                },
-            ],
-        }
-        with self.assertRaisesRegex(ValueError, "nce.*wt_symbol"):
-            DataSelectionResponse.model_validate(selection)
 
     def test_step_builder_rejects_unsupported_data_type(self):
         dataset = {"role": "x", "data_type": "csv", **self.query}
