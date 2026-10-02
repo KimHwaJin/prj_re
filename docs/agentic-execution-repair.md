@@ -113,3 +113,5 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_repair_http.p
 
 
 실행 전 모든 후보를 거절하고 새로운 계획/자유 함수를 제안하는 경계는 [041 재작성 Runtime](agentic-plan-revision.md)이다. 실패 후 수정 수준·시도 한도와 별개이며 공통 함수 구조 검증만 execution/sources에서 공유한다.
+
+055부터 이 진단 도구도 명시적인 사내 SDK verdict fixture와 실제 localhost Redis 로그인 세션을 사용한다. /auth/login/sso→/users/me→cookie/CSRF로 호출하며 X-User-Id나 권한 dependency override를 사용하지 않는다. 사내 SDK 왕복은 외부 검증 대상이 아니다. [현재 연계 검증](agentic-executor-runtime.md#현재-인증을-포함한-http-연계-검증-055)을 따른다.

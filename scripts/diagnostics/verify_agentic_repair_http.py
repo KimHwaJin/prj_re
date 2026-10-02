@@ -4,6 +4,7 @@ Uses test-only registered functions and a preset plan to inject repeatable code
 errors. --real selects a real repair role, not real planning; all other modes
 use an explicit deterministic repair-role double. Production assets are unchanged.
 """
+from cookie_auth import configure_cookie_auth, install_employee_fixture, sign_in, write_private_result
 import argparse
 import asyncio
 from copy import deepcopy
@@ -26,9 +27,6 @@ import yaml
 from service_settings import load_settings
 from service_bootstrap import create_app
 from api_service.services.agent_graph_service import runtime as graph_runtime
-from api_service.core.database import get_session_factory
-from api_service.services.user_service import UserService
-from api_service.schemas.common.user_schema import UserCreate
 from agent_config import build_langgraph_thread_id
 from agent_service.agents.analysis.tests.test_agentic_repair import FixtureCatalog,document,correction,approve
 from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
@@ -67,6 +65,7 @@ with tempfile.TemporaryDirectory(prefix='agentic-repair-migrations-') as temp:
         outcome=subprocess.run([sys.executable,'-m','alembic','-c',ini,'upgrade','head'],cwd=root,
             env={**os.environ,'SERVICE_CONFIG_FILE':str(path),'PYTHONPATH':str(root/'src')},capture_output=True,text=True)
         if outcome.returncode:raise RuntimeError('Isolated migration failed: '+outcome.stderr[-1500:])
+configure_cookie_auth(config,namespace,args.port)
 settings=load_settings(config=config,environ={})
 original_inputs=graph_runtime._load_graph_inputs
 levels={'binding':1,'source':2,'replan':3,'custom':4,'reject':3,'exhausted':1,'disabled':0,'single':0}
@@ -92,7 +91,8 @@ def load_inputs():
 
 graph_runtime._load_graph_inputs=load_inputs
 app=create_app(settings)
-summary={'passed':False,'namespace':namespace,'real_repair_llm':args.real,'planning':'preset_fault_injection',
+install_employee_fixture(app,namespace)
+summary={'corporate_sdk':'verified_employee_fixture','production_cookie_csrf':True,'login_redis':'actual_loopback','passed':False,'namespace':namespace,'real_repair_llm':args.real,'planning':'preset_fault_injection',
     'executor':'actual_local_compose','scenarios':[]}
 
 async def main():
@@ -103,13 +103,8 @@ async def main():
             while not server.started:
                 if task.done():await task
                 await asyncio.sleep(.05)
-        async with get_session_factory()() as db:
-            await UserService.bootstrap_admin(db,UserCreate(user_id='admin',user_name='Admin',role='admin'))
         async with httpx.AsyncClient(base_url=f'http://127.0.0.1:{args.port}',trust_env=False,timeout=240) as client:
-            uid=namespace
-            r=await client.post('/api/v1/users',headers={'X-User-Id':'admin'},json={'user_id':uid,'user_name':'Repair diagnostics','role':'user'})
-            assert r.status_code==201,r.text
-            user=r.json();headers={'X-User-Id':uid}
+            user,headers=await sign_in(client)
             for scenario in scenarios:
                 record={'scenario':scenario,'passed':False};summary['scenarios'].append(record)
                 r=await client.post('/api/v1/projects/'+user['default_project_id']+'/sessions',headers=headers,
@@ -178,5 +173,5 @@ async def main():
         server.should_exit=True;await task
         graph_runtime._load_graph_inputs=original_inputs
         args.output.parent.mkdir(parents=True,exist_ok=True)
-        args.output.write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
+        write_private_result(args.output,summary)
 asyncio.run(main())

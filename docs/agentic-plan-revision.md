@@ -110,3 +110,5 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_plan_revision
 ```
 
 --real은 재작성 역할만 실제 모델로 실행하며 최초 계획은 고정한다. 최초 실제 LLM 계획부터 수행한 업무 E2E, 100명 처리량, Kubernetes 재배포, 주 단위 작업, 일반 업무 코드의 정답을 검증한 시험으로 표시하지 않는다.
+
+055부터 이 진단 도구도 명시적인 사내 SDK verdict fixture와 실제 localhost Redis 로그인 세션을 사용한다. /auth/login/sso→/users/me→cookie/CSRF로 호출하며 X-User-Id나 권한 dependency override를 사용하지 않는다. 사내 SDK 왕복은 외부 검증 대상이 아니다. [현재 연계 검증](agentic-executor-runtime.md#현재-인증을-포함한-http-연계-검증-055)을 따른다.

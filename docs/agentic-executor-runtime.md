@@ -87,7 +87,7 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 }
 ```
 
-`has_value=false`는 아직 확정하지 않은 값이다. 프론트는 schema를 따라 기본값 또는 빈 입력을 보여주고 사용자가 수정해 제출할 수 있다. 요청은 동일 `POST /api/v1/sessions/{session_id}/runs`, 동일 `X-User-Id`, 새로운 `Idempotency-Key`를 사용한다.
+`has_value=false`는 아직 확정하지 않은 값이다. 프론트는 schema를 따라 기본값 또는 빈 입력을 보여주고 사용자가 수정해 제출할 수 있다. 요청은 동일 `POST /api/v1/sessions/{session_id}/runs`, 동일 로그인 쿠키·`X-CSRF-Token`, 새로운 `Idempotency-Key`를 사용한다.
 
 ```json
 {
@@ -146,3 +146,26 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_executor_http
 
 settings-file은 비밀 값을 Git에 넣지 않은 flat JSON 중앙 설정 mapping이다. DATABASE_URL은 로컬 agentic_runtime_test, CHECKPOINT_DB_URI는 로컬 agentic_checkpoint_test를 지정한다. EXECUTOR_BASE_URL은 로컬 8000, EXECUTOR_SHARED_RESULT_ROOT는 host에서 읽을 수 있는 executor/shared_dir이며 ANALYSIS_DATASETS에 default-nce Jupyter 경로를 선언한다. 실제 모델에는 MODEL_NAME/API_BASE_URL/MODEL_API_KEY 및 Phoenix 설정을 추가한다. 파일 접근 권한은 600으로 둔다. 이 harness는 로컬 Redis 6379와 기본 kernel profile을 사용하고 매 시험 전용 namespace/group을 만든다. 기존 Executor 이벤트 stream이나 다른 consumer group을 변경하지 않는다. 원천 파일은 수정하지 않지만 새 notebook/execution 결과는 Executor에 생성된다. 부하 테스트나 운영 배포 스크립트가 아니다.
 043에서 terminal 이후의 실제 관찰·결정값·리포트를 제한된 세션 문맥으로 보관하고 후속 conversation/plan_revision에 연결했다. [후속 분석 문맥 안내](agentic-session-analysis-context.md)를 참고한다. execution_review의 근거·값 검증 실패는 최대 두 번의 모델 응답 시도 안에서 정정하고, 여전히 실패하면 HITL을 유지한다. Dataset 등록 API는 연결하지 않았다.
+
+## 현재 인증을 포함한 HTTP 연계 검증 (055)
+
+현재 세 진단 도구는 X-User-Id를 쓰지 않는다. `cookie_auth.py`가 임시 loopback 앱의 사내 SDK 검증 결과만 명시적 fixture로 제공한다. 최초 일반 사용자/기본 프로젝트 자동 등록, 실제 localhost Redis 로그인 세션, HttpOnly cookie, /users/me CSRF와 실제 권한 의존성을 사용한다. 운영 라우터·인증 우회 endpoint를 추가하지 않으며 사내 SDK·사내 브라우저 SSO 왕복 검증으로 해석하지 않는다.
+
+```sh
+PYTHONPATH=src python scripts/diagnostics/verify_agentic_executor_http.py \
+  --settings-file /tmp/private-local-config.json --fixture-plan --edit-checks \
+  --output /tmp/executor-cookie-mock.json
+
+# 최초 계획부터 실제 모델. 같은 세션 설명/보고서·프로젝트 메모리까지 확인
+PYTHONPATH=src python scripts/diagnostics/verify_agentic_executor_http.py \
+  --settings-file /tmp/private-local-config.json --real --edit-checks \
+  --followup-checks --memory-checks --output /tmp/executor-cookie-real.json
+```
+
+private config의 database_url/checkpoint_db_uri는 loopback의 agentic_runtime_test/agentic_checkpoint_test여야 한다. 실제 Executor는 localhost이며 EXECUTOR_SHARED_RESULT_ROOT와 ANALYSIS_DATASETS.default-nce를 제공한다. 모델/Phoenix 키는 private 파일에 두고 결과·Git에 넣지 않는다. --fixture-plan은 최초 계획만 고정하며 실제 모델 계획 검증이 아니다. --memory-checks는 해당 임시 서버에만 auto_context를 명시한다.
+
+--edit-checks는 조회한 typed form을 편집해 MULTI 실행 정책을 조정한다. 필수 data_reference가 비어 있으면 테스트 사용자가 요청한 default-nce를 명시적으로 제출한다. Agent가 자동으로 채웠다고 보고하지 않고 initial_plan_unfilled_inputs에 원래 누락을 기록한다. no-op 편집은 plan_revision을 올리지 않으며 변경된 정책만 버전을 올린다. 로그아웃·로그인 뒤 같은 Run/interaction/resume_token 보존과 이전 토큰 409도 확인한다.
+
+--followup-checks는 실제 완료 관찰을 근거로 설명/Markdown을 재작성하고 fact_ids를 현재 source의 원본 값으로 해석해 공개 답변에 반영됐는지 확인한다. 후속 설명/보고서는 새 Executor를 제출하지 않는다. --memory-checks는 수동 공유·현재 발언에 근거한 auto_context 저장·같은 프로젝트의 새 세션 모델 입력을 확인한다. Executor Dataset Registry와 보고서 Artifact 추가 정책·실제 사내 SDK는 이 시험의 완료 기능이 아니다.
+
+같은 테스트 DB에서 이 도구와 DB 초기화 pytest를 동시에 실행하지 않는다. 서버는 종료되고 private JSON과 새 Executor notebook/artifact를 검증 근거로 남긴다. 이후 DB 초기화 pytest가 전용 테스트 DB의 Run/checkpoint를 지울 수 있으므로 해당 DB의 영구 보존을 보장하지 않는다. 동일 timeout·예제 데이터 한 회 시험이며 부하/처리량·최대 동시 사용자·1주 작업 검증이 아니다.

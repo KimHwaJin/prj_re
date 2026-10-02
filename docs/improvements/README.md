@@ -4,7 +4,7 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 브랜치를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 개발 기준: `feature/refactor-base`. 054에서 이전 설문형 Agent를 제거하고 현재 PlanningRuntime으로 개발 도구·검증을 통합했다. [054 기록](054-agent-runtime-cleanup.md), [Agent 개발 안내](../agent-development/README.md)를 따른다. 프로젝트 메모리는 [053 정책](053-project-memory-policy.md)을 유지하며 모델 호출 횟수 최적화는 [후속 목록](backlog.md)에 보류한다.
+현재 개발 기준: `feature/refactor-base`. 055에서 현재 cookie/CSRF API·실제 모델·Executor·후속 질문/보고서·project_memory의 사용자 흐름을 연결해 검증했다. [055 기록](055-authenticated-executor-flow.md), [연계 보고서](../reports/api-executor-flow-verification-2026-10-02.md)를 따른다. 이전 graph 정리는 [054](054-agent-runtime-cleanup.md), 메모리 정책은 [053](053-project-memory-policy.md)을 유지한다. 입력 자동 채움과 커널 의존성 점검은 [후속 목록](backlog.md)에 남긴다.
 
 054 통합 이력: 구현 `66ffaedbf4ad3fdc1dcb3c4f3487b2932e77b5d8`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 전체 884회귀와 이전 소스 PostgreSQL HITL 재개·wheel·Studio HTTP 검증을 통과했다. [054 기록](054-agent-runtime-cleanup.md)을 따른다.
 
@@ -94,6 +94,7 @@
 | 052 | 프로젝트 메모리 공식 LangGraph Store 전환·전용 저장소 제거 | 구현·937회귀·실제 LLM/Store/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [052 기록](052-langgraph-project-memory-store.md) |
 | 053 | 프로젝트 메모리 저장 한도·역할별 입력 예산·지속적인 주제 갱신 | 구현·959회귀·실제 LLM/Store 6개 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [053 기록](053-project-memory-policy.md) |
 | 054 | 이전 설문형 Agent 제거·현재 graph로 개발 도구·검증 통합 | 구현·884회귀·PG 재개·wheel·Studio 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [054 기록](054-agent-runtime-cleanup.md) |
+| 055 | 현재 쿠키 인증 API·실제 모델·Executor·후속 문맥·메모리 연계 검증 | 구현·실제 연계·132관련회귀 완료 / 베이스 통합·게시 예정 | 2026-10-03 | [055 기록](055-authenticated-executor-flow.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

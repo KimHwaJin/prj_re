@@ -1,0 +1,382 @@
+{
+  "date": "2026-10-02",
+  "baseline_commit": "dd867afc9c0f4e612fd248d07f4af212994fb930",
+  "corporate_sdk": "verified_employee_fixture_only; actual closed-network SDK and browser SSO untested",
+  "production_boundaries": [
+    "HTTP login/provisioning/cookie/CSRF",
+    "actual localhost Redis login + event Streams",
+    "actual PostgreSQL CRUD/checkpoints/official Store",
+    "current queue worker + actual create_agent roles",
+    "actual localhost Executor/Jupyter/manifest",
+    "real configured text-only model and Phoenix in real case"
+  ],
+  "mock_fixture_plan_flow": {
+    "real_llm": false,
+    "initial_plan_fixture": true,
+    "namespace": "agentic-exec-ddbe6e6e76",
+    "passed": true,
+    "authentication": {
+      "anonymous_status": 401,
+      "missing_csrf_status": 403,
+      "first_login_auto_registered": true,
+      "role": "user"
+    },
+    "planning_seconds": 0.362,
+    "approval_to_wait_seconds": 0.371,
+    "execution_seconds": 4.272,
+    "initial_plan_unfilled_inputs": null,
+    "plan_edit": {
+      "revision_before": 1,
+      "revision_after": 2,
+      "mode": "MULTI",
+      "repair_level": 1,
+      "max_repair_attempts": 1,
+      "stale_resume_status": 409,
+      "login_renewal_preserved_hitl": true,
+      "fixed_parameter_values": {
+        "dataset": "default-nce"
+      }
+    },
+    "status_history": [
+      "waiting_executor",
+      "success"
+    ],
+    "final_status": "success",
+    "operation_count": 2,
+    "terminal_event_seen": true,
+    "same_session_submission_status": 409,
+    "same_session_after_completion_status": 202,
+    "sse_types": [
+      "activity.completed",
+      "activity.started",
+      "activity.updated",
+      "interaction.opened",
+      "interaction.resolved",
+      "interaction.updated",
+      "message.completed",
+      "run.snapshot",
+      "run.updated"
+    ],
+    "sse_replay": {
+      "events": 26,
+      "cursor": 14,
+      "replayed_events": 12,
+      "exact_suffix": true
+    },
+    "project_memory": null,
+    "phoenix_trace_count": null
+  },
+  "real_plan_flow": {
+    "real_llm": true,
+    "initial_plan_fixture": false,
+    "namespace": "agentic-exec-9076f8404e",
+    "passed": true,
+    "authentication": {
+      "anonymous_status": 401,
+      "missing_csrf_status": 403,
+      "first_login_auto_registered": true,
+      "role": "user"
+    },
+    "planning_seconds": 30.443,
+    "approval_to_wait_seconds": 0.384,
+    "execution_seconds": 58.504,
+    "initial_plan_unfilled_inputs": [],
+    "plan_edit": {
+      "revision_before": 1,
+      "revision_after": 2,
+      "mode": "MULTI",
+      "repair_level": 1,
+      "max_repair_attempts": 1,
+      "stale_resume_status": 409,
+      "login_renewal_preserved_hitl": true,
+      "fixed_parameter_values": {
+        "dataset_id": "default-nce"
+      }
+    },
+    "status_history": [
+      "waiting_executor",
+      "success"
+    ],
+    "final_status": "success",
+    "operation_count": 3,
+    "terminal_event_seen": true,
+    "same_session_submission_status": 409,
+    "same_session_after_completion_status": 202,
+    "sse_types": [
+      "activity.completed",
+      "activity.started",
+      "activity.updated",
+      "interaction.opened",
+      "interaction.resolved",
+      "interaction.updated",
+      "message.completed",
+      "run.snapshot",
+      "run.updated"
+    ],
+    "sse_replay": {
+      "events": 31,
+      "cursor": 16,
+      "replayed_events": 15,
+      "exact_suffix": true
+    },
+    "project_memory": {
+      "manual_entries": 1,
+      "automatic_entries": 1,
+      "automatic_source_run_verified": true,
+      "same_project_new_session_referenced": true,
+      "reference_message_sizes": [
+        1002
+      ],
+      "extra_executor_submission": false,
+      "topics": [
+        {
+          "section": "report_preferences",
+          "key": "audience",
+          "version": 2
+        }
+      ]
+    },
+    "phoenix_trace_count": 24
+  },
+  "initial_real_attempt": {
+    "passed": false,
+    "planning_seconds": 39.037,
+    "stopped_before_executor": true,
+    "reason": "Required data_reference input dataset_id remained empty; approval rejected 422. User had named default-nce.",
+    "followup": "Final real attempt prefilled the value. This single observed omission remains a planning UX reliability issue, not a proven failure rate."
+  },
+  "real_execution_repair": {
+    "failed_method": "isolation_forest",
+    "error_type": "ModuleNotFoundError",
+    "missing_dependency": "sklearn",
+    "successful_retry_method": "zscore",
+    "registered_function_ast_unchanged": true,
+    "outliers_attempts": 2,
+    "repair_level_authorized": 1,
+    "max_repair_attempts_authorized": 1
+  },
+  "initial_report": {
+    "status": "ready",
+    "format": "markdown",
+    "chars": 6217,
+    "artifact_registration": "deferred",
+    "evidence_steps": [
+      "load_data",
+      "outliers",
+      "profile",
+      "statistics"
+    ]
+  },
+  "completed_analysis_context": {
+    "source_run_id": "11263b51-1d70-4a0a-afd1-ef3026dcdc9b",
+    "step_ids": [
+      "load_data",
+      "profile",
+      "statistics",
+      "outliers",
+      "outliers"
+    ],
+    "serialized_chars": 11685,
+    "omitted_observations": 0,
+    "report_truncated": false
+  },
+  "followups": [
+    {
+      "kind": "explanation",
+      "status": "success",
+      "seconds": 14.605,
+      "response_status": "answer",
+      "message_chars": 2229,
+      "selected_fact_ids": 18,
+      "resolved_and_rendered_facts": 18,
+      "source_run_verified": true
+    },
+    {
+      "kind": "markdown_revision",
+      "status": "success",
+      "seconds": 15.61,
+      "response_status": "answer",
+      "message_chars": 2085,
+      "selected_fact_ids": 16,
+      "resolved_and_rendered_facts": 16,
+      "source_run_verified": true
+    }
+  ],
+  "followup_new_executor_execution": false,
+  "revision_diagnostic": {
+    "model": "initial plan and revision fixtures; actual Executor",
+    "passed": true,
+    "scenarios": [
+      {
+        "scenario": "registered",
+        "passed": true,
+        "seconds": 4.217,
+        "execution_kind": "registered",
+        "approval_mode": "user",
+        "review_count": 1,
+        "question_count": 0
+      },
+      {
+        "scenario": "free",
+        "passed": true,
+        "seconds": 3.577,
+        "execution_kind": "free_code",
+        "approval_mode": "user",
+        "review_count": 1,
+        "question_count": 0
+      },
+      {
+        "scenario": "clarification",
+        "passed": true,
+        "seconds": 4.536,
+        "execution_kind": "free_code",
+        "approval_mode": "user",
+        "review_count": 1,
+        "question_count": 1
+      },
+      {
+        "scenario": "modified",
+        "passed": true,
+        "seconds": 4.417,
+        "execution_kind": "free_code",
+        "approval_mode": "user",
+        "review_count": 1,
+        "question_count": 0
+      }
+    ]
+  },
+  "repair_diagnostic": {
+    "model": "plan and repair fixtures; actual Executor",
+    "passed": true,
+    "scenarios": [
+      {
+        "scenario": "binding",
+        "passed": true,
+        "seconds": 4.539,
+        "operations": 2,
+        "repair_attempts": 1,
+        "executor_status": "SUCCEEDED",
+        "public_status": "success",
+        "stop_reason": null
+      },
+      {
+        "scenario": "source",
+        "passed": true,
+        "seconds": 3.704,
+        "operations": 2,
+        "repair_attempts": 1,
+        "executor_status": "SUCCEEDED",
+        "public_status": "success",
+        "stop_reason": null
+      },
+      {
+        "scenario": "replan",
+        "passed": true,
+        "seconds": 5.125,
+        "operations": 2,
+        "repair_attempts": 1,
+        "executor_status": "SUCCEEDED",
+        "public_status": "success",
+        "stop_reason": null
+      },
+      {
+        "scenario": "custom",
+        "passed": true,
+        "seconds": 3.699,
+        "operations": 2,
+        "repair_attempts": 1,
+        "executor_status": "SUCCEEDED",
+        "public_status": "success",
+        "stop_reason": null
+      },
+      {
+        "scenario": "reject",
+        "passed": true,
+        "seconds": 3.733,
+        "operations": 1,
+        "repair_attempts": 0,
+        "executor_status": "CANCELLED",
+        "public_status": "error",
+        "stop_reason": "user_rejected"
+      },
+      {
+        "scenario": "exhausted",
+        "passed": true,
+        "seconds": 4.805,
+        "operations": 3,
+        "repair_attempts": 2,
+        "executor_status": "CANCELLED",
+        "public_status": "error",
+        "stop_reason": "attempts_exhausted"
+      },
+      {
+        "scenario": "disabled",
+        "passed": true,
+        "seconds": 3.696,
+        "operations": 1,
+        "repair_attempts": 0,
+        "executor_status": "CANCELLED",
+        "public_status": "error",
+        "stop_reason": "repair_disabled_or_unsupported_failure"
+      },
+      {
+        "scenario": "single",
+        "passed": true,
+        "seconds": 2.176,
+        "operations": 1,
+        "repair_attempts": 0,
+        "executor_status": "FAILED",
+        "public_status": "error",
+        "stop_reason": null
+      }
+    ]
+  },
+  "related_regression": {
+    "passed": 132,
+    "warnings": 11,
+    "seconds": 36.59
+  },
+  "limits": [
+    "One completed real-model flow, not throughput or concurrency benchmarking. Initial actual-plan failure preserved, not folded into success timing.",
+    "Mock fixture has two operations and no real model; real execution includes three operations and one repair, so timings are not a before/after comparison.",
+    "No actual corporate SDK, browser CORS/HTTPS, Gaia full template, Kubernetes or week-long task validation.",
+    "Report is returned Markdown and stored Run/context; Artifact registration and notebook report-cell append remain deferred.",
+    "External Executor Dataset Registry remains unimplemented; supplied trusted Parquet is used.",
+    "No provider credentials, raw SSO/CSRF cookies, full model responses or full Tool code published."
+  ],
+  "completed_date": "2026-10-03",
+  "final_diagnostic_smoke": {
+    "passed": true,
+    "model": "mock; initial fixture plan",
+    "actual_executor": true,
+    "plan_edit": {
+      "revision_before": 1,
+      "revision_after": 2,
+      "mode": "MULTI",
+      "repair_level": 1,
+      "max_repair_attempts": 1,
+      "stale_resume_status": 409,
+      "login_renewal_preserved_hitl": true,
+      "fixed_parameter_values": {
+        "dataset": "default-nce"
+      }
+    },
+    "private_result_file_mode": "0600",
+    "repair_history_captured": true
+  },
+  "static_verification": {
+    "changed_files": 13,
+    "new_files": 4,
+    "deleted_files": 0,
+    "production_and_config_files_unchanged": 375,
+    "changed_python_ast_valid": true,
+    "new_document_links_valid": true,
+    "credential_values_excluded_from_reports": true
+  },
+  "public_contract_verification": {
+    "application_paths": 38,
+    "documented_paths": 12,
+    "documented_schemas": 28,
+    "validation_unchanged": true
+  }
+}

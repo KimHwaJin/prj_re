@@ -65,3 +65,5 @@ ProjectMemoryMiddleware는 공식 Store의 프로젝트 배경·선호를 별도
 [Workflow JSON](../workflow-json-reference.md)의 실행 규격은 2.0-draft이며 기존 관리 CRUD는 1.3이다. [전처리 데이터 Registry](../design/dataset-registry-contract/README.md)는 Executor API 대기다. Gaia 등록 adapter, 첨부/VLM, 다중 업무 Agent registry는 후속이다. 보고서 모델 호출 횟수 최적화·운영 에러 대응은 [후속 목록](../improvements/backlog.md)의 우선순위를 유지한다.
 
 과거 성능 비교 도구는 고정 과거 commit의 설문형 그래프를 재현하는 도구다. 현재 Agent 측정으로 해석하지 않는다. [벤치마크 구분](../../scripts/benchmarks/README.md)을 따른다. 과거 노드/CLI import를 현재 경로로 유지하는 shim은 없다. 054 이전 설문형 checkpoint 자동 이행은 이번 범위에 포함되지 않으며 현재 `agentic-planning-v1` HITL 재개는 별도로 검증한다.
+
+현재 cookie/CSRF·실제 모델·local Executor 사용자 흐름의 검증/재실행은 [055 보고서](../reports/api-executor-flow-verification-2026-10-02.md), [진단 옵션](../agentic-executor-runtime.md#현재-인증을-포함한-http-연계-검증-055)을 따른다. 사내 SDK는 verdict fixture이며 실제 SSO 왕복 결과로 표시하지 않는다.

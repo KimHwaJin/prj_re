@@ -5,9 +5,7 @@ from uuid import uuid4, UUID
 import httpx, uvicorn, yaml
 from service_settings import load_settings
 from service_bootstrap import create_app
-from api_service.core.database import get_session_factory
-from api_service.services.user_service import UserService
-from api_service.schemas.common.user_schema import UserCreate
+from cookie_auth import configure_cookie_auth, install_employee_fixture, sign_in, write_private_result
 from api_service.services.agent_graph_service import runtime
 
 parser = __import__('argparse').ArgumentParser(description='Isolated local HTTP/Executor/Jupyter verification; no production DBs.')
@@ -16,9 +14,12 @@ parser.add_argument('--output', required=True, type=Path, help='Result JSON path
 parser.add_argument('--real', action='store_true', help='Use supplied real model settings instead of explicit mock.')
 parser.add_argument('--port', type=int, default=18091)
 parser.add_argument('--fixture-plan',action='store_true',help='Use an explicit registered quality-review initial plan; execution/review/report still follow the selected provider.')
+parser.add_argument('--memory-checks',action='store_true',help='Real-model project memory auto-update and same-project cross-session reference; requires --real and --followup-checks.')
+parser.add_argument('--edit-checks',action='store_true',help='Edit typed plan, logout/login while waiting, reject stale resume token, then approve.')
 parser.add_argument('--followup-checks',action='store_true',help='After completion, test real-model explanation and Markdown revision on the same session without resubmission. Requires --real.')
 args = parser.parse_args()
 assert not args.followup_checks or args.real, 'Follow-up semantic checks require the real model; mock output is not evidence of understanding'
+assert not args.memory_checks or (args.real and args.followup_checks), 'Memory checks require real follow-ups'
 root = Path(__file__).resolve().parents[2]
 config = json.loads(args.settings_file.read_text())
 real_mode = args.real
@@ -47,6 +48,8 @@ config.update(MODEL_PROVIDER='openai_compatible' if real_mode else 'mock',
     EVENT_WORKER_ENABLED=True, AGENT_WORKER_ENABLED=True, AGENT_WORKER_CONCURRENCY=2,
     AGENT_WORKER_POLL_INTERVAL_SECONDS=.1, TASK_RECONCILER_ENABLED=False,
     CHECKPOINT_SETUP_ON_START=True, MAX_PLAN_CANDIDATES=1)
+configure_cookie_auth(config,namespace,args.port)
+if args.memory_checks:config['AGENT_PROJECT_MEMORY_MODE']='auto_context'
 assert 'default-nce' in config.get('ANALYSIS_DATASETS', {}), 'Declare trusted default-nce test dataset'
 # Only isolated Agent databases are migrated; no Executor database DDL.
 import tempfile
@@ -59,7 +62,8 @@ with tempfile.TemporaryDirectory(prefix='agentic-exec-migrations-') as directory
         if outcome.returncode: raise RuntimeError('Isolated migration failed: '+outcome.stderr[-2000:])
 settings=load_settings(config=config,environ={})
 app=create_app(settings)
-summary={'real_llm':real_mode,'initial_plan_fixture':args.fixture_plan,'namespace':namespace,'port':args.port,'passed':False}
+install_employee_fixture(app,namespace)
+summary={'corporate_sdk':'verified_employee_fixture','production_cookie_csrf':True,'login_redis':'actual_loopback','real_llm':real_mode,'initial_plan_fixture':args.fixture_plan,'namespace':namespace,'port':args.port,'passed':False}
 if args.fixture_plan:
     from agent_service.agents.analysis.planning.runtime import PlanningRuntime
     from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
@@ -73,9 +77,25 @@ if args.fixture_plan:
     PlanningRuntime.respond=fixed_initial_plan
 grounding_deliveries=[]
 context_deliveries=[]
+memory_deliveries=[]
+if args.memory_checks:
+    from agent_service.middleware.project_memory import ProjectMemoryMiddleware
+    original_memory_wrap=ProjectMemoryMiddleware.awrap_model_call
+    async def observe_memory(self,request,handler):
+        async def measured(actual):
+            for message in actual.messages:
+                if message.id=='dtest-project-memory':
+                    data=json.loads(message.content)
+                    memory_deliveries.append({'role':data['selection']['role'],
+                        'project_id':data['memory']['project_id'],'entries':data['memory']['entries'],
+                        'serialized_chars':len(message.content)})
+            return await handler(actual)
+        return await original_memory_wrap(self,request,measured)
+    ProjectMemoryMiddleware.awrap_model_call=observe_memory
+
 if args.followup_checks:
     from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from agent_service.agents.analysis.execution.grounding import completed_context, fact_value
+    from agent_service.agents.analysis.execution.grounding import completed_context, fact_value, selected_facts
     before_grounding_respond=PlanningRuntime.respond
     async def observe_grounding(self,state,context,datasets):
         reply=await before_grounding_respond(self,state,context,datasets)
@@ -84,7 +104,8 @@ if args.followup_checks:
             payload=completed_context(context,self.settings.agent_session_analysis_max_chars)
             observations={o['step_id']:o for o in payload['observations']}
             grounding_deliveries.append({'source_run_id':g.source_run_id,'evidence_steps':g.evidence_steps,
-                'facts':[{'step_id':f.step_id,'path':f.path,'rendered_value':fact_value(observations[f.step_id],f.path)} for f in g.facts]})
+                'facts':[{'step_id':f.step_id,'path':f.path,'rendered_value':fact_value(observations[f.step_id],f.path)} for f in selected_facts(g,payload,max_chars=self.settings.agent_session_analysis_max_chars)[0]],
+                'selected_fact_ids':list(g.fact_ids)})
         return reply
     PlanningRuntime.respond=observe_grounding
     from agent_service.middleware import SessionAnalysisMiddleware
@@ -112,13 +133,20 @@ async def main():
                 if server_task.done(): await server_task
                 await asyncio.sleep(.05)
         await asyncio.sleep(.5)
-        async with get_session_factory()() as db:
-            await UserService.bootstrap_admin(db,UserCreate(user_id='admin',user_name='Admin',role='admin'))
         async with httpx.AsyncClient(base_url=f'http://127.0.0.1:{args.port}',trust_env=False,timeout=240) as client:
-            uid=namespace
-            r=await client.post('/api/v1/users',headers={'X-User-Id':'admin'},json={'user_id':uid,'user_name':'Executor E2E','role':'user'})
-            assert r.status_code==201,r.text
-            user=r.json(); headers={'X-User-Id':uid}
+            assert (await client.get('/api/v1/users/me')).status_code==401
+            user,headers=await sign_in(client)
+            assert user['user_id']==namespace
+            project=user['default_project_id']
+            without_csrf=await client.post('/api/v1/projects/'+project+'/sessions',json={'session_name':'No CSRF'})
+            assert without_csrf.status_code==403
+            summary['authentication']={'anonymous_status':401,'missing_csrf_status':403,'first_login_auto_registered':True,'role':'user'}
+            memory_path='/api/v1/projects/'+project+'/memory'
+            if args.memory_checks:
+                response=await client.put(memory_path+'/report_preferences/audience',headers={**headers,'Idempotency-Key':str(uuid4())},
+                    json={'content':'이 프로젝트의 보고서는 비전문가를 위해 쉬운 표현으로 작성한다.','expected_version':0})
+                assert response.status_code==200,response.text
+                summary['manual_memory_saved']=True
             r=await client.post('/api/v1/projects/'+user['default_project_id']+'/sessions',headers=headers,json={'session_name':'Executor 연계 검증','settings':{'kernel_profile':'default'}})
             assert r.status_code==201,r.text
             sid=r.json()['id']; path='/api/v1/sessions/'+sid+'/runs'
@@ -141,8 +169,34 @@ async def main():
             assert run['status']=='waiting_input',run
             summary['planning_seconds']=round(time.perf_counter()-started,3)
             plan=run['interrupt'][0]['payload']['plans'][0]
+            summary['initial_plan_unfilled_inputs']=[item['name'] for item in plan['inputs'] if item['required'] and not item.get('has_value')]
             summary['tools']=[s['tool_id'] for s in plan['steps']]
             print(json.dumps({'phase':'approval','tools':summary['tools']},ensure_ascii=False),flush=True)
+            if args.edit_checks:
+                previous_token=run['resume_token'];previous_revision=plan['plan_revision']
+                editable={item['name']:item['value'] if item.get('has_value') else 'default-nce' for item in plan['inputs'] if item['kind']=='data_reference' and item['editable']}
+                repair_level=1 if plan['execution']['repair_level']!=1 and plan['execution']['repair_level_limit']>=1 else 0
+                repair_attempts=1 if repair_level and plan['execution']['max_repair_attempts_limit']>=1 else 0
+                edit={'action':'edit_plan','plan_id':plan['plan_id'],'plan_revision':previous_revision,'input_values':editable,
+                    'execution_overrides':{'mode':'MULTI','repair_level':repair_level,'max_repair_attempts':repair_attempts}}
+                response=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},
+                    json={'run_id':rid,'resume_token':previous_token,'command':{'resume':edit}})
+                assert response.status_code==202,response.text
+                run=await wait_until(lambda r:r['status']=='waiting_input' and r['resume_token']!=previous_token or r['status'] in ('error','success'),30)
+                assert run['status']=='waiting_input',run
+                plan=run['interrupt'][0]['payload']['plans'][0]
+                assert plan['plan_revision']==previous_revision+1 and plan['execution']['mode']=='MULTI', run['interrupt']
+                saved=(run['run_id'],run['resume_token'],run['interrupt'])
+                assert (await client.post('/api/v1/auth/logout',headers=headers)).status_code==204
+                assert (await client.get(path+'/'+rid)).status_code==401
+                renewed,headers=await sign_in(client)
+                assert renewed['default_project_id']==project
+                reread=await read();assert (reread['run_id'],reread['resume_token'],reread['interrupt'])==saved
+                stale=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},
+                    json={'run_id':rid,'resume_token':previous_token,'command':{'resume':{'action':'approve_plan','plan_id':plan['plan_id'],'plan_revision':previous_revision}}})
+                assert stale.status_code==409,stale.text
+                summary['plan_edit']={'revision_before':previous_revision,'revision_after':plan['plan_revision'],
+                    'mode':'MULTI','repair_level':repair_level,'max_repair_attempts':repair_attempts,'stale_resume_status':409,'login_renewal_preserved_hitl':True,'fixed_parameter_values':editable}
             action={'action':'approve_plan','plan_id':plan['plan_id'],'plan_revision':plan['plan_revision']}
             approval={'run_id':rid,'resume_token':run['resume_token'],'command':{'resume':action}}
             key=str(uuid4());started=time.perf_counter()
@@ -172,7 +226,7 @@ async def main():
             assert run['status']=='success',run
             final=run['result']['final_response']
             assert final['status']=='analysis_completed' and final['executor_status']=='SUCCEEDED',final
-            summary.update(execution_id=final['execution_id'],observations=final['observations'],report=final['report'],skipped_steps=final['skipped_steps'])
+            summary.update(execution_id=final['execution_id'],observations=final['observations'],report=final['report'],skipped_steps=final['skipped_steps'],repair=final['repair'])
             repeat=await client.post(path,headers={**headers,'Idempotency-Key':key},json=approval)
             assert repeat.status_code==202,repeat.text
             async with runtime.open_graph() as graph:
@@ -183,6 +237,19 @@ async def main():
             summary['sse_types']=sorted(set(line[7:] for line in stream.text.splitlines() if line.startswith('event: ')))
             assert 'message.completed' in summary['sse_types'] and 'interaction.resolved' in summary['sse_types']
             assert 'def data_load' not in stream.text and 'code_sha256' not in stream.text
+            events=[json.loads(line[6:]) for line in stream.text.splitlines() if line.startswith('data: ') and line[6:].strip()]
+            sequenced=[e for e in events if isinstance(e,dict) and 'sequence' in e]
+            sequences=[e['sequence'] for e in sequenced]
+            assert sequences==sorted(set(sequences))
+            if sequences:
+                cursor=sequences[len(sequences)//2]
+                replay=await client.get(path+'/'+rid+'/stream',headers={**headers,'Last-Event-ID':str(cursor)})
+                assert replay.status_code==200,replay.text
+                replayed=[json.loads(line[6:]) for line in replay.text.splitlines() if line.startswith('data: ') and line[6:].strip()]
+                replay_sequences=[e['sequence'] for e in replayed if isinstance(e,dict) and 'sequence' in e]
+                assert replay_sequences==[q for q in sequences if q>cursor],replay_sequences
+                summary['sse_replay']={'events':len(sequences),'cursor':cursor,'replayed_events':len(replay_sequences),'exact_suffix':True}
+
             if args.followup_checks:
                 from agent_config import build_langgraph_thread_id
                 async with runtime.open_graph() as graph:
@@ -229,6 +296,46 @@ async def main():
                     assert all(d['serialized_chars']<=settings.agent.agent_session_analysis_max_chars for d in deliveries)
                 summary['followup_context_deliveries']=context_deliveries
                 summary['followup_created_execution']=False
+                if args.memory_checks:
+                    question='앞으로 이 프로젝트의 분석 결과를 설명할 때는 비전문가가 이해하기 쉬운 한국어로 작성해줘. 이 선호를 프로젝트 메모리에 기억해줘. 코드 실행은 필요 없어.'
+                    response=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':question}]}})
+                    assert response.status_code==202,response.text
+                    memory_run=response.json()['run_id']
+                    async with asyncio.timeout(240):
+                        while True:
+                            item=(await client.get(path+'/'+memory_run,headers=headers)).json()
+                            if item['status'] not in ('pending','running'):break
+                            await asyncio.sleep(.2)
+                    assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
+                    snapshot=(await client.get(memory_path,headers=headers)).json()
+                    automatic=[e for e in snapshot['entries'] if e.get('source',{}).get('run_id')==memory_run and not e['is_deleted']]
+                    assert automatic,'Explicit durable preference was not saved'
+                    assert all(e['source']['quote'] in question for e in automatic)
+                    second=await client.post('/api/v1/projects/'+project+'/sessions',headers=headers,json={'session_name':'Memory reference session','settings':{'kernel_profile':'default'}})
+                    assert second.status_code==201,second.text
+                    second_path='/api/v1/sessions/'+second.json()['id']+'/runs';before=len(memory_deliveries)
+                    response=await client.post(second_path,headers={**headers,'Idempotency-Key':str(uuid4())},
+                        json={'input':{'content':[{'type':'text','text':'이 프로젝트의 보고서 작성 선호를 알려줘. 지금은 분석 계획이나 코드 실행을 하지 말고 저장된 선호만 알려줘.'}]}})
+                    assert response.status_code==202,response.text
+                    second_run=response.json()['run_id']
+                    async with asyncio.timeout(240):
+                        while True:
+                            item=(await client.get(second_path+'/'+second_run,headers=headers)).json()
+                            if item['status'] not in ('pending','running'):break
+                            await asyncio.sleep(.2)
+                    assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
+                    delivered=memory_deliveries[before:]
+                    assert delivered and all(d['project_id']==project for d in delivered)
+                    actual_keys={(e['section'],e['key'],e['version']) for d in delivered for e in d['entries']}
+                    assert all((e['section'],e['key'],e['version']) in actual_keys for e in automatic)
+                    async with runtime.open_graph() as graph:
+                        state=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(second.json()['id'])}})).values
+                    assert not state['execution_id'] and state['executor_operation_number']==0
+                    summary['project_memory']={'manual_entries':1,'automatic_entries':len(automatic),
+                        'automatic_source_run_verified':True,'same_project_new_session_referenced':True,
+                        'reference_message_sizes':[d['serialized_chars'] for d in delivered],
+                        'extra_executor_submission':False,'topics':[{'section':e['section'],'key':e['key'],'version':e['version']} for e in automatic]}
+
             r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':'안녕하세요'}]}})
             summary['same_session_after_completion_status']=r.status_code
             assert r.status_code==202,r.text
@@ -266,6 +373,6 @@ async def main():
         server.should_exit=True
         await server_task
         args.output.parent.mkdir(parents=True,exist_ok=True)
-        args.output.write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
-        print(json.dumps(summary,ensure_ascii=False,indent=2),flush=True)
+        write_private_result(args.output,summary)
+        print(json.dumps({'passed':summary['passed'],'real_llm':real_mode,'output':str(args.output)},ensure_ascii=False),flush=True)
 asyncio.run(main())

@@ -36,4 +36,12 @@
 
 이전 설문형 graph와 전용 역할을 제거하고 CLI·Studio·시각화를 현재 PlanningRuntime으로 통합했다. 현재 개발은 [054 기록](054-agent-runtime-cleanup.md)을 따른다. 과거 고정 commit의 벤치마크는 당시 재현용이며 현재 SSO·typed HITL·Executor 연계 부하 시험을 대신하지 않는다.
 
-다음은 실제 Runs API에서 로그인 쿠키·CSRF와 함께 새 계획/편집/승인·Executor 결과·후속 질문/보고서·project_memory를 연결하는 사용자 흐름 검증이다. 반복 부하를 측정하려면 현재 인증·HITL·접수 모드를 지원하는 별도 harness 정리가 필요하다. 모델 호출 최적화·Registry·운영 보완의 기존 보류는 유지한다.
+055에서 실제 Runs API의 cookie/CSRF→실제 모델 계획/편집/승인→실제 Executor→후속 질문/Markdown→official Store/새 세션 참조를 연결해 검증했다. [055 기록](055-authenticated-executor-flow.md)을 따른다. 반복 부하를 측정하려면 현재 인증·HITL·접수 모드를 지원하는 별도 harness 정리가 필요하다. 모델 호출 최적화·Registry·운영 보완의 기존 보류는 유지한다.
+
+## 055에서 확인한 입력·커널 점검
+
+우선 Agent 기능·디테일 검증 항목이다. 운영 장애 대응 신규 개발이나 모델 호출 횟수 최적화와 구분한다.
+
+- 명확히 지정한 trusted dataset의 input_values 자동 채움: 첫 실제 계획에서 default-nce 요청에도 필수 dataset_id가 비었고 approval은 422로 차단됐다. 다음 실제 계획에서는 채워졌다. 단순 ID 언급을 선택·승인으로 자동 간주하거나 API 필수값 검증을 풀지 않는다. prompt/schema/응답 검증의 원인과 required/has_value=false의 프론트 제출 UX를 함께 검토한다. 현재 진단의 테스트 사용자가 빈 참조를 명시하여 승인하는 동작과 모델 자동 채움을 분리한다.
+- 커널 프로파일 의존성: 로컬 default Jupyter의 sklearn 부재로 isolation_forest가 실패했고, 승인한 level 1·1회 범위에서 함수 원문 유지/method=zscore 재실행이 성공했다. 실제 배포 kernel spec/library와 등록 Tool의 조건부 라이브러리를 대조한다. Agent/API 이미지의 package 설치를 Jupyter 가용성으로 해석하지 않는다. 코드/Tool/커널 정보 어디에서 가용성을 제공할지 검토하고 Executor 이미지 수정은 별도 요청 범위로 정한다.
+- 보고서 Artifact/노트북 셀 등록은 별도 정책 결정이 필요하며 현재 completion은 artifact_registration=deferred다. Markdown 응답·Run 문맥 보존과 파일 등록을 구분한다.
