@@ -35,6 +35,10 @@ Conversation은 같은 create_agent와 기존 미들웨어 경계를 사용한�
 
 [상세 측정·한계](../reports/answer-efficiency-2026-10-02.md)를 참고한다.
 
+## 후속 작업 우선순위
+
+2026-10-02 사용자 요청으로 모델 호출 횟수 최적화는 보류했다. 보고서 재작성에서 남아 있는 정정 호출 한 번의 원인 분석·축소는 [후속 작업 목록](backlog.md)에 기록하고 현재 진행 대상에서 제외한다. 050의 구현·검증 결과와 기존 수치·소유권 검증은 유지한다.
+
 ## 통합·게시
 
 구현·검증 commit `5e22b9868a33fb5c2f52e4e855e7592dca2ba68a`을 `feature/refactor-base`에 fast-forward 병합했다. 베이스·파생 `feature/grounded-answer-efficiency`를 origin `https://github.com/KimHwaJin/prj_re.git`에 atomic push한 뒤 원격 두 SHA 일치를 확인했다. 파생 브랜치는 당시 검증 구현을 보존한다. 게시 결과는 베이스의 별도 문서 commit으로 남긴다. 기존 사용자 checkout과 Docker 서비스는 유지했으며 배포·서비스 재기동은 수행하지 않았다.
