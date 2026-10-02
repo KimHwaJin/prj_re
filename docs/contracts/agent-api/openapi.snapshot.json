@@ -1580,7 +1580,7 @@
         "properties": {
           "content": {
             "type": "string",
-            "maxLength": 1000,
+            "maxLength": 16000,
             "minLength": 1,
             "title": "Content",
             "description": "명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드."
@@ -1658,6 +1658,35 @@
             ],
             "title": "Run Id",
             "description": "자동 추출 원문이 전달된 공개 Run ID. 명시적 관리 API 편집이면 없을 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "project_context",
+                  "preference_change",
+                  "remember"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent",
+            "description": "자동 메모리 갱신 사유. project_context=지속적인 배경, preference_change=선호 변경, remember=명시적 기억 요청. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "session_id": {
             "anyOf": [

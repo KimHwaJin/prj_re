@@ -1,11 +1,11 @@
 """Explicitly shared knowledge can be inspected, corrected and removed."""
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from service_contracts.project_memory import MemorySection
+from service_contracts.project_memory import MemorySection, MAX_TOPIC_CHARS
 
 class MemoryPut(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
-    content: str = Field(min_length=1, max_length=1000, description='Explicit project-wide knowledge or preference shared by this user.')
+    content: str = Field(min_length=1, max_length=MAX_TOPIC_CHARS, description='Explicit project-wide text. Configured topic_max_chars also applies; default 1000, absolute input guard 16000.')
     expected_version: int = Field(ge=0, description='0 for a new topic; echo the current version to edit or restore a deleted topic.')
 
     @field_validator('content')
@@ -15,8 +15,10 @@ class MemoryPut(BaseModel):
         return value
 
 class MemorySource(BaseModel):
-    kind: Literal['user_edit','user_request'] = Field(description='Explicit management API update, or an extracted quote from the current user request.')
+    kind: Literal['user_edit','user_request'] = Field(description='Explicit management API update, or a durable topic supported by the current user quote.')
     run_id: str | None = Field(default=None, description='Source public Run ID for Agent extraction. No new Run is created for manual memory edits.')
+    quote: str | None = Field(default=None, description='Exact current user quote supporting an automatic topic update; absent for manual edits.')
+    intent: Literal['project_context','preference_change','remember'] | None = Field(default=None, description='Durable project_context, preference_change or explicit remember intent; absent for manual edits.')
     session_id: str | None = Field(default=None, description='Source session for audit only; entries are shared within this project.')
 
 class MemoryEntry(BaseModel):

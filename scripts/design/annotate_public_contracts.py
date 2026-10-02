@@ -10,6 +10,8 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 FIELDS = {
+    'quote': '자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다.',
+    'intent': '자동 메모리 갱신 사유. project_context=지속적인 배경, preference_change=선호 변경, remember=명시적 기억 요청.',
     'section': '프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다.',
     'key': '프로젝트 메모리 section 내에서 같은 주제를 식별하는 안정적인 키. 최대 48자다.',
     'entries': '프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록.',
@@ -238,7 +240,7 @@ MODELS = {
     'MemoryPut': '프로젝트 메모리 항목 본문과 현재 버전의 명시적 쓰기 요청.',
     'MemoryResource': '프로젝트 소유자와 항목·출처·삭제 버전의 조회 응답.',
     'MemoryEntry': '하나의 프로젝트 공유 메모리 항목과 최신 버전.',
-    'MemorySource': '서비스가 부여한 메모리 출처. 사용자 편집 또는 현재 요청 원문 추출.',
+    'MemorySource': '서비스가 부여한 메모리 출처. 자동 갱신은 Run/Session·원문 quote·지속적인 갱신 intent를 보존한다.',
     'MemoryWriteResult': '커밋되거나 멱등 재생된 메모리 쓰기 결과.',
     'MemoryWrittenEntry': '이번 쓰기로 반영한 항목의 버전과 삭제 여부.',
 

@@ -94,7 +94,7 @@ def build_role_agent(
     policies = list(middleware)
     from agent_service.middleware.project_memory import ProjectMemoryMiddleware
     if not any(isinstance(policy, ProjectMemoryMiddleware) for policy in policies):
-        policies.append(ProjectMemoryMiddleware())
+        policies.append(ProjectMemoryMiddleware(role=name))
     kwargs = {}
     if output_type is not None:
         system_prompt += (

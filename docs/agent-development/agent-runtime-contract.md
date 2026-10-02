@@ -54,7 +54,7 @@ def build_agent(model, *, structured_output_mode="prompt_json"):
 | user_id/project_id/session_id | AgentContext로 전달; 자동 프롬프트 삽입하지 않음 |
 | 프로젝트 system_prompt·버전 | 서비스가 신규 사용자 턴 실행 시 DB에서 조회 → 외부 graph의 JSON 상태에 snapshot → 매 내부 호출의 AgentContext |
 | 실제 모델명 | factory에 주입된 모델에서 가져와 AgentContext.model_name 제공 |
-| runtime.store와 project_memory_policy | 공식 AsyncPostgresStore를 create_agent에 연결, 요청별 정책은 소유권·버전·출처 검사; 생성형 요약은 후속 |
+| runtime.store와 project_memory_policy | 공식 AsyncPostgresStore를 create_agent에 연결, 요청별 정책은 소유권·버전·출처 검사; 역할별 입력 예산과 현재 원문을 근거로 한 짧은 주제 갱신은 053 기준 |
 
 프로젝트 지시문은 ProjectPromptMiddleware가 역할 기본 지시문 뒤에 추가한다. 공유 Agent 객체나 원본 메시지를 수정하지 않으므로 프로젝트 간 동시 호출에 섞이지 않는다. JSON 재시도도 미들웨어를 다시 통과하며 같은 지시문을 중복 누적하지 않는다.
 
@@ -85,7 +85,7 @@ prompt_json은 tool calling이나 provider JSON Schema 지원을 강제하지 �
 
 ## 다음 단계
 
-052에서 project_memory 저장소를 공식 LangGraph Store로 전환했다. runtime.store를 읽고 요청별 정책으로 항목 버전·출처를 검사하며 051의 선택적 원문 추출 범위는 유지한다. [현재 계약](../project-memory.md)을 따른다. 생성형 요약 정책은 후속이다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name 선택과 재개 모델 고정은 023에서 구현했다. [모델 선택 계약](../run-model-selection.md)을 따른다.
+052에서 project_memory 저장소를 공식 LangGraph Store로 전환했다. runtime.store를 읽고 요청별 정책으로 항목 버전·출처를 검사하며 053의 원문을 근거로 한 지속적인 주제 갱신과 입력 예산 정책을 적용한다. [현재 계약](../project-memory.md)을 따른다. 053에서 역할별 입력 예산과 지속적인 주제 갱신 정책을 추가했다. 현재의 호출 단위 메시지에 SummarizationMiddleware를 넣는 것만으로 프로젝트 지식이 추출·저장되지는 않는다. 요청의 main_model_name 선택과 재개 모델 고정은 023에서 구현했다. [모델 선택 계약](../run-model-selection.md)을 따른다.
 
 공식 API 참고: [미들웨어](https://docs.langchain.com/oss/python/langchain/middleware/custom), [구조화 출력](https://docs.langchain.com/oss/python/langchain/structured-output), [create_agent](https://reference.langchain.com/python/langchain/agents/factory/create_agent).
 

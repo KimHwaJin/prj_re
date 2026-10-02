@@ -1,12 +1,12 @@
 # 프로젝트 공유 메모리
 
-`project_memory`는 한 프로젝트의 여러 세션에서 참고할 배경과 선호를 항목별로 보존한다. 현재 세션의 대화 이력·완료 분석의 관찰·프로젝트 `system_prompt`와 별개다. 저장소는 **공식 LangGraph `AsyncPostgresStore`**이며 서비스의 기존 `DATABASE_URL` PostgreSQL을 사용한다. `create_agent(store=...)`와 외부 LangGraph의 `compile(store=...)`에 같은 Store를 주입한다. 체크포인트 DB나 Redis·벡터 DB를 추가하지 않는다. 051의 전용 ORM 저장소는 052에서 제거했다.
+`project_memory`는 한 프로젝트의 여러 세션에서 참고할 배경과 선호를 항목별로 보존한다. 현재 세션의 대화 이력·완료 분석의 관찰·프로젝트 `system_prompt`와 별개다. 저장소는 **공식 LangGraph `AsyncPostgresStore`**이며 서비스의 기존 `DATABASE_URL` PostgreSQL을 사용한다. `create_agent(store=...)`와 외부 LangGraph의 `compile(store=...)`에 같은 Store를 주입한다. 체크포인트 DB나 Redis·벡터 DB를 추가하지 않는다. 051의 전용 ORM 저장소는 052에서 제거했고, 길이·역할·갱신 정책은 053에서 추가했다.
 
 ## 사용하는 흐름
 
 1. 소유한 프로젝트에 메모리를 명시적으로 등록하거나 `auto_context` 설정에서 현재 사용자 발언의 배경·선호를 추출한다.
 2. API Run Worker 또는 Executor Event Worker가 역할 Agent를 호출할 때, 서비스가 공유 Store와 owner/project/session/source Run에 묶인 정책 객체를 주입한다. 미들웨어는 `runtime.store`를 이용한다.
-3. 공통 `ProjectMemoryMiddleware.abefore_agent`가 역할 호출당 한 번 읽고 연결을 돌려준다. 모델 요청·JSON 정정 재시도에는 같은 snapshot을 사용한다.
+3. 공통 `ProjectMemoryMiddleware.abefore_agent`가 역할 호출당 한 번 읽고 연결을 돌려준다. 역할/현재 요청에 맞는 제한된 참조를 만들며 모델 요청·JSON 정정 재시도에는 같은 snapshot/참조를 사용한다. prompt 한도 중 하나가 0이면 읽지 않는다.
 4. 다른 세션의 다음 역할 호출은 최신 snapshot을 다시 읽는다. 공유 Agent 객체나 전역 변수에 프로젝트별 메모리를 캐시하지 않는다.
 5. 메모리는 `HumanMessage` 참조 데이터로 주입한다. 승인·실행 명령·검증된 현재 분석 결과로 취급하지 않는다. 현재 요청과 원본 관찰이 우선한다.
 
@@ -16,12 +16,12 @@
 
 | section | 의미 | 자동 추출 |
 |---|---|---|
-| background | 프로젝트 목표·업무 배경 | auto_context에서 현재 사용자 원문만 |
-| analysis_preferences | 프로젝트 차원의 분석 관점·선호 | auto_context에서 현재 사용자 원문만 |
-| report_preferences | 보고서 독자·구성·강조점·표현 선호 | auto_context에서 현재 사용자 원문만 |
+| background | 프로젝트 목표·업무 배경 | 현재 사용자 원문으로 뒷받침되는 짧은 주제 |
+| analysis_preferences | 프로젝트 차원의 분석 관점·선호 | 현재 사용자 원문으로 뒷받침되는 짧은 주제 |
+| report_preferences | 보고서 독자·구성·강조점·표현 선호 | 현재 사용자 원문으로 뒷받침되는 짧은 주제 |
 | shared_findings | 사용자가 명시적으로 공유한 결과 메모 | 관리 API의 명시적 쓰기만 |
 
-각 항목은 `(project_id, section, key)`로 식별하며 content, version, is_deleted, source, updated_at을 갖는다. key는 같은 주제를 수정할 안정적인 영문 키다. 한 프로젝트 최대 64개 key(삭제 표시 포함), 문서 JSON 최대 16000자, 항목 본문 최대 1000자다. 자동으로 오래된 항목을 지우지 않는다. 한도에 도달하면 기존 항목을 짧게 수정하거나 삭제했던 키를 명시적으로 재사용한다.
+각 항목은 `(project_id, section, key)`로 식별하며 content, version, is_deleted, source, updated_at을 갖는다. key는 같은 주제를 수정할 안정적인 영문 키다. 기본값은 프로젝트 최대 64개 key(삭제 표시 포함), 출처를 포함한 문서 JSON 최대 16000자, 항목 본문 최대 1000자, 한 번에 최대 4개 갱신이다. 모두 설정할 수 있다. 자동으로 오래된 항목을 지우지 않는다. 한도에 도달하면 기존 항목을 짧게 수정하거나 삭제했던 키를 명시적으로 재사용한다.
 
 공식 Store의 `store` 테이블에 항목과 삭제 버전을 JSON 문서로 저장한다. `store_migrations`는 공식 Store schema 이력이다. 애플리케이션의 ORM 모델이나 별도 BaseStore 구현은 없다.
 
@@ -41,12 +41,18 @@ service:
   agent:
     # off: Agent 읽기/자동 쓰기 비활성화. 명시적 관리 API 자체는 유지.
     # manual: 프로젝트 메모리를 읽되, 쓰기는 관리 API에서 명시적으로 공유.
-    # auto_context: 현재 사용자 발언에서 프로젝트 배경/선호를 항목별 추출.
+    # auto_context: 지속적인 프로젝트 배경/선호 또는 명시적인 기억 요청만 갱신.
     # 어느 모드도 세션 데이터·수치·결론을 자동으로 공유하지 않음.
     agent_project_memory_mode: manual
+    agent_project_memory_max_topics: 64         # 삭제 표시도 포함. 1..1024.
+    agent_project_memory_max_chars: 16000      # 출처 포함 저장 JSON. 1024..1000000.
+    agent_project_memory_topic_max_chars: 1000 # 본문 및 자동 원문 인용. 1..16000.
+    agent_project_memory_max_updates: 4        # 한 원자 batch. 1..32, max_topics 이하.
+    agent_project_memory_prompt_max_chars: 6000 # 참조 메시지 전체. 0..1000000.
+    agent_project_memory_prompt_max_tokens: 4096 # 보수적 추정 토큰 예산. 0..1000000.
 ```
 
-동일한 환경변수는 `AGENT_PROJECT_MEMORY_MODE`다. 중앙 resolver의 config 명시값 > env > 기본값 순서와 false/0 보존 규칙을 유지한다. YAML에 manual을 명시하면 환경변수 auto_context가 이를 덮어쓰지 못한다. 모드를 변경한 배포 프로세스는 재시작해야 한다.
+환경변수는 위 설정 키를 대문자로 바꾼 이름이다. 예: `AGENT_PROJECT_MEMORY_MAX_TOPICS`, `AGENT_PROJECT_MEMORY_PROMPT_MAX_TOKENS`. 중앙 resolver의 config 명시값 > env > 기본값 순서와 false/0 보존 규칙을 유지한다. YAML에 manual을 명시하면 환경변수 auto_context가 이를 덮어쓰지 못한다. 모드를 변경한 배포 프로세스는 재시작해야 한다.
 
 명시적으로 입력한 `shared_findings`는 사용자 기록이다. 자동으로 검증된 Executor 결과나 재사용 가능한 데이터 파일로 승격되지 않는다. 원본 Run/Executor 결과 확인과 Dataset Registry를 대신하지 않는다.
 
@@ -96,13 +102,37 @@ section은 위 표의 네 값이고, key는 영문 소문자로 시작하는 `[a
 
 다른 사용자의 프로젝트·비활성 프로젝트는 404, 오래된 버전/멱등성 충돌은 409, 형식·용량 초과는 422다. 삭제된 key도 버전을 유지하므로 오래된 화면에서 expected_version=0으로 되살릴 수 없다. 복원은 최신 삭제 버전을 명시해야 한다.
 
-## 자동 추출과 실제 저장 결과
+## 모델 입력에 제공하는 범위
 
-`auto_context`에서 Conversation의 기존 create_agent 응답에 내부 `memory_updates`를 포함한다. 별도 추출 LLM을 호출하지 않는다. 현재 사용자 request에 실제 존재하는 원문 quote와 동일한 content만 허용하고, 기존 항목 버전을 검증한다. history·모델 해석·관찰 결과·파일 내용으로 메모리를 새로 작성하지 않는다. 숫자 문장, URL, 대표적인 파일 경로/확장자, shared_findings 자동 쓰기도 거절한다. 삭제된 항목의 자동 복원과 같은 내용의 반복 갱신을 막는다.
+저장 용량과 모델 입력 용량은 별개다. 삭제 표시, 원문 quote, source Run/Session ID, updated_at은 관리 API/Store에 보존하고 모델 메모리 메시지에서는 제외한다. 다음 역할별 범위에서 현재 요청과 겹치는 단어(한국어는 인접 두 글자도 사용)를 우선하고 역할 분류 순서·항목 버전·key로 안정적으로 정렬한다. Vector/추가 LLM 검색은 없다. 이는 의미 검색이 아닌 결정적인 관련성 휴리스틱이다.
 
-이는 생성형 요약이나 모든 자연어 의미에 대한 증명이 아니다. 문자열 원문 검증과 제한된 분류를 사용한 보수적인 항목 추출이다. 숫자 없는 세션 한정 발언을 모델이 프로젝트 배경으로 잘못 분류할 가능성은 남아 있다. 기본 manual에서는 이 경로가 실행되지 않으며, auto_context 운영 적용 전 실제 사용자 발언을 추가 검토해야 한다. 내용을 수정할 때 전체 문서를 덮어쓰지 않고 해당 section/key만 교체한다.
+| 역할 | 제공하는 분류 |
+|---|---|
+| Conversation | 배경·분석 선호·보고서 선호·명시적 공유 메모 |
+| 계획 재작성 | 배경·분석 선호 |
+| 실행 결과 판단 | 배경·분석 선호·명시적 공유 메모 |
+| 보고서 작성 | 보고서 선호·배경·명시적 공유 메모 |
+| 오류 수정 | 배경·분석 선호 |
 
-자동 저장은 검증된 최종 응답 이후 `aafter_agent`에서 실행한다. 동일 source Run의 conversation 쓰기는 동일 출처 ID를 사용한다. 같은 항목의 동시 갱신은 한쪽만 통과하며, 충돌 시 이전 내용을 임의로 덮어쓰거나 별도 LLM을 호출해 다시 결정하지 않는다. 갱신 결과는 public `activity.started/completed`의 project_memory 활동과 답변 Run 결과의 `final_response.project_memory`에서 확인한다. 계획 후보가 있는 경우 활동 이벤트와 내부 graph 결과를 사용한다. 내부 memory_updates와 메모리 문서 자체를 SSE에 그대로 공개하지 않는다.
+공통 factory의 역할 이름이 위 다섯 역할에 해당하면 이 범위를 적용한다. 신규/legacy 역할은 네 분류를 기본으로 제공하므로 역할 추가 시 `memory_selection.ROLE_SECTIONS` 또는 명시적 미들웨어 role을 검토한다. 역할 필터는 권한 검사가 아니며 소유권은 서비스 정책이 검사한다.
+
+참조 메시지의 안내문·식별자·선택 정보·쓰기 정책까지 포함하여 문자 예산과 추정 토큰 예산을 모두 검사한다. 토큰은 폐쇄망 모델 tokenizer를 추가 조회하지 않고 UTF-8 byte 수로 보수적으로 추정한다. **정확한 모델 token count나 전체 LLM 입력 예산의 보장이 아니다.** 모델 tokenizer를 사용할 때 선택 함수의 counter를 교체할 수 있다. 한 항목이 너무 크면 자르지 않고 그 항목을 생략한 뒤 다른 항목을 검사한다. selection.omitted_topics는 역할 범위 안의 활성 항목 중 생략한 수다. 전체 문서 소실/삭제로 해석하지 않는다.
+
+두 prompt 한도 중 하나가 0이면 Agent의 읽기·자동 갱신을 중단하지만 명시적 관리 API는 유지한다. 0이 아니어도 안내문이 예산에 들어가지 않으면 메모리 메시지를 넣지 않고 자동 갱신도 허용하지 않는다. 기동 시 한도를 낮췄어도 절대 입력/조회 guard 이내의 기존 메모리는 관리 API로 읽을 수 있다. 설정을 넘는 기존 문서는 새 항목/용량 증가를 거절하며 기존 항목을 더 짧게 줄이는 수정은 허용한다. tombstone은 자동 정리하지 않는다.
+
+## 갱신 시점과 내용 정책
+
+기본 manual은 관리 API의 명시적 편집만 저장한다. auto_context에서는 **기존 Conversation create_agent 응답**에 갱신안을 포함하고, 검증된 최종 응답 이후 aafter_agent가 저장한다. 별도 주기 작업이나 메모리 전용 LLM을 추가하지 않는다. 다른 역할 Agent와 Executor 완료 이벤트는 메모리를 자동 갱신하지 않는다. 다음 역할 호출부터 새 항목을 읽고, 이미 실행 중인 호출의 snapshot은 바꾸지 않는다.
+
+허용하는 것은 지속적인 프로젝트 배경, 분석/보고서 선호, 명시적인 기억 요청이다. content는 원문의 의미를 유지한 짧은 주제로 정리할 수 있고 source.quote에는 현재 사용자 발언의 정확한 부분을, source.intent에는 project_context/preference_change/remember를 보존한다. 원문 이력은 최신 항목의 근거이며 전체 변경 이력 저장소는 아니다. 예: “앞으로 보고서는 비전문가 대상으로 쉽게 작성해줘”를 “보고서 독자는 비전문가이며 쉬운 표현을 사용한다”로 정리한다.
+
+“이번 보고서만 짧게”·“이번 분석에서는 이상치를 빼줘” 같은 임시 요구는 현재 세션 요청으로만 처리한다. 모델 지침과 보수적인 한국어/영어 지속·임시 표현 검사로 이 범위를 제한한다. 원문 인용이 현재 request에 실제 존재하는지 확인하며 history·파일·모델 응답으로 새 원문을 만들지 않는다. 숫자 문장, URL, 대표 파일 경로/확장자, shared_findings 자동 쓰기와 삭제 항목 자동 복원은 거절한다. 분석 결과·수치·데이터는 기존 명시적 공유 API만 허용하며 검증된 실행 근거를 대신하지 않는다.
+
+**자연어 의미나 요약의 충실성을 기계적으로 증명하는 것은 아니다.** 다국어·새로운 표현의 분류나 짧은 정리에서 오류가 남을 수 있다. default manual을 유지하고 원문 출처/관리 API로 확인·수정할 수 있게 한다. 운영 auto_context 적용 전 실제 업무 표현을 추가 평가해야 한다.
+
+같은 주제는 기존 section/key와 version을 사용하고 변경된 항목만 갱신한다. 동일 원문을 재송신했을 때 receipt로 중복 저장을 막고, 내용이 같은(공백 차이 포함) 항목은 재갱신하지 않는다. 모델에게 기존 키 재사용을 지시하지만 서로 다른 표현의 주제를 의미적으로 완전히 중복 제거하지는 않는다. 충돌 시 기존 항목을 임의로 덮어쓰지 않는다.
+
+갱신 결과는 public activity.started/completed의 project_memory 활동과 답변 Run 결과의 final_response.project_memory에서 확인한다. 내부 memory_updates·quote·전체 메모리는 SSE에 공개하지 않는다. Store의 사용·원자 쓰기·Worker 점유 검사와 삭제/복원 동작은 052와 같다.
 
 처리 중 DB 연결은 모델 대기 동안 유지하지 않는다. 공식 Store는 psycopg를 사용하며 기존 CRUD 엔진은 asyncpg를 사용하므로 풀을 직접 공유하지 않는다. API 프로세스당 하나의 Store runtime이 lazy psycopg 풀을 소유한다. 최소 연결 0, 최대 `min(2, DATABASE_POOL_SIZE)`, 대기 timeout은 `DATABASE_POOL_TIMEOUT_SECONDS`다. 새 URL/별도 환경변수는 없으며 **Pod DB 예산에는 CRUD 풀·checkpoint 풀·bridge 풀과 이 최대 2개 연결을 각각 합산**해야 한다. Store 자체의 TTL/자동 만료와 embedding/벡터 검색은 켜지 않는다.
 
@@ -122,4 +152,4 @@ PYTHONPATH=src python -m alembic -c alembic.crud.ini upgrade head
 
 `api_service/core/memory_store.py`는 풀 수명, `service_contracts/memory_store.py`는 namespace·JSON 읽기, `api_service/services/project_memory_policy.py`는 소유권·버전·동시성·출처·receipt 정책을 담당한다. 제거된 `project_memory_service.py`/전용 모델의 호환 shim은 없다.
 
-테스트와 실제 모델 확인의 범위는 [052 Store 전환 기록](improvements/052-langgraph-project-memory-store.md)을 참고한다. 이 변경으로 기존 Docker 컨테이너나 운영 DB를 재기동·마이그레이션하지 않았다. 장기 실행 종료 후 새로운 파일/수치 근거 연결, 프로젝트 간 공유, 프로젝트 협업 권한, 자동 결과 요약은 별도 범위다.
+테스트와 실제 모델 확인의 범위는 [053 메모리 정책 기록](improvements/053-project-memory-policy.md)을 참고한다. 이 변경으로 기존 Docker 컨테이너나 운영 DB를 재기동·마이그레이션하지 않았다. 장기 실행 종료 후 새로운 파일/수치 근거 연결, 프로젝트 간 공유, 프로젝트 협업 권한, 자동 결과 요약은 별도 범위다.

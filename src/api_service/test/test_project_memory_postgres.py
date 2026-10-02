@@ -156,7 +156,7 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         payload=json.loads(next(m['content'] for m in body['messages'] if m['role']=='user'))
         memory=next(json.loads(m['content'])['memory'] for m in body['messages'] if '"reference_type": "project_memory"' in str(m['content']))
         seen.append(copy.deepcopy(memory))
-        update=[{'section':'report_preferences','key':'style','content':quote,'quote':quote,'expected_version':0}] if payload['request']==quote else []
+        update=[{'section':'report_preferences','key':'style','content':quote,'quote':quote,'intent':'preference_change','expected_version':0}] if payload['request']==quote else []
         return response({'role':'assistant','content':json.dumps({'kind':'answer','message':'간결한 원인·행동 중심 보고서 선호를 참고하겠습니다.','grounding':{'scope':'general'},'memory_updates':update,'plans':[]},ensure_ascii=False)})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
         selection=runtime.models.select().model_dump()
@@ -178,7 +178,9 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         await execute();following=await read(h,second.json()['run_id'])
         assert following['status']=='success'
     assert len(seen)==2 and seen[0]['entries']==[]
-    assert seen[1]['entries'][0]['content']==quote and seen[1]['entries'][0]['source']['run_id']==rid
+    assert seen[1]['entries'][0]['content']==quote
+    saved=(await h.client.get(f"/api/v1/projects/{h.user['default_project_id']}/memory",headers=headers(h.user['user_id']))).json()['entries'][0]
+    assert saved['source']['run_id']==rid and saved['source']['quote']==quote
     for session in [h.session_id,sid]:
         assert (await graph.aget_state({'configurable':{'thread_id':session}})).values.get('execution_id') is None
 
@@ -317,3 +319,50 @@ async def test_store_migration_preserves_legacy_topics_receipts_and_unrelated_na
     with psycopg.connect(raw) as db:
         assert db.execute("SELECT to_regclass('project_memories'),to_regclass('project_memory_receipts')").fetchone()==(None,None)
         assert [v[0] for v in db.execute('SELECT v FROM store_migrations ORDER BY v')]==[0,1,2,3]
+
+@pytest.mark.asyncio
+async def test_configurable_topic_batch_and_tombstone_limits_are_atomic(harness):
+    from service_contracts.project_memory import MemoryLimits
+    h=harness;user,uid,pid,service=await setup(h)
+    limits=MemoryLimits(max_topics=6,max_updates=6,topic_max_chars=1500,max_chars=30000)
+    custom=ProjectMemoryPolicy(session_factory=h.factory,limits=limits)
+    changes=[change('topic_'+chr(97+i),content='x'*1100) for i in range(6)]
+    first=await custom.apply(uid,pid,changes,source_id='six',source={'kind':'user_edit'})
+    # Committed replay is stable even after lowering batch/content limits.
+    assert await service.apply(uid,pid,changes,source_id='six',source={'kind':'user_edit'})==first
+    assert len((await custom.read(uid,pid))['entries'])==6
+    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('seven')],source_id='seven',source={'kind':'user_edit'})
+    await custom.apply(uid,pid,[change('topic_a',version=1)],source_id='delete-a',source={'kind':'user_edit'},delete=True)
+    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('seven')],source_id='seven-again',source={'kind':'user_edit'})
+    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('topic_b',content='x'*1501,version=1)],source_id='large',source={'kind':'user_edit'})
+    assert len((await custom.read(uid,pid))['entries'])==6
+
+@pytest.mark.asyncio
+async def test_lowered_limits_preserve_reads_and_allow_gradual_shrinking(harness):
+    from service_contracts.project_memory import MemoryLimits
+    h=harness;user,uid,pid,service=await setup(h)
+    for key in ['one','two','three']:
+        await service.apply(uid,pid,[change(key,content='x'*800)],source_id=key,source={'kind':'user_edit'})
+    smaller=ProjectMemoryPolicy(session_factory=h.factory,limits=MemoryLimits(max_topics=2,max_updates=2,max_chars=1024))
+    assert len((await smaller.read(uid,pid))['entries'])==3
+    with pytest.raises(MemoryLimit):await smaller.apply(uid,pid,[change('four')],source_id='four',source={'kind':'user_edit'})
+    await smaller.apply(uid,pid,[change('one',content='short',version=1)],source_id='shrink',source={'kind':'user_edit'})
+    assert next(e for e in (await smaller.read(uid,pid))['entries'] if e['key']=='one')['content']=='short'
+
+@pytest.mark.asyncio
+async def test_normalized_topic_keeps_exact_current_quote_as_provenance(harness):
+    h=harness;user,uid,pid,service=await setup(h)
+    sid=await add_session(h,user)
+    from api_service.schemas.common.run_schema import RunStart
+    from api_service.services.public_run_service import PublicRunService
+    async with h.factory() as db:
+        run=await PublicRunService.create(db,uid,UUID(sid),RunStart(input={'messages':[{'role':'user','content':'앞으로 보고서는 비전문가를 대상으로 작성해줘'}]}),'normalized')
+        rid=str(run.run_id)
+    bound=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':sid,'run_id':rid})
+    update={**change(content='보고서 독자는 비전문가'), 'quote':'앞으로 보고서는 비전문가를 대상으로 작성해줘','intent':'preference_change'}
+    async with store_runtime.open_store() as store:
+        first=await bound.apply(store,[update]);assert await bound.apply(store,[update])==first
+    saved=(await service.read(uid,pid))['entries'][0]
+    assert saved['content']=='보고서 독자는 비전문가'
+    assert saved['source']['quote']==update['quote'] and saved['source']['intent']=='preference_change'
+    assert saved['source']['run_id']==rid

@@ -20,11 +20,11 @@
 
 ## 프로젝트 메모리 이행 상태
 
-051에서 project_memory 항목 저장·읽기·미들웨어와 선택적 현재 발언 원문 추출을 구현했다. [051 기록](051-project-memory-runtime.md)의 추출 정책을 유지하며 저장·접근 구조는 [052 공식 Store 전환](052-langgraph-project-memory-store.md)을 따른다. 생성형 요약과 실행 결과 자동 공유는 미구현이며 현재 기능으로 표시하지 않는다. [현재 개발 계약](../agent-development/agent-runtime-contract.md), [공유 메모리 설계](../design/agentic-workflow-contract/README.md)를 따른다.
+051에서 project_memory 항목 저장·읽기·미들웨어와 선택적 현재 발언 원문 추출을 구현했다. [051 기록](051-project-memory-runtime.md)의 추출 정책을 유지하며 저장·접근 구조는 [052 공식 Store 전환](052-langgraph-project-memory-store.md)을 따른다. 053에서 현재 사용자 원문을 근거로 한 짧은 주제 정리와 지속성/역할/입력 예산 정책을 추가했다. 전체 메모리의 자동 요약·Executor 결과 자동 공유는 미구현이며 현재 기능으로 표시하지 않는다. [현재 개발 계약](../agent-development/agent-runtime-contract.md), [공유 메모리 설계](../design/agentic-workflow-contract/README.md)를 따른다.
 
 검토할 범위는 프로젝트의 공유 배경·분석 선호·공유 가능한 근거를 부분별로 저장하고 다음 세션의 Agent 문맥에서 읽는 것이다. system_prompt, 현재 세션의 대화 이력, 완료 분석의 실제 수치 근거와 역할을 구분한다. 세션 전용 데이터·수치·결론은 명시적 공유 없이 프로젝트 메모리에 자동 확산하지 않는다. 완료 분석의 원본 관찰은 메모리 요약으로 대체하지 않는다.
 
-저장 형식·owner/source 검사·항목별 버전·동시 갱신·역할별 미들웨어 연결은 052의 공식 Store 검증 결과를 기준으로 한다. 기본 manual, 선택적 auto_context의 의미와 한계는 [현재 계약](../project-memory.md)을 따른다.
+저장 형식·owner/source 검사·항목별 버전·동시 갱신은 052를, 설정 가능한 한도·역할별 입력·지속적인 갱신은 [053 기록](053-project-memory-policy.md)을 기준으로 한다. 기본 manual, 선택적 auto_context의 의미와 한계는 [현재 계약](../project-memory.md)을 따른다.
 
 ## 기존 보류 사항
 

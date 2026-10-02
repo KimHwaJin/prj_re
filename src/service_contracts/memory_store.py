@@ -1,9 +1,8 @@
 """Application namespaces on the standard LangGraph Store, without a custom backend."""
 from hashlib import sha256
 from langgraph.store.base import BaseStore
+from service_contracts.project_memory import MAX_STORAGE_TOPICS, MAX_STORAGE_CHARS, MemoryLimit
 
-MAX_TOPICS = 64
-MAX_MEMORY_CHARS = 16000
 SECTIONS = {'background', 'analysis_preferences', 'report_preferences', 'shared_findings'}
 
 def memory_namespace(user_id, project_id):
@@ -30,7 +29,13 @@ def memory_entries(items, user_id, project_id):
     return entries
 
 async def read_memory(store: BaseStore, user_id, project_id):
-    items = await store.asearch(memory_namespace(user_id, project_id), limit=MAX_TOPICS + 1)
+    items = await store.asearch(memory_namespace(user_id, project_id), limit=MAX_STORAGE_TOPICS + 1)
+    if len(items) > MAX_STORAGE_TOPICS:
+        raise MemoryLimit('Project memory exceeds the absolute scan bound')
     entries = memory_entries(items, user_id, project_id)
     entries.sort(key=lambda entry: (entry['section'], entry['key']))
-    return {'schema_version': 1, 'user_id': str(user_id), 'project_id': str(project_id), 'entries': entries}
+    document = {'schema_version': 1, 'user_id': str(user_id), 'project_id': str(project_id), 'entries': entries}
+    import json
+    if len(json.dumps(document, ensure_ascii=False)) > MAX_STORAGE_CHARS:
+        raise MemoryLimit('Project memory exceeds the absolute document bound')
+    return document

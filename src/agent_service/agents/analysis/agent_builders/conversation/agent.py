@@ -3,13 +3,13 @@ import json
 from importlib.resources import files
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field, model_validator, PrivateAttr, create_model
 
 from agent_service.factory import build_role_agent, json_output
 from agent_service.middleware import ProjectPromptMiddleware, SessionAnalysisMiddleware
 from agent_service.middleware.discovery import MetadataDiscoveryMiddleware
 from agent_service.middleware.planning_contract import PlanningContractMiddleware
-from service_contracts.project_memory import MemoryProposal
+from service_contracts.project_memory import MemoryProposal, MemoryLimits
 from agent_service.middleware.project_memory import ProjectMemoryMiddleware
 from agent_service.runtime.project_memory import validate_memory_proposals, extract_memory_changes
 from service_contracts.plan_review import new_review
@@ -24,7 +24,11 @@ class Proposal(BaseModel):
     input_values: dict = Field(default_factory=dict)
 
 
-def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
+def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memory_limits=None):
+    limits = memory_limits or MemoryLimits()
+    proposal_type = create_model('ProjectMemoryProposal', __base__=MemoryProposal,
+        content=(str,Field(min_length=1,max_length=limits.topic_max_chars,description='Short normalized topic supported by quote; no new claims.')),
+        quote=(str,Field(min_length=1,max_length=limits.topic_max_chars,description='Exact CURRENT user quote supporting durable project sharing.')))
     class Reply(BaseModel):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'planning', 'plans']
@@ -32,7 +36,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
             'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
             'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
             'For plans or unrelated general FAQ, ordinary text is allowed.')
-        memory_updates: list[MemoryProposal] = Field(default_factory=list, max_length=4, description="Extract only project background or analysis/report preferences explicitly stated in the CURRENT request. content=quote exactly. No data/schema/statistics/file paths or inferred findings. Empty when automatic_write=false, no snapshot or no new durable project context.")
+        memory_updates: list[proposal_type] = Field(default_factory=list, max_length=limits.max_updates, description="Only durable project background/preferences or explicit remember requests. Normalize briefly, preserve exact CURRENT quote and intent. Never session-only requests, findings, data or paths. Reuse stable keys/versions; empty when automatic_write=false or no change.")
         _memory_result: dict | None = PrivateAttr(default=None)
         grounding: AnswerGrounding | None = None
         plans: list[Proposal] = Field(default_factory=list, max_length=max_candidates)
@@ -66,8 +70,8 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
     return Reply
 
 
-def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000,store=None):
-    schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts)
+def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, structured_output_mode='prompt_json',repair_limit=4,repair_attempts=3,session_context_max_chars=16000,store=None,memory_limits=None):
+    schema = reply_schema(catalog, max_candidates,repair_limit,repair_attempts,memory_limits)
     prompt = load_prompt(__package__)
     planning_prompt = files(__package__).joinpath('planning_prompt.md').read_text(encoding='utf-8') + '\nWorkflow definition JSON Schema:\n' + json.dumps(workflow_schema(), ensure_ascii=False)
     planning = PlanningContractMiddleware(planning_prompt, schema=schema)

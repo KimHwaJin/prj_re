@@ -1,6 +1,7 @@
 """Per-invocation context. Never put clients or repositories in graph state."""
 from dataclasses import dataclass, field
 from typing import Protocol
+from service_contracts.project_memory import MemoryLimits
 
 
 class ProjectMemoryPolicy(Protocol):
@@ -22,3 +23,5 @@ class AgentContext:
     session_analysis_context: dict | None = field(default=None, repr=False, compare=False)
     project_memory_policy: ProjectMemoryPolicy | None = field(default=None, repr=False, compare=False)
     project_memory_auto_write: bool = False
+    project_memory_limits: MemoryLimits = field(default_factory=MemoryLimits)
+    project_memory_request: str = field(default='', repr=False, compare=False)

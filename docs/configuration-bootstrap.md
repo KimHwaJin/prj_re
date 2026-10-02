@@ -40,7 +40,7 @@ service:
     executor_submit_enabled: false
 ```
 
-`service` 아래 그룹은 runtime/database/checkpoint/llm/executor/events/storage/diagnostics이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
+`service` 아래 그룹은 runtime/database/checkpoint/llm/agent/executor/events/storage/diagnostics/auth이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
 
 ## Run 동시 실행 수
 
@@ -155,3 +155,7 @@ Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀
 SDK factory·API/프론트 origin·SSO 허용 주소는 실제 환경에서 제공해야 한다. 미설정 로그인은
 503이며 X-User-Id 우회는 없다. 자동 일반 사용자 등록, 고정 로그인 TTL, 쿠키 정책, 로그인
 Redis 연결풀의 설정·주석과 Swagger 테스트는 [SSO 가이드](sso-authentication.md)를 따른다.
+
+## 프로젝트 메모리 한도와 입력 예산
+
+`service.agent`의 `AGENT_PROJECT_MEMORY_*`는 중앙 설정에서 API 저장 정책·Agent 응답 schema·미들웨어에 동일하게 주입한다. 기본값과 문자/추정 토큰 단위, 0의 의미, 역할별 범위, 한도 변경 시 기존 문서 처리 정책은 [프로젝트 메모리](project-memory.md)를 따른다. config.yml에 각 설정의 주석 예시가 있다. 설정 변경은 프로세스 재시작 후 적용된다.

@@ -1,0 +1,102 @@
+{
+  "model": "qwen38-27b-nvfp4",
+  "backend": "official AsyncPostgresStore, actual scratch PostgreSQL, production create_agent",
+  "scope": "real model + Store policy + SQL persistence; identity test double, direct Agent invoke; no queue Worker/Executor/Phoenix E2E",
+  "cases": [
+    {
+      "case": "save",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 4.451,
+      "error_type": null
+    },
+    {
+      "case": "session_only",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 3.547,
+      "error_type": null
+    },
+    {
+      "case": "next_session",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 3.485,
+      "error_type": null
+    },
+    {
+      "case": "update",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 4.224,
+      "error_type": null
+    },
+    {
+      "case": "after_update",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 3.393,
+      "error_type": null
+    },
+    {
+      "case": "manual_no_auto",
+      "passed": true,
+      "model_calls": 1,
+      "seconds": 3.217,
+      "error_type": null
+    }
+  ],
+  "restart_persistence": true,
+  "executor_submissions": 0,
+  "passed": true,
+  "verification_date": "2026-10-02",
+  "baseline_commit": "effe70351e5656c402a168adffaf6089273613c2",
+  "feature_branch": "feature/project-memory-policy",
+  "performance_comparison": false,
+  "static_input_fixture": {
+    "scope": "synthetic 32-topic fixture; full reference document (without baseline policy wrapper) vs current complete message; not a real LLM A/B benchmark",
+    "stored_json_chars": 8289,
+    "new_complete_message_chars": 2615,
+    "new_complete_message_utf8_bytes": 3869,
+    "selected_topics": 11,
+    "omitted_role_eligible_topics": 11,
+    "default_prompt_max_chars": 6000,
+    "default_prompt_estimated_tokens": 4096,
+    "full_reference_document_chars": 8337,
+    "full_reference_document_utf8_bytes": 11985
+  },
+  "public_contract_change_audit": {
+    "changed_schemas": [
+      "MemoryPut",
+      "MemorySource"
+    ],
+    "documented_paths": 12,
+    "schemas": 28,
+    "paths_unchanged_from_base": true,
+    "current_snapshot_matches_app": true,
+    "memory_put_absolute_input_guard": 16000,
+    "default_deployment_topic_limit": 1000,
+    "new_optional_provenance_fields": [
+      "quote",
+      "intent"
+    ]
+  },
+  "full_regression": {
+    "passed": 959,
+    "subtests_passed": 2,
+    "warnings": 100,
+    "seconds": 412.4
+  },
+  "final_related_regression": {
+    "passed": 89,
+    "warnings": 9,
+    "seconds": 18.61
+  },
+  "package_verification": {
+    "source_checkout_imported": false,
+    "roles": 12,
+    "openapi_paths": 38,
+    "mock_steps": 4,
+    "memory_selection_included": true
+  }
+}

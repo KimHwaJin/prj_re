@@ -2,7 +2,7 @@
 
 현재 분석 Agent의 최신 실행 안내: [계획 제안](../agentic-planning-runtime.md), [Executor 실행](../agentic-executor-runtime.md), [040 오류 수정](../agentic-execution-repair.md), [041 계획 재작성](../agentic-plan-revision.md). 오류 수정 역할의 선언·프롬프트는 analysis/agent_builders/execution_repair, 실행 노드는 analysis/execution/repair_nodes, 순수 검증은 repair_policy에 있다. 등록 workflow 자산 파일을 실행 중 변경하지 않는다. 실행 전 재작성 역할은 analysis/agent_builders/plan_revision, 전체·차이 계획 검증은 planning/proposals, 공통 함수 검증은 execution/sources에 있다. 역할마다 prompt를 별개로 보존한다.
 
-패키지 분리의 기준 기록은 025이고 현재 공개 실행 계약은 [Agent API](../public-run-api.md), 정의 형식은 [Workflow JSON](../workflow-json-reference.md)을 따른다. 다음 문단의 025 역할 수는 당시 기록이다. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory는 052에서 공식 LangGraph AsyncPostgresStore로 전환했다. 051의 원문 추출 정책은 유지한다. 생성형 메모리 요약과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
+패키지 분리의 기준 기록은 025이고 현재 공개 실행 계약은 [Agent API](../public-run-api.md), 정의 형식은 [Workflow JSON](../workflow-json-reference.md)을 따른다. 다음 문단의 025 역할 수는 당시 기록이다. API·Agent 패키지와 공통 규격·연동·자원 계층을 분리했다. 7개 역할의 create_agent·미들웨어, Run별 모델 고정(023), 비동기 Executor HTTP(024)를 사용한다. project_memory는 052에서 공식 LangGraph AsyncPostgresStore로 전환했다. 053에서 원문 출처를 보존한 지속적인 주제 정리·역할별 입력 예산을 구현했다. 전체 메모리 자동 요약과 다중 업무 Agent registry는 후속이다. [현재 구조·의존성 규칙](../architecture/service-layout.md)과 [Agent 선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
 - [현재 분석 Agent의 파일별 역할](../../src/agent_service/agents/analysis/README.md)
 - [전체 목표 구조와 이번 단계의 경계](../architecture/service-layout.md)
@@ -83,7 +83,7 @@ builder는 주입받은 모델을 사용하며 모델·DB 풀·Worker를 import 
 
 여러 업무 Agent가 실제 공유하는 도구가 생길 때 agent_service/tools로 올린다. 현재는 분석 카탈로그만 확인되어 analysis/tools를 유지했고 빈 공용 패키지는 만들지 않았다. Executor용 Python 소스(src/agent_service/agents/analysis/workflow/tools)는 LLM에 제공할 LangChain Tool과 다른 개념이다.
 
-프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 역할별 기본 prompt.md 7개는 원문을 유지한다. 프로젝트 system_prompt는 ProjectPromptMiddleware가 각 모델 요청에 별도로 추가하며, project_memory 저장·읽기·원문 추출은 [052 현재 계약](../project-memory.md)을 따른다. 생성형 요약은 미구현이다.
+프롬프트 로더는 파일 내용의 strip/개행 정규화/공통 템플릿 합성을 하지 않는다. 역할별 기본 prompt.md 7개는 원문을 유지한다. 프로젝트 system_prompt는 ProjectPromptMiddleware가 각 모델 요청에 별도로 추가하며, project_memory 저장·읽기·역할별 입력 예산·원문을 근거로 한 짧은 주제 갱신은 [053 현재 계약](../project-memory.md)을 따른다. 전체 메모리의 주기적 자동 요약은 미구현이다.
 
 실제 LLM을 호출하지 않는 WorkflowRecommender와 file_lookup placeholder에는 가짜 builder나 prompt를 만들지 않는다. 기존 미사용 recommender prompt는 [참고 자료](reference-prompts/workflow_recommender_prompt.md)로 옮겼다.
 
@@ -160,10 +160,12 @@ async for update in graph.astream(graph_input, config):
 
 공개 API·Executor Event Worker는 039의 planning/graph.py와 execution/{compiler,nodes}.py를 사용한다. 결과 판단은 agent_builders/execution_review, 리포트는 agent_builders/execution_report에 선언과 독립 prompt를 둔다. 등록 함수 원문 보존, 실제 관찰, 사용자 decision_review, 자원 수명은 [실행 개발 안내](../agentic-executor-runtime.md)를 따른다. 기존 CLI/graph의 이행 여부와 구분한다.
 
-## 프로젝트 메모리 공식 Store 연결 052
+## 프로젝트 메모리 공식 Store 연결·입력/갱신 정책 053
 
 `ProjectMemoryMiddleware`는 공통 factory에서 모든 create_agent 역할에 추가된다. 서비스가 `create_agent(store=...)`에 공식 Store를 연결하며 미들웨어는 `runtime.store`를 사용한다. per-invocation `AgentContext.project_memory_policy`는 활성 소유권·Run 출처·조건부 쓰기 검사만 담당하고 Store를 대체하지 않는다. Store/정책이 없는 독립 호출에서는 읽지 않는다. Conversation만 최종 `memory_updates`에서 갱신을 제안하며 판단·보고서·repair·재작성 역할은 읽기만 한다.
 
 Store 객체는 프로세스 수명으로 공유하지만 요청별 snapshot과 owner는 Agent 캐시에 보관하지 않는다. `PlanningRuntime(store=..., memory_policy_factory=...)`가 모델 역할 선언에 Store를 전달하고 `bind_context`가 각 요청의 정책을 만든다. 실제 저장은 `api_service/core/memory_store.py`의 공식 Store가 담당한다. `api_service/services/project_memory_policy.py`는 CRUD/Worker 검사를 연결하는 서비스 정책이며 Agent 패키지를 import하지 않는다. 계약은 `service_contracts/memory_store.py`와 `service_contracts/project_memory.py`에 있다. 신규 메모리 쓰기는 원시 Store `aput()`으로 버전/권한 검사를 우회하지 않고 정책을 거친다.
 
-Store 사용만으로 요약·추출이 자동 구현되지는 않는다. 원문 추출의 범위·manual 기본값은 [현재 메모리 계약](../project-memory.md)을 따른다. 공식 Store에 향후 다른 Agent 메모리 문서를 저장할 수 있지만 이번 구현은 프로젝트 메모리와 관련 receipt만 사용한다. Workflow 추천 JSON·원시 파일·실행 출력 전체를 Store로 이전하지 않는다.
+Store 사용만으로 요약·추출이 자동 구현되지는 않는다. 원문을 근거로 한 지속적인 주제 갱신·manual 기본값은 [현재 메모리 계약](../project-memory.md)을 따른다. 공식 Store에 향후 다른 Agent 메모리 문서를 저장할 수 있지만 이번 구현은 프로젝트 메모리와 관련 receipt만 사용한다. Workflow 추천 JSON·원시 파일·실행 출력 전체를 Store로 이전하지 않는다.
+
+053의 `AgentContext.project_memory_limits`는 중앙 설정에서 주입한 immutable MemoryLimits다. `memory_selection.ROLE_SECTIONS`에서 신규 역할의 허용 분류를 검토하고, 입력 예산은 저장 한도와 분리해 유지한다. 모델에 제공된 일부 참조만으로 Store 전체를 덮어쓰지 않는다. Conversation 응답 schema도 configured max_updates/topic_max_chars를 사용한다.

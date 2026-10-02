@@ -21,6 +21,9 @@ class PlanningRuntime:
         self.store = store
 
     def bind_context(self, state, context):
+        from service_contracts.project_memory import MemoryLimits
+        context = replace(context, project_memory_limits=MemoryLimits.from_settings(self.settings),
+                          project_memory_request=state.get('user_request',''))
         if self.memory_policy_factory is None or self.settings.agent_project_memory_mode == 'off':
             return context
         return replace(context,project_memory_policy=self.memory_policy_factory(state),
@@ -83,7 +86,8 @@ class PlanningRuntime:
                                                discovery_max_rounds=self.settings.agent_discovery_max_rounds,
                                                repair_limit=self.settings.agent_repair_level_limit,repair_attempts=self.settings.agent_max_repair_attempts,
                                                session_context_max_chars=self.settings.agent_session_analysis_max_chars,
-                                               structured_output_mode=spec.structured_output_mode, store=self.store)
+                                               structured_output_mode=spec.structured_output_mode, store=self.store,
+                                               memory_limits=context.project_memory_limits)
         return await self.agents[key].ainvoke({
             'request': state['user_request'], 'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
             'available_skills': self.catalog.public_skills(), 'dataset_catalog': dataset_catalog,

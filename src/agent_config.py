@@ -188,6 +188,16 @@ class AgentSettings:
     # off=no read/write; manual=read plus explicit memory API; auto_context=extract current user background/preferences.
     # Session data/results are never auto-shared, and deletion cannot be automatically reversed.
     agent_project_memory_mode: str = "manual"
+    # Storage guards: all topics (including tombstones), serialized JSON chars,
+    # per-topic content chars and atomic batch size. No automatic eviction.
+    agent_project_memory_max_topics: int = 64
+    agent_project_memory_max_chars: int = 16000
+    agent_project_memory_topic_max_chars: int = 1000
+    agent_project_memory_max_updates: int = 4
+    # Complete memory reference message budget, separate from durable storage.
+    # UTF-8 bytes conservatively estimate tokens; 0 in either disables injection.
+    agent_project_memory_prompt_max_chars: int = 6000
+    agent_project_memory_prompt_max_tokens: int = 4096
     # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
     analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
     # Text evidence supplied to the text-only model per Step; full output remains on Executor PV.
@@ -354,6 +364,9 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     memory_mode = env.get('AGENT_PROJECT_MEMORY_MODE', 'manual')
     if memory_mode not in {'off','manual','auto_context'}:
         raise ValueError('AGENT_PROJECT_MEMORY_MODE must be off, manual or auto_context')
+    from service_contracts.project_memory import MemoryLimits
+    memory_limits = MemoryLimits(**{name: int(env.get('AGENT_PROJECT_MEMORY_' + name.upper(), str(default)))
+        for name, default in vars(MemoryLimits()).items()})
     observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
     max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
     plan_revisions = int(env.get('AGENT_MAX_PLAN_REVISIONS', '5'))
@@ -376,6 +389,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     return AgentSettings(
         max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
         agent_session_analysis_max_chars=session_analysis_limit, agent_project_memory_mode=memory_mode,
+        **{'agent_project_memory_' + name: value for name, value in vars(memory_limits).items()},
         agent_discovery_max_rounds=discovery_rounds,
         analysis_datasets=datasets,
         agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,

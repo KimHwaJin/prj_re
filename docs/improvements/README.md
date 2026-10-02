@@ -4,7 +4,7 @@
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 브랜치를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 개발 기준: `feature/refactor-base`. 052에서 프로젝트 메모리를 공식 LangGraph Store로 전환하고 전체 검증을 마쳤다. 전용 ORM backend/shim을 제거했고 기존 데이터는 0025로 이전한다. [052 작업 기록](052-langgraph-project-memory-store.md), [현재 메모리 계약](../project-memory.md)을 따른다. 모델 호출 횟수 최적화는 [후속 목록](backlog.md)에 보류한다.
+현재 개발 기준: `feature/refactor-base`. 053에서 공식 Store 기반 프로젝트 메모리의 설정 가능한 저장 한도·역할별 입력 예산·지속적인 주제 갱신 정책을 구현하고 최종 검증을 마쳤다. [053 작업 기록](053-project-memory-policy.md), [현재 메모리 계약](../project-memory.md)을 따른다. 모델 호출 횟수 최적화는 [후속 목록](backlog.md)에 보류한다.
 
 052 통합 이력: 구현 `bf82d9357351293f4300319b00b5324aac8f66a9`를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 원격 구현 SHA 일치를 확인했다. [052 구현·검증·게시 기록](052-langgraph-project-memory-store.md)을 따른다.
 
@@ -88,10 +88,11 @@
 | 050 | 후속 답변의 짧은 근거 ID·수치 분리 계약·중복 표 축소 | 구현·실모델 A/B·908회귀·최종 경계84/wheel 검증·베이스 병합·origin 게시 완료 | 2026-10-02 | [050 기록](050-compact-answer-facts.md) |
 | 051 | 프로젝트 공유 메모리 저장·읽기·미들웨어·원문 추출 | 구현·932회귀·실제 모델 세 사례/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [051 기록](051-project-memory-runtime.md) |
 | 052 | 프로젝트 메모리 공식 LangGraph Store 전환·전용 저장소 제거 | 구현·937회귀·실제 LLM/Store/wheel 검증 완료 / 베이스 병합·origin 게시 완료 | 2026-10-02 | [052 기록](052-langgraph-project-memory-store.md) |
+| 053 | 프로젝트 메모리 저장 한도·역할별 입력 예산·지속적인 주제 갱신 | 구현·959회귀·실제 LLM/Store 6개 사례/wheel 검증 완료 / 통합·게시 준비 | 2026-10-02 | [053 기록](053-project-memory-policy.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
-2026-10-02 사용자 결정: 모델 호출 횟수 최적화는 후순위로 보류한다. 보고서 재작성의 정정 호출 축소도 이 범위에 포함한다. [후속 작업 목록](backlog.md)에 현상·재개 범위·검증 기준을 기록했다. 051에서 project_memory 저장소와 미들웨어 연결을 진행했다. 051은 최초 저장 정책 이력이고, 현재 저장 구조와 검증은 [052 기록](052-langgraph-project-memory-store.md)을 따른다.
+2026-10-02 사용자 결정: 모델 호출 횟수 최적화는 후순위로 보류한다. 보고서 재작성의 정정 호출 축소도 이 범위에 포함한다. [후속 작업 목록](backlog.md)에 현상·재개 범위·검증 기준을 기록했다. 051에서 project_memory 저장소와 미들웨어 연결을 진행했다. 051은 최초 저장 정책 이력이고, 현재 저장 구조는 052, 길이·갱신 정책과 검증은 [053 기록](053-project-memory-policy.md)을 따른다.
 
 현재 구현 순서는 002의 공통 기반 → 사용자 식별/역할 → Runs·실행기(001 정체 수정 포함) → CRUD 정책 → Agent 프로젝트 컨텍스트/Workflow → 통합·부하 검증이다. 번호는 기록 ID이며 우선순위와 같지 않다. 프로젝트 공유 메모리의 확정 명칭은 `project_memory`다.
 

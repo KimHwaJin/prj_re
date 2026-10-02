@@ -25,7 +25,7 @@ def snapshot(project='p',user='u',entries=None):
     return {'schema_version':1,'user_id':user,'project_id':project,'entries':entries or []}
 
 def proposal(**kw):
-    return {'section':'report_preferences','key':'style','content':QUOTE,'quote':QUOTE,'expected_version':0,**kw}
+    return {'section':'report_preferences','key':'style','content':QUOTE,'quote':QUOTE,'intent':'preference_change','expected_version':0,**kw}
 
 def value(updates=None):
     return {'kind':'answer','message':'요청한 방향을 참고하겠습니다.','plans':[],
@@ -52,7 +52,7 @@ async def test_one_read_retries_no_durable_write_before_validation_and_no_extra_
         result=await build_agent(model(client),AssetCatalog(),structured_output_mode=mode,store=InMemoryStore()).ainvoke({'request':QUOTE},context=ctx)
     assert len(calls)==2 and memory.read.await_count==1 and memory.apply.await_count==1
     assert result._memory_result['status']=='saved'
-    assert 'quote' not in memory.apply.call_args.args[1][0]
+    assert memory.apply.call_args.args[1][0]['quote']==QUOTE
     assert all(sum('"reference_type": "project_memory"' in str(m['content']) for m in body['messages'])==1 for body in calls)
     assert all('Workflow definition JSON Schema' not in body['messages'][0]['content'] for body in calls)
 
