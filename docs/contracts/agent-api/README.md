@@ -42,3 +42,5 @@ events 파일은 SSE data의 JSON이다. 실제 전송 시 저장 이벤트에 i
 9개 요청과 4종 HITL·계획 종료·Run 상태를 실제 Pydantic 계약으로 검증했다. 계획은 레포 등록 Skill/Tool 예제를 사용하여 순수 Workflow validator와 편집/승인 validator도 확인했다. decision/repair action은 해당 화면과 대조했다. 메타데이터와 schema 생성만 수행하며 Tool 실행·파일 로드·기업 인증·성능을 검증한 자료는 아니다.
 
 Schema를 수정하면 current code에서 다시 생성하고 예제를 재검증해야 한다. OpenAPI만으로 SSE 및 유연한 최종 결과 payload를 완전히 복원할 수 없으므로 주 문서와 함께 사용한다.
+
+051에서 프로젝트 공유 메모리 조회·수정·삭제의 두 경로를 OpenAPI snapshot에 추가했다. 기존 Run 요청·응답·SSE envelope 계약은 유지한다. [메모리 필드·설정·예제](../../project-memory.md)를 참고한다.

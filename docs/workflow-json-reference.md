@@ -348,7 +348,7 @@ expected_outputs 각 항목은 id/kind/description/required/source/format이 필
 
 MinIO는 모두가 공유하는 원천 저장소로 취급한다. 우리가 관리할 전처리 데이터의 USER/PROJECT/SESSION 범위 및 등록/조회는 별도 Dataset 계약이며 Executor 구현을 기다리고 있다. JSON에 특정 파일명·임의 경로를 넣어서 이 권한 경계를 대체하지 않는다.
 
-MULTI는 목표 실행 완료 후 Finalize와 terminal 확인으로 커널을 종료한다. 완료 후 추가 계산은 새 Run·새 Execution·새 커널이며 저장된 데이터/결과를 사용한다. 설명·보고서 편집만이면 새 Executor 실행이 없다. 프로젝트 system_prompt는 Agent 문맥에 적용하고 project_memory 자동 요약·저장은 아직 별도 후속 작업이다.
+MULTI는 목표 실행 완료 후 Finalize와 terminal 확인으로 커널을 종료한다. 완료 후 추가 계산은 새 Run·새 Execution·새 커널이며 저장된 데이터/결과를 사용한다. 설명·보고서 편집만이면 새 Executor 실행이 없다. 프로젝트 system_prompt는 Agent 문맥에 적용하고 project_memory 저장·조회·선택적 현재 사용자 원문 추출은 [051 계약](project-memory.md)을 따른다. 실행 결과의 자동 공유·생성형 요약은 후속이다.
 
 ## 기존 Workflow CRUD와 1.3 형식
 

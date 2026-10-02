@@ -91,6 +91,9 @@ def build_role_agent(
     validate_response: Callable | None = None,
 ) -> RoleAgent:
     policies = list(middleware)
+    from agent_service.middleware.project_memory import ProjectMemoryMiddleware
+    if not any(isinstance(policy, ProjectMemoryMiddleware) for policy in policies):
+        policies.append(ProjectMemoryMiddleware())
     kwargs = {}
     if output_type is not None:
         system_prompt += (

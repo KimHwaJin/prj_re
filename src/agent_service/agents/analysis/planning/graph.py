@@ -39,6 +39,7 @@ class PlanningState(TypedDict, total=False):
     user_resume_receipt: dict | None
     history: list[dict]
     last_analysis_context: dict | None
+    project_memory_result: dict | None
     public_events: list[dict]
     reviews: list[dict]
     plan_views: list[dict]
@@ -113,6 +114,7 @@ def build_planning_graph(runtime, *, checkpointer):
         return {'agent_runtime': RUNTIME_VERSION, 'public_run_id': current['public_run_id'],
                 'task_id': str(uuid4()),'kernel_profile':state.get('kernel_profile') or runtime.settings.executor_runtime_profile,
                 'dataset_output_dir':f"/workspace/pv/user/{state['user_id']}/project/{state['project_id']}/data",
+                'project_memory_result':None,
                 'execution_id':None,'executor_operation_number':0,'next_step_sequence':0,
                 'completed_steps':[],'skipped_steps':[],'execution_decisions':{},'pending_decisions':[],
                 'decision_review':None,'execution_review_validation_error':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
@@ -158,9 +160,15 @@ def build_planning_graph(runtime, *, checkpointer):
         activity = next(e['envelope']['data']['activity_id'] for e in state['public_events'] if e['envelope']['type'] == 'activity.started')
         events = [*state['public_events'], public_event(state, 'activity.completed', {'activity_id': activity, 'kind': 'planning', 'title': '답변 또는 계획을 준비했습니다.'}),
                   public_event(state, 'message.completed', {'role': 'assistant', 'channel': channel, 'content': [{'type': 'text', 'text': message}]})]
-        return {'reviews': reviews, 'routing_result': {'route': 'analysis' if reviews else 'faq'}, 'public_events': events,
+        memory_result = getattr(reply,'_memory_result',None)
+        if memory_result is not None:
+            memory_activity_id=str(uuid4())
+            events.append(public_event(state,'activity.started',{'activity_id':memory_activity_id,'kind':'project_memory','title':'프로젝트 공유 메모리 갱신 결과를 확인합니다.'}))
+            events.append(public_event(state,'activity.completed',{'activity_id':memory_activity_id,'kind':'project_memory',
+                'title':'프로젝트 공유 메모리를 갱신했습니다.' if memory_result['status']=='saved' else '프로젝트 메모리가 변경되거나 한도에 도달해 이번 자동 갱신은 저장하지 않았습니다.'}))
+        return {'project_memory_result':memory_result, 'reviews': reviews, 'routing_result': {'route': 'analysis' if reviews else 'faq'}, 'public_events': events,
                 'history': [*state['history'], {'role': 'assistant', 'content': message}][-runtime.settings.agent_history_message_limit:],
-                'final_response': None if reviews else {'status': 'answer', 'message': message}}
+                'final_response': None if reviews else {'status': 'answer', 'message': message, **({'project_memory':memory_result} if memory_result is not None else {})}}
 
     def publish_review(state):
         owner = (state.get('user_resume_receipt') or {}).get('command_id', state['agent_run_id'])

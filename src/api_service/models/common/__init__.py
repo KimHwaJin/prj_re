@@ -15,6 +15,8 @@ from api_service.models.common.workflow_model import (
 
 __all__ = [
     "UserModel",
+    "ProjectMemoryModel",
+    "ProjectMemoryReceiptModel",
     "ProjectModel",
     "ProjectMemberModel",
     "SessionModel",
@@ -32,3 +34,5 @@ __all__ = [
 
 
 from api_service.models.common.session_execution_model import SessionExecutionModel
+
+from api_service.models.common.project_memory_model import ProjectMemoryModel, ProjectMemoryReceiptModel

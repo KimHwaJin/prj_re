@@ -1,10 +1,10 @@
 # Agent 호출과 응답 API
 
-프론트 개발자와 API 연계 개발자를 위한 현재 코드 기준 계약이다. 2026-10-01의 045까지 반영한 `0e35b62`에서 확인했으며, 이후 이 문서와 예제를 추가했다. 실행 중인 과거 Docker 이미지의 API와 같다고 가정하지 않는다.
+프론트 개발자와 API 연계 개발자를 위한 현재 코드 기준 계약이다. 2026-10-02의 051까지 반영한 코드와 OpenAPI snapshot에서 확인했다. 실행 중인 과거 Docker 이미지의 API와 같다고 가정하지 않는다.
 
 새 요청과 모든 HITL 재개는 같은 POST를 사용한다. 일반 POST는 실행을 durable queue에 접수하고 Run 상태를 반환한다. 진행 메시지·승인 화면·최종 결과는 상태 GET 또는 SSE로 받는다. 최종 LLM 답변을 일반 POST의 응답까지 기다리는 방식이 아니다.
 
-[SSO 설정](sso-authentication.md), [Workflow JSON](workflow-json-reference.md), [검증된 JSON 예제와 schema](contracts/agent-api/README.md)를 함께 참고한다. 이미지·파일 입력과 Gaia adapter, 새 Workflow 관리 API·pgvector 추천, 동적 Dataset Registry는 아직 연결되지 않았다.
+[프로젝트 공유 메모리 API](project-memory.md), [SSO 설정](sso-authentication.md), [Workflow JSON](workflow-json-reference.md), [검증된 JSON 예제와 schema](contracts/agent-api/README.md)를 함께 참고한다. 이미지·파일 입력과 Gaia adapter, 새 Workflow 관리 API·pgvector 추천, 동적 Dataset Registry는 아직 연결되지 않았다.
 
 본문 `jsonc` 예제와 [주석 파일 안내](contracts/field-comments.md)는 필드별 설명을 포함한다. API에 전송할 때는 주석 없는 `.json` 예제를 사용한다. 주석은 요청 필드가 아니다.
 
@@ -313,3 +313,7 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 - 상태·재개 검증: [public_run_service.py](../src/api_service/services/public_run_service.py)
 - 화면·액션: [plan_interaction.py](../src/service_contracts/plan_interaction.py), [execution_repair.py](../src/service_contracts/execution_repair.py)
 - SSE: [run_stream_service.py](../src/api_service/services/run_stream_service.py)
+
+## 프로젝트 메모리 갱신 결과 051
+
+Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리는 `/projects/{project_id}/memory`의 별도 GET과 section/key PUT·DELETE로 제공한다. `auto_context`에서 실제 메모리 갱신을 시도한 경우 활동 이벤트의 `kind=project_memory`와 답변 최종 결과의 `final_response.project_memory`에 saved/not_saved 결과를 전달한다. 실패·동시 갱신 충돌을 저장 성공으로 표시하지 않는다. 내부 model의 memory_updates는 프론트가 전달하는 필드가 아니다. [각 필드와 설정](project-memory.md)을 참고한다.

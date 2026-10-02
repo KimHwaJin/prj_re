@@ -185,6 +185,9 @@ class AgentSettings:
     # Latest terminal analysis supplied to follow-up model calls, measured as serialized JSON chars.
     # 0 disables it; full reports/results remain in Run/Executor records, independent of this excerpt.
     agent_session_analysis_max_chars: int = 16000
+    # off=no read/write; manual=read plus explicit memory API; auto_context=extract current user background/preferences.
+    # Session data/results are never auto-shared, and deletion cannot be automatically reversed.
+    agent_project_memory_mode: str = "manual"
     # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
     analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
     # Text evidence supplied to the text-only model per Step; full output remains on Executor PV.
@@ -348,6 +351,9 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     session_analysis_limit = int(env.get('AGENT_SESSION_ANALYSIS_MAX_CHARS', '16000'))
     if session_analysis_limit != 0 and not 2048 <= session_analysis_limit <= 64000:
         raise ValueError('AGENT_SESSION_ANALYSIS_MAX_CHARS must be 0 or 2048..64000')
+    memory_mode = env.get('AGENT_PROJECT_MEMORY_MODE', 'manual')
+    if memory_mode not in {'off','manual','auto_context'}:
+        raise ValueError('AGENT_PROJECT_MEMORY_MODE must be off, manual or auto_context')
     observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
     max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
     plan_revisions = int(env.get('AGENT_MAX_PLAN_REVISIONS', '5'))
@@ -369,7 +375,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
                 for key, value in datasets.items()}
     return AgentSettings(
         max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
-        agent_session_analysis_max_chars=session_analysis_limit,
+        agent_session_analysis_max_chars=session_analysis_limit, agent_project_memory_mode=memory_mode,
         agent_discovery_max_rounds=discovery_rounds,
         analysis_datasets=datasets,
         agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,

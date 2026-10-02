@@ -29,6 +29,9 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/agents/analysis/execution/grounding.py' in names
     assert 'agent_service/runtime/session_analysis.py' in names
     assert 'agent_service/middleware/session_analysis.py' in names
+    assert 'agent_service/middleware/project_memory.py' in names
+    assert 'service_contracts/project_memory.py' in names
+    assert 'api_service/services/project_memory_service.py' in names
     assert 'agent_service/middleware/planning_contract.py' in names
     assert 'agent_service/agents/analysis/agent_builders/conversation/planning_prompt.md' in names
     assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
@@ -92,6 +95,8 @@ settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED'
 app = create_app(settings)
 paths = app.openapi()['paths']
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
+assert '/api/v1/projects/{project_id}/memory' in paths
+assert '/api/v1/projects/{project_id}/memory/{section}/{key}' in paths
 assert '/api/v1/auth/login/sso' in paths and '/api/v1/auth/logout' in paths
 assert any(p.endswith('/runs') for p in paths)
 assert '/api/v1/tasks/{task_id}' in paths

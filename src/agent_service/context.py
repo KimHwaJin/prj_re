@@ -5,8 +5,8 @@ from typing import Protocol
 
 class ProjectMemory(Protocol):
     """A project-scoped repository supplied by the service; no global keys."""
-    async def read(self, project_id: str) -> str: ...
-    async def write(self, project_id: str, content: str, *, source_id: str) -> None: ...
+    async def read(self, project_id: str) -> dict: ...
+    async def apply(self, changes: list[dict]) -> dict: ...
 
 
 @dataclass(frozen=True)
@@ -21,3 +21,4 @@ class AgentContext:
     # Bounded completed evidence for this exact user/project/session, never shared Agent state.
     session_analysis_context: dict | None = field(default=None, repr=False, compare=False)
     project_memory: ProjectMemory | None = field(default=None, repr=False, compare=False)
+    project_memory_auto_write: bool = False

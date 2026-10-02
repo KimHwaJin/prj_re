@@ -73,7 +73,8 @@ class AgentGraphRuntime:
             ) from exc
 
         agent_settings = load_agent_settings()
-        dependencies = PlanningRuntime(agent_settings)
+        from api_service.services.project_memory_service import ProjectMemoryService
+        dependencies = PlanningRuntime(agent_settings, project_memory_factory=ProjectMemoryService().for_context)
         checkpointer = (settings.graph_checkpointer or "postgres").strip().lower()
         return dependencies, agent_settings, checkpointer
 

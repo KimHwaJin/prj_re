@@ -3,12 +3,15 @@ import json
 from importlib.resources import files
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, PrivateAttr
 
 from agent_service.factory import build_role_agent, json_output
 from agent_service.middleware import ProjectPromptMiddleware, SessionAnalysisMiddleware
 from agent_service.middleware.discovery import MetadataDiscoveryMiddleware
 from agent_service.middleware.planning_contract import PlanningContractMiddleware
+from service_contracts.project_memory import MemoryProposal
+from agent_service.middleware.project_memory import ProjectMemoryMiddleware
+from agent_service.runtime.project_memory import validate_memory_proposals, extract_memory_changes
 from service_contracts.plan_review import new_review
 from service_contracts.workflow_validation import workflow_schema
 from .._prompts import load_prompt
@@ -29,6 +32,8 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
             'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
             'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
             'For plans or unrelated general FAQ, ordinary text is allowed.')
+        memory_updates: list[MemoryProposal] = Field(default_factory=list, max_length=4, description="Extract only project background or analysis/report preferences explicitly stated in the CURRENT request. content=quote exactly. No data/schema/statistics/file paths or inferred findings. Empty when automatic_write=false, no snapshot or no new durable project context.")
+        _memory_result: dict | None = PrivateAttr(default=None)
         grounding: AnswerGrounding | None = None
         plans: list[Proposal] = Field(default_factory=list, max_length=max_candidates)
         skill_ids: list[str] = Field(default_factory=list, max_length=20)
@@ -37,6 +42,8 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3):
         def valid(self):
             if (self.kind == 'plans') != bool(self.plans):
                 raise ValueError('plans kind requires plans; answer kind forbids plans')
+            if self.kind == 'planning' and self.memory_updates:
+                raise ValueError('Planning selection cannot contain memory updates')
             if self.kind == 'planning':
                 if self.grounding is not None or not self.skill_ids or len(self.skill_ids) != len(set(self.skill_ids)) or not set(self.skill_ids) <= set(catalog.metadata['skills']):
                     raise ValueError('Planning selection requires distinct registered skill_ids and grounding=null')
@@ -70,7 +77,13 @@ def build_agent(model, catalog, *, max_candidates=5, discovery_max_rounds=4, str
         if reply.kind == 'planning':
             raise ValueError('Skill metadata is already available; return a final answer or plans, not another planning selection')
         grounded_message(reply, request.runtime.context, max_chars=session_context_max_chars)
+        validate_memory_proposals(reply, request)
+    def decode(result):
+        reply = json_output(schema)(result)
+        reply._memory_result = result.get("project_memory_write_result")
+        return reply
+    memory_policy = ProjectMemoryMiddleware(extract_changes=lambda result: extract_memory_changes(schema, result))
     return build_role_agent(model, name='analysis_conversation', system_prompt=prompt,
-                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), planning, SessionAnalysisMiddleware(max_chars=session_context_max_chars, evidence_view=compact_evidence_view), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
-                            output_type=schema, decode=json_output(schema),
+                            tools=catalog.metadata_tools(), middleware=[ProjectPromptMiddleware(), memory_policy, planning, SessionAnalysisMiddleware(max_chars=session_context_max_chars, evidence_view=compact_evidence_view), MetadataDiscoveryMiddleware(max_rounds=discovery_max_rounds)],
+                            output_type=schema, decode=decode,
                             structured_output_mode=structured_output_mode, max_validation_attempts=3, validate_response=validate_response)

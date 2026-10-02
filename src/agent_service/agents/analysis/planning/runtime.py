@@ -1,4 +1,5 @@
 """Per-process immutable assets and lazy, pinned model/Agent instances."""
+from dataclasses import replace
 from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
 from agent_service.agents.analysis.dependencies import create_chat_model
 from agent_service.agents.analysis.planning.catalog import AssetCatalog
@@ -6,7 +7,7 @@ from service_runtime.model_selection import build_catalog
 
 
 class PlanningRuntime:
-    def __init__(self, settings, catalog=None, *, executor=None, bindings=None):
+    def __init__(self, settings, catalog=None, *, executor=None, bindings=None, project_memory_factory=None):
         self.settings = settings
         self.catalog = catalog or AssetCatalog()
         self.models = settings.model_catalog or build_catalog(settings)
@@ -16,6 +17,13 @@ class PlanningRuntime:
         self.bindings = bindings
         self.execution_agents = {}
         self.revision_agents = {}
+        self.project_memory_factory = project_memory_factory
+
+    def bind_context(self, state, context):
+        if self.project_memory_factory is None or self.settings.agent_project_memory_mode == 'off':
+            return context
+        return replace(context,project_memory=self.project_memory_factory(state),
+                       project_memory_auto_write=self.settings.agent_project_memory_mode=='auto_context')
 
     @property
     def execution_enabled(self):
@@ -27,6 +35,7 @@ class PlanningRuntime:
         context = AgentContext(user_id=state['user_id'],project_id=state['project_id'],session_id=state['session_id'],
             project_system_prompt=state.get('project_system_prompt',''),project_prompt_version=state.get('project_prompt_version'),
             model_selection=state['model_selection'])
+        context = self.bind_context(state,context)
         if spec.provider == 'mock':
             from agent_service.agents.analysis.planning.testing import mock_execution_role
             return mock_execution_role(role,payload)
@@ -59,6 +68,7 @@ class PlanningRuntime:
         return await self.execution_agents[key].ainvoke(payload,context=context)
 
     async def respond(self, state, context, dataset_catalog):
+        context = self.bind_context(state,context)
         selected = state['model_selection']
         spec = self.models.resolve(selected)
         key = (selected['name'], selected['revision'])
@@ -84,6 +94,7 @@ class PlanningRuntime:
 
 
     async def revise(self, state, context, dataset_catalog):
+        context = self.bind_context(state,context)
         from service_contracts.plan_projection import plan_view
         from agent_service.agents.analysis.planning.proposals import RevisionReply, validate_revision_reply
         import json

@@ -19,5 +19,7 @@ def build_agent_graph(
     """Compile the service graph with Worker bindings and its checkpointer."""
 
     settings = load_agent_settings()
-    runtime=PlanningRuntime(settings,executor=executor_client,bindings=bindings)
+    from api_service.services.project_memory_service import ProjectMemoryService
+    runtime=PlanningRuntime(settings,executor=executor_client,bindings=bindings,
+                            project_memory_factory=ProjectMemoryService().for_context)
     return build_planning_graph(runtime,checkpointer=checkpointer)

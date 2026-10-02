@@ -1493,6 +1493,510 @@
           }
         ]
       }
+    },
+    // 이 URL의 HTTP operation 정의. path placeholder는 실제 자원 ID로 치환한다.
+    "/api/v1/projects/{project_id}/memory": {
+      // GET operation. 조회·SSE 구독 또는 SSO 로그인 이동에 사용한다.
+      "get": {
+        // Swagger에서 API operation을 묶는 분류 태그 목록.
+        "tags": [
+          "projects"
+        ],
+        // Swagger에 표시하는 해당 HTTP operation 요약.
+        "summary": "Read Project Memory",
+        // OpenAPI operation 식별자.
+        "operationId": "read_project_memory_api_v1_projects__project_id__memory_get",
+        // path/query/header의 요청 파라미터 목록. JSON body 필드와 별개다.
+        "parameters": [
+          {
+            // 요청 파라미터 이름. 프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다.
+            "name": "project_id",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+              "format": "uuid",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Project Id"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            // 요청 파라미터 이름. 로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다.
+            "name": "X-CSRF-Token",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "header",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": false,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+              "anyOf": [
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "string"
+                },
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "null"
+                }
+              ],
+              // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "X-Csrf-Token"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        // HTTP 상태 코드별 응답 정의. 실제 SSE/redirect의 annotation 제한은 API 문서를 따른다.
+        "responses": {
+          // HTTP 200 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "200": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Successful Response",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/MemoryResource"
+                }
+              }
+            }
+          },
+          // HTTP 422 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "422": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Validation Error",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        // operation이 요구하는 인증 방식. CSRF는 변경 요청에서 별도로 검증한다.
+        "security": [
+          {
+            // 서비스 로그인 쿠키를 사용하는 인증 방식. 토큰 발급 API를 뜻하지 않는다.
+            "LoginSession": []
+          }
+        ]
+      }
+    },
+    // 이 URL의 HTTP operation 정의. path placeholder는 실제 자원 ID로 치환한다.
+    "/api/v1/projects/{project_id}/memory/{section}/{key}": {
+      // PUT operation. 프로젝트 메모리 항목을 명시적으로 생성·수정·복원한다.
+      "put": {
+        // Swagger에서 API operation을 묶는 분류 태그 목록.
+        "tags": [
+          "projects"
+        ],
+        // Swagger에 표시하는 해당 HTTP operation 요약.
+        "summary": "Put Project Memory",
+        // OpenAPI operation 식별자.
+        "operationId": "put_project_memory_api_v1_projects__project_id__memory__section___key__put",
+        // path/query/header의 요청 파라미터 목록. JSON body 필드와 별개다.
+        "parameters": [
+          {
+            // 요청 파라미터 이름. 프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다.
+            "name": "project_id",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+              "format": "uuid",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Project Id"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            // 요청 파라미터 이름. 프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다.
+            "name": "section",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 값 목록.
+              "enum": [
+                "background",
+                "analysis_preferences",
+                "report_preferences",
+                "shared_findings"
+              ],
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Section"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다."
+          },
+          {
+            // 요청 파라미터 이름. system_context binding이 참조할 서버 제공 문맥 키.
+            "name": "key",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // 허용 문자열의 최소 길이.
+              "minLength": 1,
+              // 허용 문자열의 최대 길이.
+              "maxLength": 48,
+              // 문자열이 만족해야 하는 정규식.
+              "pattern": "^[a-z][a-z0-9_]*$",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Key"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "system_context binding이 참조할 서버 제공 문맥 키."
+          },
+          {
+            // 요청 파라미터 이름. 논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다.
+            "name": "Idempotency-Key",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "header",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": false,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+              "anyOf": [
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "string",
+                  // 허용 문자열의 최소 길이.
+                  "minLength": 1,
+                  // 허용 문자열의 최대 길이.
+                  "maxLength": 100
+                },
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "null"
+                }
+              ],
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Idempotency-Key"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다."
+          },
+          {
+            // 요청 파라미터 이름. 로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다.
+            "name": "X-CSRF-Token",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "header",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": false,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+              "anyOf": [
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "string"
+                },
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "null"
+                }
+              ],
+              // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "X-Csrf-Token"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        // HTTP 요청 body 정의.
+        "requestBody": {
+          // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+          "required": true,
+          // MIME type별 body/응답 규격.
+          "content": {
+            // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+            "application/json": {
+              // 이 파라미터 또는 body/응답의 데이터 규격.
+              "schema": {
+                // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                "$ref": "#/components/schemas/MemoryPut"
+              }
+            }
+          }
+        },
+        // HTTP 상태 코드별 응답 정의. 실제 SSE/redirect의 annotation 제한은 API 문서를 따른다.
+        "responses": {
+          // HTTP 200 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "200": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Successful Response",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/MemoryWriteResult"
+                }
+              }
+            }
+          },
+          // HTTP 422 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "422": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Validation Error",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        // operation이 요구하는 인증 방식. CSRF는 변경 요청에서 별도로 검증한다.
+        "security": [
+          {
+            // 서비스 로그인 쿠키를 사용하는 인증 방식. 토큰 발급 API를 뜻하지 않는다.
+            "LoginSession": []
+          }
+        ]
+      },
+      // DELETE operation. 프로젝트 메모리 항목에 삭제 버전을 기록한다.
+      "delete": {
+        // Swagger에서 API operation을 묶는 분류 태그 목록.
+        "tags": [
+          "projects"
+        ],
+        // Swagger에 표시하는 해당 HTTP operation 요약.
+        "summary": "Delete Project Memory",
+        // OpenAPI operation 식별자.
+        "operationId": "delete_project_memory_api_v1_projects__project_id__memory__section___key__delete",
+        // path/query/header의 요청 파라미터 목록. JSON body 필드와 별개다.
+        "parameters": [
+          {
+            // 요청 파라미터 이름. 프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다.
+            "name": "project_id",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+              "format": "uuid",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Project Id"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            // 요청 파라미터 이름. 프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다.
+            "name": "section",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 값 목록.
+              "enum": [
+                "background",
+                "analysis_preferences",
+                "report_preferences",
+                "shared_findings"
+              ],
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Section"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다."
+          },
+          {
+            // 요청 파라미터 이름. system_context binding이 참조할 서버 제공 문맥 키.
+            "name": "key",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "path",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "string",
+              // 허용 문자열의 최소 길이.
+              "minLength": 1,
+              // 허용 문자열의 최대 길이.
+              "maxLength": 48,
+              // 문자열이 만족해야 하는 정규식.
+              "pattern": "^[a-z][a-z0-9_]*$",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Key"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "system_context binding이 참조할 서버 제공 문맥 키."
+          },
+          {
+            // 요청 파라미터 이름. 쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다.
+            "name": "expected_version",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "query",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": true,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+              "type": "integer",
+              // 허용 숫자의 포함 하한.
+              "minimum": 1,
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Expected Version"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다."
+          },
+          {
+            // 요청 파라미터 이름. 논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다.
+            "name": "Idempotency-Key",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "header",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": false,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+              "anyOf": [
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "string",
+                  // 허용 문자열의 최소 길이.
+                  "minLength": 1,
+                  // 허용 문자열의 최대 길이.
+                  "maxLength": 100
+                },
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "null"
+                }
+              ],
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "Idempotency-Key"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "논리 요청 중복 접수를 막는 헤더. 동일 요청 재시도는 같은 키, 다른 사용자 액션은 새 키를 쓴다."
+          },
+          {
+            // 요청 파라미터 이름. 로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다.
+            "name": "X-CSRF-Token",
+            // 요청 파라미터 위치. path/query/header/cookie를 구분한다.
+            "in": "header",
+            // HTTP 파라미터 또는 요청 body의 필수 여부. CSRF는 GET과 변경 요청의 실제 검증 정책을 함께 확인한다.
+            "required": false,
+            // 이 파라미터 또는 body/응답의 데이터 규격.
+            "schema": {
+              // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+              "anyOf": [
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "string"
+                },
+                {
+                  // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                  "type": "null"
+                }
+              ],
+              // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+              "title": "X-Csrf-Token"
+            },
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        // HTTP 상태 코드별 응답 정의. 실제 SSE/redirect의 annotation 제한은 API 문서를 따른다.
+        "responses": {
+          // HTTP 200 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "200": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Successful Response",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/MemoryWriteResult"
+                }
+              }
+            }
+          },
+          // HTTP 422 상태 코드 응답의 명세. 실제 SSE/redirect는 주 문서를 함께 확인한다.
+          "422": {
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "Validation Error",
+            // MIME type별 body/응답 규격.
+            "content": {
+              // 일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.
+              "application/json": {
+                // 이 파라미터 또는 body/응답의 데이터 규격.
+                "schema": {
+                  // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        // operation이 요구하는 인증 방식. CSRF는 변경 요청에서 별도로 검증한다.
+        "security": [
+          {
+            // 서비스 로그인 쿠키를 사용하는 인증 방식. 토큰 발급 API를 뜻하지 않는다.
+            "LoginSession": []
+          }
+        ]
+      }
     }
   },
   // 재사용하는 데이터 Schema와 인증 정의.
@@ -1935,6 +2439,359 @@
         ],
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "ImageContent"
+      },
+      // 하나의 프로젝트 공유 메모리 항목과 최신 버전.
+      "MemoryEntry": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // 프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드.
+          "section": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 허용하는 값 목록.
+            "enum": [
+              "background",
+              "analysis_preferences",
+              "report_preferences",
+              "shared_findings"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Section",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드."
+          },
+          // system_context binding이 참조할 서버 제공 문맥 키. 필수 필드.
+          "key": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Key",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "system_context binding이 참조할 서버 제공 문맥 키. 필수 필드."
+          },
+          // 명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드.
+          "content": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Content",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드."
+          },
+          // 항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드.
+          "version": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "integer",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Version",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드."
+          },
+          // 삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드.
+          "is_deleted": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Is Deleted",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드."
+          },
+          // 서버가 기록한 최신 항목의 출처. 사용자 직접 편집 또는 source Run/Session의 요청 원문이다. 필수 필드.
+          "source": {
+            // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+            "$ref": "#/components/schemas/MemorySource",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "서버가 기록한 최신 항목의 출처. 사용자 직접 편집 또는 source Run/Session의 요청 원문이다. 필수 필드."
+          },
+          // 이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드.
+          "updated_at": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Updated At",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+          }
+        },
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "section",
+          "key",
+          "content",
+          "version",
+          "is_deleted",
+          "source",
+          "updated_at"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemoryEntry"
+      },
+      // 프로젝트 메모리 항목 본문과 현재 버전의 명시적 쓰기 요청.
+      "MemoryPut": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // 명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드.
+          "content": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 허용 문자열의 최대 길이.
+            "maxLength": 1000,
+            // 허용 문자열의 최소 길이.
+            "minLength": 1,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Content",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드."
+          },
+          // 쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다. 필수 필드.
+          "expected_version": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "integer",
+            // 허용 숫자의 포함 하한.
+            "minimum": 0.0,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Expected Version",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다. 필수 필드."
+          }
+        },
+        // 정의되지 않은 필드 허용 여부 또는 동적 키의 값 schema. false면 임의 필드를 거절한다.
+        "additionalProperties": false,
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "content",
+          "expected_version"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemoryPut"
+      },
+      // 프로젝트 소유자와 항목·출처·삭제 버전의 조회 응답.
+      "MemoryResource": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // 계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 필수 필드.
+          "schema_version": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "integer",
+            // 반드시 일치해야 하는 단일 고정값.
+            "const": 1,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Schema Version",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 필수 필드."
+          },
+          // 프로젝트 소유자의 내부 UUID. 로그인 인증이나 공개 사용자 ID를 대신하지 않는다. 필수 필드.
+          "user_id": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "User Id",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 소유자의 내부 UUID. 로그인 인증이나 공개 사용자 ID를 대신하지 않는다. 필수 필드."
+          },
+          // 프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다. 필수 필드.
+          "project_id": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Project Id",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다. 필수 필드."
+          },
+          // 프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드.
+          "entries": {
+            // 배열 원소에 적용할 Schema.
+            "items": {
+              // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+              "$ref": "#/components/schemas/MemoryEntry"
+            },
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "array",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Entries",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드."
+          }
+        },
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "schema_version",
+          "user_id",
+          "project_id",
+          "entries"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemoryResource"
+      },
+      // 서비스가 부여한 메모리 출처. 사용자 편집 또는 현재 요청 원문 추출.
+      "MemorySource": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // user_edit는 관리 API 명시적 편집, user_request는 현재 사용자 요청에서 추출한 메모리다. 필수 필드.
+          "kind": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 허용하는 값 목록.
+            "enum": [
+              "user_edit",
+              "user_request"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Kind",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "user_edit는 관리 API 명시적 편집, user_request는 현재 사용자 요청에서 추출한 메모리다. 필수 필드."
+          },
+          // 자동 추출 원문이 전달된 공개 Run ID. 명시적 관리 API 편집이면 없을 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "run_id": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Run Id",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "자동 추출 원문이 전달된 공개 Run ID. 명시적 관리 API 편집이면 없을 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 자동 추출 원문의 세션 ID. 감사용 출처이며 공유 범위는 프로젝트다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "session_id": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Session Id",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "자동 추출 원문의 세션 ID. 감사용 출처이며 공유 범위는 프로젝트다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          }
+        },
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "kind"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemorySource"
+      },
+      // 커밋되거나 멱등 재생된 메모리 쓰기 결과.
+      "MemoryWriteResult": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // saved는 이번 메모리 쓰기가 커밋되었거나 동일 요청이 이미 커밋되었음을 뜻한다. 필수 필드.
+          "status": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 반드시 일치해야 하는 단일 고정값.
+            "const": "saved",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Status",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "saved는 이번 메모리 쓰기가 커밋되었거나 동일 요청이 이미 커밋되었음을 뜻한다. 필수 필드."
+          },
+          // 프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드.
+          "entries": {
+            // 배열 원소에 적용할 Schema.
+            "items": {
+              // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+              "$ref": "#/components/schemas/MemoryWrittenEntry"
+            },
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "array",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Entries",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드."
+          }
+        },
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "status",
+          "entries"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemoryWriteResult"
+      },
+      // 이번 쓰기로 반영한 항목의 버전과 삭제 여부.
+      "MemoryWrittenEntry": {
+        // 객체 필드 이름별 검증 규칙.
+        "properties": {
+          // 프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드.
+          "section": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 허용하는 값 목록.
+            "enum": [
+              "background",
+              "analysis_preferences",
+              "report_preferences",
+              "shared_findings"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Section",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드."
+          },
+          // system_context binding이 참조할 서버 제공 문맥 키. 필수 필드.
+          "key": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Key",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "system_context binding이 참조할 서버 제공 문맥 키. 필수 필드."
+          },
+          // 항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드.
+          "version": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "integer",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Version",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드."
+          },
+          // 삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드.
+          "is_deleted": {
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Is Deleted",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드."
+          }
+        },
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "object",
+        // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+        "required": [
+          "section",
+          "key",
+          "version",
+          "is_deleted"
+        ],
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "MemoryWrittenEntry"
       },
       // 다음 페이지 커서·존재 여부.
       "PageInfo": {
