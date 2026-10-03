@@ -2,7 +2,7 @@
 import socket
 from uuid import UUID, uuid4
 
-from sqlalchemy import or_, select
+from sqlalchemy import bindparam, or_, select
 from sqlalchemy.orm import aliased
 
 from api_service.core.enums import AgentRunStatus, TaskStatus
@@ -19,7 +19,8 @@ from api_service.services.task_service import TaskService
 from service_contracts.events import EventContext, ExecutorEvent
 
 
-async def claim_one(factory, namespace):
+def _claim_statement():
+    """Build the immutable query once; rows and eligibility are always read from DB."""
     earlier = aliased(Command)
     blocked_session = select(Owner.session_id).where(
         Owner.session_id == Command.session_id,
@@ -33,12 +34,22 @@ async def claim_one(factory, namespace):
         earlier.session_id == Command.session_id, earlier.ordinal < Command.ordinal,
         earlier.state.not_in(("DONE", "IGNORED", "FAILED")),
     ).exists()
+    return select(Command).where(
+        Command.namespace == bindparam("claim_namespace"), Command.state == "READY",
+        Command.available_at <= bindparam("claim_now"), ~blocked_session, ~predecessor,
+        or_(Command.kind != "executor_resume", ~busy_task),
+    ).order_by(Command.ordinal).limit(1).with_for_update(skip_locked=True)
+
+
+# This is SQL structure, not cached results, ownership or a shared DB session.
+_CLAIM_STATEMENT = _claim_statement()
+
+
+async def claim_one(factory, namespace):
     async with factory() as db:
-        command = await db.scalar(select(Command).where(
-            Command.namespace == namespace, Command.state == "READY",
-            Command.available_at <= utc_now(), ~blocked_session, ~predecessor,
-            or_(Command.kind != "executor_resume", ~busy_task),
-        ).order_by(Command.ordinal).limit(1).with_for_update(skip_locked=True))
+        command = await db.scalar(_CLAIM_STATEMENT, {
+            "claim_namespace": namespace, "claim_now": utc_now(),
+        })
         if command is None:
             return None
         if command.kind == "executor_resume":

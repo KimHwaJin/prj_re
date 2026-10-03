@@ -40,6 +40,7 @@ class CPUProfile:
         self.main.enable()
 
     def finish(self):
+        if self.main is None:return None
         if self.result is not None:return self.result
         self.main.disable()
         process=time.process_time()-self.process_start

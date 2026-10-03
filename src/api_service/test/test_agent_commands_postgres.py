@@ -427,3 +427,21 @@ async def test_failed_command_admission_rolls_back_user_invocation_and_task(comm
         assert await db.scalar(select(AgentRunModel.run_id)) is None
         assert await db.scalar(select(Task.task_id)) is None
         assert await db.scalar(select(Command.command_id)) is None
+
+
+async def test_reused_claim_query_binds_namespace_and_fresh_deadline(commands, monkeypatch):
+    import api_service.runs.commands.claim as claim
+    h = commands
+    await admit_event(h)
+    pending = (await rows(h))[0]
+    future = utc_now() + timedelta(hours=1)
+    async with h.factory() as db:
+        await db.execute(update(Command).where(Command.command_id == pending.command_id).values(available_at=future))
+        await db.commit()
+    # Reusing SQL must never reuse an earlier namespace or current-time value.
+    assert await claim.claim_one(h.factory, h.store.namespace) is None
+    monkeypatch.setattr(claim, 'utc_now', lambda: future + timedelta(seconds=1))
+    assert await claim.claim_one(h.factory, 'another-namespace') is None
+    picked = await claim.claim_one(h.factory, h.store.namespace)
+    assert picked.command_id == pending.command_id
+    assert await claim.claim_one(h.factory, h.store.namespace) is None
