@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [070 공개 Run 상태 조회문 재사용](070-public-run-query-reuse.md). 직전069 대비 동일 한도·LLM0/HTTP fixture에서50명3회 평균 완료22.8%·API CPU23.9% 감소를 확인했다. 보조20 Operation의1명은 개선이 없었다. 회귀51개·전체18회424흐름·검산1,644개를 완료했다. 베이스 미병합·미푸시·미배포이며066 저장 후보 보류는 유지한다.
+최신 작업: [071 결과 로그 replay 확인 일괄 조회](071-result-log-replay-batch.md). 속도 이득 미입증으로 후보 채택을 보류한다. 중복 확인 조회는 줄었지만 동일 한도·LLM0/HTTP fixture 표준50명3회 시간·CPU는 사실상 같다. 회귀56개·18회424흐름·검산1,692개 완료. 베이스 미병합·미푸시·미배포이며066 저장 후보 보류는 유지한다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -114,6 +114,7 @@
 | 066 | observations 증가분 write 후보·기존 pending 복원 | 후보 구현·195회 비교 / 저장31.6% 감소·처리량 향상 미입증·미병합 | 2026-10-04 | [후보·채택 판단](066-observation-incremental-writes.md) |
 | 067 | 증가분 writer의 실제 Worker 동일 부하 대조 | 24완료·중단1/검산/보고서 완료 · 최초 원인 미확정/후보 병합 보류 | 2026-10-04 | [결과·판단·제한](067-observation-worker-comparison.md) |
 | 068 | Executor 이력 경로·최초 오류 추적·역방향 버전 경계 | 경로 수정/105회귀/50명2회 완료 · 기존 원인 미확정/후보 병합 보류 | 2026-10-04 | [작업·검증·제한](068-executor-event-recovery-verification.md) |
+| 071 | 결과 로그 replay 확인 일괄 조회 | 후보·56회귀·18회 비교 완료 / 속도 미입증·채택 보류 | 2026-10-04 | [071 기록](071-result-log-replay-batch.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 
