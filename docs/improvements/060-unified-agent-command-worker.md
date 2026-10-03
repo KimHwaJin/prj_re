@@ -7,6 +7,7 @@
 | 브랜치 | feature/unified-agent-command-worker |
 | 기준 | faca5b1 — 059 Run 실행 경계 |
 | 구현 commit | 67c8dd0325086b6cf433f617e5517231090dab3d (로컬, 베이스 미병합·원격 미게시) |
+| 구 실행 경로 삭제 commit | 544b791de4d0185f3ce1c095bcf1dd09c5c3183c (로컬, 베이스 미병합·원격 미게시) |
 | 합의 | D-06/D-08/D-09, C-02/C-03 |
 
 ## 문제
