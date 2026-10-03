@@ -1,0 +1,13 @@
+{"variant": "append", "repeat": 5, "case": "output_65536", "ms": 198.0, "MiB": 0.336}
+{"variant": "append", "repeat": 5, "case": "output_16777216", "ms": 170.6, "MiB": 0.334}
+{"variant": "append", "repeat": 5, "case": "operations_1", "ms": 211.2, "MiB": 0.55}
+{"variant": "append", "repeat": 5, "case": "operations_20", "ms": 1028.3, "MiB": 2.933}
+{"variant": "append", "repeat": 5, "case": "repair_1", "ms": 190.4, "MiB": 0.509}
+{"variant": "append", "repeat": 5, "case": "output_1048576", "ms": 227.1, "MiB": 0.335}
+{"variant": "append", "repeat": 5, "case": "repair_0", "ms": 261.3, "MiB": 0.332}
+{"variant": "append", "repeat": 5, "case": "repair_10", "ms": 622.8, "MiB": 2.279}
+{"variant": "append", "repeat": 5, "case": "repair_5", "ms": 494.4, "MiB": 1.256}
+{"variant": "append", "repeat": 5, "case": "large_operations_20", "ms": 939.1, "MiB": 6.438}
+{"variant": "append", "repeat": 5, "case": "large_operations_1", "ms": 224.9, "MiB": 1.156}
+{"variant": "append", "repeat": 5, "case": "operations_5", "ms": 305.9, "MiB": 1.069}
+{"variant": "append", "repeat": 5, "case": "output_0", "ms": 154.0, "MiB": 0.305}

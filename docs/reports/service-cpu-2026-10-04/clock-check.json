@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "sleep_wall_seconds": 0.08,
+  "sleep_self_cpu_seconds": 1.6791000000000002e-05,
+  "offload_cpu_seconds": 0.0046251669999999995,
+  "main_cpu_seconds": 0.000341000000000001,
+  "wall_seconds": 0.09501779195852578,
+  "prestart_finish_safe": true,
+  "finish_cached": true
+}

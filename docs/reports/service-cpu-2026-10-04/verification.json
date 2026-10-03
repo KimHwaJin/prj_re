@@ -1,0 +1,9 @@
+{
+  "checks": 1200,
+  "trials": 19,
+  "user_flows": 416,
+  "speed_trials": 12,
+  "speed_user_flows": 382,
+  "failures": 0,
+  "passed": true
+}

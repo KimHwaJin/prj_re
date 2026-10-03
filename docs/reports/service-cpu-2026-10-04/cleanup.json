@@ -1,0 +1,115 @@
+{
+  "trials": [
+    {
+      "name": "standard10-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "standard10-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "large1-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "large1-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u1-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u1-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u10-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u10-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u30-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u30-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r2",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r2",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r3",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r3",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-standard10-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-large1-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-large1-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    }
+  ],
+  "remaining_scratch_databases_before_removing_container": [
+    "identity_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "owned_containers_removed": [
+    "dtest-cpu-postgres",
+    "dtest-cpu-redis"
+  ],
+  "owned_anonymous_volumes_removed": [
+    "944689f96bb33bd3eb5e2508d06913027933d1931d33a9c7d8f621ce64ab083b",
+    "bf38d979d075f4c1a5109ee44fd7604ac6d7be44cbc7544fc1b6de78a30c8ebb"
+  ],
+  "existing_containers_preserved": 18,
+  "existing_checkout_and_env_untouched": true
+}

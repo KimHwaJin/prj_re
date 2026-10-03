@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+_ ERROR collecting scripts/benchmarks/worker_e2e/test_observation_scenarios.py _
+ImportError while importing test module '/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/scripts/benchmarks/worker_e2e/test_observation_scenarios.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/benchmarks/worker_e2e/test_observation_scenarios.py:9: in <module>
+    import jsonschema
+E   ModuleNotFoundError: No module named 'jsonschema'
+=========================== short test summary info ============================
+ERROR scripts/benchmarks/worker_e2e/test_observation_scenarios.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.07s

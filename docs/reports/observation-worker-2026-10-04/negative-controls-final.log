@@ -1,0 +1,1 @@
+{"rejected_controls": ["missing user", "duplicated final evidence", "wrong model delay", "wrong capacity", "duplicated successful event", "wrong persisted byte count", "archive payload SHA mismatch"], "passed": true}

@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [068 Executor 이벤트 복구·중단 원인 추적](068-executor-event-recovery-verification.md). 기본 이력 경로 정합성 수정·105회귀·역순 E2E·50명 진단2회를 완료했다. 과거 최초 오류는 재현되지 않아 미확정이며, 새 tagged pending write의 구버전 reader 비호환을 실제 PG로 확인했다. 저장 후보 병합 보류를 유지한다.
+최신 작업: [069 서비스 CPU 진단·워커 조회문 재사용](069-service-cpu-profiling.md). 독립 전체 값 저장 기준에서 동일 한도·LLM0의1/10/30/50명 비교를 완료했다. 50명3회 평균 완료3.1%·CPU3.2% 감소로 큰 개선은 아니다. 전체19회·416흐름·PG 회귀17개·독립 검산1,200개를 확인했다. 베이스 미병합·미푸시이며066 저장 후보 보류는 유지한다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
