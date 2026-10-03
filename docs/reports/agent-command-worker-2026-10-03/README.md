@@ -1,6 +1,6 @@
 # 공통 Agent 명령 Worker 검증 — 2026-10-03
 
-[060 기록](../../improvements/060-unified-agent-command-worker.md), [구조·이행 안내](../../agent-command-worker.md). 브랜치 `feature/unified-agent-command-worker`, 기준 `faca5b1`.
+[060 기록](../../improvements/060-unified-agent-command-worker.md), [구조·이행 안내](../../agent-command-worker.md). 브랜치 `feature/unified-agent-command-worker`, 기준 `faca5b1`, 구현 `67c8dd0325086b6cf433f617e5517231090dab3d` (로컬 commit).
 
 ## 최종 결과와 수정 이력
 
