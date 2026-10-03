@@ -8,6 +8,8 @@
 
 이전 단계: `feature/refactor-base`. 056에서 LLM을 제외한 현재 서비스 처리량을 분석하고 SQL 준비 캐시·이벤트 batch·로그인 pool·SSE frame 정리를 개선했다. 실행 한도16의 시간차이는 작으며 한도32의 설정효과와 분리한다. [056 기록](056-service-throughput-tuning.md), [보고서](../reports/service-throughput-2026-10-03/report.html), [설정 가이드](../service-throughput-settings.md)를 따른다. 실제 모델·Executor 흐름 검증은 [055](055-authenticated-executor-flow.md), memory 정책은 [053](053-project-memory-policy.md)이며 남은 범위는 [후속 목록](backlog.md)에 보존한다.
 
+057 통합 이력: 구현 `6f0b1ee4ce657092fbe4bbae24c50db2a1d1e1c3`를 베이스에 fast-forward 병합하고 베이스·`feature/executor-service-throughput`을 origin에 atomic push했다. 26회/686사용자·388검산·관련112회귀 및 최종capture13개를 확인했다. [057 기록](057-executor-service-throughput.md)을 따른다.
+
 056 통합 이력: 구현 `2822ed58887803ab9aa822a1b48ef0e31daaf7ae`를 베이스에 fast-forward 병합하고 베이스·`feature/service-throughput-tuning`을 origin에 atomic push했다. 주 비교29회/856사용자·관련 회귀182개와 독립 검산377개를 확인했다. 설정은 opt-in이며 기존 서비스 재기동·배포는 수행하지 않았다. [056 기록](056-service-throughput-tuning.md)을 따른다.
 
 055 통합 이력: 구현 `2cd081c1d83f31dd99ab13fada08b131ce72ecc5`를 베이스에 fast-forward 병합하고 베이스·`feature/api-executor-flow-verification`을 origin에 게시했다. 실제 모델·Executor·후속 문맥·Store와 132개 관련 회귀를 확인했다. 데이터 입력 누락 및 로컬 커널 의존성 문제는 보고서·후속 목록에 남겼다. [055 기록](055-authenticated-executor-flow.md)을 따른다.
@@ -45,7 +47,7 @@
 
 | ID | 항목 | 상태 | 완료일 | 기록 |
 |---|---|---|---|---|
-| 057 | Executor 연계 서비스 처리량·세션 인계·중복 투영 | 구현·로컬 A/B·관련 회귀 완료 / 미배포 | 2026-10-03 | [작업 기록](057-executor-service-throughput.md) |
+| 057 | Executor 연계 서비스 처리량·세션 인계·중복 투영 | 베이스 병합·origin 게시 완료 / 미배포 | 2026-10-03 | [작업 기록](057-executor-service-throughput.md) |
 | 000 | 개선 브랜치와 기록 환경 준비 | 완료 — 문서·환경 준비 | 2026-09-28 | [준비 결과](000-workspace-setup.md) |
 | 001 | 취소 감시 정리 중 Run 실행기 정체 | 구현·격리 PostgreSQL 검증 완료 / 자동 복구·배포 미완료 | 2026-09-28 | [변경·검증·제한](001-run-cleanup-stall.md) |
 | 002 | 기동·설정 기반 통합 | 로컬 기반 구현 완료 / 실제 Gaia 통합 검증 대기 | 2026-09-28 | [변경·검증·제한](002-bootstrap-configuration.md) |

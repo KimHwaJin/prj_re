@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | 구현·로컬 A/B·관련 회귀 완료 / 병합·게시 예정 |
+| 상태 | 구현·로컬 A/B·관련 회귀 완료 / 베이스 병합·origin 게시 확인 |
 | 시작일 / 완료일 | 2026-10-03 / 2026-10-03 |
 | 브랜치 | feature/executor-service-throughput |
 | 출발 commit | cbe520f97089c8e120a561e544ce67e35079048a |
@@ -68,4 +68,4 @@ Event8/16 탐색은 공통 투영 전의 중간 후보에서 각각 1회 수행�
 
 ## 통합·게시
 
-검증한 파생 브랜치를 feature/refactor-base에 병합하고 두 브랜치를 origin에 게시한 뒤 commit과 원격 SHA를 기록한다. 자동 배포나 기존 컨테이너 재시작은 수행하지 않는다.
+2026-10-03 구현·검증 commit `6f0b1ee4ce657092fbe4bbae24c50db2a1d1e1c3`를 `feature/refactor-base`에 fast-forward 병합하고 베이스·`feature/executor-service-throughput`을 origin에 atomic push했다. 원격 두 구현 SHA 일치를 확인했다. 파생 브랜치는 구현 commit에 보존하고 이 게시 기록은 베이스의 후속 문서 commit에 남긴다. 자동 배포·기존 서비스 재기동은 수행하지 않았다. 원래 checkout HEAD/status/.env/316개 파일과 기존 서비스 환경은 유지한다.

@@ -1,0 +1,13 @@
+{
+  "implementation_commit": "6f0b1ee4ce657092fbe4bbae24c50db2a1d1e1c3",
+  "base_branch": "feature/refactor-base",
+  "feature_branch": "feature/executor-service-throughput",
+  "implementation_merge": "fast-forward",
+  "implementation_push": "atomic",
+  "remote_implementation_sha_verified": {
+    "refs/heads/feature/executor-service-throughput": "6f0b1ee4ce657092fbe4bbae24c50db2a1d1e1c3",
+    "refs/heads/feature/refactor-base": "6f0b1ee4ce657092fbe4bbae24c50db2a1d1e1c3"
+  },
+  "publication_note": "This record is a subsequent documentation-only base commit; feature remains at implementation.",
+  "deployed": false
+}
