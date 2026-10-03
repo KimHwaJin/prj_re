@@ -116,13 +116,13 @@ def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event, 
     if settings.api.task_reconciler_enabled:
         from api_service.task_lock_reconciler import run_forever as reconcile
         factories["task-lock-reconciler"] = lambda: reconcile(stop_event=stop_event)
-    if settings.api.agent_worker_enabled:
+    if settings.api.agent_worker_enabled or settings.event_worker_enabled:
         from api_service.agent_run_worker import run_forever
         factories["agent-run-worker"] = lambda: run_forever(stop_event=stop_event)
     if settings.event_worker_enabled:
         from api_service.agent_worker.worker_main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
-        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, use_shared_graph=True, on_worker=on_event_worker)
+        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, on_worker=on_event_worker)
     return factories
 
 
@@ -276,7 +276,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
                 healthy = False
             else:
                 checks.append(worker.ready)
-        if healthy and (settings.api.agent_worker_enabled or settings.api.task_reconciler_enabled):
+        if healthy and (settings.api.agent_worker_enabled or settings.event_worker_enabled or settings.api.task_reconciler_enabled):
             async def primary_database_ready():
                 # Legacy Event DB overrides do not prove API queue readiness.
                 from api_service.core.database import short_session
@@ -285,6 +285,13 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
                     async with asyncio.timeout(2):
                         async with short_session() as db:
                             await db.execute(text("SELECT 1 FROM tasks LIMIT 0"))
+                            complete = await db.scalar(text("""SELECT NOT EXISTS (
+                                SELECT 1 FROM agent_runs r WHERE r.status IN ('pending','running')
+                                AND NOT EXISTS (SELECT 1 FROM agent_commands c
+                                    WHERE c.namespace=:namespace AND c.invocation_id=r.run_id))"""),
+                                {"namespace": settings.worker.namespace})
+                            if not complete:
+                                return False
                     return True
                 except Exception:
                     return False

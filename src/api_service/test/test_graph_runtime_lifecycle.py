@@ -218,84 +218,56 @@ async def test_service_does_not_close_other_pools_while_graph_still_owned(monkey
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('fail', [False, True])
-async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch, fail):
+async def test_event_ingress_never_builds_or_invokes_graph(monkeypatch, fail):
     import api_service.agent_worker.worker_main as entry
-    import agent_service.runtime.langgraph.checkpointer as factory
-    import api_service.runs.projection as completion
-    projection = AsyncMock()
-    monkeypatch.setattr(completion, 'synchronize_executor_completion', projection)
-    clients = []
-    counts = {'pool_open': 0, 'pool_close': 0, 'build': 0, 'events': 0}
-    @asynccontextmanager
-    async def checkpointer(**_):
-        counts['pool_open'] += 1
-        try:
-            yield 'checkpoint'
-        finally:
-            counts['pool_close'] += 1
-    def graph(**kwargs):
-        assert kwargs['checkpointer'] == 'checkpoint'
-        assert not kwargs['executor_client'].http.is_closed
-        clients.append(kwargs['executor_client'])
-        counts['build'] += 1
-        return object()
-    class Adapter:
-        def __init__(self, graph, *, project_context_loader, model_validator):
-            assert callable(model_validator)
-            assert callable(project_context_loader)
-            self.graph = graph
-        async def executor_event(self, context):
-            assert counts['pool_open'] == 1 and counts['pool_close'] == 0
-            counts['events'] += 1
-            await projection(context, self.graph)
+    import api_service.services.agent_graph_service as shared
+    opened = AsyncMock(side_effect=AssertionError('Ingress borrowed a graph'))
+    monkeypatch.setattr(shared.runtime, 'open_graph', opened)
+    calls = []
     class Worker:
-        def __init__(self, settings, handlers):
-            self.handlers = handlers
-            self.bindings = object()
+        def __init__(self, settings, event_types):
+            assert event_types == {'execution.operation_completed', 'execution.completed'}
         async def __aenter__(self):
+            calls.append('open')
             return self
         async def __aexit__(self, *_):
-            assert counts['pool_close'] == 1
-            assert len(clients) == 1 and clients[0].http.is_closed
+            calls.append('close')
         def add_readiness_check(self, *args):
             pass
-        async def run(self):
-            for _ in range(10):
-                await self.handlers['test'](object())
+        async def run(self, *, stop_event=None):
+            calls.append('run')
             if fail:
                 raise RuntimeError('worker failure')
-    monkeypatch.setattr(factory, 'create_checkpointer', checkpointer)
-    monkeypatch.setattr(entry, 'build_agent_graph', graph)
-    monkeypatch.setattr(entry, '_validate_graph', lambda _: None)
-    monkeypatch.setattr(entry, 'build_handlers', lambda handler: {'test': handler})
-    monkeypatch.setattr(entry, 'GraphInvocation', Adapter)
-    async def own(context, operation, *, handoff_timeout_seconds):
-        assert handoff_timeout_seconds == 1.0
-        return await operation()
-    monkeypatch.setattr(entry, 'run_event_owned', own)
     monkeypatch.setattr(entry, 'ExecutorWorker', Worker)
     if fail:
         with pytest.raises(RuntimeError, match='worker failure'):
             await entry.main(install_signals=False)
     else:
         await entry.main(install_signals=False)
-    assert counts == {'pool_open': 1, 'pool_close': 1, 'build': 1, 'events': 10}
-    assert projection.await_count == 10
+    assert calls == ['open', 'run', 'close']
+    opened.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_embedded_event_worker_borrows_api_graph_without_second_pool(monkeypatch):
-    import api_service.agent_worker.worker_main as entry
+async def test_common_event_command_borrows_shared_graph(monkeypatch):
+    import api_service.agent_run_worker as worker
     import api_service.services.agent_graph_service as shared
+    import api_service.runs.graph_invocation as boundary
     from types import SimpleNamespace
-    graph = object()
     runtime = AgentGraphRuntime()
+    graph = object()
     runtime.override_graph(graph)
     monkeypatch.setattr(shared, 'runtime', runtime)
-    # The standalone constructor is never needed by this embedded path.
-    monkeypatch.setattr(entry, 'build_agent_graph', lambda **_: pytest.fail('Second graph built'))
-    async with entry.graph_context(SimpleNamespace(), SimpleNamespace(), use_shared_graph=True) as borrowed:
-        assert borrowed is graph and runtime._active == 1
+    applied = AsyncMock()
+    class Invocation:
+        def __init__(self, borrowed, **kwargs):
+            assert borrowed is graph and runtime._active == 1
+        async def executor_event(self, context):
+            await applied(context)
+    monkeypatch.setattr(boundary, 'GraphInvocation', Invocation)
+    context = SimpleNamespace()
+    await worker.execute_event(context)
+    applied.assert_awaited_once_with(context)
     assert runtime._active == 0
     await runtime.shutdown()
 

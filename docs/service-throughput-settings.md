@@ -23,7 +23,7 @@ YAML > env > 기본값 순서라 환경변수만 바꾸어 YAML 값을 덮어쓸
 | 항목 | 후보 | 의미 |
 |---|---:|---|
 | API 프로세스 | 1 | Run 슬롯과 DB 풀 복제 비용을 피함. 이번에 여러 프로세스 재비교하지 않음 |
-| Run concurrency | 32 | 프로세스 안의 동시 그래프 실행 구간. HITL/Executor 대기는 슬롯을 점유하지 않음 |
+| Agent command concurrency | 32 | 사용자 시작·승인·Executor 결과를 합친 프로세스별 graph 총한도. HITL/Executor 대기는 슬롯을 점유하지 않음 |
 | CRUD pool / overflow | 10 / 0 | 실제 DB 연결 상한을 제한. Run 32개가 연결 32개를 계속 들고 있는 구조가 아님 |
 | asyncpg statement cache | 100 | 연결당 prepared statement cache. 코드에서 0으로 고정하던 것을 설정으로 선택 |
 | checkpoint pool | 1~4 | 슬롯 수만큼 키우지 않음 |
@@ -36,8 +36,7 @@ statement cache는 API의 asyncpg CRUD 연결에만 적용하며 checkpointer,
 이 성능 profile만 100을 명시한다. 캐시는 요청별 결과나 사용자 권한을
 저장하는 캐시가 아니며 SQL 수·트랜잭션·소유권 검사를 생략하지 않는다.
 
-057에서 profile에 Event ingress4/dispatch4·EW pool4·periodic0.2/idle2초를 명시했다.
-Agent 한도32와 Event 한도4는 서로 다른 자리다. Event Worker를 자동 활성화하지는 않는다.
+057 측정 당시 Agent32/Event4는 별도 자리였다. 060 현재 profile은 **전체 graph32**와 Event ingress4·EW pool4·periodic0.2/idle2초를 사용한다. 과거 합계36의 측정치를 공통32의 검증 결과로 사용하지 않는다. Event 수신은 AGENT_WORKER_ENABLED를 기본으로 따르며 EVENT_WORKER_ENABLED로 명시적으로 끌 수 있다. [공통 Worker 설정·이행](agent-command-worker.md)을 따른다.
 Executor 제출 bridge와 Event Worker는 별도 풀 객체이며 EW_POOL_SIZE를 각각 적용한다.
 [Executor 연계 측정](reports/executor-throughput-2026-10-03/README.md)을 참고한다.
 

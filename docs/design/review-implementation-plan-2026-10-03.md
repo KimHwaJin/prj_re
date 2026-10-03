@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 3단계 공통 명령 원장·스케줄러이며, 전체 작업 완료 기록은 아니다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 4단계 깨우기 신호이며 전체 작업 완료 기록은 아니다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -56,9 +56,11 @@
 - 우선 두 기존 입력/dispatch 경로를 공통 실행부에 연결해 동작을 보존한다. 공통화 과정에서 공개 Run/API/SSE/승인·재개 의미가 바뀌지 않게 한다.
 - 검증: 새 요청·HITL 편집/승인·Executor 이벤트·decision/repair HITL·보고서·중복 재개·모델 pin·결과 저장 재시도. checkpoint 재개와 SQL/연결 수명 대조를 포함한다.
 
-## 3. 공통 명령 원장·스케줄러
+## 3. 공통 명령 원장·스케줄러 — 060 구현·격리 검증
 
-### 먼저 확정할 설계
+[060 구현](../improvements/060-unified-agent-command-worker.md), [명령 원장·Worker·이행 안내](../agent-command-worker.md). 아래는 인수 기준이며 현재 runtime은 신규 agent_commands를 정본으로 사용한다. 이전 Redis 실행 모듈 파일 삭제는 자동 승인 거절로 보류했다.
+
+### 설계 기준
 
 - 공개 Run과 내부 명령의 식별·상태·순서·재시도 의미를 분리한다. 기존 ew_commands 확장/재사용 또는 내부 원장 신규 테이블 중 더 작은 정합성 경계로 결정한다.
 - 명령 종류는 새 요청, 사용자 resume, Executor event resume다. 취소/운영 복구를 일반 FIFO 뒤에 넣어 진행을 막지 않는다.

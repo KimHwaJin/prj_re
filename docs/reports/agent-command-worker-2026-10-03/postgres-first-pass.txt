@@ -1,0 +1,153 @@
+...................F.................................................... [ 35%]
+........................................................................ [ 70%]
+.............................................................            [100%]
+=================================== FAILURES ===================================
+________ test_stuck_watcher_is_durable_visible_and_session_stays_locked ________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x119d632d0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-03T13:25:52.216628Z', 'deleted_at': None}, session_id='7b7bb46d-06aa-4644-9330-281ca2981ded')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111e43c10>
+
+    @pytest.mark.asyncio
+    async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime, monkeypatch):
+        h = runtime
+        release, started = asyncio.Event(), asyncio.Event()
+        async def watcher(_id, _stop):
+            started.set()
+            while not release.is_set():
+                try:
+                    await release.wait()
+                except asyncio.CancelledError:
+                    pass
+            return False
+        async def graph(*_, **__):
+            await started.wait()
+            return {'routing_result': {'route': 'analysis'}}
+        monkeypatch.setattr(monitoring, 'wait_for_cancellation', watcher)
+        monkeypatch.setattr(runs, 'ainvoke_user_turn', graph)
+        queued = await enqueue(h)
+        owner = asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
+        try:
+            run, task = await wait_until_recovery(h, queued['run_id'])
+            assert run.failure['code'] == 'RUN_RECOVERY_REQUIRED' and not run.failure['retry_scheduled']
+            assert run.status == AgentRunStatus.RUNNING and task.status == TaskStatus.RUNNING
+            assert not owner.done() and not execution_health.healthy
+            response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs',
+                headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
+                json={'input': {'content': [{'type': 'text', 'text': 'second'}]}})
+            assert response.status_code == 409
+>           response = await h.client.get(f'/api/v1/sessions/{h.session_id}/tasks', headers=headers(h.user['user_id']))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_run_cleanup_postgres.py:169:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1768: in get
+    return await self.request(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1629: in send
+    response = await self._send_handling_auth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/httpx/_transports/asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/applications.py:1163: in __call__
+    await super().__call__(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+src/service_runtime/request_id.py:19: in __call__
+    await self.app(scope, receive, send_with_id)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/routing.py:670: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:2734: in app
+    await route.handle(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:1780: in handle
+    await self.original_router.handle(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:2789: in handle
+    await included_router._handle_selected(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:1791: in _handle_selected
+    await route.handle(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:1780: in handle
+    await self.original_router.handle(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:2789: in handle
+    await included_router._handle_selected(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:1800: in _handle_selected
+    await original_route.handle(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:1279: in handle
+    await app(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:158: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:144: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:706: in app
+    raw_response = await run_endpoint_function(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/fastapi/routing.py:352: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/api_service/api/v1/routes/tasks.py:21: in list_session_tasks
+    return await diagnostics.list_tasks(db, session_id, params, user_id=user_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/api_service/services/task_diagnostics.py:106: in list_tasks
+    return {"items": [_resource(row) for row in rows], "page": page}
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/api_service/services/task_diagnostics.py:106: in <listcomp>
+    return {"items": [_resource(row) for row in rows], "page": page}
+                      ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+row = (UUID('acc2814d-3a2f-409c-a5f0-e940a17c7895'), datetime.datetime(2026, 10, 3, 13, 25, 52, 375342, tzinfo=datetime.time...datetime.timezone.utc), datetime.datetime(2026, 10, 3, 13, 25, 52, 486519, tzinfo=datetime.timezone.utc), False, None))
+
+    def _resource(row):
+        task = row.task
+        execution = row.execution
+        owned, recovery = execution.ownership_held, bool(execution.recovery_required)
+        details = dict(execution._mapping) if owned or recovery else {}
+        details.update(ownership_held=owned, recovery_required=recovery)
+        reasons = [name for name, blocked in row.blockers._mapping.items() if blocked]
+        unfinished = bool(reasons)
+        if not row.resources_active:
+            reasons.insert(0, "resources_inactive")
+        return TaskResource(
+            **dict(task._mapping), public_run_id=row.public_run_id,
+            is_unfinished=task.status not in TERMINAL_TASKS or task.recovery_required,
+            observed_at=row.observed_at,
+>           session_work=SessionWorkResource(
+                resources_active=row.resources_active, has_unfinished_work=unfinished,
+                can_start_new_run=not reasons, blocking_reasons=reasons,
+                execution=SessionExecutionResource(**details),
+            ),
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for SessionWorkResource
+E       blocking_reasons.0
+E         Input should be 'resources_inactive', 'unfinished_task', 'unfinished_run', 'unfinished_llm' or 'execution_held_or_uncertain' [type=literal_error, input_value='unfinished_command', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+
+src/api_service/services/task_diagnostics.py:82: ValidationError
+------------------------------ Captured log call -------------------------------
+ERROR    api_service.core.execution_lifecycle:execution_lifecycle.py:33 execution_requires_recovery run_id=e4bc6c50-6983-4f01-9e74-1b9af991db93 stage=cancel_watch_stop
+=========================== short test summary info ============================
+FAILED src/api_service/test/test_run_cleanup_postgres.py::test_stuck_watcher_is_durable_visible_and_session_stays_locked
+1 failed, 204 passed, 3 warnings in 259.24s (0:04:19)

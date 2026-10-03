@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable
 from contextlib import AsyncExitStack, suppress
 from typing import Self
 
@@ -19,11 +19,7 @@ from api_service.worker.consumer import (
     AckDecision,
     StreamMessageHandler,
 )
-from service_contracts.events import EventHandler
-from api_service.worker.dispatcher import Dispatcher
-from api_service.worker.guard import SessionGuard
 from api_service.worker.ingress import EventRouter, Ingress
-from api_service.worker.outbox import Outbox
 from api_service.worker.redis_streams import group_progress
 from api_service.worker.store import Store
 from api_service.worker.telemetry import Telemetry
@@ -57,12 +53,11 @@ class ExecutorWorker:
     def __init__(
         self,
         settings: Settings,
-        handlers: Mapping[str, EventHandler],
+        event_types: set[str] | frozenset[str],
     ) -> None:
         self._router_wake = asyncio.Event()
-        self._outbox_wake = asyncio.Event()
         self.settings = settings
-        self.handlers = dict(handlers)
+        self.event_types = set(event_types)
         self.pool = AsyncConnectionPool(
             settings.database_url,
             min_size=1,
@@ -81,48 +76,22 @@ class ExecutorWorker:
         )
         self.store = Store(self.pool, settings.namespace)
         self.bindings = self.store
-        self.guard = SessionGuard(
-            self.redis,
-            settings.namespace,
-            ttl=settings.lease_ttl_seconds,
-            renew_seconds=settings.lease_renew_seconds,
-        )
         self.telemetry = Telemetry()
         self.router = EventRouter(
             self.store,
             self.http,
-            set(handlers),
+            self.event_types,
             batch_size=settings.batch_size,
             concurrency=settings.ingress_workers,
         )
-        self.outbox = Outbox(
-            self.store,
-            self.redis,
-            settings.command_stream,
-            batch_size=settings.batch_size,
-            lease_seconds=settings.publish_lease_seconds,
-        )
         self.ingress = Ingress(self.store)
-        self.dispatcher = Dispatcher(
-            self.store,
-            self.guard,
-            self.handlers,
-            max_attempts=settings.max_handler_attempts,
-        )
         self.consumers = [
             self._consumer(
                 "ingress",
                 settings.executor_event_stream,
                 settings.event_group,
-                lambda _: _WakeAfterCommit(self.ingress, self._router_wake, event_types=set(self.handlers)),
+                lambda _: _WakeAfterCommit(self.ingress, self._router_wake, event_types=self.event_types),
                 settings.ingress_workers,
-            ),
-            self._consumer(
-                "dispatch",
-                settings.command_stream,
-                settings.command_group,
-                lambda _: _WakeAfterCommit(self.dispatcher, self._outbox_wake),
-                settings.dispatch_workers,
             ),
         ]
         self._readiness_checks: dict[str, Callable[[], Awaitable[bool]]] = {}
@@ -175,7 +144,6 @@ class ExecutorWorker:
     def request_stop(self) -> None:
         self._stop.set()
         self._router_wake.set()
-        self._outbox_wake.set()
         for consumer in self.consumers:
             consumer.request_stop()
 
@@ -217,8 +185,7 @@ class ExecutorWorker:
                 )
             tasks = [asyncio.create_task(c.run()) for c in self.consumers]
             tasks += [
-                asyncio.create_task(self._loop(self.router.once, wake=self._router_wake, after_work=self._outbox_wake.set)),
-                asyncio.create_task(self._loop(self.outbox.once, wake=self._outbox_wake)),
+                asyncio.create_task(self._loop(self.router.once, wake=self._router_wake)),
                 asyncio.create_task(self._loop(self._metrics, interval=10)),
             ]
             done, _ = await asyncio.wait(
@@ -302,11 +269,6 @@ class ExecutorWorker:
                 self.settings.executor_event_stream,
                 self.settings.event_group,
             ),
-            (
-                "dispatch",
-                self.settings.command_stream,
-                self.settings.command_group,
-            ),
         ):
             progress = await group_progress(self.redis, stream, group)
             for metric, value in {
@@ -328,6 +290,13 @@ class ExecutorWorker:
                 await self.redis.ping()
                 async with self.pool.connection() as conn:
                     await conn.execute("SELECT 1 FROM ew_bindings LIMIT 0")
+                    cur = await conn.execute("""SELECT NOT EXISTS (
+                        SELECT 1 FROM ew_commands e WHERE e.namespace=%s AND e.state='READY'
+                        AND NOT EXISTS (SELECT 1 FROM agent_commands c
+                            WHERE c.namespace=e.namespace AND c.command_id=e.command_id))""",
+                        (self.store.namespace,))
+                    if not (await cur.fetchone())[0]:
+                        return False
                 if self._readiness_checks:
                     results = await asyncio.gather(
                         *(

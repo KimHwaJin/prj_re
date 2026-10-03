@@ -2,6 +2,8 @@
 import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 import pytest
@@ -87,6 +89,11 @@ def test_integrated_readiness_waits_for_consumer_then_tracks_its_health(monkeypa
         holder['publish'] = on_event_worker
         return {'executor-event-worker': loop}
     monkeypatch.setattr(service_bootstrap, '_background_factories', factories)
+    database = SimpleNamespace(execute=AsyncMock(), scalar=AsyncMock(return_value=True))
+    @asynccontextmanager
+    async def short_session():
+        yield database
+    monkeypatch.setattr('api_service.core.database.short_session', short_session)
     settings = load_settings(config={'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False,
         'EVENT_WORKER_ENABLED': True, 'SHUTDOWN_DRAIN_SECONDS': 0}, environ={})
     app = service_bootstrap.create_app(settings)
@@ -97,6 +104,9 @@ def test_integrated_readiness_waits_for_consumer_then_tracks_its_health(monkeypa
         metrics = client.get('/service/metrics')
         assert metrics.status_code == 200
         assert 'ew_operations' in metrics.text and 'python_info' in metrics.text
+        database.scalar.return_value = False
+        assert client.get('/service/ready').status_code == 503
+        database.scalar.return_value = True
         worker.ready.return_value = False
         assert client.get('/service/ready').status_code == 503
         assert client.get('/service/live').status_code == 200
@@ -188,3 +198,16 @@ def test_local_start_prepares_selected_infrastructure(tmp_path, monkeypatch, url
     else:
         assert ('up','-d','--wait','postgres') in calls
         assert not any('redis' in call for call in calls)
+
+
+def test_active_command_worker_requires_same_database_without_exposing_credentials():
+    with pytest.raises(ConfigurationError, match='same database') as error:
+        load_settings(config={'DATABASE_URL':'postgresql+asyncpg://u:secret@host/chat_app',
+            'EW_DATABASE_URL':'postgresql://u:secret@host/agent'}, environ={})
+    assert 'secret' not in str(error.value)
+    assert load_settings(config={'DATABASE_URL':'postgresql+asyncpg://u:secret@host/chat_app',
+        'EW_DATABASE_URL':'postgresql://u:secret@host:5432/chat_app'}, environ={})
+    # Inspection/migration can still resolve the old separate targets with execution disabled.
+    assert load_settings(config={'DATABASE_URL':'postgresql+asyncpg://u:secret@host/chat_app',
+        'EW_DATABASE_URL':'postgresql://u:secret@host/agent',
+        'AGENT_WORKER_ENABLED':False,'EVENT_WORKER_ENABLED':False}, environ={})

@@ -67,4 +67,5 @@ if __name__ == "__main__":
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.crud.ini", "upgrade", "head"], check=True)
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"], check=True)
     asyncio.run(setup_checkpoint())
+    subprocess.run([sys.executable, "-m", "api_service.runs.commands.migrate"], check=True)
     print("Local migrations complete for selected CRUD, event/workflow and checkpoint targets", flush=True)

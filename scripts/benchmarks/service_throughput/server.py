@@ -63,6 +63,10 @@ if cfg.get('hold_owner_probe'):
 
 original_execute=worker.execute_claimed
 async def execute(item):
+    # Event calls are measured by the Executor probe. This list is private
+    # user invocations only, in both the old and common-worker architectures.
+    if not hasattr(item, 'claim'):
+        return await original_execute(item)
     started=time.perf_counter();measured=enabled()
     if measured:
         metrics['current_worker']+=1;metrics['peak_worker']=max(metrics['peak_worker'],metrics['current_worker'])

@@ -173,6 +173,8 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
         payload={"status": AgentRunStatus.PENDING.value},
         commit=False,
     )
+    from api_service.runs.commands.admission import enqueue_user
+    await enqueue_user(db, run)
     try:
         await db.commit()
     except IntegrityError as exc:

@@ -11,7 +11,7 @@ from api_service.worker.runtime import ExecutorWorker,_WakeAfterCommit
 def runtime():
     worker=object.__new__(ExecutorWorker)
     worker.settings=SimpleNamespace(poll_seconds=.03,idle_poll_seconds=.6)
-    worker._stop=asyncio.Event();worker._router_wake=asyncio.Event();worker._outbox_wake=asyncio.Event();worker.consumers=[]
+    worker._stop=asyncio.Event();worker._router_wake=asyncio.Event();worker.consumers=[]
     return worker
 
 

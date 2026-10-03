@@ -4,7 +4,8 @@
 # Explicit YAML beats env. This file does not restart/deploy the running service.
 service:
   runtime:
-    # Per process. Additional Uvicorn workers/Pods multiply slots and DB pools.
+    # Shared graph total: user start/resume + Executor events, per process.
+    # Additional Uvicorn workers/Pods multiply slots and DB pools.
     agent_worker_concurrency: 32
     # Preserve the default idle claim/cancel checks; no extra idle polling.
     agent_worker_poll_interval_seconds: 0.25
@@ -26,16 +27,14 @@ service:
     sso_redis_max_connections: 8
     sso_redis_timeout_seconds: 3
   events:
-    # Agent Run slots and Executor result dispatch slots are separate limits.
-    # Four slots measured well; 8 was marginal and 16 slower in an exploratory
-    # Event-only candidate. Event Worker now follows AGENT_WORKER_ENABLED by default;
-    # EVENT_WORKER_ENABLED can explicitly disable it for an API-only measurement.
+    # Ingress/routing concurrency only. All graph calls share the runtime limit.
+    # Event Worker follows AGENT_WORKER_ENABLED by default; EVENT_WORKER_ENABLED
+    # can explicitly disable ingestion for an API-only measurement.
     ew_concurrency: 4
     ew_ingress_concurrency: 4
-    ew_dispatch_concurrency: 4
     # Each Event Worker and submission bridge has its OWN pool with this limit.
     ew_pool_size: 4
     # Periodic fallback for other Pods/restarts; local committed work also wakes
-    # router/outbox with a bounded 20ms coalescing window.
+    # router with a bounded 20ms coalescing window. Agent claim wakeup is stage 4.
     ew_poll_seconds: 0.2
     ew_idle_poll_seconds: 2

@@ -139,13 +139,22 @@ class Store:
         event_types: set[str],
         limit: int,
     ) -> tuple[int, int | None]:
-        """Atomically route a contiguous Inbox prefix into the Outbox.
+        """Atomically route a contiguous Inbox prefix into the graph command ledger.
 
         Returns (number advanced, gap-after-sequence or None).
         """
         async with self.pool.connection() as conn, conn.transaction():
+            binding = await conn.execute(
+                "SELECT session_id FROM ew_bindings WHERE namespace=%s AND execution_id=%s",
+                (self.namespace, execution_id),
+            )
+            identity = await binding.fetchone()
+            if identity is None:
+                return 0, None
+            await conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                               (f"agent-command-order:{UUID(identity[0])}",))
             cur = await conn.execute(
-                """SELECT last_sequence FROM ew_bindings
+                """SELECT last_sequence,session_id,task_id FROM ew_bindings
                 WHERE namespace=%s AND execution_id=%s FOR UPDATE""",
                 (self.namespace, execution_id),
             )
@@ -187,10 +196,13 @@ class Store:
                         ),
                     )
                     await conn.execute(
-                        """INSERT INTO ew_outbox
-                        (namespace,command_id,created_by,updated_by)
-                        VALUES (%s,%s,'worker','worker')""",
-                        (self.namespace, command_id),
+                        """INSERT INTO agent_commands
+                        (namespace,command_id,session_id,kind,payload)
+                        VALUES (%s,%s,%s,'executor_resume',%s)""",
+                        (self.namespace, command_id, UUID(row[1]), Jsonb({
+                            "task_id": row[2], "execution_id": str(execution_id),
+                            "event": data,
+                        })),
                     )
                 await conn.execute(
                     """UPDATE ew_inbox SET state=%s,updated_at=now(),
@@ -403,7 +415,7 @@ class Store:
     async def counts(self) -> dict[str, int]:
         async with self.pool.connection() as conn:
             cur = await conn.execute(
-                """SELECT 'command:'||state,count(*) FROM ew_commands
+                """SELECT 'command:'||state,count(*) FROM agent_commands
                 WHERE namespace=%s GROUP BY state UNION ALL
                 SELECT 'inbox:'||state,count(*) FROM ew_inbox
                 WHERE namespace=%s GROUP BY state UNION ALL

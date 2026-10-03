@@ -292,3 +292,10 @@ API·내부 명령·Inbox를 같은 database에 두는 방향은 권장한다. �
 - 현재 state에서 리스트를 비워도 이전 checkpoint/blob 버전이 삭제되지는 않는다. 따라서 동일 thread의 과거 저장량은 여러 요청과 재개에 걸쳐 누적된다.
 
 정확한 기준은 `channel마다 전체 값을 다시 저장하는 구간과 reset/교체 시점이 다르므로, channel·요청·실행 구간별 증가를 측정하고 thread 전체의 보존된 버전 바이트를 함께 집계한다`이다. 앞선 reducer 비교 실험과 F-01 대표 시나리오 측정 계획은 유지한다.
+
+
+## D-06/D-08/D-09 구현 이행 — 060
+
+[060 기록](../improvements/060-unified-agent-command-worker.md)에서 신규 agent_commands를 공통 claim 정본으로 선택했다. ew_commands는 이행/감사 투영으로 유지하고, API·Inbox·원장을 같은 DB에 기록한다. 실행 활성 시 분리 DB 설정을 거절하지만 기존 운영 DB를 실제 이전하지는 않았다. C-03의 내부 명령 수명과 ordinal 순서·세션 owner를 구현했다. FAILED/IGNORED는 뒤 명령을 추월 방지 조건에서 막지 않고 RECOVERY는 보호한다.
+
+D-07 신호 fan-out·빈 조회 최적화와 D-09 동일 총한도 부하 대조는 후속 4·5단계다. 기존 Redis 실행 모듈 파일 삭제는 자동 승인 거절로 보류했으며 production dispatch에서는 제외했다. 전체 D-09 인수 조건이 모두 완료되었다는 기록은 아니다.

@@ -8,6 +8,7 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 |---|---|---|
 | `services/public_run_service.py` | 공개 Run 조회, 승인 토큰·interaction 검증, HTTP 요청 조정 | `PublicRunService.create/resume/cancel` |
 | `runs/admission.py` | 세션 잠금, 멱등키 확인, Task·pending invocation·queued 이벤트 원자 기록 | `enqueue` |
+| `runs/commands/` | 내부 원장 접수·순서·claim·결과·기존 작업 이행 | [명령 Worker 안내](agent-command-worker.md) |
 | `runs/execution.py` | 점유 검증, 실행 준비, observer 소유, 결과·실패 기록 조정 | `execute_claimed` |
 | `runs/monitoring.py` | 그래프와 사용자 취소·heartbeat·token observer 경쟁 및 종료 확인 | `run_cancellable` |
 | `runs/cancellation.py` | 취소 요청 기록, 대기 중 Task의 안전한 종료 | `cancel_task` |
@@ -24,8 +25,8 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 
 ## DB 수명
 
-1. 접수 transaction에 Task, invocation, queued 이벤트를 함께 저장한다.
-2. Worker가 실행 자리가 있을 때만 Run을 점유한다.
+1. 접수 transaction에 Task, invocation, queued 이벤트, 내부 명령을 함께 저장한다.
+2. 공통 Worker가 실행 자리가 있을 때만 내부 명령과 세션 소유권을 같은 transaction에서 점유한다. 사용자 입력일 때 기존 Run/Task도 함께 점유한다.
 3. 실행 준비 transaction에서 identity·모델·프로젝트 ID 등 평범한 값을 복사하고 `started/resumed` 이벤트를 저장한다.
 4. 준비 session을 닫은 뒤 그래프를 실행한다. observer와 각 서비스 projection/checkpoint I/O는 자신만의 짧은 DB 작업을 사용한다.
 5. 그래프와 observer 종료를 확인한 뒤 새로운 session에서 결과/재예약/격리를 기록한다.
@@ -45,8 +46,8 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 
 ## 현재 단계와 다음 단계
 
-현재는 사용자 Run dispatcher와 Redis 이벤트 dispatcher의 실행 경로를 공통화하는 단계다. 총 실행 자리를 배분하는 scheduler와 내부 명령 원장은 다음 단계다. 같은 컨테이너 안에 두 dispatcher가 존재하며 기존 실행 한도는 유지한다.
+060에서 두 입력을 DB `agent_commands`로 모으고 한 Agent Worker가 공통 총한도로 실행하도록 전환했다. 외부 Redis 이벤트 수신·Inbox/routing은 별도 background 책임이며 직접 graph를 호출하지 않는다. 공개 Run ID를 내부 command ID로 대체하지 않는다. [원장·Worker·설정·DB 이행](agent-command-worker.md)을 따른다.
 
-다음 단계에서는 새 요청·사용자 resume·Executor resume을 내부 실행 명령으로 모으고 하나의 Agent Worker가 실행한다. 외부 Redis 이벤트 수신/영속화는 별도 책임으로 유지한다. 공개 Run ID를 내부 command ID로 대체하지 않는다.
+다음 단계는 Worker 전용 깨우기 신호와 조회 비용 정리다. 기존 Redis 실행 모듈 파일은 자동 승인 검토의 삭제 거절로 남았지만 새 bootstrap에서 구성하지 않는다.
 
 HITL 또는 Executor 대기에 도달하면 현재 invocation의 실행 소유권을 반환한다. 공개 업무는 아직 미완료이고 `WAITING_EXECUTOR` 세션 입력 잠금은 유지한다. 외부 Executor의 장기 작업 동안 Agent 실행 자리를 유지하지 않는다.

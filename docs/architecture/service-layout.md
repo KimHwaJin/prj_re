@@ -1,6 +1,6 @@
 # 현재 서비스 구조와 의존성 경계
 
-059 기준(베이스 미병합·미배포). 소스 책임을 분리하며 단일 Deployment·단일 컨테이너 Pod 전제를 유지한다.
+060 기준(베이스 미병합·미배포). 소스 책임을 분리하며 단일 Deployment·단일 컨테이너 Pod 전제를 유지한다.
 별도 Agent HTTP 서버나 Agent별 Worker·풀을 추가하지 않는다.
 
 ```text
@@ -13,13 +13,14 @@ src/
     api/                        HTTP 라우터·권한·접수
     schemas/ models/ repositories/
     runs/                       접수·실행·취소·공통 GraphInvocation·결과 반영
+      commands/                 DB 원장·공통 claim/결과·기존 작업 이행
       protocols/                최초 입력·사용자 resume·Executor receipt 검증
     services/                   CRUD·공개 Run 조회·소유권·DB 어댑터
       agent_graph_service.py    API 실행 → 실제 분석 graph 조립 어댑터
       workflow_persistence.py   WorkflowStore의 PostgreSQL 구현
-    agent_run_worker.py         사용자 invocation claim·dispatch
-    agent_worker/               Executor 이벤트 입력·GraphInvocation 연결
-    worker/                     Redis 수신·Inbox/Outbox·dispatch
+    agent_run_worker.py         사용자/Executor 명령 공통 한도·실행 수명
+    agent_worker/               Executor 이벤트 수신 bootstrap·종류 등록
+    worker/                     Redis 수신·Inbox/routing·binding (구 실행 파일 삭제 보류)
     core/                       DB·인증·API 상태/복구 관리
     test/                       API·DB·실행기 통합 테스트
   agent_service/
@@ -111,3 +112,5 @@ project_memory는 공식 Store와 역할별 middleware로 구현했다.
 
 HTTP는 native async이며 파일/PV와 Workflow DB 저장은 기존 `run_sync` 수명을 유지한다.
 제공 Gaia 템플릿 전체 기동·폐쇄망·Kubernetes·외부 Executor/Redis 배포 검증도 별도다.
+
+060의 내부 상태·동시성·동일 DB 전제·구 실행기 종료/이행은 [공통 명령 Worker 안내](../agent-command-worker.md)를 따른다.

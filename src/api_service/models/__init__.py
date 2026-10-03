@@ -17,6 +17,7 @@ from api_service.models.common.jupyter_server_model import JupyterServerModel
 from api_service.models.common.task_event_model import TaskEventModel
 
 __all__ = [
+    "AgentCommandModel",
     "Base",
     "UserModel",
     "ProjectModel",
@@ -38,3 +39,5 @@ __all__ = [
 
 
 from api_service.models.common.session_execution_model import SessionExecutionModel
+
+from api_service.models.common.agent_command_model import AgentCommandModel

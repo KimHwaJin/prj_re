@@ -12,6 +12,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_service.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus, TaskStatus
+from api_service.models.common.agent_command_model import AgentCommandModel
 from api_service.models.common.agent_run_model import AgentRunModel
 from api_service.models.common.llm_run_model import LLMRunModel
 from api_service.models.common.project_model import ProjectModel
@@ -81,6 +82,7 @@ def unfinished_work_conditions(*, session_ids=None, session_id=None):
         ).correlate_except(model).exists()
 
     return {
+        "unfinished_command": exists(AgentCommandModel, AgentCommandModel.state.not_in(("DONE", "IGNORED", "FAILED"))),
         "unfinished_task": exists(TaskModel, or_(
             TaskModel.status.not_in(TERMINAL_TASKS), TaskModel.recovery_required.is_(True),
         )),

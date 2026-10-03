@@ -27,7 +27,8 @@ async def isolated(monkeypatch):
 
 
 def item():
-    return SimpleNamespace(claim=SimpleNamespace(run_id=uuid4()))
+    identity = uuid4()
+    return SimpleNamespace(command_id=identity, claim=SimpleNamespace(run_id=identity))
 
 
 async def until(predicate):

@@ -1,5 +1,7 @@
 # Executor 연계까지 포함한 서비스 처리량 측정
 
+**057 기준 소스용 runner/capture 계약.** 060의 공통 Agent Worker에서는 별도 Event 한도가 적용되지 않아 현재 run.py는 실행을 거절한다. 이전 baseline 소스로 재현하고, 새 공유 peak·동일 총한도·모든 역할 5초 fixture 측정은 리뷰 계획 5단계에서 제공한다. [060 안내](../../../docs/agent-command-worker.md)를 따른다. 이전 원본 측정은 보존한다.
+
 LLM provider와 코드 실행만 fixture로 바꾸고, 현재 cookie/CSRF 인증, Project/Session CRUD,
 Run 접수·계획 편집·승인, checkpoint, 실제 HTTP Executor 요청, binding/Inbox/Outbox,
 Redis Streams 소비, Event Worker 재개, 관찰/Markdown 저장, SSE 완료를 실행한다.

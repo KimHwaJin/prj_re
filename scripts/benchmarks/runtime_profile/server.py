@@ -107,7 +107,7 @@ module.build_analysis_workflow_graph=measured_build
 original_execute=worker.execute_claimed
 @wraps(original_execute)
 async def execute(item):
-    rid=item.claim.run_id
+    rid=item.command_id if hasattr(item, "command_id") else item.claim.run_id
     token=run.set(str(rid));t=time.perf_counter();outcome='ok';m['worker_active']+=1;m['peak_worker']=max(m['peak_worker'],m['worker_active'])
     try:return await original_execute(item)
     except BaseException as exc:outcome=type(exc).__name__;raise

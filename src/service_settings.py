@@ -194,7 +194,8 @@ class ServiceSettings:
             "server_processes": 1,
             "task_reconciler_enabled": self.api.task_reconciler_enabled,
             "event_ingress_concurrency": self.worker.ingress_workers,
-            "event_dispatch_concurrency": self.worker.dispatch_workers,
+            "event_graph_dispatchers": 0,
+            "agent_command_concurrency": self.api.agent_worker_concurrency,
             "event_health_port": self.worker.health_port,
             # Configured maxima, not currently checked-out connections. Distinct
             # drivers/lifetimes require distinct pools, even with one endpoint.
@@ -368,6 +369,14 @@ def load_settings(
         fields = ", ".join(".".join(map(str, e["loc"])) for e in exc.errors())
         raise ConfigurationError(f"Invalid event Worker settings: {fields}") from None
     _postgres_url(worker.database_url, "EW_DATABASE_URL")
+    event_enabled = _boolean(merged.get("EVENT_WORKER_ENABLED", api.agent_worker_enabled), "EVENT_WORKER_ENABLED")
+    if api.agent_worker_enabled or event_enabled:
+        api_url = make_url(_postgres_url(api.database_url, "DATABASE_URL"))
+        event_url = make_url(worker.database_url)
+        def target(url):
+            return (url.username, url.password, url.host, url.port or 5432, url.database, url.query)
+        if target(api_url) != target(event_url):
+            raise ConfigurationError("Agent command Worker requires DATABASE_URL and EW_DATABASE_URL to target the same database; migrate event data before enabling it")
     _postgres_url(agent.checkpoint_db_uri, "CHECKPOINT_DB_URI")
     if not worker.redis_url.startswith(("redis://", "rediss://")):
         raise ConfigurationError("Invalid Redis URL: EW_REDIS_URL")
@@ -393,7 +402,7 @@ def load_settings(
         raise ConfigurationError("Invalid path setting: MOCK_DATA_ROOT")
     return ServiceSettings(
         api=api, agent=agent, worker=worker, sso=sso, profile=selected,
-        event_worker_enabled=_boolean(merged.get("EVENT_WORKER_ENABLED", api.agent_worker_enabled), "EVENT_WORKER_ENABLED"),
+        event_worker_enabled=event_enabled,
         workflow_database_url=workflow_url if workflow_enabled else None,
         mock_data_root=Path(mock_root),
         shutdown_timeout_seconds=shutdown, shutdown_drain_seconds=drain,

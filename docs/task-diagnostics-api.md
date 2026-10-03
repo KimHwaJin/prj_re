@@ -35,7 +35,7 @@
 | `resources_active` | User·Project·Session이 모두 활성인지 |
 | `has_unfinished_work` | 미종료/복구 필요 Task, 큐·실행 Run, Task 없는 interrupt, 큐·실행 LLM, 실행 점유/종료 불명 중 하나라도 있는지 |
 | `can_start_new_run` | 활성 자원이고 위 차단 사유가 없을 때의 보수적인 새 일반 입력 가능 snapshot |
-| `blocking_reasons` | `resources_inactive`, `unfinished_task`, `unfinished_run`, `unfinished_llm`, `execution_held_or_uncertain` 중 해당 사유 |
+| `blocking_reasons` | `resources_inactive`, `unfinished_command`, `unfinished_task`, `unfinished_run`, `unfinished_llm`, `execution_held_or_uncertain` 중 해당 사유 |
 | `execution.ownership_held` | `session_executions`에 점유 token이 남아 있는지. token 자체는 노출하지 않음 |
 | `execution.owner_kind/owner_id/owner_process` | 현재 점유/복구 확인 대상의 종류·내부 ID·프로세스 |
 | `execution.acquired_at/heartbeat_at` | 점유·마지막 heartbeat 기록 시각 |
@@ -60,3 +60,5 @@
 - 운영 프론트·현재 부하 시나리오는 Runs를 기준으로 한다. 레거시 내부 demo는 이번 호환 범위가 아니며 제거한 Task 명령과 구 배열/필드를 사용하는 부분은 별도 전환이 필요하다.
 
 새 DB migration/설정은 없다. Task가 없는 세션의 별도 운영 진단·복구, 검색 조건이 있는 전역 작업 대시보드, 장기 이력 보존/삭제는 후속 범위다. 이 API를 사용자 화면의 추가 폴링 대상으로 요구하지 않는다.
+
+060 추가: `unfinished_command`는 READY/RUNNING/RECOVERY 내부 명령이 남아 있음을 뜻한다. 공개 Task가 종료되었어도 원장 처리/소유권 확인 전에는 세션 CRUD와 새 작업의 진단값이 보수적으로 잠길 수 있다. 내부 명령 DONE/IGNORED/FAILED는 이 사유에서 제외한다. 다른 실행 보호 사유는 별도로 확인한다.

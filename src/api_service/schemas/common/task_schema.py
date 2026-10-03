@@ -23,7 +23,7 @@ class SessionWorkResource(BaseModel):
     resources_active: bool
     has_unfinished_work: bool
     can_start_new_run: bool = Field(description="Conservative snapshot for a fresh input, not HITL resume or a reservation; POST rechecks admission.")
-    blocking_reasons: list[Literal["resources_inactive", "unfinished_task", "unfinished_run", "unfinished_llm", "execution_held_or_uncertain"]]
+    blocking_reasons: list[Literal["resources_inactive", "unfinished_command", "unfinished_task", "unfinished_run", "unfinished_llm", "execution_held_or_uncertain"]]
     execution: SessionExecutionResource
 
 

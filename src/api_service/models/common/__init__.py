@@ -14,6 +14,7 @@ from api_service.models.common.workflow_model import (
 )
 
 __all__ = [
+    "AgentCommandModel",
     "UserModel",
     "ProjectModel",
     "ProjectMemberModel",
@@ -32,3 +33,5 @@ __all__ = [
 
 
 from api_service.models.common.session_execution_model import SessionExecutionModel
+
+from api_service.models.common.agent_command_model import AgentCommandModel

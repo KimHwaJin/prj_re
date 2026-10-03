@@ -82,6 +82,7 @@ class Settings(BaseModel):
     agent_worker_enabled: bool = True
     agent_worker_poll_interval_seconds: float = 0.25
     # Per process, not per Pod. YAML explicit value takes priority over env.
+    # Per-process total graph calls: user start/resume + Executor resume share this limit.
     agent_worker_concurrency: int = Field(default=1, ge=1)
     # 최초 실행은 제외한 자동 재시도 횟수입니다. 3이면 총 최대 4회 실행합니다.
     agent_worker_max_retries: int = 3

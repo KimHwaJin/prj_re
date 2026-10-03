@@ -10,14 +10,21 @@ def install(metrics,enabled,kind):
     def init(self,*a,**kw):
         old_init(self,*a,**kw);pools.append(self)
     AsyncConnectionPool.__init__=init
-    from api_service.agent_worker.worker_main import DeferredHandler
-    original=DeferredHandler.__call__
-    async def handle(self,context):
+    from api_service.agent_worker import worker_main
+    if hasattr(worker_main,'DeferredHandler'):
+        owner=worker_main.DeferredHandler
+        hook='__call__'
+    else:
+        from api_service import agent_run_worker as owner
+        hook='execute_event'
+    original=getattr(owner,hook)
+    async def handle(*args):
+        context=args[-1]
         start=time.perf_counter();measured=enabled();token=kind.set('event_graph');error=None
         if measured:
             metrics['current_event_worker']+=1
             metrics['peak_event_worker']=max(metrics['peak_event_worker'],metrics['current_event_worker'])
-        try:return await original(self,context)
+        try:return await original(*args)
         except BaseException as exc:error=type(exc).__name__;raise
         finally:
             if measured:
@@ -26,7 +33,7 @@ def install(metrics,enabled,kind):
                     'start':start,'end':time.perf_counter(),'error':error})
                 metrics['current_event_worker']-=1
             kind.reset(token)
-    DeferredHandler.__call__=handle
+    setattr(owner,hook,handle)
     from api_service.worker.store import Store
     def wrap(name):
         prior=getattr(Store,name)

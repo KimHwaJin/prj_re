@@ -1,0 +1,10 @@
+{
+  "owned_containers": [
+    "dtest-unified-worker-pg",
+    "dtest-unified-worker-redis"
+  ],
+  "owned_containers_removed": true,
+  "existing_service_containers_changed": false,
+  "actual_service_database_migrated": false,
+  "original_checkout_changed": false
+}
