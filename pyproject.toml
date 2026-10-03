@@ -33,6 +33,7 @@ dependencies = [
     "pyarrow==25.0.0",
     "pydantic==2.13.4",
     "pydantic-settings>=2.7,<3.0",
+    "python-dotenv>=1.2,<2.0",
     "prometheus-client>=0.21,<1.0",
     "psycopg[binary,pool]>=3.2,<4.0",
     "PyYAML==6.0.3",

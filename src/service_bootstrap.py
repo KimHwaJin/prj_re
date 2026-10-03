@@ -111,7 +111,7 @@ class BackgroundRuntime:
         self.tasks.clear()
 
 
-def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event) -> dict[str, Callable]:
+def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event, *, on_event_worker=None) -> dict[str, Callable]:
     factories: dict[str, Callable] = {}
     if settings.api.task_reconciler_enabled:
         from api_service.task_lock_reconciler import run_forever as reconcile
@@ -122,7 +122,7 @@ def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event) 
     if settings.event_worker_enabled:
         from api_service.agent_worker.worker_main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
-        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, use_shared_graph=True)
+        factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, use_shared_graph=True, on_worker=on_event_worker)
     return factories
 
 
@@ -179,8 +179,12 @@ def attach_service(
     attach_swagger(app, sso, docs_path=sso_docs_path)
     previous_lifespan = app.router.lifespan_context
     stop_event = asyncio.Event()
+    app.state.executor_event_worker = None
+    def publish_event_worker(worker):
+        app.state.executor_event_worker = worker
+
     background = BackgroundRuntime(
-        _background_factories(settings, stop_event) if background_factories is None else background_factories,
+        _background_factories(settings, stop_event, on_event_worker=publish_event_worker) if background_factories is None else background_factories,
         settings.shutdown_timeout_seconds, stop_event=stop_event,
         drain_timeout=settings.shutdown_drain_seconds,
     )
@@ -262,12 +266,49 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     @app.get("/service/ready", tags=["health"])
     async def ready():
         healthy = app.state.service_runtime.ready
+        checks = []
+        if healthy and settings.event_worker_enabled:
+            worker = app.state.executor_event_worker
+            if worker is None:
+                healthy = False
+            else:
+                checks.append(worker.ready)
+        if healthy and (settings.api.agent_worker_enabled or settings.api.task_reconciler_enabled):
+            async def primary_database_ready():
+                # Legacy Event DB overrides do not prove API queue readiness.
+                from api_service.core.database import short_session
+                from sqlalchemy import text
+                try:
+                    async with asyncio.timeout(2):
+                        async with short_session() as db:
+                            await db.execute(text("SELECT 1 FROM tasks LIMIT 0"))
+                    return True
+                except Exception:
+                    return False
+            checks.append(primary_database_ready)
+        if healthy and checks:
+            results = await asyncio.gather(*(check() for check in checks), return_exceptions=True)
+            healthy = all(result is True for result in results)
         return JSONResponse({"ready": healthy}, status_code=200 if healthy else 503)
+
+    @app.get("/service/metrics", include_in_schema=False)
+    async def metrics():
+        # Retain Event Worker telemetry without a second HTTP listener. The
+        # default registry also carries process/platform metrics when registered.
+        from fastapi.responses import Response
+        from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+        payload = generate_latest()
+        worker = app.state.executor_event_worker
+        if worker is not None:
+            payload += generate_latest(worker.telemetry.registry)
+        return Response(payload, headers={"Content-Type": CONTENT_TYPE_LATEST})
 
     @app.get("/service/live", tags=["health"])
     async def live():
         from api_service.core.execution_lifecycle import execution_health
-        healthy = execution_health.healthy
+        healthy = execution_health.healthy and all(
+            not task.done() for task in app.state.service_runtime.tasks.values()
+        )
         return JSONResponse({"healthy": healthy}, status_code=200 if healthy else 503)
 
     return app
@@ -296,11 +337,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--local-env-file", type=Path)
     parser.add_argument("--check-config", action="store_true")
     args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO)
     settings = configure(load_settings(profile=args.env, config_path=args.config, dotenv_path=args.local_env_file))
+    if settings.api.server_reload:
+        parser.error("server_reload is not supported by this single-process bootstrap")
     if args.check_config:
         print(json.dumps(settings.summary(), ensure_ascii=False, indent=2))
         return
-    if settings.api.server_reload:
-        parser.error("server_reload is not supported by this single-process bootstrap")
-    logging.basicConfig(level=logging.INFO)
     build_server(create_app(settings), settings).run()

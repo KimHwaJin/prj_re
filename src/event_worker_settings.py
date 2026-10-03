@@ -17,7 +17,7 @@ class Settings(BaseModel):
     redis_url: str
 
     # DB 행, Redis key와 기본 Stream 이름을 서비스별로 구분하는 값이다.
-    namespace: str = Field(default="executor-worker", min_length=1)
+    namespace: str = Field(default="dtest-agent", min_length=1)
 
     # 이벤트 순번 누락 시 실행 이력을 조회할 Executor REST API 주소다.
     executor_base_url: str = "http://localhost:8000/api/v1"
@@ -85,8 +85,9 @@ class Settings(BaseModel):
     # Executor HTTP 요청과 Redis 연결에 적용하는 timeout(초)이다.
     request_timeout_seconds: float = Field(default=10, gt=0)
 
-    # liveness, readiness, metrics HTTP 서버 포트다. 0이면 비활성화한다.
-    health_port: int = Field(default=8011, ge=0, le=65535)
+    # 선택적 진단 HTTP 포트다. 기본 0: 내장 Worker는 서비스 probe를 사용한다.
+    # standalone 진단에서만 8011 등을 명시한다.
+    health_port: int = Field(default=0, ge=0, le=65535)
 
     @model_validator(mode="after")
     def validate_intervals(self):

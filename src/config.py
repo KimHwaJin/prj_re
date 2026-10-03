@@ -75,8 +75,8 @@ class Settings(BaseModel):
     # E03: Worker가 heartbeat를 갱신하지 못했을 때 Run을 stale로 판단하는 lease 길이입니다.
     task_lease_seconds: int = 300
     task_reconcile_interval_seconds: int = 30
-    # 단일 서버/로컬에서는 API lifespan과 함께 Reconciler를 실행합니다.
-    # 운영에서 별도 Reconciler Deployment를 둘 때는 false로 끌 수 있습니다.
+    # 같은 서비스 lifespan에서 세션 잠금/Run lease 정합성을 점검합니다.
+    # 실행기를 비활성화하는 진단 환경에서는 함께 끌 수 있습니다.
     task_reconciler_enabled: bool = True
     # 별도 Pod 없이 서비스 bootstrap lifespan에서 durable DB queue를 소비합니다.
     agent_worker_enabled: bool = True

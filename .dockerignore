@@ -16,6 +16,5 @@ dist
 var
 workspace
 demo_artifacts
-config.dev.yml
 *.log
 .DS_Store

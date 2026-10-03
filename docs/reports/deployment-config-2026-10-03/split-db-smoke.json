@@ -1,0 +1,85 @@
+{
+  "project": "dtest-config-check-a2477ea3cc",
+  "image": "dtest-agent:config-unification-check",
+  "split_event_db": true,
+  "scope": "startup/readiness/metrics/SSO boundary/idle SIGTERM; no LLM or Executor calls",
+  "docker_top": "PID                 COMMAND\n140033              python app.py",
+  "http": {
+    "/health": 200,
+    "/service/ready": 200,
+    "/service/live": 200,
+    "/openapi.json": 200
+  },
+  "metrics_status": 200,
+  "sso_without_cookie_status": 401,
+  "effective_config": {
+    "profile": "dev",
+    "server_host": "0.0.0.0",
+    "server_port": 8000,
+    "server_processes": 1,
+    "task_reconciler_enabled": true,
+    "event_ingress_concurrency": 4,
+    "event_dispatch_concurrency": 4,
+    "event_health_port": 0,
+    "connection_pool_limits": {
+      "crud": 20,
+      "checkpoint": 4,
+      "submission_bridge": 8,
+      "event": 8,
+      "project_memory": 2,
+      "sse_listener": 1
+    },
+    "agent_worker_enabled": true,
+    "agent_worker_concurrency": 2,
+    "event_worker_enabled": true,
+    "shutdown_drain_seconds": 1.0,
+    "shutdown_timeout_seconds": 5.0,
+    "identity_mode": "sso_cookie",
+    "sso_adapter_configured": false
+  },
+  "db_identities": [
+    {
+      "role": "crud",
+      "host": "postgres",
+      "database": "chat_app",
+      "schema": "public"
+    },
+    {
+      "role": "checkpoint",
+      "host": "postgres",
+      "database": "agent",
+      "schema": "public"
+    },
+    {
+      "role": "workflow",
+      "host": "postgres",
+      "database": "agent",
+      "schema": "public"
+    },
+    {
+      "role": "event",
+      "host": "postgres",
+      "database": "agent",
+      "schema": "public"
+    },
+    {
+      "worker_host": "d36f33a34872",
+      "checkpointer": "postgres",
+      "redis": "ready",
+      "redis_host": "redis",
+      "revision": "working-tree",
+      "executor_submit_enabled": false
+    }
+  ],
+  "redis_outage_ready_status": 503,
+  "redis_outage_live_status": 200,
+  "redis_recovery_ready_status": 200,
+  "sigterm_seconds": 1.596,
+  "exit_code": 0,
+  "shutdown_logs": [
+    "INFO:service_bootstrap:service_draining grace_seconds=1.0",
+    "INFO:uvicorn.error:Shutting down",
+    "INFO:uvicorn.error:Application shutdown complete.",
+    "INFO:uvicorn.error:Finished server process [1]"
+  ]
+}

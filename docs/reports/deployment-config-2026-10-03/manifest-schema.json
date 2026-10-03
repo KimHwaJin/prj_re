@@ -1,0 +1,54 @@
+{
+  "source": "kubernetes/kubernetes v1.34.1 api/openapi-spec/swagger.json",
+  "strict_unknown_fields": true,
+  "documents": [
+    {
+      "kind": "ConfigMap",
+      "name": "dtest-agent-config",
+      "schema": "io.k8s.api.core.v1.ConfigMap",
+      "valid": true
+    },
+    {
+      "kind": "Deployment",
+      "name": "dtest-agent-api",
+      "schema": "io.k8s.api.apps.v1.Deployment",
+      "valid": true
+    },
+    {
+      "kind": "Service",
+      "name": "dtest-agent-api",
+      "schema": "io.k8s.api.core.v1.Service",
+      "valid": true
+    },
+    {
+      "kind": "Secret",
+      "name": "dtest-agent-secrets",
+      "schema": "io.k8s.api.core.v1.Secret",
+      "valid": true
+    },
+    {
+      "kind": "Deployment",
+      "name": "gaia-prj-03-0042-v2-api-basic-dev",
+      "schema": "io.k8s.api.apps.v1.Deployment",
+      "valid": true
+    },
+    {
+      "kind": "Service",
+      "name": "gaia-prj-03-0042-v2-api-basic-dev-svc",
+      "schema": "io.k8s.api.core.v1.Service",
+      "valid": true
+    },
+    {
+      "kind": "Ingress",
+      "name": "gaia-prj-03-0042-v2-api-basic-dev-ingress",
+      "schema": "io.k8s.api.networking.v1.Ingress",
+      "valid": true
+    },
+    {
+      "kind": "HorizontalPodAutoscaler",
+      "name": "gaia-prj-03-0042-v2-api-basic-dev-hpa",
+      "schema": "io.k8s.api.autoscaling.v1.HorizontalPodAutoscaler",
+      "valid": true
+    }
+  ]
+}

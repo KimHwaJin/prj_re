@@ -1,33 +1,18 @@
-# Gaia 배포 준비
+# 단일 애플리케이션 배포
 
-이 디렉터리는 하나의 `dtest-agent` 이미지로 두 프로세스를 배포한다.
+정본은 `app.py`로 실행하는 한 컨테이너다. FastAPI, Run Worker, Executor 이벤트 수신/재개, reconciler가 같은 프로세스와 lifespan에서 동작한다. 별도 Worker Deployment는 사용하지 않는다.
 
-- `dtest-agent-api`: FastAPI, 테스트 HTML, CRUD Run queue와 LangGraph 실행
-- `dtest-agent-worker`: Redis Executor event consumer와 LangGraph resume
+1. 배포 전에 CRUD·이벤트·checkpoint schema를 서버와 같은 설정으로 준비한다. init container나 자동 reset은 없다.
+2. `dtest-agent.yaml`의 이미지·PVC·자원은 환경에 맞춘다. 사내 CICD의 고정 placeholder는 플랫폼이 치환한다.
+3. Secret 예제의 공통 DB·Redis·Executor·모델 값을 주입한다. 기존 분리 DB는 `EW_DATABASE_URL`로 보존한다.
+4. 기존 별도 Worker가 있으면 drain/종료 후 내장 Worker로 전환한다.
+5. readiness `/service/ready`, liveness `/service/live`, 종료 유예70초를 유지한다.
 
-배포 전에 `dtest-agent.yaml`의 다음 환경별 값을 Gaia 리소스에 맞춘다.
-
-1. 모든 `image: dtest-agent:latest`를 사내 registry 이미지로 교체한다.
-2. `dtest-shared-pv`를 Agent와 Executor가 함께 마운트하는 PVC 이름으로 교체한다.
-3. `secret.example.yaml`을 복사해 실제 Secret 관리 절차로 `dtest-agent-secrets`를 만든다. 예시 파일에 실제 비밀번호를 저장하거나 commit하지 않는다.
-4. API의 `CHECKPOINT_DB_URI`와 Worker의 `AGENT_CHECKPOINT_DATABASE_URL`은 같은 LangGraph checkpoint DB를 가리켜야 한다.
-5. `EW_DATABASE_URL`에는 Worker migration과 `ew_*` 테이블을 둘 PostgreSQL을 지정한다.
-
-두 migration은 각 Deployment의 init container에서 실행된다. PostgreSQL advisory lock과 Alembic revision으로 중복 실행을 직렬화한다.
+[공통 설정·포트·schema 준비·전환 절차](../docs/deployment-configuration.md), [로컬 환경](../docs/local-docker.md), [058 검증 기록](../docs/improvements/058-deployment-config-unification.md)을 따른다.
 
 ```bash
 docker build -t dtest-agent:local .
-docker compose --env-file .env -f compose.external.yaml up
+docker compose -f compose.external.yaml up
 ```
 
-```bash
-kubectl apply -f deploy/dtest-agent.yaml
-```
-
-로컬 PostgreSQL·Redis를 함께 사용하는 기본 개발 환경은 저장소 루트에서
-`python3 scripts/local.py up`으로 실행한다. 기본 `compose.yaml`은 이 로컬 구성을 사용한다.
-
-확인 endpoint:
-
-- API: `GET /health`, `GET /demo`
-- Worker: `GET :8011/health/live`, `GET :8011/health/ready`, `GET :8011/metrics`
+`kubectl apply -f deploy/dtest-agent.yaml`은 schema·Secret·PVC 준비와 기존 Worker 전환 완료 뒤 실행한다. 이번 변경은 실제 사내 배포를 수행하지 않았다.

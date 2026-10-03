@@ -4,7 +4,7 @@ service:
   runtime:
     app_name: DTest Agent API
     server_host: 0.0.0.0
-    server_port: 8000
+    # server_port: 8000  # 기본값. 명시하면 SERVER_PORT 환경변수보다 우선한다.
   checkpoint:
     checkpoint_setup_on_start: false
   agent: {}

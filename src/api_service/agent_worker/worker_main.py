@@ -1,4 +1,4 @@
-"""Standalone Worker entrypoint with no dependency on the source service."""
+"""Executor event runtime embedded in app.py; standalone mode is diagnostic."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import asyncio
 import logging
 import signal
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Callable
 
 from api_service.agent_worker.graph_provider import build_agent_graph
 from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
@@ -88,7 +88,8 @@ async def graph_context(service, worker, *, use_shared_graph):
 
 
 async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None = None,
-               use_shared_graph: bool = False) -> None:
+               use_shared_graph: bool = False,
+               on_worker: Callable[[ExecutorWorker | None], None] | None = None) -> None:
     from service_settings import get_settings
     service = get_settings()
     worker_settings = service.worker
@@ -126,12 +127,16 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
                 return execution_health.healthy
             worker.add_readiness_check("session-execution", execution_ready)
             installed = _install_signal_handlers(worker) if install_signals else []
+            if on_worker is not None:
+                on_worker(worker)
             try:
                 if stop_event is None:
                     await worker.run()
                 else:
                     await worker.run(stop_event=stop_event)
             finally:
+                if on_worker is not None:
+                    on_worker(None)
                 loop = asyncio.get_running_loop()
                 for signum in installed:
                     loop.remove_signal_handler(signum)

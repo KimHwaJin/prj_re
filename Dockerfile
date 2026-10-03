@@ -43,6 +43,6 @@ ARG SOURCE_REVISION=working-tree
 ENV SOURCE_REVISION=${SOURCE_REVISION}
 LABEL org.opencontainers.image.revision=${SOURCE_REVISION}
 
-EXPOSE 8000 8011
+EXPOSE 8000
 
 CMD ["python", "app.py"]

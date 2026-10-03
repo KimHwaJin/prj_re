@@ -1,13 +1,19 @@
+# 한 애플리케이션: API·Agent·Executor 이벤트 수신의 공용 설정.
 name: dtest-agent-local
 
 x-app: &app
   image: dtest-agent:local-dev
   env_file:
-    - .env
+    - .env.local
   environment: &app-environment
+    APP_ENV: dev
+    SERVER_PORT: "8000"
+    AGENT_WORKER_ENABLED: "true"
+    TASK_RECONCILER_ENABLED: "true"
+    EVENT_WORKER_ENABLED: "true"
+    EW_HEALTH_PORT: "0"
     DATABASE_URL: ${LOCAL_DATABASE_URL:?Run python3 scripts/local.py init}
     CHECKPOINT_DB_URI: ${LOCAL_CHECKPOINT_DB_URI:?Run python3 scripts/local.py init}
-    AGENT_CHECKPOINT_DATABASE_URL: ${LOCAL_AGENT_CHECKPOINT_DATABASE_URL:?Run python3 scripts/local.py init}
     EW_DATABASE_URL: ${LOCAL_EW_DATABASE_URL:?Run python3 scripts/local.py init}
     WORKFLOW_DATABASE_URL: ${LOCAL_WORKFLOW_DATABASE_URL:?Run python3 scripts/local.py init}
   volumes:
@@ -72,7 +78,8 @@ services:
       context: .
       args:
         SOURCE_REVISION: ${LOCAL_SOURCE_REVISION:-working-tree}
-    command: [python, -m, uvicorn, "main:app", --app-dir, /app/src, --host, 0.0.0.0, --port, "8000", --workers, "${LOCAL_API_WORKERS:-4}"]
+    command: [python, app.py]
+    stop_grace_period: 70s
     ports:
       - "127.0.0.1:${LOCAL_API_PORT:-18000}:8000"
     depends_on:
@@ -81,29 +88,13 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/service/ready', timeout=3)"]
       interval: 5s
       timeout: 4s
       start_period: 15s
       retries: 12
     restart: unless-stopped
 
-  event-worker:
-    <<: *app
-    command: [python, -m, api_service.agent_worker.worker_main]
-    ports:
-      - "127.0.0.1:${LOCAL_EVENT_WORKER_PORT:-18011}:8011"
-    depends_on:
-      api:
-        condition: service_healthy
-    healthcheck:
-      test: [CMD, python, -c, "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('EW_HEALTH_PORT', '8011') + '/health/ready', timeout=3)"]
-      interval: 5s
-      timeout: 4s
-      start_period: 15s
-      retries: 12
-    stop_grace_period: 35s
-    restart: unless-stopped
 
 volumes:
   postgres-data:

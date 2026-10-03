@@ -26,14 +26,15 @@ def validate_local_targets():
     expected = {
         "DATABASE_URL": "chat_app",
         "CHECKPOINT_DB_URI": "agent",
-        "EW_DATABASE_URL": "agent",
-        "WORKFLOW_DATABASE_URL": "agent",
+        "EW_DATABASE_URL": {"agent", "chat_app"},
+        "WORKFLOW_DATABASE_URL": {"agent", "chat_app"},
     }
     targets = resolved_targets()
     for name, database in expected.items():
         parsed = urlsplit(targets[name] or "")
-        if parsed.hostname != "postgres" or parsed.path != "/" + database:
-            raise RuntimeError(f"{name} must point at the local Compose {database} database")
+        allowed = {database} if isinstance(database, str) else database
+        if parsed.hostname != "postgres" or parsed.path.lstrip("/") not in allowed:
+            raise RuntimeError(f"{name} must point at the local Compose allowed database")
 
 
 def provision_local_logins():
@@ -66,4 +67,4 @@ if __name__ == "__main__":
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.crud.ini", "upgrade", "head"], check=True)
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"], check=True)
     asyncio.run(setup_checkpoint())
-    print("Local migrations complete: CRUD=chat_app, workflow/checkpoint=agent", flush=True)
+    print("Local migrations complete for selected CRUD, event/workflow and checkpoint targets", flush=True)

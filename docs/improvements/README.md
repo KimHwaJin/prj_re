@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-2026-10-03 리뷰 반영 후 다음 구현은 **배포·설정 정합성 → Run/GraphInvocation 책임 분리 → 공통 DB 명령 스케줄러와 wakeup → 동일 총한도 성능 검증**이다. [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [갱신된 후속 목록](backlog.md)을 따른다. 계획 수립 상태이며 기존 작업 완료 기록과 구분한다.
+2026-10-03 리뷰의 1단계 배포·설정 정합성은 [058](058-deployment-config-unification.md)에서 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 Run 책임 분리와 공통 GraphInvocation이다. [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [후속 목록](backlog.md)을 따른다.
 
 고아 기준 브랜치: `feature/refactor-base`
 
@@ -49,6 +49,7 @@
 
 | ID | 항목 | 상태 | 완료일 | 기록 |
 |---|---|---|---|---|
+| 058 | 단일 프로젝트 배포·공통 설정 | 구현·격리 Docker 검증 완료 / 미병합·미배포 | 2026-10-03 | [작업 기록](058-deployment-config-unification.md) |
 | 057 | Executor 연계 서비스 처리량·세션 인계·중복 투영 | 베이스 병합·origin 게시 완료 / 미배포 | 2026-10-03 | [작업 기록](057-executor-service-throughput.md) |
 | 000 | 개선 브랜치와 기록 환경 준비 | 완료 — 문서·환경 준비 | 2026-09-28 | [준비 결과](000-workspace-setup.md) |
 | 001 | 취소 감시 정리 중 Run 실행기 정체 | 구현·격리 PostgreSQL 검증 완료 / 자동 복구·배포 미완료 | 2026-09-28 | [변경·검증·제한](001-run-cleanup-stall.md) |

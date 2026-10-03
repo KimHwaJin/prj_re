@@ -1,4 +1,6 @@
-# 기동과 설정 — 리팩토링 첫 단계
+# 기동과 설정
+
+2026-10-03의 배포 정본·기본 활성값·예제·포트·전환 절차는 [058 통합 설정 안내](deployment-configuration.md)를 따른다. 아래는 초기 bootstrap의 설계 설명이며 갱신된 구현이 우선한다.
 
 루트 `app.py`가 `src/service_bootstrap.py`를 호출한다. 설정은 `src/service_settings.py`에서 프로세스당 한 번 확정한다. 기존 `run.py`, `uvicorn main:app --app-dir src`도 같은 bootstrap을 사용한다. 025에서 API 패키지는 `src/api_service`로 이동했다. 루트 `app.py`는 그대로 진입점이며 기존 패키지 이름 충돌용 우회는 제거했다.
 
@@ -13,9 +15,9 @@ python app.py --config /mounted/config.yml
 
 `APP_ENV=dev|stg|prd` 또는 `--env`로 환경을 선택한다. `development/staging/production` 환경변수 값도 허용한다. 기본 포트는 8000이다. `--check-config`는 설정 출처와 Worker 활성 여부만 출력하고 서버나 외부 연결을 시작하지 않는다.
 
-`config.dev.yml` 예제는 API만 기동한다. Agent 실행을 시험하려면 `agent_worker_enabled`, `task_reconciler_enabled`를 YAML에서 켜고 DB 마이그레이션을 먼저 수행한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
+기본 dev/stg/prd 예제는 활성값을 가리지 않으며 API와 Worker가 함께 실행된다. DB schema는 사전 준비한다. API만 실행하려면 세 Worker flag를 false로 지정한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
 
-Docker 기본 CMD도 `python app.py`로 변경했다. 기존 Compose의 명시적 Uvicorn 명령과 다중 프로세스 설정은 남아 있다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 013에서 프로세스별 제한된 Run 동시 실행을 구현했다. 최종 Pod의 프로세스 수와 배포 명령은 별도 적용·검증이 필요하다.
+Docker 기본 CMD도 `python app.py`로 변경했다. 058에서 Compose·Kubernetes·CICD의 명시적 Uvicorn 명령과 별도 Worker 배포를 제거하고 app.py 한 프로세스로 통일했다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 013에서 프로세스별 제한된 Run 동시 실행을 구현했다. 최종 Pod의 프로세스 수와 배포 명령은 별도 적용·검증이 필요하다.
 
 ## 우선순위
 
@@ -84,11 +86,11 @@ Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수
 
 `create_app()`은 로컬 앱을 만들고 `create_app(platform_app=..., settings=...)`은 이미 조립된 FastAPI에 붙인다. `attach_service()`는 기존 앱/라우터 lifespan을 보존하면서 Worker 시작·종료와 공유 자원 정리를 합성한다. 두 번 붙이면 오류다. startup 실패 시 시작된 형제 작업을 정리한다. 015부터 정상 종료는 새 점유를 중단하고 현재 호출에 유예 시간을 준 뒤, 남은 작업만 취소한다. Run 내부 종료 경로는 [001 개선](improvements/001-run-cleanup-stall.md)에서 stop 신호와 종료 기한 관찰로 변경했다. 종료가 확인되지 않은 background 작업이 있으면 서비스 공용 자원을 먼저 닫지 않는다. 종료 기한 초과는 오류로 드러내며, 취소를 무시하는 Python 코루틴을 강제 종료하는 기능은 아니다.
 
-`/health`는 기존 생존 확인이다. `/service/ready`는 소유한 background loop가 끝났거나 Run 종료/소유권 불확실성을 감지하면 503으로 바뀐다. 새 `/service/live`도 Run 건전성 실패를 503으로 노출한다. Kubernetes probe 연결은 배포 측에서 별도 검증해야 한다. DB/Redis 접속이나 큐 처리 가능성을 종합 검증하는 준비 상태는 아직 아니다.
+`/health`는 기존 생존 확인이다. `/service/ready`는 소유한 background loop가 끝났거나 Run 종료/소유권 불확실성을 감지하면 503으로 바뀐다. 새 `/service/live`도 Run 건전성 실패를 503으로 노출한다. Kubernetes probe 연결은 배포 측에서 별도 검증해야 한다. 058에서 내장 이벤트 consumer·이벤트 DB/Redis와 활성 API 실행기의 tasks 테이블 확인을 추가했다. 모델·Executor와 모든 테이블의 종합 검증은 아니다.
 
 `run_cleanup_timeout_seconds`(기본 5초)는 정상 stop/취소 후 종료 관찰, `run_monitor_timeout_seconds`(기본 3초)는 취소 감시·heartbeat DB 작업에 적용한다. `service.runtime` YAML 또는 동일한 대문자 환경변수 이름으로 설정한다. LLM·Executor 작업 제한 시간이 아니다. 종료가 확인되지 않는 작업은 복구 필요 상태를 유지하며 자동 재실행되지 않는다. 자세한 운영 제한은 001 기록을 따른다.
 
-[004 개선](improvements/004-graph-resource-lifecycle.md)부터 API/Run 그래프의 checkpoint·binding 풀은 첫 사용에 한 번 열고 서비스 lifespan 동안 재사용한다. Executor 이벤트 그래프·checkpoint 풀도 이벤트마다 생성하지 않고 Worker lifespan 동안 유지한다. 양쪽 풀은 아직 별개이며, API SQLAlchemy 풀·동기 Workflow DB 접근까지 하나로 합친 것은 아니다. 풀 크기의 합과 Pod 수를 고려해 DB 연결 예산을 검증해야 한다.
+[004 개선](improvements/004-graph-resource-lifecycle.md)부터 API/Run 그래프의 checkpoint·binding 풀은 첫 사용에 한 번 열고 서비스 lifespan 동안 재사용한다. Executor 이벤트 그래프·checkpoint 풀도 이벤트마다 생성하지 않고 Worker lifespan 동안 유지한다. 내장 모드는 056부터 API와 이벤트가 같은 graph/checkpointer를 사용한다. API SQLAlchemy·Store·binding/event pool까지 하나로 합친 것은 아니다. 풀 크기의 합과 Pod 수를 고려해 DB 연결 예산을 검증해야 한다.
 
 그래프를 사용하는 호출이 남아 있으면 `SHUTDOWN_TIMEOUT_SECONDS`까지 반환을 기다리고 새 사용은 거절한다. 반환이 확인되지 않으면 다른 서비스 풀도 먼저 닫지 않는다. HITL/Executor 대기로 그래프 호출이 반환된 상태는 자원 차용 중으로 세지 않으며, 대기 세션마다 checkpoint 연결을 하나씩 보유하지 않는다. 초기 그래프에 고정된 설정·의존성·catalog prompt 변경은 재시작으로 반영한다.
 

@@ -9,7 +9,6 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
-from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit, urlunsplit
 
@@ -38,16 +37,27 @@ def initialize():
                              "-f", "-", "config", "--format", "json"], input=config,
                             capture_output=True, text=True, check=True)
     source = json.loads(result.stdout)["services"]["inspect"]["environment"]
+    # Canonicalize old spellings before host overrides; never modify the user's .env.
+    sys.path.insert(0, str(ROOT / "src"))
+    from service_settings import ALIASES
+    source = dict(source)
+    for canonical, aliases in ALIASES.items():
+        present = [name for name in (canonical, *aliases) if name in source]
+        if len({source[name] for name in present}) > 1:
+            raise RuntimeError("Conflicting aliases for " + canonical)
+        if present:
+            source[canonical] = source[present[0]]
+        for alias in aliases:
+            source.pop(alias, None)
     previous = read_env(ENV_FILE)
     values = {key: previous.get(key, default) for key, default in
               read_env(ROOT / ".env.local.example").items() if key.startswith("LOCAL_")}
     values["LOCAL_POSTGRES_PASSWORD"] = previous.get("LOCAL_POSTGRES_PASSWORD") or secrets.token_hex(24)
-    workers = values.get("LOCAL_API_WORKERS", "4")
-    if not workers.isdigit() or int(workers) < 1:
-        raise RuntimeError("LOCAL_API_WORKERS must be a positive integer")
-    keys = ["DATABASE_URL", "CHECKPOINT_DB_URI", "AGENT_CHECKPOINT_DATABASE_URL", "EW_DATABASE_URL", "WORKFLOW_DATABASE_URL"]
+    keys = ["DATABASE_URL", "CHECKPOINT_DB_URI", "EW_DATABASE_URL", "WORKFLOW_DATABASE_URL"]
     for key in keys:
-        value = source.get(key) or (source.get("EW_DATABASE_URL") if key == "WORKFLOW_DATABASE_URL" else None)
+        fallback = {"EW_DATABASE_URL": source.get("DATABASE_URL"),
+                    "WORKFLOW_DATABASE_URL": source.get("EW_DATABASE_URL") or source.get("DATABASE_URL")}
+        value = source.get(key) or fallback.get(key)
         if not value:
             raise RuntimeError(key + " is required in .env")
         parsed = urlsplit(value)
@@ -64,13 +74,15 @@ def initialize():
     if result_root != shared:
         raise RuntimeError("Configure separate Docker bind mounts when input/result roots differ")
     values["LOCAL_SHARED_INPUT_ROOT"] = shared
-    content = "# Generated from .env: DB host only is replaced with postgres. Do not commit.\n"
-    for key, value in values.items():
-        content += key + "='" + value.replace("'", "\\'") + "'\n"
+    content = "# Generated canonical .env + local DB host overrides. Do not commit.\n"
+    # One generated file serves both Compose interpolation and env_file.
+    # Local infrastructure controls are preserved; service values always come from .env.
+    for key, value in {**source, **values}.items():
+        content += key + "='" + str(value).replace("'", "\\'") + "'\n"
     with ENV_FILE.open("w") as output:
         os.chmod(ENV_FILE, 0o600)
         output.write(content)
-    print("Synchronized .env settings; only database hosts point to local PostgreSQL.")
+    print("Synchronized canonical .env settings; only database hosts point to local PostgreSQL.")
 
 
 def compose(*args):
@@ -78,7 +90,8 @@ def compose(*args):
     revision = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
                               capture_output=True, text=True)
     digest = hashlib.sha256()
-    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py"]]
+    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py", "app.py"]]
+    sources.extend(ROOT.glob("config*.yml"))
     for directory in ["src", "migrations", "crud_migrations", "scripts/local"]:
         sources.extend(p for p in (ROOT / directory).rglob("*")
                        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
@@ -88,6 +101,23 @@ def compose(*args):
     env["LOCAL_SOURCE_REVISION"] = (revision.stdout.strip() or "working-tree") + "+" + digest.hexdigest()[:12]
     subprocess.run(["docker", "compose", "--env-file", str(ENV_FILE), "-f",
                     str(ROOT / "compose.local.yaml"), *args], cwd=ROOT, env=env, check=True)
+
+
+def retire_legacy_event_worker():
+    """Drain only the old standalone service in this local Compose project.
+
+    Merely removing the service definition leaves its old container running.
+    Stop before migration so it cannot consume events alongside the embedded Worker.
+    """
+    project = os.environ.get("COMPOSE_PROJECT_NAME", "dtest-agent-local")
+    result = subprocess.run(["docker", "ps", "-a",
+        "--filter", "label=com.docker.compose.project=" + project,
+        "--filter", "label=com.docker.compose.service=event-worker",
+        "--format", "{{.ID}}"], capture_output=True, text=True, check=True)
+    containers = result.stdout.split()
+    if containers:
+        subprocess.run(["docker", "stop", "--time", "70", *containers], check=True)
+        subprocess.run(["docker", "rm", *containers], check=True)
 
 
 def smoke():
@@ -101,19 +131,11 @@ def smoke():
 
     assert request("/health")["status"] == "ok"
     assert "/api/v1/sessions/{session_id}/runs" in request("/openapi.json")["paths"]
-    try:
-        request("/api/v1/users/by-name/local-dev")
-    except HTTPError as exc:
-        if exc.code != 404:
-            raise
-        request("/api/v1/users", {"user_name": "local-dev"})
     compose("exec", "-T", "api", "python", "scripts/local/inspect_environment.py")
-    worker_port = read_env(ENV_FILE).get("LOCAL_EVENT_WORKER_PORT", "18011")
-    with urlopen("http://127.0.0.1:" + worker_port + "/health/ready", timeout=5) as response:
-        assert response.status == 200 and response.read().strip() == b"ok"
-    print("Ready: " + base + "/demo (user: local-dev)")
+    assert request("/service/ready")["ready"] is True
+    print("Ready: " + base + "/demo")
     print("Swagger: " + base + "/docs")
-    print("Event Worker ready: http://127.0.0.1:" + worker_port + "/health/ready")
+    print("API·Agent·Event Worker ready: " + base + "/service/ready")
 
 
 def main():
@@ -125,21 +147,24 @@ def main():
         return
     if args.action in {"up", "update"}:
         compose("build", "api")
-        compose("up", "-d", "--wait", "postgres")
-        if args.action == "update":
-            # Let the old process finish/shut down before migrating its database.
-            compose("stop", "api", "event-worker")
+        redis_host = urlsplit(read_env(ENV_FILE).get("REDIS_URL", "")).hostname
+        if redis_host == "redis":
+            compose("--profile", "local-redis", "up", "-d", "--wait", "postgres", "redis")
+        else:
+            compose("up", "-d", "--wait", "postgres")
+        # Both up and update can encounter an existing environment.
+        compose("stop", "api")
+        retire_legacy_event_worker()
         compose("run", "--rm", "--no-deps", "migrate")
-        compose("up", "-d", "--no-deps", "--force-recreate", "--wait", "api", "event-worker")
+        compose("up", "-d", "--no-deps", "--force-recreate", "--wait", "api")
         smoke()
     elif args.action == "down":
         compose("down")  # Named volumes intentionally survive shutdown.
     elif args.action == "logs":
-        compose("logs", "--tail", "200", "-f", "api", "event-worker")
+        compose("logs", "--tail", "200", "-f", "api")
     elif args.action == "status":
         compose("ps", "-a")
         compose("exec", "-T", "api", "python", "scripts/local/inspect_environment.py")
-        compose("exec", "-T", "event-worker", "python", "scripts/local/inspect_environment.py")
     elif args.action == "smoke":
         smoke()
 

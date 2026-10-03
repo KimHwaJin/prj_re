@@ -19,8 +19,8 @@
 
 | ID | 합의 사항 | 요약 확인 | 구현 기록 |
 |---|---|---|---|
-| D-01 | 배포·실행 정본 | 확인 | 미착수 |
-| D-02 | 설정 정책과 예제 정합성 | 확인 | 미착수 |
+| D-01 | 배포·실행 정본 | 확인 | [058](../improvements/058-deployment-config-unification.md) — 구현·로컬 검증 / 미병합·미배포 |
+| D-02 | 설정 정책과 예제 정합성 | 확인 | [058](../improvements/058-deployment-config-unification.md) — 구현·로컬 검증 / 사내 배포 미검증 |
 | D-03 | Run 접수·실행·취소 분리와 도메인 예외 | 확인 | 미착수 |
 | D-04 | 짧은 Unit of Work | 확인 | 미착수 |
 | D-05 | 공통 GraphInvocation·상태 반영 (W-02) | 확인 | 미착수 |

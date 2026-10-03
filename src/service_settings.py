@@ -12,6 +12,7 @@ from types import MappingProxyType
 from typing import Any, Mapping
 import os
 import json
+from uuid import uuid4
 
 import yaml
 from pydantic import ValidationError
@@ -30,6 +31,8 @@ ALIASES = {
     "MODEL_ENABLE_THINKING": ("LLM_ENABLE_THINKING",),
     "MODEL_STRUCTURED_OUTPUT_MODE": ("LLM_STRUCTURED_OUTPUT_MODE",),
     "CHECKPOINT_DB_URI": ("AGENT_CHECKPOINT_DATABASE_URL",),
+    "REDIS_URL": ("EW_REDIS_URL",),
+    "EXECUTOR_BASE_URL": ("EW_EXECUTOR_BASE_URL",),
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
@@ -186,6 +189,23 @@ class ServiceSettings:
         """Safe for startup logs / --check-config; never dump values or DSNs."""
         return {
             "profile": self.profile,
+            "server_host": self.api.server_host,
+            "server_port": self.api.server_port,
+            "server_processes": 1,
+            "task_reconciler_enabled": self.api.task_reconciler_enabled,
+            "event_ingress_concurrency": self.worker.ingress_workers,
+            "event_dispatch_concurrency": self.worker.dispatch_workers,
+            "event_health_port": self.worker.health_port,
+            # Configured maxima, not currently checked-out connections. Distinct
+            # drivers/lifetimes require distinct pools, even with one endpoint.
+            "connection_pool_limits": {
+                "crud": self.api.database_pool_size + self.api.database_max_overflow,
+                "checkpoint": self.agent.checkpoint_pool_max_size,
+                "submission_bridge": self.worker.pool_size,
+                "event": self.worker.pool_size,
+                "project_memory": min(2, self.api.database_pool_size),
+                "sse_listener": 1,
+            },
             "agent_worker_enabled": self.api.agent_worker_enabled,
             "agent_worker_concurrency": self.api.agent_worker_concurrency,
             "event_worker_enabled": self.event_worker_enabled,
@@ -222,7 +242,7 @@ def load_settings(
     if selected not in {"dev", "stg", "prd"}:
         raise ConfigurationError("APP_ENV must select dev, stg or prd")
     api_fields = {name: _api_key(name, info) for name, info in APISettings.model_fields.items()}
-    worker_keys = {"EW_" + name.upper() for name in WorkerSettings.model_fields}
+    worker_keys = {_key("EW_" + name.upper()) for name in WorkerSettings.model_fields}
     sso_keys = {"SSO_" + name.upper() for name in SsoSettings.model_fields}
     known = set(api_fields.values()) | worker_keys | AGENT_KEYS | EXTRA_KEYS | sso_keys
     sources: dict[str, str] = {}
@@ -318,14 +338,23 @@ def load_settings(
         raise ConfigurationError("Invalid Workflow recommendation/revision settings")
     if not 0 < agent.executor_timeout_seconds < float("inf"):
         raise ConfigurationError("EXECUTOR_TIMEOUT_SECONDS must be finite and positive")
-    # Role-specific URLs can differ. Missing Worker URLs derive explicitly from
-    # API settings; invalid supplied URLs never trigger a fallback.
-    worker_input = {name: merged["EW_" + name.upper()] for name in WorkerSettings.model_fields
-                    if "EW_" + name.upper() in merged}
+    # Role-specific database targets can differ. Redis/Executor endpoints are
+    # common canonical values; invalid supplied settings never fall back.
+    worker_input = {name: merged[_key("EW_" + name.upper())] for name in WorkerSettings.model_fields
+                    if _key("EW_" + name.upper()) in merged}
     worker_input.setdefault("database_url", _postgres_url(api.database_url, "DATABASE_URL"))
+    # One DB endpoint can serve adapters requiring different driver spellings.
+    worker_input["database_url"] = _postgres_url(worker_input["database_url"], "EW_DATABASE_URL")
     worker_input.setdefault("redis_url", api.redis_url)
     worker_input.setdefault("executor_base_url", agent.executor_base_url)
     worker_input.setdefault("namespace", "dtest-agent")
+    if "instance_id" in worker_input:
+        # Old deployments supplied a fixed consumer ID. Keep it only as a label
+        # prefix: each settings snapshot gets a fresh process-start identity.
+        prefix = worker_input["instance_id"]
+        if not isinstance(prefix, str) or not prefix.strip():
+            raise ConfigurationError("Invalid event Worker settings: instance_id")
+        worker_input["instance_id"] = f"{prefix}:{uuid4()}"
     for key, origin in {
         "EW_DATABASE_URL": "derived from DATABASE_URL",
         "EW_REDIS_URL": "derived from REDIS_URL",
@@ -357,12 +386,14 @@ def load_settings(
     for key in known:
         sources.setdefault(key, "default")
     sources["APP_ENV"] = "bootstrap selection"
+    if "EVENT_WORKER_ENABLED" not in merged:
+        sources["EVENT_WORKER_ENABLED"] = "derived from AGENT_WORKER_ENABLED"
     mock_root = merged.get("MOCK_DATA_ROOT", "/workspace/pv")
     if not isinstance(mock_root, (str, Path)) or not str(mock_root).strip():
         raise ConfigurationError("Invalid path setting: MOCK_DATA_ROOT")
     return ServiceSettings(
         api=api, agent=agent, worker=worker, sso=sso, profile=selected,
-        event_worker_enabled=_boolean(merged.get("EVENT_WORKER_ENABLED", False), "EVENT_WORKER_ENABLED"),
+        event_worker_enabled=_boolean(merged.get("EVENT_WORKER_ENABLED", api.agent_worker_enabled), "EVENT_WORKER_ENABLED"),
         workflow_database_url=workflow_url if workflow_enabled else None,
         mock_data_root=Path(mock_root),
         shutdown_timeout_seconds=shutdown, shutdown_drain_seconds=drain,

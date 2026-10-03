@@ -1,9 +1,10 @@
+# 접수까지의 기존 HTTP mock 환경. 완료까지의 성능 검증은 scripts/benchmarks/executor_throughput 사용.
 name: dtest-agent-loadtest
 
 x-app: &app
   image: dtest-agent:loadtest
   environment:
-    APP_ENV: loadtest
+    APP_ENV: dev
     MODEL_PROVIDER: mock
     MODEL_NAME: service-load-mock
     MODEL_MOCK_DELAY_MS: ${LOADTEST_MOCK_DELAY_MS:-0}
@@ -16,17 +17,16 @@ x-app: &app
     EXECUTOR_REPORT_SOURCE_TYPE: INLINE
     DATABASE_URL: postgresql+asyncpg://dtest:loadtest-local@postgres:5432/chat_app
     CHECKPOINT_DB_URI: &checkpoint postgresql://dtest:loadtest-local@postgres:5432/agent?sslmode=disable
-    AGENT_CHECKPOINT_DATABASE_URL: *checkpoint
     EW_DATABASE_URL: *checkpoint
-    WORKFLOW_DATABASE_URL: *checkpoint
     GRAPH_CHECKPOINTER: postgres
     CHECKPOINT_SETUP_ON_START: "false"
     AGENT_WORKER_ENABLED: "true"
     TASK_RECONCILER_ENABLED: "true"
-    REDIS_URL: &redis redis://redis:6379/0
-    EW_REDIS_URL: *redis
+    EVENT_WORKER_ENABLED: "true"
+    EW_HEALTH_PORT: "0"
+    SERVER_PORT: "8000"
+    REDIS_URL: redis://redis:6379/0
     EW_NAMESPACE: dtest-agent-loadtest
-    PHOENIX_CONFIG_PATH: /nonexistent/loadtest-config.yml
     DEMO_ARTIFACTS_ENABLED: "false"
     DEMO_ARTIFACTS_ROOT: /app/var/demo_artifacts
     EXECUTOR_SHARED_INPUT_ROOT: /workspace/pv
@@ -92,7 +92,8 @@ services:
     <<: *app
     build:
       context: .
-    command: [python, -m, uvicorn, "main:app", --app-dir, /app/src, --host, 0.0.0.0, --port, "8000", --workers, "${LOADTEST_WORKERS:-4}"]
+    command: [python, app.py]
+    stop_grace_period: 70s
     ports:
       - "127.0.0.1:${LOADTEST_PORT:-18080}:8000"
     depends_on:
@@ -101,7 +102,7 @@ services:
       mock-executor:
         condition: service_healthy
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/service/ready', timeout=3)"]
       interval: 5s
       timeout: 4s
       start_period: 15s

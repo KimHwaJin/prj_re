@@ -319,7 +319,7 @@ class ExecutorWorker:
         return 0
 
     async def ready(self) -> bool:
-        if self._stop.is_set() or not all(
+        if not self._running or self._stop.is_set() or not all(
             c.is_healthy for c in self.consumers
         ):
             return False

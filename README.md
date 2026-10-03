@@ -1,4 +1,6 @@
 # dtest-agent
+
+기동·환경 설정의 정본은 [단일 프로젝트 배포 안내](docs/deployment-configuration.md)다. `app.py` 한 프로세스 안에서 API·Agent·이벤트 수신을 함께 실행한다. [058 검증 기록](docs/improvements/058-deployment-config-unification.md)을 참고한다.
 dtest 프로젝트 공유
 
 현재 리팩토링 작업 저장소는 [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re)이고, 기준 브랜치는 `feature/refactor-base`다. [저장소·브랜치 작업 안내](docs/repository-workflow.md)를 따라 베이스에서 파생 브랜치를 만들고 작업한다. 이전 단계별 브랜치는 이력 확인용으로 보존한다.

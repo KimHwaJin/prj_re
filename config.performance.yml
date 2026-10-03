@@ -28,7 +28,8 @@ service:
   events:
     # Agent Run slots and Executor result dispatch slots are separate limits.
     # Four slots measured well; 8 was marginal and 16 slower in an exploratory
-    # Event-only candidate. Event Worker stays disabled unless explicitly enabled.
+    # Event-only candidate. Event Worker now follows AGENT_WORKER_ENABLED by default;
+    # EVENT_WORKER_ENABLED can explicitly disable it for an API-only measurement.
     ew_concurrency: 4
     ew_ingress_concurrency: 4
     ew_dispatch_concurrency: 4

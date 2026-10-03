@@ -17,6 +17,7 @@ for role, url in [
     ("crud", settings.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)),
     ("checkpoint", agent.checkpoint_db_uri),
     ("workflow", service.workflow_database_url),
+    ("event", service.worker.database_url),
 ]:
     if url is None:
         print(json.dumps({"role": role, "enabled": False}))
