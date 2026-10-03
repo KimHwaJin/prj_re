@@ -1,0 +1,17 @@
+{
+  "assessment": "Share with caveats",
+  "raw_hashes_and_arithmetic_verified": true,
+  "all_planned_trials_present": true,
+  "trials": 59,
+  "user_scenarios": 1722,
+  "agent_service_files_identical": 122,
+  "equal_total_capacity": 20,
+  "p95_definition": "Trial-specific user percentile; repeat range preserved, not a pooled p95",
+  "caveats": [
+    "Single local API process, finite synchronized arrivals, no Kubernetes quota/HPA",
+    "All in-window model calls use 5-second transport fixture; actual provider/SSO/Tool compute excluded",
+    "API CPU and CRUD SQL only; no database, Redis, client or Executor process CPU",
+    "Follow-up report is grounded Markdown response; separate Artifact rewrite/registration excluded",
+    "Burst setup models use zero delay and are excluded from timing/cost window"
+  ]
+}

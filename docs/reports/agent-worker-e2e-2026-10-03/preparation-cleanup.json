@@ -1,0 +1,19 @@
+{
+  "preparation_only_failures": [
+    "removed EW_DISPATCH_CONCURRENCY setting",
+    "conflicting EW_EXECUTOR_BASE_URL alias"
+  ],
+  "performance_trials_excluded": true,
+  "cleanup": [
+    {
+      "failed_smoke": "smoke-current",
+      "owned_shared_fixture_removed": true,
+      "private_config_removed": true
+    },
+    {
+      "failed_smoke": "smoke-current-2",
+      "owned_shared_fixture_removed": true,
+      "private_config_removed": true
+    }
+  ]
+}

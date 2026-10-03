@@ -1,0 +1,58 @@
+{
+  "dependency_files": {
+    "split": {
+      "pyproject.toml": "69b967d7efb9c28d150488f4eb3f9794fc39ba8a8913953eb6c6c51f3bcbac84",
+      "uv.lock": "d0f34f3f68c017a130be371dbc6abf384bdbe6ef32b108bc39ad88a60e9a894b"
+    },
+    "common": {
+      "pyproject.toml": "69b967d7efb9c28d150488f4eb3f9794fc39ba8a8913953eb6c6c51f3bcbac84",
+      "uv.lock": "d0f34f3f68c017a130be371dbc6abf384bdbe6ef32b108bc39ad88a60e9a894b"
+    }
+  },
+  "dependency_files_identical": true,
+  "changed_runtime_files": [
+    "src/api_service/agent_run_worker.py",
+    "src/api_service/agent_worker/graph_provider.py",
+    "src/api_service/agent_worker/worker_hooks.py",
+    "src/api_service/agent_worker/worker_main.py",
+    "src/api_service/models/__init__.py",
+    "src/api_service/models/common/__init__.py",
+    "src/api_service/models/common/agent_command_model.py",
+    "src/api_service/runs/admission.py",
+    "src/api_service/runs/commands/__init__.py",
+    "src/api_service/runs/commands/admission.py",
+    "src/api_service/runs/commands/claim.py",
+    "src/api_service/runs/commands/migrate.py",
+    "src/api_service/runs/commands/outcome.py",
+    "src/api_service/runs/commands/types.py",
+    "src/api_service/runs/commands/wakeup.py",
+    "src/api_service/schemas/common/task_schema.py",
+    "src/api_service/services/resource_lifecycle.py",
+    "src/api_service/services/run_stream_service.py",
+    "src/api_service/test/test_agent_command_outcomes.py",
+    "src/api_service/test/test_agent_commands_postgres.py",
+    "src/api_service/test/test_command_wakeup.py",
+    "src/api_service/test/test_command_wakeup_postgres.py",
+    "src/api_service/test/test_deployment_configuration.py",
+    "src/api_service/test/test_event_worker_wakeup.py",
+    "src/api_service/test/test_graceful_shutdown.py",
+    "src/api_service/test/test_graph_runtime_lifecycle.py",
+    "src/api_service/test/test_package_boundaries.py",
+    "src/api_service/test/test_redis_execution_boundary.py",
+    "src/api_service/test/test_run_concurrency.py",
+    "src/api_service/test/test_session_execution_dispatch.py",
+    "src/api_service/test/test_session_execution_postgres.py",
+    "src/api_service/worker/dispatcher.py",
+    "src/api_service/worker/guard.py",
+    "src/api_service/worker/outbox.py",
+    "src/api_service/worker/runtime.py",
+    "src/api_service/worker/store.py",
+    "src/config.py",
+    "src/event_worker_settings.py",
+    "src/service_bootstrap.py",
+    "src/service_contracts/events.py",
+    "src/service_runtime/postgres_signals.py",
+    "src/service_settings.py"
+  ],
+  "agent_logic_files_changed": false
+}

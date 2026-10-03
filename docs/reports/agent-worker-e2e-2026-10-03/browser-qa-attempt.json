@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "stage": "static_charts",
+  "code": "browser_timeout",
+  "error": "Chromium did not finish within 18710ms.",
+  "timings": {
+    "totalMs": 18887.9
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "owned_container_names": [
+    "dtest-worker-e2e-pg",
+    "dtest-worker-e2e-redis"
+  ],
+  "owned_containers_removed": true,
+  "remaining_owned_scratch_databases": [],
+  "remaining_owned_redis_keys": 0,
+  "remaining_owned_child_processes": [],
+  "remaining_private_configs": [],
+  "existing_service_containers_stopped_or_modified": false,
+  "raw_capture_directory_retained_for_audit": true,
+  "pre_stop_checks": "cleanup-owned.py verified zero owned DBs/Redis keys/processes/private configs before stop",
+  "post_stop_check": "docker ps -a confirms both owned containers absent; auto-removal completed after stop returned"
+}

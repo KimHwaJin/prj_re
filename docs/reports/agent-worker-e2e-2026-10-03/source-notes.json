@@ -1,0 +1,75 @@
+{
+  "audience": "technical",
+  "delivery": "portable canonical HTML, Codex runtime",
+  "required_structure_map": {
+    "title": "title",
+    "technical_summary": "summary",
+    "key_findings": "flow/approval/burst/mixed/cost/notify/memory",
+    "definitions": "definition before evidence",
+    "methodology": "validity and definition",
+    "limitations": "limit and adjacent notes",
+    "next_steps": "next",
+    "further_questions": "questions"
+  },
+  "chart_contracts": [
+    {
+      "id": "flow-chart",
+      "question": "동시 사용자별 리포트 완료 시간",
+      "family": "comparison",
+      "variant": "grouped bar",
+      "row_count": 8,
+      "category_count": 4,
+      "series": "condition encoding; baseline then current; native categorical blue/orange roots",
+      "unit": "seconds",
+      "palette": "hard two-root: blue baseline, orange current; legend/order/value labels",
+      "fallback": "exact table included",
+      "qa": "portable delivery receipt; desktop+narrow, light+dark"
+    },
+    {
+      "id": "burst-chart",
+      "question": "동시 결과별 완료 시간",
+      "family": "comparison",
+      "variant": "grouped bar",
+      "row_count": 8,
+      "category_count": 4,
+      "series": "condition encoding; baseline then current; native categorical blue/orange roots",
+      "unit": "seconds",
+      "palette": "hard two-root: blue baseline, orange current; legend/order/value labels",
+      "fallback": "exact table included",
+      "qa": "portable delivery receipt; desktop+narrow, light+dark"
+    }
+  ],
+  "tables_without_charts": "Exact p95 ranges, costs and mixed cohort lookup; no fabricated continuous trend from four cohort levels",
+  "smoke_excluded": true,
+  "operating_deployment_changed": false,
+  "delivery_qa": {
+    "ok": true,
+    "html": "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/docs/reports/agent-worker-e2e-2026-10-03/report.html",
+    "stages": {
+      "validation": "passed",
+      "package": "passed",
+      "verification": "structural_only"
+    },
+    "browserWarning": {
+      "code": "browser_unavailable",
+      "message": "No installed Chromium headless-shell executable was found. Set CHROMIUM_EXECUTABLE_PATH (or the legacy PLAYWRIGHT_EXECUTABLE_PATH) or preinstall Chromium headless-shell under PLAYWRIGHT_BROWSERS_PATH; portable tooling never downloads browsers."
+    },
+    "counts": {
+      "blocks": 27,
+      "charts": 2,
+      "html": 0,
+      "metrics": 0,
+      "tables": 10
+    },
+    "sourceDialog": "not_verified",
+    "sourceInteraction": "not_verified",
+    "viewports": [],
+    "timings": {
+      "validateAndPackageMs": 70.4,
+      "staticChartExtractionMs": 1.6,
+      "structuralVerificationMs": 2.9,
+      "totalMs": 74
+    }
+  },
+  "browser_attempt": "Installed Chrome timed out during packaged chart extraction; no bespoke automation or browser download used."
+}

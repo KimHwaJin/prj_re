@@ -1,0 +1,16 @@
+{
+  "validated_trials": 59,
+  "completed_user_scenarios": 1722,
+  "errors": 0,
+  "missing_or_duplicate_successes": 0,
+  "over_capacity": 0,
+  "temporary_event_defer_attempts": 0,
+  "model_call_counts": {
+    "planning_select": 1148,
+    "planning_plan": 1148,
+    "review": 1190,
+    "report": 1190,
+    "answer": 88
+  },
+  "note": "Model counts are in-window; burst prepared planning is outside measurement. Smoke is excluded."
+}

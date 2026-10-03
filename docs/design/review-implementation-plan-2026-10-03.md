@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 다음은 전체5단계 기능·성능 검증이며 전체 작업 완료 기록은 아니다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 5단계 [062](../improvements/062-agent-worker-e2e-performance.md)의 동일 총한도·전체 HTTP fixture 59회도 로컬 검증·독립 검산했다. 멀티 Pod·지속 유입·실제 배포는 미검증이며 전체 작업 완료 기록은 아니다. 다음은 6단계 checkpoint 실측이다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -93,7 +93,9 @@
 - Redis 신호를 선택하면 내부 신호 ACK가 graph 수명에 묶이지 않게 한다. 실행할 명령이 없거나 다른 Pod가 claim한 신호를 영구 pending으로 남기지 않는다.
 - 동기화 구조가 먼저 완성돼야 하므로 3단계의 제한된 polling 기반 정확성을 확보한 뒤 신호 최적화를 붙일 수 있다. Redis/NOTIFY 비교는 측정상 선택 필요성이 있을 때 수행한다.
 
-## 5. 기능·성능 검증
+## 5. 기능·성능 검증 — 062 로컬 fixture 완료
+
+[062 기록](../improvements/062-agent-worker-e2e-performance.md), [전체 비교 보고서](../reports/agent-worker-e2e-2026-10-03/report.html). 총한도 20에서 기존 16+4와 공통 20의 59 trial·1,722 시나리오를 검증했다. 50명은 각 3회, 모든 측정 모델콜 5초다. 실제 Pod/멀티 프로세스·지속 부하·대용량 원장·외부 계산·Artifact POST 등록과 브라우저 화면 QA는 미완료다. 아래 기준 중 그 범위까지 완료한 것으로 해석하지 않는다.
 
 간단한 요청으로 [8건 실행 자리 공유 비교](../reports/command-worker-capacity-2026-10-03/README.md)를 선행했다. 조건별2회, 같은 총한도4에서 단독 부하의 빈 자리 공유 효과와 균형 부하의 시간 유지를 확인했다. 아래 전체 기능/E2E·1/10/30/50명·다중 프로세스·지속 부하 검증의 완료를 의미하지 않는다.
 

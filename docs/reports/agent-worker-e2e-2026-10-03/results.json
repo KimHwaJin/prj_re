@@ -1,0 +1,4016 @@
+[
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 11.326491374988109,
+    "p95_seconds": 11.326491374988109,
+    "makespan_seconds": 11.326982750091702,
+    "batch_users_per_second": 0.08828476409500174,
+    "api_cpu_seconds": 0.3805630000000002,
+    "api_cpu_per_user_seconds": 0.3805630000000002,
+    "crud_sql_count": 304,
+    "crud_sql_per_user": 304.0,
+    "crud_sql_elapsed_ms": 273.7633001524955,
+    "sql_by_category": {
+      "write": 69,
+      "sse": 24,
+      "worker": 150,
+      "claim": 20,
+      "cancel_watch": 41
+    },
+    "claims": 8,
+    "empty_claims": 6,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.289331916952506,
+    "slot_utilization": 0.0454195620491662,
+    "user_queue_mean_ms": 32.3005,
+    "user_queue_p95_ms": 46.19515,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 2
+    },
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.00232629198581,
+      "planning_plan": 5.002257874934003
+    },
+    "pool_acquire_p95_ms": 0.01868756953626871,
+    "loop_lag_p95_ms": 2.5775000452995247,
+    "loop_lag_max_ms": 14.022833062335843,
+    "rss_peak_mib": 214.6875,
+    "db_connections_peak": 10,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 11.326491374988109,
+        "p95_seconds": 11.326491374988109
+      }
+    },
+    "capture": "approval-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 11.45021858299151,
+    "p95_seconds": 11.45021858299151,
+    "makespan_seconds": 11.450595249887556,
+    "batch_users_per_second": 0.08733170443779505,
+    "api_cpu_seconds": 0.507457,
+    "api_cpu_per_user_seconds": 0.507457,
+    "crud_sql_count": 323,
+    "crud_sql_per_user": 323.0,
+    "crud_sql_elapsed_ms": 338.13082869164646,
+    "sql_by_category": {
+      "write": 65,
+      "sse": 24,
+      "worker": 138,
+      "claim": 55,
+      "cancel_watch": 41
+    },
+    "claims": 47,
+    "empty_claims": 45,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.285574042005464,
+    "slot_utilization": 0.04491283561047391,
+    "user_queue_mean_ms": 125.73049999999999,
+    "user_queue_p95_ms": 188.76064999999997,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001784416846931,
+      "planning_plan": 5.001393333077431
+    },
+    "pool_acquire_p95_ms": 0.020012492313981053,
+    "loop_lag_p95_ms": 2.6211250107735333,
+    "loop_lag_max_ms": 2.87375003099441,
+    "rss_peak_mib": 204.8125,
+    "db_connections_peak": 9,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 11.45021858299151,
+        "p95_seconds": 11.45021858299151
+      }
+    },
+    "capture": "approval-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 11.931883733347059,
+    "p95_seconds": 12.11795195399318,
+    "makespan_seconds": 12.18548604217358,
+    "batch_users_per_second": 0.8206484308783678,
+    "api_cpu_seconds": 2.3211770000000005,
+    "api_cpu_per_user_seconds": 0.23211770000000004,
+    "crud_sql_count": 2982,
+    "crud_sql_per_user": 298.2,
+    "crud_sql_elapsed_ms": 6547.6715106051415,
+    "sql_by_category": {
+      "write": 690,
+      "sse": 243,
+      "worker": 1463,
+      "claim": 163,
+      "cancel_watch": 423
+    },
+    "claims": 43,
+    "empty_claims": 23,
+    "shared_peak": 10,
+    "slot_work_seconds": 107.88032637536526,
+    "slot_utilization": 0.44265910281294846,
+    "user_queue_mean_ms": 190.62959999999998,
+    "user_queue_p95_ms": 313.9468,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 20
+    },
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000618145940825,
+      "planning_plan": 5.000485000177287
+    },
+    "pool_acquire_p95_ms": 2.63380481628701,
+    "loop_lag_p95_ms": 3.1601768219843427,
+    "loop_lag_max_ms": 63.61595806665718,
+    "rss_peak_mib": 225.046875,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 4,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 11.931883733347059,
+        "p95_seconds": 12.11795195399318
+      }
+    },
+    "capture": "approval-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 12.27721606262494,
+    "p95_seconds": 12.367475054529496,
+    "makespan_seconds": 12.3688450420741,
+    "batch_users_per_second": 0.8084829235052917,
+    "api_cpu_seconds": 2.2653130000000004,
+    "api_cpu_per_user_seconds": 0.22653130000000005,
+    "crud_sql_count": 2890,
+    "crud_sql_per_user": 289.0,
+    "crud_sql_elapsed_ms": 5580.055722035468,
+    "sql_by_category": {
+      "write": 650,
+      "sse": 270,
+      "worker": 1380,
+      "claim": 160,
+      "cancel_watch": 430
+    },
+    "claims": 80,
+    "empty_claims": 60,
+    "shared_peak": 10,
+    "slot_work_seconds": 108.37475120625459,
+    "slot_utilization": 0.43809567844695674,
+    "user_queue_mean_ms": 250.4519,
+    "user_queue_p95_ms": 299.317,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000974695687182,
+      "planning_plan": 5.001173470681533
+    },
+    "pool_acquire_p95_ms": 1.6685687587596474,
+    "loop_lag_p95_ms": 2.677291957661504,
+    "loop_lag_max_ms": 66.41454212367535,
+    "rss_peak_mib": 220.390625,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 5,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 12.27721606262494,
+        "p95_seconds": 12.367475054529496
+      }
+    },
+    "capture": "approval-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 17.122951806833346,
+    "p95_seconds": 24.33126673301449,
+    "makespan_seconds": 24.371725332923234,
+    "batch_users_per_second": 1.2309346010671494,
+    "api_cpu_seconds": 6.916831000000001,
+    "api_cpu_per_user_seconds": 0.23056103333333336,
+    "crud_sql_count": 9185,
+    "crud_sql_per_user": 306.1666666666667,
+    "crud_sql_elapsed_ms": 20732.062737690285,
+    "sql_by_category": {
+      "write": 2070,
+      "sse": 975,
+      "worker": 4351,
+      "claim": 451,
+      "cancel_watch": 1338
+    },
+    "claims": 91,
+    "empty_claims": 31,
+    "shared_peak": 20,
+    "slot_work_seconds": 350.5620384551585,
+    "slot_utilization": 0.7191982382584786,
+    "user_queue_mean_ms": 2339.7363666666665,
+    "user_queue_p95_ms": 11512.0646,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 60
+    },
+    "model_calls": {
+      "planning_select": 30,
+      "planning_plan": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.0007203138122955,
+      "planning_plan": 5.01167584300662
+    },
+    "pool_acquire_p95_ms": 36.818658048286935,
+    "loop_lag_p95_ms": 4.609224980231368,
+    "loop_lag_max_ms": 102.33604195527732,
+    "rss_peak_mib": 229.71875,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 8,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 17.122951806833346,
+        "p95_seconds": 24.33126673301449
+      }
+    },
+    "capture": "approval-30-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 18.444167963803434,
+    "p95_seconds": 24.24044143341016,
+    "makespan_seconds": 24.276115416781977,
+    "batch_users_per_second": 1.2357825576682309,
+    "api_cpu_seconds": 6.341750000000001,
+    "api_cpu_per_user_seconds": 0.2113916666666667,
+    "crud_sql_count": 8725,
+    "crud_sql_per_user": 290.8333333333333,
+    "crud_sql_elapsed_ms": 18425.04940717481,
+    "sql_by_category": {
+      "write": 1950,
+      "sse": 960,
+      "worker": 4140,
+      "claim": 362,
+      "cancel_watch": 1313
+    },
+    "claims": 122,
+    "empty_claims": 62,
+    "shared_peak": 16,
+    "slot_work_seconds": 337.0115272111725,
+    "slot_utilization": 0.6941216117678322,
+    "user_queue_mean_ms": 3089.8083333333334,
+    "user_queue_p95_ms": 11553.236450000002,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 30,
+      "planning_plan": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000742504249017,
+      "planning_plan": 5.000461597236184
+    },
+    "pool_acquire_p95_ms": 45.68494171835443,
+    "loop_lag_p95_ms": 2.733433432877058,
+    "loop_lag_max_ms": 119.04895803891122,
+    "rss_peak_mib": 227.46875,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 9,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 18.444167963803434,
+        "p95_seconds": 24.24044143341016
+      }
+    },
+    "capture": "approval-30-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 27.376396201695314,
+    "p95_seconds": 34.433917476877106,
+    "makespan_seconds": 35.41860774997622,
+    "batch_users_per_second": 1.4116873354524664,
+    "api_cpu_seconds": 10.99924,
+    "api_cpu_per_user_seconds": 0.2199848,
+    "crud_sql_count": 15283,
+    "crud_sql_per_user": 305.66,
+    "crud_sql_elapsed_ms": 31917.023004731163,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1701,
+      "worker": 7236,
+      "claim": 736,
+      "cancel_watch": 2160
+    },
+    "claims": 136,
+    "empty_claims": 36,
+    "shared_peak": 20,
+    "slot_work_seconds": 564.4599662055261,
+    "slot_utilization": 0.7968409856622684,
+    "user_queue_mean_ms": 7431.00453,
+    "user_queue_p95_ms": 22156.1022,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001204220787622,
+      "planning_plan": 5.000347992395982
+    },
+    "pool_acquire_p95_ms": 74.78470820933579,
+    "loop_lag_p95_ms": 5.282964371144754,
+    "loop_lag_max_ms": 114.51750001870096,
+    "rss_peak_mib": 231.375,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.376396201695314,
+        "p95_seconds": 34.433917476877106
+      }
+    },
+    "capture": "approval-50-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.88418777997605,
+    "p95_seconds": 37.4469026514329,
+    "makespan_seconds": 45.27547200000845,
+    "batch_users_per_second": 1.104350717757082,
+    "api_cpu_seconds": 11.898641999999999,
+    "api_cpu_per_user_seconds": 0.23797283999999996,
+    "crud_sql_count": 14808,
+    "crud_sql_per_user": 296.16,
+    "crud_sql_elapsed_ms": 34022.613839944825,
+    "sql_by_category": {
+      "write": 3250,
+      "sse": 1893,
+      "worker": 6900,
+      "claim": 546,
+      "cancel_watch": 2219
+    },
+    "claims": 146,
+    "empty_claims": 46,
+    "shared_peak": 16,
+    "slot_work_seconds": 580.8990394570865,
+    "slot_utilization": 0.6415162711688329,
+    "user_queue_mean_ms": 12038.50651,
+    "user_queue_p95_ms": 23122.323650000002,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000750953406095,
+      "planning_plan": 5.015900548277423
+    },
+    "pool_acquire_p95_ms": 99.68061506515369,
+    "loop_lag_p95_ms": 6.142608076333975,
+    "loop_lag_max_ms": 82.97120882198215,
+    "rss_peak_mib": 228.578125,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 36.88418777997605,
+        "p95_seconds": 37.4469026514329
+      }
+    },
+    "capture": "approval-50-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 27.78484624839388,
+    "p95_seconds": 35.37013452306855,
+    "makespan_seconds": 35.89698079111986,
+    "batch_users_per_second": 1.392874801670477,
+    "api_cpu_seconds": 11.591266,
+    "api_cpu_per_user_seconds": 0.23182531999999997,
+    "crud_sql_count": 15316,
+    "crud_sql_per_user": 306.32,
+    "crud_sql_elapsed_ms": 32328.902507200837,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1701,
+      "worker": 7238,
+      "claim": 738,
+      "cancel_watch": 2189
+    },
+    "claims": 138,
+    "empty_claims": 38,
+    "shared_peak": 20,
+    "slot_work_seconds": 571.521447791718,
+    "slot_utilization": 0.7960578232433131,
+    "user_queue_mean_ms": 7654.3836599999995,
+    "user_queue_p95_ms": 22453.0031,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000721169123426,
+      "planning_plan": 5.007230923422612
+    },
+    "pool_acquire_p95_ms": 96.28903713310132,
+    "loop_lag_p95_ms": 4.686041478998954,
+    "loop_lag_max_ms": 85.62137498520315,
+    "rss_peak_mib": 231.109375,
+    "db_connections_peak": 17,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.78484624839388,
+        "p95_seconds": 35.37013452306855
+      }
+    },
+    "capture": "approval-50-2-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.70765051416587,
+    "p95_seconds": 37.48224620609544,
+    "makespan_seconds": 44.388545708032325,
+    "batch_users_per_second": 1.1264167186029763,
+    "api_cpu_seconds": 11.996877,
+    "api_cpu_per_user_seconds": 0.23993754,
+    "crud_sql_count": 14827,
+    "crud_sql_per_user": 296.54,
+    "crud_sql_elapsed_ms": 33979.92293862626,
+    "sql_by_category": {
+      "write": 3250,
+      "sse": 1911,
+      "worker": 6900,
+      "claim": 545,
+      "cancel_watch": 2221
+    },
+    "claims": 145,
+    "empty_claims": 45,
+    "shared_peak": 16,
+    "slot_work_seconds": 580.9935224975925,
+    "slot_utilization": 0.6544408171413226,
+    "user_queue_mean_ms": 11957.7834,
+    "user_queue_p95_ms": 23201.912699999997,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001369242514484,
+      "planning_plan": 5.00048447157722
+    },
+    "pool_acquire_p95_ms": 86.19620022363961,
+    "loop_lag_p95_ms": 3.9966184296645113,
+    "loop_lag_max_ms": 113.4508341550827,
+    "rss_peak_mib": 229.3125,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 36.70765051416587,
+        "p95_seconds": 37.48224620609544
+      }
+    },
+    "capture": "approval-50-2-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 27.876671246709304,
+    "p95_seconds": 35.8413785979501,
+    "makespan_seconds": 36.033750917064026,
+    "batch_users_per_second": 1.387587989801033,
+    "api_cpu_seconds": 11.260072000000001,
+    "api_cpu_per_user_seconds": 0.22520144000000003,
+    "crud_sql_count": 15365,
+    "crud_sql_per_user": 307.3,
+    "crud_sql_elapsed_ms": 33533.05695136078,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1743,
+      "worker": 7238,
+      "claim": 738,
+      "cancel_watch": 2196
+    },
+    "claims": 138,
+    "empty_claims": 38,
+    "shared_peak": 20,
+    "slot_work_seconds": 575.3220571675338,
+    "slot_utilization": 0.7983099767932932,
+    "user_queue_mean_ms": 7631.69494,
+    "user_queue_p95_ms": 22451.194599999995,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000700793303549,
+      "planning_plan": 5.009017199203372
+    },
+    "pool_acquire_p95_ms": 82.58503745310006,
+    "loop_lag_p95_ms": 5.129206262063228,
+    "loop_lag_max_ms": 109.52025009319186,
+    "rss_peak_mib": 232.0,
+    "db_connections_peak": 17,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.876671246709304,
+        "p95_seconds": 35.8413785979501
+      }
+    },
+    "capture": "approval-50-3-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.13780690990854,
+    "p95_seconds": 36.75460722692078,
+    "makespan_seconds": 44.47879100008868,
+    "batch_users_per_second": 1.124131274159415,
+    "api_cpu_seconds": 11.752326,
+    "api_cpu_per_user_seconds": 0.23504652,
+    "crud_sql_count": 14742,
+    "crud_sql_per_user": 294.84,
+    "crud_sql_elapsed_ms": 32208.679472561926,
+    "sql_by_category": {
+      "write": 3250,
+      "sse": 1854,
+      "worker": 6900,
+      "claim": 546,
+      "cancel_watch": 2192
+    },
+    "claims": 146,
+    "empty_claims": 46,
+    "shared_peak": 16,
+    "slot_work_seconds": 571.0691268700175,
+    "slot_utilization": 0.6419566652214973,
+    "user_queue_mean_ms": 11733.31114,
+    "user_queue_p95_ms": 22869.22755,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.0013277917169034,
+      "planning_plan": 5.003592985030264
+    },
+    "pool_acquire_p95_ms": 101.4791353372857,
+    "loop_lag_p95_ms": 3.640249988529826,
+    "loop_lag_max_ms": 77.12833406403661,
+    "rss_peak_mib": 228.625,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 36.13780690990854,
+        "p95_seconds": 36.75460722692078
+      }
+    },
+    "capture": "approval-50-3-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 22.225400374969468,
+    "p95_seconds": 22.225400374969468,
+    "makespan_seconds": 22.225819791899994,
+    "batch_users_per_second": 0.044992716100597616,
+    "api_cpu_seconds": 0.8522989999999999,
+    "api_cpu_per_user_seconds": 0.8522989999999999,
+    "crud_sql_count": 607,
+    "crud_sql_per_user": 607.0,
+    "crud_sql_elapsed_ms": 449.1678711492568,
+    "sql_by_category": {
+      "event_graph": 148,
+      "write": 105,
+      "sse": 48,
+      "worker": 218,
+      "claim": 46,
+      "cancel_watch": 42
+    },
+    "claims": 22,
+    "empty_claims": 16,
+    "shared_peak": 1,
+    "slot_work_seconds": 20.72257291828282,
+    "slot_utilization": 0.04661824200931158,
+    "user_queue_mean_ms": 32.690666666666665,
+    "user_queue_p95_ms": 44.47709999999999,
+    "event_publish_to_start_mean_ms": 47.931333227703966,
+    "event_publish_to_start_p95_ms": 56.71836680267006,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 6
+    },
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.002456792164594,
+      "planning_plan": 5.002061791019514,
+      "review": 4.999933208106086,
+      "report": 5.002124540973455
+    },
+    "pool_acquire_p95_ms": 0.016908254474401474,
+    "loop_lag_p95_ms": 2.7214587084017627,
+    "loop_lag_max_ms": 5.42116616852581,
+    "rss_peak_mib": 209.6875,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 22.225400374969468,
+        "p95_seconds": 22.225400374969468
+      }
+    },
+    "capture": "executor-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 22.709345458075404,
+    "p95_seconds": 22.709345458075404,
+    "makespan_seconds": 22.709720792016014,
+    "batch_users_per_second": 0.0440340068096111,
+    "api_cpu_seconds": 1.1496879999999998,
+    "api_cpu_per_user_seconds": 1.1496879999999998,
+    "crud_sql_count": 652,
+    "crud_sql_per_user": 652.0,
+    "crud_sql_elapsed_ms": 592.674461659044,
+    "sql_by_category": {
+      "event_graph": 181,
+      "write": 99,
+      "sse": 48,
+      "worker": 178,
+      "claim": 104,
+      "cancel_watch": 42
+    },
+    "claims": 92,
+    "empty_claims": 89,
+    "shared_peak": 1,
+    "slot_work_seconds": 20.85523200011812,
+    "slot_utilization": 0.04591697139546103,
+    "user_queue_mean_ms": 119.76733333333334,
+    "user_queue_p95_ms": 216.21049999999997,
+    "event_publish_to_start_mean_ms": 91.87309731108446,
+    "event_publish_to_start_p95_ms": 107.13049119804054,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.002630124799907,
+      "planning_plan": 5.001943374983966,
+      "review": 5.001839749980718,
+      "report": 5.0004675830714405
+    },
+    "pool_acquire_p95_ms": 0.021926837507635355,
+    "loop_lag_p95_ms": 2.8685876051895263,
+    "loop_lag_max_ms": 6.265916023403401,
+    "rss_peak_mib": 209.8125,
+    "db_connections_peak": 12,
+    "db_idle_transaction_peak": 2,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 22.709345458075404,
+        "p95_seconds": 22.709345458075404
+      }
+    },
+    "capture": "executor-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 24.621177287539467,
+    "p95_seconds": 24.91407233288046,
+    "makespan_seconds": 24.923875459004194,
+    "batch_users_per_second": 0.40122171274882223,
+    "api_cpu_seconds": 5.186711000000001,
+    "api_cpu_per_user_seconds": 0.5186711,
+    "crud_sql_count": 6018,
+    "crud_sql_per_user": 601.8,
+    "crud_sql_elapsed_ms": 11680.623235879466,
+    "sql_by_category": {
+      "event_graph": 1480,
+      "write": 1050,
+      "sse": 552,
+      "worker": 2100,
+      "claim": 380,
+      "cancel_watch": 456
+    },
+    "claims": 140,
+    "empty_claims": 80,
+    "shared_peak": 10,
+    "slot_work_seconds": 228.48456604010426,
+    "slot_utilization": 0.45836484461641,
+    "user_queue_mean_ms": 157.39703333333333,
+    "user_queue_p95_ms": 302.0559,
+    "event_publish_to_start_mean_ms": 242.2643861422936,
+    "event_publish_to_start_p95_ms": 510.15021880157275,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 60
+    },
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.003755691484548,
+      "planning_plan": 5.00048076659441,
+      "review": 5.00023539159447,
+      "report": 5.040901670930907
+    },
+    "pool_acquire_p95_ms": 2.370012225583194,
+    "loop_lag_p95_ms": 2.650154440198088,
+    "loop_lag_max_ms": 110.23004106245935,
+    "rss_peak_mib": 226.3125,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 5,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 24.621177287539467,
+        "p95_seconds": 24.91407233288046
+      }
+    },
+    "capture": "executor-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 35.10158940020483,
+    "p95_seconds": 39.92451734194765,
+    "makespan_seconds": 39.92626604088582,
+    "batch_users_per_second": 0.2504616882971142,
+    "api_cpu_seconds": 5.573475,
+    "api_cpu_per_user_seconds": 0.5573475,
+    "crud_sql_count": 5979,
+    "crud_sql_per_user": 597.9,
+    "crud_sql_elapsed_ms": 10527.70718652755,
+    "sql_by_category": {
+      "event_graph": 1844,
+      "write": 990,
+      "sse": 603,
+      "worker": 1780,
+      "claim": 325,
+      "cancel_watch": 437
+    },
+    "claims": 205,
+    "empty_claims": 175,
+    "shared_peak": 12,
+    "slot_work_seconds": 217.8626819618512,
+    "slot_utilization": 0.27283127570551247,
+    "user_queue_mean_ms": 211.85353333333333,
+    "user_queue_p95_ms": 305.4262,
+    "event_publish_to_start_mean_ms": 3933.467629303535,
+    "event_publish_to_start_p95_ms": 9728.923595754894,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000536725134589,
+      "planning_plan": 5.000414200057276,
+      "review": 5.000531370704993,
+      "report": 5.000653837504797
+    },
+    "pool_acquire_p95_ms": 1.881984039209782,
+    "loop_lag_p95_ms": 2.9112500138580737,
+    "loop_lag_max_ms": 129.63004210032523,
+    "rss_peak_mib": 227.296875,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 9,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 35.10158940020483,
+        "p95_seconds": 39.92451734194765
+      }
+    },
+    "capture": "executor-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 34.063583066749075,
+    "p95_seconds": 40.056780595844614,
+    "makespan_seconds": 40.12051666714251,
+    "batch_users_per_second": 0.7477471002901888,
+    "api_cpu_seconds": 14.269628999999998,
+    "api_cpu_per_user_seconds": 0.4756542999999999,
+    "crud_sql_count": 18169,
+    "crud_sql_per_user": 605.6333333333333,
+    "crud_sql_elapsed_ms": 33115.2958185412,
+    "sql_by_category": {
+      "event_graph": 4440,
+      "write": 3150,
+      "sse": 2127,
+      "worker": 6099,
+      "claim": 939,
+      "cancel_watch": 1414
+    },
+    "claims": 219,
+    "empty_claims": 39,
+    "shared_peak": 20,
+    "slot_work_seconds": 697.4011455450673,
+    "slot_utilization": 0.8691328072006332,
+    "user_queue_mean_ms": 1912.8389777777777,
+    "user_queue_p95_ms": 11124.55215,
+    "event_publish_to_start_mean_ms": 1415.19467083789,
+    "event_publish_to_start_p95_ms": 5566.132899816148,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 180
+    },
+    "model_calls": {
+      "planning_select": 30,
+      "planning_plan": 30,
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000896309743014,
+      "planning_plan": 5.00495710541339,
+      "review": 5.000968084732691,
+      "report": 5.000181826398087
+    },
+    "pool_acquire_p95_ms": 19.477874971926212,
+    "loop_lag_p95_ms": 3.5062187933362905,
+    "loop_lag_max_ms": 108.79570906981826,
+    "rss_peak_mib": 236.421875,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 9,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 34.063583066749075,
+        "p95_seconds": 40.056780595844614
+      }
+    },
+    "capture": "executor-30-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 78.02355560273864,
+    "p95_seconds": 95.08233254124643,
+    "makespan_seconds": 96.1005514159333,
+    "batch_users_per_second": 0.31217302666825336,
+    "api_cpu_seconds": 16.781536000000003,
+    "api_cpu_per_user_seconds": 0.5593845333333334,
+    "crud_sql_count": 18177,
+    "crud_sql_per_user": 605.9,
+    "crud_sql_elapsed_ms": 28532.737877685577,
+    "sql_by_category": {
+      "event_graph": 5440,
+      "write": 2970,
+      "sse": 2304,
+      "worker": 5340,
+      "claim": 793,
+      "cancel_watch": 1330
+    },
+    "claims": 433,
+    "empty_claims": 343,
+    "shared_peak": 20,
+    "slot_work_seconds": 662.3200511632022,
+    "slot_utilization": 0.34459742499114876,
+    "user_queue_mean_ms": 2228.5908444444444,
+    "user_queue_p95_ms": 11493.39255,
+    "event_publish_to_start_mean_ms": 16030.086551425564,
+    "event_publish_to_start_p95_ms": 27184.997515229043,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 30,
+      "planning_plan": 30,
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000798601463127,
+      "planning_plan": 5.0003439805780845,
+      "review": 5.000417199979226,
+      "report": 5.0018596291154
+    },
+    "pool_acquire_p95_ms": 20.014306227676563,
+    "loop_lag_p95_ms": 2.7801101561635675,
+    "loop_lag_max_ms": 122.61874983087182,
+    "rss_peak_mib": 231.078125,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 8,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 78.02355560273864,
+        "p95_seconds": 95.08233254124643
+      }
+    },
+    "capture": "executor-30-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 55.378822839106434,
+    "p95_seconds": 61.80100412862375,
+    "makespan_seconds": 61.84591070795432,
+    "batch_users_per_second": 0.8084608897766501,
+    "api_cpu_seconds": 24.401882,
+    "api_cpu_per_user_seconds": 0.48803764,
+    "crud_sql_count": 30539,
+    "crud_sql_per_user": 610.78,
+    "crud_sql_elapsed_ms": 56229.52118841931,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 5250,
+      "sse": 3888,
+      "worker": 10119,
+      "claim": 1519,
+      "cancel_watch": 2363
+    },
+    "claims": 319,
+    "empty_claims": 19,
+    "shared_peak": 20,
+    "slot_work_seconds": 1178.0745631309692,
+    "slot_utilization": 0.9524272095321017,
+    "user_queue_mean_ms": 6220.539626666667,
+    "user_queue_p95_ms": 22138.968849999997,
+    "event_publish_to_start_mean_ms": 4095.8761766646057,
+    "event_publish_to_start_p95_ms": 8792.707085690923,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000471713328734,
+      "planning_plan": 5.017455447572283,
+      "review": 5.000250999904238,
+      "report": 5.008693921593949
+    },
+    "pool_acquire_p95_ms": 41.61384121980516,
+    "loop_lag_p95_ms": 5.228254233952596,
+    "loop_lag_max_ms": 114.32099980302155,
+    "rss_peak_mib": 240.9375,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 55.378822839106434,
+        "p95_seconds": 61.80100412862375
+      }
+    },
+    "capture": "executor-50-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 141.4451283658389,
+    "p95_seconds": 169.86550577509917,
+    "makespan_seconds": 172.5304681248963,
+    "batch_users_per_second": 0.2898038853276893,
+    "api_cpu_seconds": 31.781226,
+    "api_cpu_per_user_seconds": 0.63562452,
+    "crud_sql_count": 31755,
+    "crud_sql_per_user": 635.1,
+    "crud_sql_elapsed_ms": 56864.65288535692,
+    "sql_by_category": {
+      "event_graph": 9228,
+      "write": 4950,
+      "sse": 4947,
+      "worker": 8900,
+      "claim": 1273,
+      "cancel_watch": 2457
+    },
+    "claims": 673,
+    "empty_claims": 523,
+    "shared_peak": 20,
+    "slot_work_seconds": 1175.4413200435229,
+    "slot_utilization": 0.34064746152332087,
+    "user_queue_mean_ms": 8842.139713333334,
+    "user_queue_p95_ms": 23184.59175,
+    "event_publish_to_start_mean_ms": 30125.027509198215,
+    "event_publish_to_start_p95_ms": 56868.79242133582,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.0009139025118206,
+      "planning_plan": 5.009332620878704,
+      "review": 5.000376481628045,
+      "report": 5.001043344917707
+    },
+    "pool_acquire_p95_ms": 38.35837496444583,
+    "loop_lag_p95_ms": 3.1379485502839035,
+    "loop_lag_max_ms": 102.63225003145635,
+    "rss_peak_mib": 236.28125,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 141.4451283658389,
+        "p95_seconds": 169.86550577509917
+      }
+    },
+    "capture": "executor-50-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 55.29389104163274,
+    "p95_seconds": 61.44111916233087,
+    "makespan_seconds": 62.0347777500283,
+    "batch_users_per_second": 0.8059995024319595,
+    "api_cpu_seconds": 24.495144,
+    "api_cpu_per_user_seconds": 0.48990288,
+    "crud_sql_count": 30533,
+    "crud_sql_per_user": 610.66,
+    "crud_sql_elapsed_ms": 56190.02853683196,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 5250,
+      "sse": 3894,
+      "worker": 10120,
+      "claim": 1520,
+      "cancel_watch": 2349
+    },
+    "claims": 320,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 1169.3092838299926,
+    "slot_utilization": 0.942462700956045,
+    "user_queue_mean_ms": 6256.722966666666,
+    "user_queue_p95_ms": 22417.471949999996,
+    "event_publish_to_start_mean_ms": 4019.617592743598,
+    "event_publish_to_start_p95_ms": 8570.314327371307,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000479743303731,
+      "planning_plan": 5.000492911697365,
+      "review": 5.000816656756215,
+      "report": 5.000393072413281
+    },
+    "pool_acquire_p95_ms": 69.34933350421488,
+    "loop_lag_p95_ms": 6.331745511852218,
+    "loop_lag_max_ms": 112.4060420319438,
+    "rss_peak_mib": 241.0625,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 55.29389104163274,
+        "p95_seconds": 61.44111916233087
+      }
+    },
+    "capture": "executor-50-2-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 142.12763219740708,
+    "p95_seconds": 170.35104158752364,
+    "makespan_seconds": 173.40704412502237,
+    "batch_users_per_second": 0.2883389210184056,
+    "api_cpu_seconds": 31.421167,
+    "api_cpu_per_user_seconds": 0.62842334,
+    "crud_sql_count": 31663,
+    "crud_sql_per_user": 633.26,
+    "crud_sql_elapsed_ms": 55808.95213317126,
+    "sql_by_category": {
+      "event_graph": 9164,
+      "write": 4950,
+      "sse": 4905,
+      "worker": 8900,
+      "claim": 1279,
+      "cancel_watch": 2465
+    },
+    "claims": 680,
+    "empty_claims": 530,
+    "shared_peak": 20,
+    "slot_work_seconds": 1173.000298288418,
+    "slot_utilization": 0.3382216403627504,
+    "user_queue_mean_ms": 8825.43918,
+    "user_queue_p95_ms": 22942.3523,
+    "event_publish_to_start_mean_ms": 30354.222369465668,
+    "event_publish_to_start_p95_ms": 58228.05643544997,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.00067474827636,
+      "planning_plan": 5.012162406644784,
+      "review": 5.0003102308511735,
+      "report": 5.001302403281443
+    },
+    "pool_acquire_p95_ms": 28.980300016701186,
+    "loop_lag_p95_ms": 2.7580999769270367,
+    "loop_lag_max_ms": 124.65145913884044,
+    "rss_peak_mib": 235.8125,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 142.12763219740708,
+        "p95_seconds": 170.35104158752364
+      }
+    },
+    "capture": "executor-50-2-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 55.694506809110756,
+    "p95_seconds": 62.044522976980076,
+    "makespan_seconds": 62.16019341698848,
+    "batch_users_per_second": 0.8043733014887132,
+    "api_cpu_seconds": 24.213948000000002,
+    "api_cpu_per_user_seconds": 0.48427896000000004,
+    "crud_sql_count": 30560,
+    "crud_sql_per_user": 611.2,
+    "crud_sql_elapsed_ms": 52863.99466753937,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 5250,
+      "sse": 3927,
+      "worker": 10120,
+      "claim": 1520,
+      "cancel_watch": 2343
+    },
+    "claims": 320,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 1186.9926032517105,
+    "slot_utilization": 0.9547851591202607,
+    "user_queue_mean_ms": 6244.61338,
+    "user_queue_p95_ms": 21326.2689,
+    "event_publish_to_start_mean_ms": 4163.883515281293,
+    "event_publish_to_start_p95_ms": 9600.079139799345,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000548814255744,
+      "planning_plan": 5.012519352529198,
+      "review": 5.000425818399526,
+      "report": 5.000421539084055
+    },
+    "pool_acquire_p95_ms": 50.56179368402809,
+    "loop_lag_p95_ms": 7.197973330039533,
+    "loop_lag_max_ms": 125.71425000205636,
+    "rss_peak_mib": 240.734375,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 55.694506809110756,
+        "p95_seconds": 62.044522976980076
+      }
+    },
+    "capture": "executor-50-3-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 140.23119614578783,
+    "p95_seconds": 168.0689472021768,
+    "makespan_seconds": 172.2561420421116,
+    "batch_users_per_second": 0.29026541177136345,
+    "api_cpu_seconds": 31.118716999999997,
+    "api_cpu_per_user_seconds": 0.6223743399999999,
+    "crud_sql_count": 31527,
+    "crud_sql_per_user": 630.54,
+    "crud_sql_elapsed_ms": 52127.69796908833,
+    "sql_by_category": {
+      "event_graph": 9202,
+      "write": 4950,
+      "sse": 4803,
+      "worker": 8900,
+      "claim": 1280,
+      "cancel_watch": 2392
+    },
+    "claims": 680,
+    "empty_claims": 530,
+    "shared_peak": 20,
+    "slot_work_seconds": 1153.2154014578555,
+    "slot_utilization": 0.33473854336524267,
+    "user_queue_mean_ms": 8538.48768,
+    "user_queue_p95_ms": 22511.24745,
+    "event_publish_to_start_mean_ms": 30192.46303997158,
+    "event_publish_to_start_p95_ms": 55598.852600180544,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.005403240025044,
+      "planning_plan": 5.000662834141403,
+      "review": 5.000538535756059,
+      "report": 5.001063699224033
+    },
+    "pool_acquire_p95_ms": 23.501351790036992,
+    "loop_lag_p95_ms": 2.709416532889003,
+    "loop_lag_max_ms": 118.08954095467925,
+    "rss_peak_mib": 236.4375,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 140.23119614578783,
+        "p95_seconds": 168.0689472021768
+      }
+    },
+    "capture": "executor-50-3-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "auto_context",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 33.802335292100906,
+    "p95_seconds": 33.802335292100906,
+    "makespan_seconds": 33.80264529096894,
+    "batch_users_per_second": 0.029583483523023868,
+    "api_cpu_seconds": 1.3093659999999998,
+    "api_cpu_per_user_seconds": 1.3093659999999998,
+    "crud_sql_count": 951,
+    "crud_sql_per_user": 951.0,
+    "crud_sql_elapsed_ms": 699.5260613039136,
+    "sql_by_category": {
+      "event_graph": 148,
+      "write": 149,
+      "sse": 84,
+      "get": 4,
+      "worker": 417,
+      "claim": 66,
+      "cancel_watch": 83
+    },
+    "claims": 30,
+    "empty_claims": 22,
+    "shared_peak": 1,
+    "slot_work_seconds": 31.168884665938094,
+    "slot_utilization": 0.046104209297290547,
+    "user_queue_mean_ms": 31.0494,
+    "user_queue_p95_ms": 49.5908,
+    "event_publish_to_start_mean_ms": 55.93744432553649,
+    "event_publish_to_start_p95_ms": 66.48618357721716,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 8
+    },
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1,
+      "answer": 2
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.002666417043656,
+      "planning_plan": 5.002050207927823,
+      "review": 5.0002733340952545,
+      "report": 5.002057082951069,
+      "answer": 5.002298166509718
+    },
+    "pool_acquire_p95_ms": 0.018516858108341697,
+    "loop_lag_p95_ms": 2.722583198919887,
+    "loop_lag_max_ms": 70.84349994547665,
+    "rss_peak_mib": 212.3125,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 33.802335292100906,
+        "p95_seconds": 33.802335292100906
+      }
+    },
+    "followup_mean_seconds": [
+      5.690306417178363,
+      5.681627792073414
+    ],
+    "capture": "followup-auto_context-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "auto_context",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 34.25776958395727,
+    "p95_seconds": 34.25776958395727,
+    "makespan_seconds": 34.25806004204787,
+    "batch_users_per_second": 0.0291902109685316,
+    "api_cpu_seconds": 1.6508699999999998,
+    "api_cpu_per_user_seconds": 1.6508699999999998,
+    "crud_sql_count": 1015,
+    "crud_sql_per_user": 1015.0,
+    "crud_sql_elapsed_ms": 892.0549747999758,
+    "sql_by_category": {
+      "event_graph": 181,
+      "write": 139,
+      "sse": 84,
+      "get": 4,
+      "worker": 365,
+      "claim": 159,
+      "cancel_watch": 83
+    },
+    "claims": 139,
+    "empty_claims": 134,
+    "shared_peak": 1,
+    "slot_work_seconds": 31.142081084428355,
+    "slot_utilization": 0.04545219584267905,
+    "user_queue_mean_ms": 133.6172,
+    "user_queue_p95_ms": 202.38160000000002,
+    "event_publish_to_start_mean_ms": 60.05370834221443,
+    "event_publish_to_start_p95_ms": 64.23708361107856,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1,
+      "answer": 2
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000953000038862,
+      "planning_plan": 5.001590457977727,
+      "review": 5.002393665956333,
+      "report": 5.000351584050804,
+      "answer": 5.001852625049651
+    },
+    "pool_acquire_p95_ms": 0.01974985934793949,
+    "loop_lag_p95_ms": 2.5958232814446034,
+    "loop_lag_max_ms": 30.812166957184665,
+    "rss_peak_mib": 209.890625,
+    "db_connections_peak": 12,
+    "db_idle_transaction_peak": 2,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 34.25776958395727,
+        "p95_seconds": 34.25776958395727
+      }
+    },
+    "followup_mean_seconds": [
+      5.918573499890044,
+      5.6948761669918895
+    ],
+    "capture": "followup-auto_context-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "auto_context",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 35.743027520831674,
+    "p95_seconds": 36.17286307155155,
+    "makespan_seconds": 36.1745028749574,
+    "batch_users_per_second": 0.27643780025302633,
+    "api_cpu_seconds": 7.284643000000001,
+    "api_cpu_per_user_seconds": 0.7284643000000001,
+    "crud_sql_count": 9356,
+    "crud_sql_per_user": 935.6,
+    "crud_sql_elapsed_ms": 14796.745439060032,
+    "sql_by_category": {
+      "event_graph": 1480,
+      "write": 1490,
+      "sse": 888,
+      "get": 40,
+      "worker": 4053,
+      "claim": 543,
+      "cancel_watch": 862
+    },
+    "claims": 183,
+    "empty_claims": 103,
+    "shared_peak": 10,
+    "slot_work_seconds": 329.68701333366334,
+    "slot_utilization": 0.4556897636897403,
+    "user_queue_mean_ms": 114.49665999999999,
+    "user_queue_p95_ms": 287.86825000000005,
+    "event_publish_to_start_mean_ms": 227.55423035317412,
+    "event_publish_to_start_p95_ms": 344.4773086695931,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 80
+    },
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10,
+      "answer": 20
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000290800072253,
+      "planning_plan": 5.0000416584080085,
+      "review": 4.999844254227355,
+      "report": 5.000739975110628,
+      "answer": 5.000449699931778
+    },
+    "pool_acquire_p95_ms": 1.8863081000745296,
+    "loop_lag_p95_ms": 2.7935245074331707,
+    "loop_lag_max_ms": 65.56445905007422,
+    "rss_peak_mib": 225.796875,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 6,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 35.743027520831674,
+        "p95_seconds": 36.17286307155155
+      }
+    },
+    "followup_mean_seconds": [
+      5.733303808327764,
+      5.744580829120241
+    ],
+    "capture": "followup-auto_context-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "auto_context",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 47.21809859201312,
+    "p95_seconds": 51.70931584779173,
+    "makespan_seconds": 51.71045795804821,
+    "batch_users_per_second": 0.1933844795594892,
+    "api_cpu_seconds": 7.9240710000000005,
+    "api_cpu_per_user_seconds": 0.7924071,
+    "crud_sql_count": 9215,
+    "crud_sql_per_user": 921.5,
+    "crud_sql_elapsed_ms": 14058.589046122506,
+    "sql_by_category": {
+      "event_graph": 1850,
+      "write": 1390,
+      "sse": 948,
+      "get": 40,
+      "worker": 3650,
+      "claim": 482,
+      "cancel_watch": 855
+    },
+    "claims": 282,
+    "empty_claims": 232,
+    "shared_peak": 12,
+    "slot_work_seconds": 324.86709737591445,
+    "slot_utilization": 0.3141212727602156,
+    "user_queue_mean_ms": 183.21358,
+    "user_queue_p95_ms": 287.6287,
+    "event_publish_to_start_mean_ms": 4031.664191776266,
+    "event_publish_to_start_p95_ms": 10342.379646340849,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10,
+      "answer": 20
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000715275108814,
+      "planning_plan": 5.001087874965743,
+      "review": 5.000186137366109,
+      "report": 5.001371512422338,
+      "answer": 5.000548391835764
+    },
+    "pool_acquire_p95_ms": 2.1674921037629256,
+    "loop_lag_p95_ms": 2.9126204201020207,
+    "loop_lag_max_ms": 80.28687499463558,
+    "rss_peak_mib": 226.703125,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 7,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 47.21809859201312,
+        "p95_seconds": 51.70931584779173
+      }
+    },
+    "followup_mean_seconds": [
+      5.854533929284662,
+      5.806290608318522
+    ],
+    "capture": "followup-auto_context-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 33.608835249906406,
+    "p95_seconds": 33.608835249906406,
+    "makespan_seconds": 33.6098089159932,
+    "batch_users_per_second": 0.029753218844518658,
+    "api_cpu_seconds": 1.269263,
+    "api_cpu_per_user_seconds": 1.269263,
+    "crud_sql_count": 936,
+    "crud_sql_per_user": 936.0,
+    "crud_sql_elapsed_ms": 691.6006179526448,
+    "sql_by_category": {
+      "event_graph": 148,
+      "write": 153,
+      "sse": 84,
+      "get": 4,
+      "worker": 399,
+      "claim": 65,
+      "cancel_watch": 83
+    },
+    "claims": 29,
+    "empty_claims": 21,
+    "shared_peak": 1,
+    "slot_work_seconds": 31.144404291175306,
+    "slot_utilization": 0.04633231383287524,
+    "user_queue_mean_ms": 26.4524,
+    "user_queue_p95_ms": 33.8336,
+    "event_publish_to_start_mean_ms": 44.94651399242381,
+    "event_publish_to_start_p95_ms": 51.23698781244457,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 8
+    },
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1,
+      "answer": 2
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001396959181875,
+      "planning_plan": 5.000257625011727,
+      "review": 5.001676458166912,
+      "report": 5.000264583155513,
+      "answer": 5.002889416529797
+    },
+    "pool_acquire_p95_ms": 0.02291406271979212,
+    "loop_lag_p95_ms": 2.785771014168853,
+    "loop_lag_max_ms": 6.030416907742614,
+    "rss_peak_mib": 209.953125,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 33.608835249906406,
+        "p95_seconds": 33.608835249906406
+      }
+    },
+    "followup_mean_seconds": [
+      5.699166374979541,
+      5.668170541990548
+    ],
+    "capture": "followup-manual-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 34.503265750128776,
+    "p95_seconds": 34.503265750128776,
+    "makespan_seconds": 34.503756457939744,
+    "batch_users_per_second": 0.02898235156566228,
+    "api_cpu_seconds": 1.7152489999999996,
+    "api_cpu_per_user_seconds": 1.7152489999999996,
+    "crud_sql_count": 1002,
+    "crud_sql_per_user": 1002.0,
+    "crud_sql_elapsed_ms": 1039.1387396957725,
+    "sql_by_category": {
+      "event_graph": 181,
+      "write": 143,
+      "sse": 84,
+      "get": 4,
+      "worker": 348,
+      "claim": 159,
+      "cancel_watch": 83
+    },
+    "claims": 139,
+    "empty_claims": 134,
+    "shared_peak": 1,
+    "slot_work_seconds": 31.523497165413573,
+    "slot_utilization": 0.045681253871358726,
+    "user_queue_mean_ms": 133.38,
+    "user_queue_p95_ms": 208.2316,
+    "event_publish_to_start_mean_ms": 65.51352795213461,
+    "event_publish_to_start_p95_ms": 76.19976236019284,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 1,
+      "planning_plan": 1,
+      "review": 1,
+      "report": 1,
+      "answer": 2
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001219833036885,
+      "planning_plan": 5.000493832863867,
+      "review": 5.000446374993771,
+      "report": 5.002812416991219,
+      "answer": 5.001612520893104
+    },
+    "pool_acquire_p95_ms": 0.01902092481032014,
+    "loop_lag_p95_ms": 2.7340022264979735,
+    "loop_lag_max_ms": 11.108541954308743,
+    "rss_peak_mib": 209.359375,
+    "db_connections_peak": 12,
+    "db_idle_transaction_peak": 2,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 34.503265750128776,
+        "p95_seconds": 34.503265750128776
+      }
+    },
+    "followup_mean_seconds": [
+      5.92859883303754,
+      5.696107292082161
+    ],
+    "capture": "followup-manual-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.48281668347772,
+    "p95_seconds": 36.6875918500009,
+    "makespan_seconds": 36.69062645803206,
+    "batch_users_per_second": 0.2725491757803135,
+    "api_cpu_seconds": 7.5168289999999995,
+    "api_cpu_per_user_seconds": 0.7516828999999999,
+    "crud_sql_count": 9244,
+    "crud_sql_per_user": 924.4,
+    "crud_sql_elapsed_ms": 16284.927687607706,
+    "sql_by_category": {
+      "event_graph": 1480,
+      "write": 1530,
+      "sse": 906,
+      "get": 40,
+      "worker": 3880,
+      "claim": 540,
+      "cancel_watch": 868
+    },
+    "claims": 180,
+    "empty_claims": 100,
+    "shared_peak": 10,
+    "slot_work_seconds": 334.1391095460858,
+    "slot_utilization": 0.45534669451376786,
+    "user_queue_mean_ms": 135.502,
+    "user_queue_p95_ms": 360.75024999999994,
+    "event_publish_to_start_mean_ms": 281.60848341261345,
+    "event_publish_to_start_p95_ms": 509.4069770188071,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 80
+    },
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10,
+      "answer": 20
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000690149818547,
+      "planning_plan": 5.0004439581884075,
+      "review": 5.000601966795512,
+      "report": 5.000211879401467,
+      "answer": 5.006982043711469
+    },
+    "pool_acquire_p95_ms": 1.9725900143384925,
+    "loop_lag_p95_ms": 2.8198518208228003,
+    "loop_lag_max_ms": 92.48708384111524,
+    "rss_peak_mib": 227.15625,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 9,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 36.48281668347772,
+        "p95_seconds": 36.6875918500009
+      }
+    },
+    "followup_mean_seconds": [
+      5.770016699982807,
+      5.74299746255856
+    ],
+    "capture": "followup-manual-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "executor",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": true,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 46.75736577908974,
+    "p95_seconds": 51.54485963130137,
+    "makespan_seconds": 51.546672666911036,
+    "batch_users_per_second": 0.19399894275657534,
+    "api_cpu_seconds": 8.27608,
+    "api_cpu_per_user_seconds": 0.827608,
+    "crud_sql_count": 9069,
+    "crud_sql_per_user": 906.9,
+    "crud_sql_elapsed_ms": 11275.669743539765,
+    "sql_by_category": {
+      "event_graph": 1826,
+      "write": 1430,
+      "sse": 966,
+      "get": 40,
+      "worker": 3480,
+      "claim": 480,
+      "cancel_watch": 847
+    },
+    "claims": 280,
+    "empty_claims": 230,
+    "shared_peak": 10,
+    "slot_work_seconds": 319.535356749082,
+    "slot_utilization": 0.30994760691333517,
+    "user_queue_mean_ms": 181.27754,
+    "user_queue_p95_ms": 290.84335,
+    "event_publish_to_start_mean_ms": 3924.784304155037,
+    "event_publish_to_start_p95_ms": 9712.337278726043,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 10,
+      "planning_plan": 10,
+      "review": 10,
+      "report": 10,
+      "answer": 20
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.00189745426178,
+      "planning_plan": 5.000486516486854,
+      "review": 5.0007811459247025,
+      "report": 5.000566845899447,
+      "answer": 5.000419381377287
+    },
+    "pool_acquire_p95_ms": 1.470521092414856,
+    "loop_lag_p95_ms": 2.7531041181646234,
+    "loop_lag_max_ms": 90.35979197360575,
+    "rss_peak_mib": 226.453125,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 8,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 46.75736577908974,
+        "p95_seconds": 51.54485963130137
+      }
+    },
+    "followup_mean_seconds": [
+      5.8088852249085905,
+      5.779685800033621
+    ],
+    "capture": "followup-manual-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 10.947395958006382,
+    "p95_seconds": 10.947395958006382,
+    "makespan_seconds": 10.947628957917914,
+    "batch_users_per_second": 0.09134397994706847,
+    "api_cpu_seconds": 0.31525500000000006,
+    "api_cpu_per_user_seconds": 0.31525500000000006,
+    "crud_sql_count": 206,
+    "crud_sql_per_user": 206.0,
+    "crud_sql_elapsed_ms": 152.356585720554,
+    "sql_by_category": {
+      "sse": 18,
+      "worker": 23,
+      "claim": 17,
+      "event_graph": 148
+    },
+    "claims": 11,
+    "empty_claims": 8,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.399659791728482,
+    "slot_utilization": 0.04749731577359904,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 55.37013903570672,
+    "event_publish_to_start_p95_ms": 58.0117916688323,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 6
+    },
+    "model_calls": {
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "review": 5.001378041924909,
+      "report": 5.002429666928947
+    },
+    "pool_acquire_p95_ms": 0.013698125258088112,
+    "loop_lag_p95_ms": 2.6043648598715605,
+    "loop_lag_max_ms": 3.0478749889880365,
+    "rss_peak_mib": 156.125,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 10.947395958006382,
+        "p95_seconds": 10.947395958006382
+      }
+    },
+    "capture": "mixed-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 11.212702790973708,
+    "p95_seconds": 11.212702790973708,
+    "makespan_seconds": 11.212804750073701,
+    "batch_users_per_second": 0.08918375217346285,
+    "api_cpu_seconds": 0.5619869999999998,
+    "api_cpu_per_user_seconds": 0.5619869999999998,
+    "crud_sql_count": 242,
+    "crud_sql_per_user": 242.0,
+    "crud_sql_elapsed_ms": 246.11791758798063,
+    "sql_by_category": {
+      "sse": 18,
+      "claim": 43,
+      "event_graph": 181
+    },
+    "claims": 43,
+    "empty_claims": 43,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.46949266595766,
+    "slot_utilization": 0.04668543196513274,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 84.51019475857417,
+    "event_publish_to_start_p95_ms": 104.48728783521801,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "review": 5.001983124995604,
+      "report": 5.002905375091359
+    },
+    "pool_acquire_p95_ms": 0.022070971317589273,
+    "loop_lag_p95_ms": 2.771768486127252,
+    "loop_lag_max_ms": 69.87550002522767,
+    "rss_peak_mib": 206.484375,
+    "db_connections_peak": 13,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 11.212702790973708,
+        "p95_seconds": 11.212702790973708
+      }
+    },
+    "capture": "mixed-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 17.565465087536722,
+    "p95_seconds": 23.398269573121798,
+    "makespan_seconds": 23.40990937501192,
+    "batch_users_per_second": 0.42716953063791635,
+    "api_cpu_seconds": 3.391362,
+    "api_cpu_per_user_seconds": 0.3391362,
+    "crud_sql_count": 3936,
+    "crud_sql_per_user": 393.6,
+    "crud_sql_elapsed_ms": 5962.622215505689,
+    "sql_by_category": {
+      "event_graph": 1480,
+      "write": 525,
+      "sse": 330,
+      "worker": 1140,
+      "claim": 250,
+      "cancel_watch": 211
+    },
+    "claims": 100,
+    "empty_claims": 55,
+    "shared_peak": 10,
+    "slot_work_seconds": 163.40354483528063,
+    "slot_utilization": 0.34900507775929274,
+    "user_queue_mean_ms": 115.362,
+    "user_queue_p95_ms": 225.8306,
+    "event_publish_to_start_mean_ms": 181.3853945272664,
+    "event_publish_to_start_p95_ms": 296.3606401812285,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 60
+    },
+    "model_calls": {
+      "planning_select": 5,
+      "planning_plan": 5,
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001696849893778,
+      "planning_plan": 5.000429158378393,
+      "review": 5.001471779239364,
+      "report": 5.000344954361208
+    },
+    "pool_acquire_p95_ms": 0.726375263184309,
+    "loop_lag_p95_ms": 2.6078955037519282,
+    "loop_lag_max_ms": 98.54758400470018,
+    "rss_peak_mib": 222.78125,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 7,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 5,
+        "mean_seconds": 23.36398834181018,
+        "p95_seconds": 23.403613583603875
+      },
+      "primary": {
+        "users": 5,
+        "mean_seconds": 11.766941833263264,
+        "p95_seconds": 11.796684716502204
+      }
+    },
+    "capture": "mixed-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 20.078656312567183,
+    "p95_seconds": 27.940133276907726,
+    "makespan_seconds": 28.081044958904386,
+    "batch_users_per_second": 0.3561121038990766,
+    "api_cpu_seconds": 3.782449,
+    "api_cpu_per_user_seconds": 0.3782449,
+    "crud_sql_count": 3958,
+    "crud_sql_per_user": 395.8,
+    "crud_sql_elapsed_ms": 4453.3282946795225,
+    "sql_by_category": {
+      "event_graph": 1810,
+      "write": 495,
+      "sse": 360,
+      "worker": 890,
+      "claim": 193,
+      "cancel_watch": 210
+    },
+    "claims": 133,
+    "empty_claims": 118,
+    "shared_peak": 9,
+    "slot_work_seconds": 159.15007866872475,
+    "slot_utilization": 0.2833763467521156,
+    "user_queue_mean_ms": 128.2788,
+    "user_queue_p95_ms": 186.88189999999997,
+    "event_publish_to_start_mean_ms": 1081.9399376244594,
+    "event_publish_to_start_p95_ms": 4975.728839461225,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 5,
+      "planning_plan": 5,
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000718758348375,
+      "planning_plan": 5.000001475354656,
+      "review": 5.000614633434452,
+      "report": 5.003955520805903
+    },
+    "pool_acquire_p95_ms": 0.012027332559227942,
+    "loop_lag_p95_ms": 2.8813336510211176,
+    "loop_lag_max_ms": 71.06400011107326,
+    "rss_peak_mib": 223.1875,
+    "db_connections_peak": 17,
+    "db_idle_transaction_peak": 3,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 5,
+        "mean_seconds": 26.569850041577592,
+        "p95_seconds": 28.0173991413787
+      },
+      "primary": {
+        "users": 5,
+        "mean_seconds": 13.587462583556771,
+        "p95_seconds": 16.859421158535405
+      }
+    },
+    "capture": "mixed-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 24.462870847076797,
+    "p95_seconds": 29.42755626718281,
+    "makespan_seconds": 29.45073845796287,
+    "batch_users_per_second": 1.0186501789359588,
+    "api_cpu_seconds": 10.106085,
+    "api_cpu_per_user_seconds": 0.3368695,
+    "crud_sql_count": 11951,
+    "crud_sql_per_user": 398.3666666666667,
+    "crud_sql_elapsed_ms": 18039.72950950265,
+    "sql_by_category": {
+      "event_graph": 4440,
+      "write": 1575,
+      "sse": 1353,
+      "worker": 3275,
+      "claim": 605,
+      "cancel_watch": 703
+    },
+    "claims": 155,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 517.8037294975948,
+    "slot_utilization": 0.8791014361773861,
+    "user_queue_mean_ms": 617.8585333333333,
+    "user_queue_p95_ms": 988.748,
+    "event_publish_to_start_mean_ms": 1975.5361939909765,
+    "event_publish_to_start_p95_ms": 8690.88185590225,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 180
+    },
+    "model_calls": {
+      "planning_select": 15,
+      "planning_plan": 15,
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000091191676135,
+      "planning_plan": 5.000158316657568,
+      "review": 5.000177976349368,
+      "report": 5.000976472223798
+    },
+    "pool_acquire_p95_ms": 4.17635901831089,
+    "loop_lag_p95_ms": 3.7477498175576263,
+    "loop_lag_max_ms": 109.57399997860193,
+    "rss_peak_mib": 235.765625,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 8,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 15,
+        "mean_seconds": 27.577104827792695,
+        "p95_seconds": 29.438348529418
+      },
+      "primary": {
+        "users": 15,
+        "mean_seconds": 21.348636866360902,
+        "p95_seconds": 25.14172443742864
+      }
+    },
+    "capture": "mixed-30-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 65.45319430290256,
+    "p95_seconds": 82.56104572098701,
+    "makespan_seconds": 83.28136687492952,
+    "batch_users_per_second": 0.36022463518224274,
+    "api_cpu_seconds": 13.308712,
+    "api_cpu_per_user_seconds": 0.4436237333333333,
+    "crud_sql_count": 12622,
+    "crud_sql_per_user": 420.73333333333335,
+    "crud_sql_elapsed_ms": 21962.41844142787,
+    "sql_by_category": {
+      "event_graph": 5430,
+      "write": 1485,
+      "sse": 1725,
+      "worker": 2670,
+      "claim": 567,
+      "cancel_watch": 745
+    },
+    "claims": 387,
+    "empty_claims": 342,
+    "shared_peak": 19,
+    "slot_work_seconds": 517.9257308354136,
+    "slot_utilization": 0.3109493457361388,
+    "user_queue_mean_ms": 313.7707111111111,
+    "user_queue_p95_ms": 554.1133999999998,
+    "event_publish_to_start_mean_ms": 15760.814068024047,
+    "event_publish_to_start_p95_ms": 26373.184862162452,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 15,
+      "planning_plan": 15,
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000972908362746,
+      "planning_plan": 5.000055730435998,
+      "review": 5.000740541525496,
+      "report": 5.001210734605168
+    },
+    "pool_acquire_p95_ms": 10.05730178439988,
+    "loop_lag_p95_ms": 2.7174170594662375,
+    "loop_lag_max_ms": 90.82991615869105,
+    "rss_peak_mib": 231.140625,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 9,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 15,
+        "mean_seconds": 75.28151243887842,
+        "p95_seconds": 83.27704184611794
+      },
+      "primary": {
+        "users": 15,
+        "mean_seconds": 55.6248761669267,
+        "p95_seconds": 63.64985336253885
+      }
+    },
+    "capture": "mixed-30-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.84679553081281,
+    "p95_seconds": 44.39190575479297,
+    "makespan_seconds": 45.38760183285922,
+    "batch_users_per_second": 1.1016224250870543,
+    "api_cpu_seconds": 16.911452,
+    "api_cpu_per_user_seconds": 0.33822904000000004,
+    "crud_sql_count": 20040,
+    "crud_sql_per_user": 400.8,
+    "crud_sql_elapsed_ms": 29318.74998472631,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 2625,
+      "sse": 2466,
+      "worker": 5445,
+      "claim": 995,
+      "cancel_watch": 1109
+    },
+    "claims": 245,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 833.1310527990572,
+    "slot_utilization": 0.9177958507998281,
+    "user_queue_mean_ms": 3790.279413333333,
+    "user_queue_p95_ms": 10655.5541,
+    "event_publish_to_start_mean_ms": 4619.142713008138,
+    "event_publish_to_start_p95_ms": 17251.79406467358,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.00064139822498,
+      "planning_plan": 5.013810429973528,
+      "review": 5.017996309068986,
+      "report": 5.000379879209213
+    },
+    "pool_acquire_p95_ms": 6.349364412017167,
+    "loop_lag_p95_ms": 4.033743788022542,
+    "loop_lag_max_ms": 130.73379090055823,
+    "rss_peak_mib": 240.109375,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 13,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 42.238250541761516,
+        "p95_seconds": 45.184694167179984
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 31.455340519864112,
+        "p95_seconds": 38.16952978358604
+      }
+    },
+    "capture": "mixed-50-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 104.53579437022097,
+    "p95_seconds": 132.859302510391,
+    "makespan_seconds": 135.8375111669302,
+    "batch_users_per_second": 0.36808683824128074,
+    "api_cpu_seconds": 22.473218,
+    "api_cpu_per_user_seconds": 0.44946436,
+    "crud_sql_count": 21151,
+    "crud_sql_per_user": 423.02,
+    "crud_sql_elapsed_ms": 27791.299184318632,
+    "sql_by_category": {
+      "event_graph": 9050,
+      "write": 2475,
+      "sse": 3180,
+      "worker": 4450,
+      "claim": 870,
+      "cancel_watch": 1126
+    },
+    "claims": 570,
+    "empty_claims": 495,
+    "shared_peak": 20,
+    "slot_work_seconds": 820.71186037804,
+    "slot_utilization": 0.3020932337936722,
+    "user_queue_mean_ms": 1680.0559866666667,
+    "user_queue_p95_ms": 10959.6024,
+    "event_publish_to_start_mean_ms": 28295.546314196352,
+    "event_publish_to_start_p95_ms": 38719.390025280874,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000623060008511,
+      "planning_plan": 5.0002657750528305,
+      "review": 5.000444466643967,
+      "report": 5.0012389692151915
+    },
+    "pool_acquire_p95_ms": 8.768493134994106,
+    "loop_lag_p95_ms": 2.8144377050921268,
+    "loop_lag_max_ms": 120.64145794138312,
+    "rss_peak_mib": 233.296875,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 120.76228006841615,
+        "p95_seconds": 135.36234495076351
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 88.3093086720258,
+        "p95_seconds": 102.31192970904522
+      }
+    },
+    "capture": "mixed-50-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 36.83305200977716,
+    "p95_seconds": 44.49918893135619,
+    "makespan_seconds": 45.36683620791882,
+    "batch_users_per_second": 1.1021266673930517,
+    "api_cpu_seconds": 17.280541999999997,
+    "api_cpu_per_user_seconds": 0.3456108399999999,
+    "crud_sql_count": 20015,
+    "crud_sql_per_user": 400.3,
+    "crud_sql_elapsed_ms": 31018.544448772445,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 2625,
+      "sse": 2442,
+      "worker": 5445,
+      "claim": 995,
+      "cancel_watch": 1108
+    },
+    "claims": 245,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 834.1653408668935,
+    "slot_utilization": 0.9193558671844183,
+    "user_queue_mean_ms": 3712.365333333333,
+    "user_queue_p95_ms": 10714.7064,
+    "event_publish_to_start_mean_ms": 4680.745349462765,
+    "event_publish_to_start_p95_ms": 17441.6827644105,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.003981794891879,
+      "planning_plan": 5.000266138277948,
+      "review": 5.000559044959955,
+      "report": 5.0042718699946995
+    },
+    "pool_acquire_p95_ms": 11.021796357817927,
+    "loop_lag_p95_ms": 4.459017026238137,
+    "loop_lag_max_ms": 116.603749897331,
+    "rss_peak_mib": 236.6875,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 42.248641353342684,
+        "p95_seconds": 44.698014858551325
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 31.417462666211648,
+        "p95_seconds": 37.89223459125496
+      }
+    },
+    "capture": "mixed-50-2-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 105.23721881983802,
+    "p95_seconds": 133.61122947680997,
+    "makespan_seconds": 136.58106470806524,
+    "batch_users_per_second": 0.3660829567178462,
+    "api_cpu_seconds": 22.765911,
+    "api_cpu_per_user_seconds": 0.45531822,
+    "crud_sql_count": 21172,
+    "crud_sql_per_user": 423.44,
+    "crud_sql_elapsed_ms": 31698.94864759408,
+    "sql_by_category": {
+      "event_graph": 9050,
+      "write": 2475,
+      "sse": 3186,
+      "worker": 4450,
+      "claim": 866,
+      "cancel_watch": 1145
+    },
+    "claims": 566,
+    "empty_claims": 491,
+    "shared_peak": 20,
+    "slot_work_seconds": 830.6477519141044,
+    "slot_utilization": 0.30408598501174733,
+    "user_queue_mean_ms": 1732.8481733333333,
+    "user_queue_p95_ms": 11025.8056,
+    "event_publish_to_start_mean_ms": 28451.700993616443,
+    "event_publish_to_start_p95_ms": 38662.79601061251,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000503239911049,
+      "planning_plan": 5.012481430135668,
+      "review": 5.0021326566301285,
+      "report": 5.001747306664474
+    },
+    "pool_acquire_p95_ms": 11.14855797495688,
+    "loop_lag_p95_ms": 2.7825232245959293,
+    "loop_lag_max_ms": 147.28174996562302,
+    "rss_peak_mib": 233.53125,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 121.50636706323363,
+        "p95_seconds": 136.04112082533538
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 88.9680705764424,
+        "p95_seconds": 102.87467721654102
+      }
+    },
+    "capture": "mixed-50-2-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 37.55809007004369,
+    "p95_seconds": 45.263908302097114,
+    "makespan_seconds": 45.58699724986218,
+    "batch_users_per_second": 1.0968039795635183,
+    "api_cpu_seconds": 16.696329999999996,
+    "api_cpu_per_user_seconds": 0.3339265999999999,
+    "crud_sql_count": 20087,
+    "crud_sql_per_user": 401.74,
+    "crud_sql_elapsed_ms": 30641.357328509912,
+    "sql_by_category": {
+      "event_graph": 7400,
+      "write": 2625,
+      "sse": 2484,
+      "worker": 5445,
+      "claim": 995,
+      "cancel_watch": 1138
+    },
+    "claims": 245,
+    "empty_claims": 20,
+    "shared_peak": 20,
+    "slot_work_seconds": 850.218519161921,
+    "slot_utilization": 0.9325230553153964,
+    "user_queue_mean_ms": 3743.69888,
+    "user_queue_p95_ms": 10610.1466,
+    "event_publish_to_start_mean_ms": 4825.808789414975,
+    "event_publish_to_start_p95_ms": 18182.8052373603,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000634766630828,
+      "planning_plan": 5.001693959888071,
+      "review": 5.000249178269878,
+      "report": 5.00397833080031
+    },
+    "pool_acquire_p95_ms": 10.196541086770594,
+    "loop_lag_p95_ms": 4.471656668465579,
+    "loop_lag_max_ms": 123.26845792122185,
+    "rss_peak_mib": 238.0625,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 12,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 42.947119850050655,
+        "p95_seconds": 45.36203775038011
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 32.169060290036725,
+        "p95_seconds": 38.77343682493083
+      }
+    },
+    "capture": "mixed-50-3-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "mixed",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 105.4053244357789,
+    "p95_seconds": 133.5461716462858,
+    "makespan_seconds": 136.87885145819746,
+    "batch_users_per_second": 0.365286525035388,
+    "api_cpu_seconds": 22.645981,
+    "api_cpu_per_user_seconds": 0.45291961999999997,
+    "crud_sql_count": 21148,
+    "crud_sql_per_user": 422.96,
+    "crud_sql_elapsed_ms": 29163.831025827676,
+    "sql_by_category": {
+      "event_graph": 9050,
+      "write": 2475,
+      "sse": 3174,
+      "worker": 4450,
+      "claim": 871,
+      "cancel_watch": 1128
+    },
+    "claims": 571,
+    "empty_claims": 496,
+    "shared_peak": 20,
+    "slot_work_seconds": 824.4408292497974,
+    "slot_utilization": 0.30115712561395214,
+    "user_queue_mean_ms": 1689.0893466666666,
+    "user_queue_p95_ms": 10973.9876,
+    "event_publish_to_start_mean_ms": 28554.491825855028,
+    "event_publish_to_start_p95_ms": 38732.22909817705,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "planning_select": 25,
+      "planning_plan": 25,
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.001462408397347,
+      "planning_plan": 5.000393406692893,
+      "review": 5.004738603336737,
+      "report": 5.001004790076986
+    },
+    "pool_acquire_p95_ms": 6.492559949401766,
+    "loop_lag_p95_ms": 2.7777876588515884,
+    "loop_lag_max_ms": 121.98845795355737,
+    "rss_peak_mib": 233.4375,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 8,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "incoming": {
+        "users": 25,
+        "mean_seconds": 121.64121375510469,
+        "p95_seconds": 136.26409478397107
+      },
+      "primary": {
+        "users": 25,
+        "mean_seconds": 89.1694351164531,
+        "p95_seconds": 102.9009234000463
+      }
+    },
+    "capture": "mixed-50-3-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "off",
+    "mean_seconds": 27.80910147159826,
+    "p95_seconds": 35.56785287270323,
+    "makespan_seconds": 35.87668087496422,
+    "batch_users_per_second": 1.3936629247911123,
+    "api_cpu_seconds": 11.113761,
+    "api_cpu_per_user_seconds": 0.22227522,
+    "crud_sql_count": 15321,
+    "crud_sql_per_user": 306.42,
+    "crud_sql_elapsed_ms": 31125.57548400946,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1722,
+      "worker": 7200,
+      "claim": 757,
+      "cancel_watch": 2192
+    },
+    "claims": 157,
+    "empty_claims": 57,
+    "shared_peak": 20,
+    "slot_work_seconds": 575.6813127505593,
+    "slot_utilization": 0.8023057020755315,
+    "user_queue_mean_ms": 7649.01001,
+    "user_queue_p95_ms": 22671.39075,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000825687563047,
+      "planning_plan": 5.011670109238476
+    },
+    "pool_acquire_p95_ms": 107.71169997751697,
+    "loop_lag_p95_ms": 4.3927251361310375,
+    "loop_lag_max_ms": 98.25108302757144,
+    "rss_peak_mib": 233.984375,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.80910147159826,
+        "p95_seconds": 35.56785287270323
+      }
+    },
+    "capture": "notify-off-50-1-common.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "off",
+    "mean_seconds": 27.46231072248891,
+    "p95_seconds": 34.98999009135878,
+    "makespan_seconds": 35.548549292143434,
+    "batch_users_per_second": 1.4065271578058594,
+    "api_cpu_seconds": 11.176433,
+    "api_cpu_per_user_seconds": 0.22352866,
+    "crud_sql_count": 15293,
+    "crud_sql_per_user": 305.86,
+    "crud_sql_elapsed_ms": 30798.882643692195,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1707,
+      "worker": 7200,
+      "claim": 759,
+      "cancel_watch": 2177
+    },
+    "claims": 159,
+    "empty_claims": 59,
+    "shared_peak": 20,
+    "slot_work_seconds": 567.1475672088563,
+    "slot_utilization": 0.7977084557627804,
+    "user_queue_mean_ms": 7509.54537,
+    "user_queue_p95_ms": 22135.4164,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.000986896613613,
+      "planning_plan": 5.019009024980478
+    },
+    "pool_acquire_p95_ms": 85.98118394147622,
+    "loop_lag_p95_ms": 5.66452095517888,
+    "loop_lag_max_ms": 83.22770809754729,
+    "rss_peak_mib": 233.0625,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.46231072248891,
+        "p95_seconds": 34.98999009135878
+      }
+    },
+    "capture": "notify-off-50-2-common.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "approval",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "off",
+    "mean_seconds": 27.55417272336781,
+    "p95_seconds": 34.893842648225835,
+    "makespan_seconds": 35.59313683304936,
+    "batch_users_per_second": 1.404765200508358,
+    "api_cpu_seconds": 11.464967,
+    "api_cpu_per_user_seconds": 0.22929934,
+    "crud_sql_count": 15305,
+    "crud_sql_per_user": 306.1,
+    "crud_sql_elapsed_ms": 31255.510203773156,
+    "sql_by_category": {
+      "write": 3450,
+      "sse": 1725,
+      "worker": 7200,
+      "claim": 758,
+      "cancel_watch": 2172
+    },
+    "claims": 158,
+    "empty_claims": 58,
+    "shared_peak": 20,
+    "slot_work_seconds": 568.5167016633786,
+    "slot_utilization": 0.7986324784045064,
+    "user_queue_mean_ms": 7524.19824,
+    "user_queue_p95_ms": 22070.1866,
+    "event_publish_to_start_mean_ms": null,
+    "event_publish_to_start_p95_ms": null,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 100
+    },
+    "model_calls": {
+      "planning_select": 50,
+      "planning_plan": 50
+    },
+    "model_mean_seconds": {
+      "planning_select": 5.0010866916878145,
+      "planning_plan": 5.000591923259199
+    },
+    "pool_acquire_p95_ms": 92.66250799410045,
+    "loop_lag_p95_ms": 7.6055567245930105,
+    "loop_lag_max_ms": 92.79629201628268,
+    "rss_peak_mib": 232.875,
+    "db_connections_peak": 16,
+    "db_idle_transaction_peak": 10,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 27.55417272336781,
+        "p95_seconds": 34.893842648225835
+      }
+    },
+    "capture": "notify-off-50-3-common.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 10.934600749984384,
+    "p95_seconds": 10.934600749984384,
+    "makespan_seconds": 10.934783625183627,
+    "batch_users_per_second": 0.0914512837452883,
+    "api_cpu_seconds": 0.33587900000000026,
+    "api_cpu_per_user_seconds": 0.33587900000000026,
+    "crud_sql_count": 206,
+    "crud_sql_per_user": 206.0,
+    "crud_sql_elapsed_ms": 155.95174254849553,
+    "sql_by_category": {
+      "sse": 18,
+      "worker": 23,
+      "claim": 17,
+      "event_graph": 148
+    },
+    "claims": 11,
+    "empty_claims": 8,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.394884916488081,
+    "slot_utilization": 0.04753127849986844,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 51.863152688990034,
+    "event_publish_to_start_p95_ms": 60.3034955682233,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 6
+    },
+    "model_calls": {
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "review": 5.002365249907598,
+      "report": 5.001554584130645
+    },
+    "pool_acquire_p95_ms": 0.01107226125895977,
+    "loop_lag_p95_ms": 2.6284017018042447,
+    "loop_lag_max_ms": 4.9273328389972395,
+    "rss_peak_mib": 205.828125,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 10.934600749984384,
+        "p95_seconds": 10.934600749984384
+      }
+    },
+    "capture": "result_burst-1-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 1,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 11.042423416860402,
+    "p95_seconds": 11.042423416860402,
+    "makespan_seconds": 11.042525041848421,
+    "batch_users_per_second": 0.09055899771204946,
+    "api_cpu_seconds": 0.43184500000000003,
+    "api_cpu_per_user_seconds": 0.43184500000000003,
+    "crud_sql_count": 242,
+    "crud_sql_per_user": 242.0,
+    "crud_sql_elapsed_ms": 196.984666865319,
+    "sql_by_category": {
+      "sse": 18,
+      "claim": 43,
+      "event_graph": 181
+    },
+    "claims": 43,
+    "empty_claims": 43,
+    "shared_peak": 1,
+    "slot_work_seconds": 10.419103540945798,
+    "slot_utilization": 0.047177178686305846,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 78.67619426300128,
+    "event_publish_to_start_p95_ms": 98.32675764337182,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 1,
+      "report": 1
+    },
+    "model_mean_seconds": {
+      "review": 5.000541457906365,
+      "report": 5.000789875164628
+    },
+    "pool_acquire_p95_ms": 0.015375635121017693,
+    "loop_lag_p95_ms": 2.7263419236987776,
+    "loop_lag_max_ms": 6.189667014405126,
+    "rss_peak_mib": 209.203125,
+    "db_connections_peak": 11,
+    "db_idle_transaction_peak": 1,
+    "successes": 1,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 1,
+        "mean_seconds": 11.042423416860402,
+        "p95_seconds": 11.042423416860402
+      }
+    },
+    "capture": "result_burst-1-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 12.120571033284069,
+    "p95_seconds": 12.265147139295005,
+    "makespan_seconds": 12.26822358299978,
+    "batch_users_per_second": 0.8151139349837996,
+    "api_cpu_seconds": 1.9114749999999994,
+    "api_cpu_per_user_seconds": 0.19114749999999994,
+    "crud_sql_count": 2014,
+    "crud_sql_per_user": 201.4,
+    "crud_sql_elapsed_ms": 2483.744055731222,
+    "sql_by_category": {
+      "sse": 210,
+      "worker": 192,
+      "claim": 132,
+      "event_graph": 1480
+    },
+    "claims": 72,
+    "empty_claims": 42,
+    "shared_peak": 10,
+    "slot_work_seconds": 114.80369424866512,
+    "slot_utilization": 0.46789045484853214,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 228.5393388941884,
+    "event_publish_to_start_p95_ms": 345.92959583969787,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 60
+    },
+    "model_calls": {
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "review": 5.0004504877375435,
+      "report": 5.0003711291123185
+    },
+    "pool_acquire_p95_ms": 1.250752597115934,
+    "loop_lag_p95_ms": 2.6264589745551294,
+    "loop_lag_max_ms": 113.49799982272089,
+    "rss_peak_mib": 223.734375,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 2,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 12.120571033284069,
+        "p95_seconds": 12.265147139295005
+      }
+    },
+    "capture": "result_burst-10-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 10,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 23.143983166338877,
+    "p95_seconds": 27.60316411241656,
+    "makespan_seconds": 27.603939415886998,
+    "batch_users_per_second": 0.36226713330071514,
+    "api_cpu_seconds": 2.589518,
+    "api_cpu_per_user_seconds": 0.2589518,
+    "crud_sql_count": 2175,
+    "crud_sql_per_user": 217.5,
+    "crud_sql_elapsed_ms": 2481.7462996579707,
+    "sql_by_category": {
+      "sse": 258,
+      "claim": 107,
+      "event_graph": 1810
+    },
+    "claims": 107,
+    "empty_claims": 107,
+    "shared_peak": 4,
+    "slot_work_seconds": 106.3937332900241,
+    "slot_utilization": 0.19271476380068947,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 4050.9389472038797,
+    "event_publish_to_start_p95_ms": 10418.592693435492,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 10,
+      "report": 10
+    },
+    "model_mean_seconds": {
+      "review": 5.000337987509556,
+      "report": 5.001135741826147
+    },
+    "pool_acquire_p95_ms": 0.6282040849328041,
+    "loop_lag_p95_ms": 2.668416639789933,
+    "loop_lag_max_ms": 49.99079192057251,
+    "rss_peak_mib": 218.203125,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 2,
+    "successes": 10,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 10,
+        "mean_seconds": 23.143983166338877,
+        "p95_seconds": 27.60316411241656
+      }
+    },
+    "capture": "result_burst-10-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 16.5464345670538,
+    "p95_seconds": 19.379749300400725,
+    "makespan_seconds": 19.395882833981887,
+    "batch_users_per_second": 1.5467200053116188,
+    "api_cpu_seconds": 5.778675999999999,
+    "api_cpu_per_user_seconds": 0.1926225333333333,
+    "crud_sql_count": 6012,
+    "crud_sql_per_user": 200.4,
+    "crud_sql_elapsed_ms": 6920.154377352446,
+    "sql_by_category": {
+      "sse": 810,
+      "worker": 471,
+      "claim": 291,
+      "event_graph": 4440
+    },
+    "claims": 111,
+    "empty_claims": 21,
+    "shared_peak": 20,
+    "slot_work_seconds": 345.9527256314177,
+    "slot_utilization": 0.8918200027103257,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 1653.5464180271244,
+    "event_publish_to_start_p95_ms": 5715.76109380694,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 180
+    },
+    "model_calls": {
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "review": 5.004611774999648,
+      "report": 5.003790162503719
+    },
+    "pool_acquire_p95_ms": 1.2189061497338123,
+    "loop_lag_p95_ms": 3.452487359754733,
+    "loop_lag_max_ms": 86.87183316797018,
+    "rss_peak_mib": 234.0,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 5,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 16.5464345670538,
+        "p95_seconds": 19.379749300400725
+      }
+    },
+    "capture": "result_burst-30-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 30,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 63.56472216962526,
+    "p95_seconds": 80.55742381274467,
+    "makespan_seconds": 81.56995591684245,
+    "batch_users_per_second": 0.36778247165640116,
+    "api_cpu_seconds": 8.678128000000001,
+    "api_cpu_per_user_seconds": 0.28927093333333337,
+    "crud_sql_count": 6810,
+    "crud_sql_per_user": 227.0,
+    "crud_sql_elapsed_ms": 7034.825700102374,
+    "sql_by_category": {
+      "sse": 1065,
+      "claim": 315,
+      "event_graph": 5430
+    },
+    "claims": 315,
+    "empty_claims": 315,
+    "shared_peak": 4,
+    "slot_work_seconds": 317.768890125677,
+    "slot_utilization": 0.19478304637655475,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 17511.93105924823,
+    "event_publish_to_start_p95_ms": 33055.84928713506,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 30,
+      "report": 30
+    },
+    "model_mean_seconds": {
+      "review": 5.008751140239959,
+      "report": 5.000730734714307
+    },
+    "pool_acquire_p95_ms": 0.6863996619358657,
+    "loop_lag_p95_ms": 2.74906862759962,
+    "loop_lag_max_ms": 78.26041695661843,
+    "rss_peak_mib": 228.96875,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 3,
+    "successes": 30,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 30,
+        "mean_seconds": 63.56472216962526,
+        "p95_seconds": 80.55742381274467
+      }
+    },
+    "capture": "result_burst-30-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 25.082648420413026,
+    "p95_seconds": 31.14237337455852,
+    "makespan_seconds": 31.156131290830672,
+    "batch_users_per_second": 1.6048205578949761,
+    "api_cpu_seconds": 9.528217999999999,
+    "api_cpu_per_user_seconds": 0.19056436,
+    "crud_sql_count": 10055,
+    "crud_sql_per_user": 201.1,
+    "crud_sql_elapsed_ms": 11247.378679225221,
+    "sql_by_category": {
+      "sse": 1419,
+      "worker": 768,
+      "claim": 468,
+      "event_graph": 7400
+    },
+    "claims": 168,
+    "empty_claims": 18,
+    "shared_peak": 20,
+    "slot_work_seconds": 564.5423604659736,
+    "slot_utilization": 0.9059891858783504,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 4546.229360021341,
+    "event_publish_to_start_p95_ms": 10487.935837847179,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.000153599134646,
+      "report": 5.008340947511606
+    },
+    "pool_acquire_p95_ms": 1.2301417998969555,
+    "loop_lag_p95_ms": 4.005358973518011,
+    "loop_lag_max_ms": 92.61616608127952,
+    "rss_peak_mib": 237.546875,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 4,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 25.082648420413026,
+        "p95_seconds": 31.14237337455852
+      }
+    },
+    "capture": "result_burst-50-1-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 1,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 103.54138797451742,
+    "p95_seconds": 131.77368882322918,
+    "makespan_seconds": 134.78360345913097,
+    "batch_users_per_second": 0.3709650040270735,
+    "api_cpu_seconds": 15.314707000000002,
+    "api_cpu_per_user_seconds": 0.30629414000000005,
+    "crud_sql_count": 11780,
+    "crud_sql_per_user": 235.6,
+    "crud_sql_elapsed_ms": 11563.749453052878,
+    "sql_by_category": {
+      "sse": 2208,
+      "claim": 522,
+      "event_graph": 9050
+    },
+    "claims": 522,
+    "empty_claims": 522,
+    "shared_peak": 4,
+    "slot_work_seconds": 527.7779557558242,
+    "slot_utilization": 0.19578715148235995,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 30837.93488921908,
+    "event_publish_to_start_p95_ms": 58649.181934900116,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.000809467518702,
+      "report": 5.000817309180275
+    },
+    "pool_acquire_p95_ms": 0.6812624749727548,
+    "loop_lag_p95_ms": 2.676370693370696,
+    "loop_lag_max_ms": 121.90245799720287,
+    "rss_peak_mib": 235.78125,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 4,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 103.54138797451742,
+        "p95_seconds": 131.77368882322918
+      }
+    },
+    "capture": "result_burst-50-1-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 25.55256021608133,
+    "p95_seconds": 31.539071043836884,
+    "makespan_seconds": 31.58463729196228,
+    "batch_users_per_second": 1.583048098283025,
+    "api_cpu_seconds": 9.930543,
+    "api_cpu_per_user_seconds": 0.19861086,
+    "crud_sql_count": 10127,
+    "crud_sql_per_user": 202.54,
+    "crud_sql_elapsed_ms": 11566.341536818072,
+    "sql_by_category": {
+      "sse": 1485,
+      "worker": 771,
+      "claim": 471,
+      "event_graph": 7400
+    },
+    "claims": 171,
+    "empty_claims": 21,
+    "shared_peak": 20,
+    "slot_work_seconds": 571.7894836624619,
+    "slot_utilization": 0.905170254730093,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 4684.084557238966,
+    "event_publish_to_start_p95_ms": 10893.534202151932,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.000276230024173,
+      "report": 5.000540734203533
+    },
+    "pool_acquire_p95_ms": 1.3230506330728522,
+    "loop_lag_p95_ms": 3.5338830668479067,
+    "loop_lag_max_ms": 101.43141713924706,
+    "rss_peak_mib": 238.625,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 9,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 25.55256021608133,
+        "p95_seconds": 31.539071043836884
+      }
+    },
+    "capture": "result_burst-50-2-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 2,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 103.96052677336614,
+    "p95_seconds": 132.15802523327292,
+    "makespan_seconds": 135.38436408317648,
+    "batch_users_per_second": 0.36931886734927055,
+    "api_cpu_seconds": 15.641229,
+    "api_cpu_per_user_seconds": 0.31282457999999996,
+    "crud_sql_count": 11786,
+    "crud_sql_per_user": 235.72,
+    "crud_sql_elapsed_ms": 12428.508131531999,
+    "sql_by_category": {
+      "sse": 2211,
+      "claim": 525,
+      "event_graph": 9050
+    },
+    "claims": 525,
+    "empty_claims": 525,
+    "shared_peak": 4,
+    "slot_work_seconds": 530.0845459124539,
+    "slot_utilization": 0.19577022409573988,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 30964.10435663226,
+    "event_publish_to_start_p95_ms": 58918.26679572696,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.0006647015968335,
+      "report": 5.000781660852954
+    },
+    "pool_acquire_p95_ms": 0.6808125181123614,
+    "loop_lag_p95_ms": 2.6637083850800933,
+    "loop_lag_max_ms": 120.99533397704363,
+    "rss_peak_mib": 235.875,
+    "db_connections_peak": 18,
+    "db_idle_transaction_peak": 4,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 103.96052677336614,
+        "p95_seconds": 132.15802523327292
+      }
+    },
+    "capture": "result_burst-50-2-split.json.gz"
+  },
+  {
+    "architecture": "common",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 20,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 25.349875448727982,
+    "p95_seconds": 31.33113456052961,
+    "makespan_seconds": 31.3679983750917,
+    "batch_users_per_second": 1.5939812098340123,
+    "api_cpu_seconds": 9.757306,
+    "api_cpu_per_user_seconds": 0.19514612,
+    "crud_sql_count": 10100,
+    "crud_sql_per_user": 202.0,
+    "crud_sql_elapsed_ms": 10790.887420065701,
+    "sql_by_category": {
+      "sse": 1458,
+      "worker": 771,
+      "claim": 471,
+      "event_graph": 7400
+    },
+    "claims": 171,
+    "empty_claims": 21,
+    "shared_peak": 20,
+    "slot_work_seconds": 568.6947708323132,
+    "slot_utilization": 0.906488778837567,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 4612.403593875158,
+    "event_publish_to_start_p95_ms": 10938.917645392938,
+    "event_defer_attempts": 0,
+    "command_attempts": {
+      "1": 300
+    },
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.0031063333852215,
+      "report": 5.001801482494921
+    },
+    "pool_acquire_p95_ms": 1.271474943496287,
+    "loop_lag_p95_ms": 4.991047619841977,
+    "loop_lag_max_ms": 82.64670809730887,
+    "rss_peak_mib": 237.109375,
+    "db_connections_peak": 19,
+    "db_idle_transaction_peak": 4,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 25.349875448727982,
+        "p95_seconds": 31.33113456052961
+      }
+    },
+    "capture": "result_burst-50-3-common.json.gz"
+  },
+  {
+    "architecture": "split",
+    "scenario": "result_burst",
+    "users": 50,
+    "repeat": 3,
+    "memory_mode": "manual",
+    "followup": false,
+    "total_capacity": 20,
+    "user_capacity": 16,
+    "event_capacity": 4,
+    "notify": "on",
+    "mean_seconds": 103.658286667075,
+    "p95_seconds": 131.65262085171418,
+    "makespan_seconds": 135.07395441597328,
+    "batch_users_per_second": 0.37016758868271654,
+    "api_cpu_seconds": 15.921486,
+    "api_cpu_per_user_seconds": 0.31842971999999997,
+    "crud_sql_count": 11775,
+    "crud_sql_per_user": 235.5,
+    "crud_sql_elapsed_ms": 12032.859082100913,
+    "sql_by_category": {
+      "sse": 2202,
+      "claim": 523,
+      "event_graph": 9050
+    },
+    "claims": 523,
+    "empty_claims": 523,
+    "shared_peak": 4,
+    "slot_work_seconds": 528.4467334994115,
+    "slot_utilization": 0.1956138530867353,
+    "user_queue_mean_ms": null,
+    "user_queue_p95_ms": null,
+    "event_publish_to_start_mean_ms": 30877.176208081655,
+    "event_publish_to_start_p95_ms": 58912.279917125124,
+    "event_defer_attempts": 0,
+    "command_attempts": {},
+    "model_calls": {
+      "review": 50,
+      "report": 50
+    },
+    "model_mean_seconds": {
+      "review": 5.000485819205641,
+      "report": 5.0010855950089175
+    },
+    "pool_acquire_p95_ms": 0.6562088383361697,
+    "loop_lag_p95_ms": 2.6732915779575652,
+    "loop_lag_max_ms": 110.65149991773069,
+    "rss_peak_mib": 229.59375,
+    "db_connections_peak": 20,
+    "db_idle_transaction_peak": 3,
+    "successes": 50,
+    "validated": true,
+    "cohorts": {
+      "primary": {
+        "users": 50,
+        "mean_seconds": 103.658286667075,
+        "p95_seconds": 131.65262085171418
+      }
+    },
+    "capture": "result_burst-50-3-split.json.gz"
+  }
+]
