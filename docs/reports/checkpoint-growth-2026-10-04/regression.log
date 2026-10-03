@@ -1,0 +1,10 @@
+.......................................                                  [100%]
+=============================== warnings summary ===============================
+src/agent_service/agents/analysis/tests/test_agentic_repair.py::test_repair_create_agent_semantic_middleware_corrects_binding_without_sync_transport[prompt_json]
+src/agent_service/agents/analysis/tests/test_agentic_repair.py::test_repair_create_agent_semantic_middleware_corrects_binding_without_sync_transport[provider_json_schema]
+src/agent_service/agents/analysis/tests/test_agentic_repair.py::test_discovery_synthesis_uses_repair_schema_not_conversation_reply
+  /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/langgraph/pregel/main.py:3230: UserWarning: `durability` has no effect when no checkpointer is present.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+39 passed, 3 warnings in 5.87s

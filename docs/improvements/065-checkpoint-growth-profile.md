@@ -5,6 +5,7 @@
 | 상태 | 측정·분석·회귀 완료 / runtime 변경 없음·베이스 미병합·미푸시 |
 | 브랜치 | feature/checkpoint-growth-profile |
 | 기준 | 27fbefd (064), 2026-10-04 KST |
+| 측정·도구 커밋 | b7a29aacb0d467fe22a3079ba4b4a6642102efc8 |
 | 범위 | 실제 PG 체크포인트 bytes/로컬 기능 비용, LLM·Executor double |
 
 ## 문제와 실제 작업
