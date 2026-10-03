@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from .pooled_saver import PooledAsyncPostgresSaver
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from agent_config import load_agent_settings
@@ -53,7 +54,7 @@ async def create_checkpointer(
     try:
         await pool.open(wait=True, timeout=timeout)
         logger.info("Checkpoint pool ready: %s", pool.get_stats())
-        checkpointer = AsyncPostgresSaver(pool)
+        checkpointer = PooledAsyncPostgresSaver(pool)
         instrument_async_methods(checkpointer, "checkpoint", ("aget_tuple", "aput", "aput_writes"))
         if setup_on_start:
             await checkpointer.setup()
