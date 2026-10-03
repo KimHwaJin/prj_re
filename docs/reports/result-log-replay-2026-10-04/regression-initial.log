@@ -1,0 +1,174 @@
+........EE............................                                   [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_public_event_batch_barrier_replay_and_partial_failure _
+
+self = <Coroutine test_public_event_batch_barrier_replay_and_partial_failure>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py:924: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x108f7af50>, _basetemp=PosixPath...folders/xz/qh9vc0zs6mj5gvchrn9tffkr0000gn/T/pytest-of-a10054/pytest-375'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope='module')
+    def test_config(tmp_path_factory):
+        file = os.getenv('DTEST_AGENTIC_TEST_SETTINGS_FILE')
+        if not file:
+            pytest.skip('Needs isolated local agentic_runtime_test + agentic_checkpoint_test DBs')
+        settings = json.loads(Path(file).read_text())
+        crud, checkpoint = make_url(settings['database_url']), make_url(settings['checkpoint_db_uri'])
+        assert crud.database == 'agentic_runtime_test' and checkpoint.database == 'agentic_checkpoint_test'
+        assert crud.host in {'127.0.0.1', 'localhost'} and checkpoint.host in {'127.0.0.1', 'localhost'}
+        path = tmp_path_factory.mktemp('agentic-migrations')/'config.yml'
+        import yaml
+        path.write_text(yaml.safe_dump({'service': settings}))
+        result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.crud.ini', 'upgrade', 'head'],
+            cwd=ROOT, env={**os.environ, 'SERVICE_CONFIG_FILE': str(path), 'PYTHONPATH': str(ROOT/'src')}, capture_output=True, text=True)
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<frozen runpy>", line 198, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+E             main(prog="alembic")
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 1039, in main
+E             CommandLine(prog=prog).main(argv=argv)
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 1029, in main
+E             self.run_cmd(cfg, options)
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 963, in run_cmd
+E             fn(
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/command.py", line 487, in upgrade
+E             script.run_env()
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 550, in run_env
+E             util.load_python_file(self.dir, "env.py")
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 114, in load_python_file
+E             module = load_module_py(module_id, path)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 132, in load_module_py
+E             spec.loader.exec_module(module)  # type: ignore
+E             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+E           File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/crud_migrations/env.py", line 18, in <module>
+E             config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+E                                                      ^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/config.py", line 176, in __getattr__
+E             return getattr(get_settings().api, name)
+E                            ^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 441, in get_settings
+E             _snapshot = load_settings()
+E                         ^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 283, in load_settings
+E             overlay(_flatten(_read_yaml(path)), "config file", True)
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 268, in overlay
+E             normalized = _normalize(values, known, strict=strict)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 134, in _normalize
+E             raise ConfigurationError(f"Unknown service setting: {raw}")
+E         service_settings.ConfigurationError: Unknown service setting: WORKFLOW_STORAGE_PATH
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python', '-m', 'alembic', '-c', 'alembic.crud...known service setting: {raw}")\nservice_settings.ConfigurationError: Unknown service setting: WORKFLOW_STORAGE_PATH\n').returncode
+
+src/api_service/test/test_planning_api_postgres.py:52: AssertionError
+_ ERROR at setup of test_invocation_projection_commits_deltas_and_new_invocation_repairs_replay _
+
+self = <Coroutine test_invocation_projection_commits_deltas_and_new_invocation_repairs_replay>
+
+    def setup(self) -> None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        if runner_fixture_id not in self.fixturenames:
+            self.fixturenames.append(runner_fixture_id)
+        # When loop factories are configured, resolve the loop factory
+        # fixture early so that a factory variant change cascades cache
+        # invalidation before any async fixture checks its cache.
+        hook_caller = self.config.hook.pytest_asyncio_loop_factories
+        if hook_caller.get_hookimpls():
+            _ = self._request.getfixturevalue(_asyncio_loop_factory.__name__)
+>       return super().setup()
+               ^^^^^^^^^^^^^^^
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x108f7af50>, _basetemp=PosixPath...folders/xz/qh9vc0zs6mj5gvchrn9tffkr0000gn/T/pytest-of-a10054/pytest-375'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope='module')
+    def test_config(tmp_path_factory):
+        file = os.getenv('DTEST_AGENTIC_TEST_SETTINGS_FILE')
+        if not file:
+            pytest.skip('Needs isolated local agentic_runtime_test + agentic_checkpoint_test DBs')
+        settings = json.loads(Path(file).read_text())
+        crud, checkpoint = make_url(settings['database_url']), make_url(settings['checkpoint_db_uri'])
+        assert crud.database == 'agentic_runtime_test' and checkpoint.database == 'agentic_checkpoint_test'
+        assert crud.host in {'127.0.0.1', 'localhost'} and checkpoint.host in {'127.0.0.1', 'localhost'}
+        path = tmp_path_factory.mktemp('agentic-migrations')/'config.yml'
+        import yaml
+        path.write_text(yaml.safe_dump({'service': settings}))
+        result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.crud.ini', 'upgrade', 'head'],
+            cwd=ROOT, env={**os.environ, 'SERVICE_CONFIG_FILE': str(path), 'PYTHONPATH': str(ROOT/'src')}, capture_output=True, text=True)
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<frozen runpy>", line 198, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/__main__.py", line 4, in <module>
+E             main(prog="alembic")
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 1039, in main
+E             CommandLine(prog=prog).main(argv=argv)
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 1029, in main
+E             self.run_cmd(cfg, options)
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/config.py", line 963, in run_cmd
+E             fn(
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/command.py", line 487, in upgrade
+E             script.run_env()
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/script/base.py", line 550, in run_env
+E             util.load_python_file(self.dir, "env.py")
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 114, in load_python_file
+E             module = load_module_py(module_id, path)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 132, in load_module_py
+E             spec.loader.exec_module(module)  # type: ignore
+E             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+E           File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/crud_migrations/env.py", line 18, in <module>
+E             config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+E                                                      ^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/config.py", line 176, in __getattr__
+E             return getattr(get_settings().api, name)
+E                            ^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 441, in get_settings
+E             _snapshot = load_settings()
+E                         ^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 283, in load_settings
+E             overlay(_flatten(_read_yaml(path)), "config file", True)
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 268, in overlay
+E             normalized = _normalize(values, known, strict=strict)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_settings.py", line 134, in _normalize
+E             raise ConfigurationError(f"Unknown service setting: {raw}")
+E         service_settings.ConfigurationError: Unknown service setting: WORKFLOW_STORAGE_PATH
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python', '-m', 'alembic', '-c', 'alembic.crud...known service setting: {raw}")\nservice_settings.ConfigurationError: Unknown service setting: WORKFLOW_STORAGE_PATH\n').returncode
+
+src/api_service/test/test_planning_api_postgres.py:52: AssertionError
+=========================== short test summary info ============================
+ERROR src/api_service/test/test_plan_event_batch_postgres.py::test_public_event_batch_barrier_replay_and_partial_failure
+ERROR src/api_service/test/test_plan_event_batch_postgres.py::test_invocation_projection_commits_deltas_and_new_invocation_repairs_replay
+36 passed, 2 errors in 30.86s
