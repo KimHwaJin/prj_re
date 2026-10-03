@@ -9,9 +9,9 @@
 
 | ID | 항목 | 상태 | 의견 |
 |---|---|---|---|
-| F-01 | 누적 list channel의 checkpoint 쓰기 증폭 측정 (R-06 후속) | 미검토 | |
-| F-02 | Redis를 실행 명령 전달 경로가 아닌 깨우기 신호로 한정 (W-01/W-05 후속) | 미검토 | |
-| F-03 | 실행 명령 원장과 API DB를 같은 DB로 두는 제약 (W-03 후속) | 미검토 | |
+| F-01 | 누적 list channel의 checkpoint 쓰기 증폭 측정 (R-06 후속) | 부분 수용 | 대표 흐름 실측 요청 수용. 직렬화 실험에서 누적 blob 증가 확인. operator.add도 전체 누적 값을 checkpoint하므로 단순 reducer 전환은 용량 해법이 아님. 실제 DB/대표 흐름 측정은 별도 수행 필요. |
+| F-02 | Redis를 실행 명령 전달 경로가 아닌 깨우기 신호로 한정 (W-01/W-05 후속) | 수용 | DB 원장으로 실행 상태·소유권·재시도를 일원화하고 신호는 best-effort wakeup으로 권고 변경. claim commit 이후 ACK 및 crash 복구 조건 필요. 같은 DB 전제에서는 LISTEN/NOTIFY 우선 검토. |
+| F-03 | 실행 명령 원장과 API DB를 같은 DB로 두는 제약 (W-03 후속) | 부분 수용 | API·내부 명령·Inbox를 같은 DB에 두는 신규 구조 권장. 운영상 분리 사유는 미확인. 동일 DB뿐 아니라 동일 연결/transaction으로 기록해야 원자적이며 checkpoint·Executor DB까지 강제 통합하지 않음. |
 
 ## 총평
 
@@ -102,3 +102,7 @@ unique command ID, checkpoint receipt, Executor idempotency는 같은 DB를 쓰�
 
 - 응답표 F-01~F-03 갱신
 - W-02(공통 GraphInvocation·상태 반영 추출) 구현이 시작되면 해당 `improvements/NNN` 기록과 함께 변경분을 리뷰한다.
+
+## 개발 후속 응답 (2026-10-03)
+
+원문을 보존하고 응답표를 갱신했다. [상세 후속 응답](2026-10-03-followup-response.md)에 reducer 직렬화 대조, F-02 권고 변경 이유, 같은 DB 제약의 범위와 확인 조건을 기록했다. 대표 시나리오의 실제 DB 저장량 측정 및 Worker 구현은 아직 수행하지 않았다.
