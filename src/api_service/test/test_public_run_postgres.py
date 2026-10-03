@@ -372,3 +372,66 @@ async def test_taskless_legacy_cancel_finishes_only_confirmed_paused_invocation(
     final=await state(h,rid)
     assert final['status']==('canceled' if old_status=='interrupted' else 'running')
     assert bool(final['completed_at'])==(old_status=='interrupted')
+
+
+@pytest.mark.asyncio
+async def test_snapshot_reuse_keeps_fresh_rows_and_preserves_dirty_orm_objects(runtime):
+    from api_service.services.public_run_service import PublicRunService
+    h = runtime
+    first = await enqueue(h)
+    second_session = await add_session(h, h.user)
+    second = await enqueue(h, second_session)
+    first_id, second_id = UUID(first['run_id']), UUID(second['run_id'])
+    async with h.factory() as db:
+        run = await db.get(Run, first_id)
+        task = await db.get(Task, UUID(first['task_id']))
+        local_failure = {'local': 'not flushed'}
+        run.failure = local_failure
+        # Reusing an expanding bind must not retain IDs or a previous list size.
+        for ids, expected in [([first_id], {first_id}),
+                              ([first_id, second_id], {first_id, second_id}),
+                              ([], set()), ([second_id, second_id, uuid4()], {second_id}),
+                              ([first_id], {first_id})]:
+            snapshots = await PublicRunService.snapshots(db, ids)
+            assert set(snapshots) == expected
+        before = (await PublicRunService.snapshots(db, [first_id]))[first_id]
+        assert before[1].failure is None and not before[2].recovery_required
+        async with h.factory() as writer:
+            await writer.execute(update(Task).where(Task.task_id == task.task_id).values(recovery_required=True))
+            await writer.commit()
+        after = (await PublicRunService.snapshots(db, [first_id]))[first_id]
+        assert after[2].recovery_required  # Fresh DB row, even in the same reader session.
+        assert after[1].failure is None
+        assert run.failure == local_failure and run in db.dirty
+        assert not task.recovery_required  # Scalar projection did not refresh ORM objects.
+
+
+@pytest.mark.asyncio
+async def test_reused_public_read_isolates_concurrent_users_and_session_ids(runtime):
+    h = runtime
+    first = await enqueue(h)
+    second_session = await add_session(h, h.user)
+    second = await enqueue(h, second_session)
+    other_user = await add_user(h, name='another-user')
+    other_session = await add_session(h, other_user)
+    response = await h.client.post(f'/api/v1/sessions/{other_session}/runs',
+        headers={**headers(other_user['user_id']), 'Idempotency-Key': str(uuid4())},
+        json={'input': {'content': [{'type': 'text', 'text': 'another request'}]}})
+    assert response.status_code == 202, response.text
+    third = response.json()
+    targets = [(h.user, h.session_id, first), (h.user, second_session, second),
+               (other_user, other_session, third)]
+    for _ in range(3):
+        responses = await asyncio.gather(*(h.client.get(
+            f"/api/v1/sessions/{sid}/runs/{run['run_id']}", headers=headers(user['user_id']))
+            for user, sid, run in targets))
+        assert all(r.status_code == 200 for r in responses)
+        assert [r.json()['run_id'] for r in responses] == [t[2]['run_id'] for t in targets]
+    for user, sid, rid in [(h.user, second_session, first['run_id']),
+                           (h.user, h.session_id, third['run_id']),
+                           (h.user, other_session, third['run_id']),
+                           (other_user, h.session_id, first['run_id']),
+                           (h.user, h.session_id, str(uuid4()))]:
+        rejected = await h.client.get(f'/api/v1/sessions/{sid}/runs/{rid}', headers=headers(user['user_id']))
+        assert rejected.status_code == 404
+    assert (await state(h, first['run_id']))['run_id'] == first['run_id']

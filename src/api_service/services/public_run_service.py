@@ -8,11 +8,11 @@ from api_service.runs.cancellation import cancel_task
 from api_service.runs.requests import validate_replay
 from api_service.runs.projection import finish_run
 from api_service.runs.repository import require_session
+from api_service.runs.public_state_query import PUBLIC_RUN_READ, PUBLIC_RUN_SNAPSHOTS
 from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Bundle, aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
 
@@ -63,48 +63,19 @@ class PublicRunService:
         await lifecycle.lock_session(db, user_id, session_id)
 
     @staticmethod
-    def _snapshot_query():
-        root, latest = aliased(Run), aliased(Run)
-        latest_id = (select(Run.run_id).where(Run.public_run_id == root.run_id)
-                     .order_by(Run.created_at.desc(), Run.run_id.desc()).limit(1).correlate(root).scalar_subquery())
-        # Scalar bundles never populate/expire writable Run or Task ORM objects.
-        # Fetch only checkpoint/model references from the root metadata JSON.
-        statement = select(
-            Bundle("root", root.run_id, root.session_id, root.created_at,
-                   root.updated_at, root.started_at,
-                   root.metadata_json["checkpoint_run_id"].label("checkpoint_run_id"),
-                   root.metadata_json["_model_selection"].label("model_selection")),
-            Bundle("latest", latest.run_id, latest.task_id, latest.status,
-                   latest.interrupt, latest.failure, latest.agent_response,
-                   latest.attempt_count, latest.next_attempt_at, latest.cancel_reason,
-                   latest.cancel_requested_at, latest.updated_at, latest.completed_at),
-            Bundle("task", Task.task_id, Task.status, Task.recovery_required,
-                   Task.cancel_requested_at, Task.updated_at, Task.completed_at),
-        ).select_from(root).join(latest, latest.run_id == latest_id).outerjoin(
-            Task, Task.task_id == latest.task_id,
-        ).where(root.public_run_id == root.run_id)
-        return statement, root
-
-    @staticmethod
     async def snapshots(db: AsyncSession, ids: list[UUID]):
         if not ids:
             return {}
-        statement, root = PublicRunService._snapshot_query()
-        rows = await db.execute(statement.where(root.run_id.in_(ids)))
+        rows = await db.execute(PUBLIC_RUN_SNAPSHOTS, {"public_run_ids": ids})
         return {r.run_id: (r, invocation, task if task.task_id is not None else None)
                 for r, invocation, task in rows}
 
     @staticmethod
     async def read(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID) -> PublicRunResource:
         await require_session(db, user_id, session_id)
-        # Resolve legacy invocation aliases in the same statement snapshot.
-        canonical = select(Run.public_run_id).where(
-            Run.run_id == run_id, Run.session_id == session_id,
-        ).scalar_subquery()
-        statement, root = PublicRunService._snapshot_query()
-        row = (await db.execute(statement.where(
-            root.run_id == canonical, root.session_id == session_id,
-        ))).one_or_none()
+        row = (await db.execute(PUBLIC_RUN_READ, {
+            "requested_run_id": run_id, "requested_session_id": session_id,
+        })).one_or_none()
         if row is None:
             raise HTTPException(status_code=404, detail="Run not found.")
         r, invocation, task = row
