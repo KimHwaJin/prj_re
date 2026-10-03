@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-03",
+  "owned_containers_removed": [
+    "dtest-command-capacity-pg",
+    "dtest-command-capacity-redis"
+  ],
+  "container_removal_verified": true,
+  "test_ports": [
+    63368,
+    63369
+  ],
+  "scratch_archives_removed": true,
+  "raw_logs_copied_to_report": true,
+  "existing_service_containers_env_database_and_redis_groups_changed": false
+}

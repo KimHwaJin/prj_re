@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-03",
+  "baseline_commit": "faca5b16c6e2bee559a17b40847414c963af4677",
+  "current_commit": "fb35207d2055b9e967ca8792dad971a1fa0bcee2",
+  "probe_sha256": "7685153e67ec1ed5baf29242bdf5298998f192383798bfec953beef2af41e0a7",
+  "repeats": 2,
+  "samples": 12,
+  "jobs_per_sample": 8,
+  "completed_jobs": 96,
+  "graph_delay_seconds": 5,
+  "processes": 1,
+  "total_capacity": 4,
+  "baseline_limits": {
+    "user": 2,
+    "event": 2
+  },
+  "common_limit": 4,
+  "crud_pool_size": 8,
+  "crud_overflow": 0,
+  "event_pool_size": 8,
+  "claim_poll_seconds": 0.05,
+  "cancel_poll_seconds": 0.25,
+  "db_completion_poll_seconds": 0.05,
+  "postgres_image": "sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675",
+  "redis_image": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+  "external_ingress_and_admission_timed": false,
+  "checkpoint_llm_executor_timed": false,
+  "runtime_source_modified": false,
+  "original_checkout_env_and_services_modified": false,
+  "comparisons": [
+    {
+      "scenario": "user_only",
+      "split": {
+        "wall_seconds": 20.33607785461936,
+        "jobs_per_second": 0.3933895440491789,
+        "graph_queue_mean_seconds": 7.678831159340916,
+        "graph_queue_p95_seconds": 15.280969041981734,
+        "graph_return_mean_seconds": 12.67998803408409,
+        "graph_return_p95_seconds": 20.281571250059642,
+        "process_cpu_seconds": 1.5423745000000002,
+        "wall_min_seconds": 20.331559209153056,
+        "wall_max_seconds": 20.340596500085667,
+        "sqlalchemy_statements_mean": 1049,
+        "psycopg_statements_mean": 395
+      },
+      "common": {
+        "wall_seconds": 10.343706062529236,
+        "jobs_per_second": 0.7734180624316946,
+        "graph_queue_mean_seconds": 2.682734815272852,
+        "graph_queue_p95_seconds": 5.24806691694539,
+        "graph_return_mean_seconds": 7.683739411499118,
+        "graph_return_p95_seconds": 10.248491458361968,
+        "process_cpu_seconds": 0.9718509999999997,
+        "wall_min_seconds": 10.332673375029117,
+        "wall_max_seconds": 10.354738750029355,
+        "sqlalchemy_statements_mean": 913,
+        "psycopg_statements_mean": 102
+      },
+      "time_reduction_percent": 49.13617986479309,
+      "throughput_ratio": 1.9660361444050152
+    },
+    {
+      "scenario": "event_only",
+      "split": {
+        "wall_seconds": 20.317000020528212,
+        "jobs_per_second": 0.3937600290848057,
+        "graph_queue_mean_seconds": 7.663627966190688,
+        "graph_queue_p95_seconds": 15.26107704162132,
+        "graph_return_mean_seconds": 12.664408635449945,
+        "graph_return_p95_seconds": 20.26183747954201,
+        "process_cpu_seconds": 2.0736830000000004,
+        "wall_min_seconds": 20.28291304106824,
+        "wall_max_seconds": 20.351086999988183,
+        "sqlalchemy_statements_mean": 1130.5,
+        "psycopg_statements_mean": 435
+      },
+      "common": {
+        "wall_seconds": 10.15320687496569,
+        "jobs_per_second": 0.7879302508729138,
+        "graph_queue_mean_seconds": 2.564618502583471,
+        "graph_queue_p95_seconds": 5.095621645916253,
+        "graph_return_mean_seconds": 7.565461437407066,
+        "graph_return_p95_seconds": 10.096249270369299,
+        "process_cpu_seconds": 0.6715010000000003,
+        "wall_min_seconds": 10.13762570801191,
+        "wall_max_seconds": 10.16878804191947,
+        "sqlalchemy_statements_mean": 592.5,
+        "psycopg_statements_mean": 100
+      },
+      "time_reduction_percent": 50.02605274052797,
+      "throughput_ratio": 2.00104173271283
+    },
+    {
+      "scenario": "balanced",
+      "split": {
+        "wall_seconds": 10.2040901244618,
+        "jobs_per_second": 0.7839993850672322,
+        "graph_queue_mean_seconds": 2.588682924179011,
+        "graph_queue_p95_seconds": 5.130257332930341,
+        "graph_return_mean_seconds": 7.589692410983844,
+        "graph_return_p95_seconds": 10.13111112441402,
+        "process_cpu_seconds": 0.9129745000000002,
+        "wall_min_seconds": 10.201858165906742,
+        "wall_max_seconds": 10.206322083016858,
+        "sqlalchemy_statements_mean": 569,
+        "psycopg_statements_mean": 219.5
+      },
+      "common": {
+        "wall_seconds": 10.21397377050016,
+        "jobs_per_second": 0.7832410497330566,
+        "graph_queue_mean_seconds": 2.6097647469869116,
+        "graph_queue_p95_seconds": 5.1613383538788185,
+        "graph_return_mean_seconds": 7.6102618095465004,
+        "graph_return_p95_seconds": 10.161418583011255,
+        "process_cpu_seconds": 0.8867194999999994,
+        "wall_min_seconds": 10.20718133309856,
+        "wall_max_seconds": 10.220766207901761,
+        "sqlalchemy_statements_mean": 753.5,
+        "psycopg_statements_mean": 101
+      },
+      "time_reduction_percent": -0.09685965056960288,
+      "throughput_ratio": 0.999032734784466
+    }
+  ]
+}

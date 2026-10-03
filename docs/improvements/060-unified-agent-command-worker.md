@@ -64,3 +64,13 @@ API DB에 `agent_commands`를 추가했다. 기존 공개 Run과 private invocat
 검증 결과는 [후속 정리 검증](../reports/agent-command-worker-2026-10-03/README.md#사용자-승인-후-구-실행-코드-삭제)을 따른다.
 
 후속 검증: 기본612개 통과/357개 조건부 skip, 실제 PostgreSQL·Redis36개 통과, 앱 조립·삭제 확인 smoke 통과. 검사 시간은 처리량 지표가 아니다. 검증용 컨테이너2개는 제거했다.
+
+## 공통화 직전/현재 소규모 실행 자리 비교 (2026-10-03)
+
+사용자가 간단한 성능 비교를 요청하여 현재 runtime을 바꾸지 않고 준비된8건 queue에서만 확인했다. 이전 `faca5b1` 사용자2+결과2와 현재 `fb35207` 공통4, graph1회5초, 프로세스1개·같은 DB/풀·poll로 각 조건2회 비교했다.
+
+- 사용자만: 평균20.34→10.34초. 결과만:20.32→10.15초. 이전의 남는 종류별 자리2개를 현재는 공통으로 사용할 수 있었다.
+- 사용자4+결과4:10.20→10.21초로 거의 같았다. 이미 총4개를 활용하면 공통화 자체가 각 graph 속도를 개선하는 것은 아니다.
+- 이전6개·현재6개 probe가 모두 통과했고96개 job의 중복/누락/오류와 잔여 owner가 없었다.
+
+[원본·측정 경계·상세 보고서](../reports/command-worker-capacity-2026-10-03/README.md), [재현용 probe](../../scripts/benchmarks/command_worker/README.md)를 남겼다. 접수/Ingress 준비 비용·checkpoint·LLM·Executor·전체 분석 E2E 및 다중 Pod는 제외했다. 단독 사용자 한도가 이전/현재 동일하면 이 자리 공유 효과가 생기지 않는다. 전체 단계5는 미완료이며 다음 단계4 NOTIFY/유휴 조회 최적화 순서는 유지한다. 검증용 PostgreSQL/Redis와 임시 소스 archive만 제거했고 기존 서비스는 변경하지 않았다.
