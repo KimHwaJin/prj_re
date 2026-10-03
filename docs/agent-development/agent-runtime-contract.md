@@ -11,7 +11,9 @@ agent_service/
   runtime/model_factory.py    설정된 OpenAI 호환 모델 생성
   middleware/                 프로젝트 prompt·JSON·탐색·세션 근거·메모리
   agents/analysis/
-    planning/graph.py         PlanningState와 새 요청·HITL
+    state.py                  수명별 타입과 노드별 읽기 경계
+    planning/lifecycle.py     새 요청 Run 상태 초기화
+    planning/graph.py         새 요청·HITL
     planning/runtime.py       고정 모델/역할 캐시와 context·Store 주입
     planning/catalog.py       Skill/Tool 조회 도구
     execution/                실제 제출·관찰·판단·수정·보고서
@@ -74,3 +76,5 @@ devtools.analysis.runtime/cli와 langgraph_dev는 외부 호출 없는 mock 계�
 054는 현재 노드 이름·state 필드·runtime 버전을 유지한다. 조건부 분기 목적지는 검사·그림용으로 명시했으며 같은 execution_phase가 같은 노드를 선택한다. 과거 설문형 그래프의 checkpoint는 이미 현재 Runtime과 별개이며 자동 이행을 지원하지 않는다.
 
 [메모리 한도·갱신·역할 정책](../project-memory.md), [Run별 모델 선택](../run-model-selection.md), [현재 공개 API](../public-run-api.md)를 따른다. 새로운 업무 Agent registry·자동 전체 요약·동적 Dataset 연계는 후속이다.
+
+064의 [상태 수명·노드 입력 계약](analysis-state-lifecycle.md)은 기존 평면 채널과 resume 위치를 유지한다. 새 요청만 초기화하며 완료 projection/replay에 필요한 승인 코드·receipt는 남긴다.

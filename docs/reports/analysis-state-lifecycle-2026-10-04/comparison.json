@@ -1,0 +1,77 @@
+{
+  "reference_commit": "26225528357e86b43c534929b4b26b16255e7049",
+  "candidate_parent_commit": "26225528357e86b43c534929b4b26b16255e7049",
+  "candidate_runtime_hashes": {
+    "src/agent_service/agents/analysis/planning/graph.py": "f528e1efa68abe0db8fdeb168e021df18765536183a9bb9623fa7057831207d7",
+    "src/agent_service/agents/analysis/execution/nodes.py": "da0c5cb49fcc7cc8e678c7063761b20fd46cc64e33d7a9499dd000ec10159a42",
+    "src/agent_service/agents/analysis/state.py": "36fa7f2257ada3f03be49dd98d5c8a0e01599adab55ae964d9b20ddde746c4a0",
+    "src/agent_service/agents/analysis/planning/lifecycle.py": "a6312d0a9f282053e269307e5356cdcbb0d7ea04ae08723de49eb3f2f94d184b"
+  },
+  "scope": "Functional/storage comparison, one 6-row analysis plus two same-session FAQ turns per variant; not HTTP/real LLM/throughput",
+  "semantic_outcomes_identical": true,
+  "executor_calls_identical": 3,
+  "stages": [
+    {
+      "stage": "analysis_completed",
+      "checkpoints": 27,
+      "reference_total_kib": 582.02734375,
+      "candidate_total_kib": 596.4697265625,
+      "total_growth_percent": 2.4813924925670694,
+      "reference_latest_kib": 67.7265625,
+      "candidate_latest_kib": 68.021484375,
+      "latest_reduction_percent": -0.4354596839312386
+    },
+    {
+      "stage": "followup_1",
+      "checkpoints": 31,
+      "reference_total_kib": 663.298828125,
+      "candidate_total_kib": 679.0927734375,
+      "total_growth_percent": 2.381120641679102,
+      "reference_latest_kib": 30.3408203125,
+      "candidate_latest_kib": 22.646484375,
+      "latest_reduction_percent": 25.35968328559014
+    },
+    {
+      "stage": "followup_2",
+      "checkpoints": 35,
+      "reference_total_kib": 745.2041015625,
+      "candidate_total_kib": 762.255859375,
+      "total_growth_percent": 2.288199672646307,
+      "reference_latest_kib": 30.5068359375,
+      "candidate_latest_kib": 22.7626953125,
+      "latest_reduction_percent": 25.384935497295047
+    }
+  ],
+  "node_input_field_counts": {
+    "receive": 9,
+    "conversation": 13,
+    "publish_review": 11,
+    "await_review": 1,
+    "apply_review": 18,
+    "revise_plan": 22,
+    "execution_select": 13,
+    "execution_submit": 9,
+    "execution_register": 2,
+    "execution_wait": 2,
+    "execution_receipt": 5,
+    "execution_process_event": 19,
+    "execution_review": 18,
+    "execution_decision_wait": 7,
+    "execution_decision_applied": 7,
+    "execution_finalize": 9,
+    "execution_cancel": 4,
+    "execution_report": 26,
+    "execution_repair_propose": 24,
+    "execution_repair_wait": 18,
+    "execution_repair_applied": 7,
+    "execution_repair_apply": 17,
+    "execution_repair_reject": 12
+  },
+  "checkpoint_channel_names_and_types_unchanged": 77,
+  "sse_or_request_contract_changed": false,
+  "latency_or_throughput_measured": false,
+  "raw_sha256": {
+    "reference.json": "bd8091d6377d39727b0b413f59eef06771c32581d53bbf256ade79e5298e91d1",
+    "candidate.json": "e092b444a8a0115c7b4363e39e1a753a8a2e53ec8f390afb99d10791e49ac4e6"
+  }
+}

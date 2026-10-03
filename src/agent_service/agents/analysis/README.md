@@ -4,7 +4,9 @@
 
 | 위치 | 수정할 책임 |
 |---|---|
-| planning/graph.py | PlanningState, 새 요청·후속 답변·계획 후보·typed HITL·재작성·승인 연결 |
+| state.py | 평면 체크포인트 채널의 수명/타입과 23개 노드별 입력 경계 |
+| planning/lifecycle.py | 새 요청 Run 상태 초기화; resume/완료에는 적용하지 않음 |
+| planning/graph.py | 새 요청·후속 답변·계획 후보·typed HITL·재작성·승인 연결 |
 | planning/runtime.py | 고정된 모델 선택, 역할 인스턴스 캐시, 요청별 AgentContext·Store 정책 주입 |
 | planning/catalog.py | 배포된 Skill/Tool 문서·함수 추출·해시, 메타데이터 조회 도구 |
 | planning/proposals.py | 재작성·실행별 자유 함수 제안의 검증 |
@@ -25,6 +27,6 @@
 
 공통 모델 생성은 `agent_service/runtime/model_factory.py`, create_agent 조립은 `agent_service/factory.py`, 요청 문맥은 `agent_service/context.py`, 공통 정책은 `agent_service/middleware/`에 있다. import만으로 모델·DB·Worker를 시작하지 않는다.
 
-역할별 선언과 독립 프롬프트는 같은 폴더에 둔다. 전체 업무 Agent registry나 등록 API가 아니며 다른 업무 Agent 추가는 후순위다. [개발 안내](../../../../docs/agent-development/README.md), [역할·미들웨어 계약](../../../../docs/agent-development/agent-runtime-contract.md), [현재 메모리 정책](../../../../docs/project-memory.md)을 따른다.
+역할별 선언과 독립 프롬프트는 같은 폴더에 둔다. 전체 업무 Agent registry나 등록 API가 아니며 다른 업무 Agent 추가는 후순위다. [개발 안내](../../../../docs/agent-development/README.md), [역할·미들웨어 계약](../../../../docs/agent-development/agent-runtime-contract.md), [현재 메모리 정책](../../../../docs/project-memory.md), [상태 수명과 입력 경계](../../../../docs/agent-development/analysis-state-lifecycle.md)을 따른다.
 
 개발용 CLI·Studio는 현재 builder의 외부 호출 없는 mock 실행이다. 실제 API·SSO·소유권·DB·Redis·Executor 연계는 서비스 Runs API에서 확인한다. 이전 설문형 checkpoint를 새 계획 checkpoint로 해석하거나 자동 이행하지 않는다.

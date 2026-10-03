@@ -1,6 +1,8 @@
 """Durable Operation boundaries; network calls never wait for code execution."""
 from uuid import uuid4
 
+from agent_service.agents.analysis.state import NODE_INPUTS
+
 from langgraph.graph import END
 from service_contracts.plan_review import require
 from service_contracts.plan_interaction import DecisionInteractionData
@@ -277,10 +279,10 @@ class ExecutionNodes:
 def wire_execution(builder,runtime,event_factory):
     nodes=ExecutionNodes(runtime,event_factory)
     for name in ('select','submit','register','wait','receipt','process_event','review','decision_wait','decision_applied','finalize','cancel','report'):
-        builder.add_node('execution_'+name,getattr(nodes,name))
+        builder.add_node('execution_'+name, getattr(nodes,name), input_schema=NODE_INPUTS['execution_'+name])
     repair=RepairNodes(runtime,event_factory)
     for name in ('propose','wait','applied','apply','reject'):
-        builder.add_node('execution_repair_'+name,getattr(repair,name))
+        builder.add_node('execution_repair_'+name, getattr(repair,name), input_schema=NODE_INPUTS['execution_repair_'+name])
     routes={k:'execution_'+v for k,v in {'submit':'submit','review':'review','finalize':'finalize','wait':'wait','select':'select',
         'cancel':'cancel','report':'report','decision_wait':'decision_wait','event':'process_event',
         'repair_propose':'repair_propose','repair_wait':'repair_wait','repair_apply':'repair_apply','repair_reject':'repair_reject'}.items()}

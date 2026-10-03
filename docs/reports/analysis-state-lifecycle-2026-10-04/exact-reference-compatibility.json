@@ -1,0 +1,17 @@
+{
+  "reference_commit": "26225528357e86b43c534929b4b26b16255e7049",
+  "reference_source_sha256": {
+    "src/agent_service/agents/analysis/execution/nodes.py": "b71fad0ec29a69ab07cc39e7b759cdbda50350cd9712dc324a3f4830e4a77aca",
+    "src/agent_service/agents/analysis/planning/graph.py": "ace0e51dd2f38a89a0969dd97a8e9c64aa87ec0fc2acf4d0d3ed19a492da9b70"
+  },
+  "previous_waits": [
+    "plan_review",
+    "executor",
+    "decision_review",
+    "repair_review"
+  ],
+  "passed": 4,
+  "actual_reference_source": true,
+  "pool_closed_and_reopened": true,
+  "scope": "Real PG checkpoint resumption from actual graph/nodes sources. In-process mock model and Executor; no load measurement."
+}

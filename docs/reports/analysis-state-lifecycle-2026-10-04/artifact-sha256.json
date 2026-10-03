@@ -1,0 +1,12 @@
+{
+  "postgres-regression.txt": "ef4073110a8946ea867d496266f56f151e8d6c3d7aefcbe490b2c473d794d8e9",
+  "exact-reference-compatibility.txt": "ddc5cdf171f564af76ae3979c46df935f6812b1dcef2c1987e4694977e7c1cc6",
+  "candidate.json": "e092b444a8a0115c7b4363e39e1a753a8a2e53ec8f390afb99d10791e49ac4e6",
+  "postgres-regression.xml": "4b0a647a5e03ccfe1857ed53a14585727447d92983f12d8dd980fb53e0e044d9",
+  "exact-reference-compatibility.json": "9990fdfab15d01409aaa0c0d41e78a5c0db949b12a3396104bac5a642147580b",
+  "comparison.json": "1583df06da9250a11c00d8f900d4cd97274934983b93e267785a140dc8218502",
+  "reference.json": "bd8091d6377d39727b0b413f59eef06771c32581d53bbf256ade79e5298e91d1",
+  "connection-warning-targeted.txt": "62342a6a2a0f23332be811d45ef1d0d4af5c3041e0bf8e5e226d3bd5a329ec3b",
+  "exact-reference-controller.py": "d0f4d4d929a036edd0a2829fa4c47857a3ddddec655d5a8898fd4f6e50fd3ee5",
+  "agent-regression.txt": "8f8a044e9d7a56e0792d230b3b60e39d628e0a23cb8b2866646c1c9c6fc9c3a9"
+}

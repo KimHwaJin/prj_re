@@ -1,10 +1,11 @@
 """Durable conversation → candidate plans → human edits → frozen approval."""
 from datetime import datetime, timezone
-from typing import TypedDict, Any
 from uuid import uuid4
 
 from langgraph.graph import StateGraph, START, END
 
+from agent_service.agents.analysis.state import PlanningState, NODE_INPUTS
+from agent_service.agents.analysis.planning.lifecycle import new_request_defaults
 from agent_service.context import AgentContext
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
 from service_contracts.plan_review import new_review, patch_review, freeze_approval, visible_datasets, PlanReviewError
@@ -16,86 +17,6 @@ from agent_service.runtime.session_analysis import analysis_for_owner
 
 
 RUNTIME_VERSION = 'agentic-planning-v1'
-
-
-class PlanningState(TypedDict, total=False):
-    agent_runtime: str
-    user_id: str
-    project_id: str
-    session_id: str
-    run_id: str
-    task_id: str
-    public_run_id: str
-    agent_run_id: str
-    thread_id: str
-    request_id: str
-    user_request: str
-    trigger_message_id: str
-    project_system_prompt: str
-    project_prompt_version: int
-    model_selection: dict
-    initial_request_identity: dict | None
-    initial_request_receipt: dict | None
-    user_resume_receipt: dict | None
-    history: list[dict]
-    last_analysis_context: dict | None
-    project_memory_result: dict | None
-    public_events: list[dict]
-    reviews: list[dict]
-    plan_views: list[dict]
-    asset_revision: str
-    interaction_id: str
-    interaction_revision: int
-    interaction_data: dict | None
-    review_action: dict | None
-    review_error: str | None
-    approved_snapshot: dict | None
-    routing_result: dict
-    final_response: dict | None
-    kernel_profile: str
-    dataset_output_dir: str
-    execution_id: str | None
-    executor_version: int
-    executor_operation_number: int
-    executor_operation_id: str
-    executor_wait_phase: str
-    execution_command: dict
-    execution_phase: str
-    submitted_steps: list[dict]
-    next_step_sequence: int
-    completed_steps: list[str]
-    skipped_steps: list[str]
-    execution_decisions: dict
-    pending_decisions: list[dict]
-    decision_review: dict | None
-    execution_review_validation_error: str | None
-    observations: list[dict]
-    execution_status: str
-    execution_error: dict | str | None
-    analysis_failure: bool
-    terminal_event_seen: bool
-    report_status: str
-    execution_snapshot: dict | None
-    failed_step_ids: list[str]
-    repair_attempts: int
-    repair_max_attempts: int
-    repair_authorized_level: int
-    repair_candidate: dict | None
-    repair_review: dict | None
-    repair_action: str
-    repair_history: list[dict]
-    repair_stop_reason: str | None
-    repair_validation_error: str | None
-    planning_revision_count: int
-    planning_feedback: list[dict]
-    planning_previous_reviews: list[dict]
-    planning_question: str | None
-    planning_validation_error: str | None
-    planning_route: str
-    planning_activity_id: str
-    ew_pending: dict
-    ew_receipts: dict
-    ew_sequences: dict
 
 
 def public_event(state, event_type, data):
@@ -111,24 +32,15 @@ def build_planning_graph(runtime, *, checkpointer):
         history = [*state.get('history', []), {'role': 'user', 'content': state['user_request']}][-runtime.settings.agent_history_message_limit:]
         events = [public_event(current, 'message.completed', {'role': 'user', 'channel': 'answer', 'content': [{'type': 'text', 'text': state['user_request']}]})]
         events.append(public_event(current, 'activity.started', {'activity_id': str(uuid4()), 'kind': 'planning', 'title': '요청에 맞는 답변 또는 분석 계획을 준비하고 있어요.'}))
-        return {'agent_runtime': RUNTIME_VERSION, 'public_run_id': current['public_run_id'],
-                'task_id': str(uuid4()),'kernel_profile':state.get('kernel_profile') or runtime.settings.executor_runtime_profile,
-                'dataset_output_dir':f"/workspace/pv/user/{state['user_id']}/project/{state['project_id']}/data",
-                'project_memory_result':None,
-                'execution_id':None,'executor_operation_number':0,'next_step_sequence':0,
-                'completed_steps':[],'skipped_steps':[],'execution_decisions':{},'pending_decisions':[],
-                'decision_review':None,'execution_review_validation_error':None,'observations':[],'analysis_failure':False,'terminal_event_seen':False,
-                'last_analysis_context':analysis_for_owner(state.get('last_analysis_context'),state,runtime.settings.agent_session_analysis_max_chars),
-                'execution_snapshot':None,'failed_step_ids':[],'repair_attempts':0,'repair_max_attempts':0,
-                'repair_authorized_level':0,'repair_candidate':None,'repair_review':None,'repair_history':[],
-                'repair_action':'','repair_stop_reason':None,'repair_validation_error':None,
-                'ew_pending':{},'ew_receipts':{},'ew_sequences':{},'execution_status':'','report_status':'',
-                'agent_run_id': current['agent_run_id'], 'initial_request_receipt': state.get('initial_request_identity'),
-                'user_resume_receipt': None, 'public_events': events, 'history': history,
-                'planning_revision_count':0,'planning_feedback':[],'planning_previous_reviews':[],'planning_validation_error':None,'planning_question':None,'planning_route':'review',
-                'reviews': [], 'plan_views': [], 'interaction_data': None, 'approved_snapshot': None,
-                'final_response': None, 'review_action': None, 'review_error': None,
-                'interaction_id': str(uuid4()), 'interaction_revision': 1, 'asset_revision': runtime.catalog.revision}
+        return {**new_request_defaults(),
+                'agent_runtime': RUNTIME_VERSION, 'public_run_id': current['public_run_id'],
+                'agent_run_id': current['agent_run_id'], 'task_id': str(uuid4()),
+                'kernel_profile': state.get('kernel_profile') or runtime.settings.executor_runtime_profile,
+                'dataset_output_dir': f"/workspace/pv/user/{state['user_id']}/project/{state['project_id']}/data",
+                'last_analysis_context': analysis_for_owner(state.get('last_analysis_context'), state, runtime.settings.agent_session_analysis_max_chars),
+                'initial_request_receipt': state.get('initial_request_identity'),
+                'public_events': events, 'history': history,
+                'interaction_id': str(uuid4()), 'asset_revision': runtime.catalog.revision}
 
     async def converse(state):
         context = AgentContext(user_id=state['user_id'], project_id=state['project_id'], session_id=state['session_id'],
@@ -281,12 +193,12 @@ def build_planning_graph(runtime, *, checkpointer):
         return 'publish_review'
 
     builder = StateGraph(PlanningState)
-    builder.add_node('receive', receive)
-    builder.add_node('conversation', converse)
-    builder.add_node('publish_review', publish_review)
-    builder.add_node('await_review', await_review)
-    builder.add_node('apply_review', apply_review)
-    builder.add_node('revise_plan',revise)
+    builder.add_node('receive', receive, input_schema=NODE_INPUTS['receive'])
+    builder.add_node('conversation', converse, input_schema=NODE_INPUTS['conversation'])
+    builder.add_node('publish_review', publish_review, input_schema=NODE_INPUTS['publish_review'])
+    builder.add_node('await_review', await_review, input_schema=NODE_INPUTS['await_review'])
+    builder.add_node('apply_review', apply_review, input_schema=NODE_INPUTS['apply_review'])
+    builder.add_node('revise_plan', revise, input_schema=NODE_INPUTS['revise_plan'])
     builder.add_edge(START, 'receive')
     builder.add_edge('receive', 'conversation')
     builder.add_conditional_edges('conversation', lambda s: 'publish_review' if s['reviews'] else END,

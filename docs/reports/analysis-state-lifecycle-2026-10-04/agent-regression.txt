@@ -1,0 +1,22 @@
+........................................................................ [ 22%]
+........................................................................ [ 45%]
+........................................................................ [ 67%]
+........................................................................ [ 90%]
+..............................                                           [100%]
+=============================== warnings summary ===============================
+src/agent_service/agents/analysis/tests/test_agent_middleware.py: 18 warnings
+src/agent_service/agents/analysis/tests/test_agentic_repair.py: 3 warnings
+src/agent_service/agents/analysis/tests/test_answer_grounding.py: 4 warnings
+src/agent_service/agents/analysis/tests/test_async_llm.py: 8 warnings
+src/agent_service/agents/analysis/tests/test_compact_answer_facts.py: 3 warnings
+src/agent_service/agents/analysis/tests/test_conversation_performance.py: 10 warnings
+src/agent_service/agents/analysis/tests/test_discovery_middleware.py: 2 warnings
+src/agent_service/agents/analysis/tests/test_memory_policy.py: 1 warning
+src/agent_service/agents/analysis/tests/test_plan_revision.py: 3 warnings
+src/agent_service/agents/analysis/tests/test_project_memory.py: 5 warnings
+src/agent_service/agents/analysis/tests/test_session_analysis_context.py: 10 warnings
+  /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/langgraph/pregel/main.py:3230: UserWarning: `durability` has no effect when no checkpointer is present.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+318 passed, 67 warnings in 13.73s

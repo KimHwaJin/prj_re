@@ -11,7 +11,7 @@
 3. [060](060-unified-agent-command-worker.md)에서 DB 명령 원장·공통 총한도·세션 순서·원자 접수/routing을 구현했다. 기존 분리 DB의 실제 이관·운영 전환은 미완료다. 이전 Redis 실행 파일·구 전용 메서드/설정 삭제는 사용자 승인 후 완료했다.
 4. [061](061-agent-command-wakeup.md)에서 공용 LISTEN/NOTIFY·retry timer·재연결·유휴 주기 scan과 full 슬롯 hint 합치기를 구현했다. 신호 없이도 확인하며 Worker/SSE 구독 수명은 독립이다.
 5. [062](062-agent-worker-e2e-performance.md)에서 동일 총한도 20·1/10/30/50명·결과 집중/혼합·후속 설명/메모리·notify 대조 59회를 완료했다. 로컬 fixture 결과이며 실제 Pod/HPA·지속 부하·Artifact 등록은 미검증이다.
-6. [063](063-checkpoint-pool-concurrency.md)에서 정상/후속 checkpoint 저장량·잠금 대기와 pool 상한 유지 병렬 접근을 검증했다. 별도 PG repair 후보 복구도 확인했다. 저장량 자체를 줄이지 않았다. **다음 작업:** 오래된 state 필드의 수명과 역할별 상태/읽기 경계를 정리할 범위를 확정하고 필요한 변경만 진행한다. 큰 version metadata와 다단계/반복 repair 저장량은 변경 전에 확대 검증한다.
+6. [063](063-checkpoint-pool-concurrency.md)에서 정상/후속 checkpoint 저장량·잠금 대기와 pool 상한 유지 병렬 접근을 검증했다. 별도 PG repair 후보 복구도 확인했다. 저장량 자체를 줄이지 않았다. [064](064-analysis-state-lifecycle.md)에서 새 요청 필드 초기화·상태 수명 타입·23개 노드 입력 경계와 기존 PG wait 재개를 검증했다. 최신 후속 상태는 작아졌지만 누계 저장량은 약 2~2.5% 증가했다. **다음 작업:** 대형 출력·다단계/반복 repair·version metadata의 저장 비용을 변경 전에 확대 검증한다.
 
 아래 057 이후 목록의 후속 대화·메모리 성능 범위는 유지하되, 바로 다음 작업의 순서는 위 계획으로 갱신한다. 모델 호출 수·prompt 최적화, Dataset Registry 실연계, Workflow CRUD, 광범위 운영 기능의 기존 보류는 유지한다. 번호가 붙은 개선 기록은 실제 착수 시 추가한다.
 
@@ -78,3 +78,5 @@
 - 보존된 후속 성능 범위: 모델응답을fixture로고정하고 후속설명/보고서·project_memory manual/auto_context 읽기·갱신의 서비스 SQL/CPU/DB연결수명을 확인한다. 위 리뷰 반영 계획의 통합 전후 검증 단계에서 다루며 모델호출횟수·prompt최적화는보류한다.
 - 실제Pod자원제한·model허용량·전체DB연결예산·여러Pod결과인계/주기scan은현로컬결과로확정하지않는다. Agent16/32는트래픽별차이가있고 Event한도를8/16으로자동확대하지않는다.
 - 보류10명에서Agent/Event0·psycopg반환은확인했으나첫표본CRUD0~1의1개소유자는기록되지않았다. 추가owner진단표본은모두0이다. 재관찰시소유구간을측정하고장기누수로미리판정하지않는다.
+
+- **운영 검증 후속(우선순위 유지):** 064 PG 회귀 종료 시 asyncpg SSL upgrade Future 경고 1회. 상태/풀 관련 8개 debug 검사에서는 미재현. 어떤 개별 취소/종료 타이밍인지 미확정이며 [검증 로그](../reports/analysis-state-lifecycle-2026-10-04/README.md)에 기록했다.

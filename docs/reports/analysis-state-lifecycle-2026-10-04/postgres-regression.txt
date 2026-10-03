@@ -1,0 +1,5 @@
+..................................................                       [100%]Future exception was never retrieved
+future: <Future finished exception=ConnectionError('unexpected connection_lost() call')>
+ConnectionError: unexpected connection_lost() call
+
+50 passed in 103.06s (0:01:43)

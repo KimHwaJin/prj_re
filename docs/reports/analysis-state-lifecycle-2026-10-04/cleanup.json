@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-03T17:23:20.245020+00:00",
+  "dedicated_containers_removed": [
+    "dtest-analysis-state-pg",
+    "dtest-analysis-state-redis"
+  ],
+  "owned_databases_dropped": [
+    "identity_test",
+    "agentic_runtime_test",
+    "agentic_checkpoint_test"
+  ],
+  "client_connections_before_cleanup": 0,
+  "redis_keys_before_cleanup": 0,
+  "private_fixture_configs_remaining": 0,
+  "preexisting_running_containers_preserved": [
+    "executor-jupyter-1",
+    "executor-executor-1",
+    "dtest-agent-loadtest-locust-1",
+    "dtest-agent-loadtest-api-1",
+    "amazing_euler",
+    "dtest-agent-loadtest-mock-executor-1",
+    "dtest-agent-loadtest-postgres-1",
+    "dtest-agent-loadtest-redis-1",
+    "dtest-agent-local-event-worker-1",
+    "dtest-agent-local-api-1",
+    "dtest-agent-local-postgres-1",
+    "ex-agent-management-api-1",
+    "ex-agent-management-postgres-1",
+    "executor-postgres-1",
+    "executor-redis-1",
+    "sdk",
+    "kind-control-plane",
+    "smp"
+  ],
+  "original_checkout_not_changed": true,
+  "scope": "Only phase064 dedicated local PG/Redis and their test DBs. Existing service/Executor resources preserved."
+}
