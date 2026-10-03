@@ -7,11 +7,11 @@
 
 | ID | 항목 | 상태 | 의견 |
 |---|---|---|---|
-| W-01 | 방향: 입구는 두 개로 유지하고 graph 실행은 Run Worker 하나로 일원화 | 미검토 | |
-| W-02 | 1단계: 공용 graph 호출·상태 반영 서비스 추출 | 미검토 | |
-| W-03 | 2단계: 이벤트 Worker가 graph 실행 대신 큐에 넣도록 전환 | 미검토 | |
-| W-04 | 3단계: 이벤트 Worker 배포를 경량화 | 미검토 | |
-| W-05 | 결정 필요: 큐 테이블 선택(`agent_runs`에 kind 추가 / 별도 `session_commands`) | 미검토 | |
+| W-01 | 방향: 입구는 두 개로 유지하고 graph 실행은 Run Worker 하나로 일원화 | 수용 | 입력 경로 분리·공통 graph 실행/한도 통합 수용. 큐 전달은 Redis Streams로도 가능하며 DB 원자성이 PostgreSQL polling을 요구하지 않음. |
+| W-02 | 1단계: 공용 graph 호출·상태 반영 서비스 추출 | 수용 | 공통 GraphInvocation·상태 반영을 먼저 추출. checkpoint receipt·짧은 DB transaction·모델 pin·공개 Run ID 보존을 검증. |
+| W-03 | 2단계: 이벤트 Worker가 graph 실행 대신 큐에 넣도록 전환 | 부분 수용 | 큐 전환 수용. API/EW DB가 다를 수 있어 단일 transaction 전제부터 확정. unique command·outbox·checkpoint 준비/순서 검증 후 handoff 제거. |
+| W-04 | 3단계: 이벤트 Worker 배포를 경량화 | 부분 수용 | 이벤트 수신부에서 graph 실행 의존을 제거하는 방향 수용. 별도 Worker Deployment 대신 기존 단일 컨테이너 내부 역할 경량화. |
+| W-05 | 결정 필요: 큐 테이블 선택(`agent_runs`에 kind 추가 / 별도 `session_commands`) | 부분 수용 | 공개 Run과 내부 실행 명령을 분리하는 안 권장. DB 명령 원장 + Redis 전달; 기존 ew_commands 재사용 범위와 schema migration은 후속 설계. |
 
 ## 현재 구조 (확인)
 
@@ -135,3 +135,7 @@
    - `executor_event` 소유자 종류와 핸드오프 로직을 제거한다.
 3. **W-04: 배포 경량화**
    - 이벤트 Worker 배포에서 graph, LLM, 체크포인트, Store 의존성을 제거한다.
+
+## 개발 검토 응답 (2026-10-03)
+
+원문은 보존했다. 동일 DB/트랜잭션 전제, 순서와 멱등 보장, 현재 내장 Worker의 자원 공유, 공개 Run과 내부 명령의 구분에 대한 보완은 [상세 응답](2026-10-03-review-response.md#worker-통합-제안)을 참고한다. Redis 전환 및 Worker 통합 구현은 아직 시작하지 않았다.
