@@ -1,5 +1,7 @@
 # 실행 구조 개선 작업 기록
 
+2026-10-03 리뷰 반영 후 다음 구현은 **배포·설정 정합성 → Run/GraphInvocation 책임 분리 → 공통 DB 명령 스케줄러와 wakeup → 동일 총한도 성능 검증**이다. [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [갱신된 후속 목록](backlog.md)을 따른다. 계획 수립 상태이며 기존 작업 완료 기록과 구분한다.
+
 고아 기준 브랜치: `feature/refactor-base`
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 브랜치를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
