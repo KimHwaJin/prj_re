@@ -59,3 +59,23 @@ PYTHONPATH=src .venv/bin/python -m pytest -q \
 ## 아직 측정하지 않은 것
 
 Worker 전용 NOTIFY/reconnect/fan-out, 여러 프로세스 경합 비용, 같은 총한도에서1/10/30/50명·결과 폭주/혼합의 처리량·SQL·CPU/RSS 비교는 다음4·5단계다. 공통화만으로 처리량 개선률을 제시하지 않는다. baseline의 API32+Event4와 현재32는 같은 총용량이 아니다.
+
+
+## 사용자 승인 후 구 실행 코드 삭제
+
+2026-10-03 사용자가 불필요한 코드 삭제를 명시 승인하여 같은 파생 브랜치에서 정리했다. 초기 자동 승인 검토의 삭제 거절 이후 수행한 별도 후속 작업이다.
+
+| 검증 | 결과 | 증거 |
+|---|---|---|
+| API·Agent 기본 회귀 | 612 passed / 357 skipped / 74 warnings / 25.20초 | [cleanup-unit-regression.txt](cleanup-unit-regression.txt) |
+| 실제 PostgreSQL·Redis 원장/소유권/종료 회귀 | 36 passed / 41.25초 | [cleanup-postgres-regression.txt](cleanup-postgres-regression.txt) |
+| 미사용 Outbox mock 제거 후 종료 회귀 재확인 | 13 passed / 3.12초 | [cleanup-shutdown-regression.txt](cleanup-shutdown-regression.txt) |
+| 로컬·Gaia Run/SSE/OpenAPI, 공통 Worker 조립, baseline hook·삭제 확인 | 통과, lifespan/네트워크 시작 없음 | [cleanup-bootstrap-smoke.txt](cleanup-bootstrap-smoke.txt) |
+
+Redis Dispatcher/SessionGuard/Outbox, 테스트만 사용하던 독립 graph builder, 해당 전용 테스트 파일2개를 삭제했다. Store의 구 발행·재시도·skip 메서드7개도 제거했다. Redis lease-loss 전용 사례는 제거했고, 현재 DB token 변경·느린 취소·checkpoint 재개·강제 중단 보호 검사는 유지하여 실제 DB에서 다시 통과했다. 현재 수신 Worker 종료 테스트의 미사용 Outbox mock도 제거했다.
+
+기본 검사 수는 이전608에서 구 전용5개를 제거하고 설정9개를 추가하여612다. 조건부 skip은 구 Redis SessionGuard 사례1개 제거로358에서357이다. 위 실행은 앞선060 검증과 중복하므로 고유 검사 총수나 처리량 수치로 합산하지 않는다.
+
+`EW_COMMAND_STREAM_NAME`, `EW_COMMAND_GROUP_NAME`, `EW_DISPATCH_CONCURRENCY`, `EW_PUBLISH_LEASE_SECONDS`는 삭제되었으며 YAML/env에 남으면 시작 시 ConfigurationError로 제거를 안내한다. ingress 동시성 정본은 `EW_INGRESS_CONCURRENCY`, `EW_CONCURRENCY`는 같은 값의 호환 별칭이다. graph 실행 총한도는 `AGENT_WORKER_CONCURRENCY`다.
+
+기존 EW 테이블·frozen migration·과거 성능 원본은 이행/감사 목적으로 보존했다. 격리 PostgreSQL17(63366)·Redis7(63367)만 사용한 뒤 전용 컨테이너2개를 제거하고 부재를 확인했다. 기존 checkout·.env·서비스 컨테이너·실제 DB·Redis group은 변경하지 않았다. 상세 삭제/보존 목록은 [legacy-cleanup-evidence.json](legacy-cleanup-evidence.json)을 따른다. 실제 LLM 및 Executor Python 실행·처리량 측정·배포 전환은 포함하지 않는다.

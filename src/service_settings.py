@@ -33,8 +33,14 @@ ALIASES = {
     "CHECKPOINT_DB_URI": ("AGENT_CHECKPOINT_DATABASE_URL",),
     "REDIS_URL": ("EW_REDIS_URL",),
     "EXECUTOR_BASE_URL": ("EW_EXECUTOR_BASE_URL",),
+    "EW_INGRESS_CONCURRENCY": ("EW_CONCURRENCY",),
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
+# Removed Redis graph-dispatch controls must not silently look effective.
+REMOVED_SETTINGS = frozenset({
+    "EW_COMMAND_STREAM_NAME", "EW_COMMAND_GROUP_NAME",
+    "EW_DISPATCH_CONCURRENCY", "EW_PUBLISH_LEASE_SECONDS",
+})
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
 GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics", "auth"}
 # Extra settings consumed by the legacy Agent adapter, outside the API model.
@@ -117,6 +123,11 @@ def _normalize(values: Mapping[str, Any], known: set[str], *, strict: bool) -> d
     result: dict[str, Any] = {}
     for raw, value in values.items():
         key = _key(raw)
+        if key in REMOVED_SETTINGS:
+            raise ConfigurationError(
+                f"Removed service setting: {key}; remove it from configuration. "
+                "Graph concurrency is AGENT_WORKER_CONCURRENCY; commands are stored in PostgreSQL."
+            )
         if key not in known:
             if strict:
                 raise ConfigurationError(f"Unknown service setting: {raw}")
@@ -193,7 +204,7 @@ class ServiceSettings:
             "server_port": self.api.server_port,
             "server_processes": 1,
             "task_reconciler_enabled": self.api.task_reconciler_enabled,
-            "event_ingress_concurrency": self.worker.ingress_workers,
+            "event_ingress_concurrency": self.worker.ingress_concurrency,
             "event_graph_dispatchers": 0,
             "agent_command_concurrency": self.api.agent_worker_concurrency,
             "event_health_port": self.worker.health_port,

@@ -73,7 +73,7 @@ Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수
 |---|---|---|
 | DATABASE_URL | API SQLAlchemy / CRUD Alembic | dev의 기존 로컬 기본값; stg/prd는 명시 필수 |
 | CHECKPOINT_DB_URI | Agent 실행 / API 상태 읽기 / Executor 이벤트 resume의 checkpointer | dev의 공통 로컬 기본값; stg/prd는 명시 필수 |
-| EW_DATABASE_URL | 이벤트 Inbox/Outbox·binding / API Worker bridge / Worker Alembic | DATABASE_URL에서 드라이버를 psycopg용으로 정규화 |
+| EW_DATABASE_URL | 공통 DB의 이벤트 Inbox·binding / 제출 bridge / Worker Alembic | DATABASE_URL에서 드라이버를 psycopg용으로 정규화 |
 | WORKFLOW_DATABASE_URL | Workflow catalog/history | EW_DATABASE_URL |
 
 `AGENT_CHECKPOINT_DATABASE_URL`은 `CHECKPOINT_DB_URI`의 별칭이다. 두 이름을 서로 다른 값으로 주면 시작을 거부한다. 역할별 DB를 하나로 강제하지 않으며, 같은 checkpoint를 읽는 소비자들의 설정을 하나로 맞춘다. URL은 실제 자격증명 없이 위 표의 이름으로만 진단한다.
@@ -161,3 +161,5 @@ Redis 연결풀의 설정·주석과 Swagger 테스트는 [SSO 가이드](sso-au
 ## 프로젝트 메모리 한도와 입력 예산
 
 `service.agent`의 `AGENT_PROJECT_MEMORY_*`는 중앙 설정에서 API 저장 정책·Agent 응답 schema·미들웨어에 동일하게 주입한다. 기본값과 문자/추정 토큰 단위, 0의 의미, 역할별 범위, 한도 변경 시 기존 문서 처리 정책은 [프로젝트 메모리](project-memory.md)를 따른다. config.yml에 각 설정의 주석 예시가 있다. 설정 변경은 프로세스 재시작 후 적용된다.
+
+060 현재 실행은 API·Inbox·명령 원장에 같은 DB 정본을 사용한다. 별도 Event DB override는 실행 활성 상태에서 거절하며 자료 이행은 [공통 Worker 안내](agent-command-worker.md)를 따른다. 내부 Redis command/group·dispatch/publish-lease 설정은 삭제되었고 남은 YAML/env 입력은 오류다.

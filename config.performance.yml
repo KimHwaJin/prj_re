@@ -30,7 +30,6 @@ service:
     # Ingress/routing concurrency only. All graph calls share the runtime limit.
     # Event Worker follows AGENT_WORKER_ENABLED by default; EVENT_WORKER_ENABLED
     # can explicitly disable ingestion for an API-only measurement.
-    ew_concurrency: 4
     ew_ingress_concurrency: 4
     # Each Event Worker and submission bridge has its OWN pool with this limit.
     ew_pool_size: 4

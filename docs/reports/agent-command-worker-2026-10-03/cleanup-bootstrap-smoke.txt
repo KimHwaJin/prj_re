@@ -1,0 +1,6 @@
+local Run/SSE/OpenAPI assembly: PASS
+platform Run/SSE/OpenAPI assembly: PASS
+event-enabled profile: one common Agent Worker + Redis ingress: PASS
+historical benchmark optional hooks: PASS
+six legacy files, seven Store methods and obsolete settings removed: PASS
+source syntax/import: PASS; no lifespan or network opened

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from psycopg_pool import AsyncConnectionPool
 
-from service_contracts.events import EventContext, ExecutorEvent
+from service_contracts.events import ExecutorEvent
 
 
 class Store:
-    """Own tables only; no dependency on the recipient's Agent schema."""
+    """Executor Inbox/bindings and atomic admission into the common command ledger."""
 
     def __init__(self, pool: AsyncConnectionPool, namespace: str) -> None:
         self.pool = pool
@@ -223,204 +223,13 @@ class Store:
             )
             return count, gap
 
-    async def claim_outbox(
-        self,
-        limit: int,
-        lease_seconds: int,
-    ) -> tuple[UUID, list[dict[str, Any]]]:
-        token = uuid4()
-        async with self.pool.connection() as conn, conn.transaction():
-            async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(
-                    """WITH picked AS (
-                    SELECT o.command_id FROM ew_outbox o
-                    JOIN ew_commands c USING (namespace, command_id)
-                    WHERE o.namespace=%s AND c.state='READY'
-                    AND (o.state='PENDING' OR
-                         (o.state='CLAIMED' AND o.claim_until<now()))
-                    AND NOT EXISTS (SELECT 1 FROM ew_commands earlier
-                        WHERE earlier.namespace=c.namespace
-                        AND earlier.execution_id=c.execution_id
-                        AND earlier.sequence<c.sequence
-                        AND earlier.state NOT IN ('DONE','IGNORED'))
-                    ORDER BY o.created_at,o.command_id LIMIT %s
-                    FOR UPDATE OF o SKIP LOCKED)
-                    UPDATE ew_outbox o SET state='CLAIMED',claim_token=%s,
-                    claim_until=now()+make_interval(secs => %s),
-                    updated_at=now(),updated_by='worker'
-                    FROM picked WHERE o.namespace=%s
-                    AND o.command_id=picked.command_id RETURNING o.*""",
-                    (
-                        self.namespace,
-                        limit,
-                        token,
-                        lease_seconds,
-                        self.namespace,
-                    ),
-                )
-                return token, await cur.fetchall()
-
-    async def finish_publications(
-        self,
-        token: UUID,
-        command_ids: list[UUID],
-        *,
-        sent: bool,
-    ) -> None:
-        if not command_ids:
-            return
-        async with self.pool.connection() as conn:
-            await conn.execute(
-                """UPDATE ew_outbox SET state=%s,claim_token=NULL,
-                claim_until=NULL,updated_at=now(),updated_by='worker'
-                WHERE namespace=%s AND claim_token=%s
-                AND command_id=ANY(%s)""",
-                (
-                    "SENT" if sent else "PENDING",
-                    self.namespace,
-                    token,
-                    command_ids,
-                ),
-            )
-
-    async def command(self, command_id: UUID) -> dict[str, Any] | None:
-        async with self.pool.connection() as conn:
-            async with conn.cursor(row_factory=dict_row) as cur:
-                await cur.execute(
-                    """SELECT c.*,i.event,b.session_id,b.task_id
-                    FROM ew_commands c JOIN ew_inbox i
-                    ON i.namespace=c.namespace AND i.event_id=c.event_id
-                    JOIN ew_bindings b ON b.namespace=c.namespace
-                    AND b.execution_id=c.execution_id
-                    WHERE c.namespace=%s AND c.command_id=%s""",
-                    (self.namespace, command_id),
-                )
-                return await cur.fetchone()
-
-    async def failed_page(
-        self,
-        *,
-        after: tuple[UUID, int] | None = None,
-        limit: int = 32,
-    ) -> list[dict[str, Any]]:
-        """Read-only keyset page for host-owned failure recovery policies."""
-        if not 1 <= limit <= 100:
-            raise ValueError("Failed command page size must be 1..100")
-        condition = "AND (execution_id,sequence)>(%s,%s)" if after else ""
-        params = (self.namespace, *(after or ()), limit)
-        async with self.pool.connection() as conn:
-            async with conn.cursor(row_factory=dict_row) as cur:
-                # Matches the existing ew_commands_order partial index; no
-                # scan of DONE/IGNORED history and no new Worker migration.
-                await cur.execute(
-                    f"""SELECT command_id,execution_id,sequence
-                    FROM ew_commands
-                    WHERE namespace=%s AND state NOT IN ('DONE','IGNORED')
-                    AND state='FAILED' {condition}
-                    ORDER BY execution_id,sequence LIMIT %s""",
-                    params,
-                )
-                return await cur.fetchall()
-
-    def context(self, row: dict[str, Any]) -> EventContext:
-        return EventContext(
-            namespace=self.namespace,
-            session_id=row["session_id"],
-            task_id=row["task_id"],
-            execution_id=row["execution_id"],
-            command_id=row["command_id"],
-            event=ExecutorEvent.model_validate(row["event"]),
-        )
-
-    async def set_state(
-        self,
-        command_id: UUID,
-        state: str,
-        *,
-        error: str | None = None,
-        failed_attempt: bool = False,
-    ) -> None:
-        async with self.pool.connection() as conn:
-            await conn.execute(
-                """UPDATE ew_commands SET state=%s,last_error=%s,
-                failure_attempts=failure_attempts+%s,
-                updated_at=now(),updated_by='worker'
-                WHERE namespace=%s AND command_id=%s""",
-                (
-                    state,
-                    error[:2000] if error else None,
-                    int(failed_attempt),
-                    self.namespace,
-                    command_id,
-                ),
-            )
-            if state in {"DONE", "IGNORED", "FAILED"}:
-                await conn.execute(
-                    """UPDATE ew_outbox SET state='SENT',claim_token=NULL,
-                    claim_until=NULL,updated_at=now(),updated_by='worker'
-                    WHERE namespace=%s AND command_id=%s""",
-                    (self.namespace, command_id),
-                )
-
-    async def resolve_failed(
-        self,
-        command_id: UUID,
-        *,
-        retry: bool,
-        actor: str,
-        reason: str,
-    ) -> None:
-        """Caller must hold the same session guard as the Dispatcher."""
-        if not actor.strip() or not reason.strip():
-            raise ValueError("actor and reason are required")
-        async with self.pool.connection() as conn, conn.transaction():
-            cur = await conn.execute(
-                """UPDATE ew_commands SET state=%s,
-                generation=generation+1,failure_attempts=0,
-                last_error=NULL,updated_at=now(),updated_by=%s
-                WHERE namespace=%s AND command_id=%s AND state='FAILED'
-                RETURNING generation""",
-                (
-                    "READY" if retry else "IGNORED",
-                    actor,
-                    self.namespace,
-                    command_id,
-                ),
-            )
-            row = await cur.fetchone()
-            if row is None:
-                raise ValueError("Command is not FAILED")
-            if retry:
-                await conn.execute(
-                    """UPDATE ew_outbox SET generation=%s,state='PENDING',
-                    claim_token=NULL,claim_until=NULL,
-                    updated_at=now(),updated_by=%s
-                    WHERE namespace=%s AND command_id=%s""",
-                    (row[0], actor, self.namespace, command_id),
-                )
-            await conn.execute(
-                """INSERT INTO ew_audit
-                (namespace,command_id,action,reason,created_by,updated_by)
-                VALUES (%s,%s,%s,%s,%s,%s)""",
-                (
-                    self.namespace,
-                    command_id,
-                    "RETRY" if retry else "SKIP",
-                    reason,
-                    actor,
-                    actor,
-                ),
-            )
-
     async def counts(self) -> dict[str, int]:
         async with self.pool.connection() as conn:
             cur = await conn.execute(
                 """SELECT 'command:'||state,count(*) FROM agent_commands
                 WHERE namespace=%s GROUP BY state UNION ALL
                 SELECT 'inbox:'||state,count(*) FROM ew_inbox
-                WHERE namespace=%s GROUP BY state UNION ALL
-                SELECT 'outbox:'||state,count(*) FROM ew_outbox
                 WHERE namespace=%s GROUP BY state""",
-                (self.namespace,) * 3,
+                (self.namespace,) * 2,
             )
             return dict(await cur.fetchall())

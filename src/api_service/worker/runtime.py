@@ -82,7 +82,7 @@ class ExecutorWorker:
             self.http,
             self.event_types,
             batch_size=settings.batch_size,
-            concurrency=settings.ingress_workers,
+            concurrency=settings.ingress_concurrency,
         )
         self.ingress = Ingress(self.store)
         self.consumers = [
@@ -91,7 +91,7 @@ class ExecutorWorker:
                 settings.executor_event_stream,
                 settings.event_group,
                 lambda _: _WakeAfterCommit(self.ingress, self._router_wake, event_types=self.event_types),
-                settings.ingress_workers,
+                settings.ingress_concurrency,
             ),
         ]
         self._readiness_checks: dict[str, Callable[[], Awaitable[bool]]] = {}

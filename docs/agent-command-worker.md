@@ -42,7 +42,7 @@ flowchart LR
 | `worker/runtime.py`, `ingress.py`, `store.py` | Redis ingress·Inbox·routing·binding·메트릭 |
 | `crud_migrations/versions/20261003_0026_agent_commands.py` | 동결된 DDL, runtime namespace 자동 추론 없음 |
 
-`worker/dispatcher.py`, `guard.py`, `outbox.py` 및 기존 관련 테스트·Store 메서드는 현재 실행 경로에서 빠졌다. 삭제 자동 승인 검토가 안전장치/회귀 제거를 거절하여 파일 삭제는 보류했다. 새로운 bootstrap이 이들을 구성하지 않는 것을 검증하며, 이전 실행기를 현재 원장과 동시에 띄우면 안 된다.
+`worker/dispatcher.py`, `guard.py`, `outbox.py`, 독립 graph_provider와 구 전용 테스트·Store 발행/재시도 메서드는 사용자 명시 승인 후 삭제했다. DB claim·소유권·취소/종료 검증과 Redis 원본 이벤트 consumer의 lease는 유지한다. 이전 버전의 실행기를 현재 원장과 동시에 띄우면 안 된다.
 
 ## ID·필드와 상태
 
@@ -73,7 +73,7 @@ flowchart LR
 | FAILED | 영구 거절/업무 재시도 소진. 뒤 명령의 선행 조건에서는 제외하되 Task·공개 업무의 기존 입력 잠금은 별도로 유지 |
 | RECOVERY | graph/소유권/결과 기록이 불확실. token·세션 보호 유지, 자동 재실행하지 않음 |
 
-claim 직후 프로세스가 강제 종료되면 행이 RUNNING으로 남을 수도 있다. heartbeat 만료를 RECOVERY 해제나 자동 탈취 근거로 삼지 않는다. 기존 실행 종료 확인과 별도 운영 복구가 필요하다. 복구 API 확장은 현재 단계 범위가 아니다. 이전 Store의 retry/skip 메서드로 새 원장을 복구할 수 있다고 간주하면 안 된다.
+claim 직후 프로세스가 강제 종료되면 행이 RUNNING으로 남을 수도 있다. heartbeat 만료를 RECOVERY 해제나 자동 탈취 근거로 삼지 않는다. 기존 실행 종료 확인과 별도 운영 복구가 필요하다. 복구 API 확장은 현재 단계 범위가 아니다. 이전 Store retry/skip 메서드는 삭제했다. 공통 원장의 운영 복구 경로는 별도로 제공해야 한다.
 
 ## 순서·공통 한도
 
@@ -97,7 +97,8 @@ HITL/Executor 대기에서는 현재 명령이 DONE이고 자리를 반환한다
 | AGENT_WORKER_POLL_INTERVAL_SECONDS | 실행 자리가 있고 작업을 찾지 못했을 때의 주기 재확인. 기본0.25초, 최소0.05초 |
 | EVENT_WORKER_ENABLED | 외부 이벤트 수신/routing 활성화. true이면 공통 Agent Worker도 필요하여 함께 기동 |
 | EW_INGRESS_CONCURRENCY / EW_POOL_SIZE | 이벤트 수신·routing 병렬성과 해당 DB pool 상한. graph 한도가 아님 |
-| EW_DISPATCH_CONCURRENCY / EW_COMMAND_STREAM_NAME / EW_COMMAND_GROUP_NAME / EW_PUBLISH_LEASE_SECONDS | 이전 설정 파싱·이행 진단용으로 남지만 현재 실행 경로에 적용되지 않음 |
+| EW_DISPATCH_CONCURRENCY / EW_COMMAND_STREAM_NAME / EW_COMMAND_GROUP_NAME / EW_PUBLISH_LEASE_SECONDS | 삭제된 설정. YAML/env에 남으면 명시적 오류로 중단하므로 제거해야 함 |
+| EW_CONCURRENCY | EW_INGRESS_CONCURRENCY의 구 별칭. 별도 한도가 아니며 두 값이 다르면 거절 |
 
 config > env > 기본값 우선순위와 공유 snapshot을 유지한다. 같은 서버의 `chat_app`과 `agent`는 다른 database다. 공통 원장·Inbox는 같은 DB에 있어야 한다. credentials·host·기본port·dbname·query의 정본도 일치시킨다. driver 이름만 정규화한다. 서로 다른 인증 계정/DB나 DNS 별칭을 임의로 같다고 추정하지 않는다.
 

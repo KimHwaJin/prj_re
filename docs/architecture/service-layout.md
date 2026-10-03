@@ -20,7 +20,7 @@ src/
       workflow_persistence.py   WorkflowStore의 PostgreSQL 구현
     agent_run_worker.py         사용자/Executor 명령 공통 한도·실행 수명
     agent_worker/               Executor 이벤트 수신 bootstrap·종류 등록
-    worker/                     Redis 수신·Inbox/routing·binding (구 실행 파일 삭제 보류)
+    worker/                     Redis 수신·Inbox/routing·binding
     core/                       DB·인증·API 상태/복구 관리
     test/                       API·DB·실행기 통합 테스트
   agent_service/
@@ -70,8 +70,8 @@ src/
 - `service_contracts`, `service_runtime`, `integrations`는 API나 Agent 구현을
   import하지 않는다. 설정 snapshot과 외부 라이브러리를 사용할 수 있다.
 - API 업무 서비스·라우터는 Agent 내부 graph/state/schema에 의존하지 않는다.
-  실제 graph 구성은 세 어댑터에만 남긴다: `services/agent_graph_service.py`,
-  `agent_worker/graph_provider.py`, `agent_worker/worker_main.py`.
+  실제 graph 구성은 `services/agent_graph_service.py`에 모은다.
+  이벤트 bootstrap은 Agent 구현을 직접 import하거나 graph를 만들지 않는다.
   이 조립 경계까지 제거하려고 아직 필요 없는 다중 Agent registry를 추가하지 않는다.
 - `WorkflowStore`와 기존 PostgreSQL 구현은 1.3 Workflow 관리 지원으로 남아 있다.
   현재 PlanningRuntime은 이 저장소를 받아 후보를 저장하는 이전 graph 경로를 사용하지 않는다.

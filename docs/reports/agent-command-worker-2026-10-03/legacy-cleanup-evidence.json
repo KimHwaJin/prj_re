@@ -1,0 +1,60 @@
+{
+  "branch": "feature/unified-agent-command-worker",
+  "date": "2026-10-03",
+  "authorization": "User explicitly approved deleting unnecessary legacy source and tests",
+  "deleted_files": [
+    "src/api_service/worker/dispatcher.py",
+    "src/api_service/worker/guard.py",
+    "src/api_service/worker/outbox.py",
+    "src/api_service/agent_worker/graph_provider.py",
+    "src/api_service/test/test_session_execution_dispatch.py",
+    "src/api_service/test/test_redis_execution_boundary.py"
+  ],
+  "removed_store_methods": [
+    "claim_outbox",
+    "finish_publications",
+    "command",
+    "failed_page",
+    "context",
+    "set_state",
+    "resolve_failed"
+  ],
+  "removed_settings": [
+    "EW_COMMAND_STREAM_NAME",
+    "EW_COMMAND_GROUP_NAME",
+    "EW_DISPATCH_CONCURRENCY",
+    "EW_PUBLISH_LEASE_SECONDS"
+  ],
+  "ingress_setting": "EW_INGRESS_CONCURRENCY",
+  "ingress_alias": "EW_CONCURRENCY",
+  "unit": {
+    "passed": 612,
+    "skipped": 357,
+    "warnings": 74,
+    "seconds": 25.2
+  },
+  "postgres_redis": {
+    "passed": 36,
+    "seconds": 41.25
+  },
+  "bootstrap_smoke": "passed without opening lifespan/network",
+  "preserved": [
+    "Redis ingress ACK/lease/reclaim",
+    "DB ownership/token/cancellation safety",
+    "frozen migration history and existing EW tables/data",
+    "historical performance captures"
+  ],
+  "test_containers_removed": [
+    "dtest-command-cleanup-pg",
+    "dtest-command-cleanup-redis"
+  ],
+  "container_removal_verified": true,
+  "original_checkout_env_and_service_containers_changed": false,
+  "performance_improvement_measured": false,
+  "real_llm_or_executor_python_executed": false,
+  "shutdown_recheck": {
+    "passed": 13,
+    "seconds": 3.12,
+    "overlaps_unit_suite": true
+  }
+}

@@ -4,7 +4,7 @@
 
 이 문서는 Agent가 Executor에 Notebook 셀과 리포트를 전달하는 방식, 실행 결과를
 읽는 방식, Redis와 PostgreSQL 연결 설정을 설명한다. 환경변수를 변경한 뒤에는
-LangGraph API와 Agent Worker를 모두 재시작해야 한다.
+공통 설정을 읽는 `app.py` 서비스를 재시작해야 한다. 운영 재기동·DB 이행은 별도 절차다.
 
 ## 2. 권장 기본 설정
 
@@ -143,42 +143,39 @@ MANIFEST 모드 모두에 적용된다.
 
 ## 8. Redis 설정
 
-Redis는 Executor 원본 이벤트와 Worker 내부 command 전달에 사용된다.
+현재 Redis는 Executor 원본 이벤트 수신과 SSO 로그인 세션에 사용한다. 내부 graph 명령은 PostgreSQL agent_commands에 기록한다.
 
 | 환경변수 | 설명 |
 |---|---|
-| `EW_REDIS_URL` | Worker가 연결할 Redis URL |
-| `EW_EXECUTOR_EVENT_STREAM` | Executor 원본 이벤트 Stream. 기본 `executor.events` |
+| `REDIS_URL` | 공통 Redis 주소. 로그인·Streams는 용도별 pool/key/group 사용 |
+| `EW_REDIS_URL` | REDIS_URL의 구 별칭, 동일값만 허용 |
+| `EW_EXECUTOR_EVENT_STREAM` | Executor 원본 이벤트 Stream, 기본 executor.events |
 | `EW_EVENT_GROUP_NAME` | 원본 이벤트 ingress consumer group |
-| `EW_COMMAND_STREAM_NAME` | Worker가 내부적으로 생성하는 command Stream |
-| `EW_COMMAND_GROUP_NAME` | LangGraph resume dispatch consumer group |
-| `EW_NAMESPACE` | Redis key와 Worker DB 행의 서비스 구분자 |
-| `EW_INSTANCE_ID` | Worker replica 식별자 |
-
-처리 흐름은 다음과 같다.
+| `EW_NAMESPACE` | 이벤트 DB·consumer group 기본 이름의 서비스 구분자 |
+| `EW_INSTANCE_ID` | 기동 UUID가 붙는 consumer 이름 prefix |
+| `EW_INGRESS_CONCURRENCY` | 원본 이벤트 수신·routing 한도 |
+| `AGENT_WORKER_CONCURRENCY` | 사용자·승인·Executor 결과의 공통 graph 총한도 |
 
 ```text
 Executor Outbox → executor.events
-→ Worker ingress → PostgreSQL Inbox
-→ Worker router/outbox → 내부 command Stream
-→ Worker dispatch → LangGraph Command(resume=...)
+→ ingress → PostgreSQL Inbox commit → 원본 메시지 ACK
+→ sequence/binding routing + agent_commands 원자 기록
+→ 공통 Agent Worker → LangGraph 재개 → 결과/명령 상태 기록
 ```
 
-Redis Streams는 at-least-once 전달이므로 `event_id`와 `command_id` 기반 멱등 처리가
-필수다. Redis는 상태 원본이 아니며, Worker의 영속 처리 상태는 PostgreSQL에 있다.
+원본 Redis 전달은 at-least-once이며 event ID·DB command ID·checkpoint receipt·Executor idempotency로 중복을 제어한다. 내부 command stream/group, 별도 dispatch 동시성, publish lease 설정은 삭제했다. 해당 EW_* 설정이 YAML/env에 남으면 오류로 중단하므로 제거해야 한다.
 
 ## 9. PostgreSQL 설정 요약
 
 | 환경변수 | 사용 주체 | 역할 |
 |---|---|---|
-| `EW_DATABASE_URL` | Agent Worker | event Inbox/Outbox, command, execution binding 및 기본 Workflow 저장소 |
-| `WORKFLOW_DATABASE_URL` | Agent | 지정 시 Workflow catalog 저장소를 `EW_DATABASE_URL` 대신 사용 |
-| `AGENT_CHECKPOINT_DATABASE_URL` | LangGraph API와 Worker | 동일 thread를 재개하기 위한 LangGraph checkpoint DB |
-| `CHECKPOINT_DB_URI` | 로컬 CLI `--postgres` 경로 | CLI용 PostgreSQL checkpointer |
+| `DATABASE_URL` | API·공통 Agent Worker | CRUD·내부 명령 원장·세션 실행 소유권·project_memory Store |
+| `EW_DATABASE_URL` | 이벤트 입력·제출 bridge | DATABASE_URL에서 psycopg 표기로 파생하는 같은 DB의 Inbox/binding. 실행 활성 시 다른 정본 거절 |
+| `WORKFLOW_DATABASE_URL` | Workflow 저장소 | 별도 지정 가능, 해당 schema 준비 필요 |
+| `CHECKPOINT_DB_URI` | 공용 graph runtime | LangGraph checkpoint DB·pool. API DB와 분리 가능 |
+| `AGENT_CHECKPOINT_DATABASE_URL` | 구 별칭 | CHECKPOINT_DB_URI와 같은 값만 허용 |
 
-LangGraph API와 Worker의 `AGENT_CHECKPOINT_DATABASE_URL`은 반드시 같아야 한다. 서로
-다르면 Worker가 Redis 완료 이벤트를 받아도 API가 만든 중단 checkpoint를 찾거나
-재개할 수 없다.
+모든 입력의 실제 graph 호출은 같은 runtime/checkpoint 정본을 사용한다. API·Inbox·명령은 같은 database에 기록하되 라이브러리별 pool은 별도다. 데이터·설정 이행과 종료/기동은 [공통 Worker 안내](agent-command-worker.md)를 따른다.
 
 DB 생성과 마이그레이션은
 [database_migrations.md](./database_migrations.md)를 참고한다.

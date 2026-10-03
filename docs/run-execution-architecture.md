@@ -48,6 +48,6 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 
 060에서 두 입력을 DB `agent_commands`로 모으고 한 Agent Worker가 공통 총한도로 실행하도록 전환했다. 외부 Redis 이벤트 수신·Inbox/routing은 별도 background 책임이며 직접 graph를 호출하지 않는다. 공개 Run ID를 내부 command ID로 대체하지 않는다. [원장·Worker·설정·DB 이행](agent-command-worker.md)을 따른다.
 
-다음 단계는 Worker 전용 깨우기 신호와 조회 비용 정리다. 기존 Redis 실행 모듈 파일은 자동 승인 검토의 삭제 거절로 남았지만 새 bootstrap에서 구성하지 않는다.
+다음 단계는 Worker 전용 깨우기 신호와 조회 비용 정리다. 사용하지 않는 구 Redis 실행 모듈·독립 graph builder·Store 발행/재시도 메서드는 사용자 승인 후 삭제했다. Redis 원본 이벤트 수신과 DB 소유권 보호는 유지한다.
 
 HITL 또는 Executor 대기에 도달하면 현재 invocation의 실행 소유권을 반환한다. 공개 업무는 아직 미완료이고 `WAITING_EXECUTOR` 세션 입력 잠금은 유지한다. 외부 Executor의 장기 작업 동안 Agent 실행 자리를 유지하지 않는다.

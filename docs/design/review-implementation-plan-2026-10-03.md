@@ -58,7 +58,7 @@
 
 ## 3. 공통 명령 원장·스케줄러 — 060 구현·격리 검증
 
-[060 구현](../improvements/060-unified-agent-command-worker.md), [명령 원장·Worker·이행 안내](../agent-command-worker.md). 아래는 인수 기준이며 현재 runtime은 신규 agent_commands를 정본으로 사용한다. 이전 Redis 실행 모듈 파일 삭제는 자동 승인 거절로 보류했다.
+[060 구현](../improvements/060-unified-agent-command-worker.md), [명령 원장·Worker·이행 안내](../agent-command-worker.md). 아래는 인수 기준이며 현재 runtime은 신규 agent_commands를 정본으로 사용한다. 이전 Redis 실행 모듈 파일은 사용자 명시 승인 후 삭제했다.
 
 ### 설계 기준
 

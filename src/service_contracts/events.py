@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -72,15 +71,12 @@ class EventContext:
         return {"configurable": {"thread_id": self.session_id}}
 
 
-EventHandler = Callable[[EventContext], Awaitable[None]]
-
-
 class DeferEvent(Exception):
     """Not ready yet: retain pending without spending a failure attempt."""
 
 
 class RejectEvent(Exception):
-    """Permanent business failure: persist FAILED and move to DLQ."""
+    """Permanent business failure: record FAILED in the common command ledger."""
 
 
 class IgnoreEvent(Exception):

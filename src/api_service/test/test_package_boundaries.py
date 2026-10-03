@@ -36,8 +36,6 @@ def test_shared_and_agent_packages_do_not_depend_on_api(package):
 def test_only_composition_adapters_import_agent_implementation():
     allowed = {
         'services/agent_graph_service.py',
-        'agent_worker/graph_provider.py',
-        'agent_worker/worker_main.py',
     }
     errors = []
     for path in (SRC / 'api_service').rglob('*.py'):

@@ -49,7 +49,9 @@ def install(metrics,enabled,kind):
                     elif name=='finish_publications':row.update(command_ids=[str(c) for c in args[1]],sent=kw['sent'])
                     metrics['event_stages'].append(row)
         setattr(Store,name,invoke)
-    for name in ('ingest','advance','finish_publications','set_state'):wrap(name)
+    # Historical baseline hooks are optional; current Store has only ingress/routing.
+    for name in ('ingest','advance','finish_publications','set_state'):
+        if hasattr(Store,name):wrap(name)
     from agent_service.agents.analysis.planning.runtime import PlanningRuntime
     old_role=PlanningRuntime.execution_role
     async def role(self,name,state,payload):

@@ -211,3 +211,20 @@ def test_active_command_worker_requires_same_database_without_exposing_credentia
     assert load_settings(config={'DATABASE_URL':'postgresql+asyncpg://u:secret@host/chat_app',
         'EW_DATABASE_URL':'postgresql://u:secret@host/agent',
         'AGENT_WORKER_ENABLED':False,'EVENT_WORKER_ENABLED':False}, environ={})
+
+
+@pytest.mark.parametrize('name', sorted(service_settings.REMOVED_SETTINGS))
+@pytest.mark.parametrize('source', ['config','env'])
+def test_removed_dispatch_settings_fail_with_migration_instructions(name,source):
+    with pytest.raises(ConfigurationError,match='Removed service setting: '+name):
+        load_settings(config={name:'obsolete'} if source=='config' else {},
+            environ={name:'obsolete'} if source=='env' else {})
+
+
+def test_ingress_has_one_limit_and_old_common_spelling_is_only_an_alias():
+    settings=load_settings(config={'EW_CONCURRENCY':3},environ={})
+    assert settings.worker.ingress_concurrency==3
+    assert 'concurrency' not in type(settings.worker).model_fields
+    assert 'dispatch_concurrency' not in type(settings.worker).model_fields
+    with pytest.raises(ConfigurationError,match='Conflicting aliases'):
+        load_settings(config={'EW_CONCURRENCY':3,'EW_INGRESS_CONCURRENCY':4},environ={})

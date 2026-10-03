@@ -321,7 +321,7 @@ async def test_real_redis_to_persistent_graph_and_public_completion(commands,mon
             after=await state(h,public['run_id'])
             assert after['run_id']==public['run_id'] and after['status']=='success'
             assert after['result']==before['result']
-            assert not await redis.exists(settings.command_stream)
+            assert not await redis.exists(f"{settings.namespace}:commands")
             stop.set()
             await asyncio.wait_for(asyncio.gather(*loops),4)
     finally:

@@ -197,37 +197,6 @@ async def test_confirmed_event_exception_releases_owner_for_receipt_retry(runtim
 
 
 @pytest.mark.asyncio
-async def test_redis_lease_loss_cannot_unlock_live_graph(runtime):
-    from api_service.worker.guard import SessionGuard, LeaseLostError
-    h=runtime
-    entered, cleaning, release=asyncio.Event(),asyncio.Event(),asyncio.Event()
-    redis=SimpleNamespace(set=AsyncMock(return_value=True),
-                          eval=AsyncMock(side_effect=lambda *_: 0 if entered.is_set() else 1))
-    guard=SessionGuard(redis,'test',ttl=1,renew_seconds=.02)
-    async def graph():
-        entered.set()
-        try:
-            await asyncio.Event().wait()
-        finally:
-            cleaning.set(); await release.wait()
-    async def dispatch():
-        async with guard.hold(h.session_id):
-            await ownership.run_event_owned(event(h.session_id),graph)
-    task=asyncio.create_task(dispatch())
-    try:
-        await asyncio.wait_for(entered.wait(),4); await asyncio.wait_for(cleaning.wait(),2)
-        owner=await row(h,h.session_id)
-        assert owner.token is not None and owner.recovery_required
-        with pytest.raises(DeferEvent):
-            await ownership.run_event_owned(event(h.session_id),AsyncMock())
-    finally:
-        release.set()
-    with pytest.raises(LeaseLostError):
-        await task
-    assert (await row(h,h.session_id)).token is not None
-
-
-@pytest.mark.asyncio
 async def test_waiting_graph_holds_no_db_connection(runtime):
     from sqlalchemy import event as sql_event
     h=runtime
