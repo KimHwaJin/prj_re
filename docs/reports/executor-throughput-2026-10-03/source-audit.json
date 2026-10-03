@@ -1,0 +1,11 @@
+{
+  "production_files_changed": 9,
+  "changed_tracked_files": 17,
+  "new_files_before_receipt": 53,
+  "python_ast_checked": 23,
+  "markdown_links_checked": 136,
+  "protected_baseline_files_identical": 181,
+  "all26_captures_revalidated": true,
+  "final_captures_production_hash_match": 12,
+  "original_credentials_excluded": true
+}

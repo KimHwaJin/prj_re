@@ -1,0 +1,392 @@
+[
+  {
+    "set": "baseline5",
+    "trial": "executor-u1-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u1-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u10-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u10-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u30-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u30-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u50-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline5",
+    "trial": "executor-u50-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u1-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u1-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u10-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u10-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u30-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u30-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u50-c16-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common5",
+    "trial": "executor-u50-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline-repeat",
+    "trial": "executor-u50-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common-repeat",
+    "trial": "executor-u50-c32-ew4-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "dispatch8",
+    "trial": "executor-u50-c32-ew8-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "dispatch16",
+    "trial": "executor-u50-c32-ew16-d5000-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "baseline-zero",
+    "trial": "executor-u50-c32-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 39,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "307652ad79075425201e5f4bb044bbeda955fdd04f590600e48aced94fb5a321",
+    "clean_log": false,
+    "measured_deferrals": 39,
+    "normal_measured": false
+  },
+  {
+    "set": "common-zero",
+    "trial": "executor-u50-c32-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common-hold",
+    "trial": "executor-u10-c16-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "real",
+    "trial": "executor-u1-c16-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "common-real",
+    "trial": "executor-u1-c16-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  },
+  {
+    "set": "hold-owners",
+    "trial": "executor-u10-c16-ew4-d0-r1",
+    "counts": {
+      "gc": 0,
+      "traceback": 0,
+      "deferred": 0,
+      "maintenance_errors": 0,
+      "errors": 0
+    },
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "clean_log": true,
+    "measured_deferrals": 0,
+    "normal_measured": true
+  }
+]

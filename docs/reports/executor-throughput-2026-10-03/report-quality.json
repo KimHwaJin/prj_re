@@ -1,0 +1,10 @@
+{
+  "canonical_payload_validation": "passed",
+  "npm_report_deliver_validation": "passed",
+  "npm_report_deliver_package": "passed",
+  "verification": "structural_only",
+  "headless_browser": "unavailable; tooling does not download browsers",
+  "native_chrome_attempt": "cua createBrowserTab timed out; no visual inspection claimed",
+  "desktop_mobile_source_dialog": "not_verified",
+  "html_sha256": "c3524e1e4ce781232e3bb4b4a43054889f641a342a7e0d9a811950b93bc23e22"
+}

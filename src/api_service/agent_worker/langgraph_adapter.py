@@ -135,8 +135,9 @@ class LangGraphEventAdapter:
         with submission_scope():
             if getattr(self.graph,'name',None)=='agentic-planning-v1':
                 from uuid import UUID
-                from api_service.services.graph_crud_persistence import persist_graph_state
+                from api_service.services.graph_crud_persistence import InvocationProjection
+                projection = InvocationProjection()
                 async for emitted in self.graph.astream(value,config,stream_mode='values',durability=durability):
-                    await persist_graph_state(emitted,user_id=UUID(emitted['user_id']),agent_run_id=emitted['agent_run_id'])
+                    await projection.persist(emitted,user_id=UUID(emitted['user_id']),agent_run_id=emitted['agent_run_id'])
                 return
             return await self.graph.ainvoke(value, config, durability=durability)

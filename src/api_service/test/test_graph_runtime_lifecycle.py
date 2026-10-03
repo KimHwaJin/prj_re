@@ -268,7 +268,8 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
     monkeypatch.setattr(entry, '_validate_graph', lambda _: None)
     monkeypatch.setattr(entry, 'build_handlers', lambda handler: {'test': handler})
     monkeypatch.setattr(entry, 'LangGraphEventAdapter', Adapter)
-    async def own(context, operation):
+    async def own(context, operation, *, handoff_timeout_seconds):
+        assert handoff_timeout_seconds == 1.0
         return await operation()
     monkeypatch.setattr(entry, 'run_event_owned', own)
     monkeypatch.setattr(entry, 'ExecutorWorker', Worker)

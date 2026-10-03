@@ -1,0 +1,47 @@
+{
+  "broad_initial": {
+    "total": 919,
+    "passed": 916,
+    "failed": 3,
+    "seconds": 418.87,
+    "failure_kind": "fixture interfaces missing wake attributes and handoff kwarg"
+  },
+  "focused_final": {
+    "passed": 112,
+    "seconds": 17.86,
+    "failed": 0
+  },
+  "capture_final": {
+    "passed": 13,
+    "seconds": 0.29,
+    "failed": 0
+  },
+  "unique_test_scope": 921,
+  "warnings": "Broad81: durability has no effect without checkpointer (legacy fixtures); focused final0",
+  "openapi": {
+    "paths": 38,
+    "baseline_and_final_sha256": "18d51f1719fa0334d377304cc6dcf296c7e928a0c691c88876afd61b75a18333"
+  },
+  "original": {
+    "head_status_env_unchanged": true,
+    "tracked_files": 316
+  },
+  "private_log_sha256": {
+    "executor-throughput-first-regression.log": "162e4bfbc123aae4c1a936f9c0658c2e15637a49d1c62e3883e0f9f632c7e700",
+    "executor-throughput-focused-regression.log": "0363dae3a6c19254ef4f960d2953bdc444987f400ec065c5da1953b4cc69eaf6",
+    "prj-re-service-throughput-regression.log": "581955483c307ccd4a0c065b7f00d71b3b75589d839aa32922f04b2e14b054ed"
+  },
+  "cleanup": {
+    "owned_scratch_database_leftovers": 0,
+    "owned_redis_key_leftovers": 0,
+    "owned_real_executor_group_leftovers": 0,
+    "existing_database_and_executor_stream_untouched": true
+  },
+  "profile_loaded": {
+    "agent_slots": 32,
+    "ingress_slots": 4,
+    "dispatch_slots": 4,
+    "event_and_bridge_pool_each": 4,
+    "event_worker_not_auto_enabled": true
+  }
+}

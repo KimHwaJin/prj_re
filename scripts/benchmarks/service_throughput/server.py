@@ -20,7 +20,8 @@ from service_auth.sso.contracts import VerifiedEmployee
 metrics={};kind=ContextVar('bench_http_kind',default='worker');sql=defaultdict(lambda:[0,0.0,0.0])
 def reset():
     sql.clear();metrics.clear();metrics.update(active=True,start=time.perf_counter(),cpu_start=time.process_time(),
-        models=[],workers=[],traces=[],acquires=[],http=[],samples=[],loop_lag=[],peak_worker=0,current_worker=0)
+        models=[],workers=[],traces=[],acquires=[],http=[],samples=[],loop_lag=[],peak_worker=0,current_worker=0,
+        event_handlers=[],event_stages=[],roles=[],current_event_worker=0,peak_event_worker=0)
 def enabled():return metrics.get('active',False)
 def category():
     name=asyncio.current_task().get_name()
@@ -50,6 +51,16 @@ def get():
     finally:
         if enabled():metrics['acquires'].append((time.perf_counter()-started)*1000)
 engine.sync_engine.pool._do_get=get
+# Optional hold diagnostic, disabled for the matched performance matrices.
+crud_owners={}
+if cfg.get('hold_owner_probe'):
+    @event.listens_for(engine.sync_engine.pool,'checkout')
+    def track_checkout(connection,record,proxy):
+        crud_owners[id(record)]={'category':category(),'at':time.perf_counter()}
+    @event.listens_for(engine.sync_engine.pool,'checkin')
+    def track_checkin(connection,record):
+        crud_owners.pop(id(record),None)
+
 original_execute=worker.execute_claimed
 async def execute(item):
     started=time.perf_counter();measured=enabled()
@@ -68,6 +79,11 @@ async def model(self,*a,**kw):
     finally:
         if enabled():metrics['models'].append({'run_id':trace.run_id if trace else None,'start':started,'end':time.perf_counter()})
 MockConversation.ainvoke=model
+if cfg.get('executor_probe'):
+    import sys
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'executor_throughput'))
+    import probe
+    probe.install(metrics,enabled,kind)
 app=create_app()
 class EmployeeFixture:
     async def verify(self,request):
@@ -97,7 +113,7 @@ async def ready():return {'ready':True}
 async def clear():reset();return {'ok':True}
 @app.get('/_bench/metrics')
 async def snapshot():
-    return {**metrics,'crud_connections_checked_out':engine.sync_engine.pool.checkedout(),'cpu_seconds':time.process_time()-metrics['cpu_start'],
+    return {**metrics,'crud_owners':[{'category':v['category'],'held_ms':(time.perf_counter()-v['at'])*1000} for v in crud_owners.values()],'psycopg_pools':probe.snapshot() if cfg.get('executor_probe') else [],'crud_connections_checked_out':engine.sync_engine.pool.checkedout(),'cpu_seconds':time.process_time()-metrics['cpu_start'],
         'sql':[{'category':k[0],'fingerprint':k[1],'count':v[0],'total_ms':v[1],'max_ms':v[2]} for k,v in sql.items()]}
 original_lifespan=app.router.lifespan_context
 @asynccontextmanager

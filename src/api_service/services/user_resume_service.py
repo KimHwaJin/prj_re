@@ -72,9 +72,10 @@ async def resume_and_project(graph, config, *, user_id, run_id, command,
         # dispatch this Command again. External submission uncertainty propagates
         # through the existing submission_scope/ExecutionNeedsRecovery guard.
         if getattr(graph, 'name', None) == 'agentic-planning-v1':
+            incremental = projection.InvocationProjection()
             async for emitted in graph.astream(Command(resume={target: resume_envelope(identity, command)}),
                                                config=config, stream_mode='values', durability='sync'):
-                await projection.persist_graph_state(emitted, user_id=user_id, session_factory=session_factory,
+                await incremental.persist(emitted, user_id=user_id, session_factory=session_factory,
                                                      dispatcher=dispatcher, agent_run_id=run_id)
         else:
             await graph.ainvoke(

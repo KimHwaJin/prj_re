@@ -1,0 +1,74 @@
+[
+  {
+    "users": 1,
+    "slots": 16,
+    "before_after_rows_identical": {
+      "messages": 8,
+      "agent_run_logs": 28,
+      "task_events": 52
+    }
+  },
+  {
+    "users": 1,
+    "slots": 32,
+    "before_after_rows_identical": {
+      "messages": 8,
+      "agent_run_logs": 28,
+      "task_events": 52
+    }
+  },
+  {
+    "users": 10,
+    "slots": 16,
+    "before_after_rows_identical": {
+      "messages": 44,
+      "agent_run_logs": 154,
+      "task_events": 286
+    }
+  },
+  {
+    "users": 10,
+    "slots": 32,
+    "before_after_rows_identical": {
+      "messages": 44,
+      "agent_run_logs": 154,
+      "task_events": 286
+    }
+  },
+  {
+    "users": 30,
+    "slots": 16,
+    "before_after_rows_identical": {
+      "messages": 124,
+      "agent_run_logs": 434,
+      "task_events": 806
+    }
+  },
+  {
+    "users": 30,
+    "slots": 32,
+    "before_after_rows_identical": {
+      "messages": 124,
+      "agent_run_logs": 434,
+      "task_events": 806
+    }
+  },
+  {
+    "users": 50,
+    "slots": 16,
+    "before_after_rows_identical": {
+      "messages": 204,
+      "agent_run_logs": 714,
+      "task_events": 1326
+    }
+  },
+  {
+    "users": 50,
+    "slots": 32,
+    "before_after_rows_identical": {
+      "messages": 204,
+      "agent_run_logs": 714,
+      "task_events": 1326
+    }
+  }
+]

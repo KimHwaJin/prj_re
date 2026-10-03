@@ -16,6 +16,8 @@ from api_service.worker.config import Settings
 from api_service.worker.consumer import (
     RedisStreamConsumer,
     RedisStreamConsumerConfig,
+    AckDecision,
+    StreamMessageHandler,
 )
 from service_contracts.events import EventHandler
 from api_service.worker.dispatcher import Dispatcher
@@ -25,8 +27,30 @@ from api_service.worker.outbox import Outbox
 from api_service.worker.redis_streams import group_progress
 from api_service.worker.store import Store
 from api_service.worker.telemetry import Telemetry
+from api_service.worker.wakeup import binding_subscription
 
 logger = logging.getLogger(__name__)
+
+
+class _WakeAfterCommit:
+    """Coalesce a local wake only after the durable handler succeeds.
+
+    The wrapped consumer still owns ACK/retry/lease semantics. These in-memory
+    hints carry no business data; periodic DB scans remain authoritative.
+    """
+    def __init__(self, handler: StreamMessageHandler, wake: asyncio.Event, *,
+                 event_types: set[str] | None = None) -> None:
+        self.handler, self.wake, self.event_types = handler, wake, event_types
+
+    def lock_key(self, message):
+        return self.handler.lock_key(message)
+
+    async def handle(self, message):
+        result = await self.handler.handle(message)
+        if (result.decision == AckDecision.ACK and
+                (self.event_types is None or message.fields.get('event_type') in self.event_types)):
+            self.wake.set()
+        return result
 
 
 class ExecutorWorker:
@@ -35,6 +59,8 @@ class ExecutorWorker:
         settings: Settings,
         handlers: Mapping[str, EventHandler],
     ) -> None:
+        self._router_wake = asyncio.Event()
+        self._outbox_wake = asyncio.Event()
         self.settings = settings
         self.handlers = dict(handlers)
         self.pool = AsyncConnectionPool(
@@ -88,14 +114,14 @@ class ExecutorWorker:
                 "ingress",
                 settings.executor_event_stream,
                 settings.event_group,
-                lambda _: self.ingress,
+                lambda _: _WakeAfterCommit(self.ingress, self._router_wake, event_types=set(self.handlers)),
                 settings.ingress_workers,
             ),
             self._consumer(
                 "dispatch",
                 settings.command_stream,
                 settings.command_group,
-                lambda _: self.dispatcher,
+                lambda _: _WakeAfterCommit(self.dispatcher, self._outbox_wake),
                 settings.dispatch_workers,
             ),
         ]
@@ -135,6 +161,9 @@ class ExecutorWorker:
             self._stack.push_async_callback(self.http.aclose)
             self._stack.push_async_callback(self.pool.close)
             await self.pool.open(wait=True)
+            self._stack.enter_context(binding_subscription(
+                self.pool.conninfo, self.settings.namespace, self._router_wake
+            ))
         except BaseException:
             await self._stack.aclose()
             raise
@@ -145,6 +174,8 @@ class ExecutorWorker:
 
     def request_stop(self) -> None:
         self._stop.set()
+        self._router_wake.set()
+        self._outbox_wake.set()
         for consumer in self.consumers:
             consumer.request_stop()
 
@@ -186,8 +217,8 @@ class ExecutorWorker:
                 )
             tasks = [asyncio.create_task(c.run()) for c in self.consumers]
             tasks += [
-                asyncio.create_task(self._loop(self.router.once)),
-                asyncio.create_task(self._loop(self.outbox.once)),
+                asyncio.create_task(self._loop(self.router.once, wake=self._router_wake, after_work=self._outbox_wake.set)),
+                asyncio.create_task(self._loop(self.outbox.once, wake=self._outbox_wake)),
                 asyncio.create_task(self._loop(self._metrics, interval=10)),
             ]
             done, _ = await asyncio.wait(
@@ -225,21 +256,40 @@ class ExecutorWorker:
         operation: Callable[[], Awaitable[int]],
         *,
         interval: float | None = None,
+        wake: asyncio.Event | None = None,
+        after_work: Callable[[], None] | None = None,
     ) -> None:
         delay = interval or self.settings.poll_seconds
         while not self._stop.is_set():
+            # Clear BEFORE the scan. A commit during its awaits stays signalled,
+            # so the following sleep cannot miss newly available work.
+            if wake is not None:
+                wake.clear()
+            failed = False
             try:
                 count = await operation()
+                if count and after_work is not None:
+                    after_work()
                 delay = interval or (
                     self.settings.poll_seconds
                     if count
                     else min(delay * 2, self.settings.idle_poll_seconds)
                 )
             except Exception:
+                failed = True
                 logger.exception("Worker maintenance iteration failed")
                 delay = min(max(delay * 2, 0.5), 30)
             with suppress(TimeoutError):
-                await asyncio.wait_for(self._stop.wait(), delay)
+                # Errors retain their bounded retry backoff even under traffic.
+                # On idle, Redis ingestion or a settled command wakes this Pod;
+                # timeout still covers work committed by another Pod/restarts.
+                signal = self._stop if wake is None or failed else wake
+                await asyncio.wait_for(signal.wait(), delay)
+                if signal is wake and not self._stop.is_set():
+                    # A short bounded window coalesces commit bursts. Waking for
+                    # every ignored Step event would create unnecessary DB scans.
+                    with suppress(TimeoutError):
+                        await asyncio.wait_for(self._stop.wait(), min(.02, self.settings.poll_seconds))
 
     async def _metrics(self) -> int:
         counts = await self.store.counts()

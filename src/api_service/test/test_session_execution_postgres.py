@@ -332,3 +332,58 @@ async def test_real_checkpoint_cannot_resume_before_owner_handoff(runtime):
             release.set(); await task
         result=await ownership.run_event_owned(event(h.session_id),lambda:graph.ainvoke(Command(resume='answer'),config,durability='sync'))
         assert result=={'label':'shared-owner','answer':'answer'}
+
+
+@pytest.mark.asyncio
+async def test_fast_executor_waits_for_short_api_handoff_without_retaining_db_connection(runtime,monkeypatch):
+    h=runtime
+    queued=await enqueue(h);item=await worker.claim_one()
+    original=worker._execute_claimed
+    finalized,release=asyncio.Event(),asyncio.Event()
+    async def execute(value):
+        await original(value);finalized.set();await release.wait()
+    import api_service.services.run_service as runs
+    monkeypatch.setattr(runs,'ainvoke_user_turn',AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
+    monkeypatch.setattr(worker,'_execute_claimed',execute)
+    api=asyncio.create_task(worker.execute_claimed(item));call=AsyncMock()
+    event_task=None
+    from sqlalchemy import event as sa_event
+    checkouts=[]
+    def checked_out(*args):checkouts.append(1)
+    def checked_in(*args):checkouts.pop()
+    sa_event.listen(h.engine.sync_engine,'checkout',checked_out)
+    sa_event.listen(h.engine.sync_engine,'checkin',checked_in)
+    handoff_wait=asyncio.Event();original_sleep=asyncio.sleep
+    async def measured_sleep(seconds):
+        if asyncio.current_task().get_name()==f'executor-event-admission:{h.session_id}':
+            assert not checkouts
+            handoff_wait.set()
+        await original_sleep(seconds)
+    monkeypatch.setattr(ownership.asyncio,'sleep',measured_sleep)
+    try:
+        await finalized.wait()
+        event_task=asyncio.create_task(ownership.run_event_owned(event(h.session_id),call,handoff_timeout_seconds=.5))
+        await asyncio.wait_for(handoff_wait.wait(),.4)
+        call.assert_not_awaited()
+        # No connection/transaction is retained while waiting for API ownership.
+        assert not checkouts
+        assert (await row(h,h.session_id)).token is not None
+        release.set();await api;await asyncio.wait_for(event_task,.5)
+        call.assert_awaited_once();assert (await row(h,h.session_id)).token is None
+    finally:
+        release.set();await asyncio.gather(api,return_exceptions=True)
+        if event_task:
+            event_task.cancel();await asyncio.gather(event_task,return_exceptions=True)
+        sa_event.remove(h.engine.sync_engine,'checkout',checked_out)
+        sa_event.remove(h.engine.sync_engine,'checkin',checked_in)
+
+
+@pytest.mark.asyncio
+async def test_bounded_handoff_never_steals_a_live_owner(runtime):
+    h=runtime;owner=ownership.SessionExecution(UUID(h.session_id),uuid4(),uuid4(),'api_run')
+    async with h.factory() as db:
+        assert await ownership.acquire(db,owner);await db.commit()
+    call=AsyncMock()
+    with pytest.raises(DeferEvent):
+        await ownership.run_event_owned(event(h.session_id),call,handoff_timeout_seconds=.05)
+    call.assert_not_awaited();assert (await row(h,h.session_id)).token==owner.token

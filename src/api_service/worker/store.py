@@ -50,6 +50,11 @@ class Store:
             if await cur.fetchone() != (session_id, task_id):
                 raise ValueError("Execution binding is immutable")
 
+        # Wake only after transaction commit and connection return. A very fast
+        # Executor may have published all events before this binding existed.
+        from api_service.worker.wakeup import binding_committed
+        binding_committed(self.pool.conninfo, self.namespace)
+
     async def ingest(
         self,
         event: ExecutorEvent,

@@ -127,3 +127,45 @@ __all__ = [
     "ainvoke_with_crud_message_persistence",
     "astream_with_crud_message_persistence",
 ]
+
+
+class InvocationProjection:
+    """Skip only projections already committed during ONE values stream.
+
+    Checkpoints/receipts still run at every super-step. The first projection and
+    every new invocation replay all current public events through durable SQL
+    deduplication; recovery continues to call persist_graph_state directly.
+    Changed event payloads are sent to the same DB logic, never hidden by IDs.
+    No DB connection, transaction or cursor is kept between graph states.
+    """
+    def __init__(self):
+        self._scope = None
+        self._events = {}
+
+    async def persist(self, state, *, user_id, agent_run_id, session_factory=None,
+                      dispatcher=None, trigger_message_id=None):
+        kwargs = dict(user_id=user_id, agent_run_id=agent_run_id, session_factory=session_factory,
+                      dispatcher=dispatcher, trigger_message_id=trigger_message_id)
+        if (dispatcher is not None or not isinstance(state, dict)
+                or state.get('agent_runtime') != 'agentic-planning-v1'):
+            return await persist_graph_state(state, **kwargs)
+        import hashlib
+        import json
+        scope = (str(user_id), str(agent_run_id), str(trigger_message_id), *(str(state.get(key)) for key in
+                 ('session_id', 'project_id', 'task_id')))
+        prior = self._events if scope == self._scope else {}
+        pending, fingerprints = [], {}
+        for event in state.get('public_events', []):
+            key = event['event_id']
+            digest = hashlib.sha256(json.dumps(event, sort_keys=True, separators=(',', ':'),
+                                               ensure_ascii=False, allow_nan=False).encode()).digest()
+            if prior.get(key) != digest:
+                pending.append(event)
+            fingerprints[key] = digest
+        if scope != self._scope or pending:
+            await persist_graph_state({**state, 'public_events': pending}, **kwargs)
+            # Advance only after commit. A failed/uncertain projection is repaired
+            # on retry, with exactly the same persistent unique keys and payloads.
+            self._scope = scope
+            self._events = {**prior, **fingerprints}
+        return state

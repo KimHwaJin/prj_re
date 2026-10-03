@@ -36,12 +36,19 @@ statement cache는 API의 asyncpg CRUD 연결에만 적용하며 checkpointer,
 이 성능 profile만 100을 명시한다. 캐시는 요청별 결과나 사용자 권한을
 저장하는 캐시가 아니며 SQL 수·트랜잭션·소유권 검사를 생략하지 않는다.
 
-현재 프로세스의 잠재 최대 DB 연결은 CRUD 10 + checkpoint 4 + 공식 Store 2
-+ SSE LISTEN 1 = 17개다. 실제 Executor 실행 bridge가 열리면 최대 4개 추가,
-이벤트 Worker를 켜면 그 pool도 추가된다. 실측 모델 fixture는 Store 데이터
-읽기/자동 갱신과 Executor bridge를 사용하지 않으므로 실제 배포의 모든
-풀을 포화시킨 시험이 아니다. 여러 DB URL이 같은 PostgreSQL 인스턴스라면
-모두 합산해야 하며, replica 수를 우리가 제어하지 못하는 조건도 남는다.
+057에서 profile에 Event ingress4/dispatch4·EW pool4·periodic0.2/idle2초를 명시했다.
+Agent 한도32와 Event 한도4는 서로 다른 자리다. Event Worker를 자동 활성화하지는 않는다.
+Executor 제출 bridge와 Event Worker는 별도 풀 객체이며 EW_POOL_SIZE를 각각 적용한다.
+[Executor 연계 측정](reports/executor-throughput-2026-10-03/README.md)을 참고한다.
+
+이 profile의 잠재 최대 DB 연결은 CRUD10 + checkpoint4 + official Store2
++ SSE LISTEN1 + Event4 + bridge4 =25개/프로세스다. 활성화/수요에 따라 실제
+연결은 다르며 checkout을 반환해도 idle physical connection은 남을 수 있다.
+056은 Executor/Store 문맥 경로를 사용하지 않았고057은 Event/bridge를 사용하되
+memory 모델 문맥/자동 갱신을 포화시키지 않았다. profile을 선택하지 않은 기본
+EW_POOL_SIZE는 별도 값이므로25를 모든 설정의 최대치로 해석하지 않는다.
+여러 DB URL이 같은 PostgreSQL 인스턴스라면 모두 합산하며 replica/프로세스
+증가로 전체 pool이 복제된다. pooler 없는 전체 DB연결의 강한 상한은 미보장이다.
 
 32는 시험한 후보이지 무제한 처리 보장이나 실제 모델 동시 요청 권한이
 아니다. 실제 모델의 허용량·Pod CPU/memory 제한과 DB 전체 예산에 맞춰

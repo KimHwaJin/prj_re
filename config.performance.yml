@@ -25,3 +25,16 @@ service:
     # Short login queries wait within the bounded pool; do not multiply connections.
     sso_redis_max_connections: 8
     sso_redis_timeout_seconds: 3
+  events:
+    # Agent Run slots and Executor result dispatch slots are separate limits.
+    # Four slots measured well; 8 was marginal and 16 slower in an exploratory
+    # Event-only candidate. Event Worker stays disabled unless explicitly enabled.
+    ew_concurrency: 4
+    ew_ingress_concurrency: 4
+    ew_dispatch_concurrency: 4
+    # Each Event Worker and submission bridge has its OWN pool with this limit.
+    ew_pool_size: 4
+    # Periodic fallback for other Pods/restarts; local committed work also wakes
+    # router/outbox with a bounded 20ms coalescing window.
+    ew_poll_seconds: 0.2
+    ew_idle_poll_seconds: 2

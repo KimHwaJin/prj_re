@@ -1,0 +1,132 @@
+[
+  {
+    "path": "raw/baseline5-executor-u1-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "22e62436cc29469d3dd627aeb7053637992ab62e04c4456bae1595e3e04e036c",
+    "gzip_sha256": "793d21591cd9a5a1938006e97510311f35fe33adf7442d9f681ceec802b84517"
+  },
+  {
+    "path": "raw/baseline5-executor-u1-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "1cdf3c10b071e7c30febe26cbf0bde55757089f616b825d0050af02a2d9f29e2",
+    "gzip_sha256": "e55a5e4b212a211d83ec3651bbf483819d6dba71f5643f515f47e62db0f200d2"
+  },
+  {
+    "path": "raw/baseline5-executor-u10-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "7e990edd21814d5ede8739813b8949116ecc92c0799fe4af1ce34b5550c7f054",
+    "gzip_sha256": "911ef1b9ac00a78bb9f86a1cf59e92d01d8e198d826316b7e3f5a476635639fd"
+  },
+  {
+    "path": "raw/baseline5-executor-u10-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "f9ea048b315d8bd5c9c1cc5b8583006de3c57a3988492f4d7488dc4dfc0e6d2e",
+    "gzip_sha256": "71941e17a7169d9b723e5ae387b6213fa635cfcc8c3fe7d7a05a37b0b0fc2e6f"
+  },
+  {
+    "path": "raw/baseline5-executor-u30-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "bdc050bf8aa98af5aa8765f12088d3c4a6a5d79a6ea8efebdc01db9fe5f6558f",
+    "gzip_sha256": "8fb528d134606da9c99cc4fb0a10eb96fb7d688ef9c3e5a35b1672ef2bf1f863"
+  },
+  {
+    "path": "raw/baseline5-executor-u30-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "e4a194d21d41a9f83232a635431eec96675a7f5c62e2a8cda7fba78fc9451186",
+    "gzip_sha256": "4466dccc072f6771776c505230cd4c68368f187c00986dd536224353be519024"
+  },
+  {
+    "path": "raw/baseline5-executor-u50-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "f91a6aa66cb414552a765d2f64f9cca6da5736dfda2246a079838eff04a94cd7",
+    "gzip_sha256": "036cae09f83c8caf973068d40c409bc4a8d2d9c9fff2ccedd63aa771f427254e"
+  },
+  {
+    "path": "raw/baseline5-executor-u50-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "47533638d37cd1e83a9ebda681a1c5a6e9cc4c92496972b36291699ba3b34082",
+    "gzip_sha256": "7303bbce8d1b8770e4ad7f4bc28e55bdaa2f127fb91e2aed5e0035b0c7c7f9ad"
+  },
+  {
+    "path": "raw/common5-executor-u1-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "e723d229c7a1e10bdfc8f2f8667c20e5043e0a79c01addc58a4456d8ffaec828",
+    "gzip_sha256": "1ea14bbb427b2cf04fd5d036f09741b3c3a0ebe09efd78885f9284ad0bad2c59"
+  },
+  {
+    "path": "raw/common5-executor-u1-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "feab27a3300b836ffe886f0e941f88670931fe2b8c37606a37476335921d0afe",
+    "gzip_sha256": "1eeec16dde571c7d00dc7f3cab51d50309f5c99f6d808a2739260beb76ea3ddb"
+  },
+  {
+    "path": "raw/common5-executor-u10-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "0e0d5bdaf2f57a7727933cdf7059f442532cb736aa68bf6a42684a68dc1fded6",
+    "gzip_sha256": "6ab34af96734eaa151a56466174554ab4d9ac7dcea64331f1bece861acb2dc66"
+  },
+  {
+    "path": "raw/common5-executor-u10-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "6452796b27f627dba9410271bc25776d8ff0f9c0eb6ac51cba3fd0e8e14d7a91",
+    "gzip_sha256": "351699985c619ffa076857d64adca90fd4400530486613d6c91821bc2812e91a"
+  },
+  {
+    "path": "raw/common5-executor-u30-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "df7feee64ad0a36315a7ff338c4521eae692c5aa6b4931877f351b7db09e658e",
+    "gzip_sha256": "b91ddc24e46bb32e8789cd124d2d9f2c3ea326fb8255d533dfcd0ac3ae9d3cba"
+  },
+  {
+    "path": "raw/common5-executor-u30-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "d37f20b8c2b289e5c9cf39b8084e9072b5acd9e79bdfc4b397d3c91718b1ef88",
+    "gzip_sha256": "42247f0f5a6c2bd6343c17c715901a2415b7f560bef326ca0dbeb930de205202"
+  },
+  {
+    "path": "raw/common5-executor-u50-c16-ew4-d5000-r1.json.gz",
+    "raw_sha256": "c12c90468524302be45c856affc1ca9c31e2989015699a6d530029f936de0e70",
+    "gzip_sha256": "82b6f54d2baa668838c757d3cef96d5a02f3952c8f0a54ee359fb3ee315e2271"
+  },
+  {
+    "path": "raw/common5-executor-u50-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "27c8d25abc02a38f2413472f6449c8f9ac38903fbca411324a37ed4ede40f5c4",
+    "gzip_sha256": "89be377ba622add66a33d6a323297cab9c92ab6018568ffb38219075db3fa249"
+  },
+  {
+    "path": "raw/baseline-repeat-executor-u50-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "341102e3728579c0adafb7a2cdbde244ad0afee8b2d4058f69394adcd88b708c",
+    "gzip_sha256": "221321a0dddfb4cf14945407a11cf69fc4ab8a57f5a4825683564b32f10a4b58"
+  },
+  {
+    "path": "raw/common-repeat-executor-u50-c32-ew4-d5000-r1.json.gz",
+    "raw_sha256": "b21e36f6ff6b2509049efad6bc464253ccb98f5ab1416577d805f670e4e106e2",
+    "gzip_sha256": "6eebb072be3cca6ab38c32bf587b8a7d8b2cd451d0f94484e325590c4cae3db8"
+  },
+  {
+    "path": "raw/dispatch8-executor-u50-c32-ew8-d5000-r1.json.gz",
+    "raw_sha256": "e80c07f229923f61896d3522d8012268a247726c5752766768c84d299d0c8aab",
+    "gzip_sha256": "c6aa7bfed7c2fe9ffb822176b588f3e36bdd260a2da704c3a57c44d82d93cddb"
+  },
+  {
+    "path": "raw/dispatch16-executor-u50-c32-ew16-d5000-r1.json.gz",
+    "raw_sha256": "adf6b33a0f3b1c78c46fb0ab154367bd56aae6e60f0b026fc4831a6ddd5bb040",
+    "gzip_sha256": "f3b7e68c5436085aeed631cee9c268831cb10104bb4c2386ad6c9cc7a0fe8fb9"
+  },
+  {
+    "path": "raw/baseline-zero-executor-u50-c32-ew4-d0-r1.json.gz",
+    "raw_sha256": "e18db02b98fb4f6d173c00eb528468fd384e38bd9219dd5c075f9a013332dc51",
+    "gzip_sha256": "a050c12048c3a0b667c6e5affe668b2bde39f3a1cf0f270d475e6eb861bb60f0"
+  },
+  {
+    "path": "raw/common-zero-executor-u50-c32-ew4-d0-r1.json.gz",
+    "raw_sha256": "8145799608235555eb2758bc7f1f566ba5ef6204fb79b514b61ec81188329c4d",
+    "gzip_sha256": "bdd01fa5f5fa570e44362bbb22564047cd5bed7467b43ce146543fcd168980fb"
+  },
+  {
+    "path": "raw/common-hold-executor-u10-c16-ew4-d0-r1.json.gz",
+    "raw_sha256": "5167c5a1ba7f99dcda243ee7a1f80cccc796f37b186731fb81b61e58ca79c867",
+    "gzip_sha256": "8e57cf17b788b732f51f248f8bc73a947d6e15eb09cd672315b579c4643e1085"
+  },
+  {
+    "path": "raw/real-executor-u1-c16-ew4-d0-r1.json.gz",
+    "raw_sha256": "1f9f656a6684395aa97a390f8b686ad2c2d3c6dbc9693e71d87309cd53f0034c",
+    "gzip_sha256": "e235d271b060ea1af3db710bb56e25246813df9b4fc2031c72c64a73c50b8ce8"
+  },
+  {
+    "path": "raw/common-real-executor-u1-c16-ew4-d0-r1.json.gz",
+    "raw_sha256": "c1c49ecac0286b724cb03078ae4428623d606dbd76d5832f20456b5d588ca850",
+    "gzip_sha256": "8eceac961fd4f3f13c7e130cffe93889194388661e635770354d5d9e07dfceb5"
+  },
+  {
+    "path": "raw/hold-owners-executor-u10-c16-ew4-d0-r1.json.gz",
+    "raw_sha256": "260c787bc13b0cd06049c250a4660b04619778e15e0c0d1493b10f274b7ece52",
+    "gzip_sha256": "6c3816f0c0b877d6c73b1d7e8ef32e86f3021ab58a79676cd35ba1a2b01bf7d8"
+  }
+]

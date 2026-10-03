@@ -115,7 +115,10 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
                     await adapter(context)
                     # Receipt replay retries API projection after a separate graph commit.
                     await synchronize_executor_completion(context, graph)
-                await run_event_owned(context, invoke_and_project)
+                # A fast Executor can finish before the submitting Run commits its
+                # wait. Allow only a short API ownership handoff here; otherwise
+                # retain the normal durable PEL deferral/recovery policy.
+                await run_event_owned(context, invoke_and_project, handoff_timeout_seconds=1.0)
 
             deferred.bind(handle_event)
             worker.add_readiness_check("agent-graph", deferred.ready)

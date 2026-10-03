@@ -144,6 +144,7 @@ async def test_executor_runtime_uses_service_stop_without_early_handler_cancel(m
     consumer,_=consumer_for(monkeypatch,handle)
     worker=ExecutorWorker.__new__(ExecutorWorker)
     worker._running=False; worker._stop=asyncio.Event()
+    worker._router_wake=asyncio.Event(); worker._outbox_wake=asyncio.Event()
     worker.settings=SimpleNamespace(health_port=0,shutdown_seconds=0,poll_seconds=.01,idle_poll_seconds=.02)
     worker.consumers=[consumer]
     worker.router=SimpleNamespace(once=AsyncMock(return_value=0))

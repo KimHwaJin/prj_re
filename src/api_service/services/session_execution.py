@@ -137,7 +137,12 @@ async def run_owned(owner: SessionExecution, operation: Callable[[], Awaitable])
         await protected_cleanup(clean(uncertain))
 
 
-async def run_event_owned(context, operation: Callable[[], Awaitable]):
+class _HandoffPending(DeferEvent):
+    """An API invocation is still committing/releasing this session."""
+
+
+async def run_event_owned(context, operation: Callable[[], Awaitable], *,
+                          handoff_timeout_seconds: float = 0):
     if not execution_health.healthy:
         raise DeferEvent('Process session execution is unhealthy')
     owner = SessionExecution(UUID(context.session_id), uuid4(), context.command_id, 'executor_event')
@@ -154,19 +159,38 @@ async def run_event_owned(context, operation: Callable[[], Awaitable]):
                     raise DeferEvent("API resources are inactive or changed during event admission") from exc
             # Standalone graph sessions without API resources still participate
             # in the existing persistent session ownership protocol.
-            busy_task = await db.scalar(select(TaskModel.task_id).where(
+            busy_task = await db.scalar(select(TaskModel.recovery_required).where(
                 TaskModel.session_id == owner.session_id,
                 or_(TaskModel.status.in_([TaskStatus.PENDING, TaskStatus.RUNNING]),
                     TaskModel.recovery_required.is_(True)),
             ).limit(1))
-            if busy_task is not None:
-                raise DeferEvent('API task is executing, queued, or requires recovery')
+            if busy_task is True:
+                raise DeferEvent('API task requires recovery')
+            if busy_task is False:
+                raise _HandoffPending('API task is executing or queued')
             if not await acquire(db, owner):
+                current = await db.get(Owner, owner.session_id)
+                if (current is not None and current.owner_kind == 'api_run'
+                        and current.token is not None and not current.recovery_required):
+                    raise _HandoffPending('API invocation has not released its session')
                 raise DeferEvent('Session graph is owned or requires recovery')
             await db.commit()
             acquired = True
 
-    acquisition = asyncio.create_task(acquire_owner())
+    async def bounded_handoff():
+        deadline = asyncio.get_running_loop().time() + handoff_timeout_seconds
+        while True:
+            try:
+                return await acquire_owner()
+            except _HandoffPending:
+                remaining = deadline - asyncio.get_running_loop().time()
+                if remaining <= 0:
+                    raise
+                # acquire_owner exited its DB context. Never sleep with an open
+                # transaction/connection, and never bypass or steal the owner.
+                await asyncio.sleep(min(.05, remaining))
+
+    acquisition = asyncio.create_task(bounded_handoff(), name=f'executor-event-admission:{owner.session_id}')
     try:
         await asyncio.shield(acquisition)
     except asyncio.CancelledError:

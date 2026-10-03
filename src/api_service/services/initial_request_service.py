@@ -62,12 +62,13 @@ async def start_and_project(graph, config, graph_input, *, user_id, project_id,
         await mark_started(run_id=run_id, session_factory=session_factory)
         with span("graph.invoke"):
             if getattr(graph, 'name', None) == 'agentic-planning-v1':
+                incremental = projection.InvocationProjection()
                 async for emitted in graph.astream(prepared, config=config, stream_mode='values', durability='sync'):
                     # The input echo can retain the preceding terminal Run's task/events.
                     # Project only after receive records this invocation's entry receipt.
                     if emitted.get('initial_request_receipt') != identity:
                         continue
-                    await projection.persist_graph_state(emitted, user_id=user_id, session_factory=session_factory,
+                    await incremental.persist(emitted, user_id=user_id, session_factory=session_factory,
                                                          dispatcher=dispatcher, agent_run_id=run_id, trigger_message_id=trigger_message_id)
             else:
                 await graph.ainvoke(prepared, config=config, durability="sync")

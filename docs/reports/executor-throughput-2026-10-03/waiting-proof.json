@@ -1,0 +1,16 @@
+{
+  "users": 10,
+  "gate_seconds": 5,
+  "samples": 20,
+  "agent_event_active_all_zero": true,
+  "crud_checkout_zero_samples": 13,
+  "crud_checkout_one_samples": 7,
+  "db_active_and_idle_transaction_sampled_zero": true,
+  "all_psycopg_connections_available": true,
+  "checkout_owner_repeat": {
+    "samples": 20,
+    "all_crud_zero": true,
+    "checkedout_owner_seen": false
+  },
+  "scope": "first hold has7 CRUD checkout1 samples, owner was not recorded; finite repeat all zero; not a week-long test"
+}

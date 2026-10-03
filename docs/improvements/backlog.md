@@ -52,8 +52,16 @@
 
 - 실제 Kubernetes Pod CPU/memory 제한에서 단일process 한도16/32를 비교한다. 모델 병목은 별도 구분하고 실제모델 동시 허용량을 확인한다. 플랫폼 replica수를 제어하는 정책을 전제로 삼지 않는다.
 - 같은PostgreSQL 인스턴스에 붙는 모든 pool/API·Agent·Executor·배치·replica 연결 예산을 확인한다. pool10/overflow0만으로전체상한이생기는것은아니다.
-- 실제 Executor 제출·결과event/SSE·후속질문·Store와memory읽기/자동갱신 경로도 모델을제외하여용량측정한다. 현재056의종료는plan_approved이고 actual Executor시험은아니다.
+- 057에서 실제 HTTP Executor 제출·Redis 결과event·리포트/SSE까지 fixture로 서비스 비용을 측정했다. [057](057-executor-service-throughput.md). 실제 Executor는 각1건 기능 대조이며 계산 부하 용량은 미확정이다. 후속질문·보고서 재작성·Store/memory 읽기·자동갱신 비용은 다음 서비스 성능 범위로 남긴다.
 - 실제유입률과계획편집·후속질문·동시탭비율에맞는지속부하를확인한다. 유한50명burst처리량을안정도착률로환산하지않는다.
 - 현재flow SQL약390회/사용자의목적별분포를검토한다. 추가비용이입증되면권한·원자성·멱등성을보존하는개선을선택한다. 설정한도확대와SQL개선을같은성과로합산하지않는다.
 
 본시험용profile은 자동적용/배포하지않았다. 원래checkout·.env·기존컨테이너유지.
+
+
+## 057 이후 처리량 우선순위
+
+- 승인→Executor HTTP→Streams 결과→Event Worker 재개→리포트/SSE 서비스 경로를 완료했다. 동일50명·Agent32의시간개선은4.0%, CRUD SQL13.8%감소다. 0초39Defer재전달개선은정상비용비교와구분한다.
+- 다음: 모델응답을fixture로고정하고 후속설명/보고서·project_memory manual/auto_context 읽기·갱신의 서비스 SQL/CPU/DB연결수명을 확인한다. 모델호출횟수·prompt최적화는보류한다.
+- 실제Pod자원제한·model허용량·전체DB연결예산·여러Pod결과인계/주기scan은현로컬결과로확정하지않는다. Agent16/32는트래픽별차이가있고 Event한도를8/16으로자동확대하지않는다.
+- 보류10명에서Agent/Event0·psycopg반환은확인했으나첫표본CRUD0~1의1개소유자는기록되지않았다. 추가owner진단표본은모두0이다. 재관찰시소유구간을측정하고장기누수로미리판정하지않는다.

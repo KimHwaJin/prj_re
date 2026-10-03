@@ -68,3 +68,40 @@ async def test_public_event_batch_barrier_replay_and_partial_failure(planning,mo
     async with h.factory() as db:await persist_plan_events(db,{'public_events':failed},context)
     async with h.factory() as db:
         assert (await db.get(TaskModel,task_id)).last_event_sequence==before[2]+3
+
+
+@pytest.mark.asyncio
+async def test_invocation_projection_commits_deltas_and_new_invocation_repairs_replay(planning):
+    from api_service.services.graph_crud_persistence import InvocationProjection
+    h=planning
+    accepted=await submit(h,{'input':{'content':[{'type':'text','text':'품질 확인'}]}})
+    await execute();waiting=await read(h,accepted.json()['run_id'])
+    owner=UUID(waiting['resume_token']);task_id=UUID(waiting['task_id'])
+    from api_service.models.common.session_model import SessionModel
+    async with h.factory() as db:
+        task=await db.get(TaskModel,task_id);session=await db.get(SessionModel,task.session_id)
+    def public():
+        return {'event_id':str(uuid4()),'owner_run_id':str(owner),'envelope':{'schema_version':1,
+            'type':'activity.updated','sequence':1,'session_id':str(session.session_id),
+            'run_id':accepted.json()['run_id'],'occurred_at':'2026-10-03T00:00:00+00:00','data':{'title':'Projection probe'}}}
+    first,second=public(),public()
+    state={'agent_runtime':'agentic-planning-v1','public_events':[first],
+        'task_id':str(task.graph_task_id),'session_id':str(session.session_id),'project_id':str(session.project_id)}
+    projection=InvocationProjection();kw={'user_id':session.user_id,'agent_run_id':owner}
+    await projection.persist(state,**kw)
+    async def snapshot():
+        async with h.factory() as db:
+            logs=list(await db.scalars(select(AgentRunLogModel).where(AgentRunLogModel.event_key.in_(['public:'+first['event_id'],'public:'+second['event_id']]))))
+            task=await db.get(TaskModel,task_id)
+            return {log.log_id for log in logs},task.last_event_sequence
+    initial=await snapshot()
+    statements=[];engine=h.factory.kw['bind']
+    def observe(conn,cursor,statement,parameters,context,many):statements.append(statement)
+    event.listen(engine.sync_engine,'before_cursor_execute',observe)
+    try:await projection.persist(deepcopy(state),**kw)
+    finally:event.remove(engine.sync_engine,'before_cursor_execute',observe)
+    assert statements==[] and await snapshot()==initial
+    state['public_events'].append(second);await projection.persist(state,**kw)
+    updated=await snapshot();assert len(updated[0])==2 and updated[1]==initial[1]+1
+    await InvocationProjection().persist(deepcopy(state),**kw)
+    assert await snapshot()==updated
