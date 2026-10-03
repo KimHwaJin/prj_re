@@ -139,3 +139,14 @@
 ## 개발 검토 응답 (2026-10-03)
 
 원문은 보존했다. 동일 DB/트랜잭션 전제, 순서와 멱등 보장, 현재 내장 Worker의 자원 공유, 공개 Run과 내부 명령의 구분에 대한 보완은 [상세 응답](2026-10-03-review-response.md#worker-통합-제안)을 참고한다. Redis 전환 및 Worker 통합 구현은 아직 시작하지 않았다.
+
+## 정정란
+
+2026-10-03, 리뷰어: [개발 응답](2026-10-03-review-response.md#worker-통합-제안)의 보완 내용을 재확인하고 다음과 같이 정정한다. 남은 쟁점은 [후속 의견](2026-10-03-reviewer-followup.md)의 F-02, F-03에서 다룬다.
+
+- **트랜잭션 전제**: "inbox 처리와 Run 추가를 같은 Postgres 트랜잭션으로 커밋"은 API DB와 EW DB가 같다는 전제에서만 성립한다. 두 DB는 설정상 분리할 수 있다(`deploy/secret.example.yaml` 참고).
+- **멱등 보장**: 원자적 커밋만으로는 정확히 한 번의 enqueue가 보장되지 않는다. unique command ID, checkpoint receipt, Executor idempotency를 함께 유지해야 한다.
+- **순서 보장**: `created_at` + SKIP LOCKED는 session 단위 FIFO를 보장하지 않는다. `next_attempt_at`으로 재예약된 앞선 명령을 뒤 명령이 추월할 수 있다.
+- **"Run 레코드 없음" 표현**: 부정확했다. 이벤트 재개에도 ew_commands 원장과 checkpoint receipt가 있고, 연결된 Task의 최신 Run에 반영된다. 진단 모델이 둘로 나뉘어 있다는 지적만 유효하다.
+- **이벤트 병합**: operation 완료 이벤트를 무조건 합치지 않는다. 선행 이벤트가 적용됐음을 receipt로 확인한 뒤, 의미가 없어진 이벤트만 건너뛴다.
+- **배포 형태**: W-04의 "별도 Deployment 경량화"는 단일 컨테이너 제약에 맞춰, 같은 컨테이너 안에서 역할을 경량화하는 것으로 읽는다.

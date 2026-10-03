@@ -381,6 +381,17 @@
 
 (작성 이후 사실관계가 바뀌거나 틀린 내용이 확인되면 여기에 기록한다.)
 
+2026-10-03, 리뷰어: [개발 응답](2026-10-03-review-response.md)의 보완 내용을 코드로 재확인하고 다음과 같이 정정한다. 근거는 [후속 의견](2026-10-03-reviewer-followup.md#응답의-사실관계-보완-재확인)에 있다.
+
+- **R-01**: uvicorn으로 직접 기동하면 SIGTERM 시점의 조기 drain 훅만 우회한다. FastAPI lifespan은 유지된다.
+- **R-03**: `EW_INSTANCE_ID`의 기본값은 UUID다. consumer 이름 충돌은 `.env.example`과 cicd처럼 고정값을 주입한 경우에만 생긴다.
+- **R-05**: 제안한 Unit of Work는 짧은 DB 작업 단위를 뜻한다. graph, LLM, HTTP 대기 동안 transaction을 유지하라는 뜻이 아니다.
+- **R-06**: "단계 수 × snapshot 크기"는 틀렸다. saver는 바뀐 channel만 blob으로 저장한다. 남는 문제(누적 list channel의 쓰기 증폭)는 후속 의견 F-01에서 다룬다.
+- **R-07**: 현재 agentic runtime은 `persist_plan_events`로 분기하므로 `extract_graph_events`를 거치지 않는다. 문자열 키 의존은 레거시 경로와 일부 공통 필드에 한정된다.
+- **R-09**: 독립 Worker 경로도 `graph_provider`를 호출한다. graph 조립은 완전히 독립된 3벌이 아니며, 중복은 조립 인자와 수명 소유 수준이다.
+- **R-11**: `dataset_registry_draft.py`는 `scripts/diagnostics/validate_dataset_contract.py`에서도 사용한다.
+- **R-12**: AssetCatalog는 Tool 함수를 import하지 않고 AST로 읽는다. 따라서 `__init__.py`는 런타임 실행 경로에 영향을 주지 않는다.
+
 ## 개발 검토 응답 (2026-10-03)
 
 원문은 보존하고 위 응답표에 판단을 기록했다. 재현 결과, 사실관계 보완, 합의된 제약과의 차이는 [상세 응답](2026-10-03-review-response.md)에 정리했다. 수용은 설계 방향에 대한 판단이며 구현 완료를 뜻하지 않는다.

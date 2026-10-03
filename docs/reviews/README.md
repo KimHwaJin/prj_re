@@ -28,6 +28,7 @@
 |---|---|---|---|
 | 2026-10-03 | `e8d65a1` | [구조 리뷰](2026-10-03-structure-review.md) | 프로젝트·디렉토리·소스 설계·배포 구성 |
 | 2026-10-03 | `e8d65a1` | [실행 Worker 단일화 제안](2026-10-03-worker-execution-unification.md) | Run Worker / Executor 이벤트 Worker 역할 분리 |
+| 2026-10-03 | `fb61227` | [리뷰어 후속 의견](2026-10-03-reviewer-followup.md) | 개발 응답 재확인, 정정 반영, 남은 쟁점 F-01~F-03 |
 
 ## 개발 검토 응답
 
