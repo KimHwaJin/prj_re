@@ -14,8 +14,8 @@ from sqlalchemy import select, update
 
 import service_settings
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
-import api_service.services.executor_completion as completion
+import api_service.runs.execution as runs
+import api_service.runs.projection as completion
 from api_service.core.enums import AgentRunStatus, TaskStatus
 from api_service.models.common.agent_run_model import AgentRunModel
 from api_service.models.common.task_model import TaskModel

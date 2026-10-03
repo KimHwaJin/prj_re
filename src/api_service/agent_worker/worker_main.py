@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from typing import Any, Callable
 
 from api_service.agent_worker.graph_provider import build_agent_graph
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 from api_service.agent_worker.worker_hooks import build_handlers
 from api_service.worker import EventContext, ExecutorWorker
 from service_contracts.events import EventHandler
@@ -106,16 +106,13 @@ async def main(*, install_signals: bool = True, stop_event: asyncio.Event | None
         async with graph_context(service, worker, use_shared_graph=use_shared_graph) as graph:
             _validate_graph(graph)
             from api_service.services.agent_project_context import load_event_project_snapshot
-            from api_service.services.executor_completion import synchronize_executor_completion
             from service_runtime.model_selection import validate_checkpoint_selection
-            adapter = LangGraphEventAdapter(graph, project_context_loader=load_event_project_snapshot,
+            invocation = GraphInvocation(graph, project_context_loader=load_event_project_snapshot,
                                             model_validator=validate_checkpoint_selection)
 
             async def handle_event(context: EventContext) -> None:
                 async def invoke_and_project():
-                    await adapter(context)
-                    # Receipt replay retries API projection after a separate graph commit.
-                    await synchronize_executor_completion(context, graph)
+                    await invocation.executor_event(context)
                 # A fast Executor can finish before the submitting Run commits its
                 # wait. Allow only a short API ownership handoff here; otherwise
                 # retain the normal durable PEL deferral/recovery policy.

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 from service_contracts.execution import ExecutionNeedsRecovery
 from api_service.core.execution_lifecycle import execution_health
 from api_service.core.enums import AgentRunStatus, TaskStatus
@@ -105,7 +105,7 @@ async def test_executor_event_post_ambiguity_keeps_session_owner_for_recovery(ru
     from sqlalchemy import select
     from api_service.services.session_execution import run_event_owned
     from api_service.models.common.session_execution_model import SessionExecutionModel
-    from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+    from api_service.runs.graph_invocation import GraphInvocation
     from api_service.worker import EventContext, ExecutorEvent, DeferEvent
     from unittest.mock import AsyncMock
     from uuid import UUID
@@ -125,8 +125,8 @@ async def test_executor_event_post_ambiguity_keeps_session_owner_for_recovery(ru
         async with api.ExecutorClient(cfg) as client:
             async def invoke(*args,**kwargs):
                 await api.submit_execution_artifact(cfg,str(execution),{"idempotency_key":"report"},client=client)
-            adapter=LangGraphEventAdapter(SimpleNamespace(ainvoke=invoke))
-            async def operation(): return await adapter._invoke(None,{},values={},durability="sync")
+            adapter=GraphInvocation(SimpleNamespace(ainvoke=invoke), model_validator=None)
+            async def operation(): return await adapter.invoke(None,{},values={},durability="sync")
             with pytest.raises(ExecutionNeedsRecovery):
                 await run_event_owned(context,operation)
             async with h.factory() as db:

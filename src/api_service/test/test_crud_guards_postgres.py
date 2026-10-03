@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, text, update, func
 
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 from api_service.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus, MessageType, TaskStatus
 from api_service.models.common.agent_run_model import AgentRunModel as Run
 from api_service.models.common.llm_run_model import LLMRunModel as LLM

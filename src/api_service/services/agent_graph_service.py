@@ -313,14 +313,13 @@ async def ainvoke_user_turn(
         request_id=request_id,
         model_selection=model_selection,
     )
-    from api_service.services.initial_request_service import start_and_project
+    from api_service.runs.graph_invocation import GraphInvocation
 
     async def invoke(compiled):
-        return await start_and_project(
-            compiled, graph_config(session_id, run_id, callbacks), graph_input,
+        return await GraphInvocation(compiled, session_factory=session_factory, dispatcher=dispatcher).user_turn(
+            graph_config(session_id, run_id, callbacks), graph_input,
             user_id=user_id, project_id=project_id, session_id=session_id, run_id=run_id,
             protocol=initial_protocol, started=initial_started,
-            session_factory=session_factory, dispatcher=dispatcher,
             trigger_message_id=trigger_message_id,
         )
     if graph is not None:
@@ -344,15 +343,14 @@ async def ainvoke_resume(
     graph: Any | None = None,
     callbacks: list[Any] | None = None,
 ) -> dict[str, Any]:
-    from api_service.services.user_resume_service import resume_and_project
+    from api_service.runs.graph_invocation import GraphInvocation
 
     async def invoke(compiled):
-        return await resume_and_project(
-            compiled, graph_config(session_id, checkpoint_run_id, callbacks),
+        return await GraphInvocation(compiled, session_factory=session_factory, dispatcher=dispatcher).user_resume(
+            graph_config(session_id, checkpoint_run_id, callbacks),
             user_id=user_id, run_id=agent_run_id, command=command,
             target=resume_target, started=resume_started,
-            model_selection=model_selection, session_factory=session_factory,
-            dispatcher=dispatcher,
+            model_selection=model_selection,
         )
     if graph is not None:
         return await invoke(graph)

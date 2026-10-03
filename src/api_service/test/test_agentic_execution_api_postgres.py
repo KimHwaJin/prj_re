@@ -8,8 +8,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 import service_settings
 from api_service.test.test_planning_api_postgres import planning, test_config, submit, execute, read
 from api_service.services.agent_graph_service import runtime as graph_runtime
-from api_service.services.executor_completion import synchronize_executor_completion
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.projection import synchronize_executor_completion
+from api_service.runs.graph_invocation import GraphInvocation
 from service_contracts.events import EventContext, ExecutorEvent
 from service_contracts.plan_interaction import DecisionInteractionEvent
 from agent_service.agents.analysis.planning.graph import build_planning_graph
@@ -20,7 +20,7 @@ from agent_service.agents.analysis.tests.test_agentic_execution import LocalExec
 @pytest.mark.asyncio
 async def test_decision_form_validation_does_not_consume_token_and_projects_terminal(planning, tmp_path, monkeypatch):
     h = planning
-    import api_service.services.executor_completion as completion
+    import api_service.runs.projection as completion
     monkeypatch.setattr(completion, "get_session_factory", lambda: h.factory)
     pd = pytest.importorskip('pandas')
     path = tmp_path/'data.parquet'
@@ -56,7 +56,7 @@ async def test_decision_form_validation_does_not_consume_token_and_projects_term
         state=(await graph.aget_state({'configurable':{'thread_id':h.session_id}})).values
         context=EventContext(namespace='test',session_id=h.session_id,task_id=state['task_id'],
             execution_id=UUID(executor.id),command_id=uuid4(),event=ExecutorEvent.model_validate(event))
-        await LangGraphEventAdapter(graph)(context)
+        await GraphInvocation(graph, model_validator=None).executor_resume(context)
         await synchronize_executor_completion(context,graph)
 
     await deliver(executor.events[0])

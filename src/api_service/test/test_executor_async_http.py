@@ -1,4 +1,7 @@
 """Real local HTTP/1.1 sockets: pooling, deadlines, delivery uncertainty."""
+from api_service.runs import monitoring
+from api_service.runs.monitoring import run_cancellable
+from api_service.runs.policy import is_retryable
 import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -11,7 +14,6 @@ import pytest
 
 from agent_config import load_agent_settings
 from integrations.executor import client as api
-from api_service.services.run_service import RunService
 from service_contracts.execution import ExecutionNeedsRecovery
 
 
@@ -122,7 +124,7 @@ async def test_pool_timeout_is_known_unsent_and_has_no_server_side_effect():
                 with pytest.raises(api.ExecutorSubmitError) as error:
                     with api.submission_scope():
                         await api.submit_execution_start(cfg,{"idempotency_key":"not-sent"},client=client)
-                assert RunService._is_retryable(error.value)
+                assert is_retryable(error.value)
                 assert len(server.requests)==1
             finally: release.set(); await first
 
@@ -178,14 +180,14 @@ async def test_cancel_during_or_just_after_post_remains_recovery_when_watcher_wi
         return 202,receipt()
     async def watcher(*args):
         await cancel.wait(); return True
-    monkeypatch.setattr(RunService,"_wait_for_cancellation",watcher)
+    monkeypatch.setattr(monitoring, "wait_for_cancellation",watcher)
     async with local_server(handle) as server:
         cfg=settings(server.url)
         async with api.ExecutorClient(cfg) as client:
             async def graph():
                 await api.submit_execution_start(cfg,{"idempotency_key":"cancel"},client=client)
                 entered.set(); await asyncio.Event().wait()
-            task=asyncio.create_task(RunService._run_cancellable(uuid4(),graph()))
+            task=asyncio.create_task(run_cancellable(uuid4(),graph()))
             await asyncio.wait_for(entered.wait(),2)
             cancel.set()
             with pytest.raises(ExecutionNeedsRecovery):
@@ -227,7 +229,7 @@ async def test_rejections_and_invalid_receipts_are_classified_without_body_leak(
                     await api.submit_execution_start(cfg,{"idempotency_key":"test"},client=client)
             assert "must-not-leak" not in str(caught.value)
             if isinstance(caught.value,api.ExecutorSubmitError):
-                assert RunService._is_retryable(caught.value)==retryable
+                assert is_retryable(caught.value)==retryable
             assert len(server.requests)==1
 
 
@@ -356,7 +358,7 @@ async def test_completed_submission_and_cancel_in_same_turn_do_not_unlock(monkey
     completed=asyncio.Event()
     async def handle(request): return 202,receipt()
     async def watcher(*args): await completed.wait(); return True
-    monkeypatch.setattr(RunService,"_wait_for_cancellation",watcher)
+    monkeypatch.setattr(monitoring, "wait_for_cancellation",watcher)
     async with local_server(handle) as server:
         cfg=settings(server.url)
         async with api.ExecutorClient(cfg) as client:
@@ -365,7 +367,7 @@ async def test_completed_submission_and_cancel_in_same_turn_do_not_unlock(monkey
                 completed.set()
                 return {"execution_id":"execution-1"}
             with pytest.raises(ExecutionNeedsRecovery):
-                await RunService._run_cancellable(uuid4(),graph())
+                await run_cancellable(uuid4(),graph())
             assert len(server.requests)==1
 
 
@@ -399,4 +401,4 @@ async def test_invalid_url_is_rejected_before_delivery_without_recovery(url):
         with pytest.raises(api.ExecutorSubmitError) as error:
             with api.submission_scope():
                 await api.submit_execution_start(cfg,{"idempotency_key":"invalid-url"},client=client)
-        assert not RunService._is_retryable(error.value)
+        assert not is_retryable(error.value)

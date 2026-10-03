@@ -4,22 +4,23 @@ The immutable target is copied from the preceding Run at admission. A durable
 started marker makes a failed invocation without a receipt ambiguous: never
 blindly resend it, even if the old interrupt is still visible.
 """
+
 from __future__ import annotations
 
-from api_service.services.graph_recovery import GraphProjectionError, snapshot_interrupts, checkpoint_state
-from sqlalchemy import select
 from langgraph.types import Command
+from sqlalchemy import select
 
 from api_service.core.database import short_session
-from api_service.core.execution_claim import current_execution_claim
 from api_service.core.enums import AgentRunStatus
+from api_service.core.execution_claim import current_execution_claim
 from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.services import graph_crud_persistence as projection
+from api_service.services.graph_recovery import (
+    GraphProjectionError,
+    checkpoint_state,
+    snapshot_interrupts,
+)
 from service_contracts.execution import ExecutionNeedsRecovery
 from service_contracts.user_resume import UserResumeNeedsRecovery, resume_envelope, resume_identity
-from service_runtime.model_selection import validate_checkpoint_selection
-
-
 
 
 async def mark_started(*, run_id, identity, session_factory):
@@ -50,12 +51,12 @@ def require_finished(snapshot, identity):
 
 async def resume_and_project(graph, config, *, user_id, run_id, command,
                              target, started, model_selection, session_factory=None,
-                             dispatcher=None):
+                             dispatcher=None, invocation=None):
     if not target or not run_id:
         raise UserResumeNeedsRecovery("User resume target is missing; reconcile the legacy waiting Run")
     identity = resume_identity(str(run_id), target, command)
     snapshot = await graph.aget_state(config)
-    validate_checkpoint_selection(snapshot.values, model_selection)
+    invocation.validate_model(snapshot.values, model_selection)
     receipt = snapshot.values.get("user_resume_receipt")
     if isinstance(receipt, dict) and receipt.get("command_id") == str(run_id):
         require_finished(snapshot, identity)
@@ -71,23 +72,16 @@ async def resume_and_project(graph, config, *, user_id, run_id, command,
         # If this raises, a queue retry may only inspect the receipt. It may not
         # dispatch this Command again. External submission uncertainty propagates
         # through the existing submission_scope/ExecutionNeedsRecovery guard.
-        if getattr(graph, 'name', None) == 'agentic-planning-v1':
-            incremental = projection.InvocationProjection()
-            async for emitted in graph.astream(Command(resume={target: resume_envelope(identity, command)}),
-                                               config=config, stream_mode='values', durability='sync'):
-                await incremental.persist(emitted, user_id=user_id, session_factory=session_factory,
-                                                     dispatcher=dispatcher, agent_run_id=run_id)
-        else:
-            await graph.ainvoke(
-                Command(resume={target: resume_envelope(identity, command)}),
-                config=config, durability="sync",
-            )
+        await invocation.ensure_project_context(snapshot.values, config, allow_default=True)
+        await invocation.invoke(
+            Command(resume={target: resume_envelope(identity, command)}), config,
+            user_id=user_id, agent_run_id=run_id,
+        )
         snapshot = await graph.aget_state(config)
         require_finished(snapshot, identity)
     try:
-        return await projection.persist_graph_state(
-            checkpoint_state(snapshot), user_id=user_id, session_factory=session_factory,
-            dispatcher=dispatcher, agent_run_id=run_id,
+        return await invocation.project(
+            checkpoint_state(snapshot), user_id=user_id, agent_run_id=run_id,
         )
     except (ExecutionNeedsRecovery, UserResumeNeedsRecovery):
         raise

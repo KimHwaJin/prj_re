@@ -98,3 +98,15 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         detail="An unexpected server error occurred.",
     )
 
+
+
+async def run_exception_handler(request: Request, exc) -> JSONResponse:
+    """Translate Run application errors at the single HTTP boundary."""
+    from api_service.runs.errors import (
+        InvalidRunRequest, RunConflict, RunExecutionFailed, RunNotFound, RunUnavailable,
+    )
+    statuses = {RunNotFound: 404, RunConflict: 409, InvalidRunRequest: 422,
+                RunUnavailable: 503, RunExecutionFailed: 502}
+    return await http_exception_handler(
+        request, HTTPException(status_code=statuses.get(type(exc), 500), detail=exc.detail),
+    )

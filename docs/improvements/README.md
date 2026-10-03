@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-2026-10-03 리뷰의 1단계 배포·설정 정합성은 [058](058-deployment-config-unification.md)에서 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 Run 책임 분리와 공통 GraphInvocation이다. [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [후속 목록](backlog.md)을 따른다.
+2026-10-03 리뷰의 1단계 배포·설정 정합성은 [058](058-deployment-config-unification.md), 2단계 Run 책임 분리·공통 GraphInvocation은 [059](059-run-execution-boundaries.md)에서 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 DB 내부 명령 원장·공통 실행 스케줄러다. [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [후속 목록](backlog.md)을 따른다.
 
 고아 기준 브랜치: `feature/refactor-base`
 

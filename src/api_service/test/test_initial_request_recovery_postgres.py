@@ -26,7 +26,8 @@ from api_service.models.common.task_event_model import TaskEventModel
 from api_service.models.common.session_execution_model import SessionExecutionModel
 from api_service.services.task_event_service import TaskEventService
 from api_service.services import agent_graph_service as graphs
-from api_service.services import initial_request_service as initial
+from api_service.runs.graph_invocation import GraphInvocation
+from api_service.runs.protocols import initial
 from api_service.services import graph_crud_persistence as projection
 import api_service.agent_run_worker as worker
 from api_service.test.test_user_identity_postgres import database_url, harness, headers, add_session
@@ -157,7 +158,7 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
     monkeypatch.setattr(rt, '_graph_context', h.graph_context)
     monkeypatch.setattr(graphs, 'runtime', rt)
     # Recovery must not reload mutable project prompts or invoke the model.
-    monkeypatch.setattr(initial, 'read_project_snapshot', AsyncMock(side_effect=AssertionError('project reloaded')))
+    monkeypatch.setattr(GraphInvocation, 'project_snapshot', AsyncMock(side_effect=AssertionError('project reloaded')))
     await execute()
     run, task = await rows(h, queued['run_id'])
     assert run.attempt_count == 2 and not task.recovery_required

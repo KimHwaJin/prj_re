@@ -1,4 +1,5 @@
 """Opt-in real API/Worker/PostgreSQL checkpoints; never submits Executor code."""
+from api_service.runs import monitoring
 import json
 import os
 from pathlib import Path
@@ -18,7 +19,7 @@ from sqlalchemy.pool import NullPool
 import service_settings
 import api_service.core.database as database
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 import api_service.services.task_service as tasks
 import api_service.services.llm_token_event_service as tokens
 from api_service.services.agent_graph_service import runtime as graph_runtime
@@ -66,7 +67,7 @@ async def planning(test_config, monkeypatch):
         'ANALYSIS_DATASETS': {'default-nce': {'title': 'NCE', 'scope': 'GLOBAL',
             'runtime_path': '/workspace/pv/default_data/df_nce_long_format.parquet'}}}, environ={})
     app = create_app(settings)
-    for module in (database, worker, runs, tasks, tokens):
+    for module in (database, worker, runs, tasks, tokens, monitoring):
         monkeypatch.setattr(module, 'get_session_factory', lambda: factory)
     async def request_db():
         async with factory() as db:

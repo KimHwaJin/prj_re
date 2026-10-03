@@ -18,7 +18,7 @@ from agent_service.agents.analysis.planning.runtime import PlanningRuntime
 from agent_service.agents.analysis.planning.graph import build_planning_graph
 from agent_service.agents.analysis.execution.repair_policy import proposal_snapshot, source_info, verify_candidate
 from agent_service.agents.analysis.tests.test_agentic_execution import LocalExecutor, Bindings
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 
 
 class FixtureCatalog(AssetCatalog):
@@ -139,7 +139,7 @@ async def scenario(tmp_path,monkeypatch,**options):
         current=(await graph.aget_state(config)).values
         context=EventContext(namespace='test',session_id=value['session_id'],task_id=current['task_id'],execution_id=UUID(executor.id),
             command_id=uuid4(),event=ExecutorEvent.model_validate(event))
-        await LangGraphEventAdapter(graph)(context)
+        await GraphInvocation(graph, model_validator=None).executor_resume(context)
         return context,(await graph.aget_state(config)).values
     return runtime,executor,graph,config,state,calls,deliver,resume
 
@@ -167,7 +167,7 @@ async def test_levels_execute_correction_preserve_successful_anchor_finalize_and
     assert state['submitted_steps'][0]['plan_step_id']=='transform'
     ctx,state=await deliver(executor.events[1])
     assert executor.calls[-1][0].endswith('/finalize')
-    await LangGraphEventAdapter(graph)(ctx)
+    await GraphInvocation(graph, model_validator=None).executor_resume(ctx)
     assert len(executor.calls)==3
     _,state=await deliver(executor.event('execution.completed',{'status':'SUCCEEDED','error':None}))
     assert state['final_response']['status']=='analysis_completed'
@@ -318,7 +318,7 @@ async def test_non_code_or_incomplete_failure_is_never_repaired(tmp_path,monkeyp
 async def test_failure_receipt_replay_at_human_repair_wait_does_not_regenerate_or_submit(tmp_path,monkeypatch):
     runtime,executor,graph,config,state,calls,deliver,resume=await scenario(tmp_path,monkeypatch,needs_input=True)
     ctx,state=await deliver(executor.events[0]);candidate=deepcopy(state['repair_candidate'])
-    await LangGraphEventAdapter(graph)(ctx)
+    await GraphInvocation(graph, model_validator=None).executor_resume(ctx)
     after=(await graph.aget_state(config)).values
     assert len(calls)==1 and len(executor.calls)==1 and after['repair_candidate']==candidate
 

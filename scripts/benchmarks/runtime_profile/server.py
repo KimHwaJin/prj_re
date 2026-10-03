@@ -114,17 +114,37 @@ async def execute(item):
     finally:
         m['worker_active']-=1;record('workers',start=t,end=time.perf_counter(),ms=(time.perf_counter()-t)*1000,outcome=outcome);run.reset(token)
 worker.execute_claimed=execute
-from api_service.services.run_service import RunService
+# This harness can profile both the selected pre-refactor source and current code.
+try:
+    from api_service.runs import repository
+    from api_service.runs import admission, execution
+    run_hooks = [(repository, 'require_session', 'run.session'),
+                 (repository, 'lock_run_and_task', 'run.final_rows')]
+except ModuleNotFoundError as exc:
+    if exc.name not in ('api_service.runs', 'api_service.runs.repository'):
+        raise
+    from api_service.services.run_service import RunService
+    repository = None
+    run_hooks = [(RunService, '_session', 'run.session'),
+                 (RunService, '_lock_run_and_task', 'run.final_rows')]
 from api_service.services.llm_token_event_service import LLMTokenEventBuffer
 from api_service.services.task_event_service import TaskEventService
-for cls,name,label in [(RunService,'_session','run.session'),(RunService,'_lock_run_and_task','run.final_rows'),(LLMTokenEventBuffer,'_append','token.append'),(TaskEventService,'append','event.append')]:
+for cls,name,label in run_hooks + [(LLMTokenEventBuffer,'_append','token.append'),(TaskEventService,'append','event.append')]:
     fn=getattr(cls,name)
     def time_call(fn,label):
         @wraps(fn)
         async def wrapped(*args,**kwargs):
             with diag.span(label):return await fn(*args,**kwargs)
         return wrapped
-    setattr(cls,name,time_call(fn,label) if cls is LLMTokenEventBuffer else staticmethod(time_call(fn,label)))
+    wrapped = time_call(fn, label)
+    if cls is repository:
+        setattr(cls, name, wrapped)
+        # These application modules import the repository functions explicitly.
+        for owner in (admission, execution):
+            if getattr(owner, name, None) is fn:
+                setattr(owner, name, wrapped)
+    else:
+        setattr(cls, name, wrapped if cls is LLMTokenEventBuffer else staticmethod(wrapped))
 # Measure ChatOpenAI generation boundaries (includes client handling, not wire time alone).
 from langchain_openai import ChatOpenAI
 orig_sync=ChatOpenAI._generate;orig_async=ChatOpenAI._agenerate

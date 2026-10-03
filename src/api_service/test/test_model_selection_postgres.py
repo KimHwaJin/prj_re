@@ -18,16 +18,16 @@ from sqlalchemy import select, func
 
 import service_settings
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 import api_service.services.agent_graph_service as graphs
-import api_service.services.executor_completion as completion
+import api_service.runs.projection as completion
 from service_runtime.model_selection import build_catalog, validate_checkpoint_selection
 import agent_service.agents.analysis.planning.runtime as runtime_module
 from agent_service.agents.analysis.planning.runtime import PlanningRuntime
 from agent_service.context import AgentContext
 from agent_service.agents.analysis.tests.test_agent_middleware import response
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 from api_service.models.common.agent_run_model import AgentRunModel as Run
 from api_service.models.common.task_model import TaskModel as Task
 from api_service.services.session_execution import run_event_owned
@@ -235,9 +235,9 @@ async def test_actual_roles_keep_model_through_postgres_restart_hitl_and_executo
                     before=await graph.aget_state(context.graph_config)
                     assert before.values["model_selection"]==catalog.select().model_dump()
                     assert "private-key" not in json.dumps(before.values,default=str)
-                    adapter=LangGraphEventAdapter(graph,model_validator=validate_checkpoint_selection)
+                    adapter=GraphInvocation(graph,model_validator=validate_checkpoint_selection)
                     async def handle():
-                        await adapter(context)
+                        await adapter.executor_resume(context)
                         await completion.synchronize_executor_completion(context,graph)
                     await run_event_owned(context,handle)
                     # Delivery replay must not trigger a second report LLM call.

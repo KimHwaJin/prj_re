@@ -245,6 +245,9 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     # Preserve a platform ID; avoid introducing stream cancellation scopes.
     from service_runtime.request_id import RequestIdMiddleware
     app.add_middleware(RequestIdMiddleware)
+    from api_service.runs.errors import RunError
+    from api_service.core.problems import run_exception_handler
+    app.add_exception_handler(RunError, run_exception_handler)
 
     if platform_app is None:
         app.add_exception_handler(HTTPException, http_exception_handler)

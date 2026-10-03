@@ -1,6 +1,6 @@
-"""Offline reproduction of RunService cleanup waiting for a canceled watcher.
+"""Offline reproduction of Run invocation cleanup waiting for a canceled watcher.
 
-Uses the installed SQLAlchemy connection-pool queue and the actual RunService
+Uses the installed SQLAlchemy connection-pool queue and the actual Run monitoring
 cleanup implementation. The DB query is replaced by queue acquisition; no
 database/network calls or application mutations are performed.
 """
@@ -12,9 +12,11 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
+from api_service.runs import monitoring
+from api_service.runs.monitoring import run_cancellable
+
 from sqlalchemy.util.queue import AsyncAdaptedQueue
 from sqlalchemy.util.concurrency import greenlet_spawn
-from api_service.services.run_service import RunService
 
 
 async def trial(extra_yield):
@@ -40,8 +42,8 @@ async def trial(extra_yield):
         graph_completed.append(True)
         return {'completed': True}
 
-    with patch.object(RunService, '_wait_for_cancellation', watcher):
-        run = asyncio.create_task(RunService._run_cancellable('offline-reproduction', graph()))
+    with patch.object(monitoring, 'wait_for_cancellation', watcher):
+        run = asyncio.create_task(run_cancellable('offline-reproduction', graph()))
         done, _ = await asyncio.wait([run], timeout=.05)
         result = {'extra_yield': extra_yield, 'graph_completed': bool(graph_completed),
                   'run_returned': bool(done), 'watcher_done': watcher_ref[0].done(),

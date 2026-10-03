@@ -1,6 +1,6 @@
 # 현재 서비스 구조와 의존성 경계
 
-054 기준. 소스 책임을 분리하며 단일 Deployment·단일 컨테이너 Pod 전제를 유지한다.
+059 기준(베이스 미병합·미배포). 소스 책임을 분리하며 단일 Deployment·단일 컨테이너 Pod 전제를 유지한다.
 별도 Agent HTTP 서버나 Agent별 Worker·풀을 추가하지 않는다.
 
 ```text
@@ -12,10 +12,13 @@ src/
   api_service/
     api/                        HTTP 라우터·권한·접수
     schemas/ models/ repositories/
-    services/                   CRUD·Run 상태·소유권·DB 어댑터
+    runs/                       접수·실행·취소·공통 GraphInvocation·결과 반영
+      protocols/                최초 입력·사용자 resume·Executor receipt 검증
+    services/                   CRUD·공개 Run 조회·소유권·DB 어댑터
       agent_graph_service.py    API 실행 → 실제 분석 graph 조립 어댑터
       workflow_persistence.py   WorkflowStore의 PostgreSQL 구현
-    agent_worker/               Executor 이벤트 → graph 재개 어댑터
+    agent_run_worker.py         사용자 invocation claim·dispatch
+    agent_worker/               Executor 이벤트 입력·GraphInvocation 연결
     worker/                     Redis 수신·Inbox/Outbox·dispatch
     core/                       DB·인증·API 상태/복구 관리
     test/                       API·DB·실행기 통합 테스트
@@ -88,8 +91,9 @@ src/
 
 ## 실행·이전 경로
 
-- 기존 `python app.py`, `uvicorn main:app --app-dir src`, 배포 bootstrap 유지.
-- 독립 이벤트 Worker 모듈은 `python -m api_service.agent_worker.worker_main`.
+- 배포 정본은 `python app.py` → 단일 bootstrap·프로세스·컨테이너다. 직접 Uvicorn이나 독립 이벤트 Worker 기동은 배포 정본으로 사용하지 않는다.
+- 사용자와 이벤트 dispatcher는 아직 별도이며 graph 호출 경계만 공통화했다. 공통 DB 명령 스케줄러는 다음 단계다.
+- Run 모듈의 호출·수명·변경 위치는 [실행 인수인계](../run-execution-architecture.md)를 따른다.
 - Alembic ORM import·compose·배포 YAML·langgraph.json·wheel 설정을 새 경로로 갱신했다.
 - `src/app`와 이동한 기존 파일의 호환 shim은 남기지 않는다. 직접 import하거나
   모듈 실행 명령을 별도로 관리하는 소비자는 새 경로로 변경해야 한다.

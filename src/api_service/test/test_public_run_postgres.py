@@ -20,9 +20,9 @@ from langgraph.types import interrupt, Command
 
 import service_settings
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 import api_service.services.agent_graph_service as graphs
-import api_service.services.executor_completion as completion
+import api_service.runs.projection as completion
 import api_service.api.v1.routes.runs as routes
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from api_service.models.common.agent_run_model import AgentRunModel as Run

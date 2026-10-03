@@ -21,8 +21,8 @@ from api_service.models.common.agent_run_model import AgentRunModel
 from api_service.models.common.task_model import TaskModel
 from api_service.models.common.session_execution_model import SessionExecutionModel
 from api_service.services.session_execution import SessionExecution, acquire, run_owned
+from api_service.runs.execution import execute_claimed as execute_invocation
 from api_service.schemas.common.run_schema import RunCreate
-from api_service.services.run_service import RunService
 from api_service.services.task_service import TaskService
 from api_service.services.helpers import utc_now
 from service_runtime.diagnostics import run_trace, span
@@ -120,36 +120,31 @@ async def execute_claimed(item: ClaimedRun) -> None:
                 lambda: _execute_claimed(item),
             )
         except asyncio.CancelledError:
-            # Covers cancellation before RunService has installed its guards too.
+            # Covers cancellation before the invocation has installed its guards too.
             execution_health.fail(item.claim.run_id, "worker_cancelled")
             raise
 
 
 async def _execute_claimed(item: ClaimedRun) -> None:
     _run_id = item.claim.run_id
-    async with get_session_factory()() as db:
+    try:
+        async with run_trace(_run_id, item.session_id):
+            with span("worker.execute"):
+                await execute_invocation(item.claim, item.user_id, item.session_id, item.payload)
+    except ExecutionNeedsRecovery:
+        execution_health.fail(_run_id, "worker_requires_recovery")
+        raise
+    except Exception as exc:
+        # An error may be terminal only after its durable outcome is verified.
         try:
-            async with run_trace(_run_id, item.session_id):
-                with span("worker.execute"):
-                    await RunService.create(
-                        db, item.user_id, item.session_id, item.payload, item.key, _execute_existing=True
-                    )
-        except ExecutionNeedsRecovery:
-            execution_health.fail(_run_id, "worker_requires_recovery")
-            raise
-        except Exception as exc:
-            # Verify the assumption that RunService recorded an outcome. A DB
-            # error in its error handler must not release an unaccounted owner.
-            try:
-                await db.rollback()
+            async with get_session_factory()() as db:
                 saved = await db.get(AgentRunModel, _run_id, populate_existing=True)
                 if saved is None or saved.status == AgentRunStatus.RUNNING:
                     raise ExecutionNeedsRecovery("Worker has no durable invocation outcome")
-            except Exception as recovery_error:
-                execution_health.fail(_run_id, "worker_outcome_unverified")
-                raise ExecutionNeedsRecovery("Could not verify failed invocation outcome") from recovery_error
-            logger.error("agent_run_failed run_id=%s error_type=%s", _run_id, type(exc).__name__)
-            return
+        except Exception as recovery_error:
+            execution_health.fail(_run_id, "worker_outcome_unverified")
+            raise ExecutionNeedsRecovery("Could not verify failed invocation outcome") from recovery_error
+        logger.error("agent_run_failed run_id=%s error_type=%s", _run_id, type(exc).__name__)
 
 
 async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:

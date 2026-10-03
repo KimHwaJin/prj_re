@@ -1,4 +1,6 @@
 """Execution cleanup races, using real asyncio/SQLAlchemy queue scheduling."""
+from api_service.runs.errors import CancellationRequested
+from api_service.runs.monitoring import run_cancellable
 import asyncio
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -13,12 +15,11 @@ from sqlalchemy.util.queue import AsyncAdaptedQueue
 
 import service_settings
 import service_bootstrap
-import api_service.services.run_service as runs
+import api_service.runs.monitoring as runs
 import api_service.services.task_service as tasks
 from service_contracts.execution import ExecutionNeedsRecovery
 from api_service.core.execution_lifecycle import execution_health
 from api_service.services.llm_token_event_service import LLMTokenEventBuffer
-from api_service.services.run_service import RunService
 from api_service.services.task_service import TaskService
 
 
@@ -64,7 +65,7 @@ async def test_actual_watcher_pool_queue_race_twenty_times(monkeypatch):
             queue.put_nowait(None)
             return {'completed': True}
 
-        assert await asyncio.wait_for(RunService._run_cancellable(uuid4(), graph()), .5) == {'completed': True}
+        assert await asyncio.wait_for(run_cancellable(uuid4(), graph()), .5) == {'completed': True}
         assert all(w.done() and w.cancelling() == 0 for w in watchers)
     assert execution_health.healthy
 
@@ -75,7 +76,7 @@ async def test_graph_failure_preserved_and_monitor_stopped(monkeypatch):
     async def graph():
         raise ValueError('graph failure')
     with pytest.raises(ValueError, match='graph failure'):
-        await RunService._run_cancellable(uuid4(), graph())
+        await run_cancellable(uuid4(), graph())
     assert execution_health.healthy
 
 
@@ -93,8 +94,8 @@ async def test_user_cancel_is_reported_only_after_graph_cleanup(monkeypatch):
         finally:
             await asyncio.sleep(0)
             stopped.set()
-    with pytest.raises(RunService.CancellationRequested):
-        await RunService._run_cancellable(uuid4(), graph())
+    with pytest.raises(CancellationRequested):
+        await run_cancellable(uuid4(), graph())
     assert stopped.is_set() and execution_health.healthy
 
 
@@ -108,7 +109,7 @@ async def test_monitor_error_is_not_misreported_as_user_cancel(monkeypatch):
         finally:
             stopped.set()
     with pytest.raises(ExecutionNeedsRecovery):
-        await RunService._run_cancellable(uuid4(), graph())
+        await run_cancellable(uuid4(), graph())
     assert stopped.is_set() and not execution_health.healthy
 
 
@@ -118,7 +119,7 @@ async def test_monitor_query_has_deadline(monkeypatch):
         await asyncio.Event().wait()
     fake_db(monkeypatch, query)
     with pytest.raises(ExecutionNeedsRecovery):
-        await asyncio.wait_for(RunService._run_cancellable(uuid4(), asyncio.sleep(10)), .5)
+        await asyncio.wait_for(run_cancellable(uuid4(), asyncio.sleep(10)), .5)
 
 
 @pytest.mark.asyncio
@@ -133,7 +134,7 @@ async def test_repeated_owner_cancel_waits_for_graph_finally(monkeypatch):
             cleaning.set()
             await release.wait()
             stopped.set()
-    owner = asyncio.create_task(RunService._run_cancellable(uuid4(), graph()))
+    owner = asyncio.create_task(run_cancellable(uuid4(), graph()))
     await started.wait()
     owner.cancel()
     await cleaning.wait()
@@ -158,7 +159,7 @@ async def test_uncooperative_graph_quarantines_without_abandoning_owner(monkeypa
             except asyncio.CancelledError:
                 pass
         return {}
-    owner = asyncio.create_task(RunService._run_cancellable(uuid4(), graph()))
+    owner = asyncio.create_task(run_cancellable(uuid4(), graph()))
     try:
         await started.wait()
         await asyncio.sleep(.14)
@@ -192,7 +193,7 @@ async def test_lease_loss_stops_graph(monkeypatch):
     run_id = uuid4()
     with pytest.raises(ExecutionNeedsRecovery):
         async with TaskService.lease_heartbeat(uuid4(), uuid4(), run_id=run_id) as heartbeat:
-            await asyncio.wait_for(RunService._run_cancellable(run_id, asyncio.sleep(10), observers=(heartbeat,)), 2)
+            await asyncio.wait_for(run_cancellable(run_id, asyncio.sleep(10), observers=(heartbeat,)), 2)
     assert not execution_health.healthy
 
 

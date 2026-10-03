@@ -3,6 +3,11 @@
 No second state machine: one SQL snapshot combines the latest invocation and
 Task. Workers still claim invocation IDs; checkpoints keep their original IDs.
 """
+from api_service.runs.admission import enqueue
+from api_service.runs.cancellation import cancel_task
+from api_service.runs.requests import validate_replay
+from api_service.runs.projection import finish_run
+from api_service.runs.repository import require_session
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -15,7 +20,6 @@ from api_service.core.enums import AgentRunStatus
 from api_service.models.common.agent_run_model import AgentRunModel as Run
 from api_service.models.common.task_model import TaskModel as Task
 from api_service.schemas.common.run_schema import PublicRunResource, RunCreate, RunResume, RunStart, RunCancel
-from api_service.services.run_service import RunService
 from api_service.services.task_service import TaskService
 from api_service.services.helpers import utc_now
 from api_service.services import resource_lifecycle as lifecycle
@@ -92,7 +96,7 @@ class PublicRunService:
 
     @staticmethod
     async def read(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID) -> PublicRunResource:
-        await RunService._session(db, user_id, session_id)
+        await require_session(db, user_id, session_id)
         # Resolve legacy invocation aliases in the same statement snapshot.
         canonical = select(Run.public_run_id).where(
             Run.run_id == run_id, Run.session_id == session_id,
@@ -112,12 +116,12 @@ class PublicRunService:
         reserved = {"resume_run_id", "checkpoint_run_id", "task_id", "_request_digest", "_public_resume", "_model_selection", "_resume_target", "_resume_started", "_checkpoint_interrupt_id", "_initial_protocol", "_initial_started"}
         if reserved.intersection(payload.metadata) or any(k.startswith('_') for k in payload.metadata):
             raise HTTPException(status_code=422, detail="Execution identity metadata is managed by the server.")
-        invocation = await RunService.create(db, user_id, session_id, payload, key)
+        invocation = await enqueue(db, user_id, session_id, payload, key)
         return await PublicRunService.read(db, user_id, session_id, invocation.public_run_id)
 
     @staticmethod
     async def resume(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID, payload: RunResume, key: str) -> PublicRunResource:
-        await RunService._session(db, user_id, session_id)
+        await require_session(db, user_id, session_id)
         await PublicRunService.admission_lock(db, user_id, session_id)
         current = await PublicRunService.read(db, user_id, session_id, run_id)
         command = RunCreate(command=payload.command, metadata={
@@ -127,7 +131,7 @@ class PublicRunService:
         if previous is not None:
             if previous.public_run_id != current.run_id:
                 raise HTTPException(status_code=409, detail="Idempotency-Key belongs to another Run.")
-            RunService.validate_replay(previous, command)
+            validate_replay(previous, command)
             return current
         if current.status != "waiting_input" or current.resume_token != payload.resume_token:
             raise HTTPException(status_code=409, detail="Run is not waiting for this input; refresh Run state.")
@@ -143,7 +147,7 @@ class PublicRunService:
                     validate_repair_action(repair_review,action)
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
-                await RunService.create(db,user_id,session_id,command,key)
+                await enqueue(db,user_id,session_id,command,key)
                 return await PublicRunService.read(db,user_id,session_id,current.run_id)
             decision_review=latest.metadata_json.get('_decision_review')
             if decision_review:
@@ -155,7 +159,7 @@ class PublicRunService:
                     validate_decision_action(decision_review,action)
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
-                await RunService.create(db,user_id,session_id,command,key)
+                await enqueue(db,user_id,session_id,command,key)
                 return await PublicRunService.read(db,user_id,session_id,current.run_id)
             revision_action=(payload.command or {}).get('resume')
             if isinstance(revision_action,dict) and revision_action.get('action') in {'replan','answer_clarification'}:
@@ -169,11 +173,11 @@ class PublicRunService:
                         limit=get_settings().agent.agent_max_plan_revisions)
                 except (ValueError,TypeError) as exc:
                     raise HTTPException(422,str(exc)) from exc
-                await RunService.create(db,user_id,session_id,command,key)
+                await enqueue(db,user_id,session_id,command,key)
                 return await PublicRunService.read(db,user_id,session_id,current.run_id)
             from service_contracts.plan_review import patch_review
             from service_settings import get_settings
-            session = await RunService._session(db, user_id, session_id)
+            session = await require_session(db, user_id, session_id)
             action = (payload.command or {}).get('resume') if isinstance(payload.command, dict) else None
             reviews = latest.metadata_json.get('_plan_reviews', [])
             selected = next((r for r in reviews if r['plan_id'] == (action or {}).get('plan_id')), None)
@@ -186,12 +190,12 @@ class PublicRunService:
                     context={'user_id': str(user_id), 'project_id': str(session.project_id), 'session_id': str(session_id)})
             except (ValueError, TypeError) as exc:
                 raise HTTPException(422, str(exc)) from exc
-        await RunService.create(db, user_id, session_id, command, key)
+        await enqueue(db, user_id, session_id, command, key)
         return await PublicRunService.read(db, user_id, session_id, current.run_id)
 
     @staticmethod
     async def cancel(db: AsyncSession, user_id: UUID, session_id: UUID, run_id: UUID, payload: RunCancel) -> PublicRunResource:
-        await RunService._session(db, user_id, session_id)
+        await require_session(db, user_id, session_id)
         await PublicRunService.admission_lock(db, user_id, session_id)
         current = await PublicRunService.read(db, user_id, session_id, run_id)
         if current.status in TERMINAL:
@@ -203,7 +207,7 @@ class PublicRunService:
             # unlock a week-long external job by merely canceling the local Task.
             raise HTTPException(status_code=409, detail="Executor cancellation is not supported; the Run remains locked until its result.")
         if current.task_id:
-            await RunService.cancel_task(db, user_id, current.task_id, payload.reason)
+            await cancel_task(db, user_id, current.task_id, payload.reason)
         else:
             snapshots = await PublicRunService.snapshots(db, [current.run_id])
             latest = await db.scalar(select(Run).where(Run.run_id == snapshots[current.run_id][1].run_id)
@@ -214,6 +218,6 @@ class PublicRunService:
             # The paused invocation is finished, so close only its public history.
             latest.cancel_requested_at = utc_now()
             latest.cancel_reason = payload.reason
-            RunService._finish_run(latest, AgentRunStatus.CANCELED)
+            finish_run(latest, AgentRunStatus.CANCELED)
             await db.commit()
         return await PublicRunService.read(db, user_id, session_id, current.run_id)

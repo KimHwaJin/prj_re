@@ -1,4 +1,6 @@
 """Model references, central config and concurrent real create_agent roles."""
+from api_service.runs.requests import request_digest
+from api_service.runs.policy import is_retryable
 import asyncio
 from dataclasses import replace
 import json
@@ -15,9 +17,8 @@ from service_runtime.model_selection import ModelSelectionError, build_catalog, 
 import agent_service.agents.analysis.planning.runtime as runtime_module
 from agent_service.agents.analysis.planning.runtime import PlanningRuntime
 from agent_service.agents.analysis.tests.test_agent_middleware import response, ROLES, role_payload
-from api_service.services.run_service import RunService
 from api_service.schemas.common.run_schema import RunCreate, RunResume
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 
 
 def configured(default="alpha", **extra):
@@ -74,7 +75,7 @@ def test_pins_survive_default_change_but_not_model_change(monkeypatch):
         validate_checkpoint_selection({"model_selection":pin},new.agent.model_catalog.select().model_dump())
     with pytest.raises(ModelSelectionError,match="recovery"):
         validate_checkpoint_selection({})
-    assert not RunService._is_retryable(ModelSelectionError("changed"))
+    assert not is_retryable(ModelSelectionError("changed"))
 
 
 def test_legacy_idempotency_hash_preserved_and_explicit_choice_distinct():
@@ -82,8 +83,8 @@ def test_legacy_idempotency_hash_preserved_and_explicit_choice_distinct():
     body={"input":{"messages":[{"role":"user","content":"hello"}]}}
     request=RunCreate(**body)
     legacy=request.model_dump(mode="json",exclude={"main_model_name"})
-    assert RunService.request_digest(request)==hashlib.sha256(json.dumps(legacy,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
-    assert RunService.request_digest(request)!=RunService.request_digest(RunCreate(**body,main_model_name="default"))
+    assert request_digest(request)==hashlib.sha256(json.dumps(legacy,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
+    assert request_digest(request)!=request_digest(RunCreate(**body,main_model_name="default"))
     from pydantic import ValidationError
     with pytest.raises(ValidationError):
         RunResume(command={},resume_token="00000000-0000-0000-0000-000000000000",main_model_name="beta")
@@ -141,9 +142,9 @@ async def test_executor_rejects_unavailable_selection_before_any_graph_work(monk
     monkeypatch.setattr(service_settings,"_snapshot",configured("beta",MODEL_CATALOG={"beta":{"provider":"mock","model_name":"b"}}))
     graph=SimpleNamespace(ainvoke=AsyncMock(),aupdate_state=AsyncMock())
     loader=AsyncMock()
-    adapter=LangGraphEventAdapter(graph,project_context_loader=loader,model_validator=validate_checkpoint_selection)
+    adapter=GraphInvocation(graph,project_context_loader=loader,model_validator=validate_checkpoint_selection)
     with pytest.raises(ModelSelectionError):
-        await adapter._invoke(None,{},values={"model_selection":pin},durability="sync")
+        await adapter.invoke(None,{},values={"model_selection":pin},durability="sync")
     graph.ainvoke.assert_not_called()
     graph.aupdate_state.assert_not_called()
     loader.assert_not_called()

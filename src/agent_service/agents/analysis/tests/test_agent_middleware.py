@@ -112,7 +112,7 @@ async def test_json_retry_is_bounded_and_reapplies_prompt_without_duplication(su
 @pytest.mark.asyncio
 @pytest.mark.parametrize('legacy',[False,True])
 async def test_executor_backfill_keeps_interrupt_and_current_report_prompt(legacy):
-    from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+    from api_service.runs.graph_invocation import GraphInvocation
     class State(TypedDict,total=False):
         project_system_prompt:str
         project_prompt_version:int
@@ -131,7 +131,7 @@ async def test_executor_backfill_keeps_interrupt_and_current_report_prompt(legac
     await graph.ainvoke({'project_prompt_version':1} if legacy else {'project_system_prompt':'SAVED RULE'},config)
     values=(await graph.aget_state(config)).values
     loader=AsyncMock(return_value={'project_system_prompt':'SAVED RULE','project_prompt_version':2})
-    result=await LangGraphEventAdapter(graph,project_context_loader=loader)._invoke(Command(resume=True),config,values=values,durability='sync')
+    result=await GraphInvocation(graph, project_context_loader=loader, model_validator=None).invoke(Command(resume=True),config,values=values,durability='sync')
     assert result['approved'] is True and result['report']['evidence_steps']==['profile']
     assert calls[0][0].content.count('SAVED RULE')==1 and loader.await_count==int(legacy)
 

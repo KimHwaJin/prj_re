@@ -8,8 +8,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 import service_settings
 from api_service.test.test_planning_api_postgres import planning,test_config,submit,execute,read
 from api_service.services.agent_graph_service import runtime as graph_runtime
-from api_service.services.executor_completion import synchronize_executor_completion
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.projection import synchronize_executor_completion
+from api_service.runs.graph_invocation import GraphInvocation
 from service_contracts.events import EventContext,ExecutorEvent
 from service_contracts.execution_repair import RepairInteractionEvent
 from agent_service.agents.analysis.planning.graph import build_planning_graph
@@ -19,7 +19,7 @@ from agent_service.agents.analysis.tests.test_agentic_repair import make_runtime
 @pytest.mark.asyncio
 async def test_repair_admission_checksum_revision_restart_replay_and_public_projection(planning,tmp_path,monkeypatch):
     h=planning
-    import api_service.services.executor_completion as completion
+    import api_service.runs.projection as completion
     monkeypatch.setattr(completion,'get_session_factory',lambda:h.factory)
     settings=service_settings.get_settings()
     agent=replace(settings.agent,executor_submit_enabled=True,executor_source_type='INLINE',executor_shared_result_root=tmp_path)
@@ -36,7 +36,7 @@ async def test_repair_admission_checksum_revision_restart_replay_and_public_proj
         state=(await graph.aget_state({'configurable':{'thread_id':h.session_id}})).values
         ctx=EventContext(namespace='test',session_id=h.session_id,task_id=state['task_id'],execution_id=UUID(executor.id),
             command_id=uuid4(),event=ExecutorEvent.model_validate(event))
-        await LangGraphEventAdapter(graph)(ctx);await synchronize_executor_completion(ctx,graph)
+        await GraphInvocation(graph, model_validator=None).executor_resume(ctx);await synchronize_executor_completion(ctx,graph)
         return ctx
     ctx=await deliver(executor.events[0]);run=await read(h,rid)
     assert run['status']=='waiting_input' and run['interrupt'][0]['kind']=='repair_review'
@@ -48,7 +48,7 @@ async def test_repair_admission_checksum_revision_restart_replay_and_public_proj
         status=(await submit(h,{**body,'command':{'resume':action}})).status_code
         assert status==(409 if index==0 else 422)
     assert (await read(h,rid))['resume_token']==token and len(executor.calls)==1
-    await LangGraphEventAdapter(graph)(ctx)
+    await GraphInvocation(graph, model_validator=None).executor_resume(ctx)
     assert len(calls)==1 and len(executor.calls)==1
     # Rebuild nodes/cache over the existing checkpoint before approval; no private Python in public form.
     await graph_runtime.shutdown();graph_runtime.start()

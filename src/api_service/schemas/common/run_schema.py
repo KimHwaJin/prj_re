@@ -37,7 +37,7 @@ class RunResource(ORMModel):
     task_id: UUID | None = None
     session_id: UUID
     status: AgentRunStatus
-    # DB/RunService의 interrupt_payload()와 동일하게 복수 interrupt 배열을 노출합니다.
+    # services/agent_graph_service의 interrupt_payload()와 동일하게 복수 interrupt 배열을 노출합니다.
     interrupt: list[dict[str, Any]] | None
     failure: dict[str, Any] | None
     attempt_count: int

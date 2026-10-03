@@ -18,7 +18,7 @@ from agent_service.agents.analysis.agent_builders.conversation.agent import repl
 from agent_service.agents.analysis.planning.runtime import PlanningRuntime
 from agent_service.agents.analysis.planning.graph import build_planning_graph
 from agent_service.agents.analysis.planning.proposals import RevisionReply, prepare_review, LocalFunction
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 
 
 SOURCE = "def revision_transform(data, divisor=2):\n    return {'values': [x / divisor for x in data['values']]}\n"
@@ -119,7 +119,7 @@ async def test_free_plan_approval_setting_actual_compiler_execution_and_terminal
         current=(await graph.aget_state(config)).values
         ctx=EventContext(namespace='test',session_id=current['session_id'],task_id=current['task_id'],execution_id=UUID(executor.id),
             command_id=uuid4(),event=ExecutorEvent.model_validate(event))
-        await LangGraphEventAdapter(graph)(ctx)
+        await GraphInvocation(graph, model_validator=None).executor_resume(ctx)
     await deliver(executor.events[0])
     assert executor.calls[-1][0].endswith('/finalize')
     await deliver(executor.event('execution.completed',{'status':'SUCCEEDED','error':None}))

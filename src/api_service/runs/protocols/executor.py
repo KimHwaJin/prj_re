@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from langgraph.types import Command
 
 from api_service.worker import DeferEvent, EventContext, IgnoreEvent, RejectEvent
 
 
-class LangGraphEventAdapter:
+class ExecutorResumeProtocol:
     """Resume only the Executor interrupt bound to this event."""
 
-    def __init__(self, graph: Any, *, project_context_loader=None, model_validator=None) -> None:
-        self.graph = graph
-        self.project_context_loader = project_context_loader
-        self.model_validator = model_validator
+    def __init__(self, invocation) -> None:
+        self.invocation = invocation
+        self.graph = invocation.graph
 
     async def __call__(self, context: EventContext) -> None:
         config = context.graph_config
@@ -86,8 +83,7 @@ class LangGraphEventAdapter:
                 and context.event.event_type == "execution.completed"
             )
             if recover_terminal_event:
-                if self.model_validator is not None:
-                    self.model_validator(values)
+                self.invocation.validate_model(values)
                 await self.graph.aupdate_state(
                     config,
                     {"ew_pending": action},
@@ -126,18 +122,4 @@ class LangGraphEventAdapter:
             raise DeferEvent("Agent has not recorded the event receipt yet")
 
     async def _invoke(self, value, config, *, values, durability):
-        if self.model_validator is not None:
-            self.model_validator(values)
-        if self.project_context_loader is not None and values and "project_system_prompt" not in values:
-            update = await self.project_context_loader(values)
-            await self.graph.aupdate_state(config, update)
-        from integrations.executor.client import submission_scope
-        with submission_scope():
-            if getattr(self.graph,'name',None)=='agentic-planning-v1':
-                from uuid import UUID
-                from api_service.services.graph_crud_persistence import InvocationProjection
-                projection = InvocationProjection()
-                async for emitted in self.graph.astream(value,config,stream_mode='values',durability=durability):
-                    await projection.persist(emitted,user_id=UUID(emitted['user_id']),agent_run_id=emitted['agent_run_id'])
-                return
-            return await self.graph.ainvoke(value, config, durability=durability)
+        return await self.invocation.invoke(value, config, values=values, durability=durability)

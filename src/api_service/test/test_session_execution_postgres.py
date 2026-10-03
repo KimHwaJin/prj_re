@@ -47,7 +47,7 @@ async def test_api_claim_excludes_fast_event_until_full_finalization(runtime, mo
         await original(value)
         finalized.set()
         await release.wait()
-    import api_service.services.run_service as runs
+    import api_service.runs.execution as runs
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
     monkeypatch.setattr(worker, '_execute_claimed', execute)
     task = asyncio.create_task(worker.execute_claimed(item))
@@ -342,7 +342,7 @@ async def test_fast_executor_waits_for_short_api_handoff_without_retaining_db_co
     finalized,release=asyncio.Event(),asyncio.Event()
     async def execute(value):
         await original(value);finalized.set();await release.wait()
-    import api_service.services.run_service as runs
+    import api_service.runs.execution as runs
     monkeypatch.setattr(runs,'ainvoke_user_turn',AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
     monkeypatch.setattr(worker,'_execute_claimed',execute)
     api=asyncio.create_task(worker.execute_claimed(item));call=AsyncMock()

@@ -4,11 +4,11 @@
 
 ## 2026-10-03 리뷰 반영 후 현재 실행 순서
 
-상태: 058에서 1단계 구현·로컬 검증 완료(미병합·미배포). [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [D-01~D-12 및 C-01~C-04](../reviews/2026-10-03-decisions.md)를 따른다.
+상태: 058·059에서 1·2단계 구현·로컬 검증 완료(베이스 미병합·미배포). [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [D-01~D-12 및 C-01~C-04](../reviews/2026-10-03-decisions.md)를 따른다.
 
 1. 단일 컨테이너·app.py 정본 및 배포/설정 정합성(D-01/D-02)은 [058](058-deployment-config-unification.md)에서 구현했다. 사내 배포 검증과 기존 Worker 전환은 별도다.
-2. **다음 작업:** Run 접수/실행/취소와 공통 GraphInvocation/상태 반영을 분리한다.
-3. DB 내부 명령 원장과 공통 실행 스케줄러로 사용자/HITL/Executor 결과를 통합한다. API·Inbox·명령을 같은 DB/transaction으로 기록하는 정본과 기존 DB 전환 조건을 확인한다.
+2. Run 접수/실행/취소와 공통 GraphInvocation/상태 반영은 [059](059-run-execution-boundaries.md)에서 구현했다. DB 준비/결과 session을 분리하고 구 facade·private method 호출을 제거했다.
+3. **다음 작업:** DB 내부 명령 원장과 공통 실행 스케줄러로 사용자/HITL/Executor 결과를 통합한다. API·Inbox·명령을 같은 DB/transaction으로 기록하는 정본과 기존 DB 전환 조건을 확인한다.
 4. DB 실행 상태를 기준으로 best-effort wakeup을 붙인다. LISTEN/NOTIFY를 우선 검토하고, 신호 없이도 주기 재확인으로 진행한다.
 5. 동일 총 실행 한도에서 1/10/30/50명과 혼합/결과 집중 부하를 비교한다. 후속 설명·보고서·메모리 서비스 비용은 여기서 별도 시나리오로 확인한다.
 6. 실제 checkpoint 저장량·시간 측정 후 상태/설정/Agent 조립과 레거시 정리를 진행한다.

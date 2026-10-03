@@ -1,17 +1,18 @@
 """Guard initial input delivery and recover completed checkpoint projections."""
+
 from sqlalchemy import select
 
 from api_service.core.database import short_session
-from api_service.core.execution_claim import current_execution_claim
 from api_service.core.enums import AgentRunStatus
+from api_service.core.execution_claim import current_execution_claim
 from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.services.agent_project_context import read_project_snapshot
-from api_service.services import graph_crud_persistence as projection
-from api_service.services.graph_recovery import GraphProjectionError, snapshot_interrupts, checkpoint_state
+from api_service.services.graph_recovery import (
+    GraphProjectionError,
+    checkpoint_state,
+    snapshot_interrupts,
+)
 from service_contracts.execution import ExecutionNeedsRecovery, InvocationNeedsRecovery
 from service_contracts.initial_request import initial_identity
-from service_runtime.model_selection import validate_checkpoint_selection
-from service_runtime.diagnostics import span
 
 
 async def mark_started(*, run_id, session_factory):
@@ -40,7 +41,7 @@ def require_finished(snapshot, identity):
 
 async def start_and_project(graph, config, graph_input, *, user_id, project_id,
                             session_id, run_id, protocol, started,
-                            session_factory=None, dispatcher=None, trigger_message_id=None):
+                            session_factory=None, dispatcher=None, trigger_message_id=None, invocation=None):
     if protocol != 1:
         raise InvocationNeedsRecovery("Initial request has no delivery protocol; reconcile legacy queue")
     identity = initial_identity(graph_input)
@@ -49,35 +50,27 @@ async def start_and_project(graph, config, graph_input, *, user_id, project_id,
     receipt = values.get("initial_request_receipt")
     if isinstance(receipt, dict) and receipt.get("command_id") == str(run_id):
         require_finished(snapshot, identity)
-        validate_checkpoint_selection(values, graph_input["model_selection"])
+        invocation.validate_model(values, graph_input["model_selection"])
     else:
         if started or values.get("run_id") == str(run_id):
             raise InvocationNeedsRecovery("Initial input may have been delivered without a receipt; do not resend")
         # An admitted new Run may replace an old terminal/cancelled task's
         # checkpoint. Existing session admission/ownership prevents a live writer.
-        prepared = {**graph_input, **await read_project_snapshot(
+        prepared = {**graph_input, **await invocation.project_snapshot(
             user_id=user_id, session_id=session_id, project_id=project_id,
-            session_factory=session_factory,
         ), "initial_request_identity": identity, "initial_request_receipt": None}
         await mark_started(run_id=run_id, session_factory=session_factory)
-        with span("graph.invoke"):
-            if getattr(graph, 'name', None) == 'agentic-planning-v1':
-                incremental = projection.InvocationProjection()
-                async for emitted in graph.astream(prepared, config=config, stream_mode='values', durability='sync'):
-                    # The input echo can retain the preceding terminal Run's task/events.
-                    # Project only after receive records this invocation's entry receipt.
-                    if emitted.get('initial_request_receipt') != identity:
-                        continue
-                    await incremental.persist(emitted, user_id=user_id, session_factory=session_factory,
-                                                         dispatcher=dispatcher, agent_run_id=run_id, trigger_message_id=trigger_message_id)
-            else:
-                await graph.ainvoke(prepared, config=config, durability="sync")
+        await invocation.invoke(
+            prepared, config, user_id=user_id, agent_run_id=run_id,
+            trigger_message_id=trigger_message_id,
+            accept_state=lambda state: state.get("initial_request_receipt") == identity,
+        )
         snapshot = await graph.aget_state(config)
         require_finished(snapshot, identity)
     try:
-        return await projection.persist_graph_state(
-            checkpoint_state(snapshot), user_id=user_id, session_factory=session_factory,
-            dispatcher=dispatcher, agent_run_id=run_id, trigger_message_id=trigger_message_id,
+        return await invocation.project(
+            checkpoint_state(snapshot), user_id=user_id, agent_run_id=run_id,
+            trigger_message_id=trigger_message_id,
         )
     except (ExecutionNeedsRecovery, InvocationNeedsRecovery):
         raise

@@ -14,6 +14,7 @@ logs는 해당 테이블 계약이 확정될 때까지 deferred handler로 유�
 """
 
 from __future__ import annotations
+from api_service.runs.repository import attach_trigger_message
 
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
@@ -454,9 +455,8 @@ class MessageGraphEventHandler:
             and graph_event.context.agent_run_id
         ):
             # E03-T02: persistence 경계가 Message CRUD 결과를 Task/Run 원본과 연결합니다.
-            from api_service.services.run_service import RunService
 
-            await RunService.attach_trigger_message(
+            await attach_trigger_message(
                 db,
                 run_id=UUID(graph_event.context.agent_run_id),
                 message_id=result.message.message_id,

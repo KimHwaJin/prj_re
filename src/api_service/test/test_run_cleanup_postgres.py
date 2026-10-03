@@ -3,6 +3,8 @@
 Real API, queue claims, cancellation polling, heartbeat/recovery storage;
 graph execution is controlled locally. No LLM/Executor is contacted.
 """
+from api_service.runs import monitoring
+from api_service.runs.repository import lock_run_and_task
 import asyncio
 from dataclasses import replace
 from datetime import timedelta
@@ -16,7 +18,7 @@ from sqlalchemy import select, update
 import service_settings
 import api_service.core.database as database
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 import api_service.services.task_service as tasks
 import api_service.services.llm_token_event_service as tokens
 from api_service.core.enums import AgentRunStatus, TaskStatus
@@ -25,7 +27,6 @@ from api_service.core.execution_lifecycle import execution_health
 from api_service.models.common.agent_run_model import AgentRunModel
 from api_service.models.common.task_model import TaskModel
 from api_service.services.helpers import utc_now
-from api_service.services.run_service import RunService
 from api_service.services.task_service import TaskService
 from api_service.test.test_user_identity_postgres import database_url, harness, initialize, add_user, add_session, headers
 
@@ -40,7 +41,7 @@ async def runtime(harness, monkeypatch):
     })))
     monkeypatch.setattr(execution_health, 'faults', {})
     monkeypatch.setattr(execution_health, 'recorders', set())
-    for module in (database, worker, runs, tasks, tokens):
+    for module in (database, worker, runs, tasks, tokens, monitoring):
         monkeypatch.setattr(module, 'get_session_factory', lambda: h.factory)
     await initialize(h)
     h.user = await add_user(h)
@@ -152,7 +153,7 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
     async def graph(*_, **__):
         await started.wait()
         return {'routing_result': {'route': 'analysis'}}
-    monkeypatch.setattr(RunService, '_wait_for_cancellation', watcher)
+    monkeypatch.setattr(monitoring, 'wait_for_cancellation', watcher)
     monkeypatch.setattr(runs, 'ainvoke_user_turn', graph)
     queued = await enqueue(h)
     owner = asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
@@ -169,7 +170,7 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
         assert response.status_code == 200 and response.json()['items'][0]['recovery_required'] is True
         async with h.factory() as db:
             with pytest.raises(ExecutionNeedsRecovery):
-                await RunService._lock_run_and_task(db, UUID(queued['run_id']))
+                await lock_run_and_task(db, UUID(queued['run_id']))
         response = await h.client.post(f'/api/v1/sessions/{h.session_id}/runs/{queued["run_id"]}/cancel',
             headers=headers(h.user['user_id']), json={})
         assert response.status_code == 409

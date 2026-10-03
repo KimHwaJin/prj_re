@@ -7,7 +7,8 @@ import pytest
 
 from api_service.services.agent_project_context import load_project_snapshot
 from api_service.services import agent_graph_service as service
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.services import graph_crud_persistence as projection
+from api_service.runs.graph_invocation import GraphInvocation
 
 
 def context_db(prompt, version, settings=None):
@@ -36,7 +37,7 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
     user_id, session_id, project_id, run_id = [uuid4() for _ in range(4)]
     db = context_db("server project prompt", 2)
     received = []
-    from api_service.services import initial_request_service as initial
+    from api_service.runs.protocols import initial
     saved = SimpleNamespace(values={}, tasks=(), next=())
     async def invoke(value, **kwargs):
         db.close.assert_awaited_once()
@@ -45,7 +46,7 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
         return saved.values
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=saved), ainvoke=invoke)
     monkeypatch.setattr(initial, "mark_started", AsyncMock())
-    monkeypatch.setattr(initial.projection, "persist_graph_state", AsyncMock(return_value={}))
+    monkeypatch.setattr(projection, "persist_graph_state", AsyncMock(return_value={}))
     async def astream(graph, value, **kwargs):
         db.close.assert_awaited_once()
         received.append(value)
@@ -94,9 +95,9 @@ async def test_executor_resume_backfills_once_then_reuses_snapshot():
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=SimpleNamespace(values=values)),
         aupdate_state=AsyncMock(side_effect=update), ainvoke=AsyncMock(return_value={}))
     loader = AsyncMock(return_value={"project_system_prompt": "executor project", "project_prompt_version": 1})
-    adapter = LangGraphEventAdapter(graph, project_context_loader=loader)
-    await adapter._invoke(None, {}, values=values, durability="sync")
-    await adapter._invoke(None, {}, values=values, durability="sync")
+    adapter = GraphInvocation(graph, project_context_loader=loader, model_validator=None)
+    await adapter.invoke(None, {}, values=values, durability="sync")
+    await adapter.invoke(None, {}, values=values, durability="sync")
     loader.assert_awaited_once()
     assert graph.ainvoke.await_count == 2
     assert values["project_system_prompt"] == "executor project"

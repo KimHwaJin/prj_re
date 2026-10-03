@@ -1,3 +1,4 @@
+from api_service.runs.repository import require_session
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
@@ -19,7 +20,6 @@ from api_service.schemas.common.run_schema import (
     RunResume,
 )
 from service_contracts.run_request import RunRequest
-from api_service.services.run_service import RunService
 from api_service.services.public_run_service import PublicRunService, project
 from config import settings
 from api_service.core.database import get_session_factory
@@ -90,7 +90,7 @@ def parse_sequence(value):
 
 @router.get("/sessions/{session_id}/runs", response_model=Page[PublicRunResource])
 async def list_runs(session_id: UUID, params: ListParams = Depends(list_params), user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    await RunService._session(db, user_id, session_id)
+    await require_session(db, user_id, session_id)
     # Page only IDs/timestamps; hydrate the selected public states in one query.
     items, page = await fetch_page(
         db, select(Bundle("run_page", AgentRunModel.run_id, AgentRunModel.created_at)).where(

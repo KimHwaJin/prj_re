@@ -9,7 +9,7 @@ import pytest
 
 import service_settings
 import api_service.agent_run_worker as worker
-import api_service.services.run_service as runs
+import api_service.runs.execution as runs
 from api_service.core.enums import AgentRunStatus, TaskStatus
 from api_service.core.execution_lifecycle import execution_health
 from api_service.models.common.session_execution_model import SessionExecutionModel

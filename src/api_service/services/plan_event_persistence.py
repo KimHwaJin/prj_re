@@ -1,10 +1,10 @@
 """Project checkpointed public events atomically; no database access in nodes."""
+from api_service.runs.repository import attach_trigger_message
 from uuid import UUID
 
 from api_service.schemas.common.message_schema import MessageCreate
 from api_service.services.agent_run_log_service import AgentRunLogService
 from api_service.services.message_service import MessageService
-from api_service.services.run_service import RunService
 from api_service.services import resource_lifecycle
 from api_service.services.graph_result_batch import GraphResultBatch
 
@@ -44,7 +44,7 @@ async def persist_plan_events(db, state, context):
                               'channel': data['channel'], 'event_id': event['event_id']},
                 ), commit=False)
                 if data['role'] == 'user':
-                    await RunService.attach_trigger_message(db, run_id=owner,
+                    await attach_trigger_message(db, run_id=owner,
                         message_id=message.message.message_id, commit=False)
             log = await AgentRunLogService.create(
                 db, run_id=owner, event_key='public:' + event['event_id'],

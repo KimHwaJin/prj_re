@@ -221,7 +221,7 @@ async def test_service_does_not_close_other_pools_while_graph_still_owned(monkey
 async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch, fail):
     import api_service.agent_worker.worker_main as entry
     import agent_service.runtime.langgraph.checkpointer as factory
-    import api_service.services.executor_completion as completion
+    import api_service.runs.projection as completion
     projection = AsyncMock()
     monkeypatch.setattr(completion, 'synchronize_executor_completion', projection)
     clients = []
@@ -244,9 +244,10 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
             assert callable(model_validator)
             assert callable(project_context_loader)
             self.graph = graph
-        async def __call__(self, context):
+        async def executor_event(self, context):
             assert counts['pool_open'] == 1 and counts['pool_close'] == 0
             counts['events'] += 1
+            await projection(context, self.graph)
     class Worker:
         def __init__(self, settings, handlers):
             self.handlers = handlers
@@ -267,7 +268,7 @@ async def test_event_worker_builds_graph_and_pool_once_per_lifespan(monkeypatch,
     monkeypatch.setattr(entry, 'build_agent_graph', graph)
     monkeypatch.setattr(entry, '_validate_graph', lambda _: None)
     monkeypatch.setattr(entry, 'build_handlers', lambda handler: {'test': handler})
-    monkeypatch.setattr(entry, 'LangGraphEventAdapter', Adapter)
+    monkeypatch.setattr(entry, 'GraphInvocation', Adapter)
     async def own(context, operation, *, handoff_timeout_seconds):
         assert handoff_timeout_seconds == 1.0
         return await operation()

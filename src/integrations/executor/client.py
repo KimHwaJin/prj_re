@@ -42,6 +42,11 @@ class SubmissionEffects:
 _effects: ContextVar[SubmissionEffects | None] = ContextVar("executor_submission_effects", default=None)
 
 
+def current_submission_effects() -> SubmissionEffects | None:
+    """Borrow the active invocation's tracker at a nested execution boundary."""
+    return _effects.get()
+
+
 @contextmanager
 def submission_scope(effects=None):
     """Shared by child graph tasks, isolated from other concurrent invocations.

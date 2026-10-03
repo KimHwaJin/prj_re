@@ -229,7 +229,7 @@ async def test_ambiguous_or_exhausted_recovery_never_becomes_success(real_graph,
     if mode == 'incomplete_graph':
         h.review_calls['fail_next'] = True
     elif mode == 'dispatch_commit_lost':
-        from api_service.services import user_resume_service as boundary
+        from api_service.runs.protocols import user_resume as boundary
         original = boundary.mark_started
         async def lost(**kwargs):
             await original(**kwargs)

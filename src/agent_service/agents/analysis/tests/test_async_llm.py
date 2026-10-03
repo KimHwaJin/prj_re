@@ -1,4 +1,7 @@
 """LLM cancellation, native async transport, and mixed-node ownership checks."""
+from api_service.runs import monitoring
+from api_service.runs.errors import CancellationRequested
+from api_service.runs.monitoring import run_cancellable
 import asyncio
 from contextvars import ContextVar
 from threading import Event
@@ -20,7 +23,6 @@ from agent_service.agents.analysis.tests.model_helpers import text_agent, struct
 from agent_config import load_agent_settings
 from agent_service.runtime.model_factory import create_chat_model
 from agent_service.runtime.blocking import run_sync
-from api_service.services.run_service import RunService
 
 
 class State(TypedDict, total=False):
@@ -45,7 +47,7 @@ def cancel_after(monkeypatch, entered):
     async def watcher(_run_id, _stop):
         await entered.wait()
         return True
-    monkeypatch.setattr(RunService, '_wait_for_cancellation', watcher)
+    monkeypatch.setattr(monitoring, 'wait_for_cancellation', watcher)
 
 
 @pytest.mark.asyncio
@@ -63,8 +65,8 @@ async def test_legacy_sync_node_can_continue_after_run_reports_cancel(monkeypatc
         return {'value': 'done'}
     cancel_after(monkeypatch, entered)
     try:
-        with pytest.raises(RunService.CancellationRequested):
-            await asyncio.wait_for(RunService._run_cancellable(uuid4(), graph_for(legacy).ainvoke({})), 2)
+        with pytest.raises(CancellationRequested):
+            await asyncio.wait_for(run_cancellable(uuid4(), graph_for(legacy).ainvoke({})), 2)
         assert not finished.is_set()
         assert not side_effects
     finally:
@@ -93,8 +95,8 @@ async def test_cancel_during_role_agent_stops_model_before_run_returns(monkeypat
         submitted.append('submitted')
         return {}
     cancel_after(monkeypatch, entered)
-    with pytest.raises(RunService.CancellationRequested):
-        await asyncio.wait_for(RunService._run_cancellable(uuid4(), graph_for(node, after).ainvoke({'user_request':'hello'})), 2)
+    with pytest.raises(CancellationRequested):
+        await asyncio.wait_for(run_cancellable(uuid4(), graph_for(node, after).ainvoke({'user_request':'hello'})), 2)
     assert closed.is_set()
     assert not submitted
 

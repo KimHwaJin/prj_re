@@ -17,7 +17,7 @@ from service_contracts.user_resume import resume_identity,resume_envelope
 from service_contracts.events import EventContext,ExecutorEvent
 from agent_service.agents.analysis.planning.runtime import PlanningRuntime
 from agent_service.agents.analysis.planning.graph import build_planning_graph
-from api_service.agent_worker.langgraph_adapter import LangGraphEventAdapter
+from api_service.runs.graph_invocation import GraphInvocation
 from integrations.executor.observations import read_operation_observations
 
 
@@ -124,12 +124,12 @@ async def setup(tmp_path,monkeypatch,*,single=False,missing=False):
     import api_service.services.graph_crud_persistence as persistence
     async def persist(*args,**kwargs):return args[0]
     monkeypatch.setattr(persistence,'persist_graph_state',persist)
-    adapter=LangGraphEventAdapter(graph)
+    adapter=GraphInvocation(graph, model_validator=None)
     async def deliver(event):
         current=(await graph.aget_state(config)).values
         ctx=EventContext(namespace='test',session_id=value['session_id'],task_id=current['task_id'],execution_id=UUID(executor.id),
             command_id=uuid4(),event=ExecutorEvent.model_validate(event))
-        await adapter(ctx)
+        await adapter.executor_resume(ctx)
         return ctx,(await graph.aget_state(config)).values
     return runtime,executor,graph,config,state,deliver
 
@@ -153,7 +153,7 @@ async def test_multi_real_tools_decision_operation_sequence_finalize_terminal_an
     assert state['final_response']['status']=='analysis_completed' and state['report_status']=='ready'
     assert state['observations'][-1]['summary']['items']['outlier_indices']['items']==[5]
     assert len(executor.calls)==3
-    await LangGraphEventAdapter(graph)(ctx)
+    await GraphInvocation(graph, model_validator=None).executor_resume(ctx)
     assert len(executor.calls)==3
     assert state['execution_decisions']['inspect_outliers'] is True
     assert state['final_response']['report']['artifact_registration']=='deferred'

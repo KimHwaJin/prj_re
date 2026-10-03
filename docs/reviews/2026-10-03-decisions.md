@@ -21,9 +21,9 @@
 |---|---|---|---|
 | D-01 | 배포·실행 정본 | 확인 | [058](../improvements/058-deployment-config-unification.md) — 구현·로컬 검증 / 미병합·미배포 |
 | D-02 | 설정 정책과 예제 정합성 | 확인 | [058](../improvements/058-deployment-config-unification.md) — 구현·로컬 검증 / 사내 배포 미검증 |
-| D-03 | Run 접수·실행·취소 분리와 도메인 예외 | 확인 | 미착수 |
-| D-04 | 짧은 Unit of Work | 확인 | 미착수 |
-| D-05 | 공통 GraphInvocation·상태 반영 (W-02) | 확인 | 미착수 |
+| D-03 | Run 접수·실행·취소 분리와 도메인 예외 | 확인 | [059](../improvements/059-run-execution-boundaries.md) — 구현·로컬 검증 / 베이스 미병합·미배포 |
+| D-04 | 짧은 Unit of Work | 확인 | [059](../improvements/059-run-execution-boundaries.md) — 구현·로컬 검증 / 베이스 미병합·미배포 |
+| D-05 | 공통 GraphInvocation·상태 반영 (W-02) | 확인 | [059](../improvements/059-run-execution-boundaries.md) — 구현·로컬 검증 / 베이스 미병합·미배포 |
 | D-06 | 실행 구조: 입구 둘, 공통 스케줄러 하나 | 확인 | 미착수 |
 | D-07 | DB 실행 원장 + best-effort 깨우기 신호 | 보완 확인 — 아래 C-01 | 미착수 |
 | D-08 | 같은 DB, 한 connection·한 transaction 기록 | 조건부 확인 — 아래 C-02 | 미착수 |

@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계는 [058](../improvements/058-deployment-config-unification.md)에서 구현·로컬 검증했다(미병합·미배포). 다음 구현은2단계이며, 이 문서는 전체 작업 완료 기록이 아니다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 3단계 공통 명령 원장·스케줄러이며, 전체 작업 완료 기록은 아니다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -46,7 +46,9 @@
 - 이번 변경에 영향을 받는 bootstrap/settings/종료 테스트와 필요한 회귀만 실행한다.
 - 기동 명령·실효 설정 표·프로세스별 자원 예산·검증 결과를 문서화한다. 문서/로컬 검증을 실제 폐쇄망 배포 완료로 표시하지 않는다.
 
-## 2. Run 책임 분리·공통 실행부
+## 2. Run 책임 분리·공통 실행부 — 059 구현·로컬 검증
+
+[059 기록](../improvements/059-run-execution-boundaries.md)과 [인수인계](../run-execution-architecture.md)를 따른다. 기존 dispatcher 둘은 유지하며, 총 실행 한도 통합은 3단계다.
 
 - Run 접수, 이미 접수된 명령 실행, 취소를 공개 서비스 인터페이스로 나눈다. `_execute_existing`와 외부의 RunService private method 호출을 제거한다.
 - 모델 pin 검증, 프로젝트 context, submission_scope, checkpoint receipt와 API 결과 반영을 공통 GraphInvocation 경계에 모은다.
