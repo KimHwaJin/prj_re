@@ -1,0 +1,242 @@
+[
+  {
+    "name": "delta-1",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "delta",
+      "--repeat",
+      "1",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/delta-1",
+      "--output",
+      "/private/tmp/dtest-observation-final/delta-1.json"
+    ],
+    "seconds": 9.764148950576782
+  },
+  {
+    "name": "baseline-1",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "baseline",
+      "--repeat",
+      "1",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/baseline-1",
+      "--output",
+      "/private/tmp/dtest-observation-final/baseline-1.json"
+    ],
+    "seconds": 7.908700942993164
+  },
+  {
+    "name": "append-1",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "append",
+      "--repeat",
+      "1",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/append-1",
+      "--output",
+      "/private/tmp/dtest-observation-final/append-1.json"
+    ],
+    "seconds": 8.415892124176025
+  },
+  {
+    "name": "append-2",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "append",
+      "--repeat",
+      "2",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/append-2",
+      "--output",
+      "/private/tmp/dtest-observation-final/append-2.json"
+    ],
+    "seconds": 7.664889097213745
+  },
+  {
+    "name": "delta-2",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "delta",
+      "--repeat",
+      "2",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/delta-2",
+      "--output",
+      "/private/tmp/dtest-observation-final/delta-2.json"
+    ],
+    "seconds": 9.109354019165039
+  },
+  {
+    "name": "baseline-2",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "baseline",
+      "--repeat",
+      "2",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/baseline-2",
+      "--output",
+      "/private/tmp/dtest-observation-final/baseline-2.json"
+    ],
+    "seconds": 7.820528984069824
+  },
+  {
+    "name": "baseline-3",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "baseline",
+      "--repeat",
+      "3",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/baseline-3",
+      "--output",
+      "/private/tmp/dtest-observation-final/baseline-3.json"
+    ],
+    "seconds": 8.316958904266357
+  },
+  {
+    "name": "append-3",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "append",
+      "--repeat",
+      "3",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/append-3",
+      "--output",
+      "/private/tmp/dtest-observation-final/append-3.json"
+    ],
+    "seconds": 7.9277708530426025
+  },
+  {
+    "name": "delta-3",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "delta",
+      "--repeat",
+      "3",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/delta-3",
+      "--output",
+      "/private/tmp/dtest-observation-final/delta-3.json"
+    ],
+    "seconds": 9.27717900276184
+  },
+  {
+    "name": "append-4",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "append",
+      "--repeat",
+      "4",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/append-4",
+      "--output",
+      "/private/tmp/dtest-observation-final/append-4.json"
+    ],
+    "seconds": 8.021683931350708
+  },
+  {
+    "name": "baseline-4",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "baseline",
+      "--repeat",
+      "4",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/baseline-4",
+      "--output",
+      "/private/tmp/dtest-observation-final/baseline-4.json"
+    ],
+    "seconds": 8.541149377822876
+  },
+  {
+    "name": "delta-4",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "delta",
+      "--repeat",
+      "4",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/delta-4",
+      "--output",
+      "/private/tmp/dtest-observation-final/delta-4.json"
+    ],
+    "seconds": 9.426788806915283
+  },
+  {
+    "name": "delta-5",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "delta",
+      "--repeat",
+      "5",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/delta-5",
+      "--output",
+      "/private/tmp/dtest-observation-final/delta-5.json"
+    ],
+    "seconds": 9.483006954193115
+  },
+  {
+    "name": "append-5",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "append",
+      "--repeat",
+      "5",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/append-5",
+      "--output",
+      "/private/tmp/dtest-observation-final/append-5.json"
+    ],
+    "seconds": 8.374880075454712
+  },
+  {
+    "name": "baseline-5",
+    "command": [
+      "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python",
+      "scripts/diagnostics/profile_observation_delta.py",
+      "--variant",
+      "baseline",
+      "--repeat",
+      "5",
+      "--fixture-dir",
+      "/private/tmp/dtest-observation-final/baseline-5",
+      "--output",
+      "/private/tmp/dtest-observation-final/baseline-5.json"
+    ],
+    "seconds": 8.141273975372314
+  }
+]

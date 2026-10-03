@@ -73,6 +73,8 @@ class ExecutorWorker:
         self.http = httpx.AsyncClient(
             base_url=settings.executor_base_url.rstrip("/") + "/",
             timeout=settings.request_timeout_seconds,
+            trust_env=False,
+            follow_redirects=False,
         )
         self.store = Store(self.pool, settings.namespace)
         self.bindings = self.store
@@ -83,6 +85,7 @@ class ExecutorWorker:
             self.event_types,
             batch_size=settings.batch_size,
             concurrency=settings.ingress_concurrency,
+            events_path=settings.executor_events_path,
         )
         self.ingress = Ingress(self.store)
         self.consumers = [

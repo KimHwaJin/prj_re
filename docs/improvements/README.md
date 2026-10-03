@@ -1,8 +1,8 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [065 체크포인트 확대 측정](065-checkpoint-growth-profile.md). 064 기준에서 13조건·39회로 대형 출력/Operation/repair의 비용을 확인했다. runtime 변경·베이스 병합·푸시는 없으며 다음 후보는 observations 증가분 저장의 비교 검증이다.
+최신 작업: [068 Executor 이벤트 복구·중단 원인 추적](068-executor-event-recovery-verification.md). 기본 이력 경로 정합성 수정·105회귀·역순 E2E·50명 진단2회를 완료했다. 과거 최초 오류는 재현되지 않아 미확정이며, 새 tagged pending write의 구버전 reader 비호환을 실제 PG로 확인했다. 저장 후보 병합 보류를 유지한다.
 
-2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 다음은 Worker 깨우기 신호와 빈 조회 비용 정리다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
+2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
 고아 기준 브랜치: `feature/refactor-base`
 
@@ -111,6 +111,9 @@
 | 055 | 현재 쿠키 인증 API·실제 모델·Executor·후속 문맥·메모리 연계 검증 | 구현·실제 연계·132관련회귀 완료 / 베이스 병합·origin 게시 확인 | 2026-10-03 | [055 기록](055-authenticated-executor-flow.md) |
 | 056 | LLM 제외 서비스 처리량·SQL/풀/SSE 개선 및 opt-in 설정 | 구현·29측정·관련 회귀 완료 / 베이스 병합·origin 게시 확인 | 2026-10-03 | [056 기록](056-service-throughput-tuning.md) |
 | 065 | 대형 출력·Operation·repair 체크포인트 비용 측정 | 13조건·39회·독립 검산 / runtime 변경·베이스 병합·배포 없음 | 2026-10-04 | [측정·원인·다음 후보](065-checkpoint-growth-profile.md) |
+| 066 | observations 증가분 write 후보·기존 pending 복원 | 후보 구현·195회 비교 / 저장31.6% 감소·처리량 향상 미입증·미병합 | 2026-10-04 | [후보·채택 판단](066-observation-incremental-writes.md) |
+| 067 | 증가분 writer의 실제 Worker 동일 부하 대조 | 24완료·중단1/검산/보고서 완료 · 최초 원인 미확정/후보 병합 보류 | 2026-10-04 | [결과·판단·제한](067-observation-worker-comparison.md) |
+| 068 | Executor 이력 경로·최초 오류 추적·역방향 버전 경계 | 경로 수정/105회귀/50명2회 완료 · 기존 원인 미확정/후보 병합 보류 | 2026-10-04 | [작업·검증·제한](068-executor-event-recovery-verification.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

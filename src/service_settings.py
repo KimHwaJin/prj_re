@@ -33,6 +33,7 @@ ALIASES = {
     "CHECKPOINT_DB_URI": ("AGENT_CHECKPOINT_DATABASE_URL",),
     "REDIS_URL": ("EW_REDIS_URL",),
     "EXECUTOR_BASE_URL": ("EW_EXECUTOR_BASE_URL",),
+    "EXECUTOR_EVENTS_PATH": ("EW_EXECUTOR_EVENTS_PATH",),
     "EW_INGRESS_CONCURRENCY": ("EW_CONCURRENCY",),
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
@@ -362,6 +363,10 @@ def load_settings(
     worker_input["database_url"] = _postgres_url(worker_input["database_url"], "EW_DATABASE_URL")
     worker_input.setdefault("redis_url", api.redis_url)
     worker_input.setdefault("executor_base_url", agent.executor_base_url)
+    # Submission and history share the same configured execution resource.
+    # Root base + /api/v1 paths and API-prefixed base + /executions paths both
+    # work without guessing or inserting a second /api/v1 prefix.
+    worker_input.setdefault("executor_events_path", agent.executor_execution_path.rstrip("/") + "/events")
     worker_input.setdefault("namespace", "dtest-agent")
     if "instance_id" in worker_input:
         # Old deployments supplied a fixed consumer ID. Keep it only as a label

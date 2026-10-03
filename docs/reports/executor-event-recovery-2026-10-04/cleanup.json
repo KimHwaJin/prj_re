@@ -1,0 +1,16 @@
+{
+  "owned_containers_removed": [
+    "dtest-068-postgres",
+    "dtest-068-redis"
+  ],
+  "owned_anonymous_volumes_removed": true,
+  "owned_database_names_before_cleanup": [
+    "identity_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "original_running_count": 18,
+  "original_running_ids_all_preserved": true,
+  "removed_only_owned_resources": true
+}

@@ -1,0 +1,898 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "증가분 결과 저장의 Worker 부하 비교",
+    "generatedAt": "2026-10-03T18:57:14.444478+00:00",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# 증가분 결과 저장의 Worker 부하 비교\n\n"
+      },
+      {
+        "id": "summary",
+        "type": "markdown",
+        "body": "## 저장량 감소와 사용자 완료 시간의 효과를 나누어 판단했다\n\n**50명 대형 결과 흐름의 저장량은 사용자당 9.787→6.793MiB, 30.6% 감소**였다. 사용자 평균 완료 시간은 91.30→91.46초다. 기본 흐름은 20.77→20.77초였다. 두 50명 조건은 각각 3회다.\n\n**총 25번 중 24개 trial·764개 사용자 시나리오를 완주했다. 후보 50명·대형 결과 1회는 중단되어 별도 보존했다. 아래 시간은 완료한 trial의 조건부 비교이며 실패를 포함한 전체 처리량이 아니다.** 모델 추론 지연을 제거한 로컬 서비스 비교다. 슬롯/풀을 늘리지 않았으며 beta DeltaChannel은 비교 대상에 넣지 않았다. 현재는 베이스 병합을 보류한다. 저장량은 줄었지만 완료 시간은 개선되지 않았고, 올바른 fixture 계약에서도 후보의 50명 대형 흐름 한 번이 멈췄다. 최초 원인은 미확정이며 증가분 writer 때문이라고 확정하지 않는다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "definition",
+        "type": "markdown",
+        "body": "## 같은 자원에서 프로젝트 생성부터 리포트 완료까지 측정했다\n\n전체 시간은 프로젝트/세션 생성→새 요청→계획 편집→승인→HTTP Executor 제출/continue/finalize→Redis 결과→Worker 재개→최종 success SSE다. 인증 등록·warmup·기동/종료·SQL 증거 캡처는 제외했다. 리포트는 Agent Markdown 응답이며 별도 Artifact POST 등록은 포함하지 않는다.\n\n**LLM mock 지연은 모든 호출에서 0초**다. create_agent·스킬 조회·middleware·프롬프트 직렬화는 실제 수행한다. 분석 실행은 HTTP fixture의 합성 결과이며 Python Tool 코드를 실행하지 않는다. 실제 PostgreSQL checkpoint/Store·API 권한/CRUD·Redis Streams/Inbox·Worker·manifest/checksum·SSE를 거친다.\n\nAPI 1프로세스·공통 Worker20·CRUD10/overflow0·checkpoint4·bridge4·Store2를 맞췄다. SSE0.5초·claim/cancel0.25초·Ingress0.2/idle2초·notify ON도 같다. 1/10/30/50명 유한 동시 유입으로, 지속 유입 용량이나 HPA 확장을 측정하지 않았다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "normal",
+        "type": "markdown",
+        "body": "## 기본 흐름의 비용은 새 저장 방식과 별도로 남는다\n\n등록 Tool4개를 2개 Operation으로 실행하고 계획 선택/작성·review·report의 4개 모델 호출을 수행했다. 50명 평균은 20.77→20.77초, trial 평균 범위는 20.35~21.09/20.22~21.42초다. 아래 막대는 사용자 평균, 표의 처리율은 각 trial의 사용자 수/전체 종료 시간이다. 반복 p95 평균을 합친 모집단 p95로 부르지 않는다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "normal-chart-block",
+        "type": "chart",
+        "chartId": "normal-chart"
+      },
+      {
+        "id": "normal-table-block",
+        "type": "table",
+        "tableId": "normal-table"
+      },
+      {
+        "id": "large",
+        "type": "markdown",
+        "body": "## 대형 결과와 20번의 재개를 같은 승인 계획으로 실행했다\n\n기존 등록 load/profile Tool을 20개 단계로 구성하고 every_n_tools=1을 사용했다. 각 Tool stdout은 64KiB 반복 문자 로그이며 저장 미리보기는16000자다. review20회·계획2회·report1회, 총23개 모델 호출의 지연은 모두0초다. 50명 평균은 91.30→91.46초, trial 평균 범위는 89.89~93.33/91.06~92.19초다. **기본 흐름보다 호출/재개 수가 많으므로 두 시나리오의 절대 시간을 성능 순위로 섞지 않는다.**",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "large-chart-block",
+        "type": "chart",
+        "chartId": "large-chart"
+      },
+      {
+        "id": "large-table-block",
+        "type": "table",
+        "tableId": "large-table"
+      },
+      {
+        "id": "storage",
+        "type": "markdown",
+        "body": "## 증가분 write는 full snapshot과 재개 횟수를 줄이지 않는다\n\n대형 흐름의 observations pending write는 사용자당 3.309→0.316MiB다. 전체 목록 snapshot blob과 checkpoint 횟수는 유지한다. 원본 승인/HTTP body/receipt/실패 근거를 삭제하지 않았다. 저장 함수 시간은 동시 호출끼리 겹치는 누계여서 E2E 시간에서 그대로 뺄 수 없다.\n\n논리 바이트는 JSON text+고유 blob+retained write다. 반복 문자 fixture는 PostgreSQL에서 잘 압축되므로 압축 column 크기도 별도로 본다. **column 크기 합은 heap/index/WAL/TOAST 전체 디스크 크기가 아니다.** 실제 자연어/숫자 로그의 압축률과 클라우드 DB I/O는 달라질 수 있다. 읽기 전체 decode·모델 프레임워크·API SQL·상태 폴링 비용도 남는다. CRUD SQL 차이는 동일 쿼리의 폴링/진행시간 변동이며 이번 작업으로 쿼리를 최적화한 성과가 아니다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "cost-table-block",
+        "type": "table",
+        "tableId": "cost-table"
+      },
+      {
+        "id": "validation",
+        "type": "markdown",
+        "body": "## 전체 표본·소스·완료 근거를 독립 검산했다\n\n완료한 24회는 성공 결과의 순서·summary·상태 hash가 두 방식/사용자 수에서 같다. 각 trial 종료 시 session owner/recovery/Inbox/Outbox/CRUD checkout과 실행 자리는0이다. 실제 src 해시를 기준 Git 정본과 대조했고 변경된 runtime은 상태/reducer·결과 writer·receive reset뿐이다.\n\n측정 순서를 교차하고 동시에 두 서버를 부하하지 않았다. 각 trial은 새 DB/namespace에서 실행한 후 정리한다. 50명은각3회, 나머지는각1회다. 독립 검사기는 원문 SHA·사용자 평균/p95·SQL 합·저장 bytes·호출 수·최종 근거·반복 모집단을 다시 계산한다.\n\n잘못된 이벤트 이력 fixture 계약과 URL prefix를 사용한 첫 비교 세트는 전부 제외했다. 실제 items/next_cursor/has_more 계약 및 명시적 API base/path 설정을 양쪽에 동일 적용한 뒤 전 조건을 새로 수행했다. 제외 원본/중단 로그는 보관했다. 이후 올바른 계약의 후보 50명·대형 결과 1회는 ExecutorOutcomeUnknown 이후 20개 명령 RECOVERY·43개 READY 상태로 멈췄다. 원래 예외 사슬이 보존되지 않아 최초 원인은 미확정이다. 이 중단은 별도 실패 사건이며 재시험 성공으로 삭제하지 않았다. 성공 시간 그래프는 실패의 손실을 포함하지 못한다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## 로컬 동시 유입 결과를 운영 용량으로 확대 해석하지 않는다\n\nLLM 추론·실 Executor 계산·Jupyter/PVC/MinIO·CPU quota/HPA/멀티 Pod·지속 유입·1주 대기는 제외했다. API CPU만 측정하고 DB/Redis/mock/client CPU는 포함하지 않았다. 함수/SQL/queue/slot 시간은 서로 겹친다. 반복3회와 기존 서비스가 함께 떠 있는 로컬 자원만으로 통계적 우월성이나 SLA를 확정하지 않는다.\n\nSSE 폴링0.5초와 작업 scheduling 편차도 사용자 완료 시각에 영향을 준다. 신규 tagged pending write를 구버전 LastValue worker가 이어받는 역방향 혼합 배포는 여전히 지원을 보장하지 않는다. 현재 기본 root URL와 Event history 상대 경로의 prefix 정합성은 운영 설정/연계 후속 사항으로 별도 기록했다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "decision",
+        "type": "markdown",
+        "body": "## 확인한 효과에 맞춰 후보 채택 범위를 제한한다\n\n50명 완료 시간은 기본 흐름20.766→20.772초(+0.03%), 대형 흐름91.302→91.462초(+0.18%)로 반복 범위가 겹친다. 대형 흐름 논리 저장량9.787→6.793MiB(-30.6%), 관찰 pending write3.309→0.316MiB(-90.5%), 압축 column1.368→1.235MiB(-9.7%)다. **저장 효율의 효과는 확인했으나 처리량 향상으로 채택할 근거는 없다.**\n\n올바른 계약의 전체25시도 중 완료24회(764시나리오), 중단1회(50시나리오)다. 중단 시 첫 event handler는 Operation16 완료 뒤 ExecutorOutcomeUnknown을 기록했고,20개 명령은RECOVERY·43개는READY였다. 이후 공통 Worker는 새 claim을 중단했다. 최초 예외 사슬은 보존되지 않았으며 HTTP 응답/전송·본문 생성·checkpoint 후속 오류 중 어디서 시작됐는지 확정하지 않는다. 이후 원인 사슬 출력만 추가한 후보3회/기존3회의 대형50명 시험은 모두 완료했다. 그 성공으로 중단을 제거하지 않는다. 공개한 시간/처리율은 완료 trial의 조건부 결과여서 서비스의 전체 실패 비용을 반영하지 못한다.\n\n다음 우선순위는 중단의 원래 예외 및 Executor POST 결과를 같은 조건에서 확보하는 것이다. safe ownership·idempotency·durability를 느슨하게 하여 시험을 통과시키지 않는다. 저장 후보는 계속 분리해 두며, 최초 원인과 버전 전환 경계가 확인된 뒤 저장 효율 목적으로 채택할지 재판단한다. 다음 성능 조사 후보는 0초 LLM에서의 API CPU 구성요소 샘플링이다. 모델 호출 수 최적화는 기존 보류를 유지한다.",
+        "sourceId": "measurement"
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "body": "## 배포 전에 확인할 조건이 남아 있다\n\n먼저 중단을 일으킨 최초 예외와 POST 결과를 어떻게 확보할 것인가? 실제 로그의 크기/압축률과 Operation 수 분포는 어떤가? Pod CPU quota·총 DB 연결 예산에서 같은 결과가 유지되는가? 진행 중 대기 Run을 새 worker로 넘길 때 혼합 버전 경계를 어떻게 보장할 것인가? 기본 Executor URL와 이력 경로를 같은 규칙으로 조립하는 후속 변경도 실제 gap 대조가 필요하다.",
+        "sourceId": "measurement"
+      }
+    ],
+    "charts": [
+      {
+        "id": "normal-chart",
+        "title": "기본 분석의 동시 사용자별 완료 시간",
+        "subtitle": "LLM mock 지연 0초·Worker 20·50명 각 3회, 나머지 각 1회",
+        "showDescription": true,
+        "type": "bar",
+        "intent": "comparison",
+        "dataset": "normal-chart",
+        "sourceId": "measurement",
+        "encodings": {
+          "x": {
+            "field": "cohort",
+            "type": "nominal",
+            "label": "동시 사용자"
+          },
+          "y": {
+            "field": "seconds",
+            "type": "quantitative",
+            "label": "사용자 평균 초",
+            "format": "number",
+            "unit": "s"
+          },
+          "color": {
+            "field": "condition",
+            "type": "nominal",
+            "label": "저장 방식"
+          }
+        },
+        "palette": {
+          "kind": "categorical"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "spec"
+        },
+        "settings": {
+          "groupMode": "grouped",
+          "sort": "none"
+        },
+        "layout": "full"
+      },
+      {
+        "id": "large-chart",
+        "title": "대형 결과 분석의 동시 사용자별 완료 시간",
+        "subtitle": "LLM mock 지연 0초·Worker 20·50명 각 3회, 나머지 각 1회",
+        "showDescription": true,
+        "type": "bar",
+        "intent": "comparison",
+        "dataset": "large-chart",
+        "sourceId": "measurement",
+        "encodings": {
+          "x": {
+            "field": "cohort",
+            "type": "nominal",
+            "label": "동시 사용자"
+          },
+          "y": {
+            "field": "seconds",
+            "type": "quantitative",
+            "label": "사용자 평균 초",
+            "format": "number",
+            "unit": "s"
+          },
+          "color": {
+            "field": "condition",
+            "type": "nominal",
+            "label": "저장 방식"
+          }
+        },
+        "palette": {
+          "kind": "categorical"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "spec"
+        },
+        "settings": {
+          "groupMode": "grouped",
+          "sort": "none"
+        },
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "normal-table",
+        "title": "기본 분석의 시간 대조",
+        "dataset": "normal-table",
+        "sourceId": "measurement",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "동시 사용자",
+            "type": "number"
+          },
+          {
+            "field": "before",
+            "label": "기존 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "after",
+            "label": "후보 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "reduction_percent",
+            "label": "평균 단축 %",
+            "type": "number"
+          },
+          {
+            "field": "repeats",
+            "label": "각 반복 수",
+            "type": "number"
+          },
+          {
+            "field": "before_batch",
+            "label": "기존 전체 종료 초",
+            "type": "number"
+          },
+          {
+            "field": "after_batch",
+            "label": "후보 전체 종료 초",
+            "type": "number"
+          },
+          {
+            "field": "before_rate",
+            "label": "기존 batch 사용자/초",
+            "type": "number"
+          },
+          {
+            "field": "after_rate",
+            "label": "후보 batch 사용자/초",
+            "type": "number"
+          },
+          {
+            "field": "before_p95_range",
+            "label": "기존 trial p95 범위",
+            "type": "text"
+          },
+          {
+            "field": "after_p95_range",
+            "label": "후보 trial p95 범위",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "large-table",
+        "title": "대형 결과 분석의 시간 대조",
+        "dataset": "large-table",
+        "sourceId": "measurement",
+        "defaultSort": {
+          "field": "users",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "users",
+            "label": "동시 사용자",
+            "type": "number"
+          },
+          {
+            "field": "before",
+            "label": "기존 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "after",
+            "label": "후보 평균 초",
+            "type": "number"
+          },
+          {
+            "field": "reduction_percent",
+            "label": "평균 단축 %",
+            "type": "number"
+          },
+          {
+            "field": "repeats",
+            "label": "각 반복 수",
+            "type": "number"
+          },
+          {
+            "field": "before_batch",
+            "label": "기존 전체 종료 초",
+            "type": "number"
+          },
+          {
+            "field": "after_batch",
+            "label": "후보 전체 종료 초",
+            "type": "number"
+          },
+          {
+            "field": "before_rate",
+            "label": "기존 batch 사용자/초",
+            "type": "number"
+          },
+          {
+            "field": "after_rate",
+            "label": "후보 batch 사용자/초",
+            "type": "number"
+          },
+          {
+            "field": "before_p95_range",
+            "label": "기존 trial p95 범위",
+            "type": "text"
+          },
+          {
+            "field": "after_p95_range",
+            "label": "후보 trial p95 범위",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "cost-table",
+        "title": "50명 조건의 사용자당 비용과 명령 대기",
+        "dataset": "cost-table",
+        "sourceId": "measurement",
+        "defaultSort": {
+          "field": "scenario",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "scenario",
+            "label": "시나리오",
+            "type": "text"
+          },
+          {
+            "field": "condition",
+            "label": "방식",
+            "type": "text"
+          },
+          {
+            "field": "logical_mib",
+            "label": "논리 MiB",
+            "type": "number"
+          },
+          {
+            "field": "column_mib",
+            "label": "압축 column MiB",
+            "type": "number"
+          },
+          {
+            "field": "observation_write_mib",
+            "label": "관찰 write MiB",
+            "type": "number"
+          },
+          {
+            "field": "write_ms",
+            "label": "저장 함수 누계 ms",
+            "type": "number"
+          },
+          {
+            "field": "read_ms",
+            "label": "읽기 함수 누계 ms",
+            "type": "number"
+          },
+          {
+            "field": "cpu_seconds",
+            "label": "API CPU 초",
+            "type": "number"
+          },
+          {
+            "field": "crud_sql",
+            "label": "CRUD SQL 회",
+            "type": "number"
+          },
+          {
+            "field": "user_queue_ms",
+            "label": "사용자 명령 대기 ms",
+            "type": "number"
+          },
+          {
+            "field": "event_queue_ms",
+            "label": "XADD→handler 시작 ms",
+            "type": "number"
+          },
+          {
+            "field": "cp",
+            "label": "checkpoint 수",
+            "type": "number"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "measurement",
+        "kind": "file",
+        "name": "Validated local Worker trial rollup",
+        "path": "docs/reports/observation-worker-2026-10-04/summary.json",
+        "query": {
+          "engine": "SQLite",
+          "language": "sql",
+          "sql": "SELECT variant, profile, users, COUNT(*) AS repeats,\n AVG(mean_seconds) AS mean_seconds, MIN(mean_seconds) AS mean_min, MAX(mean_seconds) AS mean_max,\n AVG(p95_seconds) AS p95_trial_mean, MIN(p95_seconds) AS p95_min, MAX(p95_seconds) AS p95_max,\n AVG(makespan_seconds) AS makespan_seconds, AVG(batch_users_per_second) AS batch_users_per_second,\n AVG(user_queue_mean_ms) AS user_queue_mean_ms, AVG(event_queue_mean_ms) AS event_queue_mean_ms,\n AVG(api_cpu_per_user_seconds) AS cpu_per_user_seconds, AVG(crud_sql_per_user) AS crud_sql_per_user,\n AVG(saver_write_outer_ms_per_user) AS saver_write_ms_per_user,\n AVG(saver_read_ms_per_user) AS saver_read_ms_per_user, AVG(column_payload_mib_per_user) AS column_payload_mib_per_user,\n AVG(serialization_ms_per_user) AS serialization_ms_per_user,\n AVG(logical_mib_per_user) AS logical_mib_per_user, AVG(observation_write_mib_per_user) AS observation_write_mib_per_user,\n AVG(checkpoints_per_user) AS checkpoints_per_user, AVG(defer_attempts) AS defer_attempts\n FROM trials GROUP BY variant, profile, users ORDER BY profile, users, variant;\n",
+          "tables_used": [
+            "trials"
+          ],
+          "description": "Executed rollup of validated HTTP/Worker captures; checkpoint bytes originate in captured PostgreSQL checkpoint tables",
+          "filters": [
+            "one process,common slots20,PG checkpoint4,CRUD10",
+            "0s model transport fixture; actual framework/middleware",
+            "1/10/30/50 finite burst,50 repeats3",
+            "initial mismatched-history matrix wholly excluded"
+          ],
+          "metric_definitions": [
+            "mean_seconds: arithmetic mean of user project-create to success-SSE wall time",
+            "batch_users_per_second: n/cohort makespan per trial, then arithmetic mean across repeats; not sustained capacity",
+            "logical bytes: selected checkpoint JSON text/metadata+unique blobs+retained writes per user",
+            "column payload: selected pg_column_size sum; excludes total heap/index/WAL",
+            "saver times: overlapping per-user call work, not a wall-time component"
+          ]
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-10-03T18:57:14.444478+00:00",
+    "datasets": {
+      "normal-chart": [
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 1.7206895409617573,
+          "after": 1.7567729579750448,
+          "reduction_percent": -2.0970323904635935,
+          "repeats": 1,
+          "before_p95_range": "1.72~1.72",
+          "after_p95_range": "1.76~1.76",
+          "before_batch": 1.7211231670808047,
+          "after_batch": 1.7571952498983592,
+          "before_rate": 0.5810159430345122,
+          "after_rate": 0.5690887225297488,
+          "seconds": 1.7206895409617573,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 1.7206895409617573,
+          "after": 1.7567729579750448,
+          "reduction_percent": -2.0970323904635935,
+          "repeats": 1,
+          "before_p95_range": "1.72~1.72",
+          "after_p95_range": "1.76~1.76",
+          "before_batch": 1.7211231670808047,
+          "after_batch": 1.7571952498983592,
+          "before_rate": 0.5810159430345122,
+          "after_rate": 0.5690887225297488,
+          "seconds": 1.7567729579750448,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 3.8526720917550845,
+          "after": 4.26654023330193,
+          "reduction_percent": -10.742366121231651,
+          "repeats": 1,
+          "before_p95_range": "4.22~4.22",
+          "after_p95_range": "4.44~4.44",
+          "before_batch": 4.328175583854318,
+          "after_batch": 4.447434125002474,
+          "before_rate": 2.3104423113756445,
+          "after_rate": 2.2484874916487803,
+          "seconds": 3.8526720917550845,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 3.8526720917550845,
+          "after": 4.26654023330193,
+          "reduction_percent": -10.742366121231651,
+          "repeats": 1,
+          "before_p95_range": "4.22~4.22",
+          "after_p95_range": "4.44~4.44",
+          "before_batch": 4.328175583854318,
+          "after_batch": 4.447434125002474,
+          "before_rate": 2.3104423113756445,
+          "after_rate": 2.2484874916487803,
+          "seconds": 4.26654023330193,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 12.084466452787941,
+          "after": 12.46974638341926,
+          "reduction_percent": -3.1882245867994596,
+          "repeats": 1,
+          "before_p95_range": "12.68~12.68",
+          "after_p95_range": "13.01~13.01",
+          "before_batch": 12.772827417124063,
+          "after_batch": 13.16936399997212,
+          "before_rate": 2.348736033165225,
+          "after_rate": 2.2780143369158536,
+          "seconds": 12.084466452787941,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 12.084466452787941,
+          "after": 12.46974638341926,
+          "reduction_percent": -3.1882245867994596,
+          "repeats": 1,
+          "before_p95_range": "12.68~12.68",
+          "after_p95_range": "13.01~13.01",
+          "before_batch": 12.772827417124063,
+          "after_batch": 13.16936399997212,
+          "before_rate": 2.348736033165225,
+          "after_rate": 2.2780143369158536,
+          "seconds": 12.46974638341926,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 20.765880294137943,
+          "after": 20.772406854168512,
+          "reduction_percent": -0.03142924806520675,
+          "repeats": 3,
+          "before_p95_range": "21.37~22.03",
+          "after_p95_range": "21.20~22.46",
+          "before_batch": 21.840003652653348,
+          "after_batch": 21.826453985956807,
+          "before_rate": 2.2898444024305653,
+          "after_rate": 2.2921188580114578,
+          "seconds": 20.765880294137943,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 20.765880294137943,
+          "after": 20.772406854168512,
+          "reduction_percent": -0.03142924806520675,
+          "repeats": 3,
+          "before_p95_range": "21.37~22.03",
+          "after_p95_range": "21.20~22.46",
+          "before_batch": 21.840003652653348,
+          "after_batch": 21.826453985956807,
+          "before_rate": 2.2898444024305653,
+          "after_rate": 2.2921188580114578,
+          "seconds": 20.772406854168512,
+          "condition": "증가분 write 후보"
+        }
+      ],
+      "normal-table": [
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 1.7206895409617573,
+          "after": 1.7567729579750448,
+          "reduction_percent": -2.0970323904635935,
+          "repeats": 1,
+          "before_p95_range": "1.72~1.72",
+          "after_p95_range": "1.76~1.76",
+          "before_batch": 1.7211231670808047,
+          "after_batch": 1.7571952498983592,
+          "before_rate": 0.5810159430345122,
+          "after_rate": 0.5690887225297488
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 3.8526720917550845,
+          "after": 4.26654023330193,
+          "reduction_percent": -10.742366121231651,
+          "repeats": 1,
+          "before_p95_range": "4.22~4.22",
+          "after_p95_range": "4.44~4.44",
+          "before_batch": 4.328175583854318,
+          "after_batch": 4.447434125002474,
+          "before_rate": 2.3104423113756445,
+          "after_rate": 2.2484874916487803
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 12.084466452787941,
+          "after": 12.46974638341926,
+          "reduction_percent": -3.1882245867994596,
+          "repeats": 1,
+          "before_p95_range": "12.68~12.68",
+          "after_p95_range": "13.01~13.01",
+          "before_batch": 12.772827417124063,
+          "after_batch": 13.16936399997212,
+          "before_rate": 2.348736033165225,
+          "after_rate": 2.2780143369158536
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 20.765880294137943,
+          "after": 20.772406854168512,
+          "reduction_percent": -0.03142924806520675,
+          "repeats": 3,
+          "before_p95_range": "21.37~22.03",
+          "after_p95_range": "21.20~22.46",
+          "before_batch": 21.840003652653348,
+          "after_batch": 21.826453985956807,
+          "before_rate": 2.2898444024305653,
+          "after_rate": 2.2921188580114578
+        }
+      ],
+      "large-chart": [
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 4.1792673747986555,
+          "after": 4.198865124955773,
+          "reduction_percent": -0.4689278861480295,
+          "repeats": 1,
+          "before_p95_range": "4.18~4.18",
+          "after_p95_range": "4.20~4.20",
+          "before_batch": 4.179577250033617,
+          "after_batch": 4.1991459999699146,
+          "before_rate": 0.2392586475084189,
+          "after_rate": 0.23814366064127435,
+          "seconds": 4.1792673747986555,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 4.1792673747986555,
+          "after": 4.198865124955773,
+          "reduction_percent": -0.4689278861480295,
+          "repeats": 1,
+          "before_p95_range": "4.18~4.18",
+          "after_p95_range": "4.20~4.20",
+          "before_batch": 4.179577250033617,
+          "after_batch": 4.1991459999699146,
+          "before_rate": 0.2392586475084189,
+          "after_rate": 0.23814366064127435,
+          "seconds": 4.198865124955773,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 16.761285533593036,
+          "after": 16.509583966620266,
+          "reduction_percent": 1.5016841427127336,
+          "repeats": 1,
+          "before_p95_range": "17.12~17.12",
+          "after_p95_range": "16.71~16.71",
+          "before_batch": 17.119272167095914,
+          "after_batch": 16.717697917018086,
+          "before_rate": 0.5841369833012231,
+          "after_rate": 0.5981684828639185,
+          "seconds": 16.761285533593036,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 16.761285533593036,
+          "after": 16.509583966620266,
+          "reduction_percent": 1.5016841427127336,
+          "repeats": 1,
+          "before_p95_range": "17.12~17.12",
+          "after_p95_range": "16.71~16.71",
+          "before_batch": 17.119272167095914,
+          "after_batch": 16.717697917018086,
+          "before_rate": 0.5841369833012231,
+          "after_rate": 0.5981684828639185,
+          "seconds": 16.509583966620266,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 53.81963075835568,
+          "after": 54.29724527350627,
+          "reduction_percent": -0.887435510836232,
+          "repeats": 1,
+          "before_p95_range": "54.50~54.50",
+          "after_p95_range": "55.05~55.05",
+          "before_batch": 54.55791004211642,
+          "after_batch": 55.094286625040695,
+          "before_rate": 0.54987443574802,
+          "after_rate": 0.5445210717433051,
+          "seconds": 53.81963075835568,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 53.81963075835568,
+          "after": 54.29724527350627,
+          "reduction_percent": -0.887435510836232,
+          "repeats": 1,
+          "before_p95_range": "54.50~54.50",
+          "after_p95_range": "55.05~55.05",
+          "before_batch": 54.55791004211642,
+          "after_batch": 55.094286625040695,
+          "before_rate": 0.54987443574802,
+          "after_rate": 0.5445210717433051,
+          "seconds": 54.29724527350627,
+          "condition": "증가분 write 후보"
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 91.30170806808553,
+          "after": 91.46155194304107,
+          "reduction_percent": -0.17507216276428927,
+          "repeats": 3,
+          "before_p95_range": "91.36~94.65",
+          "after_p95_range": "92.39~93.61",
+          "before_batch": 92.80209326394834,
+          "after_batch": 92.92799108374554,
+          "before_rate": 0.5389046995896792,
+          "after_rate": 0.5380737227453167,
+          "seconds": 91.30170806808553,
+          "condition": "기존 누적 write"
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 91.30170806808553,
+          "after": 91.46155194304107,
+          "reduction_percent": -0.17507216276428927,
+          "repeats": 3,
+          "before_p95_range": "91.36~94.65",
+          "after_p95_range": "92.39~93.61",
+          "before_batch": 92.80209326394834,
+          "after_batch": 92.92799108374554,
+          "before_rate": 0.5389046995896792,
+          "after_rate": 0.5380737227453167,
+          "seconds": 91.46155194304107,
+          "condition": "증가분 write 후보"
+        }
+      ],
+      "large-table": [
+        {
+          "users": 1,
+          "cohort": "1명",
+          "before": 4.1792673747986555,
+          "after": 4.198865124955773,
+          "reduction_percent": -0.4689278861480295,
+          "repeats": 1,
+          "before_p95_range": "4.18~4.18",
+          "after_p95_range": "4.20~4.20",
+          "before_batch": 4.179577250033617,
+          "after_batch": 4.1991459999699146,
+          "before_rate": 0.2392586475084189,
+          "after_rate": 0.23814366064127435
+        },
+        {
+          "users": 10,
+          "cohort": "10명",
+          "before": 16.761285533593036,
+          "after": 16.509583966620266,
+          "reduction_percent": 1.5016841427127336,
+          "repeats": 1,
+          "before_p95_range": "17.12~17.12",
+          "after_p95_range": "16.71~16.71",
+          "before_batch": 17.119272167095914,
+          "after_batch": 16.717697917018086,
+          "before_rate": 0.5841369833012231,
+          "after_rate": 0.5981684828639185
+        },
+        {
+          "users": 30,
+          "cohort": "30명",
+          "before": 53.81963075835568,
+          "after": 54.29724527350627,
+          "reduction_percent": -0.887435510836232,
+          "repeats": 1,
+          "before_p95_range": "54.50~54.50",
+          "after_p95_range": "55.05~55.05",
+          "before_batch": 54.55791004211642,
+          "after_batch": 55.094286625040695,
+          "before_rate": 0.54987443574802,
+          "after_rate": 0.5445210717433051
+        },
+        {
+          "users": 50,
+          "cohort": "50명",
+          "before": 91.30170806808553,
+          "after": 91.46155194304107,
+          "reduction_percent": -0.17507216276428927,
+          "repeats": 3,
+          "before_p95_range": "91.36~94.65",
+          "after_p95_range": "92.39~93.61",
+          "before_batch": 92.80209326394834,
+          "after_batch": 92.92799108374554,
+          "before_rate": 0.5389046995896792,
+          "after_rate": 0.5380737227453167
+        }
+      ],
+      "cost-table": [
+        {
+          "scenario": "기본4 Tool/2 Operation",
+          "condition": "기존",
+          "users": 50,
+          "logical_mib": 0.6776797548929849,
+          "column_mib": 0.24434006373087566,
+          "observation_write_mib": 0.004616737365722656,
+          "write_ms": 5561.297575063072,
+          "read_ms": 1474.756399015896,
+          "cpu_seconds": 0.42576092666666665,
+          "crud_sql": 576.5933333333334,
+          "user_queue_ms": 2429.8602422222225,
+          "event_queue_ms": 2159.469884535194,
+          "cp": 30.0
+        },
+        {
+          "scenario": "기본4 Tool/2 Operation",
+          "condition": "후보",
+          "users": 50,
+          "logical_mib": 0.6758611742655436,
+          "column_mib": 0.24404821395874024,
+          "observation_write_mib": 0.0027418136596679688,
+          "write_ms": 5582.959788986482,
+          "read_ms": 1451.3165955618024,
+          "cpu_seconds": 0.42622897333333337,
+          "crud_sql": 577.34,
+          "user_queue_ms": 2444.4079466666667,
+          "event_queue_ms": 2140.1202512729087,
+          "cp": 30.0
+        },
+        {
+          "scenario": "대형20 Tool/20 Operation",
+          "condition": "기존",
+          "users": 50,
+          "logical_mib": 9.78677059173584,
+          "column_mib": 1.3680882708231608,
+          "observation_write_mib": 3.309088706970215,
+          "write_ms": 30443.652651845478,
+          "read_ms": 7064.977221243705,
+          "cpu_seconds": 1.81462534,
+          "crud_sql": 2181.6666666666665,
+          "user_queue_ms": 2535.073811111111,
+          "event_queue_ms": 2898.163233399317,
+          "cp": 156.0
+        },
+        {
+          "scenario": "대형20 Tool/20 Operation",
+          "condition": "후보",
+          "users": 50,
+          "logical_mib": 6.793098519643148,
+          "column_mib": 1.235442803700765,
+          "observation_write_mib": 0.3156900405883789,
+          "write_ms": 30724.86989601981,
+          "read_ms": 7252.001275910686,
+          "cpu_seconds": 1.8189890733333334,
+          "crud_sql": 2181.853333333333,
+          "user_queue_ms": 2493.3781555555556,
+          "event_queue_ms": 2909.5286546151583,
+          "cp": 156.0
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "measurement",
+      "kind": "file",
+      "name": "Validated local Worker trial rollup",
+      "path": "docs/reports/observation-worker-2026-10-04/summary.json",
+      "query": {
+        "engine": "SQLite",
+        "language": "sql",
+        "sql": "SELECT variant, profile, users, COUNT(*) AS repeats,\n AVG(mean_seconds) AS mean_seconds, MIN(mean_seconds) AS mean_min, MAX(mean_seconds) AS mean_max,\n AVG(p95_seconds) AS p95_trial_mean, MIN(p95_seconds) AS p95_min, MAX(p95_seconds) AS p95_max,\n AVG(makespan_seconds) AS makespan_seconds, AVG(batch_users_per_second) AS batch_users_per_second,\n AVG(user_queue_mean_ms) AS user_queue_mean_ms, AVG(event_queue_mean_ms) AS event_queue_mean_ms,\n AVG(api_cpu_per_user_seconds) AS cpu_per_user_seconds, AVG(crud_sql_per_user) AS crud_sql_per_user,\n AVG(saver_write_outer_ms_per_user) AS saver_write_ms_per_user,\n AVG(saver_read_ms_per_user) AS saver_read_ms_per_user, AVG(column_payload_mib_per_user) AS column_payload_mib_per_user,\n AVG(serialization_ms_per_user) AS serialization_ms_per_user,\n AVG(logical_mib_per_user) AS logical_mib_per_user, AVG(observation_write_mib_per_user) AS observation_write_mib_per_user,\n AVG(checkpoints_per_user) AS checkpoints_per_user, AVG(defer_attempts) AS defer_attempts\n FROM trials GROUP BY variant, profile, users ORDER BY profile, users, variant;\n",
+        "tables_used": [
+          "trials"
+        ],
+        "description": "Executed rollup of validated HTTP/Worker captures; checkpoint bytes originate in captured PostgreSQL checkpoint tables",
+        "filters": [
+          "one process,common slots20,PG checkpoint4,CRUD10",
+          "0s model transport fixture; actual framework/middleware",
+          "1/10/30/50 finite burst,50 repeats3",
+          "initial mismatched-history matrix wholly excluded"
+        ],
+        "metric_definitions": [
+          "mean_seconds: arithmetic mean of user project-create to success-SSE wall time",
+          "batch_users_per_second: n/cohort makespan per trial, then arithmetic mean across repeats; not sustained capacity",
+          "logical bytes: selected checkpoint JSON text/metadata+unique blobs+retained writes per user",
+          "column payload: selected pg_column_size sum; excludes total heap/index/WAL",
+          "saver times: overlapping per-user call work, not a wall-time component"
+        ]
+      }
+    }
+  ]
+}

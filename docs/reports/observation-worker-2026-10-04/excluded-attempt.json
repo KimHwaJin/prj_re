@@ -1,0 +1,5 @@
+{
+  "reason": "HTTP Executor fixture history contract mismatched Worker; reject whole first matrix",
+  "runner_pid_interrupted": 96292,
+  "all_prior_captures_excluded": true
+}

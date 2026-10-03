@@ -15,6 +15,8 @@ def quantile(values,p=.95):
 
 
 def analyze(raw):
+    from observation_scenarios import scenario as observation_scenario
+    spec=observation_scenario(raw['config'].get('observation_profile','standard'))
     cfg=raw['config'];n=cfg['users'];s=raw['server'];db=raw['database'];results=raw['results']
     scenario=cfg['scenario'];burst=scenario in ('result_burst','mixed');approval=scenario=='approval';followup=cfg['followup']
     assert raw['passed'] and not raw['errors'] and len(results)==n
@@ -41,14 +43,14 @@ def analyze(raw):
     assert len({r['public_run_id'] for r in db['runs']})==n*(3 if followup else 1)
     commands=db['common_commands']
     if cfg['architecture']=='common':
-        assert len(commands)==n*(2 if approval else 8 if followup else 6)
+        assert len(commands)==n*(2 if approval else 8 if followup else spec.operations+4)
         assert len({c['command_id'] for c in commands})==len(commands)
         assert all(c['state']=='DONE' for c in commands)
         # A temporary Defer is not a duplicate graph success. Retain attempts.
     incoming=sum(r['cohort']=='incoming' for r in results)
     expected_roles=Counter({'planning_select':n,'planning_plan':n})
     if burst:expected_roles=Counter({'planning_select':incoming,'planning_plan':incoming})
-    if not approval:expected_roles.update({'review':n,'report':n})
+    if not approval:expected_roles.update({'review':n*spec.reviews,'report':n})
     if followup:expected_roles.update({'answer':n*2})
     expected_roles=+expected_roles
     assert Counter(m['role'] for m in s['models'])==expected_roles
@@ -56,21 +58,21 @@ def analyze(raw):
     assert all(m['end']-m['start']>=delay-.02 for m in s['models'])
     handlers=s['event_handlers'];success=[h for h in handlers if h['error'] is None];defer=[h for h in handlers if h['error']]
     assert all(h['error'] in ('DeferEvent','_HandoffPending') for h in defer)
-    assert len(success)==len({h['event_id'] for h in success})==(0 if approval else n*3)
+    assert len(success)==len({h['event_id'] for h in success})==(0 if approval else n*(spec.operations+1))
     assert all(c['state']=='DONE' and c['failure_attempts']==0 for c in db['commands'])
-    assert len(db['commands'])==(0 if approval else n*3)
+    assert len(db['commands'])==(0 if approval else n*(spec.operations+1))
     assert {c['command_id'] for c in db['commands']}=={h['command_id'] for h in success}
     if not approval:
         executions={r['execution_id'] for r in results}
         assert len(executions)==n and {h['execution_id'] for h in success}==executions
         assert not raw['mock']['tasks_failed'] and raw['mock']['pending']==0
         seen=[e for e in raw['mock']['executions'] if e['execution_id'] in executions]
-        assert len(seen)==n and all(e['operations']==2 and e['status']=='SUCCEEDED' for e in seen)
+        assert len(seen)==n and all(e['operations']==spec.operations and e['status']=='SUCCEEDED' for e in seen)
         calls=Counter(t['stage'] for t in raw['mock']['timeline'] if t['stage']!='event_published')
-        assert calls==({'continue_accepted':n,'finalize_accepted':n,'submit_accepted':incoming} if burst and incoming else
-                       {'continue_accepted':n,'finalize_accepted':n} if burst else
-                       {'submit_accepted':n,'continue_accepted':n,'finalize_accepted':n})
-        assert all(len(r['observations'])==4 and r['report']['status']=='ready' for r in results)
+        assert calls==({'continue_accepted':n*(spec.operations-1),'finalize_accepted':n,'submit_accepted':incoming} if burst and incoming else
+                       {'continue_accepted':n*(spec.operations-1),'finalize_accepted':n} if burst else
+                       {'submit_accepted':n,'continue_accepted':n*(spec.operations-1),'finalize_accepted':n})
+        assert all([o['step_id'] for o in r['observations']]==list(spec.step_ids) and r['report']['status']=='ready' for r in results)
     if followup:
         assert all(len(r['followups'])==2 for r in results)
         answers=[m for m in s['models'] if m['role']=='answer']
@@ -86,7 +88,7 @@ def analyze(raw):
     # Invocations represent slot lifetime; sum is work-seconds, not E2E time.
     slot_seconds=sum(max(0,i['end']-max(i['start'],s['start'])) for i in s['invocations'])
     role_times={role:statistics.mean(m['end']-m['start'] for m in s['models'] if m['role']==role) for role in expected_roles}
-    result={'architecture':cfg['architecture'],'scenario':scenario,'users':n,'repeat':cfg['repeat'],
+    result={'architecture':cfg['architecture'],'scenario':scenario,'observation_profile':cfg.get('observation_profile','standard'),'users':n,'repeat':cfg['repeat'],
         'memory_mode':cfg['memory_mode'],'followup':followup,'total_capacity':cfg['total_capacity'],
         'user_capacity':cfg['user_capacity'],'event_capacity':cfg['event_concurrency'],'notify':cfg['notify'],
         'mean_seconds':statistics.mean(timings),'p95_seconds':quantile(timings),'makespan_seconds':raw['elapsed_seconds'],

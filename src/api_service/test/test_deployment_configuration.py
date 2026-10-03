@@ -228,3 +228,33 @@ def test_ingress_has_one_limit_and_old_common_spelling_is_only_an_alias():
     assert 'dispatch_concurrency' not in type(settings.worker).model_fields
     with pytest.raises(ConfigurationError,match='Conflicting aliases'):
         load_settings(config={'EW_CONCURRENCY':3,'EW_INGRESS_CONCURRENCY':4},environ={})
+
+
+@pytest.mark.parametrize('config,expected', [
+    ({'EXECUTOR_BASE_URL':'http://executor:8080'}, '/api/v1/executions/test/events'),
+    ({'EXECUTOR_BASE_URL':'http://executor:8080/api/v1', 'EXECUTOR_EXECUTION_PATH':'/executions/{execution_id}'}, '/api/v1/executions/test/events'),
+    ({'EXECUTOR_BASE_URL':'http://executor:8080/gateway', 'EXECUTOR_EXECUTION_PATH':'/v2/jobs/{execution_id}'}, '/gateway/v2/jobs/test/events'),
+    ({'EXECUTOR_BASE_URL':'http://executor:8080/gateway', 'EXECUTOR_EVENTS_PATH':'/history/{execution_id}'}, '/gateway/history/test'),
+    ({'EXECUTOR_BASE_URL':'http://executor:8080', 'EW_EXECUTOR_EVENTS_PATH':'/custom/{execution_id}/events'}, '/custom/test/events'),
+])
+@pytest.mark.asyncio
+async def test_event_history_uses_same_base_and_execution_resource(config, expected):
+    from api_service.worker.runtime import ExecutorWorker
+    settings = load_settings(config=config, environ={})
+    worker = ExecutorWorker(settings.worker, {'execution.completed'})
+    try:
+        request = worker.http.build_request('GET', worker.router.events_path.format(execution_id='test'))
+        assert request.url.path == expected
+        if 'EXECUTOR_EVENTS_PATH' not in config and 'EW_EXECUTOR_EVENTS_PATH' not in config:
+            assert str(request.url) == settings.agent.executor_execution_url.format(execution_id='test') + '/events'
+    finally:
+        await worker.http.aclose()
+        await worker.redis.aclose()
+        await worker.pool.close()
+
+
+@pytest.mark.parametrize('path', ['/events', 'https://other/{execution_id}', '//other/{execution_id}',
+                                  '/{wrong}/events', '/{execution_id}/events?x=1', '/{execution_id!r}/events'])
+def test_invalid_event_history_template_fails_at_configuration(path):
+    with pytest.raises(ConfigurationError):
+        load_settings(config={'EXECUTOR_EVENTS_PATH':path}, environ={})

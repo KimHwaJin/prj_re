@@ -1,0 +1,11 @@
+{
+  "source_commits": {
+    "baseline": "5ca22a5846b187d2e6a48c2cab0582339a2442ea",
+    "candidate": "63b2b6b3f6c271bcc599717cac190a7988935b81"
+  },
+  "owned_containers": {
+    "postgres": "04cbc90c90e09a65645dfd54a1821a7aa34d7f04219e5b853e25c32806d24868",
+    "redis": "adb3eb112d0989be0322af373e80f0a28f4b1970eefad85ec3c9d109b2227ff0"
+  },
+  "other_running_containers_count": 18
+}

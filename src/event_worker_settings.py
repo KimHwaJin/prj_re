@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from uuid import uuid4
+from string import Formatter
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Settings(BaseModel):
@@ -21,6 +22,11 @@ class Settings(BaseModel):
 
     # 이벤트 순번 누락 시 실행 이력을 조회할 Executor REST API 주소다.
     executor_base_url: str = "http://localhost:8000/api/v1"
+
+    # 중앙 로더는 EXECUTOR_EXECUTION_PATH + /events에서 유도한다.
+    # EXECUTOR_EVENTS_PATH로 별도 경로를 지정할 수 있다. standalone 기본은
+    # 위 API-prefixed base에 결합할 상대 경로이며 앞의 /도 base prefix를 유지한다.
+    executor_events_path: str = "/executions/{execution_id}/events"
 
     # Executor가 원본 실행 이벤트를 발행하는 Redis Stream 이름이다.
     executor_event_stream: str = "executor.events"
@@ -69,6 +75,24 @@ class Settings(BaseModel):
     # 선택적 진단 HTTP 포트다. 기본 0: 내장 Worker는 서비스 probe를 사용한다.
     # standalone 진단에서만 8011 등을 명시한다.
     health_port: int = Field(default=0, ge=0, le=65535)
+
+    @field_validator("executor_events_path")
+    @classmethod
+    def validate_events_path(cls, value):
+        try:
+            parts = list(Formatter().parse(value))
+            fields = [name for _, name, _, _ in parts if name is not None]
+            valid = (
+                fields == ["execution_id"]
+                and all(not spec and not conversion for _, _, spec, conversion in parts)
+                and value.startswith("/") and not value.startswith("//")
+                and not any(char in value for char in ("?", "#"))
+            )
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError("executor_events_path must be a relative path with one {execution_id}")
+        return value
 
     @model_validator(mode="after")
     def validate_intervals(self):

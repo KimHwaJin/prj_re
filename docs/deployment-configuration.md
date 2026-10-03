@@ -18,6 +18,7 @@
 | `CHECKPOINT_DB_URI` | Run 및 내장 이벤트 그래프의 공용 checkpointer | `AGENT_CHECKPOINT_DATABASE_URL`은 같은 값만 허용하는 구 별칭 |
 | `REDIS_URL` | SSO 로그인 세션과 Executor Streams | 연결풀·key/group은 용도별로 분리. `EW_REDIS_URL`은 구 별칭 |
 | `EXECUTOR_BASE_URL` | 실행 제출·결과 조회·이벤트 이력 보충 | `EW_EXECUTOR_BASE_URL`은 구 별칭 |
+| `EXECUTOR_EVENTS_PATH` | 이벤트 이력 보충 경로 | 생략 시 `EXECUTOR_EXECUTION_PATH` + `/events`에서 유도. `EW_EXECUTOR_EVENTS_PATH`는 구 별칭 |
 | `MODEL_*`, `API_BASE_URL` | 모든 Agent 역할의 기본 모델 설정 | 역할별 Agent 선언/프롬프트 구조는 유지 |
 | `PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY` | 프로세스 공용 관측 설정 | 구 `PHOENIX_CONFIG_PATH` 자동 탐색 없음 |
 | `EW_NAMESPACE` | 이벤트 DB/Redis group 기본 이름 | stream/group은 namespace에서 파생, Executor 원본 stream은 별도 계약 |
@@ -109,3 +110,18 @@ uv export --frozen --no-dev --no-emit-project --no-hashes -o requirements.txt
 ```
 
 requirements를 독립 수정하지 않는다. 기존 lock 버전은 유지했지만 구 requirements의 별도 목록은 현재 lock 기준으로 교체했다. 사내 base는 보존했으며 Python3.11이 필요하다. 폐쇄망에서는 같은 lock의 wheel/패키지를 사내 인덱스 또는 wheelhouse로 제공해야 한다. 사내 base·SDK·망·PV·CI의 실제 실행은 별도 배포 검증 대상이다.
+
+## Executor 이력 경로와 배포 버전 경계
+
+이력 조회도 제출/결과 조회와 같은 `EXECUTOR_BASE_URL`을 사용한다. 기본 root 주소
+`http://executor:8080`에서는 `/api/v1/executions/{execution_id}/events`를 호출한다.
+base에 `/api/v1`을 포함한다면 제출/조회 PATH도 `/executions...`로 지정한다.
+Worker는 `EXECUTOR_EXECUTION_PATH` 뒤에 `/events`를 붙이며 프록시에서 이력 경로만
+다르면 `EXECUTOR_EVENTS_PATH`를 명시한다. prefix를 자동 추측하거나 두 번 붙이지 않는다.
+
+066의 observations 증가분 쓰기는 새 reader가 기존 full list checkpoint와 pending write를
+읽을 수 있다. 반대 방향은 호환되지 않는다. 구버전 LastValue reader가 새 tagged pending
+write를 읽으면 list 대신 dict를 받는다. 기존 writer와 새 writer가 같은 실행 checkpoint를
+번갈아 점유하는 혼합 배포 및 즉시 rollback은 검증된 방식이 아니다. 동시 writer 금지만으로
+이 순차 교대 문제를 해결하지 못한다. 버전별 실행 고정 또는 전체 writer drain 후 전환,
+rollback 전 pending write 정리/이행 등 배포 계약이 필요하며 현재 자동 보호는 미구현이다.

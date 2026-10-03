@@ -1,0 +1,32 @@
+{
+  "owned_container_id": "938810ac46b1dfd6fae94e74deec8289f6707745dfe7cbcda9c6670cf7d49de6",
+  "owned_container_removed": true,
+  "other_test_db_clients_before_stop": 0,
+  "existing_running_containers_preserved": true,
+  "existing_running_container_count": 18,
+  "fixture_directories_removed": [
+    "dtest-delta-smoke",
+    "dtest-delta-smoke2",
+    "dtest-delta-base-smoke",
+    "dtest-append-smoke",
+    "dtest-tagged-append-smoke",
+    "dtest-tagged-append-smoke2",
+    "baseline-1",
+    "baseline-2",
+    "baseline-3",
+    "baseline-4",
+    "baseline-5",
+    "append-1",
+    "append-2",
+    "append-3",
+    "append-4",
+    "append-5",
+    "delta-1",
+    "delta-2",
+    "delta-3",
+    "delta-4",
+    "delta-5"
+  ],
+  "raw_json_and_logs_retained_in_tmp": true,
+  "production_services_reconfigured": false
+}

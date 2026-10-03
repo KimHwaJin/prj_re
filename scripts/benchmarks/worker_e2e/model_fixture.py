@@ -14,7 +14,7 @@ from langchain_openai import ChatOpenAI
 PREFERENCE='앞으로 보고서는 비전문가가 이해하기 쉽게 작성해줘'
 
 
-def choose(body):
+def choose(body, observation_profile='standard'):
     payload=json.loads(next(m['content'] for m in body['messages'] if m['role']=='user'))
     references=[]
     for message in body['messages']:
@@ -52,6 +52,8 @@ def choose(body):
         return 'planning_select',{'kind':'planning','message':'등록된 스킬을 확인합니다.','plans':[],
             'skill_ids':['data_quality_check'],'grounding':None},memory,analysis
     document=json.loads(files('agent_service.agents.analysis.planning').joinpath('fixtures/quality-review.json').read_text())
+    from observation_scenarios import plan_document
+    document=plan_document(document, observation_profile)
     datasets=payload.get('dataset_catalog',[])
     return 'planning_plan',{'kind':'plans','message':'등록된 도구로 계획을 준비했습니다.','grounding':None,
         'plans':[{'definition':document,'input_values':{'dataset':datasets[0]['dataset_id']} if datasets else {}}]},memory,analysis
@@ -63,7 +65,7 @@ def install_model_fixture(cfg,metrics,enabled):
     clients=[]
     async def handle(request):
         body=json.loads(request.content)
-        role,value,memory,analysis=choose(body)
+        role,value,memory,analysis=choose(body,cfg.get('observation_profile','standard'))
         began=time.perf_counter();measured=enabled();trace=diag._current.get()
         await asyncio.sleep(cfg['model_delay_ms']/1000 if measured and not metrics.get('prepare') else 0)
         if measured:

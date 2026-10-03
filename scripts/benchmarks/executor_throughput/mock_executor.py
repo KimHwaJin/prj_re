@@ -31,8 +31,9 @@ def logical_step(code):
     return matches[0]
 
 
-def write_results(root, execution_id, operation_id, steps):
+def write_results(root, execution_id, operation_id, steps, log_bytes=0):
     """Real file I/O/checksums; synthetic small observations, no data analysis."""
+    assert log_bytes in (0,65536), 'Bounded synthetic diagnostic output only'
     results = []
     for step in steps:
         step_id, attempt_id = step['step_id'], str(uuid4())
@@ -44,7 +45,7 @@ def write_results(root, execution_id, operation_id, steps):
         source_bytes = source.encode(); (folder / 'source.py').write_bytes(source_bytes)
         summary = {'type':'service_fixture', 'label':'SYNTHETIC: no Tool code executed',
                    'shape':[6,1], 'tool':step['lineage']['tool_name']}
-        output = ('DTEST_OBSERVATION ' + json.dumps({'step_id':logical, 'summary':summary}) + '\n').encode()
+        output = (('L' * log_bytes + '\n' if log_bytes else '') + 'DTEST_OBSERVATION ' + json.dumps({'step_id':logical, 'summary':summary}) + '\n').encode()
         (folder / 'stdout.txt').write_bytes(output)
         created = datetime.now(timezone.utc).isoformat()
         manifest = {'schema_version':'1.0','state':'FINALIZED','complete':True,
@@ -73,21 +74,29 @@ def create_app(cfg):
     broker = redis.from_url(cfg['redis_url'], decode_responses=True)
     executions, receipts, timeline, tasks = {}, {}, [], set()
     gate = asyncio.Event(); gate.set()
-    measure = {'active':False}; failures=[]
+    measure = {'active':False}; failures=[]; history_requests=[]
+    async def publish(item, doc):
+        await broker.xadd(cfg['stream'], {k:json.dumps(v) if isinstance(v,dict) else str(v) for k,v in doc.items()})
+        if measure['active']:
+            timeline.append({'stage':'event_published','at':time.perf_counter(),
+                'execution_id':item['id'],'event_id':doc['event_id'],'event_type':doc['event_type'],'sequence':doc['event_sequence']})
     async def event(item, kind, payload):
         doc = ExecutorEvent(event_id=uuid4(), execution_id=item['id'], event_type=kind,
             event_sequence=len(item['events'])+1, schema_version='1.0',
             occurred_at=datetime.now(timezone.utc).isoformat(), payload=payload).model_dump(mode='json')
         item['events'].append(doc)
-        await broker.xadd(cfg['stream'], {k:json.dumps(v) if isinstance(v,dict) else str(v) for k,v in doc.items()})
-        if measure['active']:
-            timeline.append({'stage':'event_published','at':time.perf_counter(),
-                'execution_id':item['id'],'event_id':doc['event_id'],'event_type':kind,'sequence':doc['event_sequence']})
+        if cfg.get('reverse_event_batches') and kind in {'execution.operation_started','execution.step_completed'}:
+            item.setdefault('deferred_events',[]).append(doc)
+            return
+        # History remains ordered. Only Redis delivery is reversed; no event is
+        # deleted or renumbered, and the completed result exists before routing.
+        batch=[doc,*reversed(item.pop('deferred_events',[]))] if kind=='execution.operation_completed' else [doc]
+        for outgoing in batch:await publish(item,outgoing)
     async def complete(item, operation):
         await gate.wait()
         await asyncio.sleep(cfg.get('delay_ms',0)/1000)
         await event(item,'execution.operation_started',{'operation':{'id':operation['id'],'number':operation['number']}})
-        results = await asyncio.to_thread(write_results,root,item['id'],operation['id'],operation['steps'])
+        results = await asyncio.to_thread(write_results,root,item['id'],operation['id'],operation['steps'],cfg.get('log_bytes',0))
         for result in results:
             await event(item,'execution.step_completed',{'step':{'id':result['step_id'],'sequence':result['sequence']},'status':'SUCCEEDED'})
         item['version'] += 2; item['status'] = 'WAITING_FOR_OPERATION'
@@ -126,7 +135,7 @@ def create_app(cfg):
     @app.get('/_bench/ready')
     async def ready():return {'ready':True}
     @app.post('/_bench/reset')
-    async def reset():timeline.clear();failures.clear();measure['active']=True;return {'ok':True}
+    async def reset():timeline.clear();failures.clear();history_requests.clear();measure['active']=True;return {'ok':True}
     @app.post('/_bench/gate/{action}')
     async def gating(action:str):
         if action=='hold':gate.clear()
@@ -138,7 +147,7 @@ def create_app(cfg):
         return {'timeline':timeline,'pending':len(tasks),'executions':[
             {'execution_id':i['id'],'context':i['context'],'status':i['status'],
              'operations':len(i['operations']),'events':len(i['events'])} for i in executions.values()],
-            'tasks_failed':failures}
+            'tasks_failed':failures,'history_requests':history_requests}
     @app.post('/api/v1/executions',status_code=202)
     async def submit(body:ExecutorRequestBody):
         data=body.model_dump(mode='json');digest,prior=once(('create',data['idempotency_key']),data)
@@ -176,7 +185,10 @@ def create_app(cfg):
     @app.get('/api/v1/executions/{eid}/events')
     async def history(eid:str,after_sequence:int=0,limit:int=100):
         events=find(eid)['events'];page=[e for e in events if e['event_sequence']>after_sequence][:limit]
-        return {'execution_id':eid,'events':page,'last_sequence':len(events),'has_more':bool(page and page[-1]['event_sequence']<len(events))}
+        more=bool(page and page[-1]['event_sequence']<len(events))
+        if measure['active']:
+            history_requests.append({'execution_id':eid,'after_sequence':after_sequence,'limit':limit,'items':len(page),'has_more':more})
+        return {'items':page,'next_cursor':f"fixture:{page[-1]['event_sequence']}" if more else None,'has_more':more}
     return app
 
 if __name__=='__main__':

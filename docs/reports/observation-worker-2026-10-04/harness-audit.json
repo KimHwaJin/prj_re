@@ -1,0 +1,37 @@
+{
+  "original_helper_sha256": {
+    "worker_e2e/run.py": "381946d82bc10ed95505f28ef761ea35e09eead8066dbfb7d8818dd9755186c2",
+    "worker_e2e/server.py": "5dc90337468185b1f15a8e34c8b9b2efe42fd1e848f6b195eda7391fc04c33b1",
+    "worker_e2e/model_fixture.py": "f1a4f017eb31134c9c3469908993c45c71d310ce12f0357c7b72e1d20a9c5a42",
+    "worker_e2e/observation_scenarios.py": "7e06ab1c49c0b1ce1f72a65cbfc160c6aef332da362b943ee7f46b2f7c9a2e2c",
+    "worker_e2e/checkpoint_profile.py": "6881b044ab5fbab155ef40a6f97641ca63addc86524d1cd585b80dd56af692e0",
+    "executor_throughput/mock_executor.py": "dc2c957549b8c088e73575a837928d6c3fd58c21acdd4ccd5f8ca602615397b1"
+  },
+  "cause_logging_helper_sha256": {
+    "worker_e2e/run.py": "381946d82bc10ed95505f28ef761ea35e09eead8066dbfb7d8818dd9755186c2",
+    "worker_e2e/server.py": "33983fbf2f58e425adb84fc16d9c7e5dc8c6dff63eac6d7875ceaf5f4835ef02",
+    "worker_e2e/model_fixture.py": "f1a4f017eb31134c9c3469908993c45c71d310ce12f0357c7b72e1d20a9c5a42",
+    "worker_e2e/observation_scenarios.py": "7e06ab1c49c0b1ce1f72a65cbfc160c6aef332da362b943ee7f46b2f7c9a2e2c",
+    "worker_e2e/checkpoint_profile.py": "6881b044ab5fbab155ef40a6f97641ca63addc86524d1cd585b80dd56af692e0",
+    "executor_throughput/mock_executor.py": "dc2c957549b8c088e73575a837928d6c3fd58c21acdd4ccd5f8ca602615397b1"
+  },
+  "changed_helpers": [
+    "worker_e2e/server.py"
+  ],
+  "difference": "Only traceback.print_exception in exceptional execute path; no success-path source/config/resource change",
+  "diagnostic_single_captures_use_cause_logging_revision": true,
+  "versions": {
+    "langchain": "1.3.17",
+    "langgraph": "1.2.11",
+    "langgraph-checkpoint-postgres": "3.1.2",
+    "psycopg": "3.3.4",
+    "psycopg-pool": "3.3.1",
+    "SQLAlchemy": "2.0.52",
+    "redis": "5.3.1",
+    "httpx": "0.28.1",
+    "fastapi": "0.141.1",
+    "langchain-openai": "1.6.0"
+  },
+  "python": "3.11.15",
+  "platform": "macOS-26.6.2-arm64-arm-64bit"
+}

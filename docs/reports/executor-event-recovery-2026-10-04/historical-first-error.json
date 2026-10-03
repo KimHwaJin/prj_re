@@ -1,0 +1,33 @@
+{
+  "source_sha256": "4255d920bc13034e8e90df0b78e8db30ae7b5013a01e4f45f5b134e0a6550d4f",
+  "first_handler": {
+    "command_id": "285a26b2-d586-5f95-808b-84ae7f788b0d",
+    "event_id": "537a446b-495b-4af8-9a2d-e8df705daf5a",
+    "execution_id": "6d46453f-68b0-47ba-8aea-c36dc9adb0e4",
+    "session_id": "2fb4a739-b7e3-4d56-a575-7f6912a93053",
+    "event_type": "execution.operation_completed",
+    "start": 1754268.522871375,
+    "end": 1754269.575574,
+    "error": "ExecutorOutcomeUnknown"
+  },
+  "event_sequence": 49,
+  "operation_number": 16,
+  "continuation_expected_version": 33,
+  "receiver_snapshot": {
+    "execution_id": "6d46453f-68b0-47ba-8aea-c36dc9adb0e4",
+    "context": {
+      "user_id": "02ce05b3-52cf-48c0-a8a3-99edf7c97db6",
+      "task_id": "cb1fd556-4766-4dd0-93fc-8702d8011fef",
+      "project_id": "c019c172-29d6-4637-88f2-4fa237a91bcc",
+      "session_id": "2fb4a739-b7e3-4d56-a575-7f6912a93053",
+      "workflow_id": "service_observation_storage_fixture"
+    },
+    "status": "WAITING_FOR_OPERATION",
+    "operations": 16,
+    "events": 49
+  },
+  "receiver_tasks_failed": [],
+  "later_acceptance_records": [],
+  "original_exception_chain_recorded": false,
+  "classification": "unresolved; snapshot contains no accepted subsequent operation for this execution, but no original HTTP attempt/response/cause proves why"
+}

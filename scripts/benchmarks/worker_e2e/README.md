@@ -116,3 +116,55 @@ profile과 일치해야 한다. aget_tuple 내부 profile은 후 버전 adapter 
 time에서 빼거나 겹치는 DB/graph 시간을 합산하지 않는다.
 
 [063 측정과 제한](../../../docs/reports/checkpoint-profile-2026-10-04/README.md).
+
+
+## Observations 증가분 write의 Worker 대조 (067)
+
+`observation_matrix.py`는 누적 list writer(5ca22a5)와 표준 reducer의
+증가분 writer(63b2b6b)를 같은 harness에서 비교한다. 기존 062의 Worker
+통합 전후 비교와는 기준 소스가 다르다. 운영 코드/슬롯/풀/모델 호출 수를
+한꺼번에 바꾼 성과로 합산하지 않는다.
+
+- `--observation-profile standard`: 등록 Tool 4개·Operation 2개, review 1회.
+- `--observation-profile large20`: 기존 등록 load/profile Tool로 20단계·
+  Operation 20개, review 20회. 매 Tool 출력은 64KiB 반복 문자이며 실제
+  reader는 16000자로 제한하고 summary/manifest/checksum을 확인한다.
+- 이번 service-only 측정은 두 profile 모두 모든 모델 transport 지연 0초다.
+  실제 create_agent/middleware·스킬 조회·JSON 직렬화는 유지한다.
+  standard는 계획 2+review 1+report 1=4콜, large20은 23콜이다.
+- 공통 실행 자리20, CRUD10/overflow0, checkpoint4, bridge4, Store2,
+  SSE0.5초, cancel/claim0.25초, notify ON. 두 버전은 동시에 실행하지 않는다.
+  1/10/30/50명, 50명은 각3회이며 baseline/candidate 순서를 교차한다.
+
+```sh
+<existing Python> scripts/benchmarks/worker_e2e/observation_matrix.py \
+  --database-url '<dedicated disposable asyncpg postgres URL on port63372>' \
+  --redis-url redis://127.0.0.1:63373/0 \
+  --baseline-root '<git archive of 5ca22a5>' --baseline-commit 5ca22a5 \
+  --candidate-root '<git archive of 63b2b6b>' --candidate-commit 63b2b6b \
+  --output '<fresh capture root>'
+
+<existing Python> scripts/benchmarks/worker_e2e/export_observation_comparison.py \
+  '<capture root>' '<fresh report folder>'
+<existing Python> scripts/benchmarks/worker_e2e/verify_observation_comparison.py '<report folder>'
+<existing Python> scripts/benchmarks/worker_e2e/negative_observation_controls.py '<report folder>'
+<existing Python> scripts/benchmarks/worker_e2e/build_observation_report.py '<report folder>'
+```
+
+Export는 전체 24 완료 trial·실제 src SHA·Git 정본·동일 설정을 검사한다. --supplement로 별도 재현/추가 반복 root를 합칠 수 있지만 중단 receipt도 함께 넣어 attempts.json/incident-index에 전체 시도를 보존해야 한다.
+실패/중단을 성공 평균에 섞거나 조용히 제외하지 않는다. 원문 gzip/SHA·
+실제 SQLite 집계·독립 수학 검산과 오류 대조를 보존한다. 수동 작성한
+`decision.json`의 summary/detail에는 확인된 효과와 채택 판단을 적는다.
+HTML은 기존 packaged portable renderer로 artifact.json에서 생성한다.
+
+HTTP fixture의 이벤트 이력 계약은 실제 Executor의
+`items/next_cursor/has_more`다. 첫 history 계약/prefix가 어긋난 시도는
+전체 비교 세트에서 제외하고, 두 버전 모두 Executor base를 `/api/v1`,
+기존 Agent path 설정을 `/executions...`로 명시하여 다시 측정한다.
+기본 root base와 Worker `/executions/{id}/events` 조립의 정합성은
+서비스 연계의 별도 후속 사항이며 이 벤치마크 설정을 운영 수정으로
+해석하지 않는다.
+
+논리 저장량과 PostgreSQL 압축 column bytes를 구분한다. 반복 문자 로그의
+압축률을 실제 자연어/숫자 로그의 디스크·WAL 절감으로 환산하지 않는다.
+전체 snapshot/원문/receipt/승인 body와 durability sync는 유지한다.

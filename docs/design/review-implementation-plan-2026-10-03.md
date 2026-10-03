@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 5단계 [062](../improvements/062-agent-worker-e2e-performance.md)의 동일 총한도·전체 HTTP fixture 59회도 로컬 검증·독립 검산했다. 멀티 Pod·지속 유입·실제 배포는 미검증이며 전체 작업 완료 기록은 아니다. 6단계 [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상·후속 흐름 저장량/잠금 실측과 기존 pool 병렬 접근을 구현·검증했다. [064](../improvements/064-analysis-state-lifecycle.md)에서 상태 수명·노드 입력 경계를 정리하고 기존 wait의 PG 재개를 검증했다. 장기/대형/다단계 저장량과 version metadata의 개선은 미완료다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 5단계 [062](../improvements/062-agent-worker-e2e-performance.md)의 동일 총한도·전체 HTTP fixture 59회도 로컬 검증·독립 검산했다. 멀티 Pod·지속 유입·실제 배포는 미검증이며 전체 작업 완료 기록은 아니다. 6단계 [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상·후속 흐름 저장량/잠금 실측과 기존 pool 병렬 접근을 구현·검증했다. [064](../improvements/064-analysis-state-lifecycle.md)에서 상태 수명·노드 입력 경계를 정리하고 기존 wait의 PG 재개를 검증했다. [065](../improvements/065-checkpoint-growth-profile.md)에서 대형/다단계 저장량을 측정하고 [066](../improvements/066-observation-incremental-writes.md)에서 증가분 후보의 저장·읽기 교환을 비교했다. 표준 후보의 Worker 처리량 검증/베이스 채택과 version metadata 개선은 미완료다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -122,7 +122,7 @@
 ## 6. 저장량·구조 정리 — 063 풀 병렬화·064 수명 정리·065 확대 측정
 
 - [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상/후속 전후16회와 기존 잠금2회, 별도 실제 PostgreSQL repair1회 기능·저장 probe를 검증했다. 50명 E2E 평균56.39→54.78초, 저장 함수 누계3.10→1.26초/사용자다. pool 상한4는 유지하며 실제 사용 size는1→4가 됐다. 063은 저장량을 줄이지 않았다. [064](../improvements/064-analysis-state-lifecycle.md)의 수명/입력 정리는 후속 최신 상태 약 25% 감소, 과거 포함 누계 약 2~2.5% 증가였으며 시간/처리량 개선을 주장하지 않는다.
-- F-01 확대 검증은 [065](../improvements/065-checkpoint-growth-profile.md)의 13조건×3회로 진행했다. Operation 분할·bounded output·repair의 비용을 따로 측정했고, 큰 미리보기/20 Operation에서 observations blob+write 약70%를 확인했다. service/Pod 처리량이나 real model/Executor 비용 측정은 아니다. 다음은 공식 delta 저장 별도 후보에서 증가분 write/reset·기존 seed·중간 checkpoint/대기 재개·읽기 비용을 함께 A/B 검증한다. beta라 자동 채택하지 않으며 현재 sync/승인/receipt 경계를 유지한다.
+- F-01 확대 검증은 [065](../improvements/065-checkpoint-growth-profile.md)의 13조건×3회로 진행했다. Operation 분할·bounded output·repair의 비용을 따로 측정했고, 큰 미리보기/20 Operation에서 observations blob+write 약70%를 확인했다. service/Pod 처리량이나 real model/Executor 비용 측정은 아니다. [066](../improvements/066-observation-incremental-writes.md)에서 표준 증가분 write와 beta Delta5를 195회 비교했다. reset·기존 seed/pending write·중간 wait/새 pool 복원은 통과했다. 표준 후보는 큰 미리보기20 Operation 저장31.6% 감소지만 시간+5.5%, Delta5는 저장58.4% 감소/시간+26.5%다. Delta는 runtime에서 제외하고 표준 후보도 베이스 미병합이다. [067](../improvements/067-observation-worker-comparison.md)의25시도/24완료·중단1에서 대형50명 논리 저장30.6%/압축 column9.7% 감소, 시간91.30→91.46초를 확인했다. 처리량 향상은 입증되지 않았고 첫 중단 원인이 미확정이므로 병합 보류다. 다음은 최초 예외/POST 결과 계측이며 API CPU sampling·운영 default root/history prefix 정합성은 후속 검토다. sync/승인/receipt 경계는 유지한다.
 - 저장 시간 비중이 큰 channel부터 범위 제한·근거 외부화·지원되는 delta 방식·보존 정책을 검토한다. reducer 전환만으로 용량이 줄어든다고 가정하지 않는다.
 - 상태 타입/이름, 설정 중복 기본값, Agent 조립 의존 방향, 실제 미사용 compiler/stub, 테스트 fixture 결합을 필요한 변경 단위로 정리한다.
 - analysis/workflow 자산·역할별 agent.py/prompt·공개 계약·Dataset Registry draft는 보존한다. 원문 hash 참조는 불변 저장소 계약 확보 후에만 적용한다.
@@ -131,3 +131,7 @@
 ## 단계별 보고 형식
 
 매 작업이 끝날 때 `기존 문제 → 실제 변경 → 사용자/실행 동작 변화 → 검증 결과 → 남은 제한 → 다음 작업`을 보고한다. 성능 숫자는 동일 조건의 측정 근거가 있을 때만 제시한다. 문서 작성·구현·검증·베이스 통합·실제 배포의 상태를 각각 구분한다.
+
+## 068 후속 확인
+
+[068](../improvements/068-executor-event-recovery-verification.md)에서 기본 이력 경로를 제출 API 설정과 통일하고 실제 HTTP/PG·105회귀로 검증했다. 최초 원인 계측 포함50명2회는 모두 완료했으나 과거 중단 원인은 미확정이다. 새 tagged pending write → 구 LastValue reader 비호환을 확인했으므로 저장 후보 병합 보류와 버전별 실행/drain/rollback 계약 필요를 유지한다. 다음 성능 후보는 API CPU sampling이며 기존 운영/모델 최적화 우선순위는 바꾸지 않는다.

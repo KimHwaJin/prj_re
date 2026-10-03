@@ -7,6 +7,12 @@ from psycopg import sql
 from sqlalchemy.engine import make_url
 ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser();p.add_argument('--database-url',required=True);p.add_argument('--redis-url',required=True);p.add_argument('--source-root',type=Path,default=ROOT);p.add_argument('--source-commit',required=True);p.add_argument('--output',required=True,type=Path)
+p.add_argument('--cpu-profile',action='store_true',help='CPU clock cProfile in main and offload threads; separate from speed trials')
+p.add_argument('--executor-root-base',action='store_true',help='Exercise default /api/v1 paths with a root Executor origin')
+p.add_argument('--reverse-event-batches',action='store_true',help='Deliver each fixture operation batch in descending sequence order')
+p.add_argument('--executor-trace',action='store_true',help='Diagnostic request/status/command exception traces; not a speed comparison')
+p.add_argument('--diagnostic-timeout-seconds',type=float,default=None)
+p.add_argument('--observation-profile',choices=['standard','large20'],default='standard')
 p.add_argument('--users',type=int,nargs='+',default=[1,10,30,50]);p.add_argument('--concurrency',type=int,nargs='+',default=[20])
 p.add_argument('--delay-ms',type=int,default=5000);p.add_argument('--repeat',type=int,default=1)
 p.add_argument('--event-concurrency',type=int,default=4);p.add_argument('--event-pool',type=int,default=4)
@@ -20,14 +26,19 @@ p.add_argument('--checkpoint-pool',type=int,default=4);p.add_argument('--sse-sec
 p.add_argument('--cancel-seconds',type=float,default=.25);p.add_argument('--claim-seconds',type=float,default=.25)
 p.add_argument('--hold-owners',action='store_true',help='Diagnostic live CRUD checkout owners during an Executor hold')
 p.add_argument('--cache-size',type=int,default=100);p.add_argument('--trial-index',type=int,default=1);p.add_argument('--memory-mode',choices=['manual','auto_context'],default='manual');p.add_argument('--followup',action='store_true');p.add_argument('--notify',choices=['on','off'],default='on');a=p.parse_args()
+from observation_scenarios import scenario
+SPEC=scenario(a.observation_profile)
 TOOLS=Path(__file__).resolve().parent;ROOT=a.source_root.resolve();CURRENT=(ROOT/'src/api_service/runs/commands/claim.py').exists()
 assert all(1<=n<=50 for n in a.users) and all(1<=n<=64 for n in a.concurrency)
 assert a.event_concurrency>=1 and a.event_pool>=2 and a.event_idle>=a.event_poll>0
 assert not a.real_executor or (a.users==[1] and a.executor_delay_ms==0 and a.hold_seconds==0)
 assert a.executor_delay_ms>=0 and a.hold_seconds>=0
 assert not a.followup or a.scenario=='executor'
+assert a.observation_profile=='standard' or (a.scenario=='executor' and not a.followup and not a.hold_seconds)
 assert not a.checkpoint_lock_profile or a.checkpoint_profile
 assert a.delay_ms in (0,5000) and a.repeat>=1 and a.pool>=1
+assert a.diagnostic_timeout_seconds is None or (a.executor_trace and a.diagnostic_timeout_seconds>0)
+assert not a.cpu_profile or (a.scenario=='executor' and not a.hold_seconds and not a.followup)
 assert not a.output.exists(),'Use a fresh output directory'
 a.output.mkdir(parents=True)
 private={};local=make_url(a.database_url)
@@ -85,19 +96,28 @@ async def trial(n,c,repeat):
   'EW_HEALTH_PORT':0,'EW_EXECUTOR_EVENT_STREAM':event_stream,'EW_EXECUTOR_BASE_URL':executor_origin.rstrip('/')+'/api/v1','MODEL_PROVIDER':'openai_compatible','MODEL_NAME':'fixture','MODEL_API_KEY':'fixture-not-a-secret','API_BASE_URL':'http://fixture.invalid/v1','AGENT_PROJECT_MEMORY_MODE':a.memory_mode,'PHOENIX_ENDPOINT':None,
   'AGENT_WORKER_CONCURRENCY':c if CURRENT else c-a.event_concurrency,'AGENT_WORKER_NOTIFY_ENABLED':a.notify=='on','AGENT_WORKER_RECONCILE_INTERVAL_SECONDS':5,'AGENT_WORKER_ENABLED':True,'EVENT_WORKER_ENABLED':True,'TASK_RECONCILER_ENABLED':False,
   'AGENT_WORKER_MAX_RETRIES':0,'AGENT_WORKER_POLL_INTERVAL_SECONDS':a.claim_seconds,'TASK_CANCEL_POLL_INTERVAL_SECONDS':a.cancel_seconds,
-  'SSE_POLL_INTERVAL_SECONDS':a.sse_seconds,'EXECUTOR_SUBMIT_ENABLED':True,'EXECUTOR_BASE_URL':executor_origin,'EXECUTOR_SOURCE_TYPE':'INLINE',
+  'SSE_POLL_INTERVAL_SECONDS':a.sse_seconds,'EXECUTOR_SUBMIT_ENABLED':True,'EXECUTOR_BASE_URL':executor_origin.rstrip('/')+'/api/v1','EXECUTOR_SOURCE_TYPE':'INLINE',
+  **{'EXECUTOR_'+name+'_PATH':path for name,path in {
+      'EXECUTIONS':'/executions','OPERATIONS':'/executions/{execution_id}/operations',
+      'EXECUTION':'/executions/{execution_id}','RESULT':'/executions/{execution_id}/result',
+      'NOTEBOOK':'/executions/{execution_id}/notebook','FINALIZE':'/executions/{execution_id}/finalize',
+      'CANCEL':'/executions/{execution_id}/cancel','ARTIFACTS':'/executions/{execution_id}/artifacts'}.items()},
   'EXECUTOR_SHARED_RESULT_ROOT':private['EXECUTOR_SHARED_RESULT_ROOT'] if a.real_executor else str(shared),
   'EXECUTOR_RUNTIME_PROFILE':'default','EXECUTOR_OPERATION_TIMEOUT_SECONDS':120,'EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS':120,'WORKFLOW_PERSISTENCE_ENABLED':False,
   'RUN_DIAGNOSTICS_DIR':str(folder/'trace-disabled-by-probe'),'SHUTDOWN_DRAIN_SECONDS':5,'SHUTDOWN_TIMEOUT_SECONDS':15,
   'ANALYSIS_DATASETS':{'default-nce':{'title':'Fixed service test reference','runtime_path':'/workspace/pv/default_data/df_nce_long_format.parquet','scope':'GLOBAL'}},
   'SSO_PUBLIC_API_ORIGIN':origin,'SSO_FRONTEND_ORIGIN':origin,'SSO_COOKIE_SECURE':False,'SSO_NAMESPACE':namespace+':sso',
   'SSO_AUTO_REGISTER':True,'SSO_ALLOWED_ORIGINS':['https://sso.example.test']}
+ if a.executor_root_base:
+  settings['EXECUTOR_BASE_URL']=executor_origin.rstrip('/')
+  for name in ('EXECUTIONS','OPERATIONS','EXECUTION','RESULT','NOTEBOOK','FINALIZE','CANCEL','ARTIFACTS'):
+   settings.pop('EXECUTOR_'+name+'_PATH')
  settings.pop('EW_EXECUTOR_BASE_URL')
  if CURRENT:settings.pop('EW_DISPATCH_CONCURRENCY')
  else:
   settings.pop('AGENT_WORKER_NOTIFY_ENABLED');settings.pop('AGENT_WORKER_RECONCILE_INTERVAL_SECONDS')
  if a.cache_size is not None:settings['DATABASE_PREPARED_STATEMENT_CACHE_SIZE']=a.cache_size
- config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile})
+ config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'observation_profile':a.observation_profile,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile,'executor_trace':a.executor_trace,'cpu_profile':a.cpu_profile})
  env={k:v for k,v in os.environ.items() if k in ('PATH','HOME','TMPDIR','LANG','LC_ALL')}
  env.update(PYTHONPATH=str(ROOT/'src'),PYTHONDONTWRITEBYTECODE='1')
  with tempfile.TemporaryDirectory(prefix='service-perf-config-') as directory:
@@ -106,11 +126,11 @@ async def trial(n,c,repeat):
    for ini in ('alembic.crud.ini','alembic.ini'):
     subprocess.run([sys.executable,'-m','alembic','-c',ini,'upgrade','head'],cwd=ROOT,env={**env,'SERVICE_CONFIG_FILE':str(migration)},stdout=f,stderr=f,check=True)
  if not a.real_executor:
-  private_json(mock_config,{'port':mock_port,'redis_url':settings['REDIS_URL'],'stream':event_stream,'result_root':str(shared),'delay_ms':a.executor_delay_ms})
+  private_json(mock_config,{'port':mock_port,'redis_url':settings['REDIS_URL'],'stream':event_stream,'result_root':str(shared),'delay_ms':a.executor_delay_ms,'log_bytes':SPEC.log_bytes,'reverse_event_batches':a.reverse_event_batches})
   mock_log=(folder/'mock.log').open('w');(folder/'mock.log').chmod(0o600)
   mock_process=subprocess.Popen([sys.executable,str(TOOLS.parent/'executor_throughput/mock_executor.py'),'--config',str(mock_config)],env=env,cwd=ROOT,stdout=mock_log,stderr=mock_log)
  log=(folder/'server.log').open('w');(folder/'server.log').chmod(0o600);process=subprocess.Popen([sys.executable,str(TOOLS/'server.py'),'--config',str(config)],env=env,cwd=ROOT,stdout=log,stderr=log)
- clients=[];samples=[];stop=asyncio.Event();sample_task=None;waiting=set();hold_proof=[];hold_task=None;phase=asyncio.Event();measurement_start=[None];measuring_burst=[False]
+ flows=[];clients=[];samples=[];stop=asyncio.Event();sample_task=None;waiting=set();hold_proof=[];hold_task=None;phase=asyncio.Event();measurement_start=[None];measuring_burst=[False]
  mock_ctl=httpx.AsyncClient(base_url=executor_origin,trust_env=False,timeout=30)
  try:
   async with httpx.AsyncClient(base_url=origin,trust_env=False,timeout=30) as ctl:
@@ -176,8 +196,8 @@ async def trial(n,c,repeat):
     state,approval_wait=await wait(client,path,rid,terminal=True)
     final=state['result']['final_response']
     assert final['status']=='analysis_completed' and final['executor_status']=='SUCCEEDED'
-    assert len(final['observations'])==4 and final['report']['status']=='ready'
-    assert [o['step_id'] for o in final['observations']]==['load','profile','statistics','outliers']
+    assert len(final['observations'])==len(SPEC.step_ids) and final['report']['status']=='ready'
+    assert [o['step_id'] for o in final['observations']]==list(SPEC.step_ids)
     followups=[]
     if a.followup:
      for text in ('[answer] 앞으로 보고서는 비전문가가 이해하기 쉽게 작성해줘','[answer] 방금 분석 결과에서 중요한 부분을 부각한 보고서 설명을 작성해줘'):
@@ -241,7 +261,23 @@ async def trial(n,c,repeat):
       except TimeoutError:pass
     finally:await connection.close()
    sample_task=asyncio.create_task(sample());started=time.perf_counter()
-   results=await asyncio.wait_for(asyncio.gather(*(flow(i+1,*value,cohort='incoming' if a.scenario=='mixed' and i>=(n+1)//2 else 'primary') for i,value in enumerate(users)),return_exceptions=True),max(300,n*12))
+   flows=[asyncio.create_task(flow(i+1,*value,cohort='incoming' if a.scenario=='mixed' and i>=(n+1)//2 else 'primary')) for i,value in enumerate(users)]
+   if a.diagnostic_timeout_seconds is not None:
+    done,pending=await asyncio.wait(flows,timeout=a.diagnostic_timeout_seconds)
+    if pending or any(task.exception() for task in done):
+     # Preserve live command/ownership/HTTP evidence BEFORE canceling clients or
+     # shutting down the API; completed users alone omit the failed session.
+     live={'server':(await ctl.get('/_bench/metrics')).json(),'mock':(await mock_ctl.get('/_bench/metrics')).json()}
+     with psycopg.connect(DSN,row_factory=psycopg.rows.dict_row) as db:
+      live['database']={table:list(db.execute(sql.SQL('SELECT * FROM {}').format(sql.Identifier(table))))
+                        for table in ('agent_commands','agent_runs','tasks','session_executions','ew_bindings')}
+     private_json(folder/'failure-live.json',json.loads(json.dumps(live,default=str)))
+     for task in pending:task.cancel()
+     await asyncio.gather(*flows,return_exceptions=True)
+     raise RuntimeError('Diagnostic flow failed or exceeded deadline; live evidence preserved')
+    results=[task.result() for task in flows]
+   else:
+    results=await asyncio.wait_for(asyncio.gather(*flows,return_exceptions=True),max(300,n*12))
    elapsed=time.perf_counter()-(measurement_start[0] or started)
    # Run state commit precedes owner release; collect after cleanup, not at first SSE.
    for _ in range(200):
@@ -259,7 +295,7 @@ async def trial(n,c,repeat):
    assert len(database['runs'])==expected and database['session_owners']==0 and database['recovery_tasks']==0
    assert all(r['attempt_count']==1 and r['queue_ms'] is not None for r in database['runs'])
    assert metrics['peak_shared']<=c
-   result={'config':{'users':n,'concurrency':c,'repeat':a.trial_index+repeat-1,'scenario':a.scenario,'delay_ms':a.delay_ms,'service_pool':a.pool,'checkpoint_pool':a.checkpoint_pool,'bridge_pool':a.event_pool,'overflow':0,'sse_seconds':a.sse_seconds,'cancel_seconds':a.cancel_seconds,'claim_seconds':a.claim_seconds,'cache_size':a.cache_size,'source_commit':a.source_commit,'architecture':'common' if CURRENT else 'split','total_capacity':c,'user_capacity':c if CURRENT else c-a.event_concurrency,'notify':a.notify,'memory_mode':a.memory_mode,'followup':a.followup,'event_concurrency':a.event_concurrency,'event_pool':a.event_pool,'event_ingress_concurrency':4,
+   result={'config':{'users':n,'concurrency':c,'repeat':a.trial_index+repeat-1,'scenario':a.scenario,'observation_profile':a.observation_profile,'delay_ms':a.delay_ms,'service_pool':a.pool,'checkpoint_pool':a.checkpoint_pool,'bridge_pool':a.event_pool,'overflow':0,'sse_seconds':a.sse_seconds,'cancel_seconds':a.cancel_seconds,'claim_seconds':a.claim_seconds,'cache_size':a.cache_size,'source_commit':a.source_commit,'architecture':'common' if CURRENT else 'split','total_capacity':c,'user_capacity':c if CURRENT else c-a.event_concurrency,'notify':a.notify,'memory_mode':a.memory_mode,'followup':a.followup,'event_concurrency':a.event_concurrency,'event_pool':a.event_pool,'event_ingress_concurrency':4,
       'event_poll':a.event_poll,'event_idle':a.event_idle,'executor_delay_ms':a.executor_delay_ms,'hold_seconds':a.hold_seconds,'real_executor':a.real_executor,'source_sha256':{str(path.relative_to(ROOT)):__import__('hashlib').sha256(path.read_bytes()).hexdigest() for path in sorted((ROOT/'src').rglob('*.py')) if '__pycache__' not in path.parts}},'elapsed_seconds':elapsed,'results':completed,'errors':errors,'server':metrics,'database':database,'samples':samples,'mock':mock_metrics,'hold_proof':hold_proof,'passed':len(completed)==n and not errors}
    if a.checkpoint_profile:
     from checkpoint_profile import capture
@@ -268,6 +304,7 @@ async def trial(n,c,repeat):
     result['checkpoint_profile']=await asyncio.to_thread(capture,CP,threads)
     result['config']['checkpoint_profile']=True
     result['config']['checkpoint_lock_profile']=a.checkpoint_lock_profile
+   result['config'].update(cpu_profile=a.cpu_profile,executor_trace=a.executor_trace,executor_root_base=a.executor_root_base,reverse_event_batches=a.reverse_event_batches)
    private_json(folder/'raw.json',json.loads(json.dumps(result,default=str)))
    assert result['passed'],errors
    assert not mock_metrics.get('tasks_failed')
@@ -275,12 +312,15 @@ async def trial(n,c,repeat):
    assert database['outbox_pending']==0 and database['inbox_pending']==0
    if not CURRENT:assert metrics['peak_event_worker']<=a.event_concurrency
    if a.scenario!='approval':
-    assert len({h['event_id'] for h in metrics['event_handlers'] if not h['error']})==n*3
-    assert len([r for r in metrics['roles'] if r['role']=='review'])==n
+    assert len({h['event_id'] for h in metrics['event_handlers'] if not h['error']})==n*(SPEC.operations+1)
+    assert len([r for r in metrics['roles'] if r['role']=='review'])==n*SPEC.reviews
     assert len([r for r in metrics['roles'] if r['role']=='report'])==n
    print(json.dumps({'trial':key,'seconds':round(elapsed,3),'mean':round(sum(r['seconds'] for r in completed)/n,3),'passed':True}),flush=True)
  finally:
   stop.set()
+  for task in flows:
+   if not task.done():task.cancel()
+  if flows:await asyncio.gather(*flows,return_exceptions=True)
   if sample_task:await asyncio.gather(sample_task,return_exceptions=True)
   if hold_task:hold_task.cancel();await asyncio.gather(hold_task,return_exceptions=True)
   await mock_ctl.aclose()

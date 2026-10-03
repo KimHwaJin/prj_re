@@ -1,0 +1,5 @@
+{
+  "recommendation": "Hold base merge; storage reduction verified, throughput improvement not established, first failed attempt cause unresolved.",
+  "summary": "현재는 베이스 병합을 보류한다. 저장량은 줄었지만 완료 시간은 개선되지 않았고, 올바른 fixture 계약에서도 후보의 50명 대형 흐름 한 번이 멈췄다. 최초 원인은 미확정이며 증가분 writer 때문이라고 확정하지 않는다.",
+  "detail": "50명 완료 시간은 기본 흐름20.766→20.772초(+0.03%), 대형 흐름91.302→91.462초(+0.18%)로 반복 범위가 겹친다. 대형 흐름 논리 저장량9.787→6.793MiB(-30.6%), 관찰 pending write3.309→0.316MiB(-90.5%), 압축 column1.368→1.235MiB(-9.7%)다. **저장 효율의 효과는 확인했으나 처리량 향상으로 채택할 근거는 없다.**\n\n올바른 계약의 전체25시도 중 완료24회(764시나리오), 중단1회(50시나리오)다. 중단 시 첫 event handler는 Operation16 완료 뒤 ExecutorOutcomeUnknown을 기록했고,20개 명령은RECOVERY·43개는READY였다. 이후 공통 Worker는 새 claim을 중단했다. 최초 예외 사슬은 보존되지 않았으며 HTTP 응답/전송·본문 생성·checkpoint 후속 오류 중 어디서 시작됐는지 확정하지 않는다. 이후 원인 사슬 출력만 추가한 후보3회/기존3회의 대형50명 시험은 모두 완료했다. 그 성공으로 중단을 제거하지 않는다. 공개한 시간/처리율은 완료 trial의 조건부 결과여서 서비스의 전체 실패 비용을 반영하지 못한다.\n\n다음 우선순위는 중단의 원래 예외 및 Executor POST 결과를 같은 조건에서 확보하는 것이다. safe ownership·idempotency·durability를 느슨하게 하여 시험을 통과시키지 않는다. 저장 후보는 계속 분리해 두며, 최초 원인과 버전 전환 경계가 확인된 뒤 저장 효율 목적으로 채택할지 재판단한다. 다음 성능 조사 후보는 0초 LLM에서의 API CPU 구성요소 샘플링이다. 모델 호출 수 최적화는 기존 보류를 유지한다."
+}

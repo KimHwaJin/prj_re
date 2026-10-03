@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "independent_checks": 632,
+  "regression_passed": 21,
+  "negative_controls_rejected": 7,
+  "attempts": 25,
+  "completed_trials": 24,
+  "unresolved_failed_attempts": 1,
+  "browser_ui_qa": "not_run",
+  "html_structural_validation": "passed",
+  "deployment": "not_performed"
+}

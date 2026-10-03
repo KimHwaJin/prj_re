@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": 98,
+  "trials": 3,
+  "completed_flows": 101,
+  "executor_post_202": 2103,
+  "regressions": 105,
+  "original_cause_resolved": false,
+  "new_to_legacy_pending_write_compatible": false,
+  "performance_comparison": false
+}

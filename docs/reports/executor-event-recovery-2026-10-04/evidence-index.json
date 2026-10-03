@@ -1,0 +1,74 @@
+[
+  {
+    "file": "raw/root-reversed-u1-raw.gz",
+    "sha256": "4c50ead348f394e24e49405ecf07f8e4f9e630a30ac490f93c11269f577c5753",
+    "decoded_sha256": "da6984990f94344fbaf5f3731fce67dd065d30514134a7086d3e015037f4d237",
+    "decoded_bytes": 518807
+  },
+  {
+    "file": "raw/root-reversed-u1-server.log.gz",
+    "sha256": "4e8f641d5a3fc4a8e9c1b78bb15a0ca93569eaa2a98406ce6335b73f86993e8f",
+    "decoded_sha256": "786feddc8120bf5040564479f1ed2e78a17e4501af34c21eed080e7a57907572",
+    "decoded_bytes": 1170
+  },
+  {
+    "file": "raw/root-reversed-u1-migration.log.gz",
+    "sha256": "65384eb54eb452a87621babc76cf4a45ee56dea9c2bf861d3f5ba07284b70498",
+    "decoded_sha256": "ba07bd4a234768e539439d135c0dab4ed725c1a0e40f72cf0c32e1d8df65105c",
+    "decoded_bytes": 4558
+  },
+  {
+    "file": "raw/root-reversed-u1-controller.log.gz",
+    "sha256": "3360df435f9cc99f07f4d34f59da0e82fa8313318fe9e4f9d280cdacdb2c4579",
+    "decoded_sha256": "552b86ba938fecc3b4eaf42f2767cdf16979b92002d62ce2cfd4585259d20488",
+    "decoded_bytes": 88
+  },
+  {
+    "file": "raw/large50-r1-raw.gz",
+    "sha256": "719597093719051cbf112c8b25072e163f63609be12d23dccdeffff61a84a6aa",
+    "decoded_sha256": "4453dd7eccd6cdb6e12c9c8605794a7716f70bdbbe810eca97f6841a4dfb8ad2",
+    "decoded_bytes": 104737805
+  },
+  {
+    "file": "raw/large50-r1-server.log.gz",
+    "sha256": "0faf10b97408d2eed6685e5021abc8a15c7c5477560cb75faba617797d0c9f7b",
+    "decoded_sha256": "73802c5ccacccff9d36b597c9b9e65ed3066fe1f52506b66654394991bb92318",
+    "decoded_bytes": 152685
+  },
+  {
+    "file": "raw/large50-r1-migration.log.gz",
+    "sha256": "65384eb54eb452a87621babc76cf4a45ee56dea9c2bf861d3f5ba07284b70498",
+    "decoded_sha256": "ba07bd4a234768e539439d135c0dab4ed725c1a0e40f72cf0c32e1d8df65105c",
+    "decoded_bytes": 4558
+  },
+  {
+    "file": "raw/large50-r1-controller.log.gz",
+    "sha256": "f6ea997904bfba98811be5ef2b4d2e6a3a14328c242c845aff6362b115e33321",
+    "decoded_sha256": "0c2d49692bfdaa329e77570a450a2ae58e7f765a96a7399e71079db07b8c0a41",
+    "decoded_bytes": 91
+  },
+  {
+    "file": "raw/large50-r2-raw.gz",
+    "sha256": "e00419764c5cca0e6294776be9b67733f91987a6c46d8c5fd21ac14a7d0a6145",
+    "decoded_sha256": "45e572d32ba1150772ff4707e38e035265187e8ecb254cd98658e44e8d3caaa9",
+    "decoded_bytes": 104688048
+  },
+  {
+    "file": "raw/large50-r2-server.log.gz",
+    "sha256": "27edd89da5fc38dc3a69eb6fec5ced5ff2d51cac607c74ace0a67e8f4600fbc8",
+    "decoded_sha256": "741d30ee9e02663dfaf8230bae415b720c1ea2d611f2945bfac5de0492e16825",
+    "decoded_bytes": 154440
+  },
+  {
+    "file": "raw/large50-r2-migration.log.gz",
+    "sha256": "65384eb54eb452a87621babc76cf4a45ee56dea9c2bf861d3f5ba07284b70498",
+    "decoded_sha256": "ba07bd4a234768e539439d135c0dab4ed725c1a0e40f72cf0c32e1d8df65105c",
+    "decoded_bytes": 4558
+  },
+  {
+    "file": "raw/large50-r2-controller.log.gz",
+    "sha256": "78f23a3f7993818d29d2996fd0c190e550fca0695e6dd0b6559771d991288ff7",
+    "decoded_sha256": "73cd28aefe695b6949cfac2d544d784c8692e332f9dad8990faa55fa58e29eac",
+    "decoded_bytes": 91
+  }
+]

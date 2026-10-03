@@ -1,0 +1,13 @@
+{
+  "assessment": "Share with caveats: finite local zero-delay Worker burst, not SLA or HPA capacity",
+  "trials": 24,
+  "user_scenarios": 764,
+  "checks_passed": 632,
+  "attempts": 25,
+  "failed_attempts": 1,
+  "attempted_user_scenarios": 814,
+  "adoption_blocked_by_unresolved_incident": true,
+  "excluded_evidence_files_verified": 68,
+  "semantic_hashes_match": true,
+  "repeat_coverage_verified": true
+}

@@ -47,11 +47,13 @@ class EventRouter:
         *,
         batch_size: int = 100,
         concurrency: int = 4,
+        events_path: str = "/executions/{execution_id}/events",
     ) -> None:
         self.store = store
         self.http = http
         self.event_types = event_types
         self.batch_size = batch_size
+        self.events_path = events_path
         self.semaphore = asyncio.Semaphore(concurrency)
 
     async def once(self) -> int:
@@ -74,7 +76,7 @@ class EventRouter:
                             gap if gap is not None else row["last_sequence"]
                         )
                         response = await self.http.get(
-                            f"/executions/{execution_id}/events",
+                            self.events_path.format(execution_id=execution_id),
                             params={
                                 "after_sequence": after,
                                 "limit": self.batch_size,

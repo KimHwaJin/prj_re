@@ -17,13 +17,18 @@ from api_service import agent_run_worker as worker
 from model_fixture import install_model_fixture
 from service_auth.sso.contracts import VerifiedEmployee
 
+cpu_profiler=None
 metrics={};kind=ContextVar('bench_http_kind',default='worker');sql=defaultdict(lambda:[0,0.0,0.0])
 def reset():
     sql.clear();metrics.clear();metrics.update(active=True,start=time.perf_counter(),cpu_start=time.process_time(),
         models=[],workers=[],traces=[],acquires=[],http=[],samples=[],loop_lag=[],peak_worker=0,current_worker=0,
         event_handlers=[],event_stages=[],roles=[],current_event_worker=0,peak_event_worker=0,
         current_shared=0,peak_shared=0,claims=0,empty_claims=0,invocations=[],checkpoint_calls=[])
+    if cpu_profiler is not None:cpu_profiler.start()
 def enabled():return metrics.get('active',False)
+if cfg.get('cpu_profile'):
+    from cpu_profile import CPUProfile
+    cpu_profiler=CPUProfile(enabled)
 def category():
     name=asyncio.current_task().get_name()
     if name.startswith('cancel-watch:'):return 'cancel_watch'
@@ -70,6 +75,9 @@ async def claim():
         metrics['empty_claims']+=result is None
     return result
 worker.claim_one=claim
+if cfg.get("executor_trace"):
+    import executor_trace
+    executor_trace.install(metrics, enabled)
 original_execute=worker.execute_claimed
 async def execute(item):
     started=time.perf_counter();measured=enabled();user=hasattr(item,'claim')
@@ -79,8 +87,19 @@ async def execute(item):
         if user:
             metrics['current_worker']+=1
             metrics['peak_worker']=max(metrics['peak_worker'],metrics['current_worker'])
+    trace_token = executor_trace.begin(item) if cfg.get("executor_trace") else None
     try:return await original_execute(item)
+    except BaseException as exc:
+        # Diagnostic process only: preserve exception cause before ownership
+        # quarantine replaces it with a public recovery status. No locals/body.
+        if trace_token is not None and measured:
+            executor_trace.failed(metrics, exc)
+        import traceback
+        traceback.print_exception(exc)
+        raise
     finally:
+        if trace_token is not None:
+            executor_trace.command.reset(trace_token)
         if measured:
             ended=time.perf_counter()
             metrics['invocations'].append({'kind':'user' if user else 'event','start':started,'end':ended})
@@ -147,8 +166,9 @@ async def clear():reset();return {'ok':True}
 async def prepare():metrics['prepare']=True;return {'ok':True}
 @app.get('/_bench/metrics')
 async def snapshot():
+    profile = cpu_profiler.finish() if cpu_profiler is not None and metrics.get('current_shared') == 0 and engine.sync_engine.pool.checkedout() == 0 else None
     return {**metrics,'crud_owners':[{'category':v['category'],'held_ms':(time.perf_counter()-v['at'])*1000} for v in crud_owners.values()],'psycopg_pools':probe.snapshot() if cfg.get('executor_probe') else [],'crud_connections_checked_out':engine.sync_engine.pool.checkedout(),'cpu_seconds':time.process_time()-metrics['cpu_start'],
-        'sql':[{'category':k[0],'fingerprint':k[1],'count':v[0],'total_ms':v[1],'max_ms':v[2]} for k,v in sql.items()]}
+        'cpu_profile':profile,'sql':[{'category':k[0],'fingerprint':k[1],'count':v[0],'total_ms':v[1],'max_ms':v[2]} for k,v in sql.items()]}
 original_lifespan=app.router.lifespan_context
 @asynccontextmanager
 async def lifespan(app):

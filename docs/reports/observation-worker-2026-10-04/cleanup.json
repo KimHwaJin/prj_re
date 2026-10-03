@@ -1,0 +1,25 @@
+{
+  "captured_at": "2026-10-03T18:53:11.342999+00:00",
+  "scratch_databases_before_stop": [
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "scratch_redis_keys_before_stop": 0,
+  "private_config_files_remaining": 0,
+  "owned_api_mock_runner_processes_remaining": 0,
+  "owned_containers_removed": true,
+  "original_running_container_ids_still_running": 18,
+  "original_services_modified": false,
+  "original_checkout_and_env_modified": false,
+  "fixture_images": {
+    "postgres": {
+      "image_id": "sha256:67f41722b7a8cbdb868a44a4995c846eddfdc2973bccb291ce937dce88ad5675",
+      "configured_image": "postgres:17"
+    },
+    "redis": {
+      "image_id": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+      "configured_image": "redis:7-alpine"
+    }
+  }
+}

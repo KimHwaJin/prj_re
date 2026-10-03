@@ -1,0 +1,51 @@
+{
+  "checks": {
+    "recorded_baseline_and_candidate_match_sources": true,
+    "recorded_harness_matches_files": true,
+    "summary_and_raw_match": true,
+    "python_compile": true,
+    "git_diff_check": true
+  },
+  "tests": {
+    "regression.xml": {
+      "tests": 324,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "postgres-tests.xml": {
+      "tests": 13,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "raw_sha256": "df5b0115768292c2c0e19508e23153e541d491107f3a8c4b142ad9ca8c08212e",
+  "raw_gzip_bytes": 5436954,
+  "independent_checks": 5231,
+  "negative_controls": {
+    "sql_bytes": {
+      "rejected": true,
+      "reason": "independent logical total"
+    },
+    "semantic_hash": {
+      "rejected": true,
+      "reason": "same semantic evidence: repair_0"
+    },
+    "pool_recovery": {
+      "rejected": true,
+      "reason": "pool/wait recovery"
+    },
+    "stable_ancestor_reads": {
+      "rejected": true,
+      "reason": "no new ancestor queries for stable reducer"
+    }
+  },
+  "branch": "feature/observation-delta-checkpoints",
+  "baseline_commit": "5ca22a5846b187d2e6a48c2cab0582339a2442ea",
+  "candidate_is_unmerged": true,
+  "merged": false,
+  "pushed": false,
+  "deployed": false,
+  "analyzer_sha256": "1b053edce642688fe6e449ec2718ad114ee6425dc27c1ed7b6adbe5e1c0b50cf"
+}

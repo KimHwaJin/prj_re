@@ -1,0 +1,42 @@
+[
+  {
+    "file": "incidents/candidate-large20-u50-r1-failure-live.json.gz",
+    "sha256": "4255d920bc13034e8e90df0b78e8db30ae7b5013a01e4f45f5b134e0a6550d4f",
+    "original_sha256": "4255d920bc13034e8e90df0b78e8db30ae7b5013a01e4f45f5b134e0a6550d4f",
+    "sanitized": false,
+    "variant": "candidate",
+    "profile": "large20",
+    "users": 50,
+    "repeat": 1
+  },
+  {
+    "file": "incidents/candidate-large20-u50-r1-migration.log.gz",
+    "sha256": "ba07bd4a234768e539439d135c0dab4ed725c1a0e40f72cf0c32e1d8df65105c",
+    "original_sha256": "ba07bd4a234768e539439d135c0dab4ed725c1a0e40f72cf0c32e1d8df65105c",
+    "sanitized": false,
+    "variant": "candidate",
+    "profile": "large20",
+    "users": 50,
+    "repeat": 1
+  },
+  {
+    "file": "incidents/candidate-large20-u50-r1-mock.log.gz",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sanitized": false,
+    "variant": "candidate",
+    "profile": "large20",
+    "users": 50,
+    "repeat": 1
+  },
+  {
+    "file": "incidents/candidate-large20-u50-r1-server.log.gz",
+    "sha256": "6fc87e61711c4bf9399ad3d2d6d7d69580cd777f5b051ed583d405d94f28d214",
+    "original_sha256": "6fc87e61711c4bf9399ad3d2d6d7d69580cd777f5b051ed583d405d94f28d214",
+    "sanitized": false,
+    "variant": "candidate",
+    "profile": "large20",
+    "users": 50,
+    "repeat": 1
+  }
+]
