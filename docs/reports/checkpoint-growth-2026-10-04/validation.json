@@ -1,0 +1,37 @@
+{
+  "assessment": "Share with caveats",
+  "independent_checks": 796,
+  "negative_controls": [
+    {
+      "control": "duplicate_blob",
+      "rejected": true,
+      "reason": "unique blobs"
+    },
+    {
+      "control": "missing_parent",
+      "rejected": true,
+      "reason": "complete checkpoint ancestor chain"
+    },
+    {
+      "control": "wrong_bytes",
+      "rejected": true,
+      "reason": "independent logical total"
+    },
+    {
+      "control": "missing_whole_condition",
+      "rejected": true,
+      "reason": "all thirteen planned conditions covered"
+    }
+  ],
+  "runtime_and_measured_harness_sha256_match": {
+    "src/agent_service/agents/analysis/planning/graph.py": true,
+    "src/agent_service/agents/analysis/execution/nodes.py": true,
+    "src/integrations/executor/observations.py": true,
+    "src/agent_service/runtime/langgraph/pooled_saver.py": true,
+    "scripts/diagnostics/profile_checkpoint_growth.py": true
+  },
+  "regression_tests": 39,
+  "regression_skips": 0,
+  "relative_links_checked": 8,
+  "raw_uncompressed_sha256": "79b32ddd826e3faec4731491b582ce5d15598a89161bfff9858f1c12b465ce48"
+}

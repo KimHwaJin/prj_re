@@ -11,7 +11,7 @@
 3. [060](060-unified-agent-command-worker.md)에서 DB 명령 원장·공통 총한도·세션 순서·원자 접수/routing을 구현했다. 기존 분리 DB의 실제 이관·운영 전환은 미완료다. 이전 Redis 실행 파일·구 전용 메서드/설정 삭제는 사용자 승인 후 완료했다.
 4. [061](061-agent-command-wakeup.md)에서 공용 LISTEN/NOTIFY·retry timer·재연결·유휴 주기 scan과 full 슬롯 hint 합치기를 구현했다. 신호 없이도 확인하며 Worker/SSE 구독 수명은 독립이다.
 5. [062](062-agent-worker-e2e-performance.md)에서 동일 총한도 20·1/10/30/50명·결과 집중/혼합·후속 설명/메모리·notify 대조 59회를 완료했다. 로컬 fixture 결과이며 실제 Pod/HPA·지속 부하·Artifact 등록은 미검증이다.
-6. [063](063-checkpoint-pool-concurrency.md)에서 정상/후속 checkpoint 저장량·잠금 대기와 pool 상한 유지 병렬 접근을 검증했다. 별도 PG repair 후보 복구도 확인했다. 저장량 자체를 줄이지 않았다. [064](064-analysis-state-lifecycle.md)에서 새 요청 필드 초기화·상태 수명 타입·23개 노드 입력 경계와 기존 PG wait 재개를 검증했다. 최신 후속 상태는 작아졌지만 누계 저장량은 약 2~2.5% 증가했다. **다음 작업:** 대형 출력·다단계/반복 repair·version metadata의 저장 비용을 변경 전에 확대 검증한다.
+6. [063](063-checkpoint-pool-concurrency.md)에서 정상/후속 checkpoint 저장량·잠금 대기와 pool 상한 유지 병렬 접근을 검증했다. 별도 PG repair 후보 복구도 확인했다. 저장량 자체를 줄이지 않았다. [064](064-analysis-state-lifecycle.md)에서 새 요청 필드 초기화·상태 수명 타입·23개 노드 입력 경계와 기존 PG wait 재개를 검증했다. 최신 후속 상태는 작아졌지만 누계 저장량은 약 2~2.5% 증가했다. [065](065-checkpoint-growth-profile.md)에서 대형 출력·다단계/반복 repair의 13조건·39회와 독립 검산을 완료했다. 큰 미리보기/20 Operation은 observations 누적 복사가 약70%, 작은 관찰은 checkpoint JSON·metadata가 약77%였다. **다음 작업:** observations의 증가분 저장을 별도 후보로 A/B 검증한다. 공식 DeltaChannel beta의 reset·기존 checkpoint seed·과거/중간 wait 재개·복구 읽기 비용을 먼저 확인하며 자동 채택하지 않는다. durability 및 승인/receipt/원문 보존은 유지한다.
 
 아래 057 이후 목록의 후속 대화·메모리 성능 범위는 유지하되, 바로 다음 작업의 순서는 위 계획으로 갱신한다. 모델 호출 수·prompt 최적화, Dataset Registry 실연계, Workflow CRUD, 광범위 운영 기능의 기존 보류는 유지한다. 번호가 붙은 개선 기록은 실제 착수 시 추가한다.
 

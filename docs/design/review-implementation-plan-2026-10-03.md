@@ -119,10 +119,10 @@
 
 성공 조건은 의미 보존·중복/누락 방지·총한도 준수와 함께, 주 시나리오의 처리량/지연 및 자원 비용을 실측으로 설명할 수 있는 것이다. 회귀가 있으면 원인과 적용 조건을 확인한 뒤 배포 후보를 결정한다.
 
-## 6. 저장량·구조 정리 — 063 실측/풀 병렬화, 구조 정리는 후속
+## 6. 저장량·구조 정리 — 063 풀 병렬화·064 수명 정리·065 확대 측정
 
 - [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상/후속 전후16회와 기존 잠금2회, 별도 실제 PostgreSQL repair1회 기능·저장 probe를 검증했다. 50명 E2E 평균56.39→54.78초, 저장 함수 누계3.10→1.26초/사용자다. pool 상한4는 유지하며 실제 사용 size는1→4가 됐다. 063은 저장량을 줄이지 않았다. [064](../improvements/064-analysis-state-lifecycle.md)의 수명/입력 정리는 후속 최신 상태 약 25% 감소, 과거 포함 누계 약 2~2.5% 증가였으며 시간/처리량 개선을 주장하지 않는다.
-- F-01 확대 검증: 대표 시나리오에서 checkpoint_blobs/checkpoints/checkpoint_writes를 thread/channel/실행 구간별로 측정한다. 상태 reset과 과거 버전 누적을 구분한다.
+- F-01 확대 검증은 [065](../improvements/065-checkpoint-growth-profile.md)의 13조건×3회로 진행했다. Operation 분할·bounded output·repair의 비용을 따로 측정했고, 큰 미리보기/20 Operation에서 observations blob+write 약70%를 확인했다. service/Pod 처리량이나 real model/Executor 비용 측정은 아니다. 다음은 공식 delta 저장 별도 후보에서 증가분 write/reset·기존 seed·중간 checkpoint/대기 재개·읽기 비용을 함께 A/B 검증한다. beta라 자동 채택하지 않으며 현재 sync/승인/receipt 경계를 유지한다.
 - 저장 시간 비중이 큰 channel부터 범위 제한·근거 외부화·지원되는 delta 방식·보존 정책을 검토한다. reducer 전환만으로 용량이 줄어든다고 가정하지 않는다.
 - 상태 타입/이름, 설정 중복 기본값, Agent 조립 의존 방향, 실제 미사용 compiler/stub, 테스트 fixture 결합을 필요한 변경 단위로 정리한다.
 - analysis/workflow 자산·역할별 agent.py/prompt·공개 계약·Dataset Registry draft는 보존한다. 원문 hash 참조는 불변 저장소 계약 확보 후에만 적용한다.

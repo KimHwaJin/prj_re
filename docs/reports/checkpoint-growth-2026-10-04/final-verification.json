@@ -1,0 +1,20 @@
+{
+  "raw_checks": 796,
+  "conditions": 13,
+  "successful_trials": 39,
+  "source_matches": true,
+  "summary_independently_matches": true,
+  "artifact_sha256": {
+    "regression.log": "ed2fe971a10846aa26381cd5c9666fa441d8478fd6d160d0d66f48aad967e360",
+    "summary.json": "d8cbf08518746e1c334118461305501dd4ce7769a86501b9f0d60fe9e50f9085",
+    "raw.json.gz": "1fcf1e24451ed25cbfbb523fd461949c80f531a96caf4c6d8b36c1512ea5ae4e",
+    "run.log": "9381aeb0b592acee91d98a903d479702736ef02b6c067aecec5242a5ce32c64b",
+    "README.md": "ce6a981428db660327cc9d85c7bc3427d5fcaaf270778e6001841cb0048b588d",
+    "cleanup.json": "9275e30c80cea923f26eb4b5d13f5881bf79c0ee8faee05035bc9760f7c8e6e4",
+    "library-evidence.json": "63205ff337940ce68c0e614d5ff9bee630d6075e5f36ae5f1cd9ac3163a8f521",
+    "validation.json": "d9215ea810f0d6591eeb7abc3e13f2128e81cbfabd8e2dc93528805a720992b0",
+    "regression.xml": "ce389444a4a30230fdc83c180a833fb469621cacb2c0f88e31bd2aa4ba4045d4"
+  },
+  "runtime_modified": false,
+  "deployment_performed": false
+}

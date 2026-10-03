@@ -1,0 +1,33 @@
+{
+  "owned_container": "dtest-checkpoint-growth-pg",
+  "owned_container_id": "87fe69c1b038418d13e64d5ec74274bf728349d9cf41d3da37e346a0cc3f559b",
+  "active_client_connections_before_stop": 0,
+  "owned_container_removed": true,
+  "remaining_existing_container_names": [
+    "executor-jupyter-1",
+    "executor-executor-1",
+    "dtest-agent-loadtest-locust-1",
+    "dtest-agent-loadtest-api-1",
+    "amazing_euler",
+    "dtest-agent-loadtest-mock-executor-1",
+    "dtest-agent-loadtest-postgres-1",
+    "dtest-agent-loadtest-redis-1",
+    "dtest-agent-local-event-worker-1",
+    "dtest-agent-local-api-1",
+    "dtest-agent-local-postgres-1",
+    "ex-agent-management-api-1",
+    "ex-agent-management-postgres-1",
+    "executor-postgres-1",
+    "executor-redis-1",
+    "sdk",
+    "kind-control-plane",
+    "smp"
+  ],
+  "generated_fixture_directories_removed": [
+    "/private/tmp/dtest-growth-smoke",
+    "/private/tmp/dtest-growth-smoke2",
+    "/private/tmp/dtest-growth-measured",
+    "/private/tmp/dtest-growth-final"
+  ],
+  "existing_services_reconfigured_or_restarted": false
+}
