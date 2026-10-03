@@ -80,7 +80,12 @@ class Settings(BaseModel):
     task_reconciler_enabled: bool = True
     # 별도 Pod 없이 서비스 bootstrap lifespan에서 durable DB queue를 소비합니다.
     agent_worker_enabled: bool = True
+    # LISTEN 미연결/비활성 시 fallback 조회 간격. 정상 연결의 유휴 조회와 별개다.
     agent_worker_poll_interval_seconds: float = 0.25
+    # Worker와 SSE가 프로세스당 하나의 알림 연결을 공유한다.
+    agent_worker_notify_enabled: bool = True
+    # 정상 LISTEN 중 신호 유실을 보완하는 최대 유휴 확인 간격(초).
+    agent_worker_reconcile_interval_seconds: float = 5.0
     # Per process, not per Pod. YAML explicit value takes priority over env.
     # Per-process total graph calls: user start/resume + Executor resume share this limit.
     agent_worker_concurrency: int = Field(default=1, ge=1)
@@ -142,7 +147,7 @@ class Settings(BaseModel):
             raise ValueError("graph_checkpointer must be memory or postgres")
         for name in (
             "database_pool_timeout_seconds", "task_lease_seconds", "task_reconcile_interval_seconds",
-            "agent_worker_poll_interval_seconds", "task_cancel_poll_interval_seconds",
+            "agent_worker_poll_interval_seconds", "agent_worker_reconcile_interval_seconds", "task_cancel_poll_interval_seconds",
             "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
             "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
             "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",

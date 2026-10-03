@@ -17,7 +17,7 @@ from service_contracts.execution import ExecutionNeedsRecovery
 async def isolated(monkeypatch):
     monkeypatch.setattr(service_settings, '_snapshot', None)
     service_settings.configure(service_settings.load_settings(config={
-        'AGENT_WORKER_CONCURRENCY': 3, 'AGENT_WORKER_POLL_INTERVAL_SECONDS': .05,
+        'AGENT_WORKER_NOTIFY_ENABLED': False, 'AGENT_WORKER_CONCURRENCY': 3, 'AGENT_WORKER_POLL_INTERVAL_SECONDS': .05,
     }, environ={}))
     monkeypatch.setattr(execution_health, 'faults', {})
     monkeypatch.setattr(execution_health, 'recorders', set())

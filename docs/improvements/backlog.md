@@ -4,13 +4,13 @@
 
 ## 2026-10-03 리뷰 반영 후 현재 실행 순서
 
-상태: 058·059·060에서 1~3단계 구현·로컬 검증 완료(베이스 미병합·미배포). [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [D-01~D-12 및 C-01~C-04](../reviews/2026-10-03-decisions.md)를 따른다.
+상태: 058·059·060·061에서 1~4단계 구현·로컬 검증 완료(베이스 미병합·미배포). [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [D-01~D-12 및 C-01~C-04](../reviews/2026-10-03-decisions.md)를 따른다.
 
 1. 단일 컨테이너·app.py 정본 및 배포/설정 정합성(D-01/D-02)은 [058](058-deployment-config-unification.md)에서 구현했다. 사내 배포 검증과 기존 Worker 전환은 별도다.
 2. Run 접수/실행/취소와 공통 GraphInvocation/상태 반영은 [059](059-run-execution-boundaries.md)에서 구현했다. DB 준비/결과 session을 분리하고 구 facade·private method 호출을 제거했다.
 3. [060](060-unified-agent-command-worker.md)에서 DB 명령 원장·공통 총한도·세션 순서·원자 접수/routing을 구현했다. 기존 분리 DB의 실제 이관·운영 전환은 미완료다. 이전 Redis 실행 파일·구 전용 메서드/설정 삭제는 사용자 승인 후 완료했다.
-4. **다음 작업:** DB 실행 상태를 기준으로 best-effort wakeup을 붙인다. LISTEN/NOTIFY를 우선 검토하고, 신호 없이도 주기 재확인으로 진행한다.
-5. 동일 총 실행 한도에서 1/10/30/50명과 혼합/결과 집중 부하를 비교한다. 후속 설명·보고서·메모리 서비스 비용은 여기서 별도 시나리오로 확인한다.
+4. [061](061-agent-command-wakeup.md)에서 공용 LISTEN/NOTIFY·retry timer·재연결·유휴 주기 scan과 full 슬롯 hint 합치기를 구현했다. 신호 없이도 확인하며 Worker/SSE 구독 수명은 독립이다.
+5. **다음 작업:** 동일 총 실행 한도에서 1/10/30/50명과 혼합/결과 집중 부하를 비교한다. 후속 설명·보고서·메모리 서비스 비용은 여기서 별도 시나리오로 확인한다.
 6. 실제 checkpoint 저장량·시간 측정 후 상태/설정/Agent 조립과 레거시 정리를 진행한다.
 
 아래 057 이후 목록의 후속 대화·메모리 성능 범위는 유지하되, 바로 다음 작업의 순서는 위 계획으로 갱신한다. 모델 호출 수·prompt 최적화, Dataset Registry 실연계, Workflow CRUD, 광범위 운영 기능의 기존 보류는 유지한다. 번호가 붙은 개선 기록은 실제 착수 시 추가한다.

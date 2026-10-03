@@ -1,8 +1,8 @@
 """Process-owned SSE wakeups and bounded shared reads; PostgreSQL is authoritative.
 
-NOTIFY is an invalidation hint, never the event payload. Each process with live
-subscribers owns one LISTEN connection. Missed notifications are reconciled by
-slow reads, and each HTTP connection retains its own durable sequence cursor.
+NOTIFY is an invalidation hint, never the event payload. Worker and live SSE
+subscriptions share one LISTEN connection with independent lifespans. Missed
+notifications are reconciled by slow reads. HTTP clients retain their own cursor.
 """
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from collections import OrderedDict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 import json
-import logging
 import time
 from uuid import UUID
 
@@ -19,7 +18,6 @@ import asyncpg
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy import select
-from sqlalchemy.engine import make_url
 
 from api_service.core import database
 from api_service.core.database import short_session
@@ -29,11 +27,11 @@ from api_service.models.common.session_model import SessionModel
 from api_service.models.common.project_model import ProjectModel
 from api_service.services.public_run_service import PublicRunService, project, TERMINAL
 from api_service.services.task_event_service import TaskEventService
+from service_runtime.postgres_signals import RUN_CHANNEL, PostgresSignals, process_signals
 from service_runtime.cleanup import protected_cleanup
 from service_contracts.run_events import public_event_payload
 
-log = logging.getLogger(__name__)
-CHANNEL = 'dtest_run_changed'
+CHANNEL = RUN_CHANNEL
 
 
 @dataclass(eq=False)
@@ -78,7 +76,8 @@ class RunStreamHub:
         self.cached_bytes = 0
         self.subscribers = 0
         self.listener = None
-        self.connection = None
+        self._signals = None
+        self._private_signals = session_factory is not None or connect is not None
         self.closed = False
         self.lifecycle_lock = asyncio.Lock()
         self.ready = asyncio.Event()
@@ -92,33 +91,32 @@ class RunStreamHub:
             if payload == '*' or str(key[0][2]) == payload:
                 self.cached_bytes -= self.cache.pop(key).size
 
+    @property
+    def connection(self):
+        return None if self._signals is None else self._signals.connection
+
     async def _listen(self):
-        while True:
-            conn = None
-            try:
-                dsn = make_url(self.settings.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
-                conn = await self.connect(dsn, timeout=5, ssl=False)
-                self.connection = conn
-                lost = asyncio.Event()
-                conn.add_termination_listener(lambda _: lost.set())
-                await conn.add_listener(CHANNEL, lambda _c, _pid, _ch, payload: self.invalidate(payload))
-                # Catch commits between the initial read and LISTEN/reconnect.
+        # Production uses the process broker; explicit fixture/connector
+        # injection creates a private broker for independent-process tests.
+        signals = (PostgresSignals(self.settings.database_url,
+                    connect=lambda *a, **kw: self.connect(*a, **kw))
+                   if self._private_signals else process_signals(self.settings.database_url))
+        self._signals = signals
+        def changed(payload):
+            if payload is None:
+                if signals.ready.is_set():
+                    self.ready.set()
+                else:
+                    self.ready.clear()
                 self.invalidate('*')
-                self.ready.set()
-                await lost.wait()
-            except asyncio.CancelledError:
-                raise
-            except Exception as exc:
-                log.warning('run_stream_listener_unavailable error_type=%s', type(exc).__name__)
-            finally:
-                self.ready.clear()
-                self.connection = None
-                if conn is not None:
-                    try:
-                        await protected_cleanup(conn.close(timeout=2))
-                    except Exception as exc:
-                        log.warning("run_stream_listener_close_failed error_type=%s", type(exc).__name__)
-            await asyncio.sleep(1)
+            else:
+                self.invalidate(payload)
+        try:
+            async with signals.subscribe(CHANNEL, changed):
+                await asyncio.Event().wait()
+        finally:
+            self.ready.clear()
+            self._signals = None
 
     async def _stop_listener(self):
         task, self.listener = self.listener, None

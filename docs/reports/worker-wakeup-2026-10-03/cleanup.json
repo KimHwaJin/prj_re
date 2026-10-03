@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-03",
+  "owned_containers_removed": [
+    "dtest-command-wakeup-pg",
+    "dtest-command-wakeup-redis"
+  ],
+  "removal_verified": true,
+  "ports": [
+    63370,
+    63371
+  ],
+  "independent_test_worker_processes_joined": true,
+  "existing_service_containers_database_env_redis_groups_and_original_checkout_changed": false
+}

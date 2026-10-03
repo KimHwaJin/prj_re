@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 다음은 4단계 깨우기 신호이며 전체 작업 완료 기록은 아니다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 다음은 전체5단계 기능·성능 검증이며 전체 작업 완료 기록은 아니다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -83,7 +83,9 @@
 - claim/소유권/명령 순서, 재예약 선행 명령, 중복 이벤트, 처리 완료 후 재전달, 빠른 Executor 결과, 프로세스 종료를 격리 DB·Redis로 확인한다.
 - claim 직후 crash에서 기존 writer의 안전한 종료 확인 없이 자동 탈취하지 않는다. 현재 recovery_required 보호를 유지하며 광범위 관리자 복구 API 개발은 별도다.
 
-## 4. 깨우기 신호
+## 4. 깨우기 신호 — 061 구현·로컬 검증
+
+[061](../improvements/061-agent-command-wakeup.md), [알림/대기 인수인계](../agent-command-wakeup.md). 공용 LISTEN 연결·DB commit trigger·timer/주기 fallback을 구현했다. 아래는 인수 기준이며 실제 Kubernetes/HPA 범위까지 완료한 것은 아니다.
 
 - 같은 DB를 전제로 LISTEN/NOTIFY를 우선 구현 후보로 검토한다. Worker lifespan이 수명을 소유하며 SSE 구독자 유무에 영향받지 않는다.
 - 시작/재연결/명령 완료/재예약 기한/제한된 주기 scan을 유지해 알림 없이도 진행한다. 알림은 여러 개를 합치고 slot이 없을 때 불필요한 claim을 하지 않는다.

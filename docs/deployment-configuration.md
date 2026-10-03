@@ -2,6 +2,8 @@
 
 현재060의 배포 정본은 **하나의 컨테이너, `python app.py`, 한 프로세스**다. lifespan이 API, 공통 Agent Worker, Executor 이벤트 ingress/routing, reconciler, SSO와 공용 자원을 소유한다. 모든 graph 호출은 같은 총한도를 사용한다. 이벤트 수신 standalone 진입점은 진단용이며 graph를 실행하지 않는다. [공통 명령 Worker·DB 이행](agent-command-worker.md)을 따른다.
 
+061에서 Worker와 SSE 알림을 DB 정본당 LISTEN 연결1개로 공유한다. 유휴 Worker가 유지하는 연결도 DB 예산에 포함하며 실효 summary는 `notification_listener`로 표시한다. config/수명/migration은 [알림 안내](agent-command-wakeup.md)를 따른다.
+
 ## 설정 원천과 공통 값
 
 `service_settings.load_settings()`가 한 번 읽어 불변 snapshot을 만든다. API·Agent·이벤트·SSO typed 설정은 이 snapshot의 소비용 view다.

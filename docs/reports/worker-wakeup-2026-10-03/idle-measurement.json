@@ -1,0 +1,16 @@
+[
+  {
+    "notify_enabled": false,
+    "idle_window_seconds": 6,
+    "idle_empty_claims": 20,
+    "submission_to_claim_seconds": 0.30356058408506215,
+    "listener_connections": 0
+  },
+  {
+    "notify_enabled": true,
+    "idle_window_seconds": 6,
+    "idle_empty_claims": 1,
+    "submission_to_claim_seconds": 0.204336249968037,
+    "listener_connections": 1
+  }
+]

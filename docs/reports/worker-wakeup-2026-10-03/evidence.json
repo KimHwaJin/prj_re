@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-03",
+  "branch": "feature/agent-command-wakeup",
+  "baseline_commit": "799e078",
+  "migration": "20261003_0027",
+  "notify_default": true,
+  "healthy_reconcile_default_seconds": 5,
+  "fallback_poll_default_seconds": 0.25,
+  "shared_listener_max_per_process_database": 1,
+  "unit": {
+    "passed": 625,
+    "skipped": 365,
+    "warnings": 74,
+    "seconds": 26.37
+  },
+  "postgres_regression": {
+    "passed": 55,
+    "seconds": 71.41
+  },
+  "wakeup_recheck": {
+    "passed": 19,
+    "seconds": 28.73,
+    "overlaps_postgres_and_unit": true
+  },
+  "subscriber_isolation": {
+    "passed": 13,
+    "seconds": 1.08,
+    "overlaps_unit": true
+  },
+  "multiprocess": {
+    "passed": 1,
+    "seconds": 7.14,
+    "independent_python_workers": 2,
+    "completed_unique_commands": 6
+  },
+  "resource_boundaries": {
+    "passed": 20,
+    "seconds": 50.8
+  },
+  "actual_kubernetes_hpa_test": false,
+  "real_llm_executor_python_executed": false,
+  "previous_services_env_redis_groups_or_original_checkout_changed": false,
+  "short_session_final": {
+    "passed": 3,
+    "deselected": 18,
+    "seconds": 7.38,
+    "overlaps_previous_cases": true
+  }
+}

@@ -94,7 +94,8 @@ HITL/Executor 대기에서는 현재 명령이 DONE이고 자리를 반환한다
 | CHECKPOINT_DB_URI | LangGraph checkpoint DB. 별도 DB·풀 유지 가능 |
 | WORKFLOW_DATABASE_URL | Workflow 저장소. 별도 설정 유지 |
 | AGENT_WORKER_CONCURRENCY | 사용자 시작·승인·Executor 결과를 합친 프로세스별 graph 한도 |
-| AGENT_WORKER_POLL_INTERVAL_SECONDS | 실행 자리가 있고 작업을 찾지 못했을 때의 주기 재확인. 기본0.25초, 최소0.05초 |
+| AGENT_WORKER_POLL_INTERVAL_SECONDS | LISTEN 미연결/비활성 시 fallback. 기본0.25초, 최소0.05초 |
+| AGENT_WORKER_NOTIFY_ENABLED / AGENT_WORKER_RECONCILE_INTERVAL_SECONDS | 기본true/5초. 공용 LISTEN 힌트와 유실 시 느린 재확인 |
 | EVENT_WORKER_ENABLED | 외부 이벤트 수신/routing 활성화. true이면 공통 Agent Worker도 필요하여 함께 기동 |
 | EW_INGRESS_CONCURRENCY / EW_POOL_SIZE | 이벤트 수신·routing 병렬성과 해당 DB pool 상한. graph 한도가 아님 |
 | EW_DISPATCH_CONCURRENCY / EW_COMMAND_STREAM_NAME / EW_COMMAND_GROUP_NAME / EW_PUBLISH_LEASE_SECONDS | 삭제된 설정. YAML/env에 남으면 명시적 오류로 중단하므로 제거해야 함 |
@@ -118,6 +119,6 @@ config > env > 기본값 우선순위와 공유 snapshot을 유지한다. 같은
 
 ## 다음 단계
 
-현재 정확성은 제한된 polling으로 보장한다. Worker 전용 LISTEN/NOTIFY 수명, 재연결·알림 유실·fan-out·빈 조회 감소는 4단계다. 동일 총한도·5초 역할별 모델 fixture·혼합/결과 폭주·1/10/30/50명 반복 성능 비교는 5단계다.
+[061 알림/대기 최적화](agent-command-wakeup.md)에서 Worker와 SSE의 공용 LISTEN 수명, 재연결·알림 유실·fan-out·빈 claim 감소를 구현했다. 명령은 DB 정본이고 timer/주기 scan도 유지한다. 동일 총한도·5초 역할별 모델 fixture·혼합/결과 폭주·1/10/30/50명 반복 성능 비교는 5단계다.
 
 057 `executor_throughput/run.py`는 API/Event 별도 한도 capture 구조여서 새 Worker에서 실행을 명시적으로 거절한다. 이전 source에서 baseline 재현을 유지하고, diagnostic hook은 공통 경계도 지원한다. 새 공유 peak/한도·역할별 fixture capture를 5단계에서 제공한다. 기존 측정 원본은 삭제하지 않는다.

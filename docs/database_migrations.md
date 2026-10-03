@@ -2,6 +2,8 @@
 
 현재060은 [공통 Agent 명령 원장·이행 안내](agent-command-worker.md)를 우선한다. API·Inbox·원장은 같은 DB 정본이며 CRUD Alembic은 agent_commands와 API/Store schema, Event Alembic은 Inbox/binding 및 기존 EW schema 이력을 관리한다. checkpoint는 CHECKPOINT_DB_URI에서 saver.setup으로 준비한다.
 
+061의 CRUD revision `20261003_0027`은 command NOTIFY trigger/function을 추가한다. API/명령 DB에서 CRUD upgrade head를 수행한다. Event/checkpoint migration과 다르며 [알림 수명 안내](agent-command-wakeup.md)를 따른다.
+
 `ew_0001`은 frozen 이력이다. ew_commands는 이행·감사 투영으로 유지하며 ew_outbox/ew_audit는 이전 데이터 보존용이다. 현재 runtime의 발행·dispatch·retry/skip 메서드는 삭제했고 이 테이블을 새 실행 경로로 사용하지 않는다. 아래 revision 설명은 당시 생성한 객체를 설명한다.
 
 ## 1. DB 역할 구분

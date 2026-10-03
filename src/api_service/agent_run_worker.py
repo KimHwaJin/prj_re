@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import AsyncExitStack
 
 from config import settings
 from api_service.core.database import get_session_factory
@@ -17,8 +18,10 @@ from api_service.services.session_execution import run_owned
 from api_service.runs.commands.claim import claim_one as claim_command
 from api_service.runs.commands.outcome import record as record_outcome
 from api_service.runs.commands.types import ClaimedCommand, ClaimedRun
+from api_service.runs.commands.wakeup import subscription, next_retry_delay
 from api_service.runs.execution import execute_claimed as execute_invocation
 from service_runtime.diagnostics import run_trace, span
+from api_service.services.helpers import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +97,12 @@ async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
     """
     limit = settings.agent_worker_concurrency
     interval = max(0.05, settings.agent_worker_poll_interval_seconds)
-    logger.info("agent_run_worker_started concurrency=%s poll_interval=%s", limit, interval)
+    logger.info("agent_run_worker_started concurrency=%s notify_enabled=%s fallback_poll_seconds=%s reconcile_seconds=%s",
+                limit, settings.agent_worker_notify_enabled, interval, settings.agent_worker_reconcile_interval_seconds)
+    wake = asyncio.Event()
+    stack = AsyncExitStack()
+    signals = None
+    wake_waiter = None
     active: set[asyncio.Task] = set()
     claiming: asyncio.Task | None = None
     stopping = False
@@ -122,9 +130,18 @@ async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
         await asyncio.gather(*active, return_exceptions=True)
         active.clear()
         stop_waiter.cancel()
+        if wake_waiter is not None:
+            wake_waiter.cancel()
+            await asyncio.gather(wake_waiter, return_exceptions=True)
         await asyncio.gather(stop_waiter, return_exceptions=True)
+        await stack.aclose()
 
     try:
+        from service_settings import get_settings
+        configured = get_settings()
+        if settings.agent_worker_notify_enabled:
+            signals = await stack.enter_async_context(subscription(
+                settings.database_url, configured.worker.namespace, wake))
         while not stop_event.is_set():
             for task in list(active):
                 if task.done():
@@ -133,18 +150,35 @@ async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
             if not execution_health.healthy:
                 raise ExecutionNeedsRecovery("Worker is unhealthy; no further claims allowed.")
             if len(active) < limit:
+                # Clear BEFORE the DB claim. A commit racing with the query
+                # sets it again and cannot be lost between query and sleep.
+                wake.clear()
+                observed_at = utc_now()
                 claiming = asyncio.create_task(claim_and_start(), name="agent-run-claim")
                 claimed = await asyncio.shield(claiming)
                 claiming = None
                 if claimed:
                     continue
                 timeout = interval
+                if signals is not None and signals.ready.is_set():
+                    timeout = max(.05, settings.agent_worker_reconcile_interval_seconds)
+                    due = await next_retry_delay(get_session_factory(), configured.worker.namespace, observed_at=observed_at)
+                    if due is not None:
+                        timeout = min(timeout, due)
+                wake_waiter = asyncio.create_task(wake.wait(), name='agent-command-wake')
+                waiters = active | {stop_waiter, wake_waiter}
             else:
+                # Ignore a set wake while full; keep it coalesced until a slot
+                # returns. Waiting on it here would spin without any capacity.
                 timeout = None
-            if active:
-                await asyncio.wait(active | {stop_waiter}, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
-            else:
-                await asyncio.wait({stop_waiter}, timeout=interval)
+                waiters = active | {stop_waiter}
+            try:
+                await asyncio.wait(waiters, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
+            finally:
+                if wake_waiter is not None:
+                    wake_waiter.cancel()
+                    await asyncio.gather(wake_waiter, return_exceptions=True)
+                    wake_waiter = None
         # Cooperative stop: keep claims/heartbeats alive until calls return.
         # The service coordinator cancels us only after its drain deadline.
         if active:

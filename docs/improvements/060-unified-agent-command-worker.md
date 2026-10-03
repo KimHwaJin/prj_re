@@ -74,3 +74,5 @@ API DB에 `agent_commands`를 추가했다. 기존 공개 Run과 private invocat
 - 이전6개·현재6개 probe가 모두 통과했고96개 job의 중복/누락/오류와 잔여 owner가 없었다.
 
 [원본·측정 경계·상세 보고서](../reports/command-worker-capacity-2026-10-03/README.md), [재현용 probe](../../scripts/benchmarks/command_worker/README.md)를 남겼다. 접수/Ingress 준비 비용·checkpoint·LLM·Executor·전체 분석 E2E 및 다중 Pod는 제외했다. 단독 사용자 한도가 이전/현재 동일하면 이 자리 공유 효과가 생기지 않는다. 전체 단계5는 미완료이며 다음 단계4 NOTIFY/유휴 조회 최적화 순서는 유지한다. 검증용 PostgreSQL/Redis와 임시 소스 archive만 제거했고 기존 서비스는 변경하지 않았다.
+
+후속4단계는 [061 Worker 알림/유휴 비용](061-agent-command-wakeup.md)에서 구현·실제 DB/독립 프로세스 검증했다. 위060의 당시 미구현 목록과 구분하며 전체5단계 성능 검증은 남아 있다.

@@ -207,6 +207,9 @@ class ServiceSettings:
             "event_ingress_concurrency": self.worker.ingress_concurrency,
             "event_graph_dispatchers": 0,
             "agent_command_concurrency": self.api.agent_worker_concurrency,
+            "agent_worker_notify_enabled": self.api.agent_worker_notify_enabled,
+            "agent_worker_reconcile_interval_seconds": self.api.agent_worker_reconcile_interval_seconds,
+            "agent_worker_poll_interval_seconds": self.api.agent_worker_poll_interval_seconds,
             "event_health_port": self.worker.health_port,
             # Configured maxima, not currently checked-out connections. Distinct
             # drivers/lifetimes require distinct pools, even with one endpoint.
@@ -216,7 +219,7 @@ class ServiceSettings:
                 "submission_bridge": self.worker.pool_size,
                 "event": self.worker.pool_size,
                 "project_memory": min(2, self.api.database_pool_size),
-                "sse_listener": 1,
+                "notification_listener": 1,  # Shared by Worker and SSE, outside pools.
             },
             "agent_worker_enabled": self.api.agent_worker_enabled,
             "agent_worker_concurrency": self.api.agent_worker_concurrency,
