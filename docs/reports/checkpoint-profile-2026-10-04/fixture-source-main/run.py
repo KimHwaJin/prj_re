@@ -12,7 +12,6 @@ p.add_argument('--delay-ms',type=int,default=5000);p.add_argument('--repeat',typ
 p.add_argument('--event-concurrency',type=int,default=4);p.add_argument('--event-pool',type=int,default=4)
 p.add_argument('--event-poll',type=float,default=.2);p.add_argument('--event-idle',type=float,default=2)
 p.add_argument('--executor-delay-ms',type=int,default=0);p.add_argument('--hold-seconds',type=float,default=0)
-p.add_argument('--checkpoint-lock-profile',action='store_true',help='Preserve and time the official saver lock')
 p.add_argument('--checkpoint-profile',action='store_true',help='Capture saver times and persisted row sizes after drain')
 p.add_argument('--real-executor',action='store_true');
 p.add_argument('--scenario',choices=['approval','executor','result_burst','mixed'],default='executor');p.add_argument('--pool',type=int,default=10)
@@ -26,7 +25,6 @@ assert a.event_concurrency>=1 and a.event_pool>=2 and a.event_idle>=a.event_poll
 assert not a.real_executor or (a.users==[1] and a.executor_delay_ms==0 and a.hold_seconds==0)
 assert a.executor_delay_ms>=0 and a.hold_seconds>=0
 assert not a.followup or a.scenario=='executor'
-assert not a.checkpoint_lock_profile or a.checkpoint_profile
 assert a.delay_ms in (0,5000) and a.repeat>=1 and a.pool>=1
 assert not a.output.exists(),'Use a fresh output directory'
 a.output.mkdir(parents=True)
@@ -97,7 +95,7 @@ async def trial(n,c,repeat):
  else:
   settings.pop('AGENT_WORKER_NOTIFY_ENABLED');settings.pop('AGENT_WORKER_RECONCILE_INTERVAL_SECONDS')
  if a.cache_size is not None:settings['DATABASE_PREPARED_STATEMENT_CACHE_SIZE']=a.cache_size
- config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile})
+ config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'checkpoint_profile':a.checkpoint_profile})
  env={k:v for k,v in os.environ.items() if k in ('PATH','HOME','TMPDIR','LANG','LC_ALL')}
  env.update(PYTHONPATH=str(ROOT/'src'),PYTHONDONTWRITEBYTECODE='1')
  with tempfile.TemporaryDirectory(prefix='service-perf-config-') as directory:
@@ -267,7 +265,6 @@ async def trial(n,c,repeat):
     assert threads and all(r['error'] is None for r in metrics['checkpoint_calls'])
     result['checkpoint_profile']=await asyncio.to_thread(capture,CP,threads)
     result['config']['checkpoint_profile']=True
-    result['config']['checkpoint_lock_profile']=a.checkpoint_lock_profile
    private_json(folder/'raw.json',json.loads(json.dumps(result,default=str)))
    assert result['passed'],errors
    assert not mock_metrics.get('tasks_failed')

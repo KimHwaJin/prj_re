@@ -1,0 +1,8 @@
+{
+  "selected_threads": 1,
+  "checkpoint_rows": 29,
+  "blob_rows": 81,
+  "write_rows": 220,
+  "logical_payload_bytes": 573125,
+  "scope": "One deterministic three-Tool graph, mocked roles and local Executor double; real PG repair HITL/pool restart/history/receipt replay; no HTTP/Redis/SSE throughput comparison"
+}

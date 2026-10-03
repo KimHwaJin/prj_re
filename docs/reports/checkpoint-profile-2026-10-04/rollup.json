@@ -1,0 +1,17 @@
+{
+  "main_trials": 6,
+  "main_users": 191,
+  "main_50": {
+    "repeats": 3,
+    "mean_seconds": 56.39081985973287,
+    "trial_mean_sample_std_seconds": 0.2758592647721619,
+    "saver_write_ms_per_user": 3103.3495402506865,
+    "saver_write_outer_ms_per_user": 3103.5285676488033,
+    "read_ms_per_user": 912.2348484459022,
+    "serialization_ms_per_user": 1.2469130428507924,
+    "logical_payload_bytes_per_user": 692653.78
+  },
+  "all_trials": 10,
+  "all_users": 253,
+  "validated": true
+}

@@ -3,13 +3,14 @@
 checkpoint-postgres 3.1.2 locks each saver even when its connection source is
 an AsyncConnectionPool. A short-lived official saver per operation keeps its
 connection/pipeline lock while independent operations borrow separate pool
-connections. It creates no pools, opens no extra connections, changes no SQL
+connections. It creates no pools or connections outside that pool, changes no SQL
 and uses the same serializer, schema and checkpoint format.
 
 Session/command ownership remains the application's responsibility. This
 adapter does not authorize concurrent graph writers to the same thread.
 """
 from collections.abc import AsyncIterator, Sequence
+from contextlib import aclosing
 from typing import Any
 
 from langchain_core.runnables import RunnableConfig
@@ -49,8 +50,11 @@ class PooledAsyncPostgresSaver(AsyncPostgresSaver):
 
     async def alist(self, config: RunnableConfig | None, *, filter: dict[str, Any] | None = None,
                     before: RunnableConfig | None = None, limit: int | None = None) -> AsyncIterator[CheckpointTuple]:
-        async for item in self._operation().alist(config, filter=filter, before=before, limit=limit):
-            yield item
+        async with aclosing(self._operation().alist(
+            config, filter=filter, before=before, limit=limit,
+        )) as history:
+            async for item in history:
+                yield item
 
     async def adelete_thread(self, thread_id: str) -> None:
         await self._operation().adelete_thread(thread_id)

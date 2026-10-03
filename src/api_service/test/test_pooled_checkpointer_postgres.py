@@ -52,3 +52,80 @@ async def test_cancelled_operation_releases_its_pool_connection(harness,database
         assert saver.conn.get_stats()['pool_available']==1
         async with saver.conn.connection() as conn:
             assert (await (await conn.execute('SELECT 1')).fetchone())['?column?']==1
+
+
+@pytest.mark.asyncio
+async def test_repair_candidate_survives_pool_restart_and_keeps_receipts(harness,database_url,tmp_path,monkeypatch):
+    from agent_service.agents.analysis.tests import test_agentic_repair as fixture
+    from agent_service.agents.analysis.planning.graph import build_planning_graph
+    from api_service.runs.graph_invocation import GraphInvocation
+    from langgraph.types import Command
+    from service_contracts.events import EventContext,ExecutorEvent
+    from service_contracts.user_resume import resume_identity,resume_envelope
+    from uuid import UUID
+    dsn=checkpoint_url(database_url)
+    async with create_checkpointer(dsn,setup_on_start=True,min_size=1,max_size=2) as saver:
+        monkeypatch.setattr(fixture,'InMemorySaver',lambda:saver)
+        runtime,executor,graph,config,state,calls,deliver,resume=await fixture.scenario(tmp_path,monkeypatch,needs_input=True)
+        original=state['approved_snapshot']
+        ctx,state=await deliver(executor.events[0])
+        candidate=state['repair_candidate']
+        assert state['repair_review'] and len(calls)==1 and len(executor.calls)==1
+    async with create_checkpointer(dsn,setup_on_start=False,min_size=1,max_size=2) as saver:
+        graph=build_planning_graph(runtime,checkpointer=saver)
+        snapshot=await graph.aget_state(config)
+        assert snapshot.values['repair_candidate']==candidate
+        boundary=snapshot.tasks[0].interrupts[0]
+        command=fixture.approve(snapshot.values['repair_review'])
+        identity=resume_identity(str(uuid4()),boundary.id,command)
+        state=await graph.ainvoke(Command(resume={boundary.id:resume_envelope(identity,command)}),config,durability='sync')
+        assert state['repair_attempts']==1 and state['approved_snapshot']==original
+        assert len(executor.calls)==2 and executor.globals['repair_load_calls']==1
+        async def event(value):
+            context=EventContext(namespace='test',session_id=ctx.session_id,task_id=ctx.task_id,
+                execution_id=UUID(executor.id),command_id=uuid4(),event=ExecutorEvent.model_validate(value))
+            await GraphInvocation(graph,model_validator=None).executor_resume(context)
+            return context
+        completed=await event(executor.events[1])
+        assert executor.calls[-1][0].endswith('/finalize')
+        before=len(executor.calls)
+        await GraphInvocation(graph,model_validator=None).executor_resume(completed)
+        assert len(executor.calls)==before
+        await event(executor.event('execution.completed',{'status':'SUCCEEDED','error':None}))
+        final=await graph.aget_state(config)
+        assert not final.next and final.values['final_response']['repair']['attempts']==1
+        assert final.values['final_response']['status']=='analysis_completed'
+        assert len([s async for s in graph.aget_state_history(config,limit=2)])==2
+        assert saver.conn.get_stats()['pool_available']==saver.conn.get_stats()['pool_size']
+    import os
+    output=os.environ.get('DTEST_REPAIR_CHECKPOINT_OUTPUT')
+    if output:
+        from pathlib import Path
+        import json,sys
+        target=Path(output).resolve()
+        assert target.is_relative_to(Path('/private/tmp'))
+        sys.path.insert(0,str(Path(__file__).resolve().parents[3]/'scripts/benchmarks/worker_e2e'))
+        from checkpoint_profile import capture
+        target.write_text(json.dumps(capture(dsn,[config['configurable']['thread_id']]),ensure_ascii=False,indent=2))
+
+
+@pytest.mark.asyncio
+async def test_early_history_close_returns_single_pool_connection(harness,database_url):
+    from api_service.test.test_graph_runtime_postgres import checkpoint_graph
+    from langgraph.types import Command
+    dsn=checkpoint_url(database_url)
+    config={'configurable':{'thread_id':str(uuid4())}}
+    async with create_checkpointer(dsn,setup_on_start=True,min_size=1,max_size=1) as saver:
+        graph=checkpoint_graph(saver)
+        await graph.ainvoke({'label':'history close'},config,durability='sync')
+        await graph.ainvoke(Command(resume='approved'),config,durability='sync')
+        history=saver.alist(config,limit=2)
+        try:
+            assert await anext(history)
+            assert saver.conn.get_stats()['pool_available']==0
+        finally: await history.aclose()
+        assert saver.conn.get_stats()['pool_available']==1
+        assert await saver.aget_tuple(config)
+        await saver.adelete_thread(config['configurable']['thread_id'])
+        assert await saver.aget_tuple(config) is None
+        assert saver.conn.get_stats()['pool_available']==1

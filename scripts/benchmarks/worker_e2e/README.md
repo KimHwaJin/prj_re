@@ -68,3 +68,51 @@ DTEST_WORKER_E2E_CAPTURE='<actual executor raw.json>' \
 `export.py`는 모든 trial을 다시 검증한 뒤 원문 gzip/SHA와 실제 SQLite 집계 SQL을 남긴다. `verify.py`는 analyzer를 import하지 않고 원문에서 평균·p95·처리율·SQL/사용자·반복 편차·Agent Python 소스 동일성을 독립 검산한다. 50명 평균의 표준편차는 trial 평균 3개의 표본 표준편차이며 사용자 전체 분포의 표준편차가 아니다.
 
 HTML은 canonical `artifact.json`을 Data Analytics `build-report`의 packaged `deliver_portable_artifact.mjs`에 입력해 만든다. 자체 HTML renderer는 두지 않는다. `report.html`은 읽기용 결과, `results.json`·`summary.json`·`raw/`는 검산 근거다. 당시 실행 제어 코드·환경·dependency/source audit도 보고서 폴더에 남긴다. Smoke 및 시험 준비 중 설정 충돌은 성능 모집단에 포함하지 않는다.
+
+
+## Checkpoint 저장량/대기 프로파일 (063)
+
+`--checkpoint-profile`은 실제 Saver의 get/put/intermediate-write를 메모리에서
+관측하고, 최종 cohort의 owner/connection이 반환된 뒤 별도 SQL로 저장 행을
+조회한다. 이 SQL 캡처는 사용자 wall time 밖이다. 실제 직렬화 결과 bytes를
+읽으며 payload를 다시 직렬화하거나 저장 내용을 변경하지 않는다.
+
+`--checkpoint-lock-profile`은 위 옵션과 함께 전 버전의 공통 lock 대기를
+관측한다. 원래 lock을 유지하는 wrapper이며 병렬화를 켜는 설정이 아니다.
+`analyze_checkpoint.py`의 해당 보조 시험은 단일 Saver lock 진입1을 검증한다.
+후 버전의 호출별 Saver에는 그 보조 관측 판정을 적용하지 않는다.
+
+```sh
+<existing Python> scripts/benchmarks/worker_e2e/run.py \
+  --database-url '<dedicated disposable asyncpg postgres URL on port63372>' \
+  --redis-url redis://127.0.0.1:63373/0 \
+  --source-root '<verified source root>' --source-commit '<verified commit>' \
+  --output '<fresh capture root>' --scenario executor \
+  --users 1 10 30 50 --concurrency 20 --delay-ms 5000 --checkpoint-profile
+
+<existing Python> scripts/benchmarks/worker_e2e/analyze_checkpoint.py \
+  '<capture root>' --output '<checkpoint results.json>'
+
+DTEST_CHECKPOINT_CAPTURE='<actual profiled raw.json>' \
+DTEST_CHECKPOINT_LOCK_CAPTURE='<pre-change lock-profile raw.json>' \
+  <existing Python> -m pytest -q scripts/benchmarks/worker_e2e/test_checkpoint_profile.py
+```
+
+`export_checkpoint.py`은 `--capture label=/absolute/root`로 `e2e`·`repeat`·
+`followup`·선택적 `lock`의 한 runtime 모집단을 검산/gzip/SHA로 내보낸다.
+주 조건1/10/30/50명과 50명 반복1/2/3이 있어야 한다. 전후 source는 각각
+별도 export한다. 한 export에 다른 runtime hash를 섞으면 실패한다.
+`--repeat 2 --trial-index 2`는 raw의 절대 반복2/3을 뜻하며 폴더의 r1/r2는
+해당 CLI 호출 내부 반복이다. 과거062는 repeat1/명시 trial-index였으므로
+그 당시 결과 식별에 이 문제가 없었다.
+
+Byte 집계는 고유 channel/version을 한번만 세고 최신 참조와 과거 버전을
+분리한다. JSON::text/bytea의 논리 길이, 압축 후 column size, 전체 relation
+size는 서로 다른 지표다. relation은 warmup을 포함한다. phase별 write는
+연결 parent checkpoint에 귀속하여 실제 실행 node 시간과 구별한다.
+저장 함수 외부 Trace는 adapter 생성까지 포함하고 호출 count가 내부
+profile과 일치해야 한다. aget_tuple 내부 profile은 후 버전 adapter 생성
+비용을 제외하며 모든 비용은 E2E에 포함된다. 함수 누계를 그대로 wall
+time에서 빼거나 겹치는 DB/graph 시간을 합산하지 않는다.
+
+[063 측정과 제한](../../../docs/reports/checkpoint-profile-2026-10-04/README.md).

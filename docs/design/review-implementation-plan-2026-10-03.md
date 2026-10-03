@@ -3,7 +3,7 @@
 - 기준일: 2026-10-03
 - 기준 소스: `353f7a8` (운영 소스는 직전 성능 개선 상태와 동일)
 - 근거: [D-01~D-12 합의 및 C-01~C-04 보완](../reviews/2026-10-03-decisions.md)
-- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 5단계 [062](../improvements/062-agent-worker-e2e-performance.md)의 동일 총한도·전체 HTTP fixture 59회도 로컬 검증·독립 검산했다. 멀티 Pod·지속 유입·실제 배포는 미검증이며 전체 작업 완료 기록은 아니다. 다음은 6단계 checkpoint 실측이다.
+- 상태: 1단계 [058](../improvements/058-deployment-config-unification.md), 2단계 [059](../improvements/059-run-execution-boundaries.md), 3단계 [060](../improvements/060-unified-agent-command-worker.md)는 구현·로컬 검증했다(베이스 미병합·미배포). 4단계 [061](../improvements/061-agent-command-wakeup.md)의 알림/유휴 비용도 구현·로컬 검증했다. 5단계 [062](../improvements/062-agent-worker-e2e-performance.md)의 동일 총한도·전체 HTTP fixture 59회도 로컬 검증·독립 검산했다. 멀티 Pod·지속 유입·실제 배포는 미검증이며 전체 작업 완료 기록은 아니다. 6단계 [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상·후속 흐름 저장량/잠금 실측과 기존 pool 병렬 접근을 구현·검증했다. 역할별 상태/읽기 경계·장기/다단계 저장량 등 6단계 나머지는 미완료다.
 - 우선순위: 실행 구성 정합성 → 공통 실행 구조/처리량 → 기능·성능 검증 → 측정에 근거한 저장/구조 정리. 모델 호출 수·prompt 최적화와 광범위 운영 기능은 기존 보류 유지.
 
 ## 목표와 구현 단위
@@ -119,9 +119,10 @@
 
 성공 조건은 의미 보존·중복/누락 방지·총한도 준수와 함께, 주 시나리오의 처리량/지연 및 자원 비용을 실측으로 설명할 수 있는 것이다. 회귀가 있으면 원인과 적용 조건을 확인한 뒤 배포 후보를 결정한다.
 
-## 6. 후속 저장량·구조 정리
+## 6. 저장량·구조 정리 — 063 실측/풀 병렬화, 구조 정리는 후속
 
-- F-01 대표 시나리오에서 checkpoint_blobs/checkpoints/checkpoint_writes를 thread/channel/실행 구간별로 측정한다. 상태 reset과 과거 버전 누적을 구분한다.
+- [063](../improvements/063-checkpoint-pool-concurrency.md)에서 정상/후속 전후16회와 기존 잠금2회, 별도 실제 PostgreSQL repair1회 기능·저장 probe를 검증했다. 50명 E2E 평균56.39→54.78초, 저장 함수 누계3.10→1.26초/사용자다. pool 상한4는 유지하며 실제 사용 size는1→4가 됐다. 저장량은 줄이지 않았고 역할별 상태 정리는 미착수다.
+- F-01 확대 검증: 대표 시나리오에서 checkpoint_blobs/checkpoints/checkpoint_writes를 thread/channel/실행 구간별로 측정한다. 상태 reset과 과거 버전 누적을 구분한다.
 - 저장 시간 비중이 큰 channel부터 범위 제한·근거 외부화·지원되는 delta 방식·보존 정책을 검토한다. reducer 전환만으로 용량이 줄어든다고 가정하지 않는다.
 - 상태 타입/이름, 설정 중복 기본값, Agent 조립 의존 방향, 실제 미사용 compiler/stub, 테스트 fixture 결합을 필요한 변경 단위로 정리한다.
 - analysis/workflow 자산·역할별 agent.py/prompt·공개 계약·Dataset Registry draft는 보존한다. 원문 hash 참조는 불변 저장소 계약 확보 후에만 적용한다.

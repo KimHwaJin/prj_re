@@ -11,7 +11,7 @@
 3. [060](060-unified-agent-command-worker.md)에서 DB 명령 원장·공통 총한도·세션 순서·원자 접수/routing을 구현했다. 기존 분리 DB의 실제 이관·운영 전환은 미완료다. 이전 Redis 실행 파일·구 전용 메서드/설정 삭제는 사용자 승인 후 완료했다.
 4. [061](061-agent-command-wakeup.md)에서 공용 LISTEN/NOTIFY·retry timer·재연결·유휴 주기 scan과 full 슬롯 hint 합치기를 구현했다. 신호 없이도 확인하며 Worker/SSE 구독 수명은 독립이다.
 5. [062](062-agent-worker-e2e-performance.md)에서 동일 총한도 20·1/10/30/50명·결과 집중/혼합·후속 설명/메모리·notify 대조 59회를 완료했다. 로컬 fixture 결과이며 실제 Pod/HPA·지속 부하·Artifact 등록은 미검증이다.
-6. **다음 작업:** 실제 checkpoint 저장량·시간을 thread/channel/실행 구간별로 측정한다. 비중이 큰 저장 항목을 확인한 뒤 필요한 상태/설정/Agent 조립과 레거시 정리를 진행한다.
+6. [063](063-checkpoint-pool-concurrency.md)에서 정상/후속 checkpoint 저장량·잠금 대기와 pool 상한 유지 병렬 접근을 검증했다. 별도 PG repair 후보 복구도 확인했다. 저장량 자체를 줄이지 않았다. **다음 작업:** 오래된 state 필드의 수명과 역할별 상태/읽기 경계를 정리할 범위를 확정하고 필요한 변경만 진행한다. 큰 version metadata와 다단계/반복 repair 저장량은 변경 전에 확대 검증한다.
 
 아래 057 이후 목록의 후속 대화·메모리 성능 범위는 유지하되, 바로 다음 작업의 순서는 위 계획으로 갱신한다. 모델 호출 수·prompt 최적화, Dataset Registry 실연계, Workflow CRUD, 광범위 운영 기능의 기존 보류는 유지한다. 번호가 붙은 개선 기록은 실제 착수 시 추가한다.
 

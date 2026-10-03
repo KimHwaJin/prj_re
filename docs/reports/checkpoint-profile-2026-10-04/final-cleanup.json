@@ -1,0 +1,40 @@
+{
+  "timestamp_utc": "2026-10-03T17:01:47.548238+00:00",
+  "owned_containers_removed": [
+    "dtest-checkpoint-profile-pg",
+    "dtest-checkpoint-profile-redis"
+  ],
+  "owned_test_databases_dropped": [
+    "identity_test",
+    "agentic_runtime_test",
+    "agentic_checkpoint_test"
+  ],
+  "scratch_and_test_databases_remaining_before_container_removal": [],
+  "dedicated_redis_keys_before_container_removal": 0,
+  "dedicated_redis_storage_removed_with_container": true,
+  "study_private_configs_remaining": [],
+  "benchmark_processes_remaining": [],
+  "preexisting_running_containers_preserved": [
+    "amazing_euler",
+    "dtest-agent-loadtest-api-1",
+    "dtest-agent-loadtest-locust-1",
+    "dtest-agent-loadtest-mock-executor-1",
+    "dtest-agent-loadtest-postgres-1",
+    "dtest-agent-loadtest-redis-1",
+    "dtest-agent-local-api-1",
+    "dtest-agent-local-event-worker-1",
+    "dtest-agent-local-postgres-1",
+    "ex-agent-management-api-1",
+    "ex-agent-management-postgres-1",
+    "executor-executor-1",
+    "executor-jupyter-1",
+    "executor-postgres-1",
+    "executor-redis-1",
+    "kind-control-plane",
+    "sdk",
+    "smp"
+  ],
+  "original_checkout_not_mutated_by_this_phase": true,
+  "audit_temp_raw_retained": "/private/tmp/dtest-checkpoint-profile-20261004",
+  "scope": "Only dedicated checkpoint-profile containers and their test databases. Existing Executor, service containers, DBs and Redis were not changed."
+}

@@ -1,0 +1,8 @@
+......                                                                   [100%]
+=============================== warnings summary ===============================
+src/api_service/test/test_async_llm_postgres.py::test_nested_async_agent_does_not_use_outer_postgres_saver
+  /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/langgraph/pregel/main.py:3230: UserWarning: `durability` has no effect when no checkpointer is present.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+6 passed, 1 warning in 8.49s

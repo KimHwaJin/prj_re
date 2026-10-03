@@ -92,9 +92,6 @@ worker.execute_claimed=execute
 if cfg.get("checkpoint_profile"):
     from checkpoint_profile import install
     install(metrics, enabled)
-    if cfg.get("checkpoint_lock_profile"):
-        from checkpoint_lock import install as install_lock
-        install_lock()
 install_model_fixture(cfg,metrics,enabled)
 if cfg.get('executor_probe'):
     import sys

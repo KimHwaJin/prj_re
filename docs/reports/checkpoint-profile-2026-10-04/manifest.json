@@ -1,0 +1,82 @@
+[
+  {
+    "file": "raw/e2e-executor-u1-c20-ew4-d5000-r1.json.gz",
+    "sha256": "5b309be1c43f9db6d27f0293075c8f45a510e0b58513b12e862fa70b95d34d0c",
+    "raw_sha256": "df2a715c8cd0cbc24f7720b2b2d89eaa360ff32350054b1984e18cbe2bb665bd",
+    "source_commit": "45530e6",
+    "users": 1,
+    "repeat": 1
+  },
+  {
+    "file": "raw/e2e-executor-u10-c20-ew4-d5000-r1.json.gz",
+    "sha256": "ced50fb2a63f4d514962a4143d0e9144fc673382a85a7af40d9f01b816ac9250",
+    "raw_sha256": "5d7ecf52aabe2fe32de5ee35009390dbd8c93f747aa43d2a19762e8432bb3fe4",
+    "source_commit": "45530e6",
+    "users": 10,
+    "repeat": 1
+  },
+  {
+    "file": "raw/e2e-executor-u30-c20-ew4-d5000-r1.json.gz",
+    "sha256": "6b55dcf2b093aa8a5b96eef0598357cf3fa8de0c3ffbf016a6be30a2256954ea",
+    "raw_sha256": "f13cc8c9c92024647586e43d962c9176d326f85d8fb733d13864bae1ef792410",
+    "source_commit": "45530e6",
+    "users": 30,
+    "repeat": 1
+  },
+  {
+    "file": "raw/e2e-executor-u50-c20-ew4-d5000-r1.json.gz",
+    "sha256": "eb17002bcf60a48cab9543b463de856690434ff61b472efab3df99c3ed2c0918",
+    "raw_sha256": "1d08072defcbc506db2548c884cdf3bf44391b7fab3fb0b783582c04b8a008b4",
+    "source_commit": "45530e6",
+    "users": 50,
+    "repeat": 1
+  },
+  {
+    "file": "raw/repeat-executor-u50-c20-ew4-d5000-r1.json.gz",
+    "sha256": "7bd576af948080f45616d22a763795167ae59ec474c9638339309a46a8e84a81",
+    "raw_sha256": "348b0665b82f6e4a0f4645fe064d263276d5736259a5619891e7afec81f4e4dd",
+    "source_commit": "45530e6",
+    "users": 50,
+    "repeat": 2
+  },
+  {
+    "file": "raw/repeat-executor-u50-c20-ew4-d5000-r2.json.gz",
+    "sha256": "3ab45129cf40e965e040b83c9b49d5aa699bfe0bb5f6e35586900043bb776ec6",
+    "raw_sha256": "8ceca155fd7d985501200ed977a3e57b20f99a9401f5babcb932b7ad6a6cc205",
+    "source_commit": "45530e6",
+    "users": 50,
+    "repeat": 3
+  },
+  {
+    "file": "raw/followup-executor-u1-c20-ew4-d5000-r1.json.gz",
+    "sha256": "c224069590013bdaa1b70d4254cda185406efeec2996e4f6339edb1f40824523",
+    "raw_sha256": "8f93498b93529d07281247273342a6fe43412d4dff650a10f6c5c0e3ceb4f529",
+    "source_commit": "45530e6",
+    "users": 1,
+    "repeat": 1
+  },
+  {
+    "file": "raw/followup-executor-u10-c20-ew4-d5000-r1.json.gz",
+    "sha256": "a1433cc8e9a2856a6dc1af22ac3f0e5ebc11667ec2488cf8ea3a3058503a7da6",
+    "raw_sha256": "b117065fe2956b3293c3d85d2156a7589528fce9e2b26509ea326eb9cead4163",
+    "source_commit": "45530e6",
+    "users": 10,
+    "repeat": 1
+  },
+  {
+    "file": "raw/lock-executor-u1-c20-ew4-d5000-r1.json.gz",
+    "sha256": "e48059261bee7deadda3070fd968650812b9c67f6c93a3754242d1ade2a7a9b5",
+    "raw_sha256": "d71d6a570399b7d43bcdade10626e6ed6025da2c77f5904f54dd7122df531826",
+    "source_commit": "45530e6",
+    "users": 1,
+    "repeat": 1
+  },
+  {
+    "file": "raw/lock-executor-u50-c20-ew4-d5000-r1.json.gz",
+    "sha256": "651c14f52b8b0ddcfe0b7a1683eda60ef631cd45242b40f189f7bc6bbb07631f",
+    "raw_sha256": "e08a8cb97faeb24180e1f69966653f63e1e2a2860c1915b1f044f84d9bfe2953",
+    "source_commit": "45530e6",
+    "users": 50,
+    "repeat": 1
+  }
+]

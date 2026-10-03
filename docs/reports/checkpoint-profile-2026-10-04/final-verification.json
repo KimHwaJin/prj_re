@@ -1,0 +1,13 @@
+{
+  "archive_and_capture_validation_trials": 18,
+  "user_scenarios": 455,
+  "archive_and_raw_sha_verified": true,
+  "analysis_agent_source_files_unchanged": 99,
+  "final_benchmark_source_hashes_verified": 14,
+  "dependency_files_unchanged": true,
+  "changed_python_files_syntax_checked": 13,
+  "changed_markdown_local_links_checked": 47,
+  "comparison_percentages_recomputed": true,
+  "history_closure_change_after_measurement_disclosed": true,
+  "cleanup_receipt_present": true
+}
