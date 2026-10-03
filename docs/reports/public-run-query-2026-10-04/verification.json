@@ -1,0 +1,11 @@
+{
+  "checks": 1644,
+  "trials": 18,
+  "user_flows": 424,
+  "standard_speed_trials": 12,
+  "standard_speed_user_flows": 382,
+  "auxiliary_speed_trials": 4,
+  "profile_trials": 2,
+  "failures": 0,
+  "passed": true
+}

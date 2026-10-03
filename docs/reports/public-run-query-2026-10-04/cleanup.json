@@ -1,0 +1,110 @@
+{
+  "trials": [
+    {
+      "name": "before-u1-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u1-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u10-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u10-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u30-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u30-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r1",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r2",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r2",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-u50-r3",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-u50-r3",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-standard10-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-standard10-profile",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-large1-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-large1-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "before-large10-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    },
+    {
+      "name": "after-large10-off",
+      "owned_scratch_databases_removed": true,
+      "existing_databases_untouched": true
+    }
+  ],
+  "owned_containers_removed": [
+    "dtest-public-query-postgres",
+    "dtest-public-query-redis"
+  ],
+  "owned_anonymous_volumes_removed": [
+    "0465aa3d7cbbf29609633078eac667ca64036346a6c8db658a4968a7eb269d35",
+    "14e42a1c471bf683bfde4c544f6fdc9b48e2aa627c6fa962968e89aa4b0a273c"
+  ],
+  "remaining_scratch_databases_before_container_removal": [
+    "identity_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "existing_containers_preserved": 18,
+  "existing_checkout_and_env_untouched": true
+}

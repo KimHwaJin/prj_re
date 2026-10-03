@@ -135,3 +135,7 @@
 ## 068 후속 확인
 
 [068](../improvements/068-executor-event-recovery-verification.md)에서 기본 이력 경로를 제출 API 설정과 통일하고 실제 HTTP/PG·105회귀로 검증했다. 최초 원인 계측 포함50명2회는 모두 완료했으나 과거 중단 원인은 미확정이다. 새 tagged pending write → 구 LastValue reader 비호환을 확인했으므로 저장 후보 병합 보류와 버전별 실행/drain/rollback 계약 필요를 유지한다. 다음 성능 후보는 API CPU sampling이며 기존 운영/모델 최적화 우선순위는 바꾸지 않는다.
+
+## 069·070 CPU 비용 후속 확인
+
+[069](../improvements/069-service-cpu-profiling.md)와[070](../improvements/070-public-run-query-reuse.md)는 보류된066 저장 후보와 독립된 전체 값 저장 기준에서 진행했다. 069는 워커 claim SQL 구조 재사용으로50명3회 평균 시간3.1%·CPU3.2% 감소였다. 070은 그 완료 상태를 기준으로 공개 Run 상태 SQL을 재사용하여50명 평균시간21.529→16.610초·API CPU20.761→15.792초를 확인했다. 모델0/HTTP Executor 합성 출력의로컬 결과이며 pool/총한도·모델 호출 횟수는 유지했다.070 보조20 Operation1명은 개선이 없고 실제 Pod/지속 부하·HPA는 미검증이다. 다음은 잔여 SQL 실행/ORM·DB roundtrip의 목적별 분해이며, 필수조회 제거를 성과로 오인하지 않는다.

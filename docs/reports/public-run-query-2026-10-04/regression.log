@@ -1,0 +1,10 @@
+...................................................                      [100%]
+=============================== warnings summary ===============================
+src/api_service/test/test_model_selection_postgres.py::test_actual_roles_keep_model_through_postgres_restart_hitl_and_executor
+src/api_service/test/test_model_selection_postgres.py::test_actual_roles_keep_model_through_postgres_restart_hitl_and_executor
+src/api_service/test/test_model_selection_postgres.py::test_actual_roles_keep_model_through_postgres_restart_hitl_and_executor
+  /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/langgraph/pregel/main.py:3230: UserWarning: `durability` has no effect when no checkpointer is present.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+51 passed, 3 warnings in 62.49s (0:01:02)
