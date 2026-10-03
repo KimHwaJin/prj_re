@@ -56,4 +56,4 @@ CPU는 시험 프로세스만 계측했고 DB/Redis CPU는 포함하지 않았�
 
 다음 구현 우선순위는 기존 계획의 Worker 깨우기 신호/유휴 조회 비용 정리다. 그 뒤 동일 총한도에서1/10/30/50명·실제 분석 흐름·결과 폭주/지속 유입 등을 평가하는 전체 단계5는 별도로 남긴다. 이번 소규모 검사를 전체 단계5 완료로 기록하지 않는다.
 
-원본 로그/record: [split.jsonl](split.jsonl), [common.jsonl](common.jsonl), [split.log](split.log), [common.log](common.log). 계산 값·source/hash/설정은 [summary.json](summary.json), 측정 경계와 재현은 [probe 안내](../../../scripts/benchmarks/command_worker/README.md)를 따른다. 격리 자원 정리는 [cleanup.json](cleanup.json)에 별도로 기록한다.
+원본 로그/record: [split.jsonl](split.jsonl), [common.jsonl](common.jsonl), [split-pytest.txt](split-pytest.txt), [common-pytest.txt](common-pytest.txt). 계산 값·source/hash/설정은 [summary.json](summary.json), 측정 경계와 재현은 [probe 안내](../../../scripts/benchmarks/command_worker/README.md)를 따른다. 격리 자원 정리는 [cleanup.json](cleanup.json)에 별도로 기록한다.
