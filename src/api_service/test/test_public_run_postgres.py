@@ -209,7 +209,8 @@ async def test_sse_replays_all_invocations_and_logs_use_canonical_id(runtime, mo
     assert 'event: run.snapshot' in streamed.text and '"status":"success"' in streamed.text
     assert str(invocations[-1].run_id) not in streamed.text
     logs=(await h.client.get(path(h,first['run_id'])+'/logs',headers=headers(h.user['user_id']))).json()
-    assert len(logs)==2 and {l['run_id'] for l in logs}=={first['run_id']}
+    assert len(logs['items'])==2 and {l['run_id'] for l in logs['items']}=={first['run_id']}
+    assert logs['page'] == {'has_next': False, 'next_cursor': None}
     result=await state(h,first['run_id'])
     assert result['result']['final_response']=='done' and result['completed_at']
 

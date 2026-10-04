@@ -242,7 +242,7 @@ MODELS = {
 
     'RunRequest': '새 입력 또는 현재 Run의 사용자 재개 요청.', 'RunCancel': 'Run 취소 API body.',
     'PublicRunSummary': '목록용 공개 Run 요약. 상세 대기 화면·최종 결과·resume token은 단건 조회한다.',
-    'PublicRunResource': '공개 Run의 상태·대기 화면·최종 결과.', 'AgentRunLogResource': '저장된 Agent 실행 로그.',
+    'PublicRunResource': '공개 Run의 상태·대기 화면·최종 결과.', 'AgentRunLogResource': 'Agent 실행을 조사하는 구조화된 진단 로그. 프론트 진행 표시는 SSE를 사용한다.',
     'RunEvent': '저장 SSE 이벤트의 공통 envelope.', 'PlanView': '코드 없는 사용자용 계획 확인 화면.',
     'InteractionEvent': '계획 확인 HITL 열림/갱신 이벤트.', 'InteractionResolvedEvent': '계획 승인 완료 이벤트.',
     'PlanningTransitionEvent': '재작성·질문 응답 등에 따른 HITL 종료/전환 이벤트.',
@@ -265,6 +265,7 @@ MODELS = {
     'RepairPayload': '수정 제안·변경 단계·권한·횟수 정보.', 'ClarificationData': '추가 질문 화면 본문.',
     'ClarificationPayload': '추가 질문과 안내·재작성 정책.',
     'DeleteYN': '비활성/삭제 표시 Y/N.', 'HTTPValidationError': '요청 유효성 검증 실패 상세.',
+    'Page_AgentRunLogResource_': '진단 로그 목록과 페이지 정보. 기본50개·최대200개를 반환한다.',
     'PageInfo': '다음 페이지 커서·존재 여부.', 'Page_PublicRunResource_': '과거 전체 Run 응답 목록 형식.', 'Page_PublicRunSummary_': 'Run 요약 목록 및 페이지 정보.',
     'UserMe': '현재 로그인한 사용자와 CSRF·만료 정보.', 'UserRole': '사용자 권한 admin/user.',
     'ValidationError': '개별 필드의 요청 검증 오류.',
@@ -279,6 +280,21 @@ MODELS = {
 def field_description(key, path=(), parent=None):
     """Explain fields using the containing object, not only their spelling."""
     parent = parent or {}
+    log_context = any('AgentRunLogResource' in k or k == 'run_logs.json' for k in path) or 'log_id' in parent
+    if log_context:
+        descriptions = {
+            'items': '현재 페이지의 진단 로그 목록. 프론트 진행/HITL에는 SSE를 사용한다.',
+            'log_id': '개별 저장 로그 UUID. SSE sequence나 resume_token과 무관하다.',
+            'run_id': 'HITL 재개 전후에 유지되는 공개 Run ID.',
+            'event_key': '내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있다.',
+            'agent_name': '기록을 남긴 Agent 이름. 특정되지 않은 기록은 null이다.',
+            'node': '기록을 남긴 그래프 노드 또는 실행 위치.',
+            'event': '기록 생산자가 부여한 이벤트 이름.',
+            'kind': '로그 분류 문자열. HITL 화면 kind와 별개다.',
+            'payload': '생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않는다.',
+            'created_at': 'DB 로그 저장 시각. 외부 작업의 실제 발생 시각이나 인과 순서를 보장하지 않는다.',
+        }
+        if key in descriptions: return descriptions[key]
     memory_context = any(k.startswith('Memory') for k in path)
     if memory_context and key == 'schema_version': return '프로젝트 메모리 단일 문서 형식 버전 2. 문서 변경 횟수인 version과 별개다.'
     if memory_context and key == 'project_id': return '이 메모리를 소유한 프로젝트 ID. 프로젝트당 문서는 하나이며 별도 메모리 ID가 없다.'

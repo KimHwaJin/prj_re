@@ -1,7 +1,7 @@
 from api_service.runs.repository import require_session
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Bundle
@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api_service.core.auth import get_current_user_id, get_stream_user_id
 from api_service.core.database import get_db
 from api_service.core.pagination import ListParams, fetch_page, list_params
-from api_service.models import AgentRunLogModel, AgentRunModel
+from api_service.models import AgentRunModel
 from api_service.schemas.common.api_schema import Page
 from api_service.schemas.common.run_schema import (
     AgentRunLogResource,
@@ -22,6 +22,7 @@ from api_service.schemas.common.run_schema import (
 )
 from service_contracts.run_request import RunRequest
 from api_service.services.public_run_service import PublicRunService
+from api_service.services.run_log_query import list_diagnostic_logs
 from config import settings
 from api_service.core.database import get_session_factory
 
@@ -110,26 +111,29 @@ async def read_run(session_id: UUID, run_id: UUID, user_id: UUID = Depends(get_c
 
 @router.get(
     "/sessions/{session_id}/runs/{run_id}/logs",
-    response_model=list[AgentRunLogResource],
+    response_model=Page[AgentRunLogResource],
+    summary="Agent 실행 진단 로그 조회",
 )
 async def list_run_logs(
     session_id: UUID,
     run_id: UUID,
+    params: ListParams = Depends(list_params),
+    agent_name: str | None = Query(default=None, min_length=1, max_length=100, description="Agent 이름 정확 일치"),
+    node: str | None = Query(default=None, min_length=1, max_length=100, description="그래프 노드 이름 정확 일치"),
+    event: str | None = Query(default=None, min_length=1, max_length=100, description="기록된 이벤트 이름 정확 일치"),
+    kind: str | None = Query(default=None, min_length=1, max_length=50, description="로그 분류 정확 일치"),
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """소유권을 확인한 뒤 Agent별 append-only 실행 로그를 반환합니다."""
+    """소유한 Run의 구조화된 진단 기록을 페이지로 조회합니다.
 
-    public = await PublicRunService.read(db, user_id, session_id, run_id)
-    logs = (
-        await db.scalars(
-            select(AgentRunLogModel)
-            .join(AgentRunModel, AgentRunModel.run_id == AgentRunLogModel.run_id)
-            .where(AgentRunModel.public_run_id == public.run_id)
-            .order_by(AgentRunLogModel.created_at, AgentRunLogModel.log_id)
-        )
-    ).all()
-    return [AgentRunLogResource.model_validate(log).model_copy(update={"run_id": public.run_id}) for log in logs]
+    프론트 진행/HITL/재접속은 SSE를 사용합니다. payload는 기록 종류별로
+    다르며, 로그 저장 시각 순서는 SSE sequence나 실행의 인과 순서가 아닙니다.
+    """
+    return await list_diagnostic_logs(
+        db, user_id=user_id, session_id=session_id, run_id=run_id, params=params,
+        agent_name=agent_name, node=node, event=event, kind=kind,
+    )
 
 
 @router.post("/sessions/{session_id}/runs/{run_id}/cancel", response_model=PublicRunResource, status_code=status.HTTP_202_ACCEPTED)

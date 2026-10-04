@@ -19,7 +19,7 @@
 | GET | /sessions/{session_id}/runs/{run_id} | 상태·대기 내용·최종 결과 | 200 + PublicRunResource |
 | GET | /sessions/{session_id}/runs/{run_id}/stream | 기존 Run 구독·재접속 | 200 + text/event-stream |
 | GET | /sessions/{session_id}/runs | 가벼운 Run 요약 목록 | 200 + Page[PublicRunSummary] |
-| GET | /sessions/{session_id}/runs/{run_id}/logs | 실행 로그 | 200 + 로그 배열 |
+| GET | /sessions/{session_id}/runs/{run_id}/logs | Agent 실행 진단 로그 | 200 + Page[AgentRunLogResource] |
 | POST | /sessions/{session_id}/runs/{run_id}/cancel | 취소 요청 | 202 + PublicRunResource |
 
 `join`은 완료까지 기다리는 API가 아니다. 별도 `/runs/{run_id}/resume`이나 공개 직접 `ainvoke` API는 없다. 현재 RunRequest에는 agent_id/workflow 선택 필드가 없으며 기본 분석 Runtime을 호출한다. 플랫폼의 `/api/v1/{workflow}/run`은 이번 레포의 별도 구현 완료 API가 아니다.
@@ -282,9 +282,9 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 ## 목록과 로그와 취소
 
-목록 query: limit 기본 50/1~200, cursor, sort=-created_at 또는 created_at, created_at_from 이상/created_at_to 미만. 응답은 items 배열과 page.has_next/page.next_cursor다. items는 PublicRunResource이며 전체 승인 구간을 한 공개 Run으로 묶는다.
+목록 query: limit 기본 50/1~200, cursor, sort=-created_at 또는 created_at, created_at_from 이상/created_at_to 미만. 응답은 items 배열과 page.has_next/page.next_cursor다. items는 PublicRunSummary이며 전체 승인 구간을 한 공개 Run으로 묶는다.
 
-로그 응답은 배열이고 log_id/run_id/event_key/agent_name/node/event/kind/payload/created_at을 담는다. 공개 run_id로 모아 반환하며 payload는 유연한 진단 객체다. 페이지 옵션은 없다. 사용자 UI의 주요 진행 표시는 SSE를 사용한다.
+로그는 아래의 [진단 로그 계약](#agent-실행-진단-로그--080)을 따르며 items/page로 반환한다. 사용자 UI의 주요 진행 표시는 SSE를 사용한다.
 
 취소 body는 선택적 reason(최대 1000자)을 갖는다. [예제](contracts/agent-api/requests/cancel.json) · [필드 주석](contracts/agent-api/requests/cancel.jsonc). 202는 취소 요청 수락이며 실제 실행 중이면 협조적 종료를 확인한다. waiting_executor의 일반 cancel은 409로 거절한다. 이미 canceled이면 같은 상태를 반환하고 다른 terminal이면 409다. 로그아웃·쿠키 만료·SSE 단절은 작업 취소가 아니다.
 
@@ -337,4 +337,30 @@ Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리
 
 079에서 단건 GET과 동일하게 즉시 반환하던 `/runs/{run_id}/join` 별칭을 삭제했다. 해당 경로는404이며 기존 사용처는 단건 GET으로 바꾼다. 서버 완료까지 기다리는 새 join 기능은 추가하지 않았다.
 
-`/runs/{run_id}/logs`의 필요성은 별도 검토 중이다. 현재 기존 API와 저장은 유지한다. 저장 로그는 중복/재생 확인과 해당 TaskEvent 생성에 연결되는 내부 기록이다. 프론트의 중간 메시지/진행/HITL/최종 결과/재접속은 기존 SSE와 상세 GET으로 처리할 수 있으므로 별도 logs 조회를 필수 단계로 쓰지 않는다. 진단용 logs의 권한·공개 필드·페이지네이션은 별도 합의 후 정리한다.
+`/runs/{run_id}/logs`는 Agent 실행 진단용으로 유지한다. 아래 계약을 사용한다.
+
+## Agent 실행 진단 로그 — 080
+
+`GET /api/v1/sessions/{session_id}/runs/{run_id}/logs`는 **어느 Agent·노드에서 어떤 기록을 남겼는지 조사**하는 구조화된 로그 조회다. 서버 stdout 텍스트나 trace span을 반환하는 API는 아니다. 일반 채팅 화면의 중간 메시지·진행·HITL·최종 결과·재접속은 기존 SSE와 상세 GET으로 처리한다. SSE 재생은 TaskEvent를 사용하므로 logs GET은 필수 단계가 아니다.
+
+- 로그인한 사용자가 소유한 활성 세션의 Run만 조회한다. 다른 사용자/세션은404, 미인증은401이다. 관리자라는 이유로 다른 사용자 소유권을 우회하지 않는다. 별도 관리자 전체 조회는 제공하지 않는다.
+- 최초 실행 및 모든 HITL 재개의 기록을 **동일한 공개 run_id**로 묶는다. 기존 invocation ID로 조회해도 응답은 공개 ID다. 저장 FK는 기존 내부 invocation ID이며 저장/중복 방지/TaskEvent 원자 생성은 유지한다.
+- 응답은 기존 배열에서 **items/page 객체**로 변경했다. 기본50개·최대200개, cursor, sort=-created_at/created_at, created_at_from 이상·created_at_to 미만을 지원한다. 후속 페이지에도 같은 정렬·필터를 유지한다. cursor는 조회 위치이며 SSE Last-Event-ID와 다르다. 총 개수는 반환하지 않는다.
+- agent_name/node/event/kind는 선택적 **정확 일치** 필터다. 각각 최대100/100/100/50자이며 빈 문자열은422다. 미일치는 빈 페이지다.
+- 저장 시각과 log_id로 정렬한다. 이 순서는 외부 실행의 인과 순서가 아니며 SSE sequence처럼 사용하면 안 된다. 계속 추가되는 로그의 cursor 조회는 고정 snapshot을 제공하지 않는다.
+- payload는 생산자가 저장한 종류별 진단 객체를 그대로 반환한다. 필드 형식이 다르므로 HITL UI나 resume body로 해석하지 않는다. 이 API를 사용자가 보는 채팅 내용으로 그대로 렌더링하는 용도가 아니다. 페이지 상한은 **레코드 수** 제한이며 payload 바이트 크기 제한이 아니다.
+
+| 필드 | 의미 |
+| --- | --- |
+| log_id | 개별 저장 로그 UUID. SSE sequence/resume_token과 무관 |
+| run_id | 재개 전후 고정되는 공개 Run ID |
+| event_key | invocation 내부 중복 저장 방지 키. 공개 Run 전체에서는 중복 가능 |
+| agent_name | 기록 생산 Agent 이름. 특정되지 않으면 null |
+| node | 그래프 노드/실행 위치 |
+| event | 생산자가 부여한 이벤트 이름 |
+| kind | 로그 분류. interaction kind와 별개 |
+| payload | 종류별 진단 JSON 객체 |
+| created_at | DB 로그 저장 시각 |
+| page.has_next / next_cursor | 다음 페이지 유무와 위치. 마지막은 false/null |
+
+[응답 예제](contracts/agent-api/responses/run_logs.json) · [각 필드 주석](contracts/agent-api/responses/run_logs.jsonc). 예제의 payload는 빈 객체이며 실제 기록 형식은 생산자가 정한다. 기존 배열 사용처는 response.items로 수정해야 한다. 로그 조회는 Run 결과·실패·interrupt 본문을 불필요하게 읽지 않으며 선택한 페이지 한 쿼리로 가져온다. 새 환경변수·DB migration은 없다.

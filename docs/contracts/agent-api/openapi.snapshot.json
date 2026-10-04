@@ -490,8 +490,8 @@
         "tags": [
           "runs"
         ],
-        "summary": "List Run Logs",
-        "description": "소유권을 확인한 뒤 Agent별 append-only 실행 로그를 반환합니다.",
+        "summary": "Agent 실행 진단 로그 조회",
+        "description": "소유한 Run의 구조화된 진단 기록을 페이지로 조회합니다.\n\n프론트 진행/HITL/재접속은 SSE를 사용합니다. payload는 기록 종류별로\n다르며, 로그 저장 시각 순서는 SSE sequence나 실행의 인과 순서가 아닙니다.",
         "operationId": "list_run_logs_api_v1_sessions__session_id__runs__run_id__logs_get",
         "parameters": [
           {
@@ -515,6 +515,164 @@
               "title": "Run Id"
             },
             "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
+          },
+          {
+            "name": "agent_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Agent 이름 정확 일치",
+              "title": "Agent Name"
+            },
+            "description": "로그를 발생시킨 Agent 이름."
+          },
+          {
+            "name": "node",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "그래프 노드 이름 정확 일치",
+              "title": "Node"
+            },
+            "description": "로그를 발생시킨 그래프 노드 이름."
+          },
+          {
+            "name": "event",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "기록된 이벤트 이름 정확 일치",
+              "title": "Event"
+            },
+            "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "로그 분류 정확 일치",
+              "title": "Kind"
+            },
+            "description": "대상 객체 종류. HITL은 plan_review/planning_question/decision_review/repair_review이며 입력·파라미터·산출물에도 각각 별도의 kind가 있다."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "목록 페이지 크기. 기본 50, 최대 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "다음 목록 페이지를 요청할 때 사용하는 토큰. SSE Last-Event-ID와 별개다."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^-?created_at$",
+              "default": "-created_at",
+              "title": "Sort"
+            },
+            "description": "목록 정렬. created_at 또는 -created_at으로 오름/내림차순을 선택한다."
+          },
+          {
+            "name": "created_at_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At From"
+            },
+            "description": "목록 생성 시각의 포함 하한."
+          },
+          {
+            "name": "created_at_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At To"
+            },
+            "description": "목록 생성 시각의 제외 상한."
           },
           {
             "name": "X-CSRF-Token",
@@ -541,11 +699,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AgentRunLogResource"
-                  },
-                  "title": "Response List Run Logs Api V1 Sessions  Session Id  Runs  Run Id  Logs Get"
+                  "$ref": "#/components/schemas/Page_AgentRunLogResource_"
                 }
               }
             }
@@ -1122,18 +1276,18 @@
             "type": "string",
             "format": "uuid",
             "title": "Log Id",
-            "description": "저장된 Agent 로그 레코드 UUID. 필수 필드."
+            "description": "개별 저장 로그 UUID. SSE sequence나 resume_token과 무관하다. 필수 필드."
           },
           "run_id": {
             "type": "string",
             "format": "uuid",
             "title": "Run Id",
-            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
+            "description": "HITL 재개 전후에 유지되는 공개 Run ID. 필수 필드."
           },
           "event_key": {
             "type": "string",
             "title": "Event Key",
-            "description": "로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드."
+            "description": "내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있다. 필수 필드."
           },
           "agent_name": {
             "anyOf": [
@@ -1145,34 +1299,34 @@
               }
             ],
             "title": "Agent Name",
-            "description": "로그를 발생시킨 Agent 이름. 필수 필드."
+            "description": "기록을 남긴 Agent 이름. 특정되지 않은 기록은 null이다. 필수 필드."
           },
           "node": {
             "type": "string",
             "title": "Node",
-            "description": "로그를 발생시킨 그래프 노드 이름. 필수 필드."
+            "description": "기록을 남긴 그래프 노드 또는 실행 위치. 필수 필드."
           },
           "event": {
             "type": "string",
             "title": "Event",
-            "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드."
+            "description": "기록 생산자가 부여한 이벤트 이름. 필수 필드."
           },
           "kind": {
             "type": "string",
             "title": "Kind",
-            "description": "Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드."
+            "description": "로그 분류 문자열. HITL 화면 kind와 별개다. 필수 필드."
           },
           "payload": {
             "additionalProperties": true,
             "type": "object",
             "title": "Payload",
-            "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
+            "description": "생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않는다. 필수 필드."
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At",
-            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+            "description": "DB 로그 저장 시각. 외부 작업의 실제 발생 시각이나 인과 순서를 보장하지 않는다. 필수 필드."
           }
         },
         "type": "object",
@@ -1188,7 +1342,7 @@
           "created_at"
         ],
         "title": "AgentRunLogResource",
-        "description": "프런트 진행 화면에서 표시할 Agent 실행 로그입니다."
+        "description": "Agent 실행을 조사하는 구조화된 진단 기록. 프론트 진행 프로토콜은 SSE입니다."
       },
       "ChatInput": {
         "properties": {
@@ -1478,6 +1632,28 @@
           "has_next"
         ],
         "title": "PageInfo"
+      },
+      "Page_AgentRunLogResource_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentRunLogResource"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "현재 페이지의 진단 로그 목록. 프론트 진행/HITL에는 SSE를 사용한다. 필수 필드."
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo",
+            "description": "목록 응답의 페이지 정보. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "Page[AgentRunLogResource]"
       },
       "Page_PublicRunSummary_": {
         "properties": {

@@ -55,17 +55,17 @@ class RunCancel(BaseModel):
 
 
 class AgentRunLogResource(ORMModel):
-    """프런트 진행 화면에서 표시할 Agent 실행 로그입니다."""
+    """Agent 실행을 조사하는 구조화된 진단 기록. 프론트 진행 프로토콜은 SSE입니다."""
 
-    log_id: UUID
-    run_id: UUID
-    event_key: str
-    agent_name: str | None
-    node: str
-    event: str
-    kind: str
-    payload: dict[str, Any]
-    created_at: datetime
+    log_id: UUID = Field(description="개별 저장 로그 UUID. SSE sequence나 resume_token과 무관합니다.")
+    run_id: UUID = Field(description="HITL 재개 전후에 유지되는 공개 Run ID.")
+    event_key: str = Field(description="내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있습니다.")
+    agent_name: str | None = Field(description="기록을 남긴 Agent 이름. Agent가 특정되지 않은 기록은 null입니다.")
+    node: str = Field(description="기록을 남긴 그래프 노드 또는 실행 위치.")
+    event: str = Field(description="기록 생산자가 부여한 이벤트 이름.")
+    kind: str = Field(description="로그 분류 문자열. HITL interaction kind와 별개입니다.")
+    payload: dict[str, Any] = Field(description="생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않습니다.")
+    created_at: datetime = Field(description="DB 로그 저장 시각. 실제 외부 작업 발생 시각이나 인과 순서를 보장하지 않습니다.")
 
 
 

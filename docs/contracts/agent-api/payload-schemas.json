@@ -741,24 +741,24 @@
     "type": "object"
   },
   "AgentRunLogResource": {
-    "description": "프런트 진행 화면에서 표시할 Agent 실행 로그입니다.",
+    "description": "Agent 실행을 조사하는 구조화된 진단 기록. 프론트 진행 프로토콜은 SSE입니다.",
     "properties": {
       "log_id": {
+        "description": "개별 저장 로그 UUID. SSE sequence나 resume_token과 무관하다. 필수 필드.",
         "format": "uuid",
         "title": "Log Id",
-        "type": "string",
-        "description": "저장된 Agent 로그 레코드 UUID. 필수 필드."
+        "type": "string"
       },
       "run_id": {
+        "description": "HITL 재개 전후에 유지되는 공개 Run ID. 필수 필드.",
         "format": "uuid",
         "title": "Run Id",
-        "type": "string",
-        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
+        "type": "string"
       },
       "event_key": {
+        "description": "내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있다. 필수 필드.",
         "title": "Event Key",
-        "type": "string",
-        "description": "로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드."
+        "type": "string"
       },
       "agent_name": {
         "anyOf": [
@@ -769,35 +769,35 @@
             "type": "null"
           }
         ],
-        "title": "Agent Name",
-        "description": "로그를 발생시킨 Agent 이름. 필수 필드."
+        "description": "기록을 남긴 Agent 이름. 특정되지 않은 기록은 null이다. 필수 필드.",
+        "title": "Agent Name"
       },
       "node": {
+        "description": "기록을 남긴 그래프 노드 또는 실행 위치. 필수 필드.",
         "title": "Node",
-        "type": "string",
-        "description": "로그를 발생시킨 그래프 노드 이름. 필수 필드."
+        "type": "string"
       },
       "event": {
+        "description": "기록 생산자가 부여한 이벤트 이름. 필수 필드.",
         "title": "Event",
-        "type": "string",
-        "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드."
+        "type": "string"
       },
       "kind": {
+        "description": "로그 분류 문자열. HITL 화면 kind와 별개다. 필수 필드.",
         "title": "Kind",
-        "type": "string",
-        "description": "Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드."
+        "type": "string"
       },
       "payload": {
         "additionalProperties": true,
+        "description": "생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않는다. 필수 필드.",
         "title": "Payload",
-        "type": "object",
-        "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
+        "type": "object"
       },
       "created_at": {
+        "description": "DB 로그 저장 시각. 외부 작업의 실제 발생 시각이나 인과 순서를 보장하지 않는다. 필수 필드.",
         "format": "date-time",
         "title": "Created At",
-        "type": "string",
-        "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+        "type": "string"
       }
     },
     "required": [

@@ -10,7 +10,7 @@ OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명�
 
 ## 기계 판독 파일
 
-- [openapi.snapshot.json](openapi.snapshot.json) · [필드 주석](openapi.snapshot.jsonc): 현재 app의 Run 8개 operation과 login/logout/me. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
+- [openapi.snapshot.json](openapi.snapshot.json) · [필드 주석](openapi.snapshot.jsonc): 현재 app의 Run 7개 operation과 login/logout/me 및 프로젝트 memory GET/PUT/DELETE. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
 - [payload-schemas.json](payload-schemas.json) · [필드 주석](payload-schemas.jsonc): RunRequest, RunCancel, PublicRunResource, AgentRunLogResource, RunEvent, PlanView 및 typed interaction schema. 이 객체의 key별 JSON Schema를 독립 schema로 읽는다.
 
 ## 요청
@@ -32,6 +32,7 @@ OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명�
 ## 응답과 이벤트
 
 - [Run 목록](responses/run_list.json) · [필드 주석](responses/run_list.jsonc): PublicRunSummary 목록이며 결과/인터럽트/token이 없다. 해당 Run의 단건 조회로 상세를 받는다.
+- [진단 로그 목록](responses/run_logs.json) · [필드 주석](responses/run_logs.jsonc): 소유한 공개 Run의 Agent/node별 진단 기록과 페이지 정보. 기본50·최대200개이며 일반 화면 진행은 SSE를 사용한다.
 - [pending](responses/pending.json) · [필드 주석](responses/pending.jsonc), [waiting_input](responses/waiting_input.json) · [필드 주석](responses/waiting_input.jsonc): PublicRunResource 전체.
 - [plan_review](events/plan_review.json) · [필드 주석](events/plan_review.jsonc), [planning_question](events/planning_question.json) · [필드 주석](events/planning_question.jsonc), [decision_review](events/decision_review.json) · [필드 주석](events/decision_review.jsonc), [repair_review](events/repair_review.json) · [필드 주석](events/repair_review.jsonc): typed interaction envelope.
 - [message](events/message.json) · [필드 주석](events/message.jsonc), [plan_resolved](events/plan_resolved.json) · [필드 주석](events/plan_resolved.jsonc), [run_snapshot](events/run_snapshot.json) · [필드 주석](events/run_snapshot.jsonc): 메시지·화면 종료·현재 상태.

@@ -127,6 +127,11 @@ assert '/api/v1/sessions/{session_id}/runs/{run_id}/join' not in paths
 assert set(schemas['PublicRunSummary']['properties']) == {'run_id', 'session_id', 'status', 'main_model_name',
     'model_revision', 'recovery_required', 'created_at', 'updated_at', 'started_at', 'completed_at'}
 assert paths['/api/v1/sessions/{session_id}/runs']['get']['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_PublicRunSummary_')
+logs = paths['/api/v1/sessions/{session_id}/runs/{run_id}/logs']['get']
+assert logs['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_AgentRunLogResource_')
+assert {'limit', 'cursor', 'sort', 'created_at_from', 'created_at_to', 'agent_name', 'node', 'event', 'kind'} <= {p['name'] for p in logs['parameters']}
+limit = next(p['schema'] for p in logs['parameters'] if p['name'] == 'limit')
+assert limit['default'] == 50 and limit['maximum'] == 200
 assert '/api/v1/sessions/{session_id}/runs/stream' in paths
 assert files('service_contracts').joinpath('resources/workflow-definition.schema.json').is_file()
 assert files('agent_service.agents.analysis.agent_builders.conversation').joinpath('prompt.md').is_file()

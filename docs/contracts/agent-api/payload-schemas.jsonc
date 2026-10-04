@@ -1196,44 +1196,44 @@
     // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
     "type": "object"
   },
-  // 저장된 Agent 실행 로그.
+  // Agent 실행을 조사하는 구조화된 진단 로그. 프론트 진행 표시는 SSE를 사용한다.
   "AgentRunLogResource": {
     // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-    "description": "프런트 진행 화면에서 표시할 Agent 실행 로그입니다.",
+    "description": "Agent 실행을 조사하는 구조화된 진단 기록. 프론트 진행 프로토콜은 SSE입니다.",
     // 객체 필드 이름별 검증 규칙.
     "properties": {
-      // 저장된 Agent 로그 레코드 UUID. 필수 필드.
+      // 개별 저장 로그 UUID. SSE sequence나 resume_token과 무관하다. 필수 필드.
       "log_id": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "개별 저장 로그 UUID. SSE sequence나 resume_token과 무관하다. 필수 필드.",
         // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
         "format": "uuid",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Log Id",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "저장된 Agent 로그 레코드 UUID. 필수 필드."
+        "type": "string"
       },
-      // 사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드.
+      // HITL 재개 전후에 유지되는 공개 Run ID. 필수 필드.
       "run_id": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "HITL 재개 전후에 유지되는 공개 Run ID. 필수 필드.",
         // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
         "format": "uuid",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Run Id",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
+        "type": "string"
       },
-      // 로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드.
+      // 내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있다. 필수 필드.
       "event_key": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "내부 invocation 내 중복 저장 방지 키. 공개 Run 전체에서 유일하지 않을 수 있다. 필수 필드.",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Event Key",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "로그와 이벤트의 중복 저장·연결에 사용하는 내부 키. 필수 필드."
+        "type": "string"
       },
-      // 로그를 발생시킨 Agent 이름. 필수 필드.
+      // 기록을 남긴 Agent 이름. 특정되지 않은 기록은 null이다. 필수 필드.
       "agent_name": {
         // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
         "anyOf": [
@@ -1246,59 +1246,59 @@
             "type": "null"
           }
         ],
-        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
-        "title": "Agent Name",
         // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "로그를 발생시킨 Agent 이름. 필수 필드."
+        "description": "기록을 남긴 Agent 이름. 특정되지 않은 기록은 null이다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Agent Name"
       },
-      // 로그를 발생시킨 그래프 노드 이름. 필수 필드.
+      // 기록을 남긴 그래프 노드 또는 실행 위치. 필수 필드.
       "node": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "기록을 남긴 그래프 노드 또는 실행 위치. 필수 필드.",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Node",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "로그를 발생시킨 그래프 노드 이름. 필수 필드."
+        "type": "string"
       },
-      // 로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드.
+      // 기록 생산자가 부여한 이벤트 이름. 필수 필드.
       "event": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "기록 생산자가 부여한 이벤트 이름. 필수 필드.",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Event",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "로그 이벤트 이름. SSE envelope의 type과 혼동하지 않는다. 필수 필드."
+        "type": "string"
       },
-      // Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드.
+      // 로그 분류 문자열. HITL 화면 kind와 별개다. 필수 필드.
       "kind": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "로그 분류 문자열. HITL 화면 kind와 별개다. 필수 필드.",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Kind",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "Agent 로그의 분류 문자열. HITL 화면 kind와 별개의 로그 정보다. 필수 필드."
+        "type": "string"
       },
-      // 해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드.
+      // 생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않는다. 필수 필드.
       "payload": {
         // 정의되지 않은 필드 허용 여부 또는 동적 키의 값 schema. false면 임의 필드를 거절한다.
         "additionalProperties": true,
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "생산자가 저장한 진단 객체. 종류별 형식이 다르며 SSE 응답으로 해석하지 않는다. 필수 필드.",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Payload",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "object",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "해당 HITL 또는 이벤트 종류의 세부 데이터. 계획·질문·판단·수정 제안을 담는다. 필수 필드."
+        "type": "object"
       },
-      // 이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드.
+      // DB 로그 저장 시각. 외부 작업의 실제 발생 시각이나 인과 순서를 보장하지 않는다. 필수 필드.
       "created_at": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "DB 로그 저장 시각. 외부 작업의 실제 발생 시각이나 인과 순서를 보장하지 않는다. 필수 필드.",
         // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
         "format": "date-time",
         // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
         "title": "Created At",
         // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
-        "type": "string",
-        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-        "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+        "type": "string"
       }
     },
     // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.

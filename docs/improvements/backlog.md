@@ -119,4 +119,9 @@
 
 ## Run 조회 API 리뷰 — 079
 
-[079](079-run-read-contract.md)에서 목록 요약과 상세 결과를 분리하고 단건 GET과 중복인 join을 제거했다. 현 명세는 [Run API](../public-run-api.md#run-목록과-상세-조회--079)다. 로그는 현재 저장/조회 모두 유지한다. 관리용 조회가 필요하다면 owner/admin 권한·공개 payload·페이지네이션을 먼저 합의한다. 프론트 진행/재접속에는 기존 SSE를 사용하며 별도 로그 GET이 필수는 아니다. 목록 token/result나 join을 사용한 외부 프론트의 이행 확인은 후속 통합 검증이다.
+[079](079-run-read-contract.md)에서 목록 요약과 상세 결과를 분리하고 단건 GET과 중복인 join을 제거했다. 현 명세는 [Run API](../public-run-api.md#run-목록과-상세-조회--079)다. [080](080-run-diagnostic-logs.md)에서 logs를 owner-scoped 진단 조회로 확정하고 페이지 기본50·최대200개 및 정확 일치 필터를 추가했다. 저장/TaskEvent 원자 생성은 유지한다. 관리자 전체 조회·로그 보존/정리·payload 바이트 상한은 이번 범위가 아니다. 프론트 진행/재접속에는 기존 SSE를 사용하며 별도 로그 GET이 필수는 아니다. 목록 token/result나 join을 사용한 외부 프론트의 이행 확인은 후속 통합 검증이다.
+
+
+## 진단 로그 계약 — 080
+
+logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진단 화면의 response.items 적용을 확인해야 한다. 일반 채팅은 기존 SSE와 Run 상세 GET을 사용한다. Agent 호출 횟수 최적화, Message CUD·Workflow CRUD 후순위, 실제 UI 검증 등의 기존 우선순위는 유지한다. 이번 로그 조회 정리를 로그 저장 축소나 운영 trace 구현으로 해석하지 않는다.
