@@ -1,0 +1,1145 @@
+FFFFFFFFFFFF                                                             [100%]
+=================================== FAILURES ===================================
+_ test_failure_rolls_back_pair_and_sequence_then_replay_converges[before_event] _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x11081bdd0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:37.778339Z', 'deleted_at': None}, session_id='be6d5dd8-cb24-4fa5-ada6-f4109ccb6a67')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f5f7b10>
+failure = 'before_event'
+
+    @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
+    async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        append = TaskEventService.append_for_run
+        async with h.factory() as db:
+            with monkeypatch.context() as patch:
+                if failure in ('before_event', 'after_event', 'cancel'):
+                    async def broken(*args, **kwargs):
+                        if failure != 'before_event':
+                            await append(*args, **kwargs)
+                        if failure == 'cancel':
+                            raise asyncio.CancelledError()
+                        raise SQLAlchemyError('injected event storage failure')
+                    patch.setattr(TaskEventService, 'append_for_run', staticmethod(broken))
+                else:
+                    commit = db.commit
+                    async def broken_commit():
+                        if failure == 'commit_response':
+                            await commit()
+                        raise SQLAlchemyError('injected commit failure')
+                    patch.setattr(db, 'commit', broken_commit)
+                with pytest.raises(asyncio.CancelledError if failure == 'cancel' else SQLAlchemyError):
+                    await AgentRunLogService.create(db, **arguments(rid))
+            logs, events, sequence = await read(h, rid)
+            committed = int(failure == 'commit_response')
+            assert len(logs) == len(events) == committed
+            assert sequence == baseline + committed
+            # Same session is usable after failure; no caller-owned cleanup is needed.
+>           await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x1109f7920>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_ test_failure_rolls_back_pair_and_sequence_then_replay_converges[after_event] _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x112093d90>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:38.547399Z', 'deleted_at': None}, session_id='b373bbfd-2a2c-4fdd-8866-785088e90443')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111eda790>
+failure = 'after_event'
+
+    @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
+    async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        append = TaskEventService.append_for_run
+        async with h.factory() as db:
+            with monkeypatch.context() as patch:
+                if failure in ('before_event', 'after_event', 'cancel'):
+                    async def broken(*args, **kwargs):
+                        if failure != 'before_event':
+                            await append(*args, **kwargs)
+                        if failure == 'cancel':
+                            raise asyncio.CancelledError()
+                        raise SQLAlchemyError('injected event storage failure')
+                    patch.setattr(TaskEventService, 'append_for_run', staticmethod(broken))
+                else:
+                    commit = db.commit
+                    async def broken_commit():
+                        if failure == 'commit_response':
+                            await commit()
+                        raise SQLAlchemyError('injected commit failure')
+                    patch.setattr(db, 'commit', broken_commit)
+                with pytest.raises(asyncio.CancelledError if failure == 'cancel' else SQLAlchemyError):
+>                   await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/test/test_log_event_atomicity_postgres.py:54: in broken
+    await append(*args, **kwargs)
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x110a929d0>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_ test_failure_rolls_back_pair_and_sequence_then_replay_converges[before_commit] _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110986690>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:39.179170Z', 'deleted_at': None}, session_id='cbe5d23b-dca8-4a61-ba3c-335e2c791317')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1110d4610>
+failure = 'before_commit'
+
+    @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
+    async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        append = TaskEventService.append_for_run
+        async with h.factory() as db:
+            with monkeypatch.context() as patch:
+                if failure in ('before_event', 'after_event', 'cancel'):
+                    async def broken(*args, **kwargs):
+                        if failure != 'before_event':
+                            await append(*args, **kwargs)
+                        if failure == 'cancel':
+                            raise asyncio.CancelledError()
+                        raise SQLAlchemyError('injected event storage failure')
+                    patch.setattr(TaskEventService, 'append_for_run', staticmethod(broken))
+                else:
+                    commit = db.commit
+                    async def broken_commit():
+                        if failure == 'commit_response':
+                            await commit()
+                        raise SQLAlchemyError('injected commit failure')
+                    patch.setattr(db, 'commit', broken_commit)
+                with pytest.raises(asyncio.CancelledError if failure == 'cancel' else SQLAlchemyError):
+>                   await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x11179a6b0>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_ test_failure_rolls_back_pair_and_sequence_then_replay_converges[commit_response] _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110d3f610>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:39.811079Z', 'deleted_at': None}, session_id='5868cdf5-6241-4e7d-a7eb-3cb4b22bab2f')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111d759d0>
+failure = 'commit_response'
+
+    @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
+    async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        append = TaskEventService.append_for_run
+        async with h.factory() as db:
+            with monkeypatch.context() as patch:
+                if failure in ('before_event', 'after_event', 'cancel'):
+                    async def broken(*args, **kwargs):
+                        if failure != 'before_event':
+                            await append(*args, **kwargs)
+                        if failure == 'cancel':
+                            raise asyncio.CancelledError()
+                        raise SQLAlchemyError('injected event storage failure')
+                    patch.setattr(TaskEventService, 'append_for_run', staticmethod(broken))
+                else:
+                    commit = db.commit
+                    async def broken_commit():
+                        if failure == 'commit_response':
+                            await commit()
+                        raise SQLAlchemyError('injected commit failure')
+                    patch.setattr(db, 'commit', broken_commit)
+                with pytest.raises(asyncio.CancelledError if failure == 'cancel' else SQLAlchemyError):
+>                   await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x110d68770>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+___ test_failure_rolls_back_pair_and_sequence_then_replay_converges[cancel] ____
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110eed150>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:40.432570Z', 'deleted_at': None}, session_id='8953e896-5065-414d-a157-3cb0c4d999ab')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x111dc0990>
+failure = 'cancel'
+
+    @pytest.mark.parametrize('failure', ['before_event', 'after_event', 'before_commit', 'commit_response', 'cancel'])
+    async def test_failure_rolls_back_pair_and_sequence_then_replay_converges(runtime, monkeypatch, failure):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        append = TaskEventService.append_for_run
+        async with h.factory() as db:
+            with monkeypatch.context() as patch:
+                if failure in ('before_event', 'after_event', 'cancel'):
+                    async def broken(*args, **kwargs):
+                        if failure != 'before_event':
+                            await append(*args, **kwargs)
+                        if failure == 'cancel':
+                            raise asyncio.CancelledError()
+                        raise SQLAlchemyError('injected event storage failure')
+                    patch.setattr(TaskEventService, 'append_for_run', staticmethod(broken))
+                else:
+                    commit = db.commit
+                    async def broken_commit():
+                        if failure == 'commit_response':
+                            await commit()
+                        raise SQLAlchemyError('injected commit failure')
+                    patch.setattr(db, 'commit', broken_commit)
+                with pytest.raises(asyncio.CancelledError if failure == 'cancel' else SQLAlchemyError):
+>                   await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/test/test_log_event_atomicity_postgres.py:54: in broken
+    await append(*args, **kwargs)
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x111cfce50>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+__________________ test_log_flush_failure_never_writes_event ___________________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110f03b90>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:41.105775Z', 'deleted_at': None}, session_id='1ff98eb0-b40d-4150-83f9-0f08c5d5737b')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1124ac810>
+
+    async def test_log_flush_failure_never_writes_event(runtime, monkeypatch):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        invalid = {**arguments(rid), 'node': 'x' * 101}
+        append = AsyncMock()
+        with monkeypatch.context() as patch:
+            patch.setattr(TaskEventService, 'append_for_run', append)
+            async with h.factory() as db:
+                with pytest.raises(SQLAlchemyError):
+                    await AgentRunLogService.create(db, **invalid)
+        append.assert_not_awaited()
+        assert not (await read(h, rid))[0]
+        async with h.factory() as db:
+>           await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x112616d90>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_ test_concurrent_producers_preserve_key_identity_not_payload_identity[False] __
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x112343850>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:41.850107Z', 'deleted_at': None}, session_id='fb7af1bf-ba22-4b0b-9c70-422ff873e9fb')
+distinct = False
+
+    @pytest.mark.parametrize('distinct', [False, True])
+    async def test_concurrent_producers_preserve_key_identity_not_payload_identity(runtime, distinct):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        async def write(index):
+            async with h.factory() as db:
+                return (await AgentRunLogService.create(db, **arguments(rid, str(index) if distinct else 'same'))).log_id
+>       ids = await asyncio.wait_for(asyncio.gather(*(write(i) for i in range(8))), timeout=10)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_log_event_atomicity_postgres.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/asyncio/tasks.py:489: in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+src/api_service/test/test_log_event_atomicity_postgres.py:104: in write
+    return (await AgentRunLogService.create(db, **arguments(rid, str(index) if distinct else 'same'))).log_id
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x111244f40>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+---------------------------- Captured log teardown -----------------------------
+ERROR    sqlalchemy.pool.impl.NullPool:base.py:377 Exception closing connection <AdaptedConnection <asyncpg.connection.Connection object at 0x1114dd3f0>>
+Traceback (most recent call last):
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 375, in _close_connection
+    self._dialect.do_close(connection)
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 721, in do_close
+    dbapi_connection.close()
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 903, in close
+    self.await_(self._connection.close())
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/connection.py", line 1513, in close
+    await self._protocol.close(timeout)
+  File "asyncpg/protocol/protocol.pyx", line 632, in close
+asyncio.exceptions.CancelledError
+__ test_concurrent_producers_preserve_key_identity_not_payload_identity[True] __
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x1118bb210>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:42.649915Z', 'deleted_at': None}, session_id='fd8cf446-996f-47ee-a1a9-4b7f54915693')
+distinct = True
+
+    @pytest.mark.parametrize('distinct', [False, True])
+    async def test_concurrent_producers_preserve_key_identity_not_payload_identity(runtime, distinct):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        baseline = (await read(h, rid))[2]
+        async def write(index):
+            async with h.factory() as db:
+                return (await AgentRunLogService.create(db, **arguments(rid, str(index) if distinct else 'same'))).log_id
+>       ids = await asyncio.wait_for(asyncio.gather(*(write(i) for i in range(8))), timeout=10)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_log_event_atomicity_postgres.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/asyncio/tasks.py:489: in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+src/api_service/test/test_log_event_atomicity_postgres.py:104: in write
+    return (await AgentRunLogService.create(db, **arguments(rid, str(index) if distinct else 'same'))).log_id
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x110badcb0>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+---------------------------- Captured log teardown -----------------------------
+ERROR    sqlalchemy.pool.impl.NullPool:base.py:377 Exception closing connection <AdaptedConnection <asyncpg.connection.Connection object at 0x110bd5120>>
+Traceback (most recent call last):
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 375, in _close_connection
+    self._dialect.do_close(connection)
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 721, in do_close
+    dbapi_connection.close()
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 903, in close
+    self.await_(self._connection.close())
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/connection.py", line 1513, in close
+    await self._protocol.close(timeout)
+  File "asyncpg/protocol/protocol.pyx", line 632, in close
+asyncio.exceptions.CancelledError
+________ test_existing_log_repairs_from_stored_payload_and_replays_once ________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x112d36990>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:43.374572Z', 'deleted_at': None}, session_id='8d51ba68-0cbf-497f-85e8-d5a3cbe42c42')
+
+    async def test_existing_log_repairs_from_stored_payload_and_replays_once(runtime):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        async with h.factory() as db:
+            log = AgentRunLogModel(**arguments(rid))
+            db.add(log)
+            await db.commit()  # Emulate old code's incomplete durable log.
+            log_id = log.log_id
+        for _ in range(2):
+            async with h.factory() as db:
+>               repaired = await AgentRunLogService.create(db, **{**arguments(rid), 'payload': {'changed': True}, 'node': 'changed'})
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_log_event_atomicity_postgres.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x111d50ea0>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_________ test_no_task_keeps_log_only_and_later_attachment_can_repair __________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110b648d0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:44.054229Z', 'deleted_at': None}, session_id='e75f28ac-aa57-4dc1-bbfa-16b06326d6a3')
+
+    async def test_no_task_keeps_log_only_and_later_attachment_can_repair(runtime):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        async with h.factory() as db:
+            run = await db.get(AgentRunModel, rid)
+            task_id = run.task_id
+            run.task_id = None
+            await db.commit()
+>           await AgentRunLogService.create(db, **arguments(rid))
+
+src/api_service/test/test_log_event_atomicity_postgres.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x111b69850>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+_ test_database_unique_link_rejects_duplicate_event_without_consuming_sequence _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x112094310>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:44.690536Z', 'deleted_at': None}, session_id='73f05f3d-c0e9-4c0c-bd4c-1f63375b371f')
+
+    async def test_database_unique_link_rejects_duplicate_event_without_consuming_sequence(runtime):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        async with h.factory() as db:
+>           log = await AgentRunLogService.create(db, **arguments(rid))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_log_event_atomicity_postgres.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x1115b0d10>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+______ test_complete_pair_replay_is_read_only_and_keeps_original_content _______
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x11267f150>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:12:45.363397Z', 'deleted_at': None}, session_id='45cf7538-4c82-4403-88bf-1df2cfafa9ef')
+
+    async def test_complete_pair_replay_is_read_only_and_keeps_original_content(runtime):
+        h = runtime
+        rid = UUID((await enqueue(h))['run_id'])
+        async with h.factory() as db:
+>           original = await AgentRunLogService.create(db, **arguments(rid))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_log_event_atomicity_postgres.py:174: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/services/agent_run_log_service.py:70: in create
+    await TaskEventService.append_for_run(
+src/api_service/services/task_event_service.py:79: in append_for_run
+    event = await db.scalar(APPEND_RUN_EVENT, {
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:504: in scalar
+    return await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:190: in greenlet_spawn
+    result = context.switch(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2421: in scalar
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1308: in orm_execute_statement
+    result = _bulk_insert(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:222: in _bulk_insert
+    result = persistence._emit_insert_statements(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py:1144: in _emit_insert_statements
+    result = connection.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    compiled_sql, extracted_params, cache_hit = elem._compile_w_cache(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:728: in _compile_w_cache
+    compiled_sql = self._compiler(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:323: in _compiler
+    return dialect.statement_compiler(dialect, self, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:1462: in __init__
+    Compiled.__init__(self, dialect, statement, **kwargs)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:902: in __init__
+    self.string = self.process(self.statement, **compile_kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:948: in process
+    return obj._compiler_dispatch(self, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/annotation.py:344: in _compiler_dispatch
+    return self.__element.__class__._compiler_dispatch(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py:138: in _compiler_dispatch
+    return meth(self, **kw)  # type: ignore  # noqa: E501
+           ^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py:5911: in visit_insert
+    compile_state = insert_stmt._compile_state_factory(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py:774: in create_for_statement
+    return klass.create_for_statement(statement, compiler, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1366: in create_for_statement
+    self._setup_for_bulk_insert(compiler)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1413: in _setup_for_bulk_insert
+    self._dict_parameters = {
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <dict_itemiterator object at 0x1126953f0>
+
+    self._dict_parameters = {
+        col: val
+        for col, val in self._dict_parameters.items()
+>       if col.table is emit_insert_table
+           ^^^^^^^^^
+    }
+E   AttributeError: 'str' object has no attribute 'table'
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1416: AttributeError
+=========================== short test summary info ============================
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_failure_rolls_back_pair_and_sequence_then_replay_converges[before_event]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_failure_rolls_back_pair_and_sequence_then_replay_converges[after_event]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_failure_rolls_back_pair_and_sequence_then_replay_converges[before_commit]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_failure_rolls_back_pair_and_sequence_then_replay_converges[commit_response]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_failure_rolls_back_pair_and_sequence_then_replay_converges[cancel]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_log_flush_failure_never_writes_event
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_concurrent_producers_preserve_key_identity_not_payload_identity[False]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_concurrent_producers_preserve_key_identity_not_payload_identity[True]
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_existing_log_repairs_from_stored_payload_and_replays_once
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_no_task_keeps_log_only_and_later_attachment_can_repair
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_database_unique_link_rejects_duplicate_event_without_consuming_sequence
+FAILED src/api_service/test/test_log_event_atomicity_postgres.py::test_complete_pair_replay_is_read_only_and_keeps_original_content
+12 failed in 12.25s

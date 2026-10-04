@@ -1,0 +1,67 @@
+{
+  "owned_containers_removed": [
+    {
+      "name": "dtest-event-insert-postgres",
+      "id": "1b2b840e335fd9d2ea284cf6e2dd5b4472e772b4d9c085d0aa492cb9b73b8718"
+    },
+    {
+      "name": "dtest-event-insert-redis",
+      "id": "0ee81c7713f03845403ed154b77636a5b53c71376291b05b0d4c7c67269b1961"
+    }
+  ],
+  "owned_anonymous_volumes_removed": [
+    "ee48856ec6c38f646acf51cbd05bf54c01a228c91da220494cc344b88f0ce22e",
+    "e1cfd25090a3b36be0c05b23d29c60d7516988f7f95cd6ce1b321f67c31b597d"
+  ],
+  "scratch_databases_before_container_removal": [
+    "agentic_checkpoint_test",
+    "agentic_runtime_test",
+    "identity_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "original_container_ids": [
+    "ced98920ab11",
+    "3870a27e9322",
+    "0ad3c3227dae",
+    "c2cb3f16bd4c",
+    "1090b003389c",
+    "7fe644471632",
+    "6ce9dcc7b597",
+    "68b79ebf7d80",
+    "b6f744056a6d",
+    "2afb3a15fd9b",
+    "c61b28a7e1cb",
+    "c46777295f81",
+    "d61e22060f95",
+    "8f381b3863b4",
+    "baf7c7f4142e",
+    "b2d7336a73a7",
+    "cce947ceddf5",
+    "10f19c1d7cc3"
+  ],
+  "original_running_count": 18,
+  "all_originals_still_running": true,
+  "remaining_running_ids": [
+    "ced98920ab11",
+    "3870a27e9322",
+    "0ad3c3227dae",
+    "c2cb3f16bd4c",
+    "1090b003389c",
+    "7fe644471632",
+    "6ce9dcc7b597",
+    "68b79ebf7d80",
+    "b6f744056a6d",
+    "2afb3a15fd9b",
+    "c61b28a7e1cb",
+    "c46777295f81",
+    "d61e22060f95",
+    "8f381b3863b4",
+    "baf7c7f4142e",
+    "b2d7336a73a7",
+    "cce947ceddf5",
+    "10f19c1d7cc3"
+  ],
+  "owned_containers_and_volumes_remaining": 0
+}

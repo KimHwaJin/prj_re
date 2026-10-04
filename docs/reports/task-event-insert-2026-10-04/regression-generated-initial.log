@@ -1,0 +1,105 @@
+.......FF............................................................... [ 48%]
+........................................................................ [ 97%]
+...                                                                      [100%]
+=================================== FAILURES ===================================
+___________ test_missing_run_taskless_and_fresh_concurrent_bindings ____________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10f0af9d0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:26:31.396659Z', 'deleted_at': None}, session_id='4e8f523b-acb7-47d8-8750-cfd96d503430')
+
+    async def test_missing_run_taskless_and_fresh_concurrent_bindings(runtime):
+        h = runtime;rid = UUID((await enqueue(h))['run_id']);tid = await task_for(h, rid)
+        async with h.factory() as db:
+            run = await db.get(AgentRunModel, rid);run.task_id = None;await db.commit()
+            assert await TaskEventService.append_for_run(db, run_id=rid, event_type='none', payload={}) is None
+            assert await TaskEventService.append_for_run(db, run_id=uuid4(), event_type='missing', payload={}) is None
+            run.task_id = tid;await db.commit()
+        sid = await add_session(h, h.user);second = UUID((await enqueue(h, sid))['run_id']);second_tid = await task_for(h, second)
+        async def write(owner, text):
+            async with h.factory() as db:
+                return await TaskEventService.append_for_run(db, run_id=owner, event_type='probe', payload={'owner': text})
+        first, other = await asyncio.gather(write(rid, 'first'), write(second, 'second'))
+>       assert (first.run_id, first.task_id, first.payload) == (rid, tid, {'owner': 'first'})
+                ^^^^^^^^^^^^
+
+src/api_service/test/test_task_event_atomic_insert_postgres.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:569: in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1096: in get
+    value = self._fire_loader_callables(state, key, passive)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1126: in _fire_loader_callables
+    return state._load_expired(state, passive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state.py:828: in _load_expired
+    self.manager.expired_attribute_loader(self, toload, passive)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x10b22bf10; TaskEventModel>
+state = <sqlalchemy.orm.state.InstanceState object at 0x10f299490>
+attribute_names = {'agent_run_log_id', 'event_type', 'payload', 'run_id', 'task'}
+passive = symbol('PASSIVE_OFF')
+
+    def load_scalar_attributes(mapper, state, attribute_names, passive):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+>           raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+                "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <TaskEventModel at 0x10f223510> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py:1607: DetachedInstanceError
+_______________ test_expiry_enabled_commit_returns_loaded_event ________________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10f220110>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:26:32.127484Z', 'deleted_at': None}, session_id='a86d1333-099d-4cc6-8456-1459e4d8d5c6')
+
+    async def test_expiry_enabled_commit_returns_loaded_event(runtime):
+        h = runtime;rid = UUID((await enqueue(h))['run_id'])
+        factory = async_sessionmaker(h.engine, expire_on_commit=True, autoflush=False)
+        async with factory() as db:
+            event = await TaskEventService.append_for_run(db, run_id=rid, event_type='probe', payload={'n': 1})
+>       assert event.run_id == rid and event.sequence > 0 and event.created_at and event.payload == {'n': 1}
+               ^^^^^^^^^^^^
+
+src/api_service/test/test_task_event_atomic_insert_postgres.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:569: in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1096: in get
+    value = self._fire_loader_callables(state, key, passive)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1126: in _fire_loader_callables
+    return state._load_expired(state, passive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state.py:828: in _load_expired
+    self.manager.expired_attribute_loader(self, toload, passive)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mapper = <Mapper at 0x10b22bf10; TaskEventModel>
+state = <sqlalchemy.orm.state.InstanceState object at 0x10f354b30>
+attribute_names = {'agent_run_log_id', 'event_type', 'payload', 'run_id', 'task'}
+passive = symbol('PASSIVE_OFF')
+
+    def load_scalar_attributes(mapper, state, attribute_names, passive):
+        """initiate a column-based attribute refresh operation."""
+    
+        # assert mapper is _state_mapper(state)
+        session = state.session
+        if not session:
+>           raise orm_exc.DetachedInstanceError(
+                "Instance %s is not bound to a Session; "
+                "attribute refresh operation cannot proceed" % (state_str(state))
+            )
+E           sqlalchemy.orm.exc.DetachedInstanceError: Instance <TaskEventModel at 0x10f477010> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py:1607: DetachedInstanceError
+=========================== short test summary info ============================
+FAILED src/api_service/test/test_task_event_atomic_insert_postgres.py::test_missing_run_taskless_and_fresh_concurrent_bindings
+FAILED src/api_service/test/test_task_event_atomic_insert_postgres.py::test_expiry_enabled_commit_returns_loaded_event
+2 failed, 145 passed in 104.58s (0:01:44)

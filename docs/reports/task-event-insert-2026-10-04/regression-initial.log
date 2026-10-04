@@ -1,0 +1,129 @@
+...F.................................................................... [ 49%]
+........................................................................ [ 98%]
+..                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_failed_insert_and_rollback_preserve_counter_and_visibility ________
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x110c3e2d0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T00:14:42.747030Z', 'deleted_at': None}, session_id='d1dd059c-f311-46ec-8e19-0a7a2e89e7c1')
+
+    async def test_failed_insert_and_rollback_preserve_counter_and_visibility(runtime):
+        h = runtime; rid = UUID((await enqueue(h))['run_id']);tid = await task_for(h, rid)
+        async with h.factory() as db:
+            before = await db.scalar(select(TaskModel.last_event_sequence).where(TaskModel.task_id == tid))
+            with pytest.raises(SQLAlchemyError):
+                await TaskEventService.append_for_run(db, run_id=rid, event_type='x' * 101, payload={}, commit=False)
+            await db.rollback()
+            assert await db.scalar(select(TaskModel.last_event_sequence).where(TaskModel.task_id == tid)) == before
+            event = await TaskEventService.append_for_run(db, run_id=rid, event_type='rolled_back', payload={}, commit=False)
+            async with h.factory() as reader:
+                assert await reader.get(TaskEventModel, event.task_event_id) is None
+                assert await reader.scalar(select(TaskModel.last_event_sequence).where(TaskModel.task_id == tid)) == before
+            await db.rollback()
+>           assert await db.get(TaskEventModel, event.task_event_id) is None
+                                                ^^^^^^^^^^^^^^^^^^^
+
+src/api_service/test/test_task_event_atomic_insert_postgres.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:569: in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1096: in get
+    value = self._fire_loader_callables(state, key, passive)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/attributes.py:1126: in _fire_loader_callables
+    return state._load_expired(state, passive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state.py:828: in _load_expired
+    self.manager.expired_attribute_loader(self, toload, passive)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py:1674: in load_scalar_attributes
+    result = load_on_ident(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py:510: in load_on_ident
+    return load_on_pk_identity(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py:695: in load_on_pk_identity
+    session.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2373: in execute
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2261: in _execute_internal
+    conn = self._connection_for_bind(bind)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2113: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<string>:2: in _connection_for_bind
+    ???
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:1191: in _connection_for_bind
+    conn = bind.connect()
+           ^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:3295: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:144: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:3319: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:448: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:1272: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:712: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/impl.py:307: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:389: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:674: in __init__
+    self.__connect()
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:900: in __connect
+    with util.safe_reraise():
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/pool/base.py:896: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/create.py:667: in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:955: in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+awaitable = <coroutine object connect at 0x110814a00>
+
+    def await_only(awaitable: Awaitable[_T]) -> _T:
+        """Awaits an async function in a sync method.
+    
+        The sync method must be inside a :func:`greenlet_spawn` context.
+        :func:`await_only` calls cannot be nested.
+    
+        :param awaitable: The coroutine to call.
+    
+        """
+        # this is called in the context greenlet while running fn
+        current = getcurrent()
+        if not getattr(current, "__sqlalchemy_greenlet_provider__", False):
+            _safe_cancel_awaitable(awaitable)
+    
+>           raise exc.MissingGreenlet(
+                "greenlet_spawn has not been called; can't call await_only() "
+                "here. Was IO attempted in an unexpected place?"
+            )
+E           sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:123: MissingGreenlet
+=========================== short test summary info ============================
+FAILED src/api_service/test/test_task_event_atomic_insert_postgres.py::test_failed_insert_and_rollback_preserve_counter_and_visibility
+1 failed, 145 passed in 102.40s (0:01:42)

@@ -1,0 +1,36 @@
+[
+  {
+    "name": "before-standard10-profile",
+    "process_cpu_seconds": 7.102281,
+    "main_thread_cpu_seconds": 6.848046958000001,
+    "offload_thread_cpu_seconds": 0.18332669700000034,
+    "export_cpu_seconds": 0.08715199999999967,
+    "exclusive_groups": {
+      "main:other": 3.6787459619999954,
+      "main:sqlalchemy": 2.5357153910000028,
+      "main:service": 0.4921848910000001,
+      "main:harness": 0.088554142,
+      "offload:other": 0.15865111200000004,
+      "offload:service": 0.019811903
+    },
+    "cache_key_calls": 32570,
+    "projection_builder_calls": 0
+  },
+  {
+    "name": "after-standard10-profile",
+    "process_cpu_seconds": 7.414105,
+    "main_thread_cpu_seconds": 7.163757458000001,
+    "offload_thread_cpu_seconds": 0.18118112000000028,
+    "export_cpu_seconds": 0.08233300000000021,
+    "exclusive_groups": {
+      "main:other": 3.9170836619999863,
+      "main:sqlalchemy": 2.6011747130000047,
+      "main:service": 0.4816833379999999,
+      "main:harness": 0.08792317999999999,
+      "offload:other": 0.15719085600000016,
+      "offload:service": 0.019048527000000006
+    },
+    "cache_key_calls": 30113,
+    "projection_builder_calls": 0
+  }
+]

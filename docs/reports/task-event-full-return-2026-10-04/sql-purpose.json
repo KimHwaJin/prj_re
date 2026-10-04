@@ -1,0 +1,560 @@
+[
+  {
+    "name": "before-u1-r1",
+    "category_counts": {
+      "event_graph": 148,
+      "cancel_watch": 3,
+      "worker": 214,
+      "write": 105,
+      "claim": 42,
+      "sse": 30
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 197,
+        "sequence_allocation": 23,
+        "task_event_insert": 23,
+        "advisory_barrier": 44,
+        "log_pair_read": 41,
+        "log_insert": 14,
+        "run_task_link": 20
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 117.63074481859803,
+        "sequence_allocation": 8.418666664510965,
+        "task_event_insert": 9.403124218806624,
+        "advisory_barrier": 11.115917237475514,
+        "log_pair_read": 12.744376203045249,
+        "log_insert": 7.385210134088993,
+        "run_task_link": 5.793670192360878
+      }
+    }
+  },
+  {
+    "name": "after-u1-r1",
+    "category_counts": {
+      "event_graph": 130,
+      "cancel_watch": 3,
+      "worker": 192,
+      "write": 105,
+      "claim": 42,
+      "sse": 30
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 197,
+        "sequence_allocation": 3,
+        "task_event_insert": 3,
+        "advisory_barrier": 44,
+        "log_pair_read": 41,
+        "log_insert": 14,
+        "atomic_run_event": 20
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 127.0074921194464,
+        "sequence_allocation": 2.1167078521102667,
+        "task_event_insert": 1.9117090851068497,
+        "advisory_barrier": 15.797748230397701,
+        "log_pair_read": 15.065457206219435,
+        "log_insert": 9.448789991438389,
+        "atomic_run_event": 14.300918439403176
+      }
+    }
+  },
+  {
+    "name": "after-u10-r1",
+    "category_counts": {
+      "event_graph": 1300,
+      "cancel_watch": 49,
+      "worker": 1853,
+      "write": 1050,
+      "claim": 353,
+      "sse": 402
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 1903,
+        "sequence_allocation": 30,
+        "task_event_insert": 30,
+        "advisory_barrier": 440,
+        "log_pair_read": 410,
+        "log_insert": 140,
+        "atomic_run_event": 200
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 3978.4585784655064,
+        "sequence_allocation": 32.58058172650635,
+        "task_event_insert": 43.56504022143781,
+        "advisory_barrier": 583.1036551389843,
+        "log_pair_read": 691.5889589581639,
+        "log_insert": 288.7307037599385,
+        "atomic_run_event": 323.7422192469239
+      }
+    }
+  },
+  {
+    "name": "before-u10-r1",
+    "category_counts": {
+      "event_graph": 1480,
+      "cancel_watch": 47,
+      "worker": 2076,
+      "write": 1050,
+      "claim": 356,
+      "sse": 411
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 1906,
+        "sequence_allocation": 230,
+        "task_event_insert": 230,
+        "advisory_barrier": 440,
+        "log_pair_read": 410,
+        "log_insert": 140,
+        "run_task_link": 200
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 3815.9769140183926,
+        "sequence_allocation": 269.5968656335026,
+        "task_event_insert": 316.7059209663421,
+        "advisory_barrier": 494.75725600495934,
+        "log_pair_read": 498.9408745896071,
+        "log_insert": 201.17321307770908,
+        "run_task_link": 290.9869207069278
+      }
+    }
+  },
+  {
+    "name": "before-u30-r1",
+    "category_counts": {
+      "event_graph": 4440,
+      "cancel_watch": 298,
+      "worker": 6078,
+      "write": 3150,
+      "claim": 918,
+      "sse": 2019
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 5568,
+        "sequence_allocation": 690,
+        "task_event_insert": 690,
+        "advisory_barrier": 1320,
+        "log_pair_read": 1230,
+        "log_insert": 420,
+        "run_task_link": 600
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 13409.792927326635,
+        "sequence_allocation": 1125.9385461453348,
+        "task_event_insert": 1206.4453579951078,
+        "advisory_barrier": 2111.470141680911,
+        "log_pair_read": 1895.261770579964,
+        "log_insert": 824.6472917962819,
+        "run_task_link": 907.6685460750014
+      }
+    }
+  },
+  {
+    "name": "after-u30-r1",
+    "category_counts": {
+      "event_graph": 3900,
+      "cancel_watch": 304,
+      "worker": 5413,
+      "write": 3150,
+      "claim": 913,
+      "sse": 2025
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 5563,
+        "sequence_allocation": 90,
+        "task_event_insert": 90,
+        "advisory_barrier": 1320,
+        "log_pair_read": 1230,
+        "log_insert": 420,
+        "atomic_run_event": 600
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 13402.203523088247,
+        "sequence_allocation": 141.71716501004994,
+        "task_event_insert": 157.48900268226862,
+        "advisory_barrier": 2108.66644885391,
+        "log_pair_read": 1931.5304677002132,
+        "log_insert": 751.4006784185767,
+        "atomic_run_event": 1096.5119942557067
+      }
+    }
+  },
+  {
+    "name": "before-u50-r1",
+    "category_counts": {
+      "event_graph": 7400,
+      "cancel_watch": 527,
+      "worker": 10114,
+      "write": 5250,
+      "claim": 1514,
+      "sse": 3519
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9264,
+        "sequence_allocation": 1150,
+        "task_event_insert": 1150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "run_task_link": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 21951.113298302516,
+        "sequence_allocation": 1842.0683920849115,
+        "task_event_insert": 1982.5718922074884,
+        "advisory_barrier": 3205.9769083280116,
+        "log_pair_read": 3286.18667088449,
+        "log_insert": 1348.631192697212,
+        "run_task_link": 1640.3167890384793
+      }
+    }
+  },
+  {
+    "name": "after-u50-r1",
+    "category_counts": {
+      "event_graph": 6500,
+      "cancel_watch": 524,
+      "worker": 9013,
+      "write": 5250,
+      "claim": 1513,
+      "sse": 3546
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9263,
+        "sequence_allocation": 150,
+        "task_event_insert": 150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "atomic_run_event": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 21780.15524102375,
+        "sequence_allocation": 241.38037161901593,
+        "task_event_insert": 262.2514150571078,
+        "advisory_barrier": 3570.308017078787,
+        "log_pair_read": 3225.3128464799374,
+        "log_insert": 1333.566076355055,
+        "atomic_run_event": 1880.4261204786599
+      }
+    }
+  },
+  {
+    "name": "after-u50-r2",
+    "category_counts": {
+      "event_graph": 6500,
+      "cancel_watch": 539,
+      "worker": 9014,
+      "write": 5250,
+      "claim": 1514,
+      "sse": 3546
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9264,
+        "sequence_allocation": 150,
+        "task_event_insert": 150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "atomic_run_event": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 21602.174389641732,
+        "sequence_allocation": 234.59770693443716,
+        "task_event_insert": 257.7679071109742,
+        "advisory_barrier": 3070.420736912638,
+        "log_pair_read": 3181.1149588320404,
+        "log_insert": 1259.3376839067787,
+        "atomic_run_event": 1714.2508933320642
+      }
+    }
+  },
+  {
+    "name": "before-u50-r2",
+    "category_counts": {
+      "event_graph": 7400,
+      "cancel_watch": 522,
+      "worker": 10113,
+      "write": 5250,
+      "claim": 1513,
+      "sse": 3552
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9263,
+        "sequence_allocation": 1150,
+        "task_event_insert": 1150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "run_task_link": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 21026.616060873494,
+        "sequence_allocation": 1937.1078296098858,
+        "task_event_insert": 2138.23304255493,
+        "advisory_barrier": 3038.273506332189,
+        "log_pair_read": 3361.634321976453,
+        "log_insert": 1292.0349300839007,
+        "run_task_link": 1449.0056233480573
+      }
+    }
+  },
+  {
+    "name": "before-u50-r3",
+    "category_counts": {
+      "event_graph": 7400,
+      "cancel_watch": 534,
+      "worker": 10114,
+      "write": 5250,
+      "claim": 1514,
+      "sse": 3528
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9264,
+        "sequence_allocation": 1150,
+        "task_event_insert": 1150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "run_task_link": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 21711.015579057857,
+        "sequence_allocation": 1847.2083723172545,
+        "task_event_insert": 2047.6346369832754,
+        "advisory_barrier": 3349.2508456110954,
+        "log_pair_read": 3295.083387522027,
+        "log_insert": 1179.7544602304697,
+        "run_task_link": 1433.1844900734723
+      }
+    }
+  },
+  {
+    "name": "after-u50-r3",
+    "category_counts": {
+      "event_graph": 6500,
+      "cancel_watch": 542,
+      "worker": 9014,
+      "write": 5250,
+      "claim": 1514,
+      "sse": 3561
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9264,
+        "sequence_allocation": 150,
+        "task_event_insert": 150,
+        "advisory_barrier": 2200,
+        "log_pair_read": 2050,
+        "log_insert": 700,
+        "atomic_run_event": 1000
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 23227.277838159353,
+        "sequence_allocation": 245.632165344432,
+        "task_event_insert": 274.4851717725396,
+        "advisory_barrier": 3437.442244030535,
+        "log_pair_read": 3484.962441259995,
+        "log_insert": 1380.533907096833,
+        "atomic_run_event": 1896.0858022328466
+      }
+    }
+  },
+  {
+    "name": "before-standard10-profile",
+    "category_counts": {
+      "event_graph": 1480,
+      "cancel_watch": 96,
+      "worker": 2074,
+      "write": 1050,
+      "claim": 354,
+      "sse": 564
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 1904,
+        "sequence_allocation": 230,
+        "task_event_insert": 230,
+        "advisory_barrier": 440,
+        "log_pair_read": 410,
+        "log_insert": 140,
+        "run_task_link": 200
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 6064.657150767744,
+        "sequence_allocation": 454.32212413288653,
+        "task_event_insert": 525.9894176851958,
+        "advisory_barrier": 813.6742545757443,
+        "log_pair_read": 869.3404521327466,
+        "log_insert": 289.1977133695036,
+        "run_task_link": 365.2086700312793
+      }
+    }
+  },
+  {
+    "name": "after-standard10-profile",
+    "category_counts": {
+      "event_graph": 1300,
+      "cancel_watch": 101,
+      "worker": 1852,
+      "write": 1050,
+      "claim": 352,
+      "sse": 579
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 1902,
+        "sequence_allocation": 30,
+        "task_event_insert": 30,
+        "advisory_barrier": 440,
+        "log_pair_read": 410,
+        "log_insert": 140,
+        "atomic_run_event": 200
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 6393.329330487177,
+        "sequence_allocation": 61.766417464241385,
+        "task_event_insert": 66.16970663890243,
+        "advisory_barrier": 886.2904207780957,
+        "log_pair_read": 903.6715824622661,
+        "log_insert": 336.4588355179876,
+        "atomic_run_event": 513.6324884369969
+      }
+    }
+  },
+  {
+    "name": "after-large1-off",
+    "category_counts": {
+      "event_graph": 1262,
+      "cancel_watch": 3,
+      "worker": 317,
+      "write": 105,
+      "claim": 131,
+      "sse": 45
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 937,
+        "sequence_allocation": 3,
+        "task_event_insert": 3,
+        "advisory_barrier": 268,
+        "log_pair_read": 206,
+        "log_insert": 69,
+        "atomic_run_event": 93
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 498.6546167638153,
+        "sequence_allocation": 1.287790946662426,
+        "task_event_insert": 1.595166977494955,
+        "advisory_barrier": 76.61987468600273,
+        "log_pair_read": 68.55121138505638,
+        "log_insert": 28.502998873591423,
+        "atomic_run_event": 44.56049925647676
+      }
+    }
+  },
+  {
+    "name": "before-large1-off",
+    "category_counts": {
+      "event_graph": 1426,
+      "cancel_watch": 3,
+      "worker": 340,
+      "write": 105,
+      "claim": 132,
+      "sse": 45
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 938,
+        "sequence_allocation": 96,
+        "task_event_insert": 96,
+        "advisory_barrier": 268,
+        "log_pair_read": 206,
+        "log_insert": 69,
+        "run_task_link": 93
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 501.0181120596826,
+        "sequence_allocation": 36.49049624800682,
+        "task_event_insert": 41.99724714271724,
+        "advisory_barrier": 80.97991906106472,
+        "log_pair_read": 74.63291194289923,
+        "log_insert": 34.71029340289533,
+        "run_task_link": 30.44553636573255
+      }
+    }
+  },
+  {
+    "name": "before-large10-off",
+    "category_counts": {
+      "event_graph": 14260,
+      "cancel_watch": 51,
+      "worker": 3128,
+      "write": 1050,
+      "claim": 1048,
+      "sse": 1050
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9108,
+        "sequence_allocation": 960,
+        "task_event_insert": 960,
+        "advisory_barrier": 2680,
+        "log_pair_read": 2060,
+        "log_insert": 690,
+        "run_task_link": 930
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 19282.52219222486,
+        "sequence_allocation": 1426.9913418684155,
+        "task_event_insert": 1460.2470144163817,
+        "advisory_barrier": 3708.8667592033744,
+        "log_pair_read": 3085.0039364304394,
+        "log_insert": 1249.2377213202417,
+        "run_task_link": 1233.3950935862958
+      }
+    }
+  },
+  {
+    "name": "after-large10-off",
+    "category_counts": {
+      "event_graph": 12620,
+      "cancel_watch": 46,
+      "worker": 2913,
+      "write": 1050,
+      "claim": 1053,
+      "sse": 1062
+    },
+    "worker_event_graph": {
+      "counts": {
+        "other": 9113,
+        "sequence_allocation": 30,
+        "task_event_insert": 30,
+        "advisory_barrier": 2680,
+        "log_pair_read": 2060,
+        "log_insert": 690,
+        "atomic_run_event": 930
+      },
+      "summed_sql_ms_not_e2e": {
+        "other": 20725.47371662222,
+        "sequence_allocation": 39.03712541796267,
+        "task_event_insert": 39.380043279379606,
+        "advisory_barrier": 3829.9709127750248,
+        "log_pair_read": 3208.7657360825688,
+        "log_insert": 1195.0814789161086,
+        "atomic_run_event": 1686.4720948506147
+      }
+    }
+  }
+]
