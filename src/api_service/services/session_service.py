@@ -91,10 +91,7 @@ class SessionService:
         session_id: UUID,
         payload: SessionUpdate,
     ) -> SessionModel:
-        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=current_project_id,
-                                     target_project_id=payload.target_project_id)
-        if payload.target_project_id is not None and payload.target_project_id != current_project_id:
-            await lifecycle.require_idle(db, [session_id], resource="Session")
+        await lifecycle.lock_session(db, user_id, session_id, expected_project_id=current_project_id)
         session = await SessionRepository.get_active(
             db,
             user_id=user_id,
@@ -110,10 +107,6 @@ class SessionService:
             if not name:
                 raise HTTPException(status_code=422, detail="session_name은 공백일 수 없습니다.")
             session.session_name = name
-
-        if payload.target_project_id is not None:
-            await SessionService._require_project(db, user_id, payload.target_project_id)
-            session.project_id = payload.target_project_id
 
         await db.commit()
         await db.refresh(session)

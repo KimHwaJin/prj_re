@@ -65,7 +65,7 @@ PYTHONPATH=src python -m bootstrap_admin --user-id admin-001 --user-name 관리�
 
 현재 Task의 pending/running/waiting_input 및 pending/running AgentRun, Task 없는 interrupted Run, queued/running LLMRun이 남아 있으면 삭제를 거절한다. WAITING_EXECUTOR 별도 상태는 아직 없으며 현재의 대기 상태를 기준으로 검사한다. 완료 Task에 속한 이전 interrupted 구간은 역사 기록이므로 삭제를 막지 않는다.
 
-삭제 성공 시 사용자 및 소유 프로젝트·세션·메시지를 한 transaction에서 숨긴다. Task/Run/체크포인트를 물리 삭제하거나 외부 Executor를 취소하지 않는다. 이후 쿠키 인증의 DB 활성 사용자 검사와 일반 소유권 조회에서 접근이 차단된다. 세션 이동·프로젝트 삭제 정책 자체와 장기 Executor 상태 전이 개선은 후속 단계다.
+삭제 성공 시 사용자 및 소유 프로젝트·세션·메시지를 한 transaction에서 숨긴다. Task/Run/체크포인트를 물리 삭제하거나 외부 Executor를 취소하지 않는다. 이후 쿠키 인증의 DB 활성 사용자 검사와 일반 소유권 조회에서 접근이 차단된다. 세션 프로젝트 이동은 지원하지 않는다. 세션/프로젝트 삭제 보호는 [현재 CRUD 정책](crud-lifecycle-policy.md), 장기 Executor 상태 전이 개선은 후속 목록을 따른다.
 
 ## 검증 실행
 

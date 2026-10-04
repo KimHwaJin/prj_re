@@ -83,9 +83,6 @@ async def mutate(h, operation):
         return await h.client.delete(f'/api/v1/sessions/{h.session_id}',headers=headers(h.user['user_id']))
     if operation=='project_delete':
         return await h.client.delete(f'/api/v1/projects/{h.project_id}',headers=headers(h.user['user_id']))
-    if operation=='move':
-        return await h.client.patch(f'/api/v1/sessions/{h.session_id}',headers=headers(h.user['user_id']),
-                                    json={'target_project_id':h.target_id,'session_name':'must not partially apply'})
     if operation=='user_delete':
         return await h.client.delete(f"/api/v1/users/{h.user['user_id']}",headers=headers('admin'))
     raise AssertionError(operation)
@@ -94,7 +91,7 @@ async def mutate(h, operation):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('case',['pending','running','waiting_input','waiting_executor','recovery',
     'owner_live','owner_recovery','orphan_pending','orphan_running','orphan_interrupted','llm_queued','llm_running'])
-@pytest.mark.parametrize('operation',['session_delete','project_delete','move','user_delete'])
+@pytest.mark.parametrize('operation',['session_delete','project_delete','user_delete'])
 async def test_unfinished_states_reject_without_mutation(resources,case,operation):
     h=resources
     await seed(h,case)
@@ -107,26 +104,24 @@ async def test_unfinished_states_reject_without_mutation(resources,case,operatio
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('operation',['session_delete','project_delete','move','user_delete'])
+@pytest.mark.parametrize('operation',['session_delete','project_delete','user_delete'])
 async def test_finished_history_and_released_owner_allow_mutation(resources,operation):
     h=resources
     await seed(h,'finished_history'); await seed(h,'owner_released')
     result=await mutate(h,operation)
-    assert result.status_code==(200 if operation=='move' else 204),result.text
+    assert result.status_code==204,result.text
     async with h.factory() as db:
         s=await db.get(Session,UUID(h.session_id)); m=await db.get(Message,h.message_id)
-        if operation=='move':
-            assert str(s.project_id)==h.target_id and s.delete_yn==m.delete_yn==DeleteYN.N
-        else:
-            assert s.delete_yn==m.delete_yn==DeleteYN.Y
+        assert s.delete_yn==m.delete_yn==DeleteYN.Y
+        assert str(s.project_id)==h.project_id
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('case',['running','waiting_executor','recovery'])
-async def test_names_and_same_project_noop_remain_editable(resources,case):
+async def test_names_remain_editable(resources,case):
     h=resources; await seed(h,case)
     res=await h.client.patch(f'/api/v1/sessions/{h.session_id}',headers=headers(h.user['user_id']),
-                             json={'session_name':'renamed','target_project_id':h.project_id})
+                             json={'session_name':'renamed'})
     assert res.status_code==200 and res.json()['name']=='renamed',res.text
     res=await h.client.patch(f'/api/v1/projects/{h.project_id}',headers=headers(h.user['user_id']),json={'project_name':'renamed'})
     assert res.status_code==200,res.text
@@ -171,7 +166,7 @@ async def post_run(h):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('operation',['session_delete','project_delete','move'])
+@pytest.mark.parametrize('operation',['session_delete','project_delete'])
 async def test_mutation_wins_then_stale_run_admission_is_rejected(resources,monkeypatch,operation):
     h=resources
     entered,release=hold_idle(monkeypatch,'Project' if operation=='project_delete' else 'Session')
@@ -184,14 +179,14 @@ async def test_mutation_wins_then_stale_run_admission_is_rejected(resources,monk
     finally:
         release.set()
     result,admitted=await asyncio.wait_for(asyncio.gather(first,second),5)
-    assert result.status_code==(200 if operation=='move' else 204),result.text
+    assert result.status_code==204,result.text
     assert admitted.status_code in (404,409),admitted.text
     async with h.factory() as db:
         assert await db.scalar(select(func.count()).select_from(Run).where(Run.session_id==UUID(h.session_id)))==0
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('operation',['session_delete','project_delete','move'])
+@pytest.mark.parametrize('operation',['session_delete','project_delete'])
 async def test_admission_wins_then_mutation_observes_committed_task(resources,monkeypatch,operation):
     h=resources
     entered,release=asyncio.Event(),asyncio.Event()
@@ -215,20 +210,20 @@ async def test_admission_wins_then_mutation_observes_committed_task(resources,mo
 
 
 @pytest.mark.asyncio
-async def test_project_delete_blocks_new_session_and_move_into_it(resources,monkeypatch):
+async def test_project_delete_blocks_new_session(resources,monkeypatch):
     h=resources
-    # Delete the target project while a create and an incoming move are queued.
+    # Delete the project while a new session is queued.
     entered,release=hold_idle(monkeypatch,'Project')
     deleting=asyncio.create_task(h.client.delete(f'/api/v1/projects/{h.target_id}',headers=headers(h.user['user_id'])))
     pending=[]
     try:
         await asyncio.wait_for(entered.wait(),5)
-        pending=[asyncio.create_task(new_session(h,h.target_id)),asyncio.create_task(mutate(h,'move'))]
+        pending=[asyncio.create_task(new_session(h,h.target_id))]
         await blocked_in_postgres(h)
     finally:
         release.set()
     results=await asyncio.wait_for(asyncio.gather(deleting,*pending),5)
-    assert [r.status_code for r in results]==[204,404,404],[r.text for r in results]
+    assert [r.status_code for r in results]==[204,404],[r.text for r in results]
     async with h.factory() as db:
         assert str((await db.get(Session,UUID(h.session_id))).project_id)==h.project_id
         assert not list(await db.scalars(select(Session.session_id).where(Session.project_id==UUID(h.target_id),Session.delete_yn==DeleteYN.N)))
@@ -258,12 +253,9 @@ async def test_new_session_commits_before_project_delete_enumerates_children(res
 
 
 @pytest.mark.asyncio
-async def test_opposite_moves_and_different_session_admission_do_not_serialize(resources):
+async def test_different_session_admission_does_not_serialize(resources):
     h=resources
-    other=(await new_session(h,h.target_id)).json()['id']
-    results=await asyncio.wait_for(asyncio.gather(mutate(h,'move'),h.client.patch(f'/api/v1/sessions/{other}',
-        headers=headers(h.user['user_id']),json={'target_project_id':h.project_id})),5)
-    assert all(r.status_code==200 for r in results),[r.text for r in results]
+    other=(await new_session(h,h.project_id)).json()['id']
     same_project=(await new_session(h,h.project_id)).json()['id']
     async with h.factory() as held:
         await lifecycle.lock_session(held,h.internal_user,UUID(other))
@@ -293,7 +285,7 @@ async def test_event_owner_blocks_delete_until_operation_finishes(resources):
     try:
         await asyncio.wait_for(entered.wait(),5)
         # No Task at all: independent Executor owner is enough to protect data.
-        for operation_name in ('session_delete','project_delete','move','user_delete'):
+        for operation_name in ('session_delete','project_delete','user_delete'):
             assert (await mutate(h,operation_name)).status_code==409
     finally:
         release.set(); await asyncio.wait_for(event,5)
@@ -319,7 +311,7 @@ async def test_deleted_resources_reject_late_event_before_graph_call(resources,m
 
 
 @pytest.mark.asyncio
-async def test_running_worker_allows_rename_but_not_move_or_delete(resources,monkeypatch):
+async def test_running_worker_allows_rename_but_not_delete(resources,monkeypatch):
     h=resources
     entered,release=asyncio.Event(),asyncio.Event()
     async def graph(**kwargs):
@@ -331,13 +323,14 @@ async def test_running_worker_allows_rename_but_not_move_or_delete(resources,mon
     job=asyncio.create_task(worker.execute_claimed(await worker.claim_one()))
     try:
         await asyncio.wait_for(entered.wait(),5)
-        for operation in ('move','session_delete','project_delete'):
+        for operation in ('session_delete','project_delete'):
             assert (await mutate(h,operation)).status_code==409
         renamed=await h.client.patch(f'/api/v1/sessions/{h.session_id}',headers=headers(h.user['user_id']),json={'session_name':'during inference'})
         assert renamed.status_code==200
     finally:
         release.set(); await asyncio.wait_for(job,5)
-    assert (await mutate(h,'move')).status_code==200
+    assert (await h.client.patch(f'/api/v1/sessions/{h.session_id}',
+        headers=headers(h.user['user_id']),json={'session_name':'after inference'})).status_code==200
 
 
 @pytest.mark.asyncio
@@ -365,7 +358,7 @@ async def test_public_message_write_cannot_race_past_parent_delete(resources,mon
 
 
 @pytest.mark.asyncio
-async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
+async def test_resume_admission_holds_deletion_barrier(resources,monkeypatch):
     h=resources
     monkeypatch.setattr(runs,'ainvoke_user_turn',AsyncMock(return_value={
         'routing_result':{'route':'analysis'},'__interrupt__':[SimpleNamespace(value={'kind':'USER_APPROVAL'})]}))
@@ -383,32 +376,40 @@ async def test_resume_admission_holds_movement_barrier(resources,monkeypatch):
     monkeypatch.setattr(TaskEventService,'append',held)
     resuming=asyncio.create_task(h.client.post(f'/api/v1/sessions/{h.session_id}/runs',headers={**headers(h.user['user_id']),'Idempotency-Key':'resume'},
         json={'run_id':first['run_id'], 'resume_token':current['resume_token'],'command':{'resume':{'action':'approve_plan','plan_id':'test-plan','plan_revision':1}}}))
-    moving=None
+    deleting=None
     try:
         await asyncio.wait_for(entered.wait(),5)
-        moving=asyncio.create_task(mutate(h,'move'))
+        deleting=asyncio.create_task(mutate(h,'session_delete'))
         await blocked_in_postgres(h)
     finally:
         release.set()
-    resumed,moved=await asyncio.wait_for(asyncio.gather(resuming,moving),5)
+    resumed,deleted=await asyncio.wait_for(asyncio.gather(resuming,deleting),5)
     assert resumed.status_code==202 and resumed.json()['run_id']==first['run_id'],resumed.text
-    assert moved.status_code==409,moved.text
+    assert deleted.status_code==409,deleted.text
 
 
 @pytest.mark.asyncio
-async def test_move_out_commits_before_source_project_delete_enumerates(resources,monkeypatch):
-    h=resources
-    entered,release=hold_idle(monkeypatch,'Session')
-    moving=asyncio.create_task(mutate(h,'move')); deleting=None
-    try:
-        await asyncio.wait_for(entered.wait(),5)
-        deleting=asyncio.create_task(mutate(h,'project_delete'))
-        await blocked_in_postgres(h)
-    finally:
-        release.set()
-    moved,deleted=await asyncio.wait_for(asyncio.gather(moving,deleting),5)
-    assert moved.status_code==200 and deleted.status_code==204
+@pytest.mark.parametrize('case', [None, 'running', 'waiting_executor'])
+@pytest.mark.parametrize('field', ['target_project_id', 'project_id'])
+async def test_project_change_is_rejected_without_partial_rename(resources, case, field):
+    h = resources
+    if case:
+        await seed(h, case)
+    response = await h.client.patch(f'/api/v1/sessions/{h.session_id}',
+        headers=headers(h.user['user_id']),
+        json={field: h.target_id, 'session_name': 'must not partially apply'})
+    assert response.status_code == 422, response.text
+    assert any(error['field'] == field and error['reason'] == 'extra_forbidden'
+               for error in response.json()['errors'])
     async with h.factory() as db:
-        session=await db.get(Session,UUID(h.session_id))
-        assert session.delete_yn==DeleteYN.N and str(session.project_id)==h.target_id
-        assert (await db.get(Message,h.message_id)).delete_yn==DeleteYN.N
+        session = await db.get(Session, UUID(h.session_id))
+        message = await db.get(Message, h.message_id)
+        assert str(session.project_id) == h.project_id and session.session_name == 'test'
+        assert session.delete_yn == message.delete_yn == DeleteYN.N
+        assert message.content_text == 'preserve'
+    origin = (await h.client.get(f'/api/v1/projects/{h.project_id}/sessions',
+        headers=headers(h.user['user_id']))).json()['items']
+    target = (await h.client.get(f'/api/v1/projects/{h.target_id}/sessions',
+        headers=headers(h.user['user_id']))).json()['items']
+    assert any(item['id'] == h.session_id for item in origin)
+    assert not any(item['id'] == h.session_id for item in target)

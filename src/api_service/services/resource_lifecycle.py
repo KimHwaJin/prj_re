@@ -43,7 +43,6 @@ async def lock_projects(db: AsyncSession, user_id: UUID, project_ids, *, exclusi
 
 async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
                        expected_project_id: UUID | None = None,
-                       target_project_id: UUID | None = None,
                        for_update: bool = False) -> SessionModel:
     query = select(SessionModel).where(SessionModel.session_id == session_id,
         SessionModel.user_id == user_id, SessionModel.delete_yn == DeleteYN.N)
@@ -51,8 +50,7 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
     if session is None:
         raise HTTPException(404, "Session not found.")
     source = session.project_id
-    ids = [source] + ([target_project_id] if target_project_id is not None else [])
-    await lock_projects(db, user_id, ids)
+    await lock_projects(db, user_id, [source])
     # Same key as Run admission, shared across all API replicas.
     await db.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(f"run-admission:{session_id}", 0))))
     if for_update:
@@ -60,8 +58,8 @@ async def lock_session(db: AsyncSession, user_id: UUID, session_id: UUID, *,
     session = await db.scalar(query.execution_options(populate_existing=True))
     if session is None:
         raise HTTPException(404, "Session not found.")
-    # A move may have committed while discovering/locking the source project.
-    # Do not acquire another project lock out of order or use stale context.
+    # Reject stale/mismatched project context instead of acquiring project
+    # locks out of order. The public API cannot change session ownership.
     if session.project_id != source or (expected_project_id is not None and session.project_id != expected_project_id):
         raise HTTPException(409, "Session project changed; refresh and retry.")
     return session
@@ -102,4 +100,4 @@ async def require_idle(db: AsyncSession, session_ids, *, resource: str) -> None:
     """Caller owns admission/deletion barriers until mutation commits."""
     conditions = unfinished_work_conditions(session_ids=session_ids)
     if await db.scalar(select(or_(*conditions.values()))):
-        raise HTTPException(409, f"{resource} has unfinished work; finish or cancel it before deletion or moving.")
+        raise HTTPException(409, f"{resource} has unfinished work; finish or cancel it before deletion.")

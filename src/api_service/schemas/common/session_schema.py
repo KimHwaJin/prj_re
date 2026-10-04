@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class SessionCreate(BaseModel):
     session_name: str | None = Field(default=None, max_length=300)
@@ -9,10 +9,10 @@ class SessionCreate(BaseModel):
 
 
 class SessionUpdate(BaseModel):
-    session_name: str | None = Field(default=None, min_length=1, max_length=300)
+    """Rename only; the owning project is fixed when a session is created."""
+    model_config = ConfigDict(extra="forbid")
 
-    # 현재 project_id와 구분하기 위해 이동 대상은 별도 이름을 사용합니다.
-    target_project_id: UUID | None = None
+    session_name: str | None = Field(default=None, min_length=1, max_length=300)
 
 
 class SessionDeleteResult(BaseModel):
