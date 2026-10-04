@@ -120,7 +120,8 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 |---|---|
 | EXECUTOR_SUBMIT_ENABLED | false이면 기존 계획 승인 저장까지만, true이면 PostgreSQL API Runtime의 실제 제출 활성화 |
 | EVENT_WORKER_ENABLED | 임베디드 Redis 이벤트 Worker 실행. 끄면 별도의 Event Worker가 같은 DB/checkpoint/namespace를 처리해야 함 |
-| EXECUTOR_RUNTIME_PROFILE | 세션 settings.kernel_profile이 없을 때 기본 profile. 실제 Executor에 등록된 profile이어야 함 |
+| EXECUTOR_RUNTIME_PROFILE | 새 세션 생성 시 생략한 kernel_profile의 기본값으로 확정·저장. 과거 누락 세션의 fallback도 유지. 실제 Executor 등록과 일치 필요 |
+| EXECUTOR_RUNTIME_PROFILES | 새 세션이 선택할 수 있는 허용 profile JSON/YAML 목록. 미설정 시 기본 profile만 허용, 기본값 포함·중복 없음. 기존 세션/승인 값을 덮어쓰지 않음 |
 | EXECUTOR_OPERATION_TIMEOUT_SECONDS | 각 Operation 실행 timeout. 1주 작업이라면 작업 범위에 맞게 별도 설정해야 함. 기본 600초 |
 | EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS | MULTI가 다음 Operation/Finalize를 기다릴 시간. 모델 판단과 HITL 대기 시간도 감안. 기본 600초 |
 | AGENT_OBSERVATION_MAX_CHARS | Step 텍스트/구조 관찰 크기 제한, 기본 16000, 허용 1024~64000 |
@@ -169,3 +170,5 @@ private config의 database_url/checkpoint_db_uri는 loopback의 agentic_runtime_
 --followup-checks는 실제 완료 관찰을 근거로 설명/Markdown을 재작성하고 fact_ids를 현재 source의 원본 값으로 해석해 공개 답변에 반영됐는지 확인한다. 후속 설명/보고서는 새 Executor를 제출하지 않는다. --memory-checks는 수동 공유·현재 발언에 근거한 auto_context 저장·같은 프로젝트의 새 세션 모델 입력을 확인한다. Executor Dataset Registry와 보고서 Artifact 추가 정책·실제 사내 SDK는 이 시험의 완료 기능이 아니다.
 
 같은 테스트 DB에서 이 도구와 DB 초기화 pytest를 동시에 실행하지 않는다. 서버는 종료되고 private JSON과 새 Executor notebook/artifact를 검증 근거로 남긴다. 이후 DB 초기화 pytest가 전용 테스트 DB의 Run/checkpoint를 지울 수 있으므로 해당 DB의 영구 보존을 보장하지 않는다. 동일 timeout·예제 데이터 한 회 시험이며 부하/처리량·최대 동시 사용자·1주 작업 검증이 아니다.
+
+세션 설정의 생성 검증·기본값 고정과 기존 데이터 범위는 [세션 API 계약](session-api.md)을 따른다.

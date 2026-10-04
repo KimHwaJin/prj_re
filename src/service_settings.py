@@ -51,7 +51,7 @@ MODEL_API_KEY API_BASE_URL MODEL_TIMEOUT_SECONDS MODEL_MAX_RETRIES
 MODEL_ENABLE_THINKING MODEL_STRUCTURED_OUTPUT_MODE
 CHECKPOINT_DB_URI CHECKPOINT_SETUP_ON_START CHECKPOINT_POOL_MIN_SIZE
 CHECKPOINT_POOL_MAX_SIZE CHECKPOINT_POOL_TIMEOUT_SECONDS LANGGRAPH_STRICT_MSGPACK
-EXECUTOR_BASE_URL EXECUTOR_TLS_VERIFY EXECUTOR_RUNTIME_PROFILE
+EXECUTOR_BASE_URL EXECUTOR_TLS_VERIFY EXECUTOR_RUNTIME_PROFILE EXECUTOR_RUNTIME_PROFILES
 EXECUTOR_EXECUTIONS_PATH EXECUTOR_OPERATIONS_PATH EXECUTOR_EXECUTION_PATH
 EXECUTOR_RESULT_PATH EXECUTOR_NOTEBOOK_PATH EXECUTOR_FINALIZE_PATH
 EXECUTOR_CANCEL_PATH EXECUTOR_ARTIFACTS_PATH EXECUTOR_SHARED_INPUT_ROOT
@@ -334,8 +334,9 @@ def load_settings(
         value = merged[key]
         if value is None and key not in optional:
             raise ConfigurationError(f"Null is not allowed for {key}")
-        agent_env[key] = (json.dumps(value) if key == "ANALYSIS_DATASETS" and isinstance(value, Mapping)
-                          else None if value is None else str(value))
+        structured = ((key == "ANALYSIS_DATASETS" and isinstance(value, Mapping)) or
+                      (key == "EXECUTOR_RUNTIME_PROFILES" and isinstance(value, (list, tuple))))
+        agent_env[key] = json.dumps(value) if structured else None if value is None else str(value)
     try:
         agent = _agent_settings_from_mapping(agent_env)
     except (ValueError, TypeError, AttributeError):

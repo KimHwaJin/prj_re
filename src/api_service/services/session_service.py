@@ -18,6 +18,7 @@ from api_service.services.cascade_service import (
 )
 from api_service.services.helpers import normalize_name
 from api_service.services import resource_lifecycle as lifecycle
+from service_contracts.session_settings import SessionSettings, resolve_session_settings
 
 
 class SessionService:
@@ -39,8 +40,16 @@ class SessionService:
         user_id: UUID,
         project_id: UUID,
         session_name: str | None = None,
-        settings: dict | None = None,
+        settings: SessionSettings | dict | None = None,
     ) -> SessionModel:
+        from service_settings import get_settings
+        agent = get_settings().agent
+        try:
+            resolved_settings = resolve_session_settings(settings,
+                default_profile=agent.executor_runtime_profile,
+                allowed_profiles=agent.executor_runtime_profiles or (agent.executor_runtime_profile,))
+        except ValueError as exc:
+            raise HTTPException(422, "Invalid or unsupported session kernel_profile/settings.") from exc
         await lifecycle.lock_projects(db, user_id, [project_id])
 
         name = normalize_name(session_name or "") or "새 대화"
@@ -48,7 +57,7 @@ class SessionService:
             user_id=user_id,
             project_id=project_id,
             session_name=name,
-            settings=settings or {},
+            settings=resolved_settings,
             delete_yn=DeleteYN.N,
         )
         db.add(session)

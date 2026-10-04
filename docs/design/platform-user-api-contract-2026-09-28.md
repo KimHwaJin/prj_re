@@ -117,7 +117,7 @@ Worker에는 접수 시 확정한 내부 사용자 ID를 저장해서 전달한�
 - 명시적인 요청 모델 선택은 설정 로딩 우선순위(config > env > 기본값)를 변경하는 기능이 아니다. 그 우선순위로 구성된 모델 목록 안에서 요청이 선택한다.
 - 선택 모델/profile 버전은 전체 공개 Run에 고정한다. 사용자 HITL 및 Executor 완료 후 resume도 같은 선택을 사용한다. 실행 중 전역 환경변수나 전역 LLM 객체를 덮어써 다른 사용자의 모델까지 바꾸지 않는다.
 - 다음 신규 Run은 다른 main_model_name을 선택할 수 있다. 실제 선택한 모델명은 Run 상태에서 확인 가능하게 한다.
-- 플랫폼 session_system_prompt 옵션은 제외한다. 이와 별개로 Project.system_prompt는 유지하고 매 Agent 실행에 추가한다. Agent가 관리하는 project_memory도 프로젝트 범위에서 영속 공유하고 프롬프트에 제공한다. 사용처 없는 Session 자유 settings와 Message llm_max_retries는 공개 계약에서 제외한다.
+- 플랫폼 session_system_prompt 옵션은 제외한다. 이와 별개로 Project.system_prompt는 유지하고 매 Agent 실행에 추가한다. Agent가 관리하는 project_memory도 프로젝트 범위에서 영속 공유하고 프롬프트에 제공한다. Session 자유 settings는 077에서 kernel_profile만 받는 명시적 설정으로 대체했다. Message llm_max_retries는 공개 계약에서 제외한다. [현재 세션 명세](../session-api.md)를 따른다.
 
 ## 구현 완료 조건
 

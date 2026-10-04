@@ -17,6 +17,11 @@ service:
     # agent_project_memory_prompt_max_chars: 6000  # 모델에 넣는 참조 메시지 전체 문자 수.
     # agent_project_memory_prompt_max_tokens: 4096  # UTF-8 byte 기반 보수적 토큰 추정; 정확한 모델 토큰 수 아님.
     # 두 prompt 한도 중 하나가 0이면 Agent 읽기/자동 갱신 중단; 관리 API 유지.
+  executor: {}
+    # 세션 생성 기본 커널 및 허용 목록 예시. 실제 Executor/Target 등록과 일치시켜야 함.
+    # executor_runtime_profile: default  # 기존 미설정 기본값 ml 유지. 환경에 맞게 명시.
+    # executor_runtime_profiles: [default, "3102311"]  # 미설정 시 위 기본 profile만 허용.
+    # 생성 때 확정해 DB에 저장하며, 설정 변경은 이미 생성된 세션에 덮어쓰지 않음.
   auth:
     # 사내 SDK는 폐쇄망에서 module:factory로 연결. 미설정 로그인은 503이며 헤더 우회는 없다.
     # SSO_ADAPTER_FACTORY, SSO_PUBLIC_API_ORIGIN, SSO_FRONTEND_ORIGIN,

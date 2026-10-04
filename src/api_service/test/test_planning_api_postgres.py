@@ -183,3 +183,39 @@ async def test_answer_unknown_model_invalid_attachments_and_old_route(planning):
     assert final['status'] == 'success' and final['result']['final_response']['status'] == 'answer'
     removed = await h.client.post(h.path+'/'+final['run_id']+'/resume', headers=headers(h.user['user_id']), json={})
     assert removed.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_session_kernel_is_pinned_through_worker_hitl_restart_and_approval(planning, monkeypatch):
+    from dataclasses import replace
+    h = planning
+    settings = service_settings.get_settings()
+    monkeypatch.setattr(service_settings, '_snapshot', replace(settings, agent=replace(settings.agent,
+        executor_runtime_profiles=(settings.agent.executor_runtime_profile, '3102311'))))
+    response = await h.client.post(f"/api/v1/projects/{h.user['default_project_id']}/sessions",
+        headers=headers(h.user['user_id']), json={'settings': {'kernel_profile': '3102311'}})
+    assert response.status_code == 201, response.text
+    h.session_id = response.json()['id']
+    h.path = f'/api/v1/sessions/{h.session_id}/runs'
+    started = await submit(h, {'input': {'content': [{'type': 'text', 'text': '품질을 분석해줘'}]}})
+    assert started.status_code == 202
+    run_id = started.json()['run_id']
+    await execute()
+    waiting = await read(h, run_id)
+    assert waiting['status'] == 'waiting_input', waiting
+    plan = waiting['interrupt'][0]['payload']['plans'][0]
+    # A new process/default/creation allowlist must not change this HITL run's kernel.
+    monkeypatch.setattr(service_settings, '_snapshot', settings)
+    await graph_runtime.shutdown()
+    graph_runtime.start()
+    approved = await submit(h, {'run_id': run_id, 'resume_token': waiting['resume_token'],
+        'command': {'resume': {'action': 'approve_plan', 'plan_id': plan['plan_id'],
+            'plan_revision': plan['plan_revision']}}})
+    assert approved.status_code == 202, approved.text
+    await execute()
+    final = await read(h, run_id)
+    assert final['status'] == 'success', final
+    async with h.factory() as db:
+        invocation = await db.scalar(select(AgentRunModel).where(AgentRunModel.public_run_id == UUID(run_id))
+            .order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
+        assert invocation.metadata_json['_approved_plan']['context']['kernel_profile'] == '3102311'

@@ -6,6 +6,8 @@ graph tests without reading the process environment or local files.
 
 from __future__ import annotations
 
+import json
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
@@ -149,6 +151,9 @@ class AgentSettings:
     workflow_recommendation_enabled: bool
     workflow_similarity_score: float
     model_structured_output_mode: str
+    # Allowed session creation profiles; unset loader resolves to the default only.
+    # Keep in sync with Executor/Jupyter registration; no live request per session.
+    executor_runtime_profiles: tuple[str, ...] = ()
     executor_http_max_connections: int = 8
     executor_http_connect_timeout_seconds: float = 5
     executor_http_pool_timeout_seconds: float = 5
@@ -267,6 +272,20 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         if not 0 < value < float("inf"):
             raise ValueError("Invalid Executor HTTP limit")
 
+    from service_contracts.session_settings import KERNEL_PROFILE
+    profile = KERNEL_PROFILE.validate_python(env.get("EXECUTOR_RUNTIME_PROFILE", "ml"))
+    profiles = env.get("EXECUTOR_RUNTIME_PROFILES")
+    if profiles is None:
+        profiles = (profile,)
+    else:
+        if isinstance(profiles, str):
+            profiles = json.loads(profiles)
+        if not isinstance(profiles, (list, tuple)) or not profiles:
+            raise ValueError("EXECUTOR_RUNTIME_PROFILES must be a nonempty JSON/YAML list")
+        profiles = tuple(KERNEL_PROFILE.validate_python(item) for item in profiles)
+        if len(set(profiles)) != len(profiles) or profile not in profiles:
+            raise ValueError("Runtime profiles must be distinct and include EXECUTOR_RUNTIME_PROFILE")
+
     mock_delay_ms = int(env.get("MODEL_MOCK_DELAY_MS", "0"))
     if not 0 <= mock_delay_ms <= 60000:
         raise ValueError("MODEL_MOCK_DELAY_MS must be between 0 and 60000")
@@ -331,7 +350,6 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
             "EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS must be at least 30"
         )
 
-    import json
     from service_contracts.datasets import DatasetDeclaration
     max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
     discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
@@ -402,9 +420,8 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         ),
         executor_base_url=env.get("EXECUTOR_BASE_URL", "http://executor:8080"),
         executor_tls_verify=_as_bool(env.get("EXECUTOR_TLS_VERIFY"), True),
-        executor_runtime_profile=(
-            env.get("EXECUTOR_RUNTIME_PROFILE", "ml").strip()
-        ),
+        executor_runtime_profile=profile,
+        executor_runtime_profiles=profiles,
         executor_executions_path=env.get(
             "EXECUTOR_EXECUTIONS_PATH",
             env.get("EXECUTOR_JOBS_PATH", "/api/v1/executions"),

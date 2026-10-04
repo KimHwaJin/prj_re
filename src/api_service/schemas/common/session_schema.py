@@ -1,11 +1,14 @@
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from service_contracts.session_settings import SessionSettings
 
 class SessionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     session_name: str | None = Field(default=None, max_length=300)
-    settings: dict[str, Any] = Field(default_factory=dict)
+    settings: SessionSettings = Field(default_factory=SessionSettings,
+        description="Session-scoped kernel selection; resolved once at creation. Run model/execution options are not accepted here.")
 
 
 class SessionUpdate(BaseModel):

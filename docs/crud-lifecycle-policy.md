@@ -39,3 +39,5 @@
 [문제·구현·검증·제한 기록](improvements/020-crud-execution-guards.md)
 
 [세션 이동 제거·검증 기록](improvements/076-session-project-fixed.md)
+
+세션 생성 설정은 [세션 API·커널 계약](session-api.md)을 따른다.

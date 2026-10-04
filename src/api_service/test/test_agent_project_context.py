@@ -101,3 +101,19 @@ async def test_executor_resume_backfills_once_then_reuses_snapshot():
     loader.assert_awaited_once()
     assert graph.ainvoke.await_count == 2
     assert values["project_system_prompt"] == "executor project"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('profile', ['default', '3102311'])
+async def test_project_context_carries_persisted_kernel_profile(profile):
+    result = await load_project_snapshot(context_db('prompt', 1, {'kernel_profile': profile}),
+        user_id=uuid4(), session_id=uuid4())
+    assert result['kernel_profile'] == profile
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('profile', ['', ' ', 'a/b', 3102311])
+async def test_invalid_legacy_kernel_is_not_submitted(profile):
+    with pytest.raises(ValueError):
+        await load_project_snapshot(context_db('prompt', 1, {'kernel_profile': profile}),
+            user_id=uuid4(), session_id=uuid4())

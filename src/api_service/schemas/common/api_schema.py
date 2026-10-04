@@ -37,7 +37,7 @@ class SessionResource(APIModel):
     project_id: UUID
     name: str = Field(validation_alias="session_name")
     current_leaf_message_id: UUID | None
-    settings: dict
+    settings: dict = Field(description="New sessions store the resolved kernel_profile here. Legacy JSON is returned unchanged; session settings cannot be patched.")
     created_at: datetime
     updated_at: datetime
 

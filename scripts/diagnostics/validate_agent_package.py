@@ -32,6 +32,7 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/middleware/project_memory.py' in names
     assert 'agent_service/runtime/memory_selection.py' in names
     assert 'service_contracts/project_memory.py' in names
+    assert 'service_contracts/session_settings.py' in names
     assert 'api_service/services/project_memory_policy.py' in names
     assert 'api_service/core/memory_store.py' in names
     assert 'service_contracts/memory_store.py' in names
@@ -96,6 +97,13 @@ settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED'
     'EVENT_WORKER_ENABLED':False, 'TASK_RECONCILER_ENABLED':False}, environ={})
 app = create_app(settings)
 paths = app.openapi()['paths']
+schemas = app.openapi()['components']['schemas']
+assert set(schemas['SessionCreate']['properties']) == {'session_name', 'settings'}
+assert schemas['SessionCreate']['additionalProperties'] is False
+assert set(schemas['SessionSettings']['properties']) == {'kernel_profile'}
+assert schemas['SessionSettings']['additionalProperties'] is False
+assert set(schemas['SessionUpdate']['properties']) == {'session_name'}
+assert schemas['SessionUpdate']['additionalProperties'] is False
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
 assert '/api/v1/projects/{project_id}/memory' in paths
 assert '/api/v1/projects/{project_id}/memory/{section}/{key}' not in paths
@@ -139,7 +147,7 @@ async def smoke():
     return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
-    'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
+    'session_settings_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
     'retired_graph_packages_absent':True, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
     'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

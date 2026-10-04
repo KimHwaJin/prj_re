@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [076 세션 프로젝트 소속 고정·이동 기능 제거](076-session-project-fixed.md). 요구사항에 없는 target_project_id와 이동 전용 처리를 제거하고 세션 PATCH는 이름 변경만 받는다. 프로젝트 소속 변경 필드는 422로 전체 거절한다. 삭제·접수/재개 보호는 유지하며 베이스 미병합·미푸시·미배포다.
+최신 작업: [077 세션 설정 명세·생성 시 커널 확정](077-session-settings-contract.md). settings를 kernel_profile로 제한하고 공통 생성 경계에서 기본값/허용 목록을 검증·저장한다. 설정 변경·HITL 재시작 후에도 새 세션의 선택을 유지하며 관련118+3·전체src681·wheel 검증을 완료했다. 기존 JSON의 일괄 보정·원격 가용성 검사는 별도이고 베이스 미병합·미푸시·미배포다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -120,6 +120,7 @@
 | 074 | SQL 준비·ORM 결과 비용 분해 | 진단 완료·runtime 불변·후속 후보 검토 | 2026-10-04 | [074 기록](074-sqlalchemy-cost-diagnosis.md) |
 | 075 | 프로젝트 메모리 단일 Markdown 문서·전체 버전·공개 관리 API | 구현·PG/Worker91·전체src650·wheel 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [075 기록](075-project-memory-document.md) |
 | 076 | 세션 프로젝트 소속 고정·이동 기능 제거 | 구현·PG113+신규6·전체src650 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [076 기록](076-session-project-fixed.md) |
+| 077 | 세션 설정 명세·생성 시 커널 확정 | 구현·관련118+3·전체src681·wheel 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [077 기록](077-session-settings-contract.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

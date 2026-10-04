@@ -1,5 +1,6 @@
 """Resolve authorized project instructions once per user turn or legacy backfill."""
 from uuid import UUID
+from service_contracts.session_settings import KERNEL_PROFILE
 from api_service.core.database import short_session
 from sqlalchemy import select
 from api_service.models.common.project_model import ProjectModel
@@ -18,10 +19,9 @@ async def load_project_snapshot(db, *, user_id, session_id, project_id=None):
     result={"project_system_prompt": project.system_prompt or "", "project_prompt_version": project.prompt_version}
     profile=(settings or {}).get('kernel_profile')
     if profile is not None:
-        import re
-        if not isinstance(profile,str) or not re.fullmatch(r'[a-zA-Z0-9_.-]{1,128}',profile):
-            raise ValueError('Invalid session kernel_profile')
-        result['kernel_profile']=profile
+        # Validate stored syntax defensively; changing the creation allowlist
+        # must not replace or invalidate a session's already-pinned selection.
+        result['kernel_profile']=KERNEL_PROFILE.validate_python(profile)
     return result
 
 
