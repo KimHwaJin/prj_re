@@ -87,7 +87,7 @@ async def test_http_read_measurements(harness, message_count):
         report[name] = {'selects':len(reads), 'returned_rows':sum(r['rows'] for r in reads),
                         'queries':reads}
     assert set(responses['project']) == {'id','name','system_prompt','prompt_version','is_default','created_at','updated_at'}
-    assert set(responses['session']) == {'id','project_id','name','current_leaf_message_id','settings','created_at','updated_at'}
+    assert set(responses['session']) == {'id','project_id','name','current_leaf_message_id','settings','created_at','updated_at','active_run','availability'}
     assert responses['run'] == responses['run_alias']
     assert responses['run']['run_id'] == str(roots[0])
     assert responses['run']['resume_token'] == str(latest_ids[0])

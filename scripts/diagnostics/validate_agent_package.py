@@ -35,6 +35,9 @@ with ZipFile(wheel) as archive:
     assert 'service_contracts/session_settings.py' in names
     assert 'api_service/services/project_memory_policy.py' in names
     assert 'api_service/core/memory_store.py' in names
+    assert 'api_service/services/session_activity.py' in names
+    assert 'api_service/schemas/common/session_activity_schema.py' in names
+    assert 'api_service/runs/public_status.py' in names
     assert 'service_contracts/memory_store.py' in names
     assert 'api_service/services/project_memory_service.py' not in names
     assert 'api_service/models/common/project_memory_model.py' not in names
@@ -102,6 +105,9 @@ assert set(schemas['SessionCreate']['properties']) == {'session_name', 'settings
 assert schemas['SessionCreate']['additionalProperties'] is False
 assert set(schemas['SessionSettings']['properties']) == {'kernel_profile'}
 assert schemas['SessionSettings']['additionalProperties'] is False
+assert {'active_run', 'availability'} <= set(schemas['SessionResource']['required'])
+assert set(schemas['SessionActiveRun']['properties']) == {'run_id', 'status'}
+assert set(schemas['SessionAvailability']['properties']) == {'status', 'allowed_actions', 'reason'}
 assert set(schemas['SessionUpdate']['properties']) == {'session_name'}
 assert schemas['SessionUpdate']['additionalProperties'] is False
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
@@ -147,7 +153,7 @@ async def smoke():
     return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
-    'session_settings_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
+    'session_settings_contract':True, 'session_activity_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
     'retired_graph_packages_absent':True, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
     'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

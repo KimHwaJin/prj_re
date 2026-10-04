@@ -194,6 +194,8 @@ approve_decisions의 values는 현재 payload.decisions의 decision_id를 모두
 | canceled | 취소 완료 |
 | recovery_required | 종료가 불확실하여 복구 필요 |
 
+세션 초기 조회의 `active_run`/`availability`는 [세션 API](session-api.md#현재-run과-대화-입력-가능-여부)를 따른다. `available`만 확인하지 말고 allowed_actions의 send_message/respond_to_interaction을 구분한다. 실제 접수는 같은 기준을 session admission 잠금 아래 재검사하며 기존 키/body의 재전송을 먼저 처리한다.
+
 다른 세션은 독립적으로 사용할 수 있다. 같은 세션은 실행·Executor 대기 중 입력을 잠그며 HITL에서는 현재 화면의 액션만 허용한다. 공개 Run 하나 안에서 내부 invocation이 바뀌더라도 run_id는 유지된다. REST 응답·요청·SSE의 실행 식별자는 모두 run_id다. 기존 REST 응답의 id 필드는 제거되었으므로 클라이언트도 run_id를 읽어야 한다. 프로젝트·세션의 id와 SSE 프레임의 id(이벤트 순번)는 그대로다.
 
 ## SSE 응답

@@ -110,3 +110,8 @@
 ## 관리 API 리뷰 — 2026-10-04
 
 [075](075-project-memory-document.md)에서 프로젝트 메모리를 단일 문서/API로 정리했다. 다음 세션 API 리뷰에서 프로젝트 간 세션 이동은 요구사항이 없다는 결정으로 [076](076-session-project-fixed.md)에서 제거했다. 이동/복사 기능은 현재 개발 항목이 아니다. [077](077-session-settings-contract.md)에서 settings를 kernel_profile로 제한하고 생성 시 기본값·허용 목록을 검증/저장했다. Run 모델/승인 실행 정책과 분리했으며 기존 데이터 소급 보정·실제 원격 커널 가용성은 미검증이다. 남은 관리 API 리뷰는 프론트의 입력 가능 여부·실행 Run 조회 연결이며 API/DB 상태 표현을 먼저 확정한다.
+
+
+## 세션 관리 API 리뷰 반영
+
+076에서 프로젝트 간 세션 이동을 제거했고, 077에서 kernel_profile만 생성 시 검증·확정하도록 제한했다. 078에서 세션 공개 Run/대화 availability와 실제 새 요청·resume 정책을 통일했다. 현재 계약은 [세션 API](../session-api.md)다. 프론트의 초기/복귀 GET→기존 Run SSE 연결과 busy/blocked/allowed_actions 표시를 실제 UI에서 확인하는 것은 후속 통합 검증 범위다. 이름 변경/삭제 권한을 availability로 대체하지 않는다. 기존 Message CUD·Workflow CRUD의 후순위 결정은 유지한다.

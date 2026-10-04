@@ -174,6 +174,7 @@ async def probes():
         is_default=False, created_at=now, updated_at=now, sessions=["already loaded child"]
     )).model_dump()
     session_response = SessionResource.model_validate(SimpleNamespace(
+        active_run=None, availability={"status":"available","allowed_actions":["send_message"],"reason":None},
         session_id=uuid4(), project_id=project, session_name="offline", settings={},
         current_leaf_message_id=None, created_at=now, updated_at=now,
         messages=["already loaded child"]

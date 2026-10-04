@@ -87,13 +87,16 @@ class RunResume(BaseModel):
     resume_token: UUID
 
 
+PublicRunStatus = Literal["pending", "running", "waiting_input", "waiting_executor",
+                          "success", "error", "timeout", "canceled", "recovery_required"]
+
+
 class PublicRunResource(BaseModel):
     main_model_name: str | None = None
     model_revision: str | None = None
     run_id: UUID = Field(description="Stable public Run ID across HITL resumes and Executor completion.")
     session_id: UUID
-    status: Literal["pending", "running", "waiting_input", "waiting_executor",
-                    "success", "error", "timeout", "canceled", "recovery_required"]
+    status: PublicRunStatus
     resume_token: UUID | None = None
     interrupt: list[dict[str, Any]] | None = None
     failure: dict[str, Any] | None = None

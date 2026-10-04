@@ -31,20 +31,9 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
     owner = "queue:unclaimed"
     origin: AgentRunModel | None = None
     try:
-        from api_service.models.common.session_execution_model import SessionExecutionModel
-        recovering = await db.scalar(select(SessionExecutionModel.session_id).where(
-            SessionExecutionModel.session_id == session_id,
-            SessionExecutionModel.recovery_required.is_(True),
-        ))
-        if recovering is not None:
-            raise RunConflict("Session execution requires recovery.")
+        from api_service.services.session_activity import require_input
         if payload.command is None:
-            unfinished = await db.scalar(select(TaskModel.task_id).where(
-                TaskModel.session_id == session_id,
-                TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
-            ).limit(1))
-            if unfinished is not None:
-                raise RunConflict("Session has an unfinished task; resume its requested input instead.")
+            await require_input(db, session_id)
             model_selection = select_model(payload.main_model_name)
             # Queue 대기 중에도 동일 Session의 두 분석 요청이 들어오지 못하게 Task를 선점합니다.
             task = TaskService.create_model(
@@ -65,14 +54,7 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
                 raise RunConflict("Resume target is no longer the current interrupt.")
             if any(item.get("kind") == "EXECUTOR_EVENT" for item in (origin.interrupt or []) if isinstance(item, dict)):
                 raise RunConflict("Session is waiting for Executor; user resume is not allowed.")
-            conflicting = select(TaskModel.task_id).where(
-                TaskModel.session_id == session_id,
-                TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
-            )
-            if origin.task_id is not None:
-                conflicting = conflicting.where(TaskModel.task_id != origin.task_id)
-            if await db.scalar(conflicting.limit(1)) is not None:
-                raise RunConflict("Another unfinished task owns this session.")
+            await require_input(db, session_id, resume_public_id=origin.public_run_id)
             root = await db.get(AgentRunModel, origin.public_run_id)
             model_selection = (root.metadata_json or {}).get("_model_selection")
             validate_model(model_selection)

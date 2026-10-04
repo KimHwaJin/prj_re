@@ -10,8 +10,9 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
-from api_service.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus, TaskStatus
+from api_service.core.enums import AgentRunStatus, DeleteYN, LLMRunStatus
 from api_service.models.common.agent_command_model import AgentCommandModel
 from api_service.models.common.agent_run_model import AgentRunModel
 from api_service.models.common.llm_run_model import LLMRunModel
@@ -20,8 +21,7 @@ from api_service.models.common.session_model import SessionModel
 from api_service.models.common.session_execution_model import SessionExecutionModel
 from api_service.models.common.task_model import TaskModel
 from api_service.repositories.user_repository import UserRepository
-
-TERMINAL_TASKS = (TaskStatus.SUCCESS, TaskStatus.ERROR, TaskStatus.TIMEOUT, TaskStatus.CANCELED)
+from api_service.runs.public_status import TERMINAL_TASKS
 
 
 async def lock_projects(db: AsyncSession, user_id: UUID, project_ids, *, exclusive=False):
@@ -79,12 +79,17 @@ def unfinished_work_conditions(*, session_ids=None, session_id=None):
             matches(model.session_id), *conditions,
         ).correlate_except(model).exists()
 
+    newer = aliased(AgentRunModel)
+    latest_id = (select(newer.run_id).where(newer.public_run_id == AgentRunModel.public_run_id)
+        .order_by(newer.created_at.desc(), newer.run_id.desc()).limit(1)
+        .correlate(AgentRunModel).scalar_subquery())
+    # Historical taskless interrupts must not lock a resumed/completed public Run.
     return {
         "unfinished_command": exists(AgentCommandModel, AgentCommandModel.state.not_in(("DONE", "IGNORED", "FAILED"))),
         "unfinished_task": exists(TaskModel, or_(
             TaskModel.status.not_in(TERMINAL_TASKS), TaskModel.recovery_required.is_(True),
         )),
-        "unfinished_run": exists(AgentRunModel, or_(
+        "unfinished_run": exists(AgentRunModel, AgentRunModel.run_id == latest_id, or_(
             AgentRunModel.status.in_((AgentRunStatus.PENDING, AgentRunStatus.RUNNING)),
             (AgentRunModel.status == AgentRunStatus.INTERRUPTED) & AgentRunModel.task_id.is_(None),
         )),

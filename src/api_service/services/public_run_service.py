@@ -3,6 +3,7 @@
 No second state machine: one SQL snapshot combines the latest invocation and
 Task. Workers still claim invocation IDs; checkpoints keep their original IDs.
 """
+from api_service.runs.public_status import public_status
 from api_service.runs.admission import enqueue
 from api_service.runs.cancellation import cancel_task
 from api_service.runs.requests import validate_replay
@@ -29,16 +30,11 @@ TERMINAL = {"success", "error", "timeout", "canceled"}
 
 
 def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
-    status = latest.status.value
-    if task and task.status in TaskService.TERMINAL_STATUSES:
-        status = task.status.value
-    elif status == AgentRunStatus.INTERRUPTED:
-        status = "waiting_executor" if any(
-            item.get("kind") == "EXECUTOR_EVENT" for item in (latest.interrupt or [])
-        ) else "waiting_input"
     recovery = bool(task and task.recovery_required)
-    if recovery:
-        status = "recovery_required"
+    status = public_status(latest.status, task_status=task.status if task else None,
+        recovery_required=recovery, executor_wait=any(
+            isinstance(item, dict) and item.get("kind") == "EXECUTOR_EVENT"
+            for item in (latest.interrupt or [])))
     terminal = status in TERMINAL
     times = [root.updated_at, latest.updated_at] + ([task.updated_at] if task else [])
     return PublicRunResource(

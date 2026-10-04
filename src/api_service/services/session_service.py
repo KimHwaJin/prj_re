@@ -79,17 +79,10 @@ class SessionService:
             settings=payload.settings,
         )
         await db.commit()
-        await db.refresh(session)
-        return session
-
-    @staticmethod
-    async def read(db: AsyncSession, user_id: UUID, session_id: UUID) -> SessionModel:
-        session = await SessionRepository.get_active_by_user(
-            db, user_id=user_id, session_id=session_id,
-        )
-        if session is None:
-            raise HTTPException(status_code=404, detail="Session not found.")
-        # Message history is only loaded by the paginated messages endpoint.
+        # The public response now uses a fresh scalar activity snapshot. Avoid
+        # another full Session refresh with the normal non-expiring factory.
+        if db.sync_session.expire_on_commit:
+            await db.refresh(session)
         return session
 
     @staticmethod
@@ -118,7 +111,10 @@ class SessionService:
             session.session_name = name
 
         await db.commit()
-        await db.refresh(session)
+        # The public response now uses a fresh scalar activity snapshot. Avoid
+        # another full Session refresh with the normal non-expiring factory.
+        if db.sync_session.expire_on_commit:
+            await db.refresh(session)
         return session
 
     @staticmethod
