@@ -67,6 +67,10 @@ if cfg.get('hold_owner_probe'):
     def track_checkin(connection,record):
         crud_owners.pop(id(record),None)
 
+if cfg.get('query_audit'):
+    from query_audit import install
+    install(engine, metrics, enabled)
+
 original_claim=worker.claim_one
 async def claim():
     result=await original_claim()

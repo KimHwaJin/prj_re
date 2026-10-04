@@ -7,6 +7,7 @@ from psycopg import sql
 from sqlalchemy.engine import make_url
 ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser();p.add_argument('--database-url',required=True);p.add_argument('--redis-url',required=True);p.add_argument('--source-root',type=Path,default=ROOT);p.add_argument('--source-commit',required=True);p.add_argument('--output',required=True,type=Path)
+p.add_argument('--query-audit',action='store_true',help='Record transaction-local SQL origins; diagnostic only, excluded from speed comparisons')
 p.add_argument('--cpu-profile',action='store_true',help='CPU clock cProfile in main and offload threads; separate from speed trials')
 p.add_argument('--executor-root-base',action='store_true',help='Exercise default /api/v1 paths with a root Executor origin')
 p.add_argument('--reverse-event-batches',action='store_true',help='Deliver each fixture operation batch in descending sequence order')
@@ -117,7 +118,7 @@ async def trial(n,c,repeat):
  else:
   settings.pop('AGENT_WORKER_NOTIFY_ENABLED');settings.pop('AGENT_WORKER_RECONCILE_INTERVAL_SECONDS')
  if a.cache_size is not None:settings['DATABASE_PREPARED_STATEMENT_CACHE_SIZE']=a.cache_size
- config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'observation_profile':a.observation_profile,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile,'executor_trace':a.executor_trace,'cpu_profile':a.cpu_profile})
+ config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'observation_profile':a.observation_profile,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile,'executor_trace':a.executor_trace,'cpu_profile':a.cpu_profile,'query_audit':a.query_audit})
  env={k:v for k,v in os.environ.items() if k in ('PATH','HOME','TMPDIR','LANG','LC_ALL')}
  env.update(PYTHONPATH=str(ROOT/'src'),PYTHONDONTWRITEBYTECODE='1')
  with tempfile.TemporaryDirectory(prefix='service-perf-config-') as directory:
@@ -304,7 +305,7 @@ async def trial(n,c,repeat):
     result['checkpoint_profile']=await asyncio.to_thread(capture,CP,threads)
     result['config']['checkpoint_profile']=True
     result['config']['checkpoint_lock_profile']=a.checkpoint_lock_profile
-   result['config'].update(cpu_profile=a.cpu_profile,executor_trace=a.executor_trace,executor_root_base=a.executor_root_base,reverse_event_batches=a.reverse_event_batches)
+   result['config'].update(query_audit=a.query_audit,cpu_profile=a.cpu_profile,executor_trace=a.executor_trace,executor_root_base=a.executor_root_base,reverse_event_batches=a.reverse_event_batches)
    private_json(folder/'raw.json',json.loads(json.dumps(result,default=str)))
    assert result['passed'],errors
    assert not mock_metrics.get('tasks_failed')
