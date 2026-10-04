@@ -241,6 +241,7 @@ MODELS = {
     'MemoryResource': '프로젝트당 하나의 메모리 문서와 버전·최종 변경 시각. 별도 memory_id가 없다.',
 
     'RunRequest': '새 입력 또는 현재 Run의 사용자 재개 요청.', 'RunCancel': 'Run 취소 API body.',
+    'PublicRunSummary': '목록용 공개 Run 요약. 상세 대기 화면·최종 결과·resume token은 단건 조회한다.',
     'PublicRunResource': '공개 Run의 상태·대기 화면·최종 결과.', 'AgentRunLogResource': '저장된 Agent 실행 로그.',
     'RunEvent': '저장 SSE 이벤트의 공통 envelope.', 'PlanView': '코드 없는 사용자용 계획 확인 화면.',
     'InteractionEvent': '계획 확인 HITL 열림/갱신 이벤트.', 'InteractionResolvedEvent': '계획 승인 완료 이벤트.',
@@ -264,7 +265,7 @@ MODELS = {
     'RepairPayload': '수정 제안·변경 단계·권한·횟수 정보.', 'ClarificationData': '추가 질문 화면 본문.',
     'ClarificationPayload': '추가 질문과 안내·재작성 정책.',
     'DeleteYN': '비활성/삭제 표시 Y/N.', 'HTTPValidationError': '요청 유효성 검증 실패 상세.',
-    'PageInfo': '다음 페이지 커서·존재 여부.', 'Page_PublicRunResource_': 'Run 목록 및 페이지 정보.',
+    'PageInfo': '다음 페이지 커서·존재 여부.', 'Page_PublicRunResource_': '과거 전체 Run 응답 목록 형식.', 'Page_PublicRunSummary_': 'Run 요약 목록 및 페이지 정보.',
     'UserMe': '현재 로그인한 사용자와 CSRF·만료 정보.', 'UserRole': '사용자 권한 admin/user.',
     'ValidationError': '개별 필드의 요청 검증 오류.',
     'id': 'Workflow/Step/decision/산출물의 규격화된 문자열 ID.',

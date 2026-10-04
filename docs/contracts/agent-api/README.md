@@ -31,6 +31,7 @@ OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명�
 
 ## 응답과 이벤트
 
+- [Run 목록](responses/run_list.json) · [필드 주석](responses/run_list.jsonc): PublicRunSummary 목록이며 결과/인터럽트/token이 없다. 해당 Run의 단건 조회로 상세를 받는다.
 - [pending](responses/pending.json) · [필드 주석](responses/pending.jsonc), [waiting_input](responses/waiting_input.json) · [필드 주석](responses/waiting_input.jsonc): PublicRunResource 전체.
 - [plan_review](events/plan_review.json) · [필드 주석](events/plan_review.jsonc), [planning_question](events/planning_question.json) · [필드 주석](events/planning_question.jsonc), [decision_review](events/decision_review.json) · [필드 주석](events/decision_review.jsonc), [repair_review](events/repair_review.json) · [필드 주석](events/repair_review.jsonc): typed interaction envelope.
 - [message](events/message.json) · [필드 주석](events/message.jsonc), [plan_resolved](events/plan_resolved.json) · [필드 주석](events/plan_resolved.jsonc), [run_snapshot](events/run_snapshot.json) · [필드 주석](events/run_snapshot.jsonc): 메시지·화면 종료·현재 상태.
@@ -44,3 +45,5 @@ events 파일은 SSE data의 JSON이다. 실제 전송 시 저장 이벤트에 i
 Schema를 수정하면 current code에서 다시 생성하고 예제를 재검증해야 한다. OpenAPI만으로 SSE 및 유연한 최종 결과 payload를 완전히 복원할 수 없으므로 주 문서와 함께 사용한다.
 
 075에서 프로젝트 공유 메모리 조회·전체 수정·초기화를 `/projects/{project_id}/memory` 하나의 경로로 통일했다. section/key 경로와 항목별 응답 모델은 제거했으며 문서 content/version을 사용한다. 기존 Run 요청·응답·SSE envelope 계약은 유지한다. [메모리 필드·설정·예제](../../project-memory.md)를 참고한다.
+
+079에서 Run 목록을 PublicRunSummary로 분리하고 중복 join 경로를 삭제했다. 이 사본도 현재 scoped OpenAPI로 재생성했다. 상세 접수/조회/SSE와 로그 조회 계약은 유지했다.

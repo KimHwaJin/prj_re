@@ -91,6 +91,20 @@ PublicRunStatus = Literal["pending", "running", "waiting_input", "waiting_execut
                           "success", "error", "timeout", "canceled", "recovery_required"]
 
 
+class PublicRunSummary(BaseModel):
+    """List entry only; fetch the Run detail for results or HITL actions."""
+    run_id: UUID = Field(description="Stable public Run ID across resumes; use it for detail GET/SSE.")
+    session_id: UUID
+    status: PublicRunStatus
+    main_model_name: str | None = None
+    model_revision: str | None = None
+    recovery_required: bool = False
+    created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+
 class PublicRunResource(BaseModel):
     main_model_name: str | None = None
     model_revision: str | None = None

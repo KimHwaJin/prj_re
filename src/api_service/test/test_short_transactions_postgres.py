@@ -134,6 +134,9 @@ async def test_two_runs_share_one_connection_and_crud_works_during_model_wait(sm
         queued = []
         for sid in sessions:
             state = (await h.client.get(f'/api/v1/sessions/{sid}/runs', headers=headers(h.user['user_id']))).json()['items'][0]
+            # List entries no longer carry the current HITL token/payload.
+            state = (await h.client.get(f"/api/v1/sessions/{sid}/runs/{state['run_id']}",
+                                       headers=headers(h.user['user_id']))).json()
             response = await h.client.post(f"/api/v1/sessions/{sid}/runs",
                 headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
                 json={'run_id':state['run_id'], 'command': {'resume': {'action':'approve_plan', 'plan_id':'test-plan', 'plan_revision':1}}, 'resume_token': state['resume_token']})

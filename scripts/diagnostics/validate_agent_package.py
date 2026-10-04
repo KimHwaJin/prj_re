@@ -123,6 +123,10 @@ for suffix in ('cancel', 'stream'):
     assert '/api/v1/sessions/{session_id}/runs/{run_id}/' + suffix in paths
 
 assert '/api/v1/sessions/{session_id}/runs/{run_id}/resume' not in paths
+assert '/api/v1/sessions/{session_id}/runs/{run_id}/join' not in paths
+assert set(schemas['PublicRunSummary']['properties']) == {'run_id', 'session_id', 'status', 'main_model_name',
+    'model_revision', 'recovery_required', 'created_at', 'updated_at', 'started_at', 'completed_at'}
+assert paths['/api/v1/sessions/{session_id}/runs']['get']['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_PublicRunSummary_')
 assert '/api/v1/sessions/{session_id}/runs/stream' in paths
 assert files('service_contracts').joinpath('resources/workflow-definition.schema.json').is_file()
 assert files('agent_service.agents.analysis.agent_builders.conversation').joinpath('prompt.md').is_file()

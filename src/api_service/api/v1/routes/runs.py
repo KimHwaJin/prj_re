@@ -17,10 +17,11 @@ from api_service.schemas.common.run_schema import (
     RunCancel,
     RunStart,
     PublicRunResource,
+    PublicRunSummary,
     RunResume,
 )
 from service_contracts.run_request import RunRequest
-from api_service.services.public_run_service import PublicRunService, project
+from api_service.services.public_run_service import PublicRunService
 from config import settings
 from api_service.core.database import get_session_factory
 
@@ -88,7 +89,7 @@ def parse_sequence(value):
         raise HTTPException(400, 'Last-Event-ID must be a non-negative integer.') from exc
 
 
-@router.get("/sessions/{session_id}/runs", response_model=Page[PublicRunResource])
+@router.get("/sessions/{session_id}/runs", response_model=Page[PublicRunSummary])
 async def list_runs(session_id: UUID, params: ListParams = Depends(list_params), user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
     await require_session(db, user_id, session_id)
     # Page only IDs/timestamps; hydrate the selected public states in one query.
@@ -98,8 +99,8 @@ async def list_runs(session_id: UUID, params: ListParams = Depends(list_params),
             AgentRunModel.public_run_id == AgentRunModel.run_id,
         ), model=AgentRunModel, id_name="run_id", params=params,
     )
-    snapshots = await PublicRunService.snapshots(db, [item.run_id for item in items])
-    return {"items": [project(*snapshots[item.run_id]) for item in items], "page": page}
+    summaries = await PublicRunService.summaries(db, [item.run_id for item in items])
+    return {"items": [summaries[item.run_id] for item in items], "page": page}
 
 
 @router.get("/sessions/{session_id}/runs/{run_id}", response_model=PublicRunResource)
@@ -129,11 +130,6 @@ async def list_run_logs(
         )
     ).all()
     return [AgentRunLogResource.model_validate(log).model_copy(update={"run_id": public.run_id}) for log in logs]
-
-
-@router.get("/sessions/{session_id}/runs/{run_id}/join", response_model=PublicRunResource)
-async def join_run(session_id: UUID, run_id: UUID, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return await PublicRunService.read(db, user_id, session_id, run_id)
 
 
 @router.post("/sessions/{session_id}/runs/{run_id}/cancel", response_model=PublicRunResource, status_code=status.HTTP_202_ACCEPTED)

@@ -9,7 +9,7 @@ from api_service.runs.cancellation import cancel_task
 from api_service.runs.requests import validate_replay
 from api_service.runs.projection import finish_run
 from api_service.runs.repository import require_session
-from api_service.runs.public_state_query import PUBLIC_RUN_READ, PUBLIC_RUN_SNAPSHOTS
+from api_service.runs.public_state_query import PUBLIC_RUN_READ, PUBLIC_RUN_SNAPSHOTS, PUBLIC_RUN_SUMMARIES
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -20,7 +20,7 @@ from sqlalchemy.engine import Row
 from api_service.core.enums import AgentRunStatus
 from api_service.models.common.agent_run_model import AgentRunModel as Run
 from api_service.models.common.task_model import TaskModel as Task
-from api_service.schemas.common.run_schema import PublicRunResource, RunCreate, RunResume, RunStart, RunCancel
+from api_service.schemas.common.run_schema import PublicRunResource, PublicRunSummary, RunCreate, RunResume, RunStart, RunCancel
 from api_service.services.task_service import TaskService
 from api_service.services.helpers import utc_now
 from api_service.services import resource_lifecycle as lifecycle
@@ -29,28 +29,34 @@ from api_service.services import resource_lifecycle as lifecycle
 TERMINAL = {"success", "error", "timeout", "canceled"}
 
 
-def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
+def _header(root, latest, task, *, executor_wait):
     recovery = bool(task and task.recovery_required)
     status = public_status(latest.status, task_status=task.status if task else None,
-        recovery_required=recovery, executor_wait=any(
-            isinstance(item, dict) and item.get("kind") == "EXECUTOR_EVENT"
-            for item in (latest.interrupt or [])))
-    terminal = status in TERMINAL
+        recovery_required=recovery, executor_wait=executor_wait)
     times = [root.updated_at, latest.updated_at] + ([task.updated_at] if task else [])
-    return PublicRunResource(
-        main_model_name=(root.model_selection or {}).get("name"),
-        model_revision=(root.model_selection or {}).get("revision"),
-        run_id=root.run_id, session_id=root.session_id, status=status,
+    return dict(main_model_name=(root.model_selection or {}).get("name"),
+        model_revision=(root.model_selection or {}).get("revision"), run_id=root.run_id,
+        session_id=root.session_id, status=status, recovery_required=recovery,
+        created_at=root.created_at, updated_at=max(times), started_at=root.started_at,
+        completed_at=(task.completed_at if task else latest.completed_at) if status in TERMINAL else None)
+
+
+def project(root: Row, latest: Row, task: Row | None) -> PublicRunResource:
+    header = _header(root, latest, task, executor_wait=any(
+        isinstance(item, dict) and item.get("kind") == "EXECUTOR_EVENT" for item in (latest.interrupt or [])))
+    status = header["status"]
+    return PublicRunResource(**header,
         resume_token=latest.run_id if status == "waiting_input" and not (task and task.cancel_requested_at) else None,
         interrupt=latest.interrupt if status in {"waiting_input", "waiting_executor"} else None,
-        failure=latest.failure, result=latest.agent_response if terminal else None,
-        recovery_required=recovery, checkpoint_run_id=UUID(str(root.checkpoint_run_id)) if root.checkpoint_run_id else root.run_id,
-        task_id=latest.task_id, attempt_count=latest.attempt_count,
-        next_attempt_at=latest.next_attempt_at, cancel_reason=latest.cancel_reason,
-        cancel_requested_at=task.cancel_requested_at if task else latest.cancel_requested_at,
-        created_at=root.created_at, updated_at=max(times), started_at=root.started_at,
-        completed_at=(task.completed_at if task else latest.completed_at) if terminal else None,
-    )
+        failure=latest.failure, result=latest.agent_response if status in TERMINAL else None,
+        checkpoint_run_id=UUID(str(root.checkpoint_run_id)) if root.checkpoint_run_id else root.run_id,
+        task_id=latest.task_id, attempt_count=latest.attempt_count, next_attempt_at=latest.next_attempt_at,
+        cancel_reason=latest.cancel_reason,
+        cancel_requested_at=task.cancel_requested_at if task else latest.cancel_requested_at)
+
+
+def project_summary(root, latest, task) -> PublicRunSummary:
+    return PublicRunSummary(**_header(root, latest, task, executor_wait=bool(latest.executor_wait)))
 
 
 class PublicRunService:
@@ -64,6 +70,14 @@ class PublicRunService:
             return {}
         rows = await db.execute(PUBLIC_RUN_SNAPSHOTS, {"public_run_ids": ids})
         return {r.run_id: (r, invocation, task if task.task_id is not None else None)
+                for r, invocation, task in rows}
+
+    @staticmethod
+    async def summaries(db: AsyncSession, ids: list[UUID]):
+        if not ids:
+            return {}
+        rows = await db.execute(PUBLIC_RUN_SUMMARIES, {"public_run_ids": ids})
+        return {r.run_id: project_summary(r, invocation, task if task.task_id is not None else None)
                 for r, invocation, task in rows}
 
     @staticmethod

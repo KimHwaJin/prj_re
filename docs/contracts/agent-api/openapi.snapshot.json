@@ -275,7 +275,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page_PublicRunResource_"
+                  "$ref": "#/components/schemas/Page_PublicRunSummary_"
                 }
               }
             }
@@ -546,84 +546,6 @@
                     "$ref": "#/components/schemas/AgentRunLogResource"
                   },
                   "title": "Response List Run Logs Api V1 Sessions  Session Id  Runs  Run Id  Logs Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "LoginSession": []
-          }
-        ]
-      }
-    },
-    "/api/v1/sessions/{session_id}/runs/{run_id}/join": {
-      "get": {
-        "tags": [
-          "runs"
-        ],
-        "summary": "Join Run",
-        "operationId": "join_run_api_v1_sessions__session_id__runs__run_id__join_get",
-        "parameters": [
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Session Id"
-            },
-            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다."
-          },
-          {
-            "name": "run_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Run Id"
-            },
-            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다."
-          },
-          {
-            "name": "X-CSRF-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
-              "title": "X-Csrf-Token"
-            },
-            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublicRunResource"
                 }
               }
             }
@@ -1557,11 +1479,11 @@
         ],
         "title": "PageInfo"
       },
-      "Page_PublicRunResource_": {
+      "Page_PublicRunSummary_": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/PublicRunResource"
+              "$ref": "#/components/schemas/PublicRunSummary"
             },
             "type": "array",
             "title": "Items",
@@ -1577,7 +1499,7 @@
           "items",
           "page"
         ],
-        "title": "Page[PublicRunResource]"
+        "title": "Page[PublicRunSummary]"
       },
       "ParameterChange": {
         "properties": {
@@ -1937,6 +1859,116 @@
           "updated_at"
         ],
         "title": "PublicRunResource"
+      },
+      "PublicRunSummary": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id",
+            "description": "사용자 요청 전체 흐름의 공개 Run UUID. resume에서도 같은 Run을 이어간다. 필수 필드."
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id",
+            "description": "대화 세션 UUID. 같은 세션의 동시 실행은 제한되며 다른 세션과 구분된다. 필수 필드."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "waiting_input",
+              "waiting_executor",
+              "success",
+              "error",
+              "timeout",
+              "canceled",
+              "recovery_required"
+            ],
+            "title": "Status",
+            "description": "이 객체의 현재 상태. Run 실행 상태, HITL open/resolved, 계획 Step planned/excluded 등 문맥별로 값이 다르다. 필수 필드."
+          },
+          "main_model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Model Name",
+            "description": "등록된 모델 별칭. 새 요청에서 생략하면 기본 모델을 사용하며 재개에서는 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "model_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Revision",
+            "description": "Run에 고정된 모델 설정 revision. Workflow나 승인 화면의 revision과 별개다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "recovery_required": {
+            "type": "boolean",
+            "title": "Recovery Required",
+            "default": false,
+            "description": "자동 진행이 안전하지 않아 복구 판단이 필요한지 표시하는 값. 완료 성공으로 해석하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "Run 실행 시작 시각. 시작 전에는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "Run 종료 시각. 미종료 상태에서는 null일 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "session_id",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PublicRunSummary",
+        "description": "List entry only; fetch the Run detail for results or HITL actions."
       },
       "RepairAction": {
         "properties": {

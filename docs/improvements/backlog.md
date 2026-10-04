@@ -115,3 +115,8 @@
 ## 세션 관리 API 리뷰 반영
 
 076에서 프로젝트 간 세션 이동을 제거했고, 077에서 kernel_profile만 생성 시 검증·확정하도록 제한했다. 078에서 세션 공개 Run/대화 availability와 실제 새 요청·resume 정책을 통일했다. 현재 계약은 [세션 API](../session-api.md)다. 프론트의 초기/복귀 GET→기존 Run SSE 연결과 busy/blocked/allowed_actions 표시를 실제 UI에서 확인하는 것은 후속 통합 검증 범위다. 이름 변경/삭제 권한을 availability로 대체하지 않는다. 기존 Message CUD·Workflow CRUD의 후순위 결정은 유지한다.
+
+
+## Run 조회 API 리뷰 — 079
+
+[079](079-run-read-contract.md)에서 목록 요약과 상세 결과를 분리하고 단건 GET과 중복인 join을 제거했다. 현 명세는 [Run API](../public-run-api.md#run-목록과-상세-조회--079)다. 로그는 현재 저장/조회 모두 유지한다. 관리용 조회가 필요하다면 owner/admin 권한·공개 payload·페이지네이션을 먼저 합의한다. 프론트 진행/재접속에는 기존 SSE를 사용하며 별도 로그 GET이 필수는 아니다. 목록 token/result나 join을 사용한 외부 프론트의 이행 확인은 후속 통합 검증이다.

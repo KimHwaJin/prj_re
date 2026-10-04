@@ -95,7 +95,7 @@ async def test_multiple_resumes_keep_id_and_list_one_resource(runtime, monkeypat
     # Old private IDs resolve to current public state, never a stale root interrupt.
     alias = await state(h, invocations[-1].run_id)
     assert alias['run_id'] == first['run_id'] and alias['resume_token'] == str(invocations[-1].run_id)
-    assert (await h.client.get(path(h, first['run_id'])+'/join', headers=headers(h.user['user_id']))).json() == alias
+    assert (await h.client.get(path(h, first['run_id'])+'/join', headers=headers(h.user['user_id']))).status_code == 404
 
 
 @pytest.mark.asyncio
@@ -147,7 +147,7 @@ async def test_owner_and_cross_run_tokens_are_rejected(runtime, monkeypatch):
     current = await state(h, first['run_id'])
     current['resume_token'] = second['run_id']
     assert (await resume(h, current)).status_code == 409
-    for suffix in ('', '/logs', '/stream', '/join'):
+    for suffix in ('', '/logs', '/stream'):
         assert (await h.client.get(path(h, first['run_id'])+suffix, headers=headers('admin'))).status_code == 404
     for suffix, body in [('/cancel',{})]:
         assert (await h.client.post(path(h, first['run_id'])+suffix, headers={**headers('admin'),'Idempotency-Key':'x'}, json=body)).status_code == 404

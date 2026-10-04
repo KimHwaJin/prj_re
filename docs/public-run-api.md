@@ -18,9 +18,8 @@
 | POST | /sessions/{session_id}/runs/stream | 접수 후 SSE 연결 | 200 + text/event-stream |
 | GET | /sessions/{session_id}/runs/{run_id} | 상태·대기 내용·최종 결과 | 200 + PublicRunResource |
 | GET | /sessions/{session_id}/runs/{run_id}/stream | 기존 Run 구독·재접속 | 200 + text/event-stream |
-| GET | /sessions/{session_id}/runs | Run 목록 | 200 + 페이지 JSON |
+| GET | /sessions/{session_id}/runs | 가벼운 Run 요약 목록 | 200 + Page[PublicRunSummary] |
 | GET | /sessions/{session_id}/runs/{run_id}/logs | 실행 로그 | 200 + 로그 배열 |
-| GET | /sessions/{session_id}/runs/{run_id}/join | 즉시 상태 조회 별칭 | 200 + PublicRunResource |
 | POST | /sessions/{session_id}/runs/{run_id}/cancel | 취소 요청 | 202 + PublicRunResource |
 
 `join`은 완료까지 기다리는 API가 아니다. 별도 `/runs/{run_id}/resume`이나 공개 직접 `ainvoke` API는 없다. 현재 RunRequest에는 agent_id/workflow 선택 필드가 없으며 기본 분석 Runtime을 호출한다. 플랫폼의 `/api/v1/{workflow}/run`은 이번 레포의 별도 구현 완료 API가 아니다.
@@ -162,7 +161,7 @@ approve_decisions의 values는 현재 payload.decisions의 decision_id를 모두
 
 ## Run JSON 응답
 
-[전체 접수 응답 예제](contracts/agent-api/responses/pending.json) · [필드 주석](contracts/agent-api/responses/pending.jsonc), [계획 대기 응답 예제](contracts/agent-api/responses/waiting_input.json) · [필드 주석](contracts/agent-api/responses/waiting_input.jsonc). 아래 표는 PublicRunResource의 모든 필드다. null 가능 여부·타입은 [schema](contracts/agent-api/payload-schemas.json) · [필드 주석](contracts/agent-api/payload-schemas.jsonc)에서 확인한다.
+[전체 접수 응답 예제](contracts/agent-api/responses/pending.json) · [필드 주석](contracts/agent-api/responses/pending.jsonc), [계획 대기 응답 예제](contracts/agent-api/responses/waiting_input.json) · [필드 주석](contracts/agent-api/responses/waiting_input.jsonc). 아래 표는 단건 GET·접수/재개/취소·SSE snapshot의 PublicRunResource 필드다. 목록 GET은 아래 별도 요약 계약을 따른다. null 가능 여부·타입은 [schema](contracts/agent-api/payload-schemas.json) · [필드 주석](contracts/agent-api/payload-schemas.jsonc)에서 확인한다.
 
 | 필드 | 의미 |
 |---|---|
@@ -319,3 +318,23 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 ## 프로젝트 메모리 갱신 결과 051
 
 Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리는 `/projects/{project_id}/memory`의 동일 경로의 GET·PUT·DELETE로 제공한다. 프로젝트당 하나의 Markdown content와 문서 version을 사용하며, PUT은 전체 문서 수정, DELETE는 버전을 증가시키는 초기화다. `auto_context`에서 실제 메모리 갱신을 시도한 경우 활동 이벤트의 `kind=project_memory`와 답변 최종 결과의 `final_response.project_memory`에 saved/not_saved 결과를 전달한다. 실패·동시 갱신 충돌을 저장 성공으로 표시하지 않는다. 내부 model의 memory_updates는 프론트가 전달하는 필드가 아니다. [각 필드와 설정](project-memory.md)을 참고한다.
+
+
+## Run 목록과 상세 조회 — 079
+
+`GET /sessions/{session_id}/runs`는 `{items:[PublicRunSummary],page:{next_cursor,has_next}}`를 반환한다. cursor/limit(1~200)/정렬/날짜 범위는 기존 규칙을 유지하며 최초 공개 Run의 created_at/UUID로 정렬한다. resume 때 생긴 내부 invocation을 목록 항목으로 추가하지 않는다.
+
+| 요약 필드 | 의미 |
+|---|---|
+| run_id / session_id | 상세 GET/SSE에 사용할 공개 Run UUID / 소속 세션 |
+| status | 단건 Run과 동일한 공개 lifecycle 상태 |
+| main_model_name / model_revision | 시작 때 고정한 모델 alias / 버전 또는 null |
+| recovery_required | 해당 Task의 복구 필요 여부 |
+| created_at / updated_at | 최초 Run 접수 / root·최신 호출·Task의 최종 변경 시각 |
+| started_at / completed_at | 시작 / 실제 terminal 완료 시각 또는 null |
+
+[목록 응답 예제](contracts/agent-api/responses/run_list.json) · [모든 필드 주석](contracts/agent-api/responses/run_list.jsonc). result/failure/interrupt/resume_token·checkpoint/task/시도·취소 세부값은 목록에 없다. 결과·HITL 내용/현재 토큰이 필요하면 해당 run_id의 단건 GET을 호출한다. 목록 SQL도 큰 결과/실패/인터럽트 본문을 반환하지 않으며 필요한 Executor 대기 여부만 boolean으로 읽는다. 상세 GET·접수/재개/취소 응답·SSE run.snapshot은 기존 전체 PublicRunResource를 유지한다.
+
+079에서 단건 GET과 동일하게 즉시 반환하던 `/runs/{run_id}/join` 별칭을 삭제했다. 해당 경로는404이며 기존 사용처는 단건 GET으로 바꾼다. 서버 완료까지 기다리는 새 join 기능은 추가하지 않았다.
+
+`/runs/{run_id}/logs`의 필요성은 별도 검토 중이다. 현재 기존 API와 저장은 유지한다. 저장 로그는 중복/재생 확인과 해당 TaskEvent 생성에 연결되는 내부 기록이다. 프론트의 중간 메시지/진행/HITL/최종 결과/재접속은 기존 SSE와 상세 GET으로 처리할 수 있으므로 별도 logs 조회를 필수 단계로 쓰지 않는다. 진단용 logs의 권한·공개 필드·페이지네이션은 별도 합의 후 정리한다.
