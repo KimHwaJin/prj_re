@@ -104,10 +104,22 @@ async def require_invocation_recovery(db, run_id, reason):
 
 
 async def finalize_state(db, execution_run_id, user_id, state):
+    # Completion and cancellation serialize on fresh rows in this transaction.
+    run, task = await lock_run_and_task(db, execution_run_id)
+    return await _finalize_locked_state(db, run, task, user_id, state)
+
+
+async def _finalize_locked_state(db, run, task, user_id, state):
+    """Module-local continuation; caller retains Run/Task locks without commit.
+
+    Never reuse rows across a transaction or graph wait. Executor projection
+    already locked and checked its wait; ordinary completion locks above.
+    Recheck time-sensitive lease ownership without another row query.
+    """
+    TaskService.assert_execution_owner(run, task)
+    execution_run_id = run.run_id
     status = run_status_from_state(state)
     route = (state.get("routing_result") or {}).get("route")
-    # 완료 직전 row lock을 획득해 동시에 들어온 cancel 요청과 최종 상태를 직렬화합니다.
-    run, task = await lock_run_and_task(db, execution_run_id)
     boundaries = [getattr(item, "id", None) for item in state.get("__interrupt__", ())]
     run.metadata_json = {**(run.metadata_json or {}),
                          "_checkpoint_interrupt_id": boundaries[0] if len(boundaries) == 1 else None}
@@ -284,4 +296,4 @@ async def synchronize_agentic_execution(context: EventContext, snapshot) -> None
         if (task.recovery_required or task.status != TaskStatus.WAITING_INPUT
                 or run.status != AgentRunStatus.INTERRUPTED):
             raise DeferEvent("API invocation has not committed its wait")
-        await finalize_state(db, run_id, UUID(values["user_id"]), state)
+        await _finalize_locked_state(db, run, task, UUID(values["user_id"]), state)

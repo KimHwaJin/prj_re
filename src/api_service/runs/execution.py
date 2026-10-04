@@ -74,8 +74,8 @@ async def prepare(claim: ExecutionClaim, user_id: UUID, session_id: UUID, payloa
         run, task = await lock_run_and_task(db, claim.run_id)
         if run.session_id != session_id or task is None:
             raise ExecutionNeedsRecovery("Claimed Run does not match its session/task.")
-        await db.refresh(run)
-        await db.refresh(task)
+        # The locking SELECTs populate fresh rows and hold both row locks.
+        # Re-reading here cannot observe a concurrent update to these rows.
         # rollback은 ORM 속성을 expire하므로 취소/오류 처리에 쓸 ID는 평범한 값으로 보존합니다.
         execution_model_selection = (run.metadata_json or {}).get("_model_selection")
         execution_initial_protocol = (run.metadata_json or {}).get("_initial_protocol")
