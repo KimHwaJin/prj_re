@@ -1,4 +1,4 @@
-"""Task read-only diagnostics on the guarded, disposable PostgreSQL DB."""
+"""Run-scoped read-only diagnostics on the guarded, disposable PostgreSQL DB."""
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
@@ -21,11 +21,11 @@ from api_service.test.test_read_queries_postgres import trace_reads
 async def historical(h):
     await seed(h, 'finished_history')
     async with h.factory() as db:
-        return await db.scalar(select(Task.task_id).where(Task.session_id == UUID(h.session_id)))
+        return await db.scalar(select(Task.root_run_id).where(Task.session_id == UUID(h.session_id)))
 
 
-async def read(h, task_id, *, admin=False, actor=None):
-    path = '/api/v1' + ('/admin' if admin else '') + f'/tasks/{task_id}'
+async def read(h, run_id, *, admin=False, actor=None):
+    path = '/api/v1' + ('/admin' if admin else '') + f'/sessions/{h.session_id}/runs/{run_id}/diagnostics'
     return await h.client.get(path, headers=headers(actor or ('admin' if admin else h.user['user_id'])))
 
 
@@ -37,14 +37,14 @@ async def test_task_state_is_not_session_availability(resources, case):
     async with h.factory() as db:
         task = await db.scalar(select(Task).where(Task.session_id == UUID(h.session_id)))
     with trace_reads(h) as queries:
-        response = await read(h, task.task_id)
+        response = await read(h, task.root_run_id)
     assert response.status_code == 200, response.text
     body = response.json()
     busy = case != 'finished_history'
-    assert body['is_unfinished'] == busy
-    assert 'is_active' not in body
-    assert body['public_run_id'] == str(task.root_run_id)
-    assert body['status'] == task.status.value
+    assert body['task']['is_unfinished'] == busy
+    assert set(body) == {'run_id','session_id','observed_at','task','session_work'}
+    assert body['run_id'] == str(task.root_run_id)
+    assert body['task']['status'] == task.status.value
     assert body['session_work']['can_start_new_run'] == (not busy)
     assert body['session_work']['has_unfinished_work'] == busy
     assert body['session_work']['execution']['ownership_held'] is False
@@ -68,7 +68,7 @@ async def test_finished_task_reports_other_session_blockers(resources, case, rea
     response = await read(h, tid)
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body['is_unfinished'] is False
+    assert body['task']['is_unfinished'] is False
     assert body['session_work']['has_unfinished_work'] is True
     assert body['session_work']['can_start_new_run'] is False
     assert body['session_work']['blocking_reasons'] == [reason]
@@ -136,7 +136,7 @@ async def test_admin_routes_do_not_expand_owner_routes(resources):
     h = resources
     tid = await historical(h)
     await add_user(h, 'another')
-    paths = [f'/tasks/{tid}', f'/tasks/{tid}/runs', f'/sessions/{h.session_id}/tasks']
+    paths = [f'/sessions/{h.session_id}/runs/{tid}/{suffix}' for suffix in ('diagnostics','invocations')]
     for suffix in paths:
         for actor in ('admin','another'):
             assert (await h.client.get('/api/v1'+suffix, headers=headers(actor))).status_code == 404
@@ -144,11 +144,11 @@ async def test_admin_routes_do_not_expand_owner_routes(resources):
         assert (await h.client.get('/api/v1/admin'+suffix)).status_code == 401
         assert (await h.client.get('/api/v1/admin'+suffix, headers=headers('missing'))).status_code == 401
         assert (await h.client.get('/api/v1/admin'+suffix, headers=headers('admin'))).status_code == 200
-    for suffix in (f'/tasks/{uuid4()}', f'/tasks/{uuid4()}/runs', f'/sessions/{uuid4()}/tasks'):
+    for suffix in (f'/sessions/{h.session_id}/runs/{uuid4()}/diagnostics', f'/sessions/{uuid4()}/runs/{tid}/invocations'):
         assert (await h.client.get('/api/v1/admin'+suffix, headers=headers('admin'))).status_code == 404
     empty_sid = await add_session(h, h.user)
-    result = await h.client.get(f'/api/v1/sessions/{empty_sid}/tasks', headers=headers(h.user['user_id']))
-    assert result.json() == {'items':[], 'page':{'has_next':False, 'next_cursor':None}}
+    result = await h.client.get(f'/api/v1/sessions/{empty_sid}/runs/{tid}/diagnostics', headers=headers(h.user['user_id']))
+    assert result.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -163,7 +163,7 @@ async def test_admin_can_diagnose_hidden_resources_read_only(resources, model):
         entity.delete_yn = DeleteYN.Y
         await db.commit()
     expected = 401 if model is User else 404
-    paths = [f'/tasks/{tid}',f'/tasks/{tid}/runs',f'/sessions/{h.session_id}/tasks']
+    paths = [f'/sessions/{h.session_id}/runs/{tid}/{suffix}' for suffix in ('diagnostics','invocations')]
     for path in paths:
         assert (await h.client.get('/api/v1'+path, headers=headers(h.user['user_id']))).status_code == expected
         result = await h.client.get('/api/v1/admin'+path, headers=headers())
@@ -208,8 +208,7 @@ async def test_cursor_pagination_query_budget_and_distinct_ids(resources, admin,
     tids, invocation_ids = await many_tasks(h)
     prefix = '/api/v1' + ('/admin' if admin else '')
     hdr = headers('admin' if admin else h.user['user_id'])
-    for path, ids, field in [(f'/sessions/{h.session_id}/tasks',tids,'task_id'),
-                             (f'/tasks/{tids[0]}/runs',invocation_ids[0],'invocation_id')]:
+    for path, ids, field in [(f'/sessions/{h.session_id}/runs/{invocation_ids[0][0]}/invocations',invocation_ids[0],'invocation_id')]:
         cursor, seen = None, []
         while True:
             params = {'sort':sort, 'limit':limit}
@@ -222,7 +221,7 @@ async def test_cursor_pagination_query_budget_and_distinct_ids(resources, admin,
             body = response.json()
             seen.extend(UUID(row[field]) for row in body['items'])
             if field == 'invocation_id':
-                assert all(row['public_run_id'] == str(invocation_ids[0][0]) for row in body['items'])
+                assert all(row['run_id'] == str(invocation_ids[0][0]) for row in body['items'])
                 assert all('id' not in row for row in body['items'])
                 for query in queries:
                     assert '.input' not in query['sql'] and '.request_payload' not in query['sql']
@@ -245,7 +244,7 @@ async def test_cursor_pagination_query_budget_and_distinct_ids(resources, admin,
 async def test_long_invocation_history_is_bounded(resources):
     h = resources
     tids, invocation_ids = await many_tasks(h, count=1, invocation_count=205)
-    path = f'/api/v1/tasks/{tids[0]}/runs'
+    path = f'/api/v1/sessions/{h.session_id}/runs/{invocation_ids[0][0]}/invocations'
     response = await h.client.get(path,params={'limit':200},headers=headers(h.user['user_id']))
     assert response.status_code == 200, response.text
     body = response.json()
@@ -271,7 +270,12 @@ async def test_removed_commands_openapi_and_message_deferral(resources):
     assert 'post' in paths['/api/v1/sessions/{session_id}/runs/stream']
     assert 'post' in paths['/api/v1/sessions/{session_id}/runs/{run_id}/cancel']
     assert 'get' in paths['/api/v1/sessions/{session_id}/runs/{run_id}/stream']
-    assert not paths['/api/v1/tasks/{task_id}']['get'].get('deprecated',False)
+    assert not any('/tasks' in path for path in paths)
+    for prefix in ('', '/admin'):
+        for old in (f'/sessions/{h.session_id}/tasks', f'/tasks/{tid}', f'/tasks/{tid}/runs'):
+            assert (await h.client.get('/api/v1'+prefix+old, headers=headers())).status_code == 404
+    schemas = h.app.openapi()['components']['schemas']
+    assert 'TaskResource' not in schemas and 'TaskInvocationResource' not in schemas
     assert 'post' in paths['/api/v1/messages']
     assert 'patch' in paths['/api/v1/messages/{message_id}']
     assert 'delete' in paths['/api/v1/messages/{message_id}']

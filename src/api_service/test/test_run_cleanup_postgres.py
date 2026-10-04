@@ -166,8 +166,8 @@ async def test_stuck_watcher_is_durable_visible_and_session_stays_locked(runtime
             headers={**headers(h.user['user_id']), 'Idempotency-Key': str(uuid4())},
             json={'input': {'content': [{'type': 'text', 'text': 'second'}]}})
         assert response.status_code == 409
-        response = await h.client.get(f'/api/v1/sessions/{h.session_id}/tasks', headers=headers(h.user['user_id']))
-        assert response.status_code == 200 and response.json()['items'][0]['recovery_required'] is True
+        response = await h.client.get(f'/api/v1/sessions/{h.session_id}/runs/{queued["run_id"]}/diagnostics', headers=headers(h.user['user_id']))
+        assert response.status_code == 200 and response.json()['task']['recovery_required'] is True
         async with h.factory() as db:
             with pytest.raises(ExecutionNeedsRecovery):
                 await lock_run_and_task(db, UUID(queued['run_id']))

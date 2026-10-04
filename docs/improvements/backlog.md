@@ -125,3 +125,8 @@
 ## 진단 로그 계약 — 080
 
 logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진단 화면의 response.items 적용을 확인해야 한다. 일반 채팅은 기존 SSE와 Run 상세 GET을 사용한다. Agent 호출 횟수 최적화, Message CUD·Workflow CRUD 후순위, 실제 UI 검증 등의 기존 우선순위는 유지한다. 이번 로그 조회 정리를 로그 저장 축소나 운영 trace 구현으로 해석하지 않는다.
+
+
+## Task 조회를 공개 Run 하위로 통합 — 081
+
+[081](081-run-diagnostics-contract.md)에서 Task 독립 공개 목록/상세를 제거하고 소유자/관리자의 Run diagnostics·invocations로 통합했다. 내부 Task/Worker/checkpoint/점유 책임은 유지한다. [현재 계약](../run-diagnostics-api.md)을 따른다. 기존 Task path와 public_run_id·평면 Task 응답을 쓰는 외부 관리 화면은 Run 주소 및 nested task/session_work로 전환해야 한다. Run 연결이 없는 orphan Task 탐색은 별도 관리자 후속이며 이번에 추가하지 않았다. 사용자 입력 제어는 Session availability와 Run 상세/SSE를 사용한다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위는 유지한다.

@@ -277,9 +277,71 @@ MODELS = {
 }
 
 
+MODELS.update({
+    "RunDiagnosticsResource": "공개 Run 아래에서 읽는 내부 Task·현재 세션 점유 진단 snapshot.",
+    "TaskDiagnostics": "최신 invocation에 연결된 내부 Task의 읽기 전용 진단 정보.",
+    "SessionWorkDiagnostics": "같은 세션 전체의 현재 미완료 작업·입력 차단 원인.",
+    "SessionExecutionDiagnostics": "같은 세션의 현재 실행 점유 기록. heartbeat로 생존을 확정하지 않는다.",
+    "RunInvocationResource": "공개 Run에 속한 최초 호출·각 resume의 내부 실행 구간 진단.",
+    "Page_RunInvocationResource_": "공개 Run의 내부 실행 구간 목록과 페이지 정보. 기본50·최대200개.",
+    "AgentRunStatus": "내부 실행 구간 상태. interrupted는 사용자 대기와 Executor 대기를 직접 구분하지 않는다.",
+    "TaskStatus": "내부 Task 상태. waiting_input에는 Executor 대기도 포함될 수 있다."
+})
+DIAGNOSTIC_FIELDS = {
+    "run_id": "HITL 재개 전후에 유지되는 공개 Run ID. 내부 invocation_id와 구분한다.",
+    "session_id": "이 공개 Run이 속한 대화 세션 UUID.",
+    "observed_at": "이 진단 SQL statement의 DB 관측 시각. 실행 완료나 heartbeat 시각이 아니다.",
+    "task": "최신 실행 구간에 연결된 내부 Task 진단 정보. 연결이 없거나 다른 Session/Run이면 null이다.",
+    "session_work": "해당 Run뿐 아니라 같은 세션 전체의 현재 미완료 작업·점유 진단이다.",
+    "task_id": "내부 Task 레코드 UUID. API 조회 주소는 공개 run_id를 사용한다. 과거 Task 없는 invocation은 null이다.",
+    "graph_task_id": "Agent 그래프에서 사용하는 분석 작업 ID. 서비스 task_id와 별개다.",
+    "root_run_id": "Task에 기록된 최초 실행 구간 ID.",
+    "checkpoint_run_id": "Task에 기록된 LangGraph checkpoint 기준 ID. 진단값이며 API 경로를 조립하는 값이 아니다.",
+    "trigger_message_id": "내부 Task를 시작하게 한 메시지 UUID.",
+    "trigger_type": "내부 Task의 실행 계기 분류 문자열.",
+    "is_unfinished": "이 Task가 미종료 상태이거나 복구 확인이 필요한지. 세션 전체 상태와 별개다.",
+    "lock_owner": "Task lease에 기록된 소유자. 현재 그래프 점유는 session_work.execution에서 확인한다.",
+    "heartbeat_at": "마지막으로 기록된 heartbeat 시각. 오래됐다는 이유만으로 종료나 미점유를 확정하지 않는다.",
+    "lease_expires_at": "기록된 Task lease 만료 시각. 세션 점유 해제나 재실행 허가를 뜻하지 않는다.",
+    "cancel_requested_at": "취소 요청이 기록된 시각. 실제 종료 확인과 별개다.",
+    "failure_reason": "Task에 기록된 내부 실패 사유.",
+    "recovery_required": "Task 또는 실행 점유에 대한 복구 확인 필요 여부. 이 조회는 복구를 실행하지 않는다.",
+    "created_at": "해당 Task 또는 invocation 레코드의 DB 생성 시각.",
+    "updated_at": "해당 Task 또는 invocation 레코드의 마지막 갱신 시각.",
+    "completed_at": "해당 Task 또는 invocation의 기록된 종료 시각. invocation 종료는 공개 Run 전체 완료와 다르다.",
+    "resources_active": "연결된 User·Project·Session이 모두 활성인지. 관리자만 숨김 자원도 조회한다.",
+    "has_unfinished_work": "세션 전체에 미종료 작업·복구 필요·점유 또는 종료 불명이 존재하는지.",
+    "can_start_new_run": "새 일반 입력에 대한 보수적 진단 snapshot. HITL 재개 권한이나 예약이 아니며 UI는 세션 availability, POST는 실제 재검사를 사용한다.",
+    "blocking_reasons": "세션 전체의 새 일반 입력 차단 원인 목록. 사용자용 availability.reason과 별개의 내부 진단이다.",
+    "execution": "같은 세션의 현재 실행 점유 기록. 조회한 Run과 다른 Run의 점유일 수도 있다.",
+    "ownership_held": "DB에 세션 실행 점유가 기록되어 있는지. 워커의 실제 생존을 입증하지 않는다.",
+    "owner_kind": "기록된 점유 종류. api_run 또는 executor_event 등.",
+    "owner_id": "기록된 점유자 ID. 공개 Run 조회 경로를 조립하는 값이 아니다.",
+    "owner_process": "점유자로 기록된 프로세스 식별 문자열.",
+    "acquired_at": "기록된 세션 실행 점유 획득 시각.",
+    "recovery_reason": "세션 실행 점유 복구 확인이 필요한 것으로 기록된 사유.",
+    "invocation_id": "최초 실행·각 resume마다 생성되는 내부 실행 구간 UUID. 공개 Run ID와 다르다.",
+    "attempt_count": "해당 invocation을 Worker가 점유한 횟수. 최초 시도도 포함한다.",
+    "next_attempt_at": "해당 invocation을 다시 점유할 수 있는 다음 재시도 시각.",
+    "cancel_reason": "해당 invocation에 기록된 취소 사유.",
+    "failure": "해당 실행 구간에 기록된 실패 객체. 생산자가 정한 진단 형식이며 공개 Run 최종 결과가 아니다.",
+    "started_at": "해당 invocation의 실제 실행 시작 기록 시각.",
+    "items": "현재 페이지의 내부 실행 구간 목록. 총 개수나 공개 Run 목록이 아니다."
+}
+
 def field_description(key, path=(), parent=None):
     """Explain fields using the containing object, not only their spelling."""
     parent = parent or {}
+    diagnostic_context = any(k in {'RunDiagnosticsResource','TaskDiagnostics','SessionWorkDiagnostics',
+        'SessionExecutionDiagnostics','RunInvocationResource','Page_RunInvocationResource_',
+        'run_diagnostics.json','run_invocations.json'} for k in path)
+    if diagnostic_context:
+        if key == 'status':
+            if 'TaskDiagnostics' in path or 'task' in path:
+                return '내부 Task 상태. waiting_input은 사용자 승인 또는 Executor 대기 모두 가능하므로 UI는 공개 Run status를 사용한다.'
+            return '내부 실행 구간 상태 pending/running/interrupted/success/error/timeout/canceled. 공개 Run 전체 상태와 구분한다.'
+        if key in DIAGNOSTIC_FIELDS: return DIAGNOSTIC_FIELDS[key]
+
     log_context = any('AgentRunLogResource' in k or k == 'run_logs.json' for k in path) or 'log_id' in parent
     if log_context:
         descriptions = {

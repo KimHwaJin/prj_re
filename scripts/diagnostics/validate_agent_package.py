@@ -116,8 +116,17 @@ assert '/api/v1/projects/{project_id}/memory/{section}/{key}' not in paths
 assert {'get', 'put', 'delete'} <= set(paths['/api/v1/projects/{project_id}/memory'])
 assert '/api/v1/auth/login/sso' in paths and '/api/v1/auth/logout' in paths
 assert any(p.endswith('/runs') for p in paths)
-assert '/api/v1/tasks/{task_id}' in paths
-assert '/api/v1/admin/tasks/{task_id}' in paths
+assert not any('/tasks' in path for path in paths)
+assert 'TaskResource' not in schemas and 'TaskInvocationResource' not in schemas
+for prefix in ('', '/admin'):
+    for suffix in ('diagnostics','invocations'):
+        assert '/api/v1' + prefix + '/sessions/{session_id}/runs/{run_id}/' + suffix in paths
+assert set(schemas['RunDiagnosticsResource']['properties']) == {'run_id','session_id','observed_at','task','session_work'}
+assert 'invocation_id' in schemas['RunInvocationResource']['properties']
+assert 'run_id' in schemas['RunInvocationResource']['properties']
+assert 'public_run_id' not in schemas['RunInvocationResource']['properties']
+for retired in ('api_service/api/v1/routes/tasks.py', 'api_service/services/task_diagnostics.py', 'api_service/schemas/common/task_schema.py'):
+    assert retired not in names
 for suffix in ('cancel', 'stream'):
     assert '/api/v1/tasks/{task_id}/' + suffix not in paths
     assert '/api/v1/sessions/{session_id}/runs/{run_id}/' + suffix in paths

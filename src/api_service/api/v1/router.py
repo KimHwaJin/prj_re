@@ -7,7 +7,7 @@ from api_service.api.v1.routes import (
     redis,
     runs,
     sessions,
-    tasks,
+    run_diagnostics,
     users,
     workflows,
 )
@@ -22,5 +22,5 @@ api_router.include_router(runs.router)
 api_router.include_router(workflows.router)
 api_router.include_router(jupyter_servers.router)
 api_router.include_router(redis.router)
-api_router.include_router(tasks.router)
-api_router.include_router(tasks.admin_router)
+api_router.include_router(run_diagnostics.router)
+api_router.include_router(run_diagnostics.admin_router)

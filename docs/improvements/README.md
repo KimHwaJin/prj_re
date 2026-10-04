@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [080 Run 진단 로그 계약](080-run-diagnostic-logs.md). logs 이름을 유지하고 owner-scoped Agent 실행 진단 기록으로 정리했다. 페이지 기본50·최대200, 정확 필터, 공개 Run ID·가벼운 조회를 적용했다. PG52·전체src681·wheel·필드 주석 검증 완료. 베이스 미병합·미푸시·미배포다.
+최신 작업: [081 Run 하위 진단 API 통합](081-run-diagnostics-contract.md). 독립 Task 목록/상세를 제거하고 공개 run_id의 diagnostics/invocations로 통합했다. 관리자·소유자 경계와 Task/현재 세션 점유를 구분한다. PG93·전체src681·wheel·필드 주석 검증 완료. 베이스 미병합·미푸시·미배포다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -124,6 +124,7 @@
 | 078 | 세션 공개 Run·대화 입력 가능 상태 및 접수 정책 일치 | 구현·PG/graph/전체src681·wheel 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [078 기록](078-session-availability.md) |
 | 079 | Run 요약 목록·상세 분리와 중복 join 제거 | 구현·PG53·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [079 기록](079-run-read-contract.md) |
 | 080 | Run 진단 로그 계약과 페이지 조회 | 구현·PG52·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [080 기록](080-run-diagnostic-logs.md) |
+| 081 | Task 진단을 Run diagnostics·invocations로 통합 | 구현·PG93·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [081 기록](081-run-diagnostics-contract.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

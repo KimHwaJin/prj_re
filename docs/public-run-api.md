@@ -21,6 +21,8 @@
 | GET | /sessions/{session_id}/runs | 가벼운 Run 요약 목록 | 200 + Page[PublicRunSummary] |
 | GET | /sessions/{session_id}/runs/{run_id}/logs | Agent 실행 진단 로그 | 200 + Page[AgentRunLogResource] |
 | POST | /sessions/{session_id}/runs/{run_id}/cancel | 취소 요청 | 202 + PublicRunResource |
+| GET | /sessions/{session_id}/runs/{run_id}/diagnostics | 내부 Task·현재 세션 점유 진단 | 200 + RunDiagnosticsResource |
+| GET | /sessions/{session_id}/runs/{run_id}/invocations | 내부 실행 구간 이력 | 200 + Page[RunInvocationResource] |
 
 `join`은 완료까지 기다리는 API가 아니다. 별도 `/runs/{run_id}/resume`이나 공개 직접 `ainvoke` API는 없다. 현재 RunRequest에는 agent_id/workflow 선택 필드가 없으며 기본 분석 Runtime을 호출한다. 플랫폼의 `/api/v1/{workflow}/run`은 이번 레포의 별도 구현 완료 API가 아니다.
 
@@ -364,3 +366,8 @@ Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리
 | page.has_next / next_cursor | 다음 페이지 유무와 위치. 마지막은 false/null |
 
 [응답 예제](contracts/agent-api/responses/run_logs.json) · [각 필드 주석](contracts/agent-api/responses/run_logs.jsonc). 예제의 payload는 빈 객체이며 실제 기록 형식은 생산자가 정한다. 기존 배열 사용처는 response.items로 수정해야 한다. 로그 조회는 Run 결과·실패·interrupt 본문을 불필요하게 읽지 않으며 선택한 페이지 한 쿼리로 가져온다. 새 환경변수·DB migration은 없다.
+
+
+## Run 하위 진단 조회 — 081
+
+Task 독립 조회를 제거하고 공개 run_id 아래의 diagnostics/invocations로 통합했다. 관리자 경로는 `/api/v1/admin/sessions/{session_id}/runs/{run_id}/diagnostics|invocations`이며 별도 admin 역할로 타 사용자·숨김 자원을 조사한다. 일반 프론트 진행과 HITL은 기존 Run 상세/SSE·Session availability를 사용한다. [경로·권한·모든 필드·이행 방법](run-diagnostics-api.md)을 따른다. Task 없는 과거 Run도 diagnostics는 task:null, invocations는 해당 공개 Run 전체 이력을 반환한다. 내부 Task 테이블과 Worker·checkpoint·로그 저장은 유지한다.

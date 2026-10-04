@@ -4118,5 +4118,572 @@
     ],
     "title": "PublicRunSummary",
     "type": "object"
+  },
+  "RunDiagnosticsResource": {
+    "$defs": {
+      "SessionExecutionDiagnostics": {
+        "properties": {
+          "ownership_held": {
+            "description": "DB에 세션 실행 점유가 기록되어 있는지. 워커의 실제 생존을 입증하지 않는다. 필수 필드.",
+            "title": "Ownership Held",
+            "type": "boolean"
+          },
+          "owner_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "기록된 점유 종류. api_run 또는 executor_event 등. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Owner Kind"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "기록된 점유자 ID. 공개 Run 조회 경로를 조립하는 값이 아니다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Owner Id"
+          },
+          "owner_process": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "점유자로 기록된 프로세스 식별 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Owner Process"
+          },
+          "acquired_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "기록된 세션 실행 점유 획득 시각. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Acquired At"
+          },
+          "heartbeat_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "마지막으로 기록된 heartbeat 시각. 오래됐다는 이유만으로 종료나 미점유를 확정하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Heartbeat At"
+          },
+          "recovery_required": {
+            "default": false,
+            "description": "Task 또는 실행 점유에 대한 복구 확인 필요 여부. 이 조회는 복구를 실행하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Recovery Required",
+            "type": "boolean"
+          },
+          "recovery_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "세션 실행 점유 복구 확인이 필요한 것으로 기록된 사유. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "title": "Recovery Reason"
+          }
+        },
+        "required": [
+          "ownership_held"
+        ],
+        "title": "SessionExecutionDiagnostics",
+        "type": "object"
+      },
+      "SessionWorkDiagnostics": {
+        "properties": {
+          "resources_active": {
+            "description": "연결된 User·Project·Session이 모두 활성인지. 관리자만 숨김 자원도 조회한다. 필수 필드.",
+            "title": "Resources Active",
+            "type": "boolean"
+          },
+          "has_unfinished_work": {
+            "description": "세션 전체에 미종료 작업·복구 필요·점유 또는 종료 불명이 존재하는지. 필수 필드.",
+            "title": "Has Unfinished Work",
+            "type": "boolean"
+          },
+          "can_start_new_run": {
+            "description": "새 일반 입력에 대한 보수적 진단 snapshot. HITL 재개 권한이나 예약이 아니며 UI는 세션 availability, POST는 실제 재검사를 사용한다. 필수 필드.",
+            "title": "Can Start New Run",
+            "type": "boolean"
+          },
+          "blocking_reasons": {
+            "description": "세션 전체의 새 일반 입력 차단 원인 목록. 사용자용 availability.reason과 별개의 내부 진단이다. 필수 필드.",
+            "items": {
+              "enum": [
+                "resources_inactive",
+                "unfinished_command",
+                "unfinished_task",
+                "unfinished_run",
+                "unfinished_llm",
+                "execution_held_or_uncertain"
+              ],
+              "type": "string"
+            },
+            "title": "Blocking Reasons",
+            "type": "array"
+          },
+          "execution": {
+            "$ref": "#/$defs/SessionExecutionDiagnostics",
+            "description": "같은 세션의 현재 실행 점유 기록. 조회한 Run과 다른 Run의 점유일 수도 있다. 필수 필드."
+          }
+        },
+        "required": [
+          "resources_active",
+          "has_unfinished_work",
+          "can_start_new_run",
+          "blocking_reasons",
+          "execution"
+        ],
+        "title": "SessionWorkDiagnostics",
+        "type": "object"
+      },
+      "TaskDiagnostics": {
+        "properties": {
+          "task_id": {
+            "description": "내부 Task 레코드 UUID. API 조회 주소는 공개 run_id를 사용한다. 과거 Task 없는 invocation은 null이다. 필수 필드.",
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "graph_task_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Agent 그래프에서 사용하는 분석 작업 ID. 서비스 task_id와 별개다. 필수 필드.",
+            "title": "Graph Task Id"
+          },
+          "root_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Task에 기록된 최초 실행 구간 ID. 필수 필드.",
+            "title": "Root Run Id"
+          },
+          "checkpoint_run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Task에 기록된 LangGraph checkpoint 기준 ID. 진단값이며 API 경로를 조립하는 값이 아니다. 필수 필드.",
+            "title": "Checkpoint Run Id"
+          },
+          "trigger_message_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "내부 Task를 시작하게 한 메시지 UUID. 필수 필드.",
+            "title": "Trigger Message Id"
+          },
+          "trigger_type": {
+            "description": "내부 Task의 실행 계기 분류 문자열. 필수 필드.",
+            "title": "Trigger Type",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/$defs/TaskStatus",
+            "description": "내부 Task 상태. waiting_input은 사용자 승인 또는 Executor 대기 모두 가능하므로 UI는 공개 Run status를 사용한다. 필수 필드."
+          },
+          "is_unfinished": {
+            "description": "이 Task가 미종료 상태이거나 복구 확인이 필요한지. 세션 전체 상태와 별개다. 필수 필드.",
+            "title": "Is Unfinished",
+            "type": "boolean"
+          },
+          "lock_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Task lease에 기록된 소유자. 현재 그래프 점유는 session_work.execution에서 확인한다. 필수 필드.",
+            "title": "Lock Owner"
+          },
+          "heartbeat_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "마지막으로 기록된 heartbeat 시각. 오래됐다는 이유만으로 종료나 미점유를 확정하지 않는다. 필수 필드.",
+            "title": "Heartbeat At"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "기록된 Task lease 만료 시각. 세션 점유 해제나 재실행 허가를 뜻하지 않는다. 필수 필드.",
+            "title": "Lease Expires At"
+          },
+          "cancel_requested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "취소 요청이 기록된 시각. 실제 종료 확인과 별개다. 필수 필드.",
+            "title": "Cancel Requested At"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Task에 기록된 내부 실패 사유. 필수 필드.",
+            "title": "Failure Reason"
+          },
+          "recovery_required": {
+            "description": "Task 또는 실행 점유에 대한 복구 확인 필요 여부. 이 조회는 복구를 실행하지 않는다. 필수 필드.",
+            "title": "Recovery Required",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "해당 Task 또는 invocation 레코드의 DB 생성 시각. 필수 필드.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "해당 Task 또는 invocation 레코드의 마지막 갱신 시각. 필수 필드.",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "해당 Task 또는 invocation의 기록된 종료 시각. invocation 종료는 공개 Run 전체 완료와 다르다. 필수 필드.",
+            "title": "Completed At"
+          }
+        },
+        "required": [
+          "task_id",
+          "graph_task_id",
+          "root_run_id",
+          "checkpoint_run_id",
+          "trigger_message_id",
+          "trigger_type",
+          "status",
+          "is_unfinished",
+          "lock_owner",
+          "heartbeat_at",
+          "lease_expires_at",
+          "cancel_requested_at",
+          "failure_reason",
+          "recovery_required",
+          "created_at",
+          "updated_at",
+          "completed_at"
+        ],
+        "title": "TaskDiagnostics",
+        "type": "object"
+      },
+      "TaskStatus": {
+        "description": "최초 분석 요청부터 최종 종료까지 유지되는 논리적 Job 상태입니다.",
+        "enum": [
+          "pending",
+          "running",
+          "waiting_input",
+          "success",
+          "error",
+          "timeout",
+          "canceled"
+        ],
+        "title": "TaskStatus",
+        "type": "string"
+      }
+    },
+    "properties": {
+      "run_id": {
+        "description": "HITL 재개 전후에 유지되는 공개 Run ID. 내부 invocation_id와 구분한다. 필수 필드.",
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "session_id": {
+        "description": "이 공개 Run이 속한 대화 세션 UUID. 필수 필드.",
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "observed_at": {
+        "description": "이 진단 SQL statement의 DB 관측 시각. 실행 완료나 heartbeat 시각이 아니다. 필수 필드.",
+        "format": "date-time",
+        "title": "Observed At",
+        "type": "string"
+      },
+      "task": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/TaskDiagnostics"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "최신 실행 구간에 연결된 내부 Task 진단 정보. 연결이 없거나 다른 Session/Run이면 null이다. 필수 필드."
+      },
+      "session_work": {
+        "$ref": "#/$defs/SessionWorkDiagnostics",
+        "description": "해당 Run뿐 아니라 같은 세션 전체의 현재 미완료 작업·점유 진단이다. 필수 필드."
+      }
+    },
+    "required": [
+      "run_id",
+      "session_id",
+      "observed_at",
+      "task",
+      "session_work"
+    ],
+    "title": "RunDiagnosticsResource",
+    "type": "object"
+  },
+  "RunInvocationResource": {
+    "$defs": {
+      "AgentRunStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "interrupted",
+          "success",
+          "error",
+          "timeout",
+          "canceled"
+        ],
+        "title": "AgentRunStatus",
+        "type": "string"
+      }
+    },
+    "properties": {
+      "invocation_id": {
+        "description": "최초 실행·각 resume마다 생성되는 내부 실행 구간 UUID. 공개 Run ID와 다르다. 필수 필드.",
+        "format": "uuid",
+        "title": "Invocation Id",
+        "type": "string"
+      },
+      "run_id": {
+        "description": "HITL 재개 전후에 유지되는 공개 Run ID. 내부 invocation_id와 구분한다. 필수 필드.",
+        "format": "uuid",
+        "title": "Run Id",
+        "type": "string"
+      },
+      "task_id": {
+        "anyOf": [
+          {
+            "format": "uuid",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "내부 Task 레코드 UUID. API 조회 주소는 공개 run_id를 사용한다. 과거 Task 없는 invocation은 null이다. 필수 필드.",
+        "title": "Task Id"
+      },
+      "session_id": {
+        "description": "이 공개 Run이 속한 대화 세션 UUID. 필수 필드.",
+        "format": "uuid",
+        "title": "Session Id",
+        "type": "string"
+      },
+      "status": {
+        "$ref": "#/$defs/AgentRunStatus",
+        "description": "내부 실행 구간 상태 pending/running/interrupted/success/error/timeout/canceled. 공개 Run 전체 상태와 구분한다. 필수 필드."
+      },
+      "attempt_count": {
+        "description": "해당 invocation을 Worker가 점유한 횟수. 최초 시도도 포함한다. 필수 필드.",
+        "title": "Attempt Count",
+        "type": "integer"
+      },
+      "next_attempt_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "해당 invocation을 다시 점유할 수 있는 다음 재시도 시각. 필수 필드.",
+        "title": "Next Attempt At"
+      },
+      "cancel_requested_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "취소 요청이 기록된 시각. 실제 종료 확인과 별개다. 필수 필드.",
+        "title": "Cancel Requested At"
+      },
+      "cancel_reason": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "해당 invocation에 기록된 취소 사유. 필수 필드.",
+        "title": "Cancel Reason"
+      },
+      "failure": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "해당 실행 구간에 기록된 실패 객체. 생산자가 정한 진단 형식이며 공개 Run 최종 결과가 아니다. 필수 필드.",
+        "title": "Failure"
+      },
+      "created_at": {
+        "description": "해당 Task 또는 invocation 레코드의 DB 생성 시각. 필수 필드.",
+        "format": "date-time",
+        "title": "Created At",
+        "type": "string"
+      },
+      "updated_at": {
+        "description": "해당 Task 또는 invocation 레코드의 마지막 갱신 시각. 필수 필드.",
+        "format": "date-time",
+        "title": "Updated At",
+        "type": "string"
+      },
+      "started_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "해당 invocation의 실제 실행 시작 기록 시각. 필수 필드.",
+        "title": "Started At"
+      },
+      "completed_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "해당 Task 또는 invocation의 기록된 종료 시각. invocation 종료는 공개 Run 전체 완료와 다르다. 필수 필드.",
+        "title": "Completed At"
+      }
+    },
+    "required": [
+      "invocation_id",
+      "run_id",
+      "task_id",
+      "session_id",
+      "status",
+      "attempt_count",
+      "next_attempt_at",
+      "cancel_requested_at",
+      "cancel_reason",
+      "failure",
+      "created_at",
+      "updated_at",
+      "started_at",
+      "completed_at"
+    ],
+    "title": "RunInvocationResource",
+    "type": "object"
   }
 }

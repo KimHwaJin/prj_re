@@ -39,7 +39,7 @@ Task의 is_active는 pending/running만 의미해 대기 중 세션 입력 가�
 
 ## 적용·제한
 
-[상세 API 계약](../task-diagnostics-api.md)을 따른다. Task 목록 배열→Page, is_active 제거, 구간 id→invocation_id, Task 명령/SSE 제거는 **클라이언트 변경이 필요한 계약 변경**이다. 새 migration·인덱스·환경변수는 없다. 기존 부하 시나리오는 Runs를 사용한다. 내부 demo의 레거시 Task 호출은 전환하지 않았고 필수 운영 호환 범위가 아니다.
+[현재 API 계약(081에서 Run 하위 경로로 전환)](../run-diagnostics-api.md)을 따른다. Task 목록 배열→Page, is_active 제거, 구간 id→invocation_id, Task 명령/SSE 제거는 **클라이언트 변경이 필요한 계약 변경**이다. 새 migration·인덱스·환경변수는 없다. 기존 부하 시나리오는 Runs를 사용한다. 내부 demo의 레거시 Task 호출은 전환하지 않았고 필수 운영 호환 범위가 아니다.
 
 진단은 조회 순간의 보수적 입력 가능 상태이며 실제 접수를 예약하지 않는다. Task 내부 waiting_input은 Executor 대기를 포함할 수 있으므로 화면 표시/재개는 Run 상태를 기준으로 한다. 공개 Run 연결이 없는 Task도 내부 진단은 가능하지만 임의로 새 공개 ID를 만들지 않는다.
 

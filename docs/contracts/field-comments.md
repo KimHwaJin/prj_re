@@ -31,6 +31,10 @@
 | [contracts/agent-api/requests/reject_repair.jsonc](agent-api/requests/reject_repair.jsonc) | 수정 제안 거절 |
 | [contracts/agent-api/requests/replan.jsonc](agent-api/requests/replan.jsonc) | 자연어 계획 재작성 |
 | [contracts/agent-api/requests/start.jsonc](agent-api/requests/start.jsonc) | 새 사용자 입력·모델 선택 |
+| [contracts/agent-api/responses/run_list.jsonc](agent-api/responses/run_list.jsonc) | 공개 Run 요약 목록·페이지 |
+| [contracts/agent-api/responses/run_logs.jsonc](agent-api/responses/run_logs.jsonc) | Agent 실행 진단 로그·페이지 |
+| [contracts/agent-api/responses/run_diagnostics.jsonc](agent-api/responses/run_diagnostics.jsonc) | Run의 내부 Task·세션 전체 작업·점유 진단 |
+| [contracts/agent-api/responses/run_invocations.jsonc](agent-api/responses/run_invocations.jsonc) | Run 내부 실행 구간 이력·페이지 |
 | [contracts/agent-api/responses/pending.jsonc](agent-api/responses/pending.jsonc) | 접수 대기 Run 전체 상태 |
 | [contracts/agent-api/responses/waiting_input.jsonc](agent-api/responses/waiting_input.jsonc) | 사용자 확인 대기 Run·계획 화면 |
 | [contracts/workflow/legacy-1.3.jsonc](workflow/legacy-1.3.jsonc) | 기존 Workflow 관리 API의 이전 형식 |
@@ -43,6 +47,7 @@
 | 필드 | 무엇을 식별하거나 갱신하는가 |
 |---|---|
 | run_id | 사용자 요청부터 결과까지 이어지는 공개 실행 |
+| invocation_id | 최초 실행·각 resume마다 만들어지는 내부 실행 구간 |
 | session_id | 대화 세션 |
 | checkpoint_run_id / task_id | 내부 상태 저장·업무 연결 |
 | workflow_id / definition_version | 재사용 정의와 그 변경 버전; 기존 관리 API의 DB UUID는 별도 |
