@@ -1589,7 +1589,7 @@
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
-          // 입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드.
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드.
           "origin": {
             // 허용하는 값 목록.
             "enum": [
@@ -1603,7 +1603,7 @@
             // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드.
           "has_value": {
@@ -1715,6 +1715,75 @@
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "title": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Title",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "description": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Description",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "has_value": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": false,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Has Value",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "origin": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": "unresolved",
+            // 허용하는 값 목록.
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Origin",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           // 함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드.
           "kind": {
@@ -2593,7 +2662,7 @@
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
-          // 입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드.
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드.
           "origin": {
             // 허용하는 값 목록.
             "enum": [
@@ -2607,7 +2676,7 @@
             // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드.
           "has_value": {
@@ -2812,6 +2881,75 @@
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "title": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Title",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "description": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Description",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "has_value": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": false,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Has Value",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "origin": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": "unresolved",
+            // 허용하는 값 목록.
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Origin",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           // 함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드.
           "kind": {
@@ -3912,7 +4050,7 @@
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다. 필수 필드."
           },
-          // 입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드.
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드.
           "origin": {
             // 허용하는 값 목록.
             "enum": [
@@ -3926,7 +4064,7 @@
             // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 필수 필드.
           "has_value": {
@@ -4038,6 +4176,75 @@
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "title": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Title",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "description": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Description",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "has_value": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": false,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Has Value",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "origin": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": "unresolved",
+            // 허용하는 값 목록.
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Origin",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           // 함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드.
           "kind": {
@@ -5504,6 +5711,75 @@
             "type": "string",
             // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "title": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Title",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "description": {
+            // 열거한 Schema 중 하나 이상에 맞아야 하는 선택 구조. null 허용도 이 구조로 표현한다.
+            "anyOf": [
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "string"
+              },
+              {
+                // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+                "type": "null"
+              }
+            ],
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": null,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Description",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "has_value": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": false,
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Has Value",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "boolean",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          // 값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+          "origin": {
+            // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+            "default": "unresolved",
+            // 허용하는 값 목록.
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+            "title": "Origin",
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           // 함수 인자 값의 출처. workflow_input=입력 참조, literal=직접값, step_reference=이전 반환값, deferred=결과 이후 판단, system_context=서버 문맥이다. 필수 필드.
           "kind": {

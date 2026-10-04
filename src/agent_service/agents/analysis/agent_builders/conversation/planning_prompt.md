@@ -18,3 +18,6 @@ expected_outputs는 id, kind, description, format, source와 필요한 조건을
 
 
 Execution repair policy is independent of normal result-based decisions. Use an explicit Workflow repair_level/max_repair_attempts when declared; otherwise omit those fields to let central configuration supply defaults. Do not propose values above execution_policy limits. SINGLE always requires level/attempts zero. Explain repair permissions when proposing nonzero levels: bindings, contract-preserving Tool implementation, registered replan with approval, or execution-local autonomous code. Never promise that a failed Step has no partial side effects.
+
+
+Tool metadata의 parameter_controls는 배포된 사용자 파라미터 정책입니다. 선언된 인자를 사용자에게 확인할 수 있게 하고 value_schema를 지킵니다. 생략한 선택 인자는 서버가 함수의 실제 JSON 기본값으로 채워 확인 화면에 표시하므로 임의 기본값을 생성하지 않습니다. Workflow parameter_controls는 이 범위를 좁힐 수 있지만 넓힐 수 없습니다. 사용자 요청으로 확정한 columns/method는 arguments에 literal 또는 편집 가능한 workflow_input으로 연결합니다. 결과를 보고 정해야 하면 agent_decision을 그대로 유지하며 기본값으로 미리 덮어쓰지 않습니다. 아직 필수값을 모르면 required=true인 Workflow input으로 선언하여 빈 입력을 보여주고 승인 전 입력받습니다. data/앞 단계 출력/system_context/parquet_path를 편집 가능한 상수로 노출하지 않습니다. parameter_controls가 없는 레거시 또는 실행별 함수는 Workflow의 명시적 편집 선언을 따릅니다.

@@ -43,3 +43,14 @@ test('OpenAPI preview inventory contains current User/Project/Memory/Session/Run
  for(const part of ['/users','/projects','/memory','/sessions','/runs','/diagnostics','/invocations','/logs','/workflows','/messages'])assert.ok(ops.some(o=>o.path.includes(part)),part);
  assert.ok(!ops.some(o=>o.path.includes('jupyter-servers')||o.path.includes('redis/ping')));
 });
+
+test('catalogue defaults are editable nullable arrays with labels and truthful origin',async()=>{
+ const app=harness(html);try{
+ const statistics=app.all('.step').find(card=>card.textContent.includes('compute_statistics'));
+ assert.match(statistics.textContent,/분석할 컬럼/);assert.match(statistics.textContent,/함수 기본값/);
+ const columns=statistics.querySelectorAll('textarea')[0];assert.equal(columns.value,'null');
+ await app.field(columns,'["max_val"]');await app.find(app.ids.get('review'),'편집 반영').click();
+ const updated=app.all('.step').find(card=>card.textContent.includes('compute_statistics'));
+ assert.equal(updated.querySelectorAll('textarea')[0].value,'["max_val"]');
+ }finally{app.close();}
+});

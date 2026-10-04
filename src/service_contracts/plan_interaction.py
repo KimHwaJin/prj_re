@@ -86,6 +86,10 @@ class InputView(StrictModel):
 
 class ParameterView(StrictModel):
     name: str
+    title: str | None = None
+    description: str | None = None
+    has_value: bool = False
+    origin: Literal['agent', 'tool_default', 'user', 'unresolved'] = 'unresolved'
     kind: Literal['workflow_input', 'literal', 'step_reference', 'deferred', 'system_context']
     editable: bool
     value: Any = None

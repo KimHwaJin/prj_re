@@ -108,7 +108,7 @@ FIELDS = {
     'value_schema': '입력·편집값을 검증하는 JSON Schema 객체 또는 boolean. 필수 여부 및 값 유효성은 별도다.',
     'has_value': '값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다.',
     'value': '직접 지정한 값·편집값·판단값. 의미와 허용 타입은 해당 입력 또는 파라미터 schema를 따른다.',
-    'origin': '입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다.',
+    'origin': '값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다.',
     'input_name': '이 인자가 참조하는 Workflow 입력 이름. 값은 대응하는 입력 필드에서 편집한다.',
     'selector': '이전 Step 반환값에서 추출할 키·인덱스 경로 배열. []는 반환값 전체이며 새 규격은 Python 식을 평가하지 않는다. legacy는 문자열 selector다.',
     'decision_id': '결과 기반 Agent 판단의 ID. 판단 정의·확인 화면·Tool 인자의 연결에 사용한다.',

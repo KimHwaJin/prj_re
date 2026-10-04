@@ -8,6 +8,7 @@ from jsonschema_rs import Draft202012Validator
 
 from service_contracts.plan_interaction import PlanAction
 from service_contracts.workflow_validation import validate, bindings
+from service_contracts.tool_parameters import materialize_defaults, editable_schema, value_schema
 
 
 class PlanReviewError(ValueError):
@@ -26,7 +27,9 @@ def canonical(value):
 def new_review(document, values, catalog, policy):
     errors = validate(document, catalog)
     require(not errors, '; '.join(errors[:8]))
-    document = deepcopy(document)
+    document, parameter_origins = materialize_defaults(document, catalog)
+    errors = validate(document, catalog)
+    require(not errors, '; '.join(errors[:8]))
     execution = {'mode': 'MULTI', 'repair_level': policy.get('default_repair_level',0),
                  'max_repair_attempts': 0, 'review_mode': 'decision_boundary'}
     declared=document.get('execution', {})
@@ -49,21 +52,24 @@ def new_review(document, values, catalog, policy):
     for step in document['steps']:
         editable[step['id']] = {}
         for key, binding in step['arguments'].items():
-            control = step.get('parameter_controls', {}).get(key)
-            schema = decisions[binding['decision_id']]['output_schema'] if binding['source'] == 'agent_decision' else None
-            if control is not None:
-                if not control['editable']:
-                    schema = None
-                elif schema is not None:
-                    schema = {'allOf': [schema, control['value_schema']]}
-                else:
-                    schema = control['value_schema']
+            schema = editable_schema(catalog['tools'][step['tool_id']], step, key, decisions)
             if schema is not None:
                 editable[step['id']][key] = schema
+    validate_parameter_inputs(document, catalog, initial)
     return {'plan_id': str(uuid4()), 'plan_revision': 1, 'document': document,
+            'parameter_origins': parameter_origins,
             'input_values': initial, 'input_origins': origins, 'editable_parameters': editable,
             'excluded_step_ids': [], 'user_actions': [], 'catalog': deepcopy(catalog),
             'policy': {k:deepcopy(v) for k,v in policy.items() if not k.startswith('default_')}, 'consumed': False}
+
+
+def validate_parameter_inputs(document, catalog, values):
+    for step in document['steps']:
+        tool = catalog['tools'][step['tool_id']]
+        for name, binding in step['arguments'].items():
+            if binding['source'] == 'workflow_input' and binding['name'] in values:
+                require(Draft202012Validator(value_schema(tool, step, name)).is_valid(values[binding['name']]),
+                        f'Tool input value violates its parameter schema: {step["id"]}.{name}')
 
 
 def visible_datasets(datasets, context):
@@ -109,6 +115,7 @@ def patch_review(review, raw_action, *, datasets, context):
         require(schema is not None, 'Parameter is read only')
         require(Draft202012Validator(schema).is_valid(change.value), 'Parameter value violates its schema')
         steps[change.step_id]['arguments'][change.parameter] = {'source': 'literal', 'value': change.value}
+        result.setdefault('parameter_origins', {}).setdefault(change.step_id, {})[change.parameter] = 'user'
     document['execution'].update(action.execution_overrides.model_dump(exclude_none=True))
     policy = result['policy']
     require(document['execution']['mode'] in policy['allowed_modes'], 'Execution mode is not allowed')
@@ -123,6 +130,7 @@ def patch_review(review, raw_action, *, datasets, context):
     for decision in document['decisions']:
         if decision['id'] in used:
             require(not set(decision['after_steps']).intersection(excluded), 'Exclusion removes decision evidence')
+    validate_parameter_inputs(document, result['catalog'], result['input_values'])
     accessible = visible_datasets(datasets, context)
     for key, field in document['inputs'].items():
         present = key in result['input_values']

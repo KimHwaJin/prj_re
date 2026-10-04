@@ -42,6 +42,13 @@ def plan_view(state):
                 schema = state['editable_parameters'].get(step['id'], {}).get(name)
                 parameters.append(ParameterView(name=name, kind='literal', editable=schema is not None,
                                                 value=binding['value'], value_schema=schema))
+            policy = catalog['tools'][step['tool_id']].get('parameter_controls', {}).get(name, {})
+            parameter = parameters[-1]
+            parameter.title = policy.get('title')
+            parameter.description = policy.get('description')
+            parameter.has_value = source == 'literal'
+            parameter.origin = state.get('parameter_origins', {}).get(step['id'], {}).get(name,
+                'agent' if source == 'literal' else 'unresolved')
         step_views.append(StepView(step_id=step['id'], skill_id=step['skill_id'], tool_id=step['tool_id'],
             function_name=catalog['tools'][step['tool_id']]['function_name'], description=step['description'],
             depends_on=step['depends_on'], parameters=parameters, when=step.get('when'),

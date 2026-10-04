@@ -49,7 +49,8 @@ async def test_checkpoint_edit_restart_approve_has_one_model_call_and_frozen_sou
     assert view['inputs'][0]['value'] == 'default-nce'
     assert 'code' not in json.dumps(view) and '/workspace' not in json.dumps(view)
     action = {'action': 'edit_plan', 'plan_id': view['plan_id'], 'plan_revision': 1,
-              'step_changes': [{'step_id': 'outliers', 'parameter': 'method', 'value': 'iqr'}]}
+              'step_changes': [{'step_id': 'outliers', 'parameter': 'method', 'value': 'iqr'},
+                               {'step_id': 'statistics', 'parameter': 'columns', 'value': ['max_val']}]}
     state = await resume(graph, config, state, action)
     assert state['plan_views'][0]['plan_revision'] == 2
     # New graph instance restores the actual checkpoint and consumes no second model call.
@@ -60,6 +61,9 @@ async def test_checkpoint_edit_restart_approve_has_one_model_call_and_frozen_sou
     assert not state.get('__interrupt__') and state['final_response']['status'] == 'plan_approved'
     frozen = state['approved_snapshot']
     assert frozen['approval_sha256'] and frozen['asset_revision'] == runtime.catalog.revision
+    assert frozen['steps'][2]['arguments']['columns']['value'] == ['max_val']
+    field = next(p for step in state['final_response']['approved_plan']['steps'] if step['step_id'] == 'statistics' for p in step['parameters'] if p['name'] == 'columns')
+    assert field['origin'] == 'user' and field['has_value']
     assert all('code' in item for item in frozen['tool_sources'].values())
     assert len(runtime.agents) == 1 and next(iter(runtime.agents.values())).calls == 1
     assert state['public_events'][0]['envelope']['type'] == 'interaction.resolved'

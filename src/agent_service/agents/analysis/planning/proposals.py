@@ -134,6 +134,8 @@ def prepare_review(proposal, runtime, state):
                         'New Step must declare Skill/Tool/description/dependencies')
                 step = {'id':patch.step_id,'arguments':{}}
                 document['steps'].append(step)
+            if patch.tool_id is not None and patch.tool_id != step.get('tool_id'):
+                step.pop('parameter_controls', None)
             for key in ('skill_id','tool_id','description','depends_on'):
                 value = getattr(patch,key)
                 if value is not None:step[key]=deepcopy(value)
@@ -215,6 +217,12 @@ def prepare_review(proposal, runtime, state):
         for key,value in base['input_values'].items():
             if review['input_values'].get(key)==value:
                 review['input_origins'][key]=base['input_origins'].get(key,'agent')
+        for step in review['document']['steps']:
+            previous = next((s for s in base['document']['steps'] if s['id'] == step['id']), None)
+            if previous and previous['tool_id'] == step['tool_id']:
+                for name, binding in step['arguments'].items():
+                    if binding == previous['arguments'].get(name):
+                        review['parameter_origins'][step['id']][name] = base.get('parameter_origins', {}).get(step['id'], {}).get(name, 'agent' if binding['source'] == 'literal' else 'unresolved')
         review['user_actions'].append({'action':'agent_revision','base_plan_id':base['plan_id'],'feedback_turn':state['planning_revision_count']})
         review['excluded_step_ids']=sorted(set(base.get('excluded_step_ids',[]))|set(proposal.excluded_step_ids))
     review = patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1},

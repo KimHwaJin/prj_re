@@ -983,7 +983,7 @@
             ],
             "title": "Origin",
             "type": "string",
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
@@ -1054,6 +1054,50 @@
             "title": "Name",
             "type": "string",
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "has_value": {
+            "default": false,
+            "title": "Has Value",
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "origin": {
+            "default": "unresolved",
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string",
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "kind": {
             "enum": [
@@ -1607,7 +1651,7 @@
             ],
             "title": "Origin",
             "type": "string",
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
@@ -1733,6 +1777,50 @@
             "title": "Name",
             "type": "string",
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "has_value": {
+            "default": false,
+            "title": "Has Value",
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "origin": {
+            "default": "unresolved",
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string",
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "kind": {
             "enum": [
@@ -2419,7 +2507,7 @@
             ],
             "title": "Origin",
             "type": "string",
-            "description": "입력값이 정해진 출처. agent/workflow_default/user/unresolved를 구분한다. 필수 필드."
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 필수 필드."
           },
           "has_value": {
             "title": "Has Value",
@@ -2490,6 +2578,50 @@
             "title": "Name",
             "type": "string",
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "has_value": {
+            "default": false,
+            "title": "Has Value",
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "origin": {
+            "default": "unresolved",
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string",
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "kind": {
             "enum": [
@@ -3383,6 +3515,50 @@
             "title": "Name",
             "type": "string",
             "description": "이 파라미터가 대응하는 Tool Python 함수의 인자 이름. 필수 필드."
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title",
+            "description": "사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description",
+            "description": "해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "has_value": {
+            "default": false,
+            "title": "Has Value",
+            "type": "boolean",
+            "description": "값이 실제로 정해져 있는지 표시한다. value=null 자체만으로 미확정이라고 판단하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "origin": {
+            "default": "unresolved",
+            "enum": [
+              "agent",
+              "tool_default",
+              "user",
+              "unresolved"
+            ],
+            "title": "Origin",
+            "type": "string",
+            "description": "값의 출처. 입력은 agent/workflow_default/user/unresolved, Tool 인자는 agent/tool_default/user/unresolved를 구분한다. tool_default는 함수에서 읽어 고정한 기본값이다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "kind": {
             "enum": [

@@ -11,14 +11,8 @@ tools:
     function_name: data_load
     source: data_io/data_load.py
     signature: 'data_load(parquet_path: str=None)'
-    docstring: |-
-      Parquet 파일을 pandas DataFrame으로 불러옵니다.
-
-      Args:
-          parquet_path: 불러올 Parquet 파일의 경로입니다.
-
-      Returns:
-          불러온 pandas DataFrame입니다.
+    docstring: "Parquet 파일을 pandas DataFrame으로 불러옵니다.\n\nArgs:\n    parquet_path: 불러올 Parquet 파일의 경로입니다.\n\
+      \nReturns:\n    불러온 pandas DataFrame입니다."
     inputs:
       parquet_path:
         type: str
@@ -32,20 +26,22 @@ tools:
           selector: $
     packages:
     - pandas
+    parameter_controls: {}
   extract_data:
-    availability: test_only
     category: data_io
     function_name: extract_data
     source: data_io/extract_data.py
     signature: 'extract_data(data_type: str, lot_cd: str | None=None, process: list | str | None=None,
       query_mode: str | None=None, start_dt: str | None=None, end_dt: str | None=None, limit: int | None=None,
       **kwargs: object) -> dict[str, object]'
-    docstring: |-
-      Accept the customer extraction arguments and return a placeholder result.
+    docstring: 'Accept the customer extraction arguments and return a placeholder result.
+
 
       This function deliberately performs no file or DataLake access. It only
+
       preserves the planned call/return contract until the customer implementation
-      replaces it. The following transform Tool supplies local wide mock data.
+
+      replaces it. The following transform Tool supplies local wide mock data.'
     inputs:
       data_type:
         type: str
@@ -111,19 +107,20 @@ tools:
         cache_key:
           selector: '["cache_key"]'
     packages: []
-  transform_nce:
     availability: test_only
+  transform_nce:
     category: data_io
     function_name: transform_nce
     source: data_io/transform_nce.py
     signature: 'transform_nce(data: dict | None=None, transform_op: str=''pivot'', index: list | None=None,
       columns: str=''process'', values: list | None=None, aggfunc: str=''last'', **kwargs: object) ->
       dict[str, object]'
-    docstring: |-
-      Return NCE data in the agreed wide analysis schema.
+    docstring: 'Return NCE data in the agreed wide analysis schema.
+
 
       Wide input from ``extract_data`` is preserved, including its row limit.
-      Other input triggers the deterministic wide NCE mock fallback.
+
+      Other input triggers the deterministic wide NCE mock fallback.'
     inputs:
       data:
         type: dict | None
@@ -173,19 +170,20 @@ tools:
           selector: '["transform_info"]'
     packages:
     - pandas
-  transform_wt:
     availability: test_only
+  transform_wt:
     category: data_io
     function_name: transform_wt
     source: data_io/transform_wt.py
     signature: 'transform_wt(data: dict | None=None, transform_op: str=''wt_fail_pivot'', keep_type: str=''last'',
       pivot: bool=True, index: list | None=None, meta_cols: list | None=None, aggfunc: str=''last'', **kwargs:
       object) -> dict[str, object]'
-    docstring: |-
-      Return WT symbol data in the agreed wide analysis schema.
+    docstring: 'Return WT symbol data in the agreed wide analysis schema.
+
 
       Wide input from ``extract_data`` is passed through. Other local input
-      triggers the deterministic WT wide mock fallback.
+
+      triggers the deterministic WT wide mock fallback.'
     inputs:
       data:
         type: dict | None
@@ -240,6 +238,7 @@ tools:
           selector: '["transform_info"]'
     packages:
     - pandas
+    availability: test_only
   compute_statistics:
     category: eda
     function_name: compute_statistics
@@ -266,20 +265,29 @@ tools:
           selector: '["statistics"]'
     packages:
     - pandas
+    parameter_controls:
+      columns:
+        title: 분석할 컬럼
+        description: 컬럼명 배열을 입력합니다. null이면 Tool이 전체 대상 컬럼을 선택합니다. 실제 컬럼 목록은 데이터 실행 결과로 확인합니다.
+        editable: true
+        value_schema:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            minLength: 1
+          minItems: 1
+          uniqueItems: true
   detect_outliers:
     category: eda
     function_name: detect_outliers
     source: eda/detect_outliers.py
     signature: 'detect_outliers(data: object=None, method: str=''iqr'', columns: list=None) -> dict[str,
       object]'
-    docstring: |-
-      다양한 방법으로 이상치를 탐지합니다.
-      Args:
-          data: pandas DataFrame (또는 dict 컬럼-배열 형식)
-          method: 탐지 방법 ("iqr", "zscore", "isolation_forest")
-          columns: 탐지할 컬럼 (선택사항)
-      Returns:
-          {"outlier_indices": list, "outlier_report": dict}
+    docstring: "다양한 방법으로 이상치를 탐지합니다.\nArgs:\n    data: pandas DataFrame (또는 dict 컬럼-배열 형식)\n    method:\
+      \ 탐지 방법 (\"iqr\", \"zscore\", \"isolation_forest\")\n    columns: 탐지할 컬럼 (선택사항)\nReturns:\n    {\"\
+      outlier_indices\": list, \"outlier_report\": dict}"
     inputs:
       data:
         type: object
@@ -307,17 +315,37 @@ tools:
     - numpy
     - pandas
     - scikit-learn
+    parameter_controls:
+      method:
+        title: 이상치 탐지 방법
+        description: 직접 방법을 선택하거나 결과를 보고 Agent가 결정하도록 미확정 상태로 둡니다.
+        editable: true
+        value_schema:
+          type: string
+          enum:
+          - iqr
+          - zscore
+          - isolation_forest
+      columns:
+        title: 분석할 컬럼
+        description: 컬럼명 배열을 입력합니다. null이면 Tool이 전체 대상 컬럼을 선택합니다. 실제 컬럼 목록은 데이터 실행 결과로 확인합니다.
+        editable: true
+        value_schema:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+            minLength: 1
+          minItems: 1
+          uniqueItems: true
   profile_data:
     category: eda
     function_name: profile_data
     source: eda/profile_data.py
     signature: 'profile_data(data: object=None) -> dict[str, object]'
-    docstring: |-
-      데이터셋의 기본 통계 및 품질을 분석합니다.
-      Args:
-          data: pandas DataFrame (또는 dict 컬럼-배열 형식)
-      Returns:
-          {"profile": dict} - row_count, missing_rate 등
+    docstring: "데이터셋의 기본 통계 및 품질을 분석합니다.\nArgs:\n    data: pandas DataFrame (또는 dict 컬럼-배열 형식)\nReturns:\n\
+      \    {\"profile\": dict} - row_count, missing_rate 등"
     inputs:
       data:
         type: object
@@ -331,26 +359,18 @@ tools:
           selector: '["profile"]'
     packages:
     - pandas
+    parameter_controls: {}
   merge_data:
     category: preprocessing
     function_name: merge_data
     source: preprocessing/merge_data.py
     signature: 'merge_data(left_data: object=None, right_data: object=None, join_columns: list=None, how:
       str=''inner'', suffixes: tuple=(''_left'', ''_right''), validate: str=None) -> dict[str, object]'
-    docstring: |-
-      두 DataFrame을 지정한 공통 컬럼을 기준으로 병합합니다.
-
-      Args:
-          left_data: 왼쪽 pandas DataFrame 또는 dict.
-          right_data: 오른쪽 pandas DataFrame 또는 dict.
-          join_columns: 양쪽 데이터에 공통으로 존재하는 병합 기준 컬럼 목록.
-          how: 병합 방식("inner", "left", "right", "outer").
-          suffixes: 이름이 겹치는 비기준 컬럼에 붙일 접미사 2개.
-          validate: 키 관계 검증 방식. None 또는 "one_to_one",
-              "one_to_many", "many_to_one", "many_to_many".
-
-      Returns:
-          {"merged_data": DataFrame, "merge_summary": dict}
+    docstring: "두 DataFrame을 지정한 공통 컬럼을 기준으로 병합합니다.\n\nArgs:\n    left_data: 왼쪽 pandas DataFrame 또는 dict.\n\
+      \    right_data: 오른쪽 pandas DataFrame 또는 dict.\n    join_columns: 양쪽 데이터에 공통으로 존재하는 병합 기준 컬럼 목록.\n\
+      \    how: 병합 방식(\"inner\", \"left\", \"right\", \"outer\").\n    suffixes: 이름이 겹치는 비기준 컬럼에 붙일 접미사\
+      \ 2개.\n    validate: 키 관계 검증 방식. None 또는 \"one_to_one\",\n        \"one_to_many\", \"many_to_one\"\
+      , \"many_to_many\".\n\nReturns:\n    {\"merged_data\": DataFrame, \"merge_summary\": dict}"
     inputs:
       left_data:
         type: object

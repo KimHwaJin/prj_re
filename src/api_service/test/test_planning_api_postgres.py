@@ -119,9 +119,14 @@ async def test_api_edit_restart_approval_replay_stream_and_private_snapshot(plan
     plan = waiting['interrupt'][0]['payload']['plans'][0]
     token = waiting['resume_token']
     action = {'action': 'edit_plan', 'plan_id': plan['plan_id'], 'plan_revision': 1,
-        'excluded_step_ids': ['outliers'], 'input_values': {'dataset': 'default-nce'}}
+        'excluded_step_ids': ['outliers'], 'input_values': {'dataset': 'default-nce'},
+        'step_changes': [{'step_id': 'statistics', 'parameter': 'columns', 'value': ['max_val']}]}
     body = {'run_id': run_id, 'resume_token': token, 'command': {'resume': action}}
     bad = {**body, 'command': {'resume': {**action, 'excluded_step_ids': ['load']}}}
+    assert (await submit(h, bad)).status_code == 422
+    assert (await read(h, run_id))['resume_token'] == token
+    bad = {**body, 'command': {'resume': {**action, 'step_changes': [
+        {'step_id': 'statistics', 'parameter': 'columns', 'value': 'invalid'}]}}}
     assert (await submit(h, bad)).status_code == 422
     assert (await read(h, run_id))['resume_token'] == token
     assert (await submit(h, body, key='edit-once')).status_code == 202
@@ -147,6 +152,7 @@ async def test_api_edit_restart_approval_replay_stream_and_private_snapshot(plan
         assert len(rows) == 3
         frozen = rows[-1].metadata_json['_approved_plan']
         assert frozen['approval_sha256'] and len(frozen['steps']) == 3
+        assert frozen['steps'][2]['arguments']['columns']['value'] == ['max_val']
         assert frozen['dataset_bindings']['dataset']['runtime_path'].startswith('/workspace/pv/default_data/')
         assert all(item['code'] for item in frozen['tool_sources'].values())
         assert await db.scalar(select(func.count()).select_from(MessageModel)) == 2

@@ -11,6 +11,7 @@ from langchain.tools import tool
 import yaml
 
 from agent_service.agents.analysis.workflow.paths import WORKFLOW_ROOT
+from .parameters import parameter_controls
 
 
 class AssetCatalog:
@@ -45,6 +46,8 @@ class AssetCatalog:
                 'signature': item['signature'], 'parameters': parameters,
                 'required_parameters': required, 'allows_extra_arguments': function.args.kwarg is not None,
             }
+            if 'parameter_controls' in item:
+                self.metadata['tools'][key]['parameter_controls'] = parameter_controls(function, item['parameter_controls'])
             raw = ast.get_source_segment(module, function)
             expected = deepcopy(ast.parse(raw).body[0])
             if expected.body and isinstance(expected.body[0], ast.Expr) and isinstance(expected.body[0].value, ast.Constant) and isinstance(expected.body[0].value.value, str):
@@ -72,7 +75,8 @@ class AssetCatalog:
                 'tools': [t['tool'] for t in item['tools'] if t['tool'] in self.sources],
                 'limitations': item.get('limitations', []),
             }
-        self.revision = sha256(json.dumps({'tools': self.sources, 'skills': self.skill_sources}, sort_keys=True).encode()).hexdigest()
+        self.revision = sha256(json.dumps({'tools': self.sources, 'skills': self.skill_sources,
+            'parameter_controls': {key: item.get('parameter_controls') for key, item in self.metadata['tools'].items()}}, sort_keys=True).encode()).hexdigest()
 
     def public_skills(self):
         return [{'skill_id': key, **deepcopy(value)} for key, value in self.metadata['skills'].items()]

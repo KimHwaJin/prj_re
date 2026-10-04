@@ -157,3 +157,10 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## 기능 테스트 화면 086
 
 [086](086-functional-test-console.md)에서 기존 demo와 별개인 [독립 HTML](../../tools/test-console/index.html)을 만들었다. 현재 API·SSE/HITL·관리 기능은 이 화면으로 수동 확인할 수 있다. Node/실제 HTTP 연계는 검증했지만 Mac 잠금으로 실제 브라우저 레이아웃·클릭·다운로드·SSO 왕복은 미검증이다. UI를 직접 확인하고 실제 SDK/모델/플랫폼에서 연결을 검증해야 한다. 보고서 파일 등록·데이터 registry·파라미터 노출 정책 등 기존 후속을 화면 구현으로 완료 처리하지 않는다. 운영 프론트 제품화·전체 접근성/브라우저/성능 검증은 별도다.
+
+
+## Tool 파라미터 노출·편집 정책 087
+
+[087](087-tool-parameter-review.md)에서 085의 statistics.columns 누락을 해결했다. 등록된 사용자 파라미터와 실제 AST 기본값을 공통 계획 검토에 적용하고 Workflow 제약·input/decision·편집 검증을 연결했다. 코드/데이터/출력/문맥 참조 편집은 유지해서 금지한다. [작성 가이드](../tool-parameter-policy.md)를 따르며 기타 레거시 Tool의 정책은 개발자가 추가할 수 있다.
+
+관련134회귀·격리PG4·HTML8·실제HTTP/Executor12 통과. 최신 진단 화면18101을 사용한다. 다음 기능 검증은 실제 모델의 명시 데이터/선택 인자 자동 채움과 새 폼의 자연어→편집→승인 품질, 실제 브라우저/SDK·커널 가용성이다. 074 SQL 구성 재사용 후보·최종 지속부하/Pod 자원 확인은 남으며 모델 호출 수 최적화·Registry/Workflow CRUD·Artifact/운영 후순위를 유지한다. 정책이 asset revision에 포함되므로 기존 대기 계획의 배포 이행은 별도다. 미병합·미푸시·운영 미배포.

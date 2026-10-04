@@ -6,6 +6,8 @@
 
 [Agent 요청·응답](public-run-api.md), [원본 JSON Schema](../src/service_contracts/resources/workflow-definition.schema.json), [기본 예제](contracts/workflow/quality-basic.json) · [필드 주석](contracts/workflow/quality-basic.jsonc), [조건부 예제](contracts/workflow/quality-conditional.json) · [필드 주석](contracts/workflow/quality-conditional.jsonc)를 함께 참고한다. 036 설계 기록보다 이 문서를 현재 구현 안내로 우선한다.
 
+087에서 [Tool 사용자 파라미터 정책](tool-parameter-policy.md)을 적용했다. 생략된 허용 선택 인자는 실제 함수 기본값으로 보충하고, Workflow 편집 규칙은 등록 정책을 좁힐 수 있다. 데이터·출력·문맥 참조는 직접 편집하지 않는다.
+
 본문의 `jsonc` 예제는 각 필드를 주석으로 설명한다. 저장·등록·검증에는 주석 없는 `.json`을 사용한다. [주석 파일 안내](contracts/field-comments.md), [Workflow schema 주석](design/agentic-workflow-contract/workflow-definition.schema.jsonc)을 참고한다.
 
 ## 서로 다른 JSON을 구분하기

@@ -130,9 +130,18 @@ def validate(document, catalog):
             missing = set(tool["required_parameters"]) - provided
             if missing:
                 errors.append(f"{id}: missing tool arguments {sorted(missing)}")
+        if tool is not None:
+            for name, binding in item['arguments'].items():
+                if binding['source'] == 'literal' and name in tool.get('parameter_controls', {}):
+                    if not Draft202012Validator(tool['parameter_controls'][name]['value_schema']).is_valid(binding['value']):
+                        errors.append(f'{id}: literal {name} violates its Tool parameter schema')
         for name, control in item.get("parameter_controls", {}).items():
             check_value_schema(control["value_schema"], f"{id}.{name} control", errors)
             binding = item["arguments"].get(name)
+            if tool is not None and 'parameter_controls' in tool and control['editable']:
+                allowed = tool['parameter_controls'].get(name)
+                if allowed is None or not allowed['editable']:
+                    errors.append(f'{id}: Tool parameter is not user editable: {name}')
             if binding is None:
                 errors.append(f"{id}: parameter control requires an explicit argument binding: {name}")
             elif control["editable"] and binding["source"] not in {"literal", "agent_decision"}:

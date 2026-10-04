@@ -17,7 +17,9 @@ class LiteralString(str):
 
 
 class RegistryDumper(yaml.SafeDumper):
-    pass
+    def ignore_aliases(self, data):
+        # Keep each Tool policy independently editable in generated YAML.
+        return True
 
 
 def _represent_literal(
@@ -266,6 +268,13 @@ def build_registry(root: Path) -> dict[str, Any]:
                 if status not in {'ready', 'test_only'}:
                     raise ValueError('Invalid Tool availability')
                 item['availability'] = status
+            controls = previous.get('tools', {}).get(key, {}).get('parameter_controls')
+            if controls is not None:
+                # UI policy is authored, not inferred from annotation/docstring.
+                from agent_service.agents.analysis.planning.parameters import parameter_controls
+                tree = ast.parse((root / item['source']).read_text(encoding='utf-8'))
+                parameter_controls(_tool_function(tree, item['function_name']), controls)
+                item['parameter_controls'] = controls
 
     return {
         "schema_version": "2.0",
@@ -315,4 +324,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # Direct script invocation must read contracts from this checkout too.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[5]))
     main()

@@ -21,7 +21,7 @@
 
 샘플에는 현재 전체 OpenAPI48operations 중 업무 prefix45개가 들어 있다. 실제 모드에서는 OpenAPI를 다시 읽으므로 API 변경을 정적인 메뉴로 숨기지 않는다. 관리 사용자 API는 서버의 admin 권한을 따른다. 일반 사용자는403이며, 임시 관리자 옵션은 테스트 환경에서만 제공한다. 건강 상태3개 endpoint는 업무 요청 목록에 포함하지 않는다. SSE는 대화 화면에서 시험하고 SSO 로그인은 브라우저 이동으로 처리한다.
 
-계획 화면의 모든 Python 함수 인자를 자동 보충하지 않는다. 서버 PlanView가 노출하고 editable로 허용한 인자만 수정한다. step reference/system context는 읽기 전용이며 실행 소스를 표시하지 않는다. 값0·false·JSON null과 미입력을 구분하고 정교한 JSON Schema/의존성/정책 검증은 API가 담당한다. 409/422는 화면에 표시한다. 승인 계획의 사용자 제외 목록과 최종 skipped_steps를 구분한다.
+계획 화면은 Tool Registry의 사용자 파라미터 정책을 따른다. 허용한 선택 인자가 계획에서 생략되면 서버가 실제 함수의 JSON 기본값으로 보충한다. 예: compute_statistics.columns=null을 표시하고 컬럼 배열로 수정할 수 있다. Agent 설정값·함수 기본값·사용자 수정값·미확정을 구분한다. 모든 Python 인자를 자동 노출하지 않으며 서버 PlanView가 editable로 허용한 값만 수정한다. step reference/system context는 읽기 전용이며 실행 소스를 표시하지 않는다. 값0·false·JSON null과 미입력을 구분하고 정교한 JSON Schema/의존성/정책 검증은 API가 담당한다. 409/422는 화면에 표시한다. 승인 계획의 사용자 제외 목록과 최종 skipped_steps를 구분한다.
 
 세션 availability.allowed_actions가 send_message면 새 입력을, respond_to_interaction이면 현재 승인 응답을 허용한다. GET은 예약이 아니므로 POST409를 받으면 최신 상태를 다시 읽는다. SSE는 sequence로 중복을 제거하고 재접속 cursor를 사용하며 snapshot.cursor로 이미 처리했다고 간주하지 않는다. Session GET을 상시 폴링하지 않고 상태 변화/완료 시 짧은 제한된 확인만 한다. 상태 복원에는 project/session/run ID만 sessionStorage에 보관하고 인증·재개 토큰은 저장하지 않는다.
 
