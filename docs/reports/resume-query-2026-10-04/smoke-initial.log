@@ -1,0 +1,953 @@
+FFFFFF.                                                                  [100%]
+=================================== FAILURES ===================================
+_____ test_prepare_reads_committed_fields_and_rejects_changed_owner[False] _____
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_cursor object at 0x10e0f2860>
+operation = 'UPDATE tasks SET checkpoint_run_id=$1::UUID, updated_at=now() WHERE tasks.task_id = $2::UUID'
+parameters = (UUID('5f540f21-c20e-4b98-a7e0-987dec6c7a65'), UUID('57093dda-9fe9-49e0-9910-ce35f1d15899'))
+
+    async def _prepare_and_execute(self, operation, parameters):
+        adapt_connection = self._adapt_connection
+    
+        async with adapt_connection._execute_mutex:
+            if not adapt_connection._started:
+                await adapt_connection._start_transaction()
+    
+            if parameters is None:
+                parameters = ()
+    
+            try:
+                prepared_stmt, attributes = await adapt_connection._prepare(
+                    operation, self._invalidate_schema_cache_asof
+                )
+    
+                if attributes:
+                    self.description = [
+                        (
+                            attr.name,
+                            attr.type.oid,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                        )
+                        for attr in attributes
+                    ]
+                else:
+                    self.description = None
+    
+                if self.server_side:
+                    self._cursor = await prepared_stmt.cursor(*parameters)
+                    self.rowcount = -1
+                else:
+>                   self._rows = deque(await prepared_stmt.fetch(*parameters))
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+    data, status, _ = await self.__do_execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   ???
+E   asyncpg.exceptions.ForeignKeyViolationError: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E   DETAIL:  Key (checkpoint_run_id)=(5f540f21-c20e-4b98-a7e0-987dec6c7a65) is not present in table "agent_runs".
+
+asyncpg/protocol/protocol.pyx:205: ForeignKeyViolationError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.engine.base.Connection object at 0x10e1bbc90>
+dialect = <sqlalchemy.dialects.postgresql.asyncpg.PGDialect_asyncpg object at 0x10cdb5250>
+context = <sqlalchemy.dialects.postgresql.asyncpg.PGExecutionContext_asyncpg object at 0x10e0f8950>
+statement = <sqlalchemy.dialects.postgresql.asyncpg.PGCompiler_asyncpg object at 0x10cda2610>
+parameters = [(UUID('5f540f21-c20e-4b98-a7e0-987dec6c7a65'), UUID('57093dda-9fe9-49e0-9910-ce35f1d15899'))]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10dfcd300>>
+error = ForeignKeyViolationError('insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E                   DETAIL:  Key (checkpoint_run_id)=(5f540f21-c20e-4b98-a7e0-987dec6c7a65) is not present in table "agent_runs".
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10dfc2450>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:10.913942Z', 'deleted_at': None}, session_id='dfcfb364-beb5-47b6-881d-d219f85f6f42')
+stale = False
+
+    @pytest.mark.parametrize("stale", [False, True])
+    async def test_prepare_reads_committed_fields_and_rejects_changed_owner(runtime, stale):
+        h = runtime
+        queued = await enqueue(h)
+        item = await worker.claim_one()
+        checkpoint = uuid4()
+        async with h.factory() as db:
+            await db.execute(update(AgentRunModel).where(AgentRunModel.run_id == item.claim.run_id)
+                             .values(metadata_json={"_model_selection": {"fresh": "committed"}}))
+            fields = {"checkpoint_run_id": checkpoint}
+            if stale:
+                fields["lock_token"] = uuid4()
+>           await db.execute(update(TaskModel).where(TaskModel.task_id == item.claim.task_id).values(**fields))
+
+src/api_service/test/test_locked_projection_postgres.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:448: in execute
+    result = await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2373: in execute
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1676: in orm_execute_statement
+    return super().orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1848: in _execute_context
+    return self._exec_single_context(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10dfcd300>>
+error = ForeignKeyViolationError('insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E                   DETAIL:  Key (checkpoint_run_id)=(5f540f21-c20e-4b98-a7e0-987dec6c7a65) is not present in table "agent_runs".
+E                   [SQL: UPDATE tasks SET checkpoint_run_id=$1::UUID, updated_at=now() WHERE tasks.task_id = $2::UUID]
+E                   [parameters: (UUID('5f540f21-c20e-4b98-a7e0-987dec6c7a65'), UUID('57093dda-9fe9-49e0-9910-ce35f1d15899'))]
+E                   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+_____ test_prepare_reads_committed_fields_and_rejects_changed_owner[True] ______
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_cursor object at 0x10e4a82e0>
+operation = 'UPDATE tasks SET checkpoint_run_id=$1::UUID, lock_token=$2::UUID, updated_at=now() WHERE tasks.task_id = $3::UUID'
+parameters = (UUID('ab882b9d-3012-495b-b0dd-1298be9cbe7e'), UUID('743ae82b-eb5b-45e8-bd16-529b0de500b1'), UUID('6628a2f5-44b0-490a-870f-e6da9e466135'))
+
+    async def _prepare_and_execute(self, operation, parameters):
+        adapt_connection = self._adapt_connection
+    
+        async with adapt_connection._execute_mutex:
+            if not adapt_connection._started:
+                await adapt_connection._start_transaction()
+    
+            if parameters is None:
+                parameters = ()
+    
+            try:
+                prepared_stmt, attributes = await adapt_connection._prepare(
+                    operation, self._invalidate_schema_cache_asof
+                )
+    
+                if attributes:
+                    self.description = [
+                        (
+                            attr.name,
+                            attr.type.oid,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                        )
+                        for attr in attributes
+                    ]
+                else:
+                    self.description = None
+    
+                if self.server_side:
+                    self._cursor = await prepared_stmt.cursor(*parameters)
+                    self.rowcount = -1
+                else:
+>                   self._rows = deque(await prepared_stmt.fetch(*parameters))
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+    data, status, _ = await self.__do_execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   ???
+E   asyncpg.exceptions.ForeignKeyViolationError: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E   DETAIL:  Key (checkpoint_run_id)=(ab882b9d-3012-495b-b0dd-1298be9cbe7e) is not present in table "agent_runs".
+
+asyncpg/protocol/protocol.pyx:205: ForeignKeyViolationError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.engine.base.Connection object at 0x10e4b41d0>
+dialect = <sqlalchemy.dialects.postgresql.asyncpg.PGDialect_asyncpg object at 0x10efd6510>
+context = <sqlalchemy.dialects.postgresql.asyncpg.PGExecutionContext_asyncpg object at 0x10e483e90>
+statement = <sqlalchemy.dialects.postgresql.asyncpg.PGCompiler_asyncpg object at 0x10e4831d0>
+parameters = [(UUID('ab882b9d-3012-495b-b0dd-1298be9cbe7e'), UUID('743ae82b-eb5b-45e8-bd16-529b0de500b1'), UUID('6628a2f5-44b0-490a-870f-e6da9e466135'))]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10e13d4e0>>
+error = ForeignKeyViolationError('insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E                   DETAIL:  Key (checkpoint_run_id)=(ab882b9d-3012-495b-b0dd-1298be9cbe7e) is not present in table "agent_runs".
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10eadc650>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:11.554140Z', 'deleted_at': None}, session_id='3ee88034-55a2-48d2-9bca-94a8c70d466e')
+stale = True
+
+    @pytest.mark.parametrize("stale", [False, True])
+    async def test_prepare_reads_committed_fields_and_rejects_changed_owner(runtime, stale):
+        h = runtime
+        queued = await enqueue(h)
+        item = await worker.claim_one()
+        checkpoint = uuid4()
+        async with h.factory() as db:
+            await db.execute(update(AgentRunModel).where(AgentRunModel.run_id == item.claim.run_id)
+                             .values(metadata_json={"_model_selection": {"fresh": "committed"}}))
+            fields = {"checkpoint_run_id": checkpoint}
+            if stale:
+                fields["lock_token"] = uuid4()
+>           await db.execute(update(TaskModel).where(TaskModel.task_id == item.claim.task_id).values(**fields))
+
+src/api_service/test/test_locked_projection_postgres.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py:448: in execute
+    result = await greenlet_spawn(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:201: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2373: in execute
+    return self._execute_internal(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py:1676: in orm_execute_statement
+    return super().orm_execute_statement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1848: in _execute_context
+    return self._exec_single_context(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10e13d4e0>>
+error = ForeignKeyViolationError('insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table "tasks" violates foreign key constraint "fk_tasks_checkpoint_run"
+E                   DETAIL:  Key (checkpoint_run_id)=(ab882b9d-3012-495b-b0dd-1298be9cbe7e) is not present in table "agent_runs".
+E                   [SQL: UPDATE tasks SET checkpoint_run_id=$1::UUID, lock_token=$2::UUID, updated_at=now() WHERE tasks.task_id = $3::UUID]
+E                   [parameters: (UUID('ab882b9d-3012-495b-b0dd-1298be9cbe7e'), UUID('743ae82b-eb5b-45e8-bd16-529b0de500b1'), UUID('6628a2f5-44b0-490a-870f-e6da9e466135'))]
+E                   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+../../../../SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+_ test_executor_projection_preserves_wait_and_recovery_guards[uncommitted_wait] _
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10e1bae10>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:12.127965Z', 'deleted_at': None}, session_id='0449ba58-ab0a-46d2-9b8f-c189714cd6cc')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f9b1090>
+guard = 'uncommitted_wait'
+
+    @pytest.mark.parametrize("guard", ["uncommitted_wait", "recovery"])
+    async def test_executor_projection_preserves_wait_and_recovery_guards(runtime, monkeypatch, guard):
+        h = runtime
+        queued, context, snapshot = await waiting(h, monkeypatch)
+        async with h.factory() as db:
+            fields = {"status": TaskStatus.RUNNING} if guard == "uncommitted_wait" else {"recovery_required": True}
+            await db.execute(update(TaskModel).where(TaskModel.task_id == UUID(queued["task_id"])).values(**fields))
+            await db.commit()
+        _, before = await rows(h, queued["run_id"])
+        with pytest.raises(DeferEvent if guard == "uncommitted_wait" else ExecutionNeedsRecovery):
+>           await projection.synchronize_agentic_execution(context, snapshot)
+
+src/api_service/test/test_locked_projection_postgres.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/runs/projection.py:281: in synchronize_agentic_execution
+    state, user_id=UUID(values["user_id"]), agent_run_id=values["agent_run_id"],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'UUID' object has no attribute 'int'") raised in repr()] UUID object at 0x10ea2cc00>
+hex = 'usera', bytes = None, bytes_le = None, fields = None, int = None
+version = None, is_safe = <SafeUUID.unknown: None>
+
+    def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
+                       int=None, version=None,
+                       *, is_safe=SafeUUID.unknown):
+        r"""Create a UUID from either a string of 32 hexadecimal digits,
+        a string of 16 bytes as the 'bytes' argument, a string of 16 bytes
+        in little-endian order as the 'bytes_le' argument, a tuple of six
+        integers (32-bit time_low, 16-bit time_mid, 16-bit time_hi_version,
+        8-bit clock_seq_hi_variant, 8-bit clock_seq_low, 48-bit node) as
+        the 'fields' argument, or a single 128-bit integer as the 'int'
+        argument.  When a string of hex digits is given, curly braces,
+        hyphens, and a URN prefix are all optional.  For example, these
+        expressions all yield the same UUID:
+    
+        UUID('{12345678-1234-5678-1234-567812345678}')
+        UUID('12345678123456781234567812345678')
+        UUID('urn:uuid:12345678-1234-5678-1234-567812345678')
+        UUID(bytes='\x12\x34\x56\x78'*4)
+        UUID(bytes_le='\x78\x56\x34\x12\x34\x12\x78\x56' +
+                      '\x12\x34\x56\x78\x12\x34\x56\x78')
+        UUID(fields=(0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x567812345678))
+        UUID(int=0x12345678123456781234567812345678)
+    
+        Exactly one of 'hex', 'bytes', 'bytes_le', 'fields', or 'int' must
+        be given.  The 'version' argument is optional; if given, the resulting
+        UUID will have its variant and version set according to RFC 4122,
+        overriding the given 'hex', 'bytes', 'bytes_le', 'fields', or 'int'.
+    
+        is_safe is an enum exposed as an attribute on the instance.  It
+        indicates whether the UUID has been generated in a way that is safe
+        for multiprocessing applications, via uuid_generate_time_safe(3).
+        """
+    
+        if [hex, bytes, bytes_le, fields, int].count(None) != 4:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, '
+                            'or int arguments must be given')
+        if hex is not None:
+            hex = hex.replace('urn:', '').replace('uuid:', '')
+            hex = hex.strip('{}').replace('-', '')
+            if len(hex) != 32:
+>               raise ValueError('badly formed hexadecimal UUID string')
+E               ValueError: badly formed hexadecimal UUID string
+
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/uuid.py:178: ValueError
+____ test_executor_projection_preserves_wait_and_recovery_guards[recovery] _____
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10e4ac4d0>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:12.594973Z', 'deleted_at': None}, session_id='394cb2ac-d39d-4d13-ae56-87e11795d9fe')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f9b0ed0>
+guard = 'recovery'
+
+    @pytest.mark.parametrize("guard", ["uncommitted_wait", "recovery"])
+    async def test_executor_projection_preserves_wait_and_recovery_guards(runtime, monkeypatch, guard):
+        h = runtime
+        queued, context, snapshot = await waiting(h, monkeypatch)
+        async with h.factory() as db:
+            fields = {"status": TaskStatus.RUNNING} if guard == "uncommitted_wait" else {"recovery_required": True}
+            await db.execute(update(TaskModel).where(TaskModel.task_id == UUID(queued["task_id"])).values(**fields))
+            await db.commit()
+        _, before = await rows(h, queued["run_id"])
+        with pytest.raises(DeferEvent if guard == "uncommitted_wait" else ExecutionNeedsRecovery):
+>           await projection.synchronize_agentic_execution(context, snapshot)
+
+src/api_service/test/test_locked_projection_postgres.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/runs/projection.py:281: in synchronize_agentic_execution
+    state, user_id=UUID(values["user_id"]), agent_run_id=values["agent_run_id"],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'UUID' object has no attribute 'int'") raised in repr()] UUID object at 0x10ef3f740>
+hex = 'usera', bytes = None, bytes_le = None, fields = None, int = None
+version = None, is_safe = <SafeUUID.unknown: None>
+
+    def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
+                       int=None, version=None,
+                       *, is_safe=SafeUUID.unknown):
+        r"""Create a UUID from either a string of 32 hexadecimal digits,
+        a string of 16 bytes as the 'bytes' argument, a string of 16 bytes
+        in little-endian order as the 'bytes_le' argument, a tuple of six
+        integers (32-bit time_low, 16-bit time_mid, 16-bit time_hi_version,
+        8-bit clock_seq_hi_variant, 8-bit clock_seq_low, 48-bit node) as
+        the 'fields' argument, or a single 128-bit integer as the 'int'
+        argument.  When a string of hex digits is given, curly braces,
+        hyphens, and a URN prefix are all optional.  For example, these
+        expressions all yield the same UUID:
+    
+        UUID('{12345678-1234-5678-1234-567812345678}')
+        UUID('12345678123456781234567812345678')
+        UUID('urn:uuid:12345678-1234-5678-1234-567812345678')
+        UUID(bytes='\x12\x34\x56\x78'*4)
+        UUID(bytes_le='\x78\x56\x34\x12\x34\x12\x78\x56' +
+                      '\x12\x34\x56\x78\x12\x34\x56\x78')
+        UUID(fields=(0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x567812345678))
+        UUID(int=0x12345678123456781234567812345678)
+    
+        Exactly one of 'hex', 'bytes', 'bytes_le', 'fields', or 'int' must
+        be given.  The 'version' argument is optional; if given, the resulting
+        UUID will have its variant and version set according to RFC 4122,
+        overriding the given 'hex', 'bytes', 'bytes_le', 'fields', or 'int'.
+    
+        is_safe is an enum exposed as an attribute on the instance.  It
+        indicates whether the UUID has been generated in a way that is safe
+        for multiprocessing applications, via uuid_generate_time_safe(3).
+        """
+    
+        if [hex, bytes, bytes_le, fields, int].count(None) != 4:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, '
+                            'or int arguments must be given')
+        if hex is not None:
+            hex = hex.replace('urn:', '').replace('uuid:', '')
+            hex = hex.strip('{}').replace('-', '')
+            if len(hex) != 32:
+>               raise ValueError('badly formed hexadecimal UUID string')
+E               ValueError: badly formed hexadecimal UUID string
+
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/uuid.py:178: ValueError
+__ test_executor_projection_retains_row_locks_through_finish_and_replays_once __
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10ef05c50>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:12.996905Z', 'deleted_at': None}, session_id='74ef7c15-86e1-46e6-a8fe-c04d94d784cb')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e95d0d0>
+
+    async def test_executor_projection_retains_row_locks_through_finish_and_replays_once(runtime, monkeypatch):
+        h = runtime
+        queued, context, snapshot = await waiting(h, monkeypatch)
+        original = TaskEventService.append_for_run
+        checked = False
+        async def append(db, **kwargs):
+            nonlocal checked
+            async with h.factory() as competing:
+                await competing.execute(text("SET LOCAL lock_timeout = '100ms'"))
+                with pytest.raises(DBAPIError):
+                    await competing.execute(update(AgentRunModel)
+                        .where(AgentRunModel.run_id == UUID(queued["run_id"]))
+                        .values(cancel_requested_at=text("now()")))
+                await competing.rollback()
+            checked = True
+            return await original(db, **kwargs)
+        monkeypatch.setattr(TaskEventService, "append_for_run", append)
+>       await projection.synchronize_agentic_execution(context, snapshot)
+
+src/api_service/test/test_locked_projection_postgres.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/runs/projection.py:281: in synchronize_agentic_execution
+    state, user_id=UUID(values["user_id"]), agent_run_id=values["agent_run_id"],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'UUID' object has no attribute 'int'") raised in repr()] UUID object at 0x10edc6340>
+hex = 'usera', bytes = None, bytes_le = None, fields = None, int = None
+version = None, is_safe = <SafeUUID.unknown: None>
+
+    def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
+                       int=None, version=None,
+                       *, is_safe=SafeUUID.unknown):
+        r"""Create a UUID from either a string of 32 hexadecimal digits,
+        a string of 16 bytes as the 'bytes' argument, a string of 16 bytes
+        in little-endian order as the 'bytes_le' argument, a tuple of six
+        integers (32-bit time_low, 16-bit time_mid, 16-bit time_hi_version,
+        8-bit clock_seq_hi_variant, 8-bit clock_seq_low, 48-bit node) as
+        the 'fields' argument, or a single 128-bit integer as the 'int'
+        argument.  When a string of hex digits is given, curly braces,
+        hyphens, and a URN prefix are all optional.  For example, these
+        expressions all yield the same UUID:
+    
+        UUID('{12345678-1234-5678-1234-567812345678}')
+        UUID('12345678123456781234567812345678')
+        UUID('urn:uuid:12345678-1234-5678-1234-567812345678')
+        UUID(bytes='\x12\x34\x56\x78'*4)
+        UUID(bytes_le='\x78\x56\x34\x12\x34\x12\x78\x56' +
+                      '\x12\x34\x56\x78\x12\x34\x56\x78')
+        UUID(fields=(0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x567812345678))
+        UUID(int=0x12345678123456781234567812345678)
+    
+        Exactly one of 'hex', 'bytes', 'bytes_le', 'fields', or 'int' must
+        be given.  The 'version' argument is optional; if given, the resulting
+        UUID will have its variant and version set according to RFC 4122,
+        overriding the given 'hex', 'bytes', 'bytes_le', 'fields', or 'int'.
+    
+        is_safe is an enum exposed as an attribute on the instance.  It
+        indicates whether the UUID has been generated in a way that is safe
+        for multiprocessing applications, via uuid_generate_time_safe(3).
+        """
+    
+        if [hex, bytes, bytes_le, fields, int].count(None) != 4:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, '
+                            'or int arguments must be given')
+        if hex is not None:
+            hex = hex.replace('urn:', '').replace('uuid:', '')
+            hex = hex.strip('{}').replace('-', '')
+            if len(hex) != 32:
+>               raise ValueError('badly formed hexadecimal UUID string')
+E               ValueError: badly formed hexadecimal UUID string
+
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/uuid.py:178: ValueError
+_______ test_executor_finish_failure_rolls_back_event_and_state_together _______
+
+runtime = namespace(client=<httpx.AsyncClient object at 0x10e8bae50>, factory=async_sessionmaker(class_='AsyncSession', bind=<sq...', 'updated_at': '2026-10-04T01:19:13.365558Z', 'deleted_at': None}, session_id='9c9bfead-10af-402f-87e7-ba6edc8a62ad')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e7e8d90>
+
+    async def test_executor_finish_failure_rolls_back_event_and_state_together(runtime, monkeypatch):
+        h = runtime
+        queued, context, snapshot = await waiting(h, monkeypatch)
+        _, before = await rows(h, queued["run_id"])
+        original = TaskEventService.append_for_run
+        async def fail(db, **kwargs):
+            await original(db, **kwargs)
+            raise RuntimeError("Injected projection failure after event flush")
+        monkeypatch.setattr(TaskEventService, "append_for_run", fail)
+        with pytest.raises(RuntimeError, match="Injected projection failure"):
+>           await projection.synchronize_agentic_execution(context, snapshot)
+
+src/api_service/test/test_locked_projection_postgres.py:126: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/api_service/runs/projection.py:281: in synchronize_agentic_execution
+    state, user_id=UUID(values["user_id"]), agent_run_id=values["agent_run_id"],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'UUID' object has no attribute 'int'") raised in repr()] UUID object at 0x10e8716c0>
+hex = 'usera', bytes = None, bytes_le = None, fields = None, int = None
+version = None, is_safe = <SafeUUID.unknown: None>
+
+    def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
+                       int=None, version=None,
+                       *, is_safe=SafeUUID.unknown):
+        r"""Create a UUID from either a string of 32 hexadecimal digits,
+        a string of 16 bytes as the 'bytes' argument, a string of 16 bytes
+        in little-endian order as the 'bytes_le' argument, a tuple of six
+        integers (32-bit time_low, 16-bit time_mid, 16-bit time_hi_version,
+        8-bit clock_seq_hi_variant, 8-bit clock_seq_low, 48-bit node) as
+        the 'fields' argument, or a single 128-bit integer as the 'int'
+        argument.  When a string of hex digits is given, curly braces,
+        hyphens, and a URN prefix are all optional.  For example, these
+        expressions all yield the same UUID:
+    
+        UUID('{12345678-1234-5678-1234-567812345678}')
+        UUID('12345678123456781234567812345678')
+        UUID('urn:uuid:12345678-1234-5678-1234-567812345678')
+        UUID(bytes='\x12\x34\x56\x78'*4)
+        UUID(bytes_le='\x78\x56\x34\x12\x34\x12\x78\x56' +
+                      '\x12\x34\x56\x78\x12\x34\x56\x78')
+        UUID(fields=(0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x567812345678))
+        UUID(int=0x12345678123456781234567812345678)
+    
+        Exactly one of 'hex', 'bytes', 'bytes_le', 'fields', or 'int' must
+        be given.  The 'version' argument is optional; if given, the resulting
+        UUID will have its variant and version set according to RFC 4122,
+        overriding the given 'hex', 'bytes', 'bytes_le', 'fields', or 'int'.
+    
+        is_safe is an enum exposed as an attribute on the instance.  It
+        indicates whether the UUID has been generated in a way that is safe
+        for multiprocessing applications, via uuid_generate_time_safe(3).
+        """
+    
+        if [hex, bytes, bytes_le, fields, int].count(None) != 4:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, '
+                            'or int arguments must be given')
+        if hex is not None:
+            hex = hex.replace('urn:', '').replace('uuid:', '')
+            hex = hex.strip('{}').replace('-', '')
+            if len(hex) != 32:
+>               raise ValueError('badly formed hexadecimal UUID string')
+E               ValueError: badly formed hexadecimal UUID string
+
+../../../../.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/uuid.py:178: ValueError
+=========================== short test summary info ============================
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_prepare_reads_committed_fields_and_rejects_changed_owner[False]
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_prepare_reads_committed_fields_and_rejects_changed_owner[True]
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_executor_projection_preserves_wait_and_recovery_guards[uncommitted_wait]
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_executor_projection_preserves_wait_and_recovery_guards[recovery]
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_executor_projection_retains_row_locks_through_finish_and_replays_once
+FAILED src/api_service/test/test_locked_projection_postgres.py::test_executor_finish_failure_rolls_back_event_and_state_together
+6 failed, 1 passed in 10.21s

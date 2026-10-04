@@ -1,0 +1,67 @@
+{
+  "owned_containers_removed": [
+    {
+      "name": "dtest-resume-query-postgres",
+      "id": "5650113c469a8f9ee8d42afdaa142ad0d1226f5a43d5b68f1b6dc3905fa20b7d"
+    },
+    {
+      "name": "dtest-resume-query-redis",
+      "id": "e0f2658760010014b52c371bc28d095028ca8b429209c86a56e5457b8348555f"
+    }
+  ],
+  "owned_anonymous_volumes_removed": [
+    "703113655c00f2cc8f94d4ae75079310b14ef1529984647e246afd6aaebbfa2a",
+    "00a39a3b9ffeeda0d82f5947823e0e2bd3c249a3d1b23bfcb6e376efa0c64fcb"
+  ],
+  "scratch_databases_before_container_removal": [
+    "agentic_checkpoint_test",
+    "agentic_runtime_test",
+    "identity_test",
+    "postgres",
+    "template0",
+    "template1"
+  ],
+  "original_container_ids": [
+    "ced98920ab11",
+    "3870a27e9322",
+    "0ad3c3227dae",
+    "c2cb3f16bd4c",
+    "1090b003389c",
+    "7fe644471632",
+    "6ce9dcc7b597",
+    "68b79ebf7d80",
+    "b6f744056a6d",
+    "2afb3a15fd9b",
+    "c61b28a7e1cb",
+    "c46777295f81",
+    "d61e22060f95",
+    "8f381b3863b4",
+    "baf7c7f4142e",
+    "b2d7336a73a7",
+    "cce947ceddf5",
+    "10f19c1d7cc3"
+  ],
+  "original_running_count": 18,
+  "all_originals_still_running": true,
+  "remaining_running_ids": [
+    "ced98920ab11",
+    "3870a27e9322",
+    "0ad3c3227dae",
+    "c2cb3f16bd4c",
+    "1090b003389c",
+    "7fe644471632",
+    "6ce9dcc7b597",
+    "68b79ebf7d80",
+    "b6f744056a6d",
+    "2afb3a15fd9b",
+    "c61b28a7e1cb",
+    "c46777295f81",
+    "d61e22060f95",
+    "8f381b3863b4",
+    "baf7c7f4142e",
+    "b2d7336a73a7",
+    "cce947ceddf5",
+    "10f19c1d7cc3"
+  ],
+  "owned_containers_and_volumes_remaining": 0
+}

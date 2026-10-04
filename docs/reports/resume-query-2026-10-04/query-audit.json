@@ -1,0 +1,500 @@
+[
+  {
+    "name": "audit-before1",
+    "users": 1,
+    "source_commit": "5510385",
+    "passed": true,
+    "errors": [],
+    "raw_sha256": "d5045d02186eed383b578f80f93a7a22bb5f4791caaa9d993e4e3ffd63840f32",
+    "diagnostic_only": true,
+    "cpu_profile": false,
+    "calls": {
+      "lock_session": 14,
+      "prepare": 3,
+      "message_insert": 11,
+      "plan_events": 23,
+      "finalize_state": 6,
+      "executor_projection": 3
+    },
+    "all_audited_sql": 310,
+    "top_scope_sql_counts": {
+      "lock_session": 30,
+      "prepare": 21,
+      "plan_events": 175,
+      "finalize_state": 24,
+      "executor_projection": 60
+    },
+    "redundant_same_transaction_same_binding_reads": {
+      "prepare": 6,
+      "executor_projection": 6
+    },
+    "lock_session_reads": 28,
+    "lock_session_queries": 84,
+    "message_duplicate_queries": 11,
+    "matching_examples": [
+      {
+        "origin": "prepare",
+        "call_id": 3,
+        "transaction_id": 4,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "15a5911c4999d17bfd6c3ede5705bc7641a97b932ea2d7c32ddee37001913162",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 3
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 3
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 3,
+        "transaction_id": 4,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "57184f3a0619db5e3e5175ed6d657cfa28a2af5dbd835702cb4073ab91402c18",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 3
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 3
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 26,
+        "transaction_id": 27,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "426074e97ce2851bdf0c94c488704d09c64eca0dc769a7063f14e45e57f81cb5",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 26
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 26
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 26,
+        "transaction_id": 27,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "57184f3a0619db5e3e5175ed6d657cfa28a2af5dbd835702cb4073ab91402c18",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 26
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 26
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 43,
+        "transaction_id": 44,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "96c4a11f81d4bc9f15175b42ecc3d1874bb5a2bc5eac68813cdcae00886deef3",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 43
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 43
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 43,
+        "transaction_id": 44,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "57184f3a0619db5e3e5175ed6d657cfa28a2af5dbd835702cb4073ab91402c18",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 43
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 43
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "executor_projection",
+        "call_id": 66,
+        "transaction_id": 71,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "96c4a11f81d4bc9f15175b42ecc3d1874bb5a2bc5eac68813cdcae00886deef3",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "executor_projection",
+              "call_id": 66
+            }
+          ],
+          [
+            {
+              "name": "executor_projection",
+              "call_id": 66
+            },
+            {
+              "name": "finalize_state",
+              "call_id": 72
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "executor_projection",
+        "call_id": 66,
+        "transaction_id": 71,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "57184f3a0619db5e3e5175ed6d657cfa28a2af5dbd835702cb4073ab91402c18",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "executor_projection",
+              "call_id": 66
+            }
+          ],
+          [
+            {
+              "name": "executor_projection",
+              "call_id": 66
+            },
+            {
+              "name": "finalize_state",
+              "call_id": 72
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "audit-before10",
+    "users": 10,
+    "source_commit": "5510385",
+    "passed": true,
+    "errors": [],
+    "raw_sha256": "b49e5dca14d804a1d5754b81cf2af5138f6f0bec3574458309e15a40f93d0a20",
+    "diagnostic_only": true,
+    "cpu_profile": true,
+    "calls": {
+      "lock_session": 140,
+      "prepare": 30,
+      "message_insert": 110,
+      "plan_events": 230,
+      "finalize_state": 60,
+      "executor_projection": 30
+    },
+    "all_audited_sql": 3100,
+    "top_scope_sql_counts": {
+      "lock_session": 300,
+      "prepare": 210,
+      "plan_events": 1750,
+      "finalize_state": 240,
+      "executor_projection": 600
+    },
+    "redundant_same_transaction_same_binding_reads": {
+      "prepare": 60,
+      "executor_projection": 60
+    },
+    "lock_session_reads": 280,
+    "lock_session_queries": 840,
+    "message_duplicate_queries": 110,
+    "matching_examples": [
+      {
+        "origin": "prepare",
+        "call_id": 21,
+        "transaction_id": 22,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "f51328a90ff6ba2df1cc71279754a85b722d2e37b56f831192ada3a14ec213e3",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 21
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 21
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 21,
+        "transaction_id": 22,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "a7c039c36ab51873acd3a446a408e6f65340b03d5b2f2a5d8e46fd4be0db6888",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 21
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 21
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 23,
+        "transaction_id": 24,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "05ecee86d32214425463ba3600c75e70d9cb228474c4c1bff39749569d858d4b",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 23
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 23
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 23,
+        "transaction_id": 24,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "f14367edb7776bb350cbc8ed010debe39bb71ae8d15eaa088bf878c8391d785e",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 23
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 23
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 25,
+        "transaction_id": 26,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "77de713d85b0d4fdd021af33b75d60acd7e7db3803e56e805e73901b72ada1ed",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 25
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 25
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 25,
+        "transaction_id": 26,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "10432a716fb1a6e25ce90dee582110520a896ce0c69cdaca2abca40a0927ec9e",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 25
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 25
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 27,
+        "transaction_id": 28,
+        "fingerprint_without_lock": "SELECT agent_runs.run_id, agent_runs.public_run_id, agent_runs.session_id, agent_runs.task_id, agent_runs.trigger_message_id, agent_runs.agent_message_id, agent_runs.interpreted_message_id, agent_runs.workflow_stage, agent_runs.request_payload, agent_runs.agent_response, agent_runs.redis_key, agent_runs.redis_result, agent_runs.status, agent_runs.input, agent_runs.command, agent_runs.metadata, agent_runs.idempotency_key, agent_runs.multitask_strategy, agent_runs.stream_mode, agent_runs.stream_resumable, agent_runs.on_disconnect, agent_runs.interrupt, agent_runs.failure, agent_runs.attempt_count, agent_runs.next_attempt_at, agent_runs.cancel_reason, agent_runs.cancel_requested_at, agent_runs.created_at, agent_runs.updated_at, agent_runs.started_at, agent_runs.completed_at, agent_runs.dispatched_at, agent_runs.agent_completed_at, agent_runs.redis_received_at, agent_runs.interpreted_at FROM agent_runs WHERE agent_runs.run_id = $1::UUID",
+        "parameter_sha256": "dfce49e4a222138a79f6a874f739eee903d1e93913b53c88a544f47b4825e600",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 27
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 27
+            }
+          ]
+        ]
+      },
+      {
+        "origin": "prepare",
+        "call_id": 27,
+        "transaction_id": 28,
+        "fingerprint_without_lock": "SELECT tasks.task_id, tasks.graph_task_id, tasks.root_run_id, tasks.checkpoint_run_id, tasks.session_id, tasks.trigger_message_id, tasks.trigger_type, tasks.status, tasks.idempotency_key, tasks.lock_owner, tasks.lock_token, tasks.heartbeat_at, tasks.lease_expires_at, tasks.failure_reason, tasks.cancel_requested_at, tasks.last_event_sequence, tasks.created_at, tasks.updated_at, tasks.completed_at, tasks.recovery_required FROM tasks WHERE tasks.task_id = $1::UUID",
+        "parameter_sha256": "cd96d0c0cd49d1af0c292e2152aed8d89dd8a0ea9df7e04ed81218c850c2fb6f",
+        "copies": 2,
+        "copy_scopes": [
+          [
+            {
+              "name": "prepare",
+              "call_id": 27
+            }
+          ],
+          [
+            {
+              "name": "prepare",
+              "call_id": 27
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "audit-after1",
+    "users": 1,
+    "source_commit": "2c79e5949c5f8d5761a83db8fb3bce439acc2f1a",
+    "passed": true,
+    "errors": [],
+    "raw_sha256": "04276665512be1e9d88f6f6830b50c811ad539b81cf2a0a53a72755d15f333e6",
+    "diagnostic_only": true,
+    "cpu_profile": false,
+    "calls": {
+      "lock_session": 14,
+      "prepare": 3,
+      "message_insert": 11,
+      "plan_events": 23,
+      "finalize_state": 3,
+      "executor_projection": 3
+    },
+    "all_audited_sql": 298,
+    "top_scope_sql_counts": {
+      "lock_session": 30,
+      "prepare": 15,
+      "plan_events": 175,
+      "finalize_state": 24,
+      "executor_projection": 54
+    },
+    "redundant_same_transaction_same_binding_reads": {
+      "prepare": 0,
+      "executor_projection": 0
+    },
+    "lock_session_reads": 28,
+    "lock_session_queries": 84,
+    "message_duplicate_queries": 11,
+    "matching_examples": []
+  },
+  {
+    "name": "audit-after10",
+    "users": 10,
+    "source_commit": "2c79e5949c5f8d5761a83db8fb3bce439acc2f1a",
+    "passed": true,
+    "errors": [],
+    "raw_sha256": "3c49346190c98c25d7b77c6086b9b257683db49aa6af2ef653eb90db9a53adfd",
+    "diagnostic_only": true,
+    "cpu_profile": true,
+    "calls": {
+      "lock_session": 140,
+      "prepare": 30,
+      "message_insert": 110,
+      "plan_events": 230,
+      "finalize_state": 30,
+      "executor_projection": 30
+    },
+    "all_audited_sql": 2980,
+    "top_scope_sql_counts": {
+      "lock_session": 300,
+      "prepare": 150,
+      "plan_events": 1750,
+      "finalize_state": 240,
+      "executor_projection": 540
+    },
+    "redundant_same_transaction_same_binding_reads": {
+      "prepare": 0,
+      "executor_projection": 0
+    },
+    "lock_session_reads": 280,
+    "lock_session_queries": 840,
+    "message_duplicate_queries": 110,
+    "matching_examples": []
+  }
+]

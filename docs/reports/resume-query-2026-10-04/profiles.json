@@ -1,0 +1,32 @@
+[
+  {
+    "name": "before-standard10-profile",
+    "main_thread_cpu_seconds": 6.872717042,
+    "offload_thread_cpu_seconds": 0.17676189099999962,
+    "process_cpu_seconds": 7.118129000000001,
+    "export_cpu_seconds": 0.07642300000000013,
+    "exclusive_groups": {
+      "main:other": 3.6901451359999924,
+      "main:sqlalchemy": 2.554417783,
+      "main:service": 0.4846038509999996,
+      "main:harness": 0.08840410900000004,
+      "offload:other": 0.15251689399999988,
+      "offload:service": 0.019491072000000005
+    }
+  },
+  {
+    "name": "after-standard10-profile",
+    "main_thread_cpu_seconds": 6.760412167,
+    "offload_thread_cpu_seconds": 0.241295361,
+    "process_cpu_seconds": 7.068269000000001,
+    "export_cpu_seconds": 0.07618699999999912,
+    "exclusive_groups": {
+      "main:other": 3.5994966570000084,
+      "main:sqlalchemy": 2.5504821929999917,
+      "main:service": 0.483762633,
+      "main:harness": 0.08874698799999998,
+      "offload:other": 0.2172904649999999,
+      "offload:service": 0.019271309
+    }
+  }
+]

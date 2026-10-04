@@ -1,0 +1,49 @@
+{
+  "before": "55103856cbf960a3d263148cc2c429a6ef53c9f0",
+  "after": "2c79e5949c5f8d5761a83db8fb3bce439acc2f1a",
+  "reference_070": "89f65ea53ecf2b92a19f38aa0b9f9592e0e44eee",
+  "harness_sha256": {
+    "scripts/benchmarks/worker_e2e/analyze.py": "e247530a67d0f0bfabae67c3730de839f941baba0bc3c4286ddd35d49949ae3f",
+    "scripts/benchmarks/worker_e2e/analyze_checkpoint.py": "e5d3ce0ede17dfeb56508f52e23d2947ffa7f339a68e7d88ae493bc8b48f04b4",
+    "scripts/benchmarks/worker_e2e/build_observation_report.py": "ec9791eaebd858b8278c9157b91bf5188e6dba50a80ae2cdb49f1c7649810f6d",
+    "scripts/benchmarks/worker_e2e/build_report.py": "52d681f8e6ec694edeb6bdc818135211e167f5567c6028e7c4aa7767ef0ec79d",
+    "scripts/benchmarks/worker_e2e/checkpoint_lock.py": "4bceffba9a583a5e6b2a7f8d3e2cba39f3844b2a99acdfaeb463ef495726719b",
+    "scripts/benchmarks/worker_e2e/checkpoint_profile.py": "6881b044ab5fbab155ef40a6f97641ca63addc86524d1cd585b80dd56af692e0",
+    "scripts/benchmarks/worker_e2e/cpu_profile.py": "16284f14513575af2c5b464f77f52bb738db15d9d2bb8dbaeb8584974ba02a57",
+    "scripts/benchmarks/worker_e2e/executor_trace.py": "0fed79c7559de91cc745644237ec205b308ac0ce9d9f45f54f6d66496eddb7b5",
+    "scripts/benchmarks/worker_e2e/export.py": "e099d513aa58d76f55088b33c73dae21aee9ecdc1d5005ad98e542ed74cc5eec",
+    "scripts/benchmarks/worker_e2e/export_checkpoint.py": "d7ff5bafdfa5b4a8d9b3d1703a0177c2fb3045ba4e308c15138478e95a5b5926",
+    "scripts/benchmarks/worker_e2e/export_observation_comparison.py": "04d3841b14d119c5371b887d31c366359c776c39b70dbf16a4d5dd068489a313",
+    "scripts/benchmarks/worker_e2e/matrix.py": "401c97e2e4f74ce44efc26967372a71d62ca545df758e8ddd46f683b5a21b210",
+    "scripts/benchmarks/worker_e2e/model_fixture.py": "f1a4f017eb31134c9c3469908993c45c71d310ce12f0357c7b72e1d20a9c5a42",
+    "scripts/benchmarks/worker_e2e/negative_observation_controls.py": "316324c354767f83e82aec0216ba548c84a48c2aa3ef80a819b6240e21e47bb9",
+    "scripts/benchmarks/worker_e2e/observation_matrix.py": "b4f7f90673796b7e1c9cbabd6ce4dec392a93889059d67ce9c3631354b13ae78",
+    "scripts/benchmarks/worker_e2e/observation_scenarios.py": "7e06ab1c49c0b1ce1f72a65cbfc160c6aef332da362b943ee7f46b2f7c9a2e2c",
+    "scripts/benchmarks/worker_e2e/query_audit.py": "251e24a80c13fd4a1b5d254708da84352de94530f6d064b6e1556454e2b646c9",
+    "scripts/benchmarks/worker_e2e/run.py": "d1364a6dc7bb3d5770caf5c6489c297df56714daa05b5345f7755471d06d134e",
+    "scripts/benchmarks/worker_e2e/server.py": "1327b505424e657a7fcf3c1550503ce5fb40139fa5f3def51c0b0db035d0f9c8",
+    "scripts/benchmarks/worker_e2e/test_capture.py": "a4c41f5412225c952ac7931867385dc7c4e9db8c42708e0de1ca9cfa7e3db30f",
+    "scripts/benchmarks/worker_e2e/test_checkpoint_profile.py": "d614a0dd39936094059ab98d9a65b0586da542194cfa14344fd640b4cd29360a",
+    "scripts/benchmarks/worker_e2e/test_executor_trace.py": "540a9cdae181c7f452412786c390766ad2686ec92a54b6b3c594daae5bccbe50",
+    "scripts/benchmarks/worker_e2e/test_observation_scenarios.py": "313b63ef09a8611ef215e88cb6085f315be313b5b966b785f234e8a0b44c65a3",
+    "scripts/benchmarks/worker_e2e/verify.py": "8213278dabc6ae4595861eeda01d5947eec0b5dcc476701c0fa83b30d91f249d",
+    "scripts/benchmarks/worker_e2e/verify_observation_comparison.py": "e53aebf79c4d57730a7def5526239215b8075a074a042e110ff3c7e89ec5ab96",
+    "scripts/benchmarks/executor_throughput/analyze.py": "6ffc7f3d8d5252339a78c5c12e1c424b01939fc317abc6b86e351fbc047b92b0",
+    "scripts/benchmarks/executor_throughput/mock_executor.py": "3d03f2291f65947248ef39f8e0666b9d7be07d060cd164118c18c4f17a16b0f0",
+    "scripts/benchmarks/executor_throughput/probe.py": "a0b7904b0e05a892bf6cf967ba921cfe69c74559a896f84d508ca60f274db505",
+    "scripts/benchmarks/executor_throughput/run.py": "ac90add927336511240e956ced5142039c0bd469e0fb7d695a7e8a687a2eaf85",
+    "scripts/benchmarks/executor_throughput/test_analysis.py": "b9c78a885f7be02f0a4c9ae8f2390ebc6925a4e54f64af391b44580cac0743d4",
+    "scripts/benchmarks/executor_throughput/test_mock_executor.py": "698a951dfa498bc4e5423cf2ef43a2828795e86e8ae84cf3dd6ea7585419ac39",
+    "scripts/benchmarks/executor_throughput/verify.py": "d86e6d33fab37e8888c3369acfe12657aef36518825f57da1ff21034a31160b8"
+  },
+  "source_delta": [
+    "src/api_service/runs/execution.py",
+    "src/api_service/runs/projection.py",
+    "src/api_service/test/test_locked_projection_postgres.py"
+  ],
+  "production_delta": [
+    "src/api_service/runs/execution.py",
+    "src/api_service/runs/projection.py"
+  ],
+  "before_matches_070": true
+}

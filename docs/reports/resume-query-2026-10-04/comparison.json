@@ -1,0 +1,182 @@
+[
+  {
+    "profile": "standard",
+    "users": 1,
+    "repeats": 1,
+    "before_elapsed_seconds": 1.7090053330175579,
+    "after_elapsed_seconds": 1.7194448329973966,
+    "elapsed_seconds_reduction_percent": -0.6108523933863852,
+    "before_flow_mean_seconds": 1.7085385420359671,
+    "after_flow_mean_seconds": 1.718987749889493,
+    "flow_mean_seconds_reduction_percent": -0.6115874823095391,
+    "before_flow_p95_seconds": 1.7085385420359671,
+    "after_flow_p95_seconds": 1.718987749889493,
+    "flow_p95_seconds_reduction_percent": -0.6115874823095391,
+    "before_cpu_seconds": 0.38197899999999985,
+    "after_cpu_seconds": 0.36047600000000024,
+    "cpu_seconds_reduction_percent": 5.629367059445578,
+    "before_sql_count": 540,
+    "after_sql_count": 530,
+    "sql_count_reduction_percent": 1.851851851851849,
+    "elapsed_ranges": {
+      "before": [
+        1.7090053330175579,
+        1.7090053330175579
+      ],
+      "after": [
+        1.7194448329973966,
+        1.7194448329973966
+      ]
+    }
+  },
+  {
+    "profile": "standard",
+    "users": 10,
+    "repeats": 1,
+    "before_elapsed_seconds": 4.039931500097737,
+    "after_elapsed_seconds": 4.014477208955213,
+    "elapsed_seconds_reduction_percent": 0.6300673945067503,
+    "before_flow_mean_seconds": 4.020134058385156,
+    "after_flow_mean_seconds": 3.48084988349583,
+    "flow_mean_seconds_reduction_percent": 13.414581878544386,
+    "before_flow_p95_seconds": 4.0382326249964535,
+    "after_flow_p95_seconds": 4.013200459070504,
+    "flow_p95_seconds_reduction_percent": 0.6198792454650048,
+    "before_cpu_seconds": 3.072052,
+    "after_cpu_seconds": 2.9661509999999995,
+    "cpu_seconds_reduction_percent": 3.447239825367543,
+    "before_sql_count": 5422,
+    "after_sql_count": 5282,
+    "sql_count_reduction_percent": 2.5820730357801525,
+    "elapsed_ranges": {
+      "before": [
+        4.039931500097737,
+        4.039931500097737
+      ],
+      "after": [
+        4.014477208955213,
+        4.014477208955213
+      ]
+    }
+  },
+  {
+    "profile": "standard",
+    "users": 30,
+    "repeats": 1,
+    "before_elapsed_seconds": 10.117187166120857,
+    "after_elapsed_seconds": 9.978404333116487,
+    "elapsed_seconds_reduction_percent": 1.3717531436910457,
+    "before_flow_mean_seconds": 9.560329684661701,
+    "after_flow_mean_seconds": 9.528311436080063,
+    "flow_mean_seconds_reduction_percent": 0.3349073686549464,
+    "before_flow_p95_seconds": 10.075242166873068,
+    "after_flow_p95_seconds": 9.97054245811887,
+    "flow_p95_seconds_reduction_percent": 1.0391780864428712,
+    "before_cpu_seconds": 9.597489,
+    "after_cpu_seconds": 9.481003,
+    "cpu_seconds_reduction_percent": 1.2137132952171115,
+    "before_sql_count": 16911,
+    "after_sql_count": 16570,
+    "sql_count_reduction_percent": 2.016439004198456,
+    "elapsed_ranges": {
+      "before": [
+        10.117187166120857,
+        10.117187166120857
+      ],
+      "after": [
+        9.978404333116487,
+        9.978404333116487
+      ]
+    }
+  },
+  {
+    "profile": "standard",
+    "users": 50,
+    "repeats": 3,
+    "before_elapsed_seconds": 16.45817052766991,
+    "after_elapsed_seconds": 16.226105875025194,
+    "elapsed_seconds_reduction_percent": 1.410027027333094,
+    "before_flow_mean_seconds": 15.548648166066656,
+    "after_flow_mean_seconds": 15.455318890844161,
+    "flow_mean_seconds_reduction_percent": 0.6002404467944422,
+    "before_flow_p95_seconds": 16.41937550002088,
+    "after_flow_p95_seconds": 16.193362097100664,
+    "flow_p95_seconds_reduction_percent": 1.3765042581548204,
+    "before_cpu_seconds": 15.784291666666666,
+    "after_cpu_seconds": 15.575807333333334,
+    "cpu_seconds_reduction_percent": 1.32083426824664,
+    "before_sql_count": 28354.333333333332,
+    "after_sql_count": 27733,
+    "sql_count_reduction_percent": 2.191317023852901,
+    "elapsed_ranges": {
+      "before": [
+        16.254815415944904,
+        16.836956500075758
+      ],
+      "after": [
+        16.207701708190143,
+        16.2356149579864
+      ]
+    }
+  },
+  {
+    "profile": "large20",
+    "users": 1,
+    "repeats": 1,
+    "before_elapsed_seconds": 3.6731365001760423,
+    "after_elapsed_seconds": 3.6937315831892192,
+    "elapsed_seconds_reduction_percent": -0.5606947362884585,
+    "before_flow_mean_seconds": 3.6726744170300663,
+    "after_flow_mean_seconds": 3.69111887505278,
+    "flow_mean_seconds_reduction_percent": -0.5022078172022937,
+    "before_flow_p95_seconds": 3.6726744170300663,
+    "after_flow_p95_seconds": 3.69111887505278,
+    "flow_p95_seconds_reduction_percent": -0.5022078172022937,
+    "before_cpu_seconds": 1.3318180000000002,
+    "after_cpu_seconds": 1.3368420000000003,
+    "cpu_seconds_reduction_percent": -0.37722872044079203,
+    "before_sql_count": 2046,
+    "after_sql_count": 2000,
+    "sql_count_reduction_percent": 2.2482893450635366,
+    "elapsed_ranges": {
+      "before": [
+        3.6731365001760423,
+        3.6731365001760423
+      ],
+      "after": [
+        3.6937315831892192,
+        3.6937315831892192
+      ]
+    }
+  },
+  {
+    "profile": "large20",
+    "users": 10,
+    "repeats": 1,
+    "before_elapsed_seconds": 14.897437791107222,
+    "after_elapsed_seconds": 14.463246416999027,
+    "elapsed_seconds_reduction_percent": 2.9145372526232616,
+    "before_flow_mean_seconds": 14.533559037395753,
+    "after_flow_mean_seconds": 14.211640658136456,
+    "flow_mean_seconds_reduction_percent": 2.215000320506355,
+    "before_flow_p95_seconds": 14.895565417129546,
+    "after_flow_p95_seconds": 14.462276749778539,
+    "flow_p95_seconds_reduction_percent": 2.9088433719524076,
+    "before_cpu_seconds": 13.461445999999999,
+    "after_cpu_seconds": 13.286316000000001,
+    "cpu_seconds_reduction_percent": 1.3009746501230102,
+    "before_sql_count": 20586,
+    "after_sql_count": 20090,
+    "sql_count_reduction_percent": 2.4094044496259626,
+    "elapsed_ranges": {
+      "before": [
+        14.897437791107222,
+        14.897437791107222
+      ],
+      "after": [
+        14.463246416999027,
+        14.463246416999027
+      ]
+    }
+  }
+]

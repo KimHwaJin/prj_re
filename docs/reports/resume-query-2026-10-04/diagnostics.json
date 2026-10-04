@@ -1,0 +1,42 @@
+[
+  {
+    "name": "audit-before1",
+    "variant": "before",
+    "users": 1,
+    "raw": "raw/audit-before1.json.gz",
+    "sha256": "d5045d02186eed383b578f80f93a7a22bb5f4791caaa9d993e4e3ffd63840f32",
+    "source_commit": "5510385",
+    "diagnostic_only": true,
+    "cpu_profile": false
+  },
+  {
+    "name": "audit-before10",
+    "variant": "before",
+    "users": 10,
+    "raw": "raw/audit-before10.json.gz",
+    "sha256": "b49e5dca14d804a1d5754b81cf2af5138f6f0bec3574458309e15a40f93d0a20",
+    "source_commit": "5510385",
+    "diagnostic_only": true,
+    "cpu_profile": true
+  },
+  {
+    "name": "audit-after1",
+    "variant": "after",
+    "users": 1,
+    "raw": "raw/audit-after1.json.gz",
+    "sha256": "04276665512be1e9d88f6f6830b50c811ad539b81cf2a0a53a72755d15f333e6",
+    "source_commit": "2c79e5949c5f8d5761a83db8fb3bce439acc2f1a",
+    "diagnostic_only": true,
+    "cpu_profile": false
+  },
+  {
+    "name": "audit-after10",
+    "variant": "after",
+    "users": 10,
+    "raw": "raw/audit-after10.json.gz",
+    "sha256": "3c49346190c98c25d7b77c6086b9b257683db49aa6af2ef653eb90db9a53adfd",
+    "source_commit": "2c79e5949c5f8d5761a83db8fb3bce439acc2f1a",
+    "diagnostic_only": true,
+    "cpu_profile": true
+  }
+]
