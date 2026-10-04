@@ -1,0 +1,10 @@
+{
+  "user_id": "employee-002",
+  "user_name": "김철수",
+  "role": "user",
+  "default_project_id": null,
+  "delete_yn": "Y",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-04T00:00:00Z",
+  "deleted_at": "2026-10-04T00:00:00Z"
+}

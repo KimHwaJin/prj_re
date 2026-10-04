@@ -31,6 +31,8 @@
 | [contracts/agent-api/requests/reject_repair.jsonc](agent-api/requests/reject_repair.jsonc) | 수정 제안 거절 |
 | [contracts/agent-api/requests/replan.jsonc](agent-api/requests/replan.jsonc) | 자연어 계획 재작성 |
 | [contracts/agent-api/requests/start.jsonc](agent-api/requests/start.jsonc) | 새 사용자 입력·모델 선택 |
+| [contracts/agent-api/responses/user_list.jsonc](agent-api/responses/user_list.jsonc) | 관리자 사용자 요약·권한·활성 상태·페이지 |
+| [contracts/agent-api/responses/deleted_user.jsonc](agent-api/responses/deleted_user.jsonc) | 관리자용 삭제 사용자 상세·기본 프로젝트 null |
 | [contracts/agent-api/responses/run_list.jsonc](agent-api/responses/run_list.jsonc) | 공개 Run 요약 목록·페이지 |
 | [contracts/agent-api/responses/run_logs.jsonc](agent-api/responses/run_logs.jsonc) | Agent 실행 진단 로그·페이지 |
 | [contracts/agent-api/responses/run_diagnostics.jsonc](agent-api/responses/run_diagnostics.jsonc) | Run의 내부 Task·세션 전체 작업·점유 진단 |

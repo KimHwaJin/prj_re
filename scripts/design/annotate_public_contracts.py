@@ -10,6 +10,8 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 FIELDS = {
+    'q': '사용자 공개 ID·표시 이름의 대소문자 무시 부분 검색어. 앞뒤 공백을 제거하고 %, _, 역슬래시는 문자 그대로 찾는다.',
+    'is_active': '사용자가 soft delete되지 않았는지. 로그인 세션의 유효성이나 자동 복구를 뜻하지 않는다.',
     'quote': '자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다.',
     'intent': '자동 메모리 갱신 사유. project_context=지속적인 배경, preference_change=선호 변경, remember=명시적 기억 요청.',
     'section': 'Agent 내부 메모리 부분 갱신의 고정 분류. 공개 관리 API에는 section path가 없다.',
@@ -221,8 +223,9 @@ OPENAPI = {
     'openapi': 'OpenAPI 명세 버전.', 'info': 'API 명세의 제목·버전 등 기본 정보.',
     'version': 'OpenAPI 문서에 선언된 서비스 버전.', 'paths': 'URL 경로별 HTTP operation 정의.',
     'get': 'GET operation. 조회·SSE 구독 또는 SSO 로그인 이동에 사용한다.',
-    'put': 'PUT operation. 프로젝트 메모리 Markdown 문서 전체를 명시적으로 수정한다.',
-    'delete': 'DELETE operation. 프로젝트 메모리 문서를 초기화하고 문서 버전을 증가시킨다.',
+    'put': 'PUT operation. 해당 자원 전체를 수정한다. 메모리는 Markdown 문서 전체를 교체한다.',
+    'delete': 'DELETE operation. 사용자는 soft delete, 메모리는 문서 초기화·버전 증가를 수행한다.',
+    'patch': 'PATCH operation. 사용자 이름·권한 등 해당 자원의 허용 필드만 변경한다.',
     'post': 'POST operation. 새 요청·resume·취소·로그아웃 등에 사용한다.',
     'summary': 'Swagger 등에 표시할 operation 요약.', 'operationId': 'OpenAPI operation 식별자.',
     'parameters': 'path/query/header의 요청 파라미터 목록. JSON body 필드와 별개다.',
@@ -267,6 +270,11 @@ MODELS = {
     'DeleteYN': '비활성/삭제 표시 Y/N.', 'HTTPValidationError': '요청 유효성 검증 실패 상세.',
     'Page_AgentRunLogResource_': '진단 로그 목록과 페이지 정보. 기본50개·최대200개를 반환한다.',
     'PageInfo': '다음 페이지 커서·존재 여부.', 'Page_PublicRunResource_': '과거 전체 Run 응답 목록 형식.', 'Page_PublicRunSummary_': 'Run 요약 목록 및 페이지 정보.',
+    'UserSummary': '관리자 사용자 목록용 요약. 기본 프로젝트·로그인 세션 정보는 포함하지 않는다.',
+    'Page_UserSummary_': '관리자 사용자 요약 목록·페이지. 기본50·최대200개다.',
+    'UserRead': '본인 또는 관리자의 사용자 상세. 관리자만 삭제된 사용자도 조회한다.',
+    'UserCreate': '관리자가 등록할 공개 사용자 ID·이름·권한.',
+    'UserUpdate': '관리자의 표시 이름·권한 수정. ID 변경·복구는 제공하지 않는다.',
     'UserMe': '현재 로그인한 사용자와 CSRF·만료 정보.', 'UserRole': '사용자 권한 admin/user.',
     'ValidationError': '개별 필드의 요청 검증 오류.',
     'id': 'Workflow/Step/decision/산출물의 규격화된 문자열 ID.',
@@ -332,6 +340,27 @@ DIAGNOSTIC_FIELDS = {
 def field_description(key, path=(), parent=None):
     """Explain fields using the containing object, not only their spelling."""
     parent = parent or {}
+    if '/api/v1/users' in path and parent.get('in') == 'query' and key == 'name':
+        query = parent.get('name')
+        descriptions = {'q': FIELDS['q'], 'role': '사용자 권한 admin/user 정확 일치 필터.',
+            'status': '사용자 계정 상태 필터 active/deleted/all. 기본 active이며 Run 상태와 별개다.'}
+        if query in descriptions: return '요청 query 이름. ' + descriptions[query]
+    user_context = any(k in {'UserSummary', 'Page_UserSummary_', 'UserRead', 'UserMe', 'UserCreate', 'UserUpdate',
+        'user_list.json', 'deleted_user.json'} for k in path)
+    if user_context:
+        descriptions = {
+            'items': '현재 페이지의 사용자 요약 목록. 기본 프로젝트·로그인 세션 정보는 포함하지 않는다.',
+            'user_id': '서비스 공개 문자열 사용자 ID. 내부 UUID가 아니며 SSO 사번과 연결된다.',
+            'user_name': '사용자 표시 이름. 중복 가능하며 공개 ID와 별개다.',
+            'role': '서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다.',
+            'is_active': FIELDS['is_active'],
+            'default_project_id': '활성 기본 프로젝트 UUID. 삭제 등으로 없으면 null이며 조회에서 생성하지 않는다.',
+            'delete_yn': 'N은 활성, Y는 soft delete. 관리자 상세는 삭제된 사용자도 읽으며 복구하지 않는다.',
+            'created_at': '사용자 최초 등록 시각.',
+            'updated_at': '사용자 레코드 최종 변경 시각. 로그인 세션 만료 시각과 별개다.',
+            'deleted_at': '사용자의 soft delete 시각. 활성 사용자는 null이다.',
+        }
+        if key in descriptions: return descriptions[key]
     diagnostic_context = any(k in {'RunDiagnosticsResource','TaskDiagnostics','SessionWorkDiagnostics',
         'SessionExecutionDiagnostics','RunInvocationResource','Page_RunInvocationResource_',
         'run_diagnostics.json','run_invocations.json'} for k in path)
@@ -512,6 +541,13 @@ def main():
             for url, methods in data['paths'].items():
                 for method, operation in methods.items():
                     for parameter in operation.get('parameters', []):
+                        if url == '/api/v1/users' and parameter['name'] in ('q', 'role', 'status'):
+                            parameter['description'] = {
+                                'q': FIELDS['q'],
+                                'role': '사용자 권한 admin/user 정확 일치 필터. 생략하면 둘 다 조회한다.',
+                                'status': '사용자 계정 상태 필터. active=활성(기본), deleted=soft delete만, all=전체. Run 상태와 별개다.',
+                            }[parameter['name']]
+                            continue
                         parameter['description'] = {
                             'limit':'목록 페이지 크기. 기본 50, 최대 200.',
                             'cursor':'다음 목록 페이지를 요청할 때 사용하는 토큰. SSE Last-Event-ID와 별개다.',

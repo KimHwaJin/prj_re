@@ -111,6 +111,17 @@ assert set(schemas['SessionAvailability']['properties']) == {'status', 'allowed_
 assert set(schemas['SessionUpdate']['properties']) == {'session_name'}
 assert schemas['SessionUpdate']['additionalProperties'] is False
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
+users = paths['/api/v1/users']['get']
+assert users['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_UserSummary_')
+assert {'q', 'role', 'status', 'limit', 'cursor', 'sort', 'created_at_from', 'created_at_to'} == {p['name'] for p in users['parameters'] if p['in'] == 'query'}
+limit = next(p['schema'] for p in users['parameters'] if p['name'] == 'limit')
+assert limit['default'] == 50 and limit['maximum'] == 200
+account_status = next(p['schema'] for p in users['parameters'] if p['name'] == 'status')
+assert account_status['default'] == 'active' and set(account_status['enum']) == {'active', 'deleted', 'all'}
+assert set(schemas['UserSummary']['properties']) == {'user_id', 'user_name', 'role', 'is_active', 'created_at', 'updated_at', 'deleted_at'}
+assert schemas['UserSummary']['properties']['user_id']['type'] == 'string'
+assert 'public_user_id' not in schemas['UserRead']['properties']
+assert 'api_service/services/user_queries.py' in names
 assert '/api/v1/projects/{project_id}/memory' in paths
 assert '/api/v1/projects/{project_id}/memory/{section}/{key}' not in paths
 assert {'get', 'put', 'delete'} <= set(paths['/api/v1/projects/{project_id}/memory'])
@@ -171,7 +182,7 @@ async def smoke():
     return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
-    'session_settings_contract':True, 'session_activity_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
+    'admin_user_read_contract':True, 'session_settings_contract':True, 'session_activity_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
     'retired_graph_packages_absent':True, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
     'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

@@ -38,12 +38,12 @@ class UserService:
             raise HTTPException(403, "Administrator role is required.")
 
     @staticmethod
-    async def _target(db, public_id, *, for_update=False):
+    async def _target(db, public_id, *, for_update=False, active_only=True):
         try:
             public_id = normalize_user_id(public_id)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
-        user = await UserRepository.get_by_public_id(db, public_id, active_only=True, for_update=for_update)
+        user = await UserRepository.get_by_public_id(db, public_id, active_only=active_only, for_update=for_update)
         if user is None:
             raise HTTPException(404, "User not found.")
         return user
@@ -99,7 +99,11 @@ class UserService:
             raise HTTPException(422, str(exc)) from None
         if actor.role != UserRole.ADMIN and actor.public_user_id != public_id:
             raise HTTPException(404, "User not found.")
-        return await UserService._resource(db, await UserService._target(db, public_id))
+        # Only administrators may inspect soft-deleted profiles. Mutation callers
+        # keep _target's active_only=True and SSO never reactivates them here.
+        return await UserService._resource(db, await UserService._target(
+            db, public_id, active_only=actor.role != UserRole.ADMIN,
+        ))
 
     @staticmethod
     async def _protect_last_admin(db, target):

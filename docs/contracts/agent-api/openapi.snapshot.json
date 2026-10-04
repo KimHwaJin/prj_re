@@ -1738,6 +1738,457 @@
           }
         ]
       }
+    },
+    "/api/v1/users": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user_api_v1_users_post",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "관리자 사용자 목록 조회",
+        "description": "관리자만 사용자 요약을 조회합니다. GET으로 가입·복구·기본 프로젝트 생성을 하지 않습니다.",
+        "operationId": "list_users_api_v1_users_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "공개 사용자 ID 또는 표시 이름의 대소문자 무시 부분 검색. %, _, 역슬래시는 문자 그대로 검색합니다.",
+              "title": "Q"
+            },
+            "description": "사용자 공개 ID·표시 이름의 대소문자 무시 부분 검색어. 앞뒤 공백을 제거하고 %, _, 역슬래시는 문자 그대로 찾는다."
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UserRole"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "admin 또는 user 정확 일치",
+              "title": "Role"
+            },
+            "description": "사용자 권한 admin/user 정확 일치 필터. 생략하면 둘 다 조회한다."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "deleted",
+                "all"
+              ],
+              "type": "string",
+              "description": "active=활성, deleted=삭제된 사용자만, all=전체. 기본은 active입니다.",
+              "default": "active",
+              "title": "Status"
+            },
+            "description": "사용자 계정 상태 필터. active=활성(기본), deleted=soft delete만, all=전체. Run 상태와 별개다."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "목록 페이지 크기. 기본 50, 최대 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "다음 목록 페이지를 요청할 때 사용하는 토큰. SSE Last-Event-ID와 별개다."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^-?created_at$",
+              "default": "-created_at",
+              "title": "Sort"
+            },
+            "description": "목록 정렬. created_at 또는 -created_at으로 오름/내림차순을 선택한다."
+          },
+          {
+            "name": "created_at_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At From"
+            },
+            "description": "목록 생성 시각의 포함 하한."
+          },
+          {
+            "name": "created_at_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At To"
+            },
+            "description": "목록 생성 시각의 제외 상한."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_UserSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Read User",
+        "operationId": "read_user_api_v1_users__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            },
+            "description": "서비스에 등록된 공개 사용자 식별자. 사내 SSO 연동 시 직원 식별자에 연결된다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update User",
+        "operationId": "update_user_api_v1_users__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            },
+            "description": "서비스에 등록된 공개 사용자 식별자. 사내 SSO 연동 시 직원 식별자에 연결된다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Delete User",
+        "operationId": "delete_user_api_v1_users__user_id__delete",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            },
+            "description": "서비스에 등록된 공개 사용자 식별자. 사내 SSO 연동 시 직원 식별자에 연결된다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2183,6 +2634,28 @@
           "page"
         ],
         "title": "Page[RunInvocationResource]"
+      },
+      "Page_UserSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "현재 페이지의 사용자 요약 목록. 기본 프로젝트·로그인 세션 정보는 포함하지 않는다. 필수 필드."
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo",
+            "description": "목록 응답의 페이지 정보. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "Page[UserSummary]"
       },
       "ParameterChange": {
         "properties": {
@@ -3384,21 +3857,49 @@
         ],
         "title": "TextContent"
       },
+      "UserCreate": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "서비스 공개 문자열 사용자 ID. 내부 UUID가 아니며 SSO 사번과 연결된다. 필수 필드."
+          },
+          "user_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "User Name",
+            "description": "사용자 표시 이름. 중복 가능하며 공개 ID와 별개다. 필수 필드."
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "default": "user",
+            "description": "서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "user_name"
+        ],
+        "title": "UserCreate"
+      },
       "UserMe": {
         "properties": {
           "user_id": {
             "type": "string",
             "title": "User Id",
-            "description": "서비스에 등록된 공개 사용자 식별자. 사내 SSO 연동 시 직원 식별자에 연결된다. 필수 필드."
+            "description": "서비스 공개 문자열 사용자 ID. 내부 UUID가 아니며 SSO 사번과 연결된다. 필수 필드."
           },
           "user_name": {
             "type": "string",
             "title": "User Name",
-            "description": "서비스 사용자 표시 이름. 필수 필드."
+            "description": "사용자 표시 이름. 중복 가능하며 공개 ID와 별개다. 필수 필드."
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
-            "description": "메시지 작성자 또는 사용자 권한 구분. 메시지는 assistant/user 등, 사용자 조회는 admin/user다. 필수 필드."
+            "description": "서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다. 필수 필드."
           },
           "default_project_id": {
             "anyOf": [
@@ -3411,23 +3912,23 @@
               }
             ],
             "title": "Default Project Id",
-            "description": "사용자 기본 프로젝트 UUID. 최초 SSO 등록 시 생성되는 기본 프로젝트에 연결된다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+            "description": "활성 기본 프로젝트 UUID. 삭제 등으로 없으면 null이며 조회에서 생성하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
           },
           "delete_yn": {
             "$ref": "#/components/schemas/DeleteYN",
-            "description": "사용자 비활성/삭제 표시. Y/N을 구분하며 계정 권한과 별개다. 필수 필드."
+            "description": "N은 활성, Y는 soft delete. 관리자 상세는 삭제된 사용자도 읽으며 복구하지 않는다. 필수 필드."
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At",
-            "description": "이 자원이 생성된 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+            "description": "사용자 최초 등록 시각. 필수 필드."
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
             "title": "Updated At",
-            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
+            "description": "사용자 레코드 최종 변경 시각. 로그인 세션 만료 시각과 별개다. 필수 필드."
           },
           "deleted_at": {
             "anyOf": [
@@ -3440,7 +3941,7 @@
               }
             ],
             "title": "Deleted At",
-            "description": "사용자가 비활성/삭제 처리된 시각. 해당하지 않으면 null이다. 필수 필드."
+            "description": "사용자의 soft delete 시각. 활성 사용자는 null이다. 필수 필드."
           },
           "csrf_token": {
             "type": "string",
@@ -3467,6 +3968,77 @@
         ],
         "title": "UserMe"
       },
+      "UserRead": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "서비스 공개 문자열 사용자 ID. 내부 UUID가 아니며 SSO 사번과 연결된다. 필수 필드."
+          },
+          "user_name": {
+            "type": "string",
+            "title": "User Name",
+            "description": "사용자 표시 이름. 중복 가능하며 공개 ID와 별개다. 필수 필드."
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다. 필수 필드."
+          },
+          "default_project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Project Id",
+            "description": "활성 기본 프로젝트 UUID. 삭제 등으로 없으면 null이며 조회에서 생성하지 않는다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "delete_yn": {
+            "$ref": "#/components/schemas/DeleteYN",
+            "description": "N은 활성, Y는 soft delete. 관리자 상세는 삭제된 사용자도 읽으며 복구하지 않는다. 필수 필드."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "사용자 최초 등록 시각. 필수 필드."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "사용자 레코드 최종 변경 시각. 로그인 세션 만료 시각과 별개다. 필수 필드."
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At",
+            "description": "사용자의 soft delete 시각. 활성 사용자는 null이다. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "user_name",
+          "role",
+          "delete_yn",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "title": "UserRead"
+      },
       "UserRole": {
         "type": "string",
         "enum": [
@@ -3474,6 +4046,98 @@
           "user"
         ],
         "title": "UserRole"
+      },
+      "UserSummary": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "서비스 공개 문자열 사용자 ID. 내부 UUID가 아니며 SSO 사번과 연결된다. 필수 필드."
+          },
+          "user_name": {
+            "type": "string",
+            "title": "User Name",
+            "description": "사용자 표시 이름. 중복 가능하며 공개 ID와 별개다. 필수 필드."
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole",
+            "description": "서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다. 필수 필드."
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "사용자가 soft delete되지 않았는지. 로그인 세션의 유효성이나 자동 복구를 뜻하지 않는다. 필수 필드."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "사용자 최초 등록 시각. 필수 필드."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "사용자 레코드 최종 변경 시각. 로그인 세션 만료 시각과 별개다. 필수 필드."
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At",
+            "description": "사용자의 soft delete 시각. 활성 사용자는 null이다. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "user_name",
+          "role",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "title": "UserSummary",
+        "description": "관리자 목록용 사용자 요약. 프로젝트·로그인 세션 정보는 포함하지 않습니다."
+      },
+      "UserUpdate": {
+        "properties": {
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Name",
+            "description": "사용자 표시 이름. 중복 가능하며 공개 ID와 별개다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "서비스 권한 admin 또는 user. 호출자 권한은 로그인한 사용자 DB 역할로 판단한다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UserUpdate"
       },
       "ValidationError": {
         "properties": {

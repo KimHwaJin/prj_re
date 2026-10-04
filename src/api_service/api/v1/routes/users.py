@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_service.core.auth import Actor, get_current_actor, require_admin
 from api_service.core.database import get_db
-from api_service.schemas.common.user_schema import UserCreate, UserRead, UserMe, UserUpdate
+from api_service.core.pagination import ListParams, list_params
+from api_service.core.enums import UserRole
+from api_service.schemas.common.api_schema import Page
+from api_service.schemas.common.user_schema import UserCreate, UserRead, UserMe, UserUpdate, UserSummary, UserListStatus
 from api_service.services.user_service import UserService
+from api_service.services.user_queries import list_user_summaries
 from service_auth.sso.dependencies import get_login_session
 from service_auth.sso.sessions import LoginSession
 
@@ -19,6 +23,21 @@ async def create_user(payload: UserCreate, response: Response,
     return user
 
 
+@router.get("", response_model=Page[UserSummary], summary="관리자 사용자 목록 조회")
+async def list_users(
+    response: Response,
+    params: ListParams = Depends(list_params),
+    q: str | None = Query(default=None, min_length=1, max_length=100, description="공개 사용자 ID 또는 표시 이름의 대소문자 무시 부분 검색. %, _, 역슬래시는 문자 그대로 검색합니다."),
+    role: UserRole | None = Query(default=None, description="admin 또는 user 정확 일치"),
+    account_status: UserListStatus = Query(default="active", alias="status", description="active=활성, deleted=삭제된 사용자만, all=전체. 기본은 active입니다."),
+    actor: Actor = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자만 사용자 요약을 조회합니다. GET으로 가입·복구·기본 프로젝트 생성을 하지 않습니다."""
+    response.headers["Cache-Control"] = "no-store"
+    return await list_user_summaries(db, actor, params, q=q, role=role, status=account_status)
+
+
 # Register before the public string ID route.
 @router.get("/me", response_model=UserMe)
 async def read_me(response: Response, actor: Actor = Depends(get_current_actor),
@@ -29,8 +48,9 @@ async def read_me(response: Response, actor: Actor = Depends(get_current_actor),
 
 
 @router.get("/{user_id}", response_model=UserRead)
-async def read_user(user_id: str, actor: Actor = Depends(get_current_actor),
+async def read_user(user_id: str, response: Response, actor: Actor = Depends(get_current_actor),
                     db: AsyncSession = Depends(get_db)):
+    response.headers["Cache-Control"] = "no-store"
     return await UserService.read(db, actor, user_id)
 
 

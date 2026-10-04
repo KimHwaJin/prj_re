@@ -174,3 +174,27 @@ async def test_cookie_run_resume_and_get_post_sse_keep_existing_contract(plannin
     assert (await h.client.post("/api/v1/auth/logout",headers={"X-CSRF-Token":me["csrf_token"]})).status_code==204
     assert (await h.client.get(h.path+"/"+rid+"/stream")).status_code==401
     await h.app.state.sso.close()
+
+
+@pytest.mark.asyncio
+async def test_cookie_admin_user_list_and_deleted_detail(cookie_api):
+    h=cookie_api
+    me=await sign_in(h)
+    assert (await h.client.get('/api/v1/users',params={'status':'all'})).status_code==403
+    async with h.factory() as db:
+        await UserService.bootstrap_admin(db,UserCreate(user_id='009999',user_name='Admin',role='admin'))
+    from service_auth.sso.contracts import VerifiedEmployee
+    h.app.state.sso.adapter.employee=VerifiedEmployee('009999','Employee Admin')
+    admin=await sign_in(h)
+    response=await h.client.get('/api/v1/users',params={'q':'000123'})
+    assert response.status_code==200,response.text  # GET needs cookie only, no CSRF.
+    assert [item['user_id'] for item in response.json()['items']]==['000123']
+    assert response.headers['cache-control']=='no-store'
+    assert (await h.client.delete('/api/v1/users/000123',headers={'X-CSRF-Token':admin['csrf_token']})).status_code==204
+    response=await h.client.get('/api/v1/users',params={'status':'deleted'})
+    assert response.status_code==200 and response.json()['items'][0]['is_active'] is False
+    detail=await h.client.get('/api/v1/users/000123')
+    assert detail.status_code==200 and detail.json()['delete_yn']=='Y'
+    h.client.cookies.clear()
+    assert (await h.client.get('/api/v1/users',headers={'X-User-Id':'009999'})).status_code==401
+    assert (await h.client.get('/api/v1/users',headers={'Authorization':'Bearer 009999'})).status_code==401

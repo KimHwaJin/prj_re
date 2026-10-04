@@ -130,3 +130,8 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## Task 조회를 공개 Run 하위로 통합 — 081
 
 [081](081-run-diagnostics-contract.md)에서 Task 독립 공개 목록/상세를 제거하고 소유자/관리자의 Run diagnostics·invocations로 통합했다. 내부 Task/Worker/checkpoint/점유 책임은 유지한다. [현재 계약](../run-diagnostics-api.md)을 따른다. 기존 Task path와 public_run_id·평면 Task 응답을 쓰는 외부 관리 화면은 Run 주소 및 nested task/session_work로 전환해야 한다. Run 연결이 없는 orphan Task 탐색은 별도 관리자 후속이며 이번에 추가하지 않았다. 사용자 입력 제어는 Session availability와 Run 상세/SSE를 사용한다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위는 유지한다.
+
+
+## 관리자 사용자 읽기 계약 — 082
+
+[082](082-admin-user-read-contract.md)에서 관리자 GET /users의 요약 페이지·검색·role/status 필터와 삭제 사용자 상세 읽기를 구현했다. SSO 일반 사용자/기본 프로젝트 자동 생성·삭제 사용자 자동 복구 금지·관리자 보호·소유권을 유지한다. 관리 화면은 [현재 사용자 계약](../user-identity-api.md)의 공개 user_id·목록 is_active·상세 delete_yn을 사용한다. 이번 검증은 격리PG37·전체src681·wheel·필드 주석이며 사내SDK 실연결·실제 프론트 이행·대규모 사용자 부분 검색의 성능 측정은 남아 있다. 사용자 복구 API는 이번 요구사항이 아니며 추가하지 않았다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위는 유지한다. 베이스 미병합·미푸시·미배포다.
