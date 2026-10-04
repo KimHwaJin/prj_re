@@ -100,3 +100,7 @@
 ## 073 조회 목적·동일 트랜잭션 중복 정리
 
 [073](073-result-resume-query-audit.md)에서 준비/Executor 반영의 같은 행 재조회12회/흐름을 제거했다. 권한 발견/재확인·User/Project 보호·Message dedup·서비스 replay 복구는 유지했다. 50명3회 평균 완료 16.458→16.226초(1.41% 감소), API CPU 15.784→15.576초(1.32% 감소). 관련158회귀·22회446흐름·검산1,846개, 후보 유지 권장이나 큰 성능 개선으로 표현하지 않는다. 다음은 모델 호출 수를 건드리지 않고 CPU 프로파일의 SQL 실행 준비와 ORM 결과 생성 비용을 분리해 더 큰 비용을 선택하는 검토다. 073 이후 기준 runtime은 이 후보를 유지하는 방향이며071/072 구현을 되가져오지 않는다. 실제 Pod/지속 유입/원격 DB/RSS·모델/Registry/Workflow CRUD/운영·066/067/071/072 보류 및 미병합·미푸시·미배포를 유지한다.
+
+## 074 SQL 준비·ORM 결과 비용 분해
+
+[074](074-sqlalchemy-cost-diagnosis.md)에서 서비스 소스를 변경하지 않고 caller CPU 진단을 수행했다. 표준10명 SQL expression/cache0.734초·compiler0.078초 대 ORM loading 모듈0.104초, Log/Event 쌍410 SELECT·Task 연결230 SELECT를 확인했다. driver/JSON/builtin을 포함한 전체 읽기 비용이나 불필요 중복 횟수로 해석하지 않는다. 다음 후보는 Log/Event 및 공통 User/Session 조회의 SQL 구조 재사용을 한 묶음으로 검토하고 profiler off 전후 비교로 채택을 판단하는 것이다. 권한/잠금/복구·매 호출 실제 SELECT를 유지한다. 4시도22흐름 오류0·진단 테스트3개·원본 검산 완료이며 속도 개선 주장은 없다. 073 runtime과066/067/071/072 보류, 모델/Registry/Workflow CRUD/운영 후순위를 유지한다. 베이스 미병합·미푸시·미배포다.

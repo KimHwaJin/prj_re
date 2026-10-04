@@ -1,0 +1,51 @@
+{
+  "python": "3.11.15 (main, Jun 23 2026, 15:46:51) [Clang 22.1.3 ]",
+  "packages": {
+    "sqlalchemy": "2.0.52",
+    "asyncpg": "0.31.0",
+    "psycopg": "3.3.4",
+    "langgraph": "1.2.11",
+    "fastapi": "0.141.1"
+  },
+  "resources": {
+    "original": [
+      "ced98920ab11",
+      "3870a27e9322",
+      "0ad3c3227dae",
+      "c2cb3f16bd4c",
+      "1090b003389c",
+      "7fe644471632",
+      "6ce9dcc7b597",
+      "68b79ebf7d80",
+      "b6f744056a6d",
+      "2afb3a15fd9b",
+      "c61b28a7e1cb",
+      "c46777295f81",
+      "d61e22060f95",
+      "8f381b3863b4",
+      "baf7c7f4142e",
+      "b2d7336a73a7",
+      "cce947ceddf5",
+      "10f19c1d7cc3"
+    ],
+    "owned": [
+      {
+        "name": "dtest-sql-cost-postgres",
+        "id": "e9a7042e1a43b725353f9cf9f8e1698f248c26655acfb7c1cb2f376f2e4d00ca"
+      },
+      {
+        "name": "dtest-sql-cost-redis",
+        "id": "827e34dfcb3471894510da6b320233988a50d5a1216b362fb0c1aea8d00d1129"
+      }
+    ]
+  },
+  "speed_comparison": false,
+  "source_runtime_changed": false,
+  "llm_delay_ms": 0,
+  "executor": "loopback HTTP synthetic fixture; no real code execution",
+  "capacity": 20,
+  "crud_pool": 10,
+  "checkpoint_pool": 4,
+  "event_pool": 4,
+  "overflow": 0
+}

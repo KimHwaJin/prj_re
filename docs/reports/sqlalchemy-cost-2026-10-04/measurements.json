@@ -1,0 +1,2138 @@
+[
+  {
+    "name": "standard1-profile",
+    "users": 1,
+    "profile": "standard",
+    "profiler_enabled": true,
+    "completed": 1,
+    "errors": [],
+    "elapsed_seconds_diagnostic": 2.2805808749981225,
+    "process_cpu_seconds": 0.9088669999999999,
+    "sql_count": 533,
+    "task_link_selects": 23,
+    "log_event_pair_selects": 41,
+    "main_thread_cpu_seconds": 0.7849957079999998,
+    "offload_thread_cpu_seconds": 0.015148716999999999,
+    "export_cpu_seconds": 0.10460500000000028,
+    "sqlalchemy_self_cpu_seconds": 0.2824185259999999,
+    "sqlalchemy_exclusive_groups": {
+      "sql_expression_cache": 0.08646029399999997,
+      "db_execution_result_bridge": 0.10480561199999998,
+      "orm_row_loading": 0.012918655000000001,
+      "orm_session_context_transaction": 0.027929943000000013,
+      "sql_compiler": 0.008963797999999997,
+      "sqlalchemy_other": 0.0014761409999999998,
+      "orm_state_flush_other": 0.03986408299999997
+    },
+    "diagnostic_functions": [
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 221,
+        "function": "_gen_cache_key",
+        "primitive_calls": 458,
+        "calls": 3023,
+        "self_cpu_seconds": 0.011782780000000001,
+        "cumulative_cpu_seconds": 0.02350025,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+            "line": 1063,
+            "function": "_gen_cache_key_inst",
+            "calls": 14,
+            "primitive_calls": 14,
+            "self_cpu_seconds": 4.5084000000000004e-05,
+            "cumulative_cpu_seconds": 8.962600000000001e-05
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 1262,
+            "primitive_calls": 1074,
+            "self_cpu_seconds": 0.003357202,
+            "cumulative_cpu_seconds": 0.005462935
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 1126,
+            "primitive_calls": 1055,
+            "self_cpu_seconds": 0.0036057880000000004,
+            "cumulative_cpu_seconds": 0.010839854000000001
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 347,
+            "function": "_generate_cache_key",
+            "calls": 458,
+            "primitive_calls": 458,
+            "self_cpu_seconds": 0.0043432060000000005,
+            "cumulative_cpu_seconds": 0.02350025
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 92,
+            "primitive_calls": 92,
+            "self_cpu_seconds": 0.000254834,
+            "cumulative_cpu_seconds": 0.000989253
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 71,
+            "primitive_calls": 71,
+            "self_cpu_seconds": 0.00017666600000000002,
+            "cumulative_cpu_seconds": 0.0007876710000000001
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 79,
+        "function": "instances",
+        "primitive_calls": 390,
+        "calls": 390,
+        "self_cpu_seconds": 0.004066661,
+        "cumulative_cpu_seconds": 0.033744796,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py",
+            "line": 610,
+            "function": "_return_orm_returning",
+            "calls": 58,
+            "primitive_calls": 58,
+            "self_cpu_seconds": 0.000545494,
+            "cumulative_cpu_seconds": 0.0044444540000000005
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 581,
+            "function": "orm_setup_cursor_result",
+            "calls": 332,
+            "primitive_calls": 332,
+            "self_cpu_seconds": 0.0035211670000000004,
+            "cumulative_cpu_seconds": 0.029300342000000004
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 812,
+        "function": "_instance_processor",
+        "primitive_calls": 270,
+        "calls": 270,
+        "self_cpu_seconds": 0.003322395,
+        "cumulative_cpu_seconds": 0.010463584000000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 2771,
+            "function": "row_processor",
+            "calls": 270,
+            "primitive_calls": 270,
+            "self_cpu_seconds": 0.003322395,
+            "cumulative_cpu_seconds": 0.010463584000000001
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 2160,
+        "function": "_gen_cache_key",
+        "primitive_calls": 862,
+        "calls": 862,
+        "self_cpu_seconds": 0.0019217630000000002,
+        "cumulative_cpu_seconds": 0.002563905,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 712,
+            "primitive_calls": 712,
+            "self_cpu_seconds": 0.00160752,
+            "cumulative_cpu_seconds": 0.001937951
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 116,
+            "primitive_calls": 116,
+            "self_cpu_seconds": 0.000258284,
+            "cumulative_cpu_seconds": 0.000307374
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 939,
+            "function": "<genexpr>",
+            "calls": 15,
+            "primitive_calls": 15,
+            "self_cpu_seconds": 1.6210000000000002e-05,
+            "cumulative_cpu_seconds": 2.1166e-05
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 19,
+            "primitive_calls": 19,
+            "self_cpu_seconds": 3.9749e-05,
+            "cumulative_cpu_seconds": 0.000297414
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 679,
+        "function": "_compile_w_cache",
+        "primitive_calls": 533,
+        "calls": 533,
+        "self_cpu_seconds": 0.0011841010000000001,
+        "cumulative_cpu_seconds": 0.045831535,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py",
+            "line": 1593,
+            "function": "_execute_clauseelement",
+            "calls": 533,
+            "primitive_calls": 533,
+            "self_cpu_seconds": 0.0011841010000000001,
+            "cumulative_cpu_seconds": 0.045831535
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 347,
+        "function": "_generate_cache_key",
+        "primitive_calls": 458,
+        "calls": 458,
+        "self_cpu_seconds": 0.001100014,
+        "cumulative_cpu_seconds": 0.025322502,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 411,
+            "function": "_generate_cache_key",
+            "calls": 458,
+            "primitive_calls": 458,
+            "self_cpu_seconds": 0.001100014,
+            "cumulative_cpu_seconds": 0.025322502
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/schema.py",
+        "line": 411,
+        "function": "_gen_cache_key",
+        "primitive_calls": 1626,
+        "calls": 1626,
+        "self_cpu_seconds": 0.0006827760000000001,
+        "cumulative_cpu_seconds": 0.0006827760000000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 1296,
+            "primitive_calls": 1296,
+            "self_cpu_seconds": 0.00032671100000000004,
+            "cumulative_cpu_seconds": 0.00032671100000000004
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 238,
+            "primitive_calls": 238,
+            "self_cpu_seconds": 0.0002784,
+            "cumulative_cpu_seconds": 0.0002784
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 92,
+            "primitive_calls": 92,
+            "self_cpu_seconds": 7.766500000000001e-05,
+            "cumulative_cpu_seconds": 7.766500000000001e-05
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 411,
+        "function": "_generate_cache_key",
+        "primitive_calls": 458,
+        "calls": 458,
+        "self_cpu_seconds": 0.000534463,
+        "cumulative_cpu_seconds": 0.025856965000000003,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py",
+            "line": 1246,
+            "function": "oneshot",
+            "calls": 458,
+            "primitive_calls": 458,
+            "self_cpu_seconds": 0.000534463,
+            "cumulative_cpu_seconds": 0.025856965000000003
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 5908,
+        "function": "visit_insert",
+        "primitive_calls": 20,
+        "calls": 20,
+        "self_cpu_seconds": 0.000321718,
+        "cumulative_cpu_seconds": 0.013209874000000002,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py",
+            "line": 126,
+            "function": "_compiler_dispatch",
+            "calls": 20,
+            "primitive_calls": 20,
+            "self_cpu_seconds": 0.000321718,
+            "cumulative_cpu_seconds": 0.013209874000000002
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 1373,
+        "function": "__init__",
+        "primitive_calls": 20,
+        "calls": 20,
+        "self_cpu_seconds": 0.00016841000000000002,
+        "cumulative_cpu_seconds": 0.01394683,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 317,
+            "function": "_compiler",
+            "calls": 20,
+            "primitive_calls": 20,
+            "self_cpu_seconds": 0.00016841000000000002,
+            "cumulative_cpu_seconds": 0.01394683
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 859,
+        "function": "__init__",
+        "primitive_calls": 20,
+        "calls": 20,
+        "self_cpu_seconds": 8.837600000000001e-05,
+        "cumulative_cpu_seconds": 0.013405667000000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+            "line": 1373,
+            "function": "__init__",
+            "calls": 20,
+            "primitive_calls": 20,
+            "self_cpu_seconds": 8.837600000000001e-05,
+            "cumulative_cpu_seconds": 0.013405667000000001
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+        "line": 1069,
+        "function": "_gen_cache_key",
+        "primitive_calls": 342,
+        "calls": 342,
+        "self_cpu_seconds": 7.461700000000001e-05,
+        "cumulative_cpu_seconds": 7.461700000000001e-05,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 342,
+            "primitive_calls": 342,
+            "self_cpu_seconds": 7.461700000000001e-05,
+            "cumulative_cpu_seconds": 7.461700000000001e-05
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py",
+        "line": 886,
+        "function": "_gen_cache_key",
+        "primitive_calls": 350,
+        "calls": 350,
+        "self_cpu_seconds": 7.217100000000001e-05,
+        "cumulative_cpu_seconds": 7.217100000000001e-05,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 350,
+            "primitive_calls": 350,
+            "self_cpu_seconds": 7.217100000000001e-05,
+            "cumulative_cpu_seconds": 7.217100000000001e-05
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 317,
+        "function": "_compiler",
+        "primitive_calls": 20,
+        "calls": 20,
+        "self_cpu_seconds": 5.1458e-05,
+        "cumulative_cpu_seconds": 0.013998288000000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 679,
+            "function": "_compile_w_cache",
+            "calls": 20,
+            "primitive_calls": 20,
+            "self_cpu_seconds": 5.1458e-05,
+            "cumulative_cpu_seconds": 0.013998288000000001
+          }
+        ]
+      }
+    ],
+    "select_builder_callers": [
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "execute_event",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.251e-06,
+        "cumulative_cpu_seconds": 1.5667e-05
+      },
+      {
+        "file": "api_service/repositories/project_repository.py",
+        "function": "get_active_by_name",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.083e-06,
+        "cumulative_cpu_seconds": 2e-05
+      },
+      {
+        "file": "api_service/repositories/session_repository.py",
+        "function": "get_active_by_user",
+        "calls": 15,
+        "primitive_calls": 15,
+        "self_cpu_seconds": 1.6376e-05,
+        "cumulative_cpu_seconds": 0.000284126
+      },
+      {
+        "file": "api_service/repositories/user_repository.py",
+        "function": "get_active",
+        "calls": 27,
+        "primitive_calls": 27,
+        "self_cpu_seconds": 3.0127e-05,
+        "cumulative_cpu_seconds": 0.000572041
+      },
+      {
+        "file": "api_service/runs/commands/admission.py",
+        "function": "enqueue_user",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 4.417e-06,
+        "cumulative_cpu_seconds": 2.0334000000000002e-05
+      },
+      {
+        "file": "api_service/runs/commands/outcome.py",
+        "function": "record",
+        "calls": 6,
+        "primitive_calls": 6,
+        "self_cpu_seconds": 9.375000000000001e-06,
+        "cumulative_cpu_seconds": 0.000123084
+      },
+      {
+        "file": "api_service/runs/commands/wakeup.py",
+        "function": "next_retry_delay",
+        "calls": 12,
+        "primitive_calls": 12,
+        "self_cpu_seconds": 1.5293e-05,
+        "cumulative_cpu_seconds": 0.000101
+      },
+      {
+        "file": "api_service/runs/graph_invocation.py",
+        "function": "executor_event",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.209e-06,
+        "cumulative_cpu_seconds": 4.7166e-05
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "wait_for_cancellation",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 5.291000000000001e-06,
+        "cumulative_cpu_seconds": 7.258400000000001e-05
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "invoke",
+        "calls": 7,
+        "primitive_calls": 7,
+        "self_cpu_seconds": 5.084e-06,
+        "cumulative_cpu_seconds": 4.6458e-05
+      },
+      {
+        "file": "api_service/runs/projection.py",
+        "function": "synchronize_agentic_execution",
+        "calls": 6,
+        "primitive_calls": 6,
+        "self_cpu_seconds": 5.0020000000000006e-06,
+        "cumulative_cpu_seconds": 7.825e-05
+      },
+      {
+        "file": "api_service/runs/protocols/initial.py",
+        "function": "mark_started",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.209e-06,
+        "cumulative_cpu_seconds": 2.1000000000000002e-05
+      },
+      {
+        "file": "api_service/runs/protocols/user_resume.py",
+        "function": "mark_started",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 3.4150000000000003e-06,
+        "cumulative_cpu_seconds": 5.612400000000001e-05
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "lock_run_and_task",
+        "calls": 15,
+        "primitive_calls": 15,
+        "self_cpu_seconds": 1.5543e-05,
+        "cumulative_cpu_seconds": 0.000290166
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "interrupted_run",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.916e-06,
+        "cumulative_cpu_seconds": 3.4e-05
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_user_turn",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.4170000000000002e-06,
+        "cumulative_cpu_seconds": 2.8501e-05
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_resume",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 8.74e-07,
+        "cumulative_cpu_seconds": 1.7208000000000002e-05
+      },
+      {
+        "file": "api_service/services/agent_project_context.py",
+        "function": "load_project_snapshot",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 2.209e-06,
+        "cumulative_cpu_seconds": 2.6959e-05
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "lock_run",
+        "calls": 23,
+        "primitive_calls": 23,
+        "self_cpu_seconds": 2.2881e-05,
+        "cumulative_cpu_seconds": 0.00015700500000000002
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "create",
+        "calls": 41,
+        "primitive_calls": 41,
+        "self_cpu_seconds": 4.0544000000000003e-05,
+        "cumulative_cpu_seconds": 0.001171958
+      },
+      {
+        "file": "api_service/services/message_service.py",
+        "function": "_create_locked",
+        "calls": 11,
+        "primitive_calls": 11,
+        "self_cpu_seconds": 1.0416e-05,
+        "cumulative_cpu_seconds": 0.00019562600000000001
+      },
+      {
+        "file": "api_service/services/project_memory_policy.py",
+        "function": "require_source",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 6.582000000000001e-06,
+        "cumulative_cpu_seconds": 8.895800000000001e-05
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_projects",
+        "calls": 11,
+        "primitive_calls": 11,
+        "self_cpu_seconds": 8.665000000000001e-06,
+        "cumulative_cpu_seconds": 0.00011324900000000001
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_session",
+        "calls": 17,
+        "primitive_calls": 17,
+        "self_cpu_seconds": 1.6499000000000002e-05,
+        "cumulative_cpu_seconds": 0.00028158400000000003
+      },
+      {
+        "file": "api_service/services/run_stream_service.py",
+        "function": "_read_frame",
+        "calls": 8,
+        "primitive_calls": 8,
+        "self_cpu_seconds": 3.1705e-05,
+        "cumulative_cpu_seconds": 0.000544499
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "append_for_run",
+        "calls": 20,
+        "primitive_calls": 20,
+        "self_cpu_seconds": 2.0244e-05,
+        "cumulative_cpu_seconds": 0.000320412
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "list_after_public_run",
+        "calls": 8,
+        "primitive_calls": 8,
+        "self_cpu_seconds": 1.3788e-05,
+        "cumulative_cpu_seconds": 0.000255331
+      },
+      {
+        "file": "api_service/services/task_service.py",
+        "function": "attach_graph_task_for_run",
+        "calls": 23,
+        "primitive_calls": 23,
+        "self_cpu_seconds": 5.525e-05,
+        "cumulative_cpu_seconds": 0.0007455420000000001
+      },
+      {
+        "file": "service_runtime/request_id.py",
+        "function": "__call__",
+        "calls": 5,
+        "primitive_calls": 5,
+        "self_cpu_seconds": 5.624000000000001e-06,
+        "cumulative_cpu_seconds": 0.000101624
+      }
+    ]
+  },
+  {
+    "name": "standard10-profile",
+    "users": 10,
+    "profile": "standard",
+    "profiler_enabled": true,
+    "completed": 10,
+    "errors": [],
+    "elapsed_seconds_diagnostic": 7.147155749844387,
+    "process_cpu_seconds": 7.128837,
+    "sql_count": 5486,
+    "task_link_selects": 230,
+    "log_event_pair_selects": 410,
+    "main_thread_cpu_seconds": 6.782577917000001,
+    "offload_thread_cpu_seconds": 0.1801511229999999,
+    "export_cpu_seconds": 0.09189399999999992,
+    "sqlalchemy_self_cpu_seconds": 2.417011151,
+    "sqlalchemy_exclusive_groups": {
+      "sql_expression_cache": 0.7339389030000005,
+      "db_execution_result_bridge": 0.8879314259999997,
+      "orm_row_loading": 0.10435202599999999,
+      "orm_session_context_transaction": 0.258306908,
+      "sql_compiler": 0.07800368900000003,
+      "orm_state_flush_other": 0.342518735,
+      "sqlalchemy_other": 0.011959464
+    },
+    "diagnostic_functions": [
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 221,
+        "function": "_gen_cache_key",
+        "primitive_calls": 4729,
+        "calls": 31953,
+        "self_cpu_seconds": 0.105778337,
+        "cumulative_cpu_seconds": 0.205628167,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+            "line": 1063,
+            "function": "_gen_cache_key_inst",
+            "calls": 140,
+            "primitive_calls": 140,
+            "self_cpu_seconds": 0.000443371,
+            "cumulative_cpu_seconds": 0.000805913
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 13413,
+            "primitive_calls": 11603,
+            "self_cpu_seconds": 0.031065837000000002,
+            "cumulative_cpu_seconds": 0.049281423000000005
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 11810,
+            "primitive_calls": 11170,
+            "self_cpu_seconds": 0.031358285,
+            "cumulative_cpu_seconds": 0.094131978
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 347,
+            "function": "_generate_cache_key",
+            "calls": 4729,
+            "primitive_calls": 4729,
+            "self_cpu_seconds": 0.03728227,
+            "cumulative_cpu_seconds": 0.205628167
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 1151,
+            "primitive_calls": 1151,
+            "self_cpu_seconds": 0.0039597140000000005,
+            "cumulative_cpu_seconds": 0.011838711
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 710,
+            "primitive_calls": 710,
+            "self_cpu_seconds": 0.00166886,
+            "cumulative_cpu_seconds": 0.0076868100000000005
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 79,
+        "function": "instances",
+        "primitive_calls": 4056,
+        "calls": 4056,
+        "self_cpu_seconds": 0.031188489000000003,
+        "cumulative_cpu_seconds": 0.27540811200000004,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py",
+            "line": 610,
+            "function": "_return_orm_returning",
+            "calls": 580,
+            "primitive_calls": 580,
+            "self_cpu_seconds": 0.004504523,
+            "cumulative_cpu_seconds": 0.042112773
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 581,
+            "function": "orm_setup_cursor_result",
+            "calls": 3476,
+            "primitive_calls": 3476,
+            "self_cpu_seconds": 0.026683966,
+            "cumulative_cpu_seconds": 0.23329533900000002
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 812,
+        "function": "_instance_processor",
+        "primitive_calls": 2707,
+        "calls": 2707,
+        "self_cpu_seconds": 0.028027468000000003,
+        "cumulative_cpu_seconds": 0.08942514900000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 2771,
+            "function": "row_processor",
+            "calls": 2707,
+            "primitive_calls": 2707,
+            "self_cpu_seconds": 0.028027468000000003,
+            "cumulative_cpu_seconds": 0.08942514900000001
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 2160,
+        "function": "_gen_cache_key",
+        "primitive_calls": 9168,
+        "calls": 9168,
+        "self_cpu_seconds": 0.015207109000000002,
+        "cumulative_cpu_seconds": 0.020847143000000002,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 7668,
+            "primitive_calls": 7668,
+            "self_cpu_seconds": 0.012704078,
+            "cumulative_cpu_seconds": 0.015547353000000002
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 1160,
+            "primitive_calls": 1160,
+            "self_cpu_seconds": 0.002011918,
+            "cumulative_cpu_seconds": 0.002420872
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 939,
+            "function": "<genexpr>",
+            "calls": 150,
+            "primitive_calls": 150,
+            "self_cpu_seconds": 0.000158247,
+            "cumulative_cpu_seconds": 0.000203832
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 190,
+            "primitive_calls": 190,
+            "self_cpu_seconds": 0.000332866,
+            "cumulative_cpu_seconds": 0.002675086
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 679,
+        "function": "_compile_w_cache",
+        "primitive_calls": 5486,
+        "calls": 5486,
+        "self_cpu_seconds": 0.010370107,
+        "cumulative_cpu_seconds": 0.475246979,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py",
+            "line": 1593,
+            "function": "_execute_clauseelement",
+            "calls": 5486,
+            "primitive_calls": 5486,
+            "self_cpu_seconds": 0.010370107,
+            "cumulative_cpu_seconds": 0.475246979
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 347,
+        "function": "_generate_cache_key",
+        "primitive_calls": 4729,
+        "calls": 4729,
+        "self_cpu_seconds": 0.009512041,
+        "cumulative_cpu_seconds": 0.22140256400000002,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 411,
+            "function": "_generate_cache_key",
+            "calls": 4729,
+            "primitive_calls": 4729,
+            "self_cpu_seconds": 0.009512041,
+            "cumulative_cpu_seconds": 0.22140256400000002
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/schema.py",
+        "line": 411,
+        "function": "_gen_cache_key",
+        "primitive_calls": 17650,
+        "calls": 17650,
+        "self_cpu_seconds": 0.0047060470000000005,
+        "cumulative_cpu_seconds": 0.0047060470000000005,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 14042,
+            "primitive_calls": 14042,
+            "self_cpu_seconds": 0.003193448,
+            "cumulative_cpu_seconds": 0.003193448
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 2457,
+            "primitive_calls": 2457,
+            "self_cpu_seconds": 0.001101329,
+            "cumulative_cpu_seconds": 0.001101329
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 1151,
+            "primitive_calls": 1151,
+            "self_cpu_seconds": 0.00041127000000000004,
+            "cumulative_cpu_seconds": 0.00041127000000000004
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 411,
+        "function": "_generate_cache_key",
+        "primitive_calls": 4729,
+        "calls": 4729,
+        "self_cpu_seconds": 0.004277289,
+        "cumulative_cpu_seconds": 0.225679853,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py",
+            "line": 1246,
+            "function": "oneshot",
+            "calls": 4729,
+            "primitive_calls": 4729,
+            "self_cpu_seconds": 0.004277289,
+            "cumulative_cpu_seconds": 0.225679853
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 5908,
+        "function": "visit_insert",
+        "primitive_calls": 200,
+        "calls": 200,
+        "self_cpu_seconds": 0.0028868160000000004,
+        "cumulative_cpu_seconds": 0.19287104900000002,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py",
+            "line": 126,
+            "function": "_compiler_dispatch",
+            "calls": 200,
+            "primitive_calls": 200,
+            "self_cpu_seconds": 0.0028868160000000004,
+            "cumulative_cpu_seconds": 0.19287104900000002
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 1373,
+        "function": "__init__",
+        "primitive_calls": 200,
+        "calls": 200,
+        "self_cpu_seconds": 0.0012508740000000001,
+        "cumulative_cpu_seconds": 0.199206549,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 317,
+            "function": "_compiler",
+            "calls": 200,
+            "primitive_calls": 200,
+            "self_cpu_seconds": 0.0012508740000000001,
+            "cumulative_cpu_seconds": 0.199206549
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 859,
+        "function": "__init__",
+        "primitive_calls": 200,
+        "calls": 200,
+        "self_cpu_seconds": 0.000663054,
+        "cumulative_cpu_seconds": 0.194450958,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+            "line": 1373,
+            "function": "__init__",
+            "calls": 200,
+            "primitive_calls": 200,
+            "self_cpu_seconds": 0.000663054,
+            "cumulative_cpu_seconds": 0.194450958
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+        "line": 1069,
+        "function": "_gen_cache_key",
+        "primitive_calls": 3569,
+        "calls": 3569,
+        "self_cpu_seconds": 0.0006484160000000001,
+        "cumulative_cpu_seconds": 0.0006484160000000001,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 3569,
+            "primitive_calls": 3569,
+            "self_cpu_seconds": 0.0006484160000000001,
+            "cumulative_cpu_seconds": 0.0006484160000000001
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py",
+        "line": 886,
+        "function": "_gen_cache_key",
+        "primitive_calls": 3579,
+        "calls": 3579,
+        "self_cpu_seconds": 0.000640564,
+        "cumulative_cpu_seconds": 0.000640564,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 3579,
+            "primitive_calls": 3579,
+            "self_cpu_seconds": 0.000640564,
+            "cumulative_cpu_seconds": 0.000640564
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 317,
+        "function": "_compiler",
+        "primitive_calls": 200,
+        "calls": 200,
+        "self_cpu_seconds": 0.000395407,
+        "cumulative_cpu_seconds": 0.19960195600000002,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 679,
+            "function": "_compile_w_cache",
+            "calls": 200,
+            "primitive_calls": 200,
+            "self_cpu_seconds": 0.000395407,
+            "cumulative_cpu_seconds": 0.19960195600000002
+          }
+        ]
+      }
+    ],
+    "select_builder_callers": [
+      {
+        "file": "agent_service/middleware/project_memory.py",
+        "function": "abefore_agent",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.5010000000000001e-06,
+        "cumulative_cpu_seconds": 1.7792000000000002e-05
+      },
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "claim_one",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 9.170000000000001e-07,
+        "cumulative_cpu_seconds": 1.6000000000000003e-05
+      },
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "execute_claimed",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 9.58e-07,
+        "cumulative_cpu_seconds": 1.2792e-05
+      },
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "execute_event",
+        "calls": 33,
+        "primitive_calls": 33,
+        "self_cpu_seconds": 2.5576e-05,
+        "cumulative_cpu_seconds": 0.000182868
+      },
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "claim_and_start",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.9590000000000002e-06,
+        "cumulative_cpu_seconds": 2.2209e-05
+      },
+      {
+        "file": "api_service/repositories/project_repository.py",
+        "function": "get_active_by_name",
+        "calls": 10,
+        "primitive_calls": 10,
+        "self_cpu_seconds": 7.167e-06,
+        "cumulative_cpu_seconds": 0.000132167
+      },
+      {
+        "file": "api_service/repositories/session_repository.py",
+        "function": "get_active_by_user",
+        "calls": 151,
+        "primitive_calls": 151,
+        "self_cpu_seconds": 0.000127131,
+        "cumulative_cpu_seconds": 0.002231294
+      },
+      {
+        "file": "api_service/repositories/user_repository.py",
+        "function": "get_active",
+        "calls": 270,
+        "primitive_calls": 270,
+        "self_cpu_seconds": 0.00024233400000000003,
+        "cumulative_cpu_seconds": 0.0043043790000000005
+      },
+      {
+        "file": "api_service/runs/commands/admission.py",
+        "function": "enqueue_user",
+        "calls": 30,
+        "primitive_calls": 30,
+        "self_cpu_seconds": 2.0992e-05,
+        "cumulative_cpu_seconds": 0.00013891400000000002
+      },
+      {
+        "file": "api_service/runs/commands/claim.py",
+        "function": "claim_one",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.5830000000000001e-06,
+        "cumulative_cpu_seconds": 2.4667000000000003e-05
+      },
+      {
+        "file": "api_service/runs/commands/outcome.py",
+        "function": "record",
+        "calls": 60,
+        "primitive_calls": 60,
+        "self_cpu_seconds": 6.6215e-05,
+        "cumulative_cpu_seconds": 0.0010129610000000002
+      },
+      {
+        "file": "api_service/runs/commands/wakeup.py",
+        "function": "next_retry_delay",
+        "calls": 50,
+        "primitive_calls": 50,
+        "self_cpu_seconds": 4.5214000000000005e-05,
+        "cumulative_cpu_seconds": 0.00033483600000000003
+      },
+      {
+        "file": "api_service/runs/execution.py",
+        "function": "prepare",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.5e-06,
+        "cumulative_cpu_seconds": 2.7375e-05
+      },
+      {
+        "file": "api_service/runs/execution.py",
+        "function": "execute_claimed",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.041e-06,
+        "cumulative_cpu_seconds": 6e-06
+      },
+      {
+        "file": "api_service/runs/graph_invocation.py",
+        "function": "user_resume",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 3.582e-06,
+        "cumulative_cpu_seconds": 4.6791e-05
+      },
+      {
+        "file": "api_service/runs/graph_invocation.py",
+        "function": "executor_event",
+        "calls": 31,
+        "primitive_calls": 31,
+        "self_cpu_seconds": 2.6463e-05,
+        "cumulative_cpu_seconds": 0.000519083
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "wait_for_cancellation",
+        "calls": 30,
+        "primitive_calls": 30,
+        "self_cpu_seconds": 3.2913e-05,
+        "cumulative_cpu_seconds": 0.00045220400000000005
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "invoke",
+        "calls": 48,
+        "primitive_calls": 48,
+        "self_cpu_seconds": 4.058e-05,
+        "cumulative_cpu_seconds": 0.00037595500000000003
+      },
+      {
+        "file": "api_service/runs/projection.py",
+        "function": "_finalize_locked_state",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.2930000000000002e-06,
+        "cumulative_cpu_seconds": 1.7376e-05
+      },
+      {
+        "file": "api_service/runs/projection.py",
+        "function": "synchronize_executor_completion",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.584e-06,
+        "cumulative_cpu_seconds": 4.0543e-05
+      },
+      {
+        "file": "api_service/runs/projection.py",
+        "function": "synchronize_agentic_execution",
+        "calls": 30,
+        "primitive_calls": 30,
+        "self_cpu_seconds": 3.371e-05,
+        "cumulative_cpu_seconds": 0.000444462
+      },
+      {
+        "file": "api_service/runs/protocols/initial.py",
+        "function": "mark_started",
+        "calls": 10,
+        "primitive_calls": 10,
+        "self_cpu_seconds": 1.1123e-05,
+        "cumulative_cpu_seconds": 0.00017341600000000002
+      },
+      {
+        "file": "api_service/runs/protocols/initial.py",
+        "function": "start_and_project",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.125e-06,
+        "cumulative_cpu_seconds": 1.7917e-05
+      },
+      {
+        "file": "api_service/runs/protocols/user_resume.py",
+        "function": "mark_started",
+        "calls": 20,
+        "primitive_calls": 20,
+        "self_cpu_seconds": 2.5335e-05,
+        "cumulative_cpu_seconds": 0.000383208
+      },
+      {
+        "file": "api_service/runs/protocols/user_resume.py",
+        "function": "resume_and_project",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 8.32e-07,
+        "cumulative_cpu_seconds": 1.1541e-05
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "lock_run_and_task",
+        "calls": 96,
+        "primitive_calls": 96,
+        "self_cpu_seconds": 9.387800000000001e-05,
+        "cumulative_cpu_seconds": 0.0016015900000000002
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "interrupted_run",
+        "calls": 20,
+        "primitive_calls": 20,
+        "self_cpu_seconds": 1.4247000000000001e-05,
+        "cumulative_cpu_seconds": 0.00027020500000000003
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_user_turn",
+        "calls": 21,
+        "primitive_calls": 21,
+        "self_cpu_seconds": 1.8669e-05,
+        "cumulative_cpu_seconds": 0.00034370900000000004
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_resume",
+        "calls": 11,
+        "primitive_calls": 11,
+        "self_cpu_seconds": 9.627000000000001e-06,
+        "cumulative_cpu_seconds": 0.00018041700000000002
+      },
+      {
+        "file": "api_service/services/agent_project_context.py",
+        "function": "load_project_snapshot",
+        "calls": 11,
+        "primitive_calls": 11,
+        "self_cpu_seconds": 1.3000000000000001e-05,
+        "cumulative_cpu_seconds": 0.000326166
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "lock_run",
+        "calls": 232,
+        "primitive_calls": 232,
+        "self_cpu_seconds": 0.000194161,
+        "cumulative_cpu_seconds": 0.001163247
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "create",
+        "calls": 417,
+        "primitive_calls": 417,
+        "self_cpu_seconds": 0.00037267,
+        "cumulative_cpu_seconds": 0.009387376000000001
+      },
+      {
+        "file": "api_service/services/graph_crud_persistence.py",
+        "function": "_link_graph_task",
+        "calls": 7,
+        "primitive_calls": 7,
+        "self_cpu_seconds": 6.042000000000001e-06,
+        "cumulative_cpu_seconds": 8.225100000000001e-05
+      },
+      {
+        "file": "api_service/services/graph_crud_persistence.py",
+        "function": "persist_graph_state",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.542e-06,
+        "cumulative_cpu_seconds": 2.5625000000000003e-05
+      },
+      {
+        "file": "api_service/services/graph_crud_persistence.py",
+        "function": "_persist_state",
+        "calls": 4,
+        "primitive_calls": 4,
+        "self_cpu_seconds": 2.459e-06,
+        "cumulative_cpu_seconds": 3.6917e-05
+      },
+      {
+        "file": "api_service/services/graph_crud_persistence.py",
+        "function": "persist",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.8350000000000004e-06,
+        "cumulative_cpu_seconds": 3.9459e-05
+      },
+      {
+        "file": "api_service/services/graph_event_persistence.py",
+        "function": "persist_state_delta",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.499e-06,
+        "cumulative_cpu_seconds": 1.5375e-05
+      },
+      {
+        "file": "api_service/services/message_service.py",
+        "function": "_create_locked",
+        "calls": 114,
+        "primitive_calls": 114,
+        "self_cpu_seconds": 0.000101427,
+        "cumulative_cpu_seconds": 0.0017998
+      },
+      {
+        "file": "api_service/services/plan_event_persistence.py",
+        "function": "persist_plan_events",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.917e-06,
+        "cumulative_cpu_seconds": 3.1417e-05
+      },
+      {
+        "file": "api_service/services/project_memory_policy.py",
+        "function": "read",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 3.2910000000000003e-06,
+        "cumulative_cpu_seconds": 4.1583000000000005e-05
+      },
+      {
+        "file": "api_service/services/project_memory_policy.py",
+        "function": "require_source",
+        "calls": 30,
+        "primitive_calls": 30,
+        "self_cpu_seconds": 3.5129e-05,
+        "cumulative_cpu_seconds": 0.00047146000000000004
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_projects",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 3.248e-06,
+        "cumulative_cpu_seconds": 3.3998e-05
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_session",
+        "calls": 140,
+        "primitive_calls": 140,
+        "self_cpu_seconds": 0.00012128900000000001,
+        "cumulative_cpu_seconds": 0.002235828
+      },
+      {
+        "file": "api_service/services/run_stream_service.py",
+        "function": "_read_frame",
+        "calls": 159,
+        "primitive_calls": 159,
+        "self_cpu_seconds": 0.000162838,
+        "cumulative_cpu_seconds": 0.0021127190000000003
+      },
+      {
+        "file": "api_service/services/session_execution.py",
+        "function": "_update",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 9.570000000000001e-07,
+        "cumulative_cpu_seconds": 1.9790000000000002e-05
+      },
+      {
+        "file": "api_service/services/session_execution.py",
+        "function": "run_owned",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 8.74e-07,
+        "cumulative_cpu_seconds": 1.5791000000000002e-05
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "append",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.2510000000000002e-06,
+        "cumulative_cpu_seconds": 1.7375000000000002e-05
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "append_for_run",
+        "calls": 200,
+        "primitive_calls": 200,
+        "self_cpu_seconds": 0.00018766300000000002,
+        "cumulative_cpu_seconds": 0.0026207500000000002
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "list_after_public_run",
+        "calls": 159,
+        "primitive_calls": 159,
+        "self_cpu_seconds": 0.00013725100000000002,
+        "cumulative_cpu_seconds": 0.002412005
+      },
+      {
+        "file": "api_service/services/task_service.py",
+        "function": "attach_graph_task_for_run",
+        "calls": 233,
+        "primitive_calls": 233,
+        "self_cpu_seconds": 0.000259419,
+        "cumulative_cpu_seconds": 0.0042377890000000005
+      },
+      {
+        "file": "service_runtime/diagnostics.py",
+        "function": "wrapped",
+        "calls": 6,
+        "primitive_calls": 6,
+        "self_cpu_seconds": 5.5420000000000005e-06,
+        "cumulative_cpu_seconds": 9.975000000000001e-05
+      },
+      {
+        "file": "service_runtime/request_id.py",
+        "function": "__call__",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 8.340000000000001e-07,
+        "cumulative_cpu_seconds": 1.4833e-05
+      }
+    ]
+  },
+  {
+    "name": "large1-profile",
+    "users": 1,
+    "profile": "large20",
+    "profiler_enabled": true,
+    "completed": 1,
+    "errors": [],
+    "elapsed_seconds_diagnostic": 5.779106792062521,
+    "process_cpu_seconds": 3.0850400000000002,
+    "sql_count": 2012,
+    "task_link_selects": 114,
+    "log_event_pair_selects": 206,
+    "main_thread_cpu_seconds": 2.9754297920000004,
+    "offload_thread_cpu_seconds": 0.04891513300000001,
+    "export_cpu_seconds": 0.044971000000000316,
+    "sqlalchemy_self_cpu_seconds": 0.9501152019999994,
+    "sqlalchemy_exclusive_groups": {
+      "sql_expression_cache": 0.311302006,
+      "db_execution_result_bridge": 0.3375907729999996,
+      "orm_row_loading": 0.042443375000000005,
+      "orm_session_context_transaction": 0.09313460099999996,
+      "sql_compiler": 0.035260512999999986,
+      "sqlalchemy_other": 0.004614657,
+      "orm_state_flush_other": 0.12576927699999996
+    },
+    "diagnostic_functions": [
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 221,
+        "function": "_gen_cache_key",
+        "primitive_calls": 1803,
+        "calls": 12004,
+        "self_cpu_seconds": 0.042659253,
+        "cumulative_cpu_seconds": 0.082483236,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+            "line": 1063,
+            "function": "_gen_cache_key_inst",
+            "calls": 32,
+            "primitive_calls": 32,
+            "self_cpu_seconds": 0.000124836,
+            "cumulative_cpu_seconds": 0.00022504000000000003
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 5143,
+            "primitive_calls": 4247,
+            "self_cpu_seconds": 0.012505770000000001,
+            "cumulative_cpu_seconds": 0.019772608
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 4367,
+            "primitive_calls": 4036,
+            "self_cpu_seconds": 0.012538955000000001,
+            "cumulative_cpu_seconds": 0.037579119
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 347,
+            "function": "_generate_cache_key",
+            "calls": 1803,
+            "primitive_calls": 1803,
+            "self_cpu_seconds": 0.015570076,
+            "cumulative_cpu_seconds": 0.082483236
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 388,
+            "primitive_calls": 388,
+            "self_cpu_seconds": 0.001256565,
+            "cumulative_cpu_seconds": 0.003920135
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 271,
+            "primitive_calls": 271,
+            "self_cpu_seconds": 0.000663051,
+            "cumulative_cpu_seconds": 0.002992821
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 79,
+        "function": "instances",
+        "primitive_calls": 1462,
+        "calls": 1462,
+        "self_cpu_seconds": 0.013291639000000001,
+        "cumulative_cpu_seconds": 0.110806582,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/bulk_persistence.py",
+            "line": 610,
+            "function": "_return_orm_returning",
+            "calls": 240,
+            "primitive_calls": 240,
+            "self_cpu_seconds": 0.0020583140000000003,
+            "cumulative_cpu_seconds": 0.019593424
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 581,
+            "function": "orm_setup_cursor_result",
+            "calls": 1222,
+            "primitive_calls": 1222,
+            "self_cpu_seconds": 0.011233325,
+            "cumulative_cpu_seconds": 0.091213158
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/loading.py",
+        "line": 812,
+        "function": "_instance_processor",
+        "primitive_calls": 1037,
+        "calls": 1037,
+        "self_cpu_seconds": 0.011588843000000001,
+        "cumulative_cpu_seconds": 0.037552994,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/context.py",
+            "line": 2771,
+            "function": "row_processor",
+            "calls": 1037,
+            "primitive_calls": 1037,
+            "self_cpu_seconds": 0.011588843000000001,
+            "cumulative_cpu_seconds": 0.037552994
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 2160,
+        "function": "_gen_cache_key",
+        "primitive_calls": 3487,
+        "calls": 3487,
+        "self_cpu_seconds": 0.006142334,
+        "cumulative_cpu_seconds": 0.008482048,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 2745,
+            "primitive_calls": 2745,
+            "self_cpu_seconds": 0.0047757450000000005,
+            "cumulative_cpu_seconds": 0.005907954
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 564,
+            "primitive_calls": 564,
+            "self_cpu_seconds": 0.0011309690000000001,
+            "cumulative_cpu_seconds": 0.00135618
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 939,
+            "function": "<genexpr>",
+            "calls": 105,
+            "primitive_calls": 105,
+            "self_cpu_seconds": 0.00011217800000000001,
+            "cumulative_cpu_seconds": 0.00014571700000000001
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 1031,
+            "function": "<genexpr>",
+            "calls": 73,
+            "primitive_calls": 73,
+            "self_cpu_seconds": 0.000123442,
+            "cumulative_cpu_seconds": 0.001072197
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 679,
+        "function": "_compile_w_cache",
+        "primitive_calls": 2012,
+        "calls": 2012,
+        "self_cpu_seconds": 0.004714399,
+        "cumulative_cpu_seconds": 0.174961835,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/engine/base.py",
+            "line": 1593,
+            "function": "_execute_clauseelement",
+            "calls": 2012,
+            "primitive_calls": 2012,
+            "self_cpu_seconds": 0.004714399,
+            "cumulative_cpu_seconds": 0.174961835
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 347,
+        "function": "_generate_cache_key",
+        "primitive_calls": 1803,
+        "calls": 1803,
+        "self_cpu_seconds": 0.0038311120000000002,
+        "cumulative_cpu_seconds": 0.088786235,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 411,
+            "function": "_generate_cache_key",
+            "calls": 1803,
+            "primitive_calls": 1803,
+            "self_cpu_seconds": 0.0038311120000000002,
+            "cumulative_cpu_seconds": 0.088786235
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/schema.py",
+        "line": 411,
+        "function": "_gen_cache_key",
+        "primitive_calls": 6220,
+        "calls": 6220,
+        "self_cpu_seconds": 0.002318904,
+        "cumulative_cpu_seconds": 0.002318904,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 4936,
+            "primitive_calls": 4936,
+            "self_cpu_seconds": 0.001162216,
+            "cumulative_cpu_seconds": 0.001162216
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 335,
+            "function": "<listcomp>",
+            "calls": 896,
+            "primitive_calls": 896,
+            "self_cpu_seconds": 0.0009396910000000001,
+            "cumulative_cpu_seconds": 0.0009396910000000001
+          },
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 852,
+            "function": "<genexpr>",
+            "calls": 388,
+            "primitive_calls": 388,
+            "self_cpu_seconds": 0.00021699700000000002,
+            "cumulative_cpu_seconds": 0.00021699700000000002
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+        "line": 411,
+        "function": "_generate_cache_key",
+        "primitive_calls": 1803,
+        "calls": 1803,
+        "self_cpu_seconds": 0.0019522300000000001,
+        "cumulative_cpu_seconds": 0.090738465,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py",
+            "line": 1246,
+            "function": "oneshot",
+            "calls": 1803,
+            "primitive_calls": 1803,
+            "self_cpu_seconds": 0.0019522300000000001,
+            "cumulative_cpu_seconds": 0.090738465
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 5908,
+        "function": "visit_insert",
+        "primitive_calls": 93,
+        "calls": 93,
+        "self_cpu_seconds": 0.0015597920000000002,
+        "cumulative_cpu_seconds": 0.060059748,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/visitors.py",
+            "line": 126,
+            "function": "_compiler_dispatch",
+            "calls": 93,
+            "primitive_calls": 93,
+            "self_cpu_seconds": 0.0015597920000000002,
+            "cumulative_cpu_seconds": 0.060059748
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 1373,
+        "function": "__init__",
+        "primitive_calls": 93,
+        "calls": 93,
+        "self_cpu_seconds": 0.0007273000000000001,
+        "cumulative_cpu_seconds": 0.063296922,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 317,
+            "function": "_compiler",
+            "calls": 93,
+            "primitive_calls": 93,
+            "self_cpu_seconds": 0.0007273000000000001,
+            "cumulative_cpu_seconds": 0.063296922
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+        "line": 859,
+        "function": "__init__",
+        "primitive_calls": 93,
+        "calls": 93,
+        "self_cpu_seconds": 0.00040557600000000005,
+        "cumulative_cpu_seconds": 0.060920283000000006,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/compiler.py",
+            "line": 1373,
+            "function": "__init__",
+            "calls": 93,
+            "primitive_calls": 93,
+            "self_cpu_seconds": 0.00040557600000000005,
+            "cumulative_cpu_seconds": 0.060920283000000006
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/base.py",
+        "line": 1069,
+        "function": "_gen_cache_key",
+        "primitive_calls": 1377,
+        "calls": 1377,
+        "self_cpu_seconds": 0.00026687600000000004,
+        "cumulative_cpu_seconds": 0.00026687600000000004,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 1377,
+            "primitive_calls": 1377,
+            "self_cpu_seconds": 0.00026687600000000004,
+            "cumulative_cpu_seconds": 0.00026687600000000004
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py",
+        "line": 886,
+        "function": "_gen_cache_key",
+        "primitive_calls": 1324,
+        "calls": 1324,
+        "self_cpu_seconds": 0.00025039800000000004,
+        "cumulative_cpu_seconds": 0.00025039800000000004,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/cache_key.py",
+            "line": 221,
+            "function": "_gen_cache_key",
+            "calls": 1324,
+            "primitive_calls": 1324,
+            "self_cpu_seconds": 0.00025039800000000004,
+            "cumulative_cpu_seconds": 0.00025039800000000004
+          }
+        ]
+      },
+      {
+        "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+        "line": 317,
+        "function": "_compiler",
+        "primitive_calls": 93,
+        "calls": 93,
+        "self_cpu_seconds": 0.00020075,
+        "cumulative_cpu_seconds": 0.063497672,
+        "callers": [
+          {
+            "file": "/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/sqlalchemy/sql/elements.py",
+            "line": 679,
+            "function": "_compile_w_cache",
+            "calls": 93,
+            "primitive_calls": 93,
+            "self_cpu_seconds": 0.00020075,
+            "cumulative_cpu_seconds": 0.063497672
+          }
+        ]
+      }
+    ],
+    "select_builder_callers": [
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "execute_event",
+        "calls": 41,
+        "primitive_calls": 41,
+        "self_cpu_seconds": 2.9083000000000003e-05,
+        "cumulative_cpu_seconds": 0.000213245
+      },
+      {
+        "file": "api_service/agent_run_worker.py",
+        "function": "run_forever",
+        "calls": 6,
+        "primitive_calls": 6,
+        "self_cpu_seconds": 5.168e-06,
+        "cumulative_cpu_seconds": 7.979200000000001e-05
+      },
+      {
+        "file": "api_service/repositories/project_repository.py",
+        "function": "get_active_by_name",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 8.32e-07,
+        "cumulative_cpu_seconds": 1.5416e-05
+      },
+      {
+        "file": "api_service/repositories/session_repository.py",
+        "function": "get_active_by_user",
+        "calls": 15,
+        "primitive_calls": 15,
+        "self_cpu_seconds": 1.8004000000000002e-05,
+        "cumulative_cpu_seconds": 0.00029762800000000003
+      },
+      {
+        "file": "api_service/repositories/user_repository.py",
+        "function": "get_active",
+        "calls": 103,
+        "primitive_calls": 103,
+        "self_cpu_seconds": 0.00010408700000000001,
+        "cumulative_cpu_seconds": 0.0019928370000000003
+      },
+      {
+        "file": "api_service/runs/commands/admission.py",
+        "function": "enqueue_user",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 4.749000000000001e-06,
+        "cumulative_cpu_seconds": 2.7457e-05
+      },
+      {
+        "file": "api_service/runs/commands/outcome.py",
+        "function": "record",
+        "calls": 24,
+        "primitive_calls": 24,
+        "self_cpu_seconds": 3.9045e-05,
+        "cumulative_cpu_seconds": 0.0005155
+      },
+      {
+        "file": "api_service/runs/commands/wakeup.py",
+        "function": "next_retry_delay",
+        "calls": 48,
+        "primitive_calls": 48,
+        "self_cpu_seconds": 5.0917e-05,
+        "cumulative_cpu_seconds": 0.00034383300000000004
+      },
+      {
+        "file": "api_service/runs/graph_invocation.py",
+        "function": "executor_event",
+        "calls": 41,
+        "primitive_calls": 41,
+        "self_cpu_seconds": 3.3791e-05,
+        "cumulative_cpu_seconds": 0.000719041
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "wait_for_cancellation",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 4.167e-06,
+        "cumulative_cpu_seconds": 5.6376000000000004e-05
+      },
+      {
+        "file": "api_service/runs/monitoring.py",
+        "function": "invoke",
+        "calls": 7,
+        "primitive_calls": 7,
+        "self_cpu_seconds": 4.8320000000000005e-06,
+        "cumulative_cpu_seconds": 4.5584e-05
+      },
+      {
+        "file": "api_service/runs/projection.py",
+        "function": "synchronize_agentic_execution",
+        "calls": 33,
+        "primitive_calls": 33,
+        "self_cpu_seconds": 3.4959e-05,
+        "cumulative_cpu_seconds": 0.000514833
+      },
+      {
+        "file": "api_service/runs/protocols/initial.py",
+        "function": "mark_started",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.0840000000000001e-06,
+        "cumulative_cpu_seconds": 1.9334e-05
+      },
+      {
+        "file": "api_service/runs/protocols/user_resume.py",
+        "function": "mark_started",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 2.0000000000000003e-06,
+        "cumulative_cpu_seconds": 3.9583000000000004e-05
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "lock_run_and_task",
+        "calls": 44,
+        "primitive_calls": 44,
+        "self_cpu_seconds": 4.1292000000000004e-05,
+        "cumulative_cpu_seconds": 0.000779918
+      },
+      {
+        "file": "api_service/runs/repository.py",
+        "function": "interrupted_run",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.334e-06,
+        "cumulative_cpu_seconds": 2.5042000000000002e-05
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_user_turn",
+        "calls": 2,
+        "primitive_calls": 2,
+        "self_cpu_seconds": 1.3750000000000002e-06,
+        "cumulative_cpu_seconds": 3.0708000000000005e-05
+      },
+      {
+        "file": "api_service/services/agent_graph_service.py",
+        "function": "ainvoke_resume",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 9.170000000000001e-07,
+        "cumulative_cpu_seconds": 1.9042e-05
+      },
+      {
+        "file": "api_service/services/agent_project_context.py",
+        "function": "load_project_snapshot",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 1.376e-06,
+        "cumulative_cpu_seconds": 3.0584000000000004e-05
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "lock_run",
+        "calls": 114,
+        "primitive_calls": 114,
+        "self_cpu_seconds": 0.000106248,
+        "cumulative_cpu_seconds": 0.000664456
+      },
+      {
+        "file": "api_service/services/agent_run_log_service.py",
+        "function": "create",
+        "calls": 206,
+        "primitive_calls": 206,
+        "self_cpu_seconds": 0.000181373,
+        "cumulative_cpu_seconds": 0.005066251
+      },
+      {
+        "file": "api_service/services/graph_crud_persistence.py",
+        "function": "_persist_state",
+        "calls": 1,
+        "primitive_calls": 1,
+        "self_cpu_seconds": 9.58e-07,
+        "cumulative_cpu_seconds": 1.5958000000000002e-05
+      },
+      {
+        "file": "api_service/services/message_service.py",
+        "function": "_create_locked",
+        "calls": 68,
+        "primitive_calls": 68,
+        "self_cpu_seconds": 6.0297e-05,
+        "cumulative_cpu_seconds": 0.0012044620000000001
+      },
+      {
+        "file": "api_service/services/project_memory_policy.py",
+        "function": "require_source",
+        "calls": 22,
+        "primitive_calls": 22,
+        "self_cpu_seconds": 3.2040000000000005e-05,
+        "cumulative_cpu_seconds": 0.00045537400000000003
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_projects",
+        "calls": 83,
+        "primitive_calls": 83,
+        "self_cpu_seconds": 6.9202e-05,
+        "cumulative_cpu_seconds": 0.000938497
+      },
+      {
+        "file": "api_service/services/resource_lifecycle.py",
+        "function": "lock_session",
+        "calls": 87,
+        "primitive_calls": 87,
+        "self_cpu_seconds": 7.7538e-05,
+        "cumulative_cpu_seconds": 0.0014116620000000002
+      },
+      {
+        "file": "api_service/services/run_stream_service.py",
+        "function": "_read_frame",
+        "calls": 15,
+        "primitive_calls": 15,
+        "self_cpu_seconds": 5.3416000000000005e-05,
+        "cumulative_cpu_seconds": 0.0007054580000000001
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "append_for_run",
+        "calls": 93,
+        "primitive_calls": 93,
+        "self_cpu_seconds": 9.3588e-05,
+        "cumulative_cpu_seconds": 0.001422211
+      },
+      {
+        "file": "api_service/services/task_event_service.py",
+        "function": "list_after_public_run",
+        "calls": 15,
+        "primitive_calls": 15,
+        "self_cpu_seconds": 2.1502000000000002e-05,
+        "cumulative_cpu_seconds": 0.000410875
+      },
+      {
+        "file": "api_service/services/task_service.py",
+        "function": "attach_graph_task_for_run",
+        "calls": 114,
+        "primitive_calls": 114,
+        "self_cpu_seconds": 0.00022708300000000002,
+        "cumulative_cpu_seconds": 0.0036678360000000003
+      },
+      {
+        "file": "service_runtime/request_id.py",
+        "function": "__call__",
+        "calls": 3,
+        "primitive_calls": 3,
+        "self_cpu_seconds": 2.7490000000000003e-06,
+        "cumulative_cpu_seconds": 5.4916e-05
+      }
+    ]
+  },
+  {
+    "name": "standard10-control",
+    "users": 10,
+    "profile": "standard",
+    "profiler_enabled": false,
+    "completed": 10,
+    "errors": [],
+    "elapsed_seconds_diagnostic": 4.037620417075232,
+    "process_cpu_seconds": 3.1286219999999996,
+    "sql_count": 5292,
+    "task_link_selects": 230,
+    "log_event_pair_selects": 410
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "standard1-profile",
+    "users": 1,
+    "observation_profile": "standard",
+    "cpu_profile": true,
+    "source_commit": "522e52a1e5ba217de85d9b777b61a57a90f62e14",
+    "exit_code": 0,
+    "wall_seconds": 11.371000051498413,
+    "raw": "raw/standard1-profile.json.gz",
+    "sha256": "ae32978ce62447ed8540869dddbc89cc4712a0d624424b66ecd588c305af69e5",
+    "diagnostic_only": true
+  },
+  {
+    "name": "standard10-profile",
+    "users": 10,
+    "observation_profile": "standard",
+    "cpu_profile": true,
+    "source_commit": "522e52a1e5ba217de85d9b777b61a57a90f62e14",
+    "exit_code": 0,
+    "wall_seconds": 16.28677487373352,
+    "raw": "raw/standard10-profile.json.gz",
+    "sha256": "78ccf308651e3c827f0259f514170ada24ba72340f55514c54d338810ec5ea38",
+    "diagnostic_only": true
+  },
+  {
+    "name": "large1-profile",
+    "users": 1,
+    "observation_profile": "large20",
+    "cpu_profile": true,
+    "source_commit": "522e52a1e5ba217de85d9b777b61a57a90f62e14",
+    "exit_code": 0,
+    "wall_seconds": 17.168549060821533,
+    "raw": "raw/large1-profile.json.gz",
+    "sha256": "915daf405c87b667b038454fa4e201c1ac42b43bc9b4659a062bea94798b6743",
+    "diagnostic_only": true
+  },
+  {
+    "name": "standard10-control",
+    "users": 10,
+    "observation_profile": "standard",
+    "cpu_profile": false,
+    "source_commit": "522e52a1e5ba217de85d9b777b61a57a90f62e14",
+    "exit_code": 0,
+    "wall_seconds": 12.435061931610107,
+    "raw": "raw/standard10-control.json.gz",
+    "sha256": "74b4a7f3b60fd1f6699cc53825c393020a6dd368a84e24aeb8151583e7573cb1",
+    "diagnostic_only": true
+  }
+]

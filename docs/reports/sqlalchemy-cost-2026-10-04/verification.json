@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": 70846,
+  "attempts": 4,
+  "profile_attempts": 3,
+  "unprofiled_control_attempts": 1,
+  "completed_flows": 22,
+  "failed_attempts": 0,
+  "production_changed": false,
+  "speed_improvement_claimed": false
+}

@@ -1,0 +1,10 @@
+{
+  "removed_owned_containers": [
+    "e9a7042e1a43b725353f9cf9f8e1698f248c26655acfb7c1cb2f376f2e4d00ca",
+    "827e34dfcb3471894510da6b320233988a50d5a1216b362fb0c1aea8d00d1129"
+  ],
+  "original_container_count": 18,
+  "preserved_original_container_count": 18,
+  "missing_original_containers": [],
+  "owned_resources_remaining": []
+}

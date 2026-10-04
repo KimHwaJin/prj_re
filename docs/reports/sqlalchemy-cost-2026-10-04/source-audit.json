@@ -1,0 +1,8 @@
+{
+  "baseline": "f1ca885c1a2e85bb0793a62a26c89f0bc7b3c9ef",
+  "diagnostic_source": "522e52a1e5ba217de85d9b777b61a57a90f62e14",
+  "production_delta": [],
+  "harness_delta": [
+    "scripts/benchmarks/worker_e2e/cpu_profile.py"
+  ]
+}
