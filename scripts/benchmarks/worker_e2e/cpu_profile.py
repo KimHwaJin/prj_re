@@ -53,8 +53,19 @@ class CPUProfile:
             for profile in profiles:total.add(profile)
             rows=[]
             for (file,line,name),(primitive,calls,self_cpu,cumulative,callers) in total.stats.items():
+                # pstats caller edges explain how a hot function was reached.
+                # Export only function locations/counts/clocks, never arguments.
+                # Inclusive edge clocks overlap and must not be summed as CPU.
+                edges=[]
+                for (parent_file,parent_line,parent_name),metrics in callers.items():
+                    parent_calls,parent_primitive,parent_self,parent_cumulative=metrics
+                    edges.append({'file':parent_file,'line':parent_line,'function':parent_name,
+                                  'calls':parent_calls,'primitive_calls':parent_primitive,
+                                  'self_cpu_seconds':parent_self,
+                                  'cumulative_cpu_seconds':parent_cumulative})
                 rows.append({'file':file,'line':line,'function':name,'primitive_calls':primitive,
-                             'calls':calls,'self_cpu_seconds':self_cpu,'cumulative_cpu_seconds':cumulative})
+                             'calls':calls,'self_cpu_seconds':self_cpu,'cumulative_cpu_seconds':cumulative,
+                             'callers':sorted(edges,key=lambda edge:(edge['file'],edge['line'],edge['function']))})
             return sorted(rows,key=lambda row:row['self_cpu_seconds'],reverse=True)
         self.result={'active':False,'timer':'time.thread_time', 'process_cpu_seconds':process,
                      'main_thread_cpu_seconds':main_cpu,'offload_thread_cpu_seconds':sum(cpu for _,cpu in jobs),
