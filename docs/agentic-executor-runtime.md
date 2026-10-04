@@ -184,3 +184,18 @@ private config의 database_url/checkpoint_db_uri는 loopback의 agentic_runtime_
 같은 테스트 DB에서 이 도구와 DB 초기화 pytest를 동시에 실행하지 않는다. 서버는 종료되고 private JSON과 새 Executor notebook/artifact를 검증 근거로 남긴다. 이후 DB 초기화 pytest가 전용 테스트 DB의 Run/checkpoint를 지울 수 있으므로 해당 DB의 영구 보존을 보장하지 않는다. 동일 timeout·예제 데이터 한 회 시험이며 부하/처리량·최대 동시 사용자·1주 작업 검증이 아니다.
 
 세션 설정의 생성 검증·기본값 고정과 기존 데이터 범위는 [세션 API 계약](session-api.md)을 따른다.
+
+## 실제 모델 파라미터·후속 답변 진단 088
+
+`verify_real_model_parameters.py`는 사내 직원 확인만 대체하고 실제 모델/Tool/Executor로 실행한다. .env에서 명시한 모델 키만 읽으며 업무 DB·Redis 소비 그룹을 물려받지 않는다. Docker PostgreSQL을 별도로 생성·migration·제거하고 로그인/모델 원문 관측은0600 결과 파일로 남긴다. 기존 Compose Executor/Redis 및 사용자가 제공한 model.frodo.com alias10.250.110.99를 사용한다. Phoenix/실제SDK/브라우저는 범위가 아니다.
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_real_model_parameters.py \
+  --model-env /path/to/private/.env \
+  --executor-shared-root /path/to/executor/shared_dir \
+  --output /tmp/real-model-parameters.json
+```
+
+기본 API18102·임시PG53603이 비어 있어야 한다. `--scenario autofill|missing|edit|decision`, `--planning-only`로 범위를 줄일 수 있다. 실제 제출이 켜져 있으므로 계획만 보려면 `--planning-only`를 지정한다. 모델 transport/초기 계획 fixture를 설치하지 않는다. [상세 조건·실패·검증 결과](reports/real-model-parameters-2026-10-04/README.md)를 먼저 읽는다. 초기 계획이 사용자 요청값을 충족하지 않으면 진단이 값을 몰래 채워 실행하지 않는다.
+
+기존 `verify_api_contract_flow.py`의 현재 기대값은088에서15항목으로 갱신했다. statistics.columns는 등록된 기본값으로 노출·편집하며 실행 경로는 계속 편집 금지다. 과거085의14항목 결과는 당시 정책의 이력이다.

@@ -187,3 +187,21 @@ def test_generator_preserves_policy_and_revision_changes_when_only_policy_change
     item['parameter_controls']['count']['editable'] = False
     save(); after = AssetCatalog(root)
     assert before.sources == after.sources and before.revision != after.revision
+
+
+def test_unresolved_dataset_is_omitted_but_nullable_columns_are_real_values():
+    state, catalog = review()
+    doc = document()
+    with pytest.raises(PlanReviewError, match='dataset.*omit unresolved input_values keys'):
+        new_review(doc, {'dataset': None}, catalog.metadata, POLICY)
+    unresolved = new_review(doc, {}, catalog.metadata, POLICY)
+    data = plan_view(unresolved)['inputs'][0]
+    assert not data['has_value'] and data['origin'] == 'unresolved'
+    assert parameter(unresolved, 'statistics', 'columns')['value'] is None
+    assert parameter(unresolved, 'statistics', 'columns')['has_value']
+    with pytest.raises(PlanReviewError, match='Required input is missing: dataset'):
+        edit(unresolved, [], action='approve_plan')
+    assert not unresolved['consumed']
+    assert edit(unresolved, [], action='approve_plan', input_values={'dataset': 'default-nce'})['consumed']
+    with pytest.raises(PlanReviewError, match='Unknown proposed input: typo'):
+        new_review(doc, {'typo': 'default-nce'}, catalog.metadata, POLICY)

@@ -17,6 +17,8 @@ Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agen
 
 새 기능 확인 화면은 [독립 HTML 테스트 콘솔](tools/test-console/README.md)이다. 파일을 직접 열어 샘플을 보거나 같은 origin 진단 도구로 현재 API·SSE·HITL·관리 기능을 테스트한다. 기존 demo를 재사용하지 않으며 실제 모델/사내 SSO 여부와 검증 경계는 해당 안내를 따른다.
 
+실제 모델의 자동 입력·HITL 편집·결과 기반 실행·후속 보고서는 [088 검증 기록](docs/reports/real-model-parameters-2026-10-04/README.md)에 실패 사례와 수정·재검증을 함께 남겼다. 이 기록을 고정 모델 테스트 화면이나 서비스 처리량 개선 결과와 구분한다.
+
 아래의 기존 Docker·Locust 안내는 이전 실행 환경 기록이다. 헤더로 사용자를 선택하는 과거 부하테스트·진단 클라이언트는 현재 SSO API와 그대로 호환되지 않으며 쿠키·CSRF 세션 입력으로 이관해야 한다. 현재 내부 데모와 Swagger는 쿠키·CSRF를 사용한다. 기존 실행 컨테이너는 변경하지 않았다.
 
 ## 로컬 Docker 개발 환경

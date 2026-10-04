@@ -150,3 +150,32 @@ async def test_unadvertised_initial_tool_call_cannot_bypass_selection_boundary()
         result=await build_agent(model(client),AssetCatalog()).ainvoke({'request':'설명해줘'},context=AgentContext())
     assert result.kind=='answer' and len(calls)==2
     assert not any(m['role']=='tool' or m.get('tool_calls') for call in calls[1:] for m in call['messages'])
+
+
+@pytest.mark.asyncio
+async def test_null_unresolved_dataset_receives_actionable_feedback_then_empty_form():
+    # Reproduce the real gateway's response, not a fixture that pre-fills data.
+    calls = []
+    invalid = proposal()
+    invalid['plans'][0]['input_values'] = {'dataset': None}
+    corrected = proposal()
+    corrected['plans'][0]['input_values'] = {}
+    async def handle(request):
+        body = json.loads(request.content)
+        calls.append(body)
+        if len(calls) == 1:
+            value = selection()
+        elif len(calls) == 2:
+            value = invalid
+        else:
+            value = corrected
+        return response({'role': 'assistant', 'content': json.dumps(value, ensure_ascii=False)})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+        result = await build_agent(model(client), AssetCatalog()).ainvoke(
+            {'request': '데이터를 아직 선택하지 않았으니 입력란을 비워줘'}, context=AgentContext())
+    assert result.kind == 'plans' and result.plans[0].input_values == {}
+    assert len(calls) == 3
+    feedback = calls[2]['messages'][-1]['content']
+    assert 'dataset' in feedback and 'omit unresolved input_values keys' in feedback
+    assert 'null is a supplied value' in feedback
+    assert invalid['plans'][0]['input_values'] == {'dataset': None}

@@ -21,3 +21,8 @@ Execution repair policy is independent of normal result-based decisions. Use an 
 
 
 Tool metadata의 parameter_controls는 배포된 사용자 파라미터 정책입니다. 선언된 인자를 사용자에게 확인할 수 있게 하고 value_schema를 지킵니다. 생략한 선택 인자는 서버가 함수의 실제 JSON 기본값으로 채워 확인 화면에 표시하므로 임의 기본값을 생성하지 않습니다. Workflow parameter_controls는 이 범위를 좁힐 수 있지만 넓힐 수 없습니다. 사용자 요청으로 확정한 columns/method는 arguments에 literal 또는 편집 가능한 workflow_input으로 연결합니다. 결과를 보고 정해야 하면 agent_decision을 그대로 유지하며 기본값으로 미리 덮어쓰지 않습니다. 아직 필수값을 모르면 required=true인 Workflow input으로 선언하여 빈 입력을 보여주고 승인 전 입력받습니다. data/앞 단계 출력/system_context/parquet_path를 편집 가능한 상수로 노출하지 않습니다. parameter_controls가 없는 레거시 또는 실행별 함수는 Workflow의 명시적 편집 선언을 따릅니다.
+
+
+미정 입력의 표현: input_values에는 확정한 값만 넣습니다. 아직 선택하지 않은 필수 dataset_id는 input_values에서 해당 키를 생략합니다. null, 빈 문자열 또는 추측한 dataset_id를 넣지 않습니다. 예를 들어 inputs에 required=true인 dataset 입력을 선언했다면 미정일 때 input_values={}이고, 사용자가 default-nce를 지정했다면 input_values={"dataset":"default-nce"}입니다. 선택 인자 columns=null은 value_schema가 null을 허용할 때의 실제 함수 기본값이므로 미정 데이터와 구분합니다.
+
+workflow_input으로 연결한 columns/method의 편집은 inputs의 editable=true로 선언하며 해당 Step에 parameter_controls를 다시 선언하지 않습니다. Step의 parameter_controls는 literal 또는 agent_decision인 사용자 파라미터에만 적용합니다. data, parquet_path, step_output, system_context에는 선언하지 않습니다. 사용자가 기초 통계만 요청했다면 compute_statistics에 필요한 로드만 구성하고, 별도 요청이나 근거 없이 이상치 탐지 등을 추가하지 않습니다.

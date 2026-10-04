@@ -63,3 +63,7 @@ HTML 폼의 빈칸은 변경값을 보내지 않는다는 뜻이므로 기존값
 등록 정책·기본값을 자산 revision에 포함한다. 배포 중 정책이 변경되면 기존 대기 계획을 새 정책으로 조용히 해석하지 않고 기존 자산 변경 보호가 작동한다. 승인 대기 Run은 정책 배포 전 완료시키거나 새 계획을 받는 이행이 필요하다. 실제 운영의 drain/버전별 실행 정책 검증은 별도 후속이다.
 
 DB migration·새 환경변수·추가 모델 호출은 없다. 이미 승인된 snapshot/Executor payload를 이 작업으로 다시 생성하지 않는다.
+
+## 실제 모델 입력 표현
+
+미정 필수 입력은 input_values에서 키를 생략한다. `dataset=null`은 빈칸 표시가 아니라 문자열 schema를 위반한 값이다. `columns=null`은 해당 schema와 함수가 허용하는 실제 기본값이므로 구분한다. workflow_input 참조의 사용자 편집은 상단 inputs.editable로 정하며 Step.parameter_controls를 중복 선언하지 않는다. 이 정책은 [088 실제 모델 검증](reports/real-model-parameters-2026-10-04/README.md)에서 재현·확인했다. 사용자 지정 컬럼의 실제 존재 여부를 자동 검증한 것으로 해석하지 않는다.

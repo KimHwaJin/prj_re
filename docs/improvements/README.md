@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [087 Tool 파라미터 노출·편집 정책](087-tool-parameter-review.md). 등록한 사용자 인자·실제 함수 기본값·Workflow 제약·출처 표시를 계획/HITL/승인 제출에 연결했다. 관련134회귀·격리PG4·HTML8·실제HTTP/Executor12 검증 완료. 최신 테스트 화면18101, 실제 브라우저 시각 확인·베이스 병합·push·운영 배포는 미완료다.
+최신 작업: [088 실제 모델 파라미터·실행·보고서 검증](088-real-model-parameter-validation.md). 미정 데이터 null 오류·보고서 본문 누락을 실제 모델에서 발견해 수정·재검증했다. Agent341회귀·실제모델 구조28+재검증11·현행API15 확인. 실제 브라우저/SDK·베이스 병합·push·운영 배포는 미완료다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -131,6 +131,7 @@
 | 085 | 로그인·계획 편집·실제 Executor·SSE·후속 입력 통합 | 실제 통합14·PG회귀81·계약 설명 / 미병합·미푸시·미배포 | 2026-10-04 | [085 기록](085-api-contract-flow-verification.md) |
 | 086 | 독립 HTML 기능 테스트 콘솔·현재 API/SSE/HITL | 구현·Node7·실제HTTP11+관리자6 / 시각 미검증·미병합·미푸시·미배포 | 2026-10-04 | [086 기록](086-functional-test-console.md) |
 | 087 | Tool 파라미터 정책·기본값·HITL 편집 | 구현·134회귀·PG4·HTML8·실제HTTP12 / 시각 미검증·미병합·미푸시·미배포 | 2026-10-04 | [087 기록](087-tool-parameter-review.md) |
+| 088 | 실제 모델 입력·HITL·Executor·후속 보고서 | 2개 문제 수정·Agent341·실제모델28+11·API15 / 미병합·미푸시·미배포 | 2026-10-04 | [088 기록](088-real-model-parameter-validation.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

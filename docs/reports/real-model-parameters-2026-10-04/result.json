@@ -1,0 +1,556 @@
+{
+  "date": "2026-10-04",
+  "branch": "feature/real-model-parameter-validation",
+  "baseline_commit": "354faf8",
+  "baseline": {
+    "boundaries": {
+      "model": "actual_openai_compatible",
+      "sso": "employee_verdict_fixture",
+      "database": "owned_temporary_postgresql",
+      "executor": "actual_local",
+      "phoenix": "disabled",
+      "browser": "not_tested"
+    },
+    "model": "qwen38-27b-nvfp4",
+    "structural_checks_passed": false,
+    "scenarios": [
+      {
+        "name": "autofill",
+        "request": "default-nce의 max_val 컬럼만 기초 통계 분석해줘. 등록된 툴을 사용해서 실행 계획을 제안해줘.",
+        "planning_seconds": 38.694,
+        "execution_seconds": null,
+        "status": "waiting_input",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "valid_plan_returned",
+            "passed": true,
+            "status": "waiting_input"
+          },
+          {
+            "name": "explicit_dataset_prefilled",
+            "passed": true
+          },
+          {
+            "name": "explicit_columns_prefilled",
+            "passed": true,
+            "expected": [
+              "max_val"
+            ],
+            "actual": [
+              "max_val"
+            ]
+          }
+        ],
+        "decisions": null,
+        "executed_tools": [],
+        "execution_id": null,
+        "report_status": null,
+        "followups": []
+      },
+      {
+        "name": "missing",
+        "request": "기초 통계 분석 계획을 만들어줘. 아직 분석할 데이터는 선택하지 않았으니 임의로 고르지 말고, 내가 확인하거나 입력할 수 있게 해줘.",
+        "planning_seconds": 76.043,
+        "execution_seconds": null,
+        "status": "recovery_required",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "missing_dataset_not_guessed",
+            "passed": false,
+            "status": "recovery_required"
+          }
+        ],
+        "decisions": null,
+        "executed_tools": [],
+        "execution_id": null,
+        "report_status": null,
+        "followups": []
+      }
+    ],
+    "model_boundary_calls": {
+      "Reply": 12
+    },
+    "responses_with_validation_feedback": 2,
+    "executor_post_calls": {}
+  },
+  "after_input_fix": {
+    "boundaries": {
+      "model": "actual_openai_compatible",
+      "sso": "employee_verdict_fixture",
+      "database": "owned_temporary_postgresql",
+      "executor": "actual_local",
+      "phoenix": "disabled",
+      "browser": "not_tested"
+    },
+    "model": "qwen38-27b-nvfp4",
+    "structural_checks_passed": true,
+    "scenarios": [
+      {
+        "name": "autofill",
+        "request": "default-nce의 max_val 컬럼만 기초 통계 분석해줘. 등록된 툴을 사용해서 실행 계획을 제안해줘.",
+        "planning_seconds": 47.903,
+        "execution_seconds": 23.18,
+        "status": "success",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "valid_plan_returned",
+            "passed": true,
+            "status": "waiting_input"
+          },
+          {
+            "name": "explicit_dataset_prefilled",
+            "passed": true
+          },
+          {
+            "name": "explicit_columns_prefilled",
+            "passed": true,
+            "expected": [
+              "max_val"
+            ],
+            "actual": [
+              "max_val"
+            ]
+          },
+          {
+            "name": "actual_executor_success",
+            "passed": true,
+            "status": "success"
+          },
+          {
+            "name": "only_requested_column_computed",
+            "passed": true,
+            "actual": [
+              "max_val"
+            ]
+          },
+          {
+            "name": "columns_reached_actual_executor",
+            "passed": true
+          }
+        ],
+        "decisions": {},
+        "executed_tools": [
+          "data_load",
+          "compute_statistics"
+        ],
+        "execution_id": "78cee995-76e8-4f33-a78d-2e1a986151a3",
+        "report_status": "ready",
+        "followups": []
+      },
+      {
+        "name": "missing",
+        "request": "기초 통계 분석 계획을 만들어줘. 아직 분석할 데이터는 선택하지 않았으니 임의로 고르지 말고, 내가 확인하거나 입력할 수 있게 해줘.",
+        "planning_seconds": 49.795,
+        "execution_seconds": null,
+        "status": "waiting_input",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "missing_dataset_not_guessed",
+            "passed": true,
+            "response_kind": "empty_required_form"
+          },
+          {
+            "name": "incomplete_approval_rejected_unchanged",
+            "passed": true
+          }
+        ],
+        "decisions": null,
+        "executed_tools": [],
+        "execution_id": null,
+        "report_status": null,
+        "followups": []
+      },
+      {
+        "name": "edit",
+        "request": "default-nce의 max_val과 min_val 두 컬럼에 대한 기초 통계 분석 계획을 제안해줘. 통계 결과를 Markdown 리포트로 설명해줘.",
+        "planning_seconds": 25.955,
+        "execution_seconds": 26.297,
+        "status": "success",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "valid_plan_returned",
+            "passed": true,
+            "status": "waiting_input"
+          },
+          {
+            "name": "explicit_dataset_prefilled",
+            "passed": true
+          },
+          {
+            "name": "explicit_columns_prefilled",
+            "passed": true,
+            "expected": [
+              "max_val",
+              "min_val"
+            ],
+            "actual": [
+              "max_val",
+              "min_val"
+            ]
+          },
+          {
+            "name": "human_columns_edit_preserved",
+            "passed": true
+          },
+          {
+            "name": "actual_executor_success",
+            "passed": true,
+            "status": "success"
+          },
+          {
+            "name": "only_requested_column_computed",
+            "passed": true,
+            "actual": [
+              "max_val"
+            ]
+          },
+          {
+            "name": "columns_reached_actual_executor",
+            "passed": true
+          },
+          {
+            "name": "followup_grounded_without_executor",
+            "passed": true
+          },
+          {
+            "name": "followup_grounded_without_executor",
+            "passed": true
+          }
+        ],
+        "decisions": {},
+        "executed_tools": [
+          "data_load",
+          "profile_data",
+          "compute_statistics"
+        ],
+        "execution_id": "e19e85fb-4108-4265-b18a-e550eb1eb7c4",
+        "report_status": "ready",
+        "followups": [
+          {
+            "seconds": 9.716,
+            "status": "success",
+            "type": "answer",
+            "prose_chars": 406
+          },
+          {
+            "seconds": 8.311,
+            "status": "success",
+            "type": "answer",
+            "prose_chars": 128
+          }
+        ]
+      },
+      {
+        "name": "decision",
+        "request": "default-nce의 max_val 컬럼에 대한 기초 통계를 계산한 뒤, 실제 통계 결과를 보고 iqr와 zscore 중 이상치 탐지 방법을 결정해서 max_val만 확인해줘. 등록된 스킬과 툴을 사용하는 MULTI 계획으로 제안하고, 결과는 Markdown 리포트로 설명해줘. 아직 결과를 읽기 전이므로 탐지 방법은 미리 확정하지 마.",
+        "planning_seconds": 45.631,
+        "execution_seconds": 44.176,
+        "status": "success",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "valid_plan_returned",
+            "passed": true,
+            "status": "waiting_input"
+          },
+          {
+            "name": "explicit_dataset_prefilled",
+            "passed": true
+          },
+          {
+            "name": "explicit_columns_prefilled",
+            "passed": true,
+            "expected": [
+              "max_val"
+            ],
+            "actual": [
+              "max_val"
+            ]
+          },
+          {
+            "name": "method_deferred_until_results",
+            "passed": true
+          },
+          {
+            "name": "actual_executor_success",
+            "passed": true,
+            "status": "success"
+          },
+          {
+            "name": "decision_reads_completed_evidence",
+            "passed": true
+          },
+          {
+            "name": "decision_resolved_after_execution",
+            "passed": true
+          }
+        ],
+        "decisions": {
+          "choose_outlier_method": "iqr"
+        },
+        "executed_tools": [
+          "data_load",
+          "compute_statistics",
+          "detect_outliers"
+        ],
+        "execution_id": "ef0348b5-01d6-4676-8aea-4b789c6bbfc0",
+        "report_status": "ready",
+        "followups": []
+      }
+    ],
+    "model_boundary_calls": {
+      "Reply": 25,
+      "ReportResponse": 6,
+      "ReviewResponse": 1
+    },
+    "responses_with_validation_feedback": 6,
+    "executor_post_calls": {
+      "/api/v1/executions": 3,
+      "/api/v1/executions/ef0348b5-01d6-4676-8aea-4b789c6bbfc0/operations": 1,
+      "/api/v1/executions/ef0348b5-01d6-4676-8aea-4b789c6bbfc0/finalize": 1
+    }
+  },
+  "after_report_fix": {
+    "boundaries": {
+      "model": "actual_openai_compatible",
+      "sso": "employee_verdict_fixture",
+      "database": "owned_temporary_postgresql",
+      "executor": "actual_local",
+      "phoenix": "disabled",
+      "browser": "not_tested"
+    },
+    "model": "qwen38-27b-nvfp4",
+    "structural_checks_passed": true,
+    "scenarios": [
+      {
+        "name": "edit",
+        "request": "default-nce의 max_val과 min_val 두 컬럼에 대한 기초 통계 분석 계획을 제안해줘. 통계 결과를 Markdown 리포트로 설명해줘.",
+        "planning_seconds": 42.4,
+        "execution_seconds": 27.959,
+        "status": "success",
+        "checks": [
+          {
+            "name": "no_execution_before_approval",
+            "passed": true
+          },
+          {
+            "name": "valid_plan_returned",
+            "passed": true,
+            "status": "waiting_input"
+          },
+          {
+            "name": "explicit_dataset_prefilled",
+            "passed": true
+          },
+          {
+            "name": "explicit_columns_prefilled",
+            "passed": true,
+            "expected": [
+              "max_val",
+              "min_val"
+            ],
+            "actual": [
+              "max_val",
+              "min_val"
+            ]
+          },
+          {
+            "name": "human_columns_edit_preserved",
+            "passed": true
+          },
+          {
+            "name": "actual_executor_success",
+            "passed": true,
+            "status": "success"
+          },
+          {
+            "name": "only_requested_column_computed",
+            "passed": true,
+            "actual": [
+              "max_val"
+            ]
+          },
+          {
+            "name": "columns_reached_actual_executor",
+            "passed": true
+          },
+          {
+            "name": "followup_grounded_without_executor",
+            "passed": true
+          },
+          {
+            "name": "followup_grounded_without_executor",
+            "passed": true
+          },
+          {
+            "name": "report_revision_contains_actual_markdown_body",
+            "passed": true,
+            "prose_chars": 2036
+          }
+        ],
+        "decisions": {},
+        "executed_tools": [
+          "data_load",
+          "compute_statistics"
+        ],
+        "execution_id": "0997af58-7c44-4047-b20e-251de2a1ecda",
+        "report_status": "ready",
+        "followups": [
+          {
+            "seconds": 30.597,
+            "status": "success",
+            "type": "answer",
+            "prose_chars": 1995
+          },
+          {
+            "seconds": 40.304,
+            "status": "success",
+            "type": "answer",
+            "prose_chars": 2036
+          }
+        ]
+      }
+    ],
+    "model_boundary_calls": {
+      "Reply": 9,
+      "ReportResponse": 2
+    },
+    "responses_with_validation_feedback": 3,
+    "executor_post_calls": {
+      "/api/v1/executions": 1
+    }
+  },
+  "semantic_findings": [
+    {
+      "phase": "baseline",
+      "issue": "Undecided dataset was supplied as null; Workflow-input parameter controls were also invalid. Bounded correction exhausted, recovery_required; no Executor submission."
+    },
+    {
+      "phase": "after_input_fix",
+      "issue": "Report rewrite response contained an acknowledgement and exact facts table, but no rewritten report body. Structural checks alone did not detect this.",
+      "prose_chars": 128
+    },
+    {
+      "phase": "after_report_fix",
+      "resolved": "Actual Markdown body returned, two or more headings, 2036 chars excluding server facts; no new Executor POST."
+    }
+  ],
+  "regression": {
+    "agent_tests": 341,
+    "new_regressions": 2,
+    "final_related_tests": 62,
+    "api_contract_checks": [
+      {
+        "name": "login_default_project_summary_detail_csrf_and_role",
+        "passed": true
+      },
+      {
+        "name": "project_create_prompt_and_session_list",
+        "passed": true,
+        "session_count": 2
+      },
+      {
+        "name": "plain_answer_without_hitl_or_executor",
+        "passed": true,
+        "run_id": "446ae736-1bb0-4444-82f0-48acc85158da"
+      },
+      {
+        "name": "live_sse_hitl_disconnect_and_new_input_lock",
+        "passed": true,
+        "events": 9
+      },
+      {
+        "name": "runtime_path_edit_rejected_without_mutation",
+        "passed": true
+      },
+      {
+        "name": "registered_optional_parameter_visible_and_editable",
+        "passed": true
+      },
+      {
+        "name": "plan_parameter_edit_tool_exclusion_and_stable_run_id",
+        "passed": true,
+        "revision": 4
+      },
+      {
+        "name": "login_renewal_preserves_hitl_and_rejects_stale_token",
+        "passed": true
+      },
+      {
+        "name": "executor_wait_locks_same_session_but_other_session_runs",
+        "passed": true
+      },
+      {
+        "name": "actual_executor_finalize_result_and_idempotent_approval",
+        "passed": true,
+        "execution_id": "5265586f-f8a3-40c0-b162-f96769400345",
+        "executed_steps": [
+          "load",
+          "profile",
+          "statistics"
+        ],
+        "report_chars": 2473,
+        "artifact_registration": "deferred"
+      },
+      {
+        "name": "sse_reconnect_exact_suffix_and_no_tool_code",
+        "passed": true,
+        "total_events": 30,
+        "cursor": 7
+      },
+      {
+        "name": "explanation_reuses_analysis_without_executor",
+        "passed": true,
+        "new_run_id": "a901c4fc-4a86-417a-ad97-446e66a5954f"
+      },
+      {
+        "name": "report_revision_reuses_analysis_without_executor",
+        "passed": true,
+        "new_run_id": "a9d829be-5f0d-4b45-8198-89a674e3e2d0"
+      },
+      {
+        "name": "completed_session_accepts_input_and_report_file_registration_remains_deferred",
+        "passed": true
+      },
+      {
+        "name": "new_analysis_creates_new_execution_and_edited_method_executes",
+        "passed": true,
+        "execution_id": "10b2ad05-1a86-4716-b57f-d744640be4ee",
+        "run_id": "0197e5aa-5319-4a87-9d26-a62d7955a741",
+        "method": "zscore"
+      }
+    ],
+    "api_contract_count": 15
+  },
+  "limitations": [
+    "Small stochastic real-model sample, not broad semantic quality guarantee.",
+    "Numerical provenance validation is not proof of every qualitative interpretation.",
+    "Explicit min_val in edit request was removed before execution; existence of all requested columns was not verified.",
+    "Corporate SSO SDK, Phoenix, browser rendering, dataset registration and report Artifact registration not tested.",
+    "No throughput/latency optimization claim; model call-count optimization deferred.",
+    "Pre-submit structured-response exhaustion recovery policy remains an operations follow-up."
+  ]
+}

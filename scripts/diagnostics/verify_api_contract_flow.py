@@ -90,7 +90,7 @@ def sse_events(text):
 
 async def verify(args):
     namespace = 'api-contract-flow-' + uuid4().hex[:12]
-    report = {'namespace': namespace, 'passed': False, 'checks': [],
+    report = {'namespace': namespace, 'passed': False, 'checks': [], 'findings': [],
               'boundaries': {'corporate_sdk': 'verified_employee_fixture',
                 'model': 'fixed_transport_real_agents_and_middleware', 'executor': 'actual_local',
                 'api_database_and_worker': 'actual_dedicated_postgresql', 'login_and_streams': 'actual_local_redis',
@@ -205,15 +205,26 @@ async def verify(args):
             check('live_sse_hitl_disconnect_and_new_input_lock', events=len(live))
             old = deepcopy(run); plan = run['interrupt'][0]['payload']['plans'][0]
             readonly = {'action':'edit_plan','plan_id':plan['plan_id'],'plan_revision':plan['plan_revision'],
-                'step_changes':[{'step_id':'statistics','parameter':'columns','value':[args.statistics_column]}]}
+                'step_changes':[{'step_id':'load','parameter':'parquet_path','value':'/workspace/pv/private.parquet'}]}
             rejected = await submit(sid, {'run_id':rid,'resume_token':run['resume_token'],
                 'command':{'resume':readonly}}, expected=422)
             unchanged = await api('GET', path)
             assert unchanged['resume_token']==run['resume_token'] and unchanged['interrupt']==run['interrupt']
-            report['findings']=[{'kind':'parameter_editability_contract',
-                'description':'Only Agent decisions or explicit parameter_controls are editable; absent Tool arguments are not auto-exposed.',
-                'observed':'statistics.columns absent in quality-review plan: 422, no partial mutation'}]
-            check('undeclared_parameter_edit_rejected_without_mutation')
+            check('runtime_path_edit_rejected_without_mutation')
+            columns = next(p for step in plan['steps'] if step['step_id']=='statistics'
+                           for p in step['parameters'] if p['name']=='columns')
+            assert columns['editable'] and columns['has_value'] and columns['value'] is None
+            assert columns['origin']=='tool_default'
+            old_token = run['resume_token']
+            await submit(sid, {'run_id':rid,'resume_token':old_token,'command':{'resume':{
+                'action':'edit_plan','plan_id':plan['plan_id'],'plan_revision':plan['plan_revision'],
+                'step_changes':[{'step_id':'statistics','parameter':'columns','value':[args.statistics_column]}]}}})
+            run = await wait(sid,rid,lambda r:r['status']=='waiting_input' and r['resume_token']!=old_token)
+            plan = run['interrupt'][0]['payload']['plans'][0]
+            columns = next(p for step in plan['steps'] if step['step_id']=='statistics'
+                           for p in step['parameters'] if p['name']=='columns')
+            assert columns['value']==[args.statistics_column] and columns['origin']=='user'
+            check('registered_optional_parameter_visible_and_editable')
             editable = {'action':'edit_plan','plan_id':plan['plan_id'],'plan_revision':plan['plan_revision'],
                 'step_changes':[{'step_id':'outliers','parameter':'method','value':'zscore'}]}
             await submit(sid, {'run_id':rid,'resume_token':run['resume_token'],'command':{'resume':editable}})
@@ -267,6 +278,8 @@ async def verify(args):
                 'description':'User exclusions live in the approved plan; final skipped_steps is not their combined list.',
                 'user_excluded_step_ids':['outliers'],'runtime_skipped_step_ids':result['skipped_steps']})
             assert {o['step_id'] for o in result['observations']} == {'load','profile','statistics'}
+            statistics = next(o for o in result['observations'] if o['step_id']=='statistics')
+            assert list(statistics['summary']['items']['statistics']['items']) == [args.statistics_column]
             assert any(c['path'].endswith('/finalize') for c in calls)
             baseline = deepcopy(calls)
             repeated = await submit(sid, approval, key)

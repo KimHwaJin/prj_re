@@ -33,6 +33,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memo
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'planning', 'plans']
         message: str = Field(min_length=1, max_length=12000, description=
+            'For a report-writing/revision answer, include the complete Markdown report in message, not just an acknowledgement of completion. '
             'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
             'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
             'For plans or unrelated general FAQ, ordinary text is allowed.')

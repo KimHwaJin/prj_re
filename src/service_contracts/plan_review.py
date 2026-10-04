@@ -44,8 +44,10 @@ def new_review(document, values, catalog, policy):
     initial = {k: v['default'] for k, v in document['inputs'].items() if 'default' in v}
     origins = {k: 'workflow_default' for k in initial}
     for key, value in values.items():
-        require(key in document['inputs'], 'Unknown proposed input')
-        require(Draft202012Validator(document['inputs'][key]['value_schema']).is_valid(value), 'Invalid proposed input')
+        require(key in document['inputs'], f'Unknown proposed input: {key}')
+        require(Draft202012Validator(document['inputs'][key]['value_schema']).is_valid(value),
+                f'Invalid proposed input: {key}. Follow its value_schema; omit unresolved input_values keys. '
+                'null is a supplied value, not a missing input.')
         initial[key], origins[key] = value, 'agent'
     decisions = {d['id']: d for d in document['decisions']}
     editable = {}
