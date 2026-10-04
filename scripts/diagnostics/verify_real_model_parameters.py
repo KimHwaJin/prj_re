@@ -11,13 +11,11 @@ import asyncio
 from copy import deepcopy
 import json
 from pathlib import Path
-import socket
 import tempfile
 import time
 from uuid import uuid4
 
 import httpx
-from dotenv import dotenv_values
 import uvicorn
 
 from cookie_auth import install_employee_fixture, sign_in, write_private_result
@@ -26,10 +24,8 @@ from verify_api_contract_flow import settings_for_test, migrate
 from service_bootstrap import create_app
 from service_settings import load_settings
 
-# Explicit allowlist: never inherit existing external databases, streams or SSO.
-MODEL_KEYS = ('MODEL_NAME', 'API_BASE_URL', 'MODEL_API_KEY', 'MODEL_ENABLE_THINKING',
-              'MODEL_TIMEOUT_SECONDS', 'MODEL_MAX_RETRIES', 'MODEL_TEMPERATURE',
-              'MODEL_STRUCTURED_OUTPUT_MODE')
+from model_connection import load_model_env, model_host_alias
+
 REQUESTS = {
     'autofill': 'default-nce의 max_val 컬럼만 기초 통계 분석해줘. 등록된 툴을 사용해서 실행 계획을 제안해줘.',
     'missing': '기초 통계 분석 계획을 만들어줘. 아직 분석할 데이터는 선택하지 않았으니 임의로 고르지 말고, 내가 확인하거나 입력할 수 있게 해줘.',
@@ -304,8 +300,6 @@ def main():
               'model_calls': [], 'executor_calls': [], 'execution_roles': [],
               'boundaries': {'model': 'actual_openai_compatible', 'sso': 'employee_verdict_fixture',
                   'database': 'owned_temporary_postgresql', 'executor': 'actual_local', 'phoenix': 'disabled', 'browser': 'not_tested'}}
-    original = socket.getaddrinfo
-    socket.getaddrinfo = lambda host, *a, **kw: original({'model.frodo.com': '10.250.110.99'}.get(host, host), *a, **kw)
     with tempfile.TemporaryDirectory(prefix=namespace+'-') as workspace:
         try:
             values = temporary_database(args, container)
@@ -313,15 +307,12 @@ def main():
                 EXECUTOR_SHARED_RESULT_ROOT=str(args.executor_shared_root.resolve()), WORKFLOW_STORAGE_ROOT=str(Path(workspace)/'workflows'),
                 ANALYSIS_DATASETS={'default-nce': {'title': 'NCE local sample', 'scope': 'GLOBAL',
                     'runtime_path': '/workspace/pv/default_data/df_nce_long_format.parquet'}})
-            config = settings_for_test(values, namespace, args.port)
-            private = dotenv_values(args.model_env, interpolate=False)
-            config.update({k: private[k] for k in MODEL_KEYS if private.get(k) is not None})
-            config['MODEL_PROVIDER'] = 'openai_compatible'
-            if config['API_BASE_URL'] == 'http://fixture.invalid/v1' or config['MODEL_NAME'] == 'contract-fixture':
-                raise ValueError('Actual model settings required')
+            config = settings_for_test(values, namespace, args.port, model_fixture=False)
+            config.update(load_model_env(args.model_env))
             report['model'] = config['MODEL_NAME']
             migrate(config)
-            asyncio.run(verify(args, config, namespace, report))
+            with model_host_alias():
+                asyncio.run(verify(args, config, namespace, report))
         finally:
             import subprocess
             subprocess.run(['docker', 'stop', container], capture_output=True, text=True)

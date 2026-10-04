@@ -34,7 +34,7 @@ sys.path.insert(0, str(ROOT / 'scripts/benchmarks/worker_e2e'))
 from model_fixture import install_model_fixture
 
 
-def settings_for_test(values, namespace, port):
+def settings_for_test(values, namespace, port, *, model_fixture=True):
     config = deepcopy(values)
     for key, database in (('DATABASE_URL', 'agentic_runtime_test'),
                           ('CHECKPOINT_DB_URI', 'agentic_checkpoint_test')):
@@ -49,14 +49,16 @@ def settings_for_test(values, namespace, port):
     # One canonical endpoint and one application/event command database.
     config.pop('EW_EXECUTOR_BASE_URL', None)
     config.pop('EW_REDIS_URL', None)
-    config.pop('MODEL_CATALOG', None)
-    config.pop('DEFAULT_MODEL', None)
+    if model_fixture:
+        config.pop('MODEL_CATALOG', None)
+        config.pop('DEFAULT_MODEL', None)
     config['EW_DATABASE_URL'] = str(make_url(config.get('DATABASE_URL', config.get('database_url')))
                                   .set(drivername='postgresql').render_as_string(hide_password=False))
-    config.update(MODEL_PROVIDER='openai_compatible', MODEL_NAME='contract-fixture',
-        MODEL_API_KEY='not-a-secret', API_BASE_URL='http://fixture.invalid/v1',
-        MODEL_STRUCTURED_OUTPUT_MODE='prompt_json', PHOENIX_ENDPOINT='',
-        EXECUTOR_SUBMIT_ENABLED=True, EXECUTOR_SOURCE_TYPE='INLINE', EXECUTOR_RUNTIME_PROFILE='default',
+    if model_fixture:
+        config.update(MODEL_PROVIDER='openai_compatible', MODEL_NAME='contract-fixture',
+            MODEL_API_KEY='not-a-secret', API_BASE_URL='http://fixture.invalid/v1',
+            MODEL_STRUCTURED_OUTPUT_MODE='prompt_json')
+    config.update(PHOENIX_ENDPOINT='', EXECUTOR_SUBMIT_ENABLED=True, EXECUTOR_SOURCE_TYPE='INLINE', EXECUTOR_RUNTIME_PROFILE='default',
         EXECUTOR_RUNTIME_PROFILES=['default'], EXECUTOR_OPERATION_TIMEOUT_SECONDS=120,
         EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS=120, EW_NAMESPACE=namespace,
         EW_EVENT_GROUP_NAME=namespace+':ingress', EW_HEALTH_PORT=0, EW_INGRESS_CONCURRENCY=2,

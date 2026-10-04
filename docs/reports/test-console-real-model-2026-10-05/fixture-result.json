@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "checks": [
+    "SSO fixture login uses real cookie, CSRF and default project",
+    "project CRUD prompt and LangGraph Store memory save",
+    "session create and real GET SSE plan arrival with input lock and current list status",
+    "typed plan parameter edit keeps Run ID and latest token, catalogue defaults and user columns",
+    "actual Executor statistics output contains only the user-selected max_val column",
+    "actual Executor analysis and finalize, report display and input unlock",
+    "same request retransmission preserves exact key and body",
+    "manual stream disconnect and durable cursor reconnect",
+    "POST SSE new Run locks input, updates lists and marks completed stream",
+    "OpenAPI explorer and real role enforcement",
+    "memory conflict preserves local edits and shows latest server document",
+    "page return restores project session and Run IDs without persisting tokens"
+  ],
+  "mode": "Node controller / development DOM double / actual loopback API DB Worker Executor",
+  "browser_visual_verified": false
+}

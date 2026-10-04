@@ -4,9 +4,9 @@
 
 ## 지금 로컬에서 열기
 
-이번 작업의 테스트 서버는 http://127.0.0.1:18100/test-console 이다. SSO 로그인 버튼을 누르면 **로컬 테스트 관리자**로 로그인하며, 일반 사내 SSO와 실제 LLM은 연결하지 않는다. API·PostgreSQL·Agent/Event Worker·Redis·Executor/Jupyter는 실제 서비스다. 기본 모델 응답은 호출당300ms 고정이다. 현재 Executor 실제 제출이 켜져 있어 계획 승인 후 실제 노트북/실행 기록이 생성된다.
+현재 실제 모델 콘솔: http://127.0.0.1:18102/test-console . **테스트 로그인 + 실제 qwen38-27b-nvfp4 + 실제 Executor** 조합이다. SSO 로그인 버튼은 직원 검증만 로컬 테스트 계정으로 대체한다. 로그인 쿠키·CSRF·사용자/기본 프로젝트 생성·API·PostgreSQL/checkpoint/Store·Agent/Event Worker·Redis·Executor/Jupyter는 실제 구현을 사용한다. 모델 응답은 고정하지 않는다. 화면 상단에서 로그인·모델·Executor 모드를 각각 확인할 수 있다.
 
-이 서버는 진단 도구가 만든 전용 임시 DB53601과 테스트 Workflow 저장소를 사용한다. 프로세스를 끝내면 임시 DB·Workflow 파일·전용 Redis group/로그인 키를 제거하며, 기존 Executor execution/notebook 이력은 남긴다. 장기 보존용 환경이나 운영 배포가 아니다. 재시작하면 새 사용자/DB에서 시작한다. 기존 Compose 서비스·원천 Parquet·공유 이벤트 Stream은 유지한다.
+이 서버는 전용 임시 DB53603·Workflow 저장소와 Redis consumer group/키 namespace를 사용한다. 종료하면 서버가 소유한 임시 자원은 제거하고 기존 Executor 이력·Compose 서비스·원천 Parquet·공유 이벤트 Stream은 유지한다. 재시작하면 새 DB/사용자로 시작한다. 기존18100/18101 고정 모델 콘솔을 실제 모델로 전환한 것은 아니다.
 
 ## 화면별 기능
 
@@ -33,13 +33,28 @@
 cd /Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent
 PYTHONPATH=src /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python \
   scripts/diagnostics/serve_test_console.py \
-  --local-fixtures --temporary-db --fixture-admin --executor real \
-  --executor-shared-root /Users/a10054/SKAX_PROJECT/executor/shared_dir
+  --test-login --temporary-db --fixture-admin --model real \
+  --model-env /Users/a10054/SKAX_PROJECT/dtest-agent/.env \
+  --executor real \
+  --executor-shared-root /Users/a10054/SKAX_PROJECT/executor/shared_dir \
+  --port 18102 --db-port 53603
 ```
 
-기본 UI/API18100·DB53601. 다른 포트는 --port/--db-port로 지정한다. --executor off는 실제 제출 없이 계획 승인 종료, --executor real은 실제 Executor를 호출한다. 일반 사용자 권한은 --fixture-admin을 빼서 새 서버를 시작한다. --model-delay-ms는 고정 모델 응답 지연만 바꾼다. 모델 fixture에서 일반 답변을 확인하려면 메시지를 `[answer]`로 시작한다. 그 외는 고정 품질 계획으로 연결하며 자연어 판단 품질을 확인한 것으로 해석하지 않는다. 실제 데이터 분석 예시는 `default-nce 품질과 통계를 확인하고 보고서를 작성해줘`다.
+`--model-env`는 MODEL_NAME/API_BASE_URL/MODEL_API_KEY와 모델 timeout/retry/temperature/thinking/structured-output 키만 읽는다. 기존 .env의 DB·Redis·SSO·Executor 설정은 가져오지 않는다. model.frodo.com의 사용자 지정 alias(10.250.110.99)는 진단 Python 프로세스의 연결 해석에만 적용하며 /etc/hosts를 바꾸지 않는다. 인증정보·모델 endpoint는 HTML에 주입하지 않는다.
 
-다른 로컬 환경에서는 --redis-url/--executor-base-url/--executor-shared-root를 지정한다. 임시 DB는 Docker postgres:17을 사용한다. 준비 완료는 TCP로 확인하여 초기화 중 임시 socket 서버와 구분한다. Ctrl+C로 해당 서버와 전용 자원을 종료한다. 테스트 관리자 옵션은 --local-fixtures --temporary-db에서만 허용한다. 기존 직원 계정이나 실제 DB 권한을 승격하지 않는다.
+| 선택 | 의미 |
+|---|---|
+| --test-login | 직원 검증 대체; 격리된 loopback 테스트 DB 필요 |
+| --model real | 실제 모델 설정 필수, 고정 응답 설치 안 함 |
+| --model fixture | 고정 품질 계획/답변; --test-login 필요 |
+| --local-fixtures | 기존 --test-login --model fixture 축약 옵션 |
+| --executor real / off | 테스트 로그인에서 실제 제출 켜기/끄기; 기본 off |
+| --fixture-admin | 전용 임시 DB의 테스트 관리자; 생략하면 일반 사용자 |
+| --model-delay-ms | fixture 모델만 지연 조정; 실제 모델 지연을 바꾸지 않음 |
+
+고정 모델 회귀용 실행은 위 명령에서 `--model real --model-env ...`를 `--model fixture`로 바꾸고 별도 --port/--db-port를 지정한다. 또는 기존 --local-fixtures를 그대로 쓴다. `[answer]`는 고정 모델 답변 경로에만 사용하는 예약 접두사다. 실제 모델에서는 자연어로 요청한다. 예: `default-nce 데이터의 max_val과 x 컬럼에 대해 기본 통계를 계산하고 Markdown 보고서를 작성해줘. 실행 전에 계획을 보여줘.`
+
+CLI 기본 UI/API18100·DB53601이며 현재 실제 모델 인스턴스는 명시적으로18102·53603을 사용한다. 다른 로컬 서비스는 --redis-url/--executor-base-url/--executor-shared-root로 지정한다. 임시 DB는 Docker postgres:17을 사용하고 TCP 준비 후 초기화한다. Ctrl+C로 해당 프로세스와 소유 자원을 정리한다. 테스트 계정 권한은 기존 업무 DB에서 변경하지 않는다.
 
 ## 실제 SSO와 모델 환경 연결
 
@@ -56,9 +71,11 @@ PYTHONPATH=src python scripts/diagnostics/serve_test_console.py \
 
 ## 확인한 내용과 남은 경계
 
-Node로 실제 inline controller를 실행해 core/샘플7개를 확인했고, 개발용 DOM double+실제 HTTP API/DB/Worker/Executor로11개 시나리오를 확인했다. 일반 사용자403·관리자 접근, 관리자 API6개도 별도 검증했다. 결과는 [086 작업 기록](../../docs/improvements/086-functional-test-console.md)과 [검증 JSON](../../docs/reports/test-console-2026-10-04/result.json)을 따른다.
+089에서 진단 설정12개·Node core/화면9개·고정 모델+실제 HTTP/DB/Worker/Executor12개 회귀를 통과했다. 별도로 **내장 브라우저에서 실제 LLM**으로 계획→파라미터 편집→승인→Executor 통계/보고서와 POST SSE 후속 설명을 확인했다. HITL 새로고침·수정값/revision 복원·SSE 해제/재접속·세션 전환·로그아웃/재로그인 복원도 확인했다. [089 작업 기록](../../docs/improvements/089-real-model-test-console.md)과 [상세 검증 결과](../../docs/reports/test-console-real-model-2026-10-05/README.md)를 따른다. 086/087의 DOM double 검증과 이번 실제 브라우저 검증은 구분한다.
 
-Mac 잠금으로 실제 브라우저 클릭·레이아웃·다운로드·SSO 브라우저 왕복은 시각 검증하지 못했다. DOM double 검증을 실제 브라우저 검증으로 대체해 보고하지 않는다. 화면은 개발 기능 확인 도구이며 운영 프론트의 모든 UX/성능/접근성 검증을 완료한 것이 아니다. 현재 서버에 없는 Dataset Registry·파일/이미지 입력·보고서 Artifact 등록·Gaia 등의 기능을 화면만으로 구현하지 않는다. Markdown 로컬 저장은 서버 Artifact 등록과 다르다. 실제 Workflow/Message CRUD 전 동작을 이번에 회귀 검증한 것도 아니다.
+Chrome/네이티브 UI는 Mac 잠금·탭 timeout으로 완료하지 못했지만 내장 브라우저 DOM/화면은 검증했다. 사내 SSO SDK·실제 플랫폼/Gaia·remote kernel·전체 Workflow/Message CRUD·부하/접근성 전수 검증은 범위 밖이다. Dataset Registry·보고서 Artifact 등록·파일/이미지 입력을 화면만으로 구현하지 않는다. Markdown 로컬 저장은 서버 Artifact 등록과 다르다.
+
+실제 모델 보고서는 사용자가 최종 대상에서 뺀 x를 원래 목표로 설명하는 사례가 남아 있다. 다음 Agent 기능 검토에서 승인된 최신 계획을 기준으로 해석하는지 확인해야 한다. 최소 Markdown 렌더러는 헤딩/텍스트 중심이며 표·inline Markdown은 원문으로 표시한다.
 
 ## 수정과 회귀 실행
 
@@ -66,7 +83,8 @@ index.html의 CSS·markup·console-app script가 화면 소스다. Core에는 SS
 
 ```sh
 node --test tools/test-console/tests/console.test.cjs
-# 별도 진단 앱에서만 실행. 관리자 서버라면 TEST_CONSOLE_EXPECT_ADMIN=1 추가
+# 고정 모델을 켠 별도 진단 앱에서만 실행. 실제 모델 콘솔에는 이 고정 시나리오를 사용하지 않는다.
+# 관리자 서버라면 TEST_CONSOLE_EXPECT_ADMIN=1 추가
 TEST_CONSOLE_API_URL=http://127.0.0.1:18100/api/v1 \
   node tools/test-console/tests/live-console.cjs
 # 공용 계약 수정 후 샘플/OpenAPI만 갱신. 서비스 lifespan/DB는 실행하지 않는다

@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-05",
+  "model": "actual qwen38-27b-nvfp4",
+  "auth": "employee-verdict fixture; actual cookie/CSRF/DB",
+  "executor": "actual loopback Executor/Jupyter",
+  "db": "owned temporary PostgreSQL17, port53603",
+  "redis": "actual loopback Redis, isolated consumer group",
+  "phoenix": "disabled",
+  "browser": "Codex In-app Browser, actual DOM interactions and screenshots",
+  "cases": [
+    {
+      "run_id": "0bc4a432-5ad6-4035-a531-e963e9c4a74c",
+      "run_status": "success",
+      "result_status": "analysis_completed",
+      "executor_status": "SUCCEEDED",
+      "execution_id": "e1e004f7-1030-4fd0-a065-eea837694117",
+      "statistical_columns": [
+        "max_val"
+      ],
+      "report_present": true,
+      "observed_steps": [
+        "load",
+        "statistics"
+      ]
+    },
+    {
+      "run_id": "3b0f587f-61e3-432d-bb30-43e80c038702",
+      "run_status": "success",
+      "result_status": "answer",
+      "message_present": true,
+      "execution_id_present": false
+    },
+    {
+      "run_id": "3b208947-6e5d-47ad-9d1c-c14076603f91",
+      "run_status": "success",
+      "result_status": "answer",
+      "message_present": true,
+      "execution_id_present": false
+    },
+    {
+      "run_id": "129e7a90-0a39-4a60-8e53-807cf4ef0c97",
+      "run_status": "success",
+      "result_status": "answer",
+      "message_present": true,
+      "execution_id_present": false
+    }
+  ],
+  "browser_checks": [
+    "fixture login redirect and auto default project",
+    "real LLM plan and Skill/Tool/parameter visibility",
+    "same Run retained across edits and approval",
+    "dependency-breaking exclusion HTTP422 with edit preservation",
+    "columns max_val/x edited to max_val",
+    "valid terminal Tool exclusion and restoration",
+    "HITL revision2 restored after reload",
+    "manual SSE disconnect/reconnect at HITL",
+    "actual Executor result max_val only",
+    "run restored during execution wait",
+    "input unlocked after completion",
+    "POST SSE input locked immediately after acceptance (after fix)",
+    "POST SSE stream closed label after completion (after fix)",
+    "separate session has independent send availability",
+    "return to original session restores latest Run",
+    "logout locks input; re-login restores selection"
+  ],
+  "automated": {
+    "diagnostic_config_tests": 12,
+    "node_unit_tests": 9,
+    "fixture_real_http_checks": 12
+  },
+  "findings_fixed": [
+    "recent Run status retained older status",
+    "sidebar session status retained older status",
+    "POST SSE acceptance retained stale send availability",
+    "POST SSE completion retained connected label"
+  ],
+  "remaining_findings": [
+    "report described original x target after user removed x from final columns",
+    "Markdown pipes/inline markup shown as plain text by minimal renderer"
+  ],
+  "limits": [
+    "Single-user functional test, not load test",
+    "Corporate SSO SDK not exercised",
+    "No Dataset Registry or report Artifact registration",
+    "No exhaustive Executor HTTP call-count tracing for browser follow-ups",
+    "No visual validation in Chrome; IAB verified"
+  ]
+}

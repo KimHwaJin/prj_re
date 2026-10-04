@@ -54,3 +54,15 @@ test('catalogue defaults are editable nullable arrays with labels and truthful o
  assert.equal(updated.querySelectorAll('textarea')[0].value,'["max_val"]');
  }finally{app.close();}
 });
+
+
+test('real model and test login are labelled independently, other API never inherits labels',()=>{
+ const cfg={apiBase:'http://127.0.0.1:18102/api/v1',auth:{mode:'fixture'},model:{mode:'real',name:'internal-model'},executor:{mode:'real'}};
+ const info=C.runtimeInfo(cfg,cfg.apiBase);assert.equal(info.badge,'실제 LLM');
+ assert.match(info.description,/테스트 로그인/);assert.match(info.description,/실제 LLM · internal-model/);assert.match(info.description,/실제 Executor/);
+ assert.ok(!info.description.includes('고정'));
+ const other=C.runtimeInfo(cfg,'http://127.0.0.1:18103/api/v1');assert.equal(other.badge,'실제 API');assert.ok(!other.description.includes('internal-model'));
+ const fixed=C.runtimeInfo({...cfg,model:{mode:'fixture',delay_ms:300},executor:{mode:'off'}},cfg.apiBase);
+ assert.equal(fixed.badge,'모델 고정 응답');assert.match(fixed.description,/300ms/);assert.match(fixed.description,/비활성/);
+ const legacy=C.runtimeInfo({apiBase:cfg.apiBase,fixture:true,executor:true},cfg.apiBase);assert.match(legacy.description,/고정 모델/);
+});
