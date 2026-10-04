@@ -1,8 +1,8 @@
-"""Bound current-quote-supported durable topics; never share session observations."""
+"""Current-quote-supported section patches; never share session observations."""
 import json
 import re
 from langchain_core.messages import HumanMessage
-from service_contracts.project_memory import MemoryProposal
+from service_contracts.project_memory import MemoryProposal, section_body, replace_section
 
 AUTO_SECTIONS={'background','analysis_preferences','report_preferences'}
 SESSION_ONLY = re.compile(r'이번(?:만|에는|은|에|\s*(?:분석|보고서|결과))|지금만|방금|이번에만|this\s+(?:time|report|analysis|result)|just\s+for\s+now', re.I)
@@ -27,28 +27,32 @@ def validate_memory_proposals(reply,request):
     payload=json.loads(next(m.content for m in request.messages if isinstance(m,HumanMessage)))
     current=payload.get('request','')
     if not isinstance(current,str):raise ValueError('No current request for memory source')
-    entries={(e['section'],e['key']):e for e in snapshot['entries']}
-    keys=set()
+    reference=request.state.get('project_memory_reference')
+    if reference is None:
+        raise ValueError('A bounded visible memory reference is required for automatic edits')
+    editable=reference['write_policy']['editable_sections']
+    sections=set()
     for raw in updates:
         change=MemoryProposal.model_validate(raw.model_dump() if hasattr(raw,'model_dump') else raw)
-        key=(change.section,change.key)
-        if key in keys:raise ValueError('Duplicate memory topic')
-        keys.add(key)
+        if change.section in sections:raise ValueError('Duplicate memory section')
+        sections.add(change.section)
+        if change.section not in editable:raise ValueError('Cannot edit an omitted or ambiguous memory section')
         if change.section not in AUTO_SECTIONS:raise ValueError('Analysis findings require explicit project sharing, never automatic extraction')
         if change.quote not in current or not change.quote.strip():
             raise ValueError('Memory provenance must be an exact non-blank CURRENT user quote')
-        if len(change.content)>limits.topic_max_chars or len(change.quote)>limits.topic_max_chars:
-            raise ValueError('Memory topic or provenance exceeds its configured limit')
+        if len(change.content)>limits.patch_max_chars or len(change.quote)>limits.patch_max_chars:
+            raise ValueError('Memory replacement or provenance exceeds its configured limit')
         if SESSION_ONLY.search(change.quote) or (SESSION_ONLY.search(current) and not PERSISTENT.search(change.quote)):
             raise ValueError('Session-only requests must not update project memory')
         if not (PERSISTENT.search(change.quote) or PERSISTENT.search(current) or PREFERENCE.search(change.quote)):
             raise ValueError('No explicit durable project context or preference in the CURRENT quote')
         if FORBIDDEN.search(change.content) or FORBIDDEN.search(change.quote):
             raise ValueError('Automatic memory cannot share numeric statements, URLs or file paths; use explicit sharing')
-        entry=entries.get(key)
-        if change.expected_version!=(entry['version'] if entry else 0):raise ValueError('Memory proposal must echo the current topic version')
-        if entry is not None and entry['is_deleted']:raise ValueError('Deleted topics require explicit user restoration, never automatic revival')
-        if entry is not None and ' '.join(entry['content'].split())==' '.join(change.content.split()):raise ValueError('Do not rewrite unchanged memory topics')
+        if change.expected_version!=snapshot['version']:raise ValueError('Memory proposal must echo the project document version')
+        before=section_body(snapshot['content'],change.section)
+        if change.old_text!=before:raise ValueError('Copy the complete current section body exactly')
+        if ' '.join(before.split())==' '.join(change.content.split()):raise ValueError('Do not rewrite unchanged memory sections')
+        replace_section(snapshot['content'],change)
 
 
 def extract_memory_changes(schema,state):

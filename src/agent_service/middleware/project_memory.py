@@ -57,5 +57,5 @@ class ProjectMemoryMiddleware(AgentMiddleware):
         try:
             result=await provider.apply(runtime.store, changes)
         except (MemoryConflict,MemoryLimit) as exc:
-            result={'status':'not_saved','reason':str(exc),'entries':[]}
+            result={'status':'not_saved','reason':str(exc)}
         return {'project_memory_write_result':result}

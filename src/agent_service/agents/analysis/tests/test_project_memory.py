@@ -21,11 +21,11 @@ from service_settings import load_settings
 
 QUOTE='보고서는 원인과 다음 행동 중심으로 간결하게 작성해줘'
 
-def snapshot(project='p',user='u',entries=None):
-    return {'schema_version':1,'user_id':user,'project_id':project,'entries':entries or []}
+def snapshot(project='p',user='u',content='',version=0):
+    return {'schema_version':2,'user_id':user,'project_id':project,'content':content,'version':version,'updated_at':None}
 
 def proposal(**kw):
-    return {'section':'report_preferences','key':'style','content':QUOTE,'quote':QUOTE,'intent':'preference_change','expected_version':0,**kw}
+    return {'section':'report_preferences','old_text':'','content':QUOTE,'quote':QUOTE,'intent':'preference_change','expected_version':0,**kw}
 
 def value(updates=None):
     return {'kind':'answer','message':'요청한 방향을 참고하겠습니다.','plans':[],
@@ -36,7 +36,7 @@ def provider(record=None,conflict=False):
         assert isinstance(store, InMemoryStore)
         return copy.deepcopy(record or snapshot())
     return SimpleNamespace(read=AsyncMock(side_effect=read),apply=AsyncMock(side_effect=MemoryConflict('changed') if conflict else None,
-                                      return_value={'status':'saved','entries':[{'section':'report_preferences','key':'style','version':1}]}))
+                                      return_value={'status':'saved','version':1}))
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('mode',['prompt_json','provider_json_schema'])
@@ -56,41 +56,44 @@ async def test_one_read_retries_no_durable_write_before_validation_and_no_extra_
     assert all(sum('"reference_type": "project_memory"' in str(m['content']) for m in body['messages'])==1 for body in calls)
     assert all('Workflow definition JSON Schema' not in body['messages'][0]['content'] for body in calls)
 
-@pytest.mark.parametrize('change,mode,entry',[
-    (proposal(section='shared_findings'),True,None),
-    (proposal(content='결과는 109',quote='결과는 109'),True,None),
-    (proposal(content='/workspace/pv/private.parquet',quote='/workspace/pv/private.parquet'),True,None),
-    (proposal(),False,None),
-    (proposal(expected_version=2),True,None),
-    (proposal(),True,{'section':'report_preferences','key':'style','content':'','version':0,'is_deleted':True}),
-    (proposal(expected_version=1),True,{'section':'report_preferences','key':'style','content':QUOTE,'version':1,'is_deleted':False}),
+@pytest.mark.parametrize('change,mode,document',[
+    (proposal(section='shared_findings'),True,snapshot()),
+    (proposal(content='결과는 109',quote='결과는 109'),True,snapshot()),
+    (proposal(content='/workspace/pv/private.parquet',quote='/workspace/pv/private.parquet'),True,snapshot()),
+    (proposal(),False,snapshot()),
+    (proposal(expected_version=2),True,snapshot()),
+    (proposal(expected_version=1,old_text=QUOTE),True,snapshot(content='## 보고서 선호\n'+QUOTE+'\n',version=1)),
+    (proposal(old_text='invented'),True,snapshot()),
+    (proposal(content='## 프로젝트 배경\n무단 변경'),True,snapshot()),
 ])
-def test_invalid_sharing_proposals_are_rejected(change,mode,entry):
+def test_invalid_sharing_proposals_are_rejected(change,mode,document):
     ctx=AgentContext(user_id='u',project_id='p',project_memory_policy=provider(),project_memory_auto_write=mode)
     from langchain_core.messages import HumanMessage
-    request=SimpleNamespace(runtime=SimpleNamespace(context=ctx),state={'project_memory_snapshot':snapshot(entries=[entry] if entry else [])},
-                            messages=[HumanMessage(content=json.dumps({'request':QUOTE+' 결과는 109 /workspace/pv/private.parquet'}))])
+    from agent_service.runtime.memory_selection import select_memory
+    request=SimpleNamespace(runtime=SimpleNamespace(context=ctx),state={'project_memory_snapshot':document,
+        'project_memory_reference':select_memory(document,role='analysis_conversation',request=QUOTE,limits=ctx.project_memory_limits,automatic_write=mode)},
+        messages=[HumanMessage(content=json.dumps({'request':QUOTE+' 결과는 109 /workspace/pv/private.parquet'}))])
     result=reply_schema(AssetCatalog(),5)(**value([change]))
     with pytest.raises(ValueError):validate_memory_proposals(result,request)
 
 @pytest.mark.asyncio
 async def test_cached_agent_concurrent_projects_and_next_invocation_fresh_read():
-    one=provider(snapshot('p1',entries=[{'section':'background','key':'purpose','content':'one','version':1,'is_deleted':False}]))
-    two=provider(snapshot('p2',entries=[{'section':'background','key':'purpose','content':'two','version':1,'is_deleted':False}]))
+    one=provider(snapshot('p1',content='## 프로젝트 배경\none\n',version=1))
+    two=provider(snapshot('p2',content='## 프로젝트 배경\ntwo\n',version=1))
     seen=[]
     async def handle(request):
         body=json.loads(request.content)
         current=json.loads(next(m['content'] for m in body['messages'] if m['role']=='user'))['request']
         memory=next(json.loads(m['content'])['memory'] for m in body['messages'] if '"reference_type": "project_memory"' in str(m['content']))
-        seen.append((current,memory['project_id'],memory['entries'][0]['content']))
+        seen.append((current,memory['project_id'],memory['content']))
         await asyncio.sleep(.01)
         return response({'role':'assistant','content':json.dumps(value())})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
         agent=build_agent(model(client),AssetCatalog(),store=InMemoryStore())
         await asyncio.gather(*(agent.ainvoke({'request':p},context=AgentContext(user_id='u',project_id=p,project_memory_policy=store)) for p,store in [('p1',one),('p2',two)]))
-        one.read.side_effect=lambda store:snapshot('p1',entries=[{'section':'background','key':'purpose','content':'fresh','version':2,'is_deleted':False}])
+        one.read.side_effect=lambda store:snapshot('p1',content='## 프로젝트 배경\nfresh\n',version=2)
         await agent.ainvoke({'request':'next'},context=AgentContext(user_id='u',project_id='p1',project_memory_policy=one))
-    assert set(seen)=={('p1','p1','one'),('p2','p2','two'),('next','p1','fresh')}
+    assert set(seen)=={('p1','p1','## 프로젝트 배경\none\n'),('p2','p2','## 프로젝트 배경\ntwo\n'),('next','p1','## 프로젝트 배경\nfresh\n')}
     assert one.read.await_count==2 and two.read.await_count==1
     assert one.apply.await_count==two.apply.await_count==0
 
@@ -114,7 +117,7 @@ async def test_graph_publishes_actual_memory_outcome_and_preserves_user_message(
     runtime=PlanningRuntime(settings)
     async def respond(state,*args):
         reply=reply_schema(runtime.catalog,5)(**value())
-        reply._memory_result={'status':'not_saved','entries':[],'reason':'changed'}
+        reply._memory_result={'status':'not_saved','reason':'changed'}
         return reply
     runtime.respond=respond
     graph=build_planning_graph(runtime,checkpointer=InMemorySaver())
@@ -143,12 +146,13 @@ def test_settings_priority_and_runtime_binding(mode):
 
 
 @pytest.mark.asyncio
-async def test_native_store_namespaces_are_read_and_identity_checked():
-    from service_contracts.memory_store import read_memory, memory_namespace
+async def test_native_store_exact_document_read_and_identity_check(monkeypatch):
+    from service_contracts.memory_store import read_memory, memory_namespace, MEMORY_KEY
     store=InMemoryStore()
-    entry={'section':'background','key':'purpose','content':'품질 분석','version':1,'is_deleted':False}
-    await store.aput((*memory_namespace('u','p'),'background'),'purpose',entry)
-    await store.aput((*memory_namespace('other','p'),'background'),'purpose',{**entry,'content':'다른 사용자'})
-    assert (await read_memory(store,'u','p'))['entries']==[entry]
-    await store.aput((*memory_namespace('u','p'),'background'),'purpose',{**entry,'key':'wrong'})
+    doc={'schema_version':2,'content':'품질 분석','version':1,'updated_at':None}
+    await store.aput(memory_namespace('u','p'),MEMORY_KEY,doc)
+    await store.aput(memory_namespace('other','p'),MEMORY_KEY,{**doc,'content':'다른 사용자'})
+    assert (await read_memory(store,'u','p'))['content']=='품질 분석'
+    item=await store.aget(memory_namespace('other','p'),MEMORY_KEY)
+    store=SimpleNamespace(aget=AsyncMock(return_value=item))
     with pytest.raises(ValueError,match='identity'):await read_memory(store,'u','p')

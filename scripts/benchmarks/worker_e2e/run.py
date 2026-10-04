@@ -182,7 +182,7 @@ async def trial(n,c,repeat):
      return r.json() if r.content else {}
     project=await req('POST','/api/v1/projects',{'project_name':'Throughput '+str(i),'system_prompt':'Explain clearly for non-specialists.'})
     if a.followup and a.memory_mode=='manual':
-     await req('PUT','/api/v1/projects/'+project['id']+'/memory/report_preferences/audience',{'content':'보고서는 비전문가가 이해하기 쉽게 작성한다','expected_version':0})
+     await req('PUT','/api/v1/projects/'+project['id']+'/memory',{'content':'## 보고서 선호\n보고서는 비전문가가 이해하기 쉽게 작성한다\n','expected_version':0})
     session=await req('POST','/api/v1/projects/'+project['id']+'/sessions',{'session_name':'Fixed scenario','settings':{'kernel_profile':'default'}})
     sid=session['id'];path='/api/v1/sessions/'+sid+'/runs'
     accepted=await req('POST',path,{'input':{'content':[{'type':'text','text':'default-nce 데이터의 품질과 이상치를 분석해줘'}]}})
@@ -211,9 +211,7 @@ async def trial(n,c,repeat):
       followup_state,_=await wait(client,path,next_rid,terminal=True)
       followups.append({'run_id':next_rid,'seconds':time.perf_counter()-started_followup,'handoff_retries':retry,'status':followup_state['status']})
      memory=await req('GET','/api/v1/projects/'+project['id']+'/memory')
-     audience=next(e for e in memory['entries'] if e['section']=='report_preferences' and e['key']=='audience')
-     assert not audience['is_deleted'] and audience['version']==1
-     assert audience['source']['kind']==('user_edit' if a.memory_mode=='manual' else 'user_request')
+     assert memory['version']==1 and '보고서는 비전문가가 이해하기 쉽게 작성한다' in memory['content']
     return {'user':i,'seconds':time.perf_counter()-(measurement_start[0] if measuring_burst[0] and cohort=='primary' else began),'requests':latencies,'session_id':sid,'run_id':rid,'passed':True,'sse_wait_ms':[initial_wait,edit_wait,approval_wait],'cohort':cohort,'execution_id':final['execution_id'],
       'followups':followups,'report':final['report'],'observations':final['observations'],'terminal_at':time.perf_counter()}
    # Warm pools, graph and assets separately; exclude warm-up/user registration.

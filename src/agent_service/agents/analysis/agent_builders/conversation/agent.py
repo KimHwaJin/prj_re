@@ -27,8 +27,8 @@ class Proposal(BaseModel):
 def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memory_limits=None):
     limits = memory_limits or MemoryLimits()
     proposal_type = create_model('ProjectMemoryProposal', __base__=MemoryProposal,
-        content=(str,Field(min_length=1,max_length=limits.topic_max_chars,description='Short normalized topic supported by quote; no new claims.')),
-        quote=(str,Field(min_length=1,max_length=limits.topic_max_chars,description='Exact CURRENT user quote supporting durable project sharing.')))
+        content=(str,Field(min_length=1,max_length=limits.patch_max_chars,description='Complete replacement section body; preserve existing valid information, no unsupported claims.')),
+        quote=(str,Field(min_length=1,max_length=limits.patch_max_chars,description='Exact CURRENT user quote supporting durable project sharing.')))
     class Reply(BaseModel):
         model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
         kind: Literal['answer', 'planning', 'plans']
@@ -36,7 +36,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memo
             'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
             'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
             'For plans or unrelated general FAQ, ordinary text is allowed.')
-        memory_updates: list[proposal_type] = Field(default_factory=list, max_length=limits.max_updates, description="Only durable project background/preferences or explicit remember requests. Normalize briefly, preserve exact CURRENT quote and intent. Never session-only requests, findings, data or paths. Reuse stable keys/versions; empty when automatic_write=false or no change.")
+        memory_updates: list[proposal_type] = Field(default_factory=list, max_length=limits.max_updates, description="Only durable project background/preferences or explicit remember requests. Normalize briefly, preserve exact CURRENT quote and intent. Never session-only requests, findings, data or paths. Echo the document version and exact full old_text. Edit only visible/editable sections; empty when automatic_write=false or no change.")
         _memory_result: dict | None = PrivateAttr(default=None)
         grounding: AnswerGrounding | None = None
         plans: list[Proposal] = Field(default_factory=list, max_length=max_candidates)

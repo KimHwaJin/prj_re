@@ -42,11 +42,12 @@ def choose(body, observation_profile='standard'):
                 'evidence_steps':[o['step_id'] for o in analysis['observations'] if o['status']=='SUCCEEDED'],
                 'fact_ids':[k for group in analysis.get('fact_catalog',{}).values() for k in group][:4]}
         if memory and memory['automatic_write'] and PREFERENCE in request:
-            entry=next((e for e in memory['memory']['entries'] if e['section']=='report_preferences' and e['key']=='audience'),None)
+            from service_contracts.project_memory import section_body
+            old_text=section_body(memory['memory']['content'],'report_preferences')
             content='보고서는 비전문가가 이해하기 쉽게 작성한다'
-            if entry is None or entry['content']!=content:
-                result['memory_updates']=[{'section':'report_preferences','key':'audience','content':content,
-                    'expected_version':entry['version'] if entry else 0,'quote':PREFERENCE,'intent':'preference_change'}]
+            if old_text!=content and 'report_preferences' in memory['write_policy']['editable_sections']:
+                result['memory_updates']=[{'section':'report_preferences','old_text':old_text,'content':content,
+                    'expected_version':memory['memory']['version'],'quote':PREFERENCE,'intent':'preference_change'}]
         return 'answer',result,memory,analysis
     if not any(m['role']=='tool' for m in body['messages']):
         return 'planning_select',{'kind':'planning','message':'등록된 스킬을 확인합니다.','plans':[],

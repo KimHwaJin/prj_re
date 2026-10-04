@@ -1,15 +1,15 @@
-"""Bounded shared memory, owner checks, concurrent CAS and replay on scratch PG."""
+"""Real scratch-PG document CAS, migration, API, Worker and pool boundaries."""
 import asyncio
 from uuid import UUID,uuid4
 import pytest
-from sqlalchemy import select,func
+from sqlalchemy import select
 from api_service.test.test_user_identity_postgres import database_url,harness,initialize,add_user,add_session,headers
 from api_service.services.project_memory_policy import ProjectMemoryPolicy
-from service_contracts.memory_store import receipt_namespace
+from service_contracts.memory_store import receipt_namespace, memory_namespace, MEMORY_KEY, receipt_key
 from api_service.core.memory_store import runtime as store_runtime
 from langgraph.store.postgres import AsyncPostgresStore
 import pytest_asyncio
-from service_contracts.project_memory import MemoryConflict,MemoryLimit
+from service_contracts.project_memory import MemoryConflict,MemoryLimit,MemoryLimits
 
 @pytest_asyncio.fixture(autouse=True)
 async def store_lifecycle():
@@ -25,62 +25,73 @@ async def setup(h):
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==user['user_id']))
     return user,uid,UUID(user['default_project_id']),ProjectMemoryPolicy(session_factory=h.factory)
 
-def change(key='style',content='간결한 보고서',version=0,section='report_preferences'):
-    return {'section':section,'key':key,'content':content,'expected_version':version}
+
+def change(content='간결한 보고서',version=0,section='report_preferences',old_text=''):
+    return {'section':section,'old_text':old_text,'content':content,'expected_version':version}
 
 @pytest.mark.asyncio
-async def test_explicit_http_read_edit_delete_restore_and_idempotency(harness):
+async def test_http_document_edit_reset_restore_replay_and_old_paths_removed(harness):
     h=harness;user,uid,pid,service=await setup(h)
     base=f'/api/v1/projects/{pid}/memory';auth=headers(user['user_id'])
-    assert (await h.client.get(base,headers=auth)).json()['entries']==[]
-    body={'content':'명시적으로 공유한 결과: 평균 109','expected_version':0}
-    path=base+'/shared_findings/summary';key={**auth,'Idempotency-Key':'first'}
-    first=await h.client.put(path,headers=key,json=body)
+    empty=(await h.client.get(base,headers=auth)).json()
+    assert empty=={'schema_version':2,'project_id':str(pid),'content':'','version':0,'updated_at':None}
+    body={'content':'자유로운 Markdown\n\n## 공유할 주요 발견\n명시적으로 공유한 결과: 평균 109','expected_version':0}
+    key={**auth,'Idempotency-Key':'first'}
+    first=await h.client.put(base,headers=key,json=body)
     assert first.status_code==200,first.text
-    assert (await h.client.put(path,headers=key,json=body)).json()==first.json()
-    assert (await h.client.put(path,headers=key,json={**body,'content':'different'})).status_code==409
-    assert (await h.client.put(path,headers=auth,json={'content':'new','expected_version':0})).status_code==409
-    assert (await h.client.delete(path+'?expected_version=1',headers=auth)).status_code==200
-    record=(await h.client.get(base,headers=auth)).json()['entries'][0]
-    assert record['is_deleted'] and record['version']==2
-    # Keeping the tombstone prevents ABA (stale version=0 cannot recreate this key).
-    assert (await h.client.put(path,headers=auth,json=body)).status_code==409
-    restored=await h.client.put(path,headers=auth,json={'content':'명시적 수정','expected_version':2})
-    assert restored.status_code==200 and restored.json()['entries'][0]['version']==3
+    assert first.json()['content']==body['content'] and first.json()['version']==1
+    assert (await h.client.put(base,headers=key,json=body)).json()==first.json()
+    assert (await h.client.put(base,headers=key,json={**body,'content':'different'})).status_code==409
+    assert (await h.client.put(base,headers=auth,json=body)).status_code==409
+    unchanged=await h.client.put(base,headers=auth,json={**body,'expected_version':1})
+    assert unchanged.json()['version']==1
+    reset=await h.client.delete(base+'?expected_version=1',headers={**auth,'Idempotency-Key':'reset'})
+    assert reset.status_code==200 and reset.json()['content']=='' and reset.json()['version']==2
+    assert (await h.client.delete(base+'?expected_version=1',headers={**auth,'Idempotency-Key':'reset'})).json()==reset.json()
+    assert (await h.client.put(base,headers=auth,json=body)).status_code==409
+    restored=await h.client.put(base,headers=auth,json={'content':'명시적 수정','expected_version':2})
+    assert restored.status_code==200 and restored.json()['version']==3
+    assert (await h.client.put(base+'/report_preferences/style',headers=auth,json=body)).status_code==404
+    assert (await h.client.put(base,headers=auth,json={**body,'key':'old-topic'})).status_code==422
+    assert (await h.client.put(base,headers={**auth,'Idempotency-Key':'   '},json=body)).status_code==422
     other=await add_user(h,'other')
     assert (await h.client.get(base,headers=headers(other['user_id']))).status_code==404
-    assert (await h.client.put(path,headers=headers(other['user_id']),json=body)).status_code==404
+    assert (await h.client.put(base,headers=headers(other['user_id']),json=body)).status_code==404
 
 @pytest.mark.asyncio
-async def test_concurrent_same_topic_one_wins_different_topics_both_survive_and_replay(harness):
+async def test_concurrent_document_edits_and_patches_cannot_overwrite_other_sessions(harness):
     h=harness;user,uid,pid,service=await setup(h)
-    async def write(key,text,source):
-        try:return await service.apply(uid,pid,[change(key,text)],source_id=source,source={'kind':'user_edit'})
+    async def write(text,source):
+        try:return await service.replace(uid,pid,text,0,source_id=source)
         except MemoryConflict:return 'conflict'
-    results=await asyncio.gather(write('same','one','a'),write('same','two','b'))
+    results=await asyncio.gather(write('one','a'),write('two','b'))
     assert sum(isinstance(r,dict) for r in results)==1 and results.count('conflict')==1
-    assert all(isinstance(r,dict) for r in await asyncio.gather(write('left','left','c'),write('right','right','d')))
-    replay=await service.apply(uid,pid,[change('left','left')],source_id='c',source={'kind':'user_edit'})
-    assert replay['entries'][0]['version']==1
-    state=await service.read(uid,pid)
-    assert {e['key'] for e in state['entries']}=={'same','left','right'}
-    async with store_runtime.open_store() as store:
-        assert len(await store.asearch(receipt_namespace(uid,pid),limit=10))==3
+    original=(await service.read(uid,pid))['content']
+    async def patch(section,source,version):
+        try:return await service.apply(uid,pid,[change(section=section,content=section,version=version)],source_id=source,source={'kind':'user_request'})
+        except MemoryConflict:return 'conflict'
+    patches=await asyncio.gather(patch('background','c',1),patch('analysis_preferences','d',1))
+    assert sum(isinstance(r,dict) for r in patches)==1 and patches.count('conflict')==1
+    loser='background' if patches[0]=='conflict' else 'analysis_preferences'
+    await patch(loser,'retry',2)
+    document=await service.read(uid,pid)
+    assert document['version']==3 and document['content'].startswith(original)
+    assert '프로젝트 배경' in document['content'] and '분석 선호' in document['content']
+    winner='analysis_preferences' if loser=='background' else 'background'
+    source='d' if winner=='analysis_preferences' else 'c'
+    replay=await patch(winner,source,1)
+    assert replay=={'status':'saved','version':2}
+    assert (await service.read(uid,pid))['version']==3
 
 @pytest.mark.asyncio
-async def test_batch_atomicity_size_bound_and_soft_delete(harness):
+async def test_patch_batch_atomicity_content_bound_and_soft_delete(harness):
     h=harness;user,uid,pid,service=await setup(h)
-    await service.apply(uid,pid,[change()],source_id='base',source={'kind':'user_edit'})
+    first=await service.replace(uid,pid,'## 보고서 선호\n간결한 보고서\n',0,source_id='base')
     with pytest.raises(MemoryConflict):
-        await service.apply(uid,pid,[change('new'),change(version=0)],source_id='batch',source={'kind':'user_edit'})
-    assert len((await service.read(uid,pid))['entries'])==1
-    for i in range(30):
-        try:await service.apply(uid,pid,[change('large_'+chr(97+i),content='x'*1000)],source_id='fill'+str(i),source={'kind':'user_edit'})
-        except MemoryLimit:break
-    else:raise AssertionError('Memory should hit its serialized size bound')
-    import json
-    state=await service.read(uid,pid)
-    assert len(json.dumps(state,ensure_ascii=False))<=16000
+        await service.apply(uid,pid,[change(section='background',version=1),change(version=1,old_text='incorrect')],source_id='batch',source={'kind':'user_request'})
+    assert (await service.read(uid,pid))['content']==first['content']
+    with pytest.raises(MemoryLimit):await service.replace(uid,pid,'x'*16001,1,source_id='full')
+    assert (await service.read(uid,pid))['version']==1
     async with h.factory() as db:
         from api_service.models.common.project_model import ProjectModel
         from api_service.core.enums import DeleteYN
@@ -88,7 +99,7 @@ async def test_batch_atomicity_size_bound_and_soft_delete(harness):
     from fastapi import HTTPException
     with pytest.raises(HTTPException) as exc:await service.read(uid,pid)
     assert exc.value.status_code==404
-    with pytest.raises(HTTPException):await service.apply(uid,pid,[change('forbidden')],source_id='deleted',source={'kind':'user_edit'})
+    with pytest.raises(HTTPException):await service.replace(uid,pid,'forbidden',1,source_id='deleted')
 
 @pytest.mark.asyncio
 async def test_bound_source_checks_and_same_project_cross_session_read(harness):
@@ -105,26 +116,31 @@ async def test_bound_source_checks_and_same_project_cross_session_read(harness):
     second=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':s2,'run_id':r2})
     async with store_runtime.open_store() as store:
         await first.apply(store,[change()])
-        assert (await second.read(store))['entries'][0]['content']=='간결한 보고서'
+        assert '간결한 보고서' in (await second.read(store))['content']
     invalid=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':s2,'run_id':r1})
     async with store_runtime.open_store() as store:
         with pytest.raises(ValueError,match='source Run'):await invalid.read(store)
 
-@pytest.mark.asyncio
-async def test_migration_downgrade_upgrade_preserves_existing_project(harness,database_url,tmp_path):
-    h=harness;user,uid,pid,service=await setup(h)
+
+def migration(database_url,tmp_path,direction,revision):
     import os,subprocess,sys
     from pathlib import Path
     from sqlalchemy.engine import make_url
     root=Path(__file__).resolve().parents[3]
+    raw=make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     config=tmp_path/'migration.yml'
-    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)+'\n')
+    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+raw+'\n')
     env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'APP_ENV':'dev','PYTHONPATH':str(root/'src')}
-    for direction,revision in [('downgrade','20260930_0023'),('upgrade','head')]:
-        proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)
-        assert proc.returncode==0,proc.stderr
-    state=await service.read(uid,pid)
-    assert state['project_id']==str(pid) and state['entries']==[]
+    proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)
+    assert proc.returncode==0,proc.stderr
+
+@pytest.mark.asyncio
+async def test_migration_downgrade_upgrade_preserves_existing_project(harness,database_url,tmp_path):
+    h=harness;user,uid,pid,service=await setup(h)
+    migration(database_url,tmp_path,'downgrade','20260930_0023')
+    migration(database_url,tmp_path,'upgrade','head')
+    document=await service.read(uid,pid)
+    assert document['project_id']==str(pid) and document['content']=='' and document['version']==0
 
 # Complete API -> queue Worker -> graph -> model policy -> PG -> public SSE path.
 from api_service.test.test_planning_api_postgres import planning,test_config,submit,execute,read
@@ -156,7 +172,7 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         payload=json.loads(next(m['content'] for m in body['messages'] if m['role']=='user'))
         memory=next(json.loads(m['content'])['memory'] for m in body['messages'] if '"reference_type": "project_memory"' in str(m['content']))
         seen.append(copy.deepcopy(memory))
-        update=[{'section':'report_preferences','key':'style','content':quote,'quote':quote,'intent':'preference_change','expected_version':0}] if payload['request']==quote else []
+        update=[{'section':'report_preferences','old_text':'','content':quote,'quote':quote,'intent':'preference_change','expected_version':0}] if payload['request']==quote else []
         return response({'role':'assistant','content':json.dumps({'kind':'answer','message':'간결한 원인·행동 중심 보고서 선호를 참고하겠습니다.','grounding':{'scope':'general'},'memory_updates':update,'plans':[]},ensure_ascii=False)})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
         selection=runtime.models.select().model_dump()
@@ -177,10 +193,12 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
         assert second.status_code==202,second.text
         await execute();following=await read(h,second.json()['run_id'])
         assert following['status']=='success'
-    assert len(seen)==2 and seen[0]['entries']==[]
-    assert seen[1]['entries'][0]['content']==quote
-    saved=(await h.client.get(f"/api/v1/projects/{h.user['default_project_id']}/memory",headers=headers(h.user['user_id']))).json()['entries'][0]
-    assert saved['source']['run_id']==rid and saved['source']['quote']==quote
+    assert len(seen)==2 and seen[0]['content']==''
+    assert quote in seen[1]['content']
+    saved=(await h.client.get(f"/api/v1/projects/{h.user['default_project_id']}/memory",headers=headers(h.user['user_id']))).json()
+    assert quote in saved['content'] and saved['version']==1
+    saved_source=(await service.read(seen[1]['user_id'],saved['project_id']))['source']
+    assert saved_source['run_id']==rid and saved_source['changes'][0]['quote']==quote
     for session in [h.session_id,sid]:
         assert (await graph.aget_state({'configurable':{'thread_id':session}})).values.get('execution_id') is None
 
@@ -189,10 +207,10 @@ from api_service.test.test_short_transactions_postgres import small_pool,runtime
 @pytest.mark.asyncio
 async def test_memory_api_reuses_auth_session_with_one_connection(small_pool):
     h=small_pool
-    path=f"/api/v1/projects/{h.user['default_project_id']}/memory/report_preferences/style"
+    path=f"/api/v1/projects/{h.user['default_project_id']}/memory"
     response=await h.client.put(path,headers=headers(h.user['user_id']),json={'content':'짧게 작성','expected_version':0})
     assert response.status_code==200,response.text
-    assert (await h.client.get(path.rsplit('/',2)[0],headers=headers(h.user['user_id']))).status_code==200
+    assert (await h.client.get(path,headers=headers(h.user['user_id']))).status_code==200
     assert h.engine.pool.checkedout()==0
 
 @pytest.mark.asyncio
@@ -225,7 +243,7 @@ async def test_memory_snapshot_releases_only_connection_before_model_wait(small_
             stats=store.conn.get_stats()
             assert stats.get('requests_waiting',0)==0
             assert stats['pool_available']==stats['pool_size']
-            path=f'/api/v1/projects/{pid}/memory/report_preferences/style'
+            path=f'/api/v1/projects/{pid}/memory'
             result=await h.client.put(path,headers=headers(h.user['user_id']),json={'content':'간결하게','expected_version':0})
             assert result.status_code==200,result.text
             assert not job.done() and h.engine.pool.checkedout()==0
@@ -251,7 +269,7 @@ async def test_stale_worker_claim_cannot_commit_memory(runtime):
     with bind_execution_claim(item.claim),pytest.raises(ExecutionNeedsRecovery):
         async with store_runtime.open_store() as store:
             await bound.apply(store,[change()])
-    assert (await service.read(uid,h.user['default_project_id']))['entries']==[]
+    assert (await service.read(uid,h.user['default_project_id']))['content']==''
 
 
 @pytest.mark.asyncio
@@ -269,88 +287,82 @@ async def test_official_store_batch_rolls_back_memory_and_receipt_on_failure(har
         patch.setattr(AsyncPostgresStore,'abatch',broken)
         with pytest.raises(RuntimeError,match='injected failure'):
             await policy.apply(uid,pid,[change()],source_id='rollback',source={'kind':'user_edit'})
-    assert (await policy.read(uid,pid))['entries']==[]
+    assert (await policy.read(uid,pid))['content']==''
     async with store_runtime.open_store() as store:
         assert await store.asearch(receipt_namespace(uid,pid))==[]
-    assert (await policy.apply(uid,pid,[change()],source_id='rollback',source={'kind':'user_edit'}))['entries'][0]['version']==1
+    assert (await policy.apply(uid,pid,[change()],source_id='rollback',source={'kind':'user_edit'}))['version']==1
+
 
 @pytest.mark.asyncio
-async def test_store_migration_preserves_legacy_topics_receipts_and_unrelated_namespaces(harness,database_url,tmp_path):
+async def test_migration_combines_topics_preserves_text_sources_and_unrelated_store(harness,database_url,tmp_path):
     h=harness;user,uid,pid,policy=await setup(h)
-    # Round-trip 0025 -> 0024 -> 0025 with live topic, tombstone and replay result.
-    first=await policy.apply(uid,pid,[change()],source_id='first',source={'kind':'user_edit'})
-    await policy.apply(uid,pid,[change(version=1)],source_id='delete',source={'kind':'user_edit'},delete=True)
-    await policy.apply(uid,pid,[change('other',section='background')],source_id='other',source={'kind':'user_edit'})
-    # Python isoformat keeps six fractional digits; PG JSON timestamp rendering
-    # trims trailing zeroes. Force both fractional/whole-second cases so this
-    # migration equality check cannot depend on the wall-clock microsecond.
-    from service_contracts.memory_store import memory_namespace
+    migration(database_url,tmp_path,'downgrade','20261003_0027')
+    namespace=memory_namespace(uid,pid)
     async with store_runtime.open_store() as store:
-        for entry in (await policy.read(uid,pid))['entries']:
-            entry['updated_at']='2026-10-02T00:00:00.123400+00:00' if entry['key']=='other' else '2026-10-02T00:00:00+00:00'
-            await store.aput((*memory_namespace(uid,pid),entry['section']),entry['key'],entry)
-    before=await policy.read(uid,pid)
-    async with store_runtime.open_store() as store:
+        for section,key,content,version,deleted in [
+            ('background','purpose','품질 분석\n여러 줄 배경',2,False),
+            ('report_preferences','audience','비전문가 대상',3,False),
+            ('report_preferences','style','결론 먼저',1,False),
+            ('shared_findings','deleted','제외되어야 하는 옛 결과',4,True)]:
+            await store.aput((*namespace,section),key,{'section':section,'key':key,'content':content,'version':version,
+                'is_deleted':deleted,'source':{'kind':'user_edit'},'updated_at':'2026-10-02T00:00:00+00:00'})
+        await store.aput(receipt_namespace(uid,pid),receipt_key('old'),{'source_id':'old','digest':'old','result':{'entries':[]}})
         await store.aput(('another_application',),'keep',{'preserved':True})
         await store.aput(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep',{'preserved':True})
-    import os,subprocess,sys,psycopg
-    from pathlib import Path
-    from sqlalchemy.engine import make_url
-    root=Path(__file__).resolve().parents[3]
-    raw=make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
-    config=tmp_path/'store-migration.yml'
-    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+raw+'\n')
-    env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'APP_ENV':'dev','PYTHONPATH':str(root/'src')}
-    for direction,revision in [('downgrade','20261002_0024'),('upgrade','head')]:
-        proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)
-        assert proc.returncode==0,proc.stderr
-        if direction=='downgrade':
-            with psycopg.connect(raw) as db:
-                assert db.execute('SELECT count(*) FROM project_memories WHERE project_id=%s',(pid,)).fetchone()[0]==2
-                assert db.execute('SELECT count(*) FROM project_memory_receipts WHERE project_id=%s',(pid,)).fetchone()[0]==3
-    after=await policy.read(uid,pid)
-    assert after==before
-    assert await policy.apply(uid,pid,[change()],source_id='first',source={'kind':'user_edit'})==first
+    migration(database_url,tmp_path,'upgrade','head')
+    before=await policy.read(uid,pid)
+    assert before['content']=='## 프로젝트 배경\n품질 분석\n여러 줄 배경\n\n## 보고서 선호\n비전문가 대상\n\n결론 먼저\n'
+    assert before['version']==10 and len(before['source']['previous_sources'])==4
     async with store_runtime.open_store() as store:
+        assert len(await store.asearch(namespace))==1
+        assert await store.asearch(receipt_namespace(uid,pid))==[]
         assert (await store.aget(('another_application',),'keep')).value=={'preserved':True}
-        await store.adelete(('another_application',),'keep')
         assert (await store.aget(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep')).value=={'preserved':True}
-        await store.adelete(('dtest','projectXmemory',str(uid),str(pid),'background'),'keep')
-    with psycopg.connect(raw) as db:
-        assert db.execute("SELECT to_regclass('project_memories'),to_regclass('project_memory_receipts')").fetchone()==(None,None)
-        assert [v[0] for v in db.execute('SELECT v FROM store_migrations ORDER BY v')]==[0,1,2,3]
+    # Marked downgrade/upgrade preserves arbitrary document text exactly.
+    migration(database_url,tmp_path,'downgrade','20261003_0027')
+    migration(database_url,tmp_path,'upgrade','head')
+    assert await policy.read(uid,pid)==before
+    result=await policy.replace(uid,pid,'## 자유 형식\n임의의 새 문서\n',10,source_id='after-migration')
+    migration(database_url,tmp_path,'downgrade','20261003_0027')
+    migration(database_url,tmp_path,'upgrade','head')
+    assert (await policy.read(uid,pid))['content']==result['content']
 
 @pytest.mark.asyncio
-async def test_configurable_topic_batch_and_tombstone_limits_are_atomic(harness):
-    from service_contracts.project_memory import MemoryLimits
+async def test_configured_patch_limit_replay_and_manual_document_limit(harness):
     h=harness;user,uid,pid,service=await setup(h)
-    limits=MemoryLimits(max_topics=6,max_updates=6,topic_max_chars=1500,max_chars=30000)
-    custom=ProjectMemoryPolicy(session_factory=h.factory,limits=limits)
-    changes=[change('topic_'+chr(97+i),content='x'*1100) for i in range(6)]
-    first=await custom.apply(uid,pid,changes,source_id='six',source={'kind':'user_edit'})
-    # Committed replay is stable even after lowering batch/content limits.
-    assert await service.apply(uid,pid,changes,source_id='six',source={'kind':'user_edit'})==first
-    assert len((await custom.read(uid,pid))['entries'])==6
-    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('seven')],source_id='seven',source={'kind':'user_edit'})
-    await custom.apply(uid,pid,[change('topic_a',version=1)],source_id='delete-a',source={'kind':'user_edit'},delete=True)
-    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('seven')],source_id='seven-again',source={'kind':'user_edit'})
-    with pytest.raises(MemoryLimit):await custom.apply(uid,pid,[change('topic_b',content='x'*1501,version=1)],source_id='large',source={'kind':'user_edit'})
-    assert len((await custom.read(uid,pid))['entries'])==6
+    custom=ProjectMemoryPolicy(session_factory=h.factory,limits=MemoryLimits(patch_max_chars=6000,max_chars=30000,max_updates=2))
+    patches=[change(section='background',content='x'*5000),change(content='y'*5000)]
+    first=await custom.apply(uid,pid,patches,source_id='two',source={'kind':'user_request'})
+    assert await service.apply(uid,pid,patches,source_id='two',source={'kind':'user_request'})==first
+    with pytest.raises(MemoryLimit):
+        await service.apply(uid,pid,[change(content='z'*5000,old_text='y'*5000,version=1)],source_id='large-patch',source={'kind':'user_request'})
+    # Manual PUT is bounded by document length, not the Agent patch length.
+    assert (await service.replace(uid,pid,'manual '*1000,1,source_id='manual'))['version']==2
 
 @pytest.mark.asyncio
 async def test_lowered_limits_preserve_reads_and_allow_gradual_shrinking(harness):
-    from service_contracts.project_memory import MemoryLimits
     h=harness;user,uid,pid,service=await setup(h)
-    for key in ['one','two','three']:
-        await service.apply(uid,pid,[change(key,content='x'*800)],source_id=key,source={'kind':'user_edit'})
-    smaller=ProjectMemoryPolicy(session_factory=h.factory,limits=MemoryLimits(max_topics=2,max_updates=2,max_chars=1024))
-    assert len((await smaller.read(uid,pid))['entries'])==3
-    with pytest.raises(MemoryLimit):await smaller.apply(uid,pid,[change('four')],source_id='four',source={'kind':'user_edit'})
-    await smaller.apply(uid,pid,[change('one',content='short',version=1)],source_id='shrink',source={'kind':'user_edit'})
-    assert next(e for e in (await smaller.read(uid,pid))['entries'] if e['key']=='one')['content']=='short'
+    await service.replace(uid,pid,'x'*2400,0,source_id='large')
+    smaller=ProjectMemoryPolicy(session_factory=h.factory,limits=MemoryLimits(max_chars=1024,patch_max_chars=1000))
+    assert len((await smaller.read(uid,pid))['content'])==2400
+    with pytest.raises(MemoryLimit):await smaller.replace(uid,pid,'x'*2401,1,source_id='grow')
+    await smaller.replace(uid,pid,'x'*1800,1,source_id='shrink')
+    await smaller.replace(uid,pid,'short',2,source_id='shrink-again')
+    assert (await smaller.read(uid,pid))['content']=='short'
 
 @pytest.mark.asyncio
-async def test_normalized_topic_keeps_exact_current_quote_as_provenance(harness):
+async def test_reset_blocks_stale_agent_but_new_request_can_start_new_memory(harness):
+    h=harness;user,uid,pid,service=await setup(h)
+    await service.apply(uid,pid,[change()],source_id='base',source={'kind':'user_request'})
+    await service.reset(uid,pid,1,source_id='reset')
+    with pytest.raises(MemoryConflict):
+        await service.apply(uid,pid,[change(version=1,old_text='간결한 보고서',content='과거 선호 복원')],source_id='stale',source={'kind':'user_request'})
+    assert (await service.read(uid,pid))['content']==''
+    await service.apply(uid,pid,[change(version=2,content='새 요청으로 만든 선호')],source_id='new-request',source={'kind':'user_request'})
+    assert (await service.read(uid,pid))['version']==3
+
+@pytest.mark.asyncio
+async def test_normalized_section_keeps_exact_current_quote_as_provenance(harness):
     h=harness;user,uid,pid,service=await setup(h)
     sid=await add_session(h,user)
     from api_service.schemas.common.run_schema import RunStart
@@ -359,10 +371,10 @@ async def test_normalized_topic_keeps_exact_current_quote_as_provenance(harness)
         run=await PublicRunService.create(db,uid,UUID(sid),RunStart(input={'messages':[{'role':'user','content':'앞으로 보고서는 비전문가를 대상으로 작성해줘'}]}),'normalized')
         rid=str(run.run_id)
     bound=service.for_context({'user_id':str(uid),'project_id':str(pid),'session_id':sid,'run_id':rid})
-    update={**change(content='보고서 독자는 비전문가'), 'quote':'앞으로 보고서는 비전문가를 대상으로 작성해줘','intent':'preference_change'}
+    update={**change(content='보고서 독자는 비전문가'),'quote':'앞으로 보고서는 비전문가를 대상으로 작성해줘','intent':'preference_change'}
     async with store_runtime.open_store() as store:
         first=await bound.apply(store,[update]);assert await bound.apply(store,[update])==first
-    saved=(await service.read(uid,pid))['entries'][0]
-    assert saved['content']=='보고서 독자는 비전문가'
-    assert saved['source']['quote']==update['quote'] and saved['source']['intent']=='preference_change'
+    saved=await service.read(uid,pid)
+    assert '보고서 독자는 비전문가' in saved['content']
+    assert saved['source']['changes'][0]['quote']==update['quote']
     assert saved['source']['run_id']==rid

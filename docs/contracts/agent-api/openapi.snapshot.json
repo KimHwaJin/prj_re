@@ -1000,15 +1000,13 @@
             "LoginSession": []
           }
         ]
-      }
-    },
-    "/api/v1/projects/{project_id}/memory/{section}/{key}": {
+      },
       "put": {
         "tags": [
           "projects"
         ],
         "summary": "Put Project Memory",
-        "operationId": "put_project_memory_api_v1_projects__project_id__memory__section___key__put",
+        "operationId": "put_project_memory_api_v1_projects__project_id__memory_put",
         "parameters": [
           {
             "name": "project_id",
@@ -1020,35 +1018,6 @@
               "title": "Project Id"
             },
             "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
-          },
-          {
-            "name": "section",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "enum": [
-                "background",
-                "analysis_preferences",
-                "report_preferences",
-                "shared_findings"
-              ],
-              "type": "string",
-              "title": "Section"
-            },
-            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다."
-          },
-          {
-            "name": "key",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 48,
-              "pattern": "^[a-z][a-z0-9_]*$",
-              "title": "Key"
-            },
-            "description": "system_context binding이 참조할 서버 제공 문맥 키."
           },
           {
             "name": "Idempotency-Key",
@@ -1104,7 +1073,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemoryWriteResult"
+                  "$ref": "#/components/schemas/MemoryResource"
                 }
               }
             }
@@ -1131,7 +1100,7 @@
           "projects"
         ],
         "summary": "Delete Project Memory",
-        "operationId": "delete_project_memory_api_v1_projects__project_id__memory__section___key__delete",
+        "operationId": "delete_project_memory_api_v1_projects__project_id__memory_delete",
         "parameters": [
           {
             "name": "project_id",
@@ -1145,44 +1114,15 @@
             "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
           },
           {
-            "name": "section",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "enum": [
-                "background",
-                "analysis_preferences",
-                "report_preferences",
-                "shared_findings"
-              ],
-              "type": "string",
-              "title": "Section"
-            },
-            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다."
-          },
-          {
-            "name": "key",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 48,
-              "pattern": "^[a-z][a-z0-9_]*$",
-              "title": "Key"
-            },
-            "description": "system_context binding이 참조할 서버 제공 문맥 키."
-          },
-          {
             "name": "expected_version",
             "in": "query",
             "required": true,
             "schema": {
               "type": "integer",
-              "minimum": 1,
+              "minimum": 0,
               "title": "Expected Version"
             },
-            "description": "쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다."
+            "description": "쓰기 전에 조회한 프로젝트 메모리 문서 버전. 최초 저장 전만 0이며 오래된 쓰기·초기화는 409다."
           },
           {
             "name": "Idempotency-Key",
@@ -1228,7 +1168,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MemoryWriteResult"
+                  "$ref": "#/components/schemas/MemoryResource"
                 }
               }
             }
@@ -1521,75 +1461,19 @@
         ],
         "title": "ImageContent"
       },
-      "MemoryEntry": {
-        "properties": {
-          "section": {
-            "type": "string",
-            "enum": [
-              "background",
-              "analysis_preferences",
-              "report_preferences",
-              "shared_findings"
-            ],
-            "title": "Section",
-            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드."
-          },
-          "key": {
-            "type": "string",
-            "title": "Key",
-            "description": "system_context binding이 참조할 서버 제공 문맥 키. 필수 필드."
-          },
-          "content": {
-            "type": "string",
-            "title": "Content",
-            "description": "명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드."
-          },
-          "version": {
-            "type": "integer",
-            "title": "Version",
-            "description": "항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드."
-          },
-          "is_deleted": {
-            "type": "boolean",
-            "title": "Is Deleted",
-            "description": "삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드."
-          },
-          "source": {
-            "$ref": "#/components/schemas/MemorySource",
-            "description": "서버가 기록한 최신 항목의 출처. 사용자 직접 편집 또는 source Run/Session의 요청 원문이다. 필수 필드."
-          },
-          "updated_at": {
-            "type": "string",
-            "title": "Updated At",
-            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
-          }
-        },
-        "type": "object",
-        "required": [
-          "section",
-          "key",
-          "content",
-          "version",
-          "is_deleted",
-          "source",
-          "updated_at"
-        ],
-        "title": "MemoryEntry"
-      },
       "MemoryPut": {
         "properties": {
           "content": {
             "type": "string",
-            "maxLength": 16000,
-            "minLength": 1,
+            "maxLength": 1000000,
             "title": "Content",
-            "description": "명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다. 필수 필드."
+            "description": "프로젝트 공유 Markdown 문서 전체. 빈 문자열이면 초기화된 상태이며 콘텐츠 블록 배열이 아니다. 필수 필드."
           },
           "expected_version": {
             "type": "integer",
             "minimum": 0.0,
             "title": "Expected Version",
-            "description": "쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다. 필수 필드."
+            "description": "조회한 문서 버전. 첫 저장 전만 0이며 초기화 후에는 조회한 증가 버전을 그대로 보낸다. 필수 필드."
           }
         },
         "additionalProperties": false,
@@ -1604,170 +1488,48 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "const": 1,
+            "const": 2,
             "title": "Schema Version",
-            "description": "계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다. 필수 필드."
-          },
-          "user_id": {
-            "type": "string",
-            "title": "User Id",
-            "description": "프로젝트 소유자의 내부 UUID. 로그인 인증이나 공개 사용자 ID를 대신하지 않는다. 필수 필드."
+            "description": "프로젝트 메모리 단일 문서 형식 버전 2. 문서 변경 횟수인 version과 별개다. 필수 필드."
           },
           "project_id": {
             "type": "string",
             "title": "Project Id",
-            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다. 필수 필드."
+            "description": "이 메모리를 소유한 프로젝트 ID. 프로젝트당 문서는 하나이며 별도 메모리 ID가 없다. 필수 필드."
           },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/MemoryEntry"
-            },
-            "type": "array",
-            "title": "Entries",
-            "description": "프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드."
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "프로젝트 공유 Markdown 문서 전체. 빈 문자열이면 초기화된 상태이며 콘텐츠 블록 배열이 아니다. 필수 필드."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Version",
+            "description": "문서 변경·초기화 때 증가하는 버전. 개별 항목 버전이나 Run ID가 아니다. 필수 필드."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At",
+            "description": "이 자원의 마지막 갱신 시각. ISO 8601 문자열로 표현한다. 필수 필드."
           }
         },
         "type": "object",
         "required": [
           "schema_version",
-          "user_id",
           "project_id",
-          "entries"
+          "content",
+          "version",
+          "updated_at"
         ],
         "title": "MemoryResource"
-      },
-      "MemorySource": {
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "user_edit",
-              "user_request"
-            ],
-            "title": "Kind",
-            "description": "user_edit는 관리 API 명시적 편집, user_request는 현재 사용자 요청에서 추출한 메모리다. 필수 필드."
-          },
-          "run_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Id",
-            "description": "자동 추출 원문이 전달된 공개 Run ID. 명시적 관리 API 편집이면 없을 수 있다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
-          },
-          "quote": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Quote",
-            "description": "자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
-          },
-          "intent": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "project_context",
-                  "preference_change",
-                  "remember"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Intent",
-            "description": "자동 메모리 갱신 사유. project_context=지속적인 배경, preference_change=선호 변경, remember=명시적 기억 요청. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
-          },
-          "session_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session Id",
-            "description": "자동 추출 원문의 세션 ID. 감사용 출처이며 공유 범위는 프로젝트다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
-          }
-        },
-        "type": "object",
-        "required": [
-          "kind"
-        ],
-        "title": "MemorySource"
-      },
-      "MemoryWriteResult": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "const": "saved",
-            "title": "Status",
-            "description": "saved는 이번 메모리 쓰기가 커밋되었거나 동일 요청이 이미 커밋되었음을 뜻한다. 필수 필드."
-          },
-          "entries": {
-            "items": {
-              "$ref": "#/components/schemas/MemoryWrittenEntry"
-            },
-            "type": "array",
-            "title": "Entries",
-            "description": "프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록. 필수 필드."
-          }
-        },
-        "type": "object",
-        "required": [
-          "status",
-          "entries"
-        ],
-        "title": "MemoryWriteResult"
-      },
-      "MemoryWrittenEntry": {
-        "properties": {
-          "section": {
-            "type": "string",
-            "enum": [
-              "background",
-              "analysis_preferences",
-              "report_preferences",
-              "shared_findings"
-            ],
-            "title": "Section",
-            "description": "프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다. 필수 필드."
-          },
-          "key": {
-            "type": "string",
-            "title": "Key",
-            "description": "system_context binding이 참조할 서버 제공 문맥 키. 필수 필드."
-          },
-          "version": {
-            "type": "integer",
-            "title": "Version",
-            "description": "항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다. 필수 필드."
-          },
-          "is_deleted": {
-            "type": "boolean",
-            "title": "Is Deleted",
-            "description": "삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다. 필수 필드."
-          }
-        },
-        "type": "object",
-        "required": [
-          "section",
-          "key",
-          "version",
-          "is_deleted"
-        ],
-        "title": "MemoryWrittenEntry"
       },
       "PageInfo": {
         "properties": {

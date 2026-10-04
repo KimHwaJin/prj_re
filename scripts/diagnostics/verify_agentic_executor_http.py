@@ -87,7 +87,7 @@ if args.memory_checks:
                 if message.id=='dtest-project-memory':
                     data=json.loads(message.content)
                     memory_deliveries.append({'role':data['selection']['role'],
-                        'project_id':data['memory']['project_id'],'entries':data['memory']['entries'],
+                        'project_id':data['memory']['project_id'],'content':data['memory']['content'],'version':data['memory']['version'],
                         'serialized_chars':len(message.content)})
             return await handler(actual)
         return await original_memory_wrap(self,request,measured)
@@ -143,8 +143,8 @@ async def main():
             summary['authentication']={'anonymous_status':401,'missing_csrf_status':403,'first_login_auto_registered':True,'role':'user'}
             memory_path='/api/v1/projects/'+project+'/memory'
             if args.memory_checks:
-                response=await client.put(memory_path+'/report_preferences/audience',headers={**headers,'Idempotency-Key':str(uuid4())},
-                    json={'content':'이 프로젝트의 보고서는 비전문가를 위해 쉬운 표현으로 작성한다.','expected_version':0})
+                response=await client.put(memory_path,headers={**headers,'Idempotency-Key':str(uuid4())},
+                    json={'content':'## 보고서 선호\n이 프로젝트의 보고서는 비전문가를 위해 쉬운 표현으로 작성한다.\n','expected_version':0})
                 assert response.status_code==200,response.text
                 summary['manual_memory_saved']=True
             r=await client.post('/api/v1/projects/'+user['default_project_id']+'/sessions',headers=headers,json={'session_name':'Executor 연계 검증','settings':{'kernel_profile':'default'}})
@@ -308,9 +308,16 @@ async def main():
                             await asyncio.sleep(.2)
                     assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
                     snapshot=(await client.get(memory_path,headers=headers)).json()
-                    automatic=[e for e in snapshot['entries'] if e.get('source',{}).get('run_id')==memory_run and not e['is_deleted']]
-                    assert automatic,'Explicit durable preference was not saved'
-                    assert all(e['source']['quote'] in question for e in automatic)
+                    from api_service.services.project_memory_policy import ProjectMemoryPolicy
+                    from api_service.core.database import short_session
+                    from api_service.models.common.project_model import ProjectModel
+                    from sqlalchemy import select
+                    async with short_session() as db:
+                        owner_id=await db.scalar(select(ProjectModel.user_id).where(ProjectModel.project_id==UUID(project)))
+                    stored=await ProjectMemoryPolicy().read(owner_id,project)
+                    automatic=stored.get('source',{})
+                    assert snapshot['version']>1 and automatic.get('run_id')==memory_run,'Explicit durable preference was not saved'
+                    assert automatic['changes'] and all(c['quote'] in question for c in automatic['changes'])
                     second=await client.post('/api/v1/projects/'+project+'/sessions',headers=headers,json={'session_name':'Memory reference session','settings':{'kernel_profile':'default'}})
                     assert second.status_code==201,second.text
                     second_path='/api/v1/sessions/'+second.json()['id']+'/runs';before=len(memory_deliveries)
@@ -326,15 +333,18 @@ async def main():
                     assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
                     delivered=memory_deliveries[before:]
                     assert delivered and all(d['project_id']==project for d in delivered)
-                    actual_keys={(e['section'],e['key'],e['version']) for d in delivered for e in d['entries']}
-                    assert all((e['section'],e['key'],e['version']) in actual_keys for e in automatic)
+                    assert all(d['version']==snapshot['version'] for d in delivered)
+                    from service_contracts.project_memory import section_body
+                    for change in automatic['changes']:
+                        expected_body=section_body(snapshot['content'],change['section'])
+                        assert any(expected_body in d['content'] for d in delivered)
                     async with runtime.open_graph() as graph:
                         state=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(second.json()['id'])}})).values
                     assert not state['execution_id'] and state['executor_operation_number']==0
-                    summary['project_memory']={'manual_entries':1,'automatic_entries':len(automatic),
+                    summary['project_memory']={'manual_document':True,'automatic_changes':len(automatic['changes']),
                         'automatic_source_run_verified':True,'same_project_new_session_referenced':True,
                         'reference_message_sizes':[d['serialized_chars'] for d in delivered],
-                        'extra_executor_submission':False,'topics':[{'section':e['section'],'key':e['key'],'version':e['version']} for e in automatic]}
+                        'extra_executor_submission':False,'document_version':snapshot['version'],'changed_sections':[c['section'] for c in automatic['changes']]}
 
             r=await client.post(path,headers={**headers,'Idempotency-Key':str(uuid4())},json={'input':{'content':[{'type':'text','text':'안녕하세요'}]}})
             summary['same_session_after_completion_status']=r.status_code

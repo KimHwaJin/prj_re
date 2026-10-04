@@ -59,9 +59,9 @@ Conversation의 메타데이터 탐색과 Executor 분석 함수 실행은 구�
 | system_prompt와 버전 | 신규 사용자 턴에서 읽은 snapshot을 HITL/Executor 재개에도 사용 |
 | 모델 pin | Run의 name/revision을 resolve, 진행 중 default 변경으로 교체하지 않음 |
 | 세션 분석 근거 | 같은 세션 완료 분석의 원본 관찰·source, 현재 요청으로 새로 bind |
-| 프로젝트 메모리 | 공식 runtime.store + 요청별 소유권/버전 정책, 역할별 입력 예산 |
+| 프로젝트 메모리 | 공식 runtime.store의 단일 Markdown 문서 + 요청별 소유권/문서 버전 정책, 역할별 완전한 섹션 입력 예산 |
 
-PlanningRuntime은 허용 모델별 역할을 캐시한다. 사용자별 mutable context를 공유 인스턴스에 보관하지 않는다. create_agent 생성에도 같은 공식 Store를 전달하며 bind_context가 매 요청마다 정책과 한도를 주입한다. 원시 Store aput으로 API·Worker 권한/버전 검사를 우회하지 않는다.
+PlanningRuntime은 허용 모델별 역할을 캐시한다. 사용자별 mutable context를 공유 인스턴스에 보관하지 않는다. create_agent 생성에도 같은 공식 Store를 전달하며 bind_context가 매 요청마다 정책과 한도를 주입한다. 원시 Store aput으로 API·Worker 권한/버전 검사를 우회하지 않는다. 메모리 자동 변경은 공개 항목 key가 아닌 고정 section의 old_text/content/expected_version/quote/intent 패치다. 문서 전체 버전과 이전 본문을 모두 검사하며 다른 부분은 보존한다. 충돌은 이번 갱신의 not_saved로 알리고 추가 모델 호출이나 자동 덮어쓰기를 하지 않는다.
 
 ProjectPromptMiddleware는 기본 역할 prompt 뒤에 프로젝트 snapshot을 넣고 재시도에서 중복하지 않는다. 서비스 신규 턴/재개 경계가 DB 접근을 담당하며 Agent는 DB를 직접 조회하지 않는다. snapshot 없는 호환 상태 보완과 공개 API 모델 검증은 기존 서비스 어댑터 책임이다.
 

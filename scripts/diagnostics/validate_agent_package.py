@@ -70,7 +70,9 @@ production_settings = load_agent_settings({'MODEL_PROVIDER': 'openai_compatible'
     'MODEL_NAME': 'package-smoke', 'MODEL_API_KEY': 'test-key',
     'API_BASE_URL': 'http://llm.invalid/v1'})
 from agent_service.factory import RoleAgent
-retired=('graph.py','dependencies.py','state.py','context.py','hitl_protocol.py','message_utils.py','artifacts.py')
+# 064 keeps the current shared state schema; it is not the retired graph state.
+assert 'agent_service/agents/analysis/state.py' in names
+retired=('graph.py','dependencies.py','context.py','hitl_protocol.py','message_utils.py','artifacts.py')
 assert all('agent_service/agents/analysis/'+name not in names for name in retired)
 assert not any(n.startswith(('agent_service/agents/analysis/nodes/','agent_service/agents/analysis/routers/',
     'agent_service/agents/analysis/components/','agent_service/agents/analysis/testing/','agent_service/agents/analysis/schemas/agents/')) for n in names)
@@ -96,7 +98,8 @@ app = create_app(settings)
 paths = app.openapi()['paths']
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
 assert '/api/v1/projects/{project_id}/memory' in paths
-assert '/api/v1/projects/{project_id}/memory/{section}/{key}' in paths
+assert '/api/v1/projects/{project_id}/memory/{section}/{key}' not in paths
+assert {'get', 'put', 'delete'} <= set(paths['/api/v1/projects/{project_id}/memory'])
 assert '/api/v1/auth/login/sso' in paths and '/api/v1/auth/logout' in paths
 assert any(p.endswith('/runs') for p in paths)
 assert '/api/v1/tasks/{task_id}' in paths

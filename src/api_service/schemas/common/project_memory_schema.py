@@ -1,47 +1,16 @@
-"""Explicitly shared knowledge can be inspected, corrected and removed."""
+"""One project-owned Markdown resource; no topic IDs or keys in public API."""
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from service_contracts.project_memory import MemorySection, MAX_TOPIC_CHARS
+from pydantic import BaseModel, ConfigDict, Field
+from service_contracts.project_memory import MAX_STORAGE_CHARS
 
 class MemoryPut(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
-    content: str = Field(min_length=1, max_length=MAX_TOPIC_CHARS, description='Explicit project-wide text. Configured topic_max_chars also applies; default 1000, absolute input guard 16000.')
-    expected_version: int = Field(ge=0, description='0 for a new topic; echo the current version to edit or restore a deleted topic.')
-
-    @field_validator('content')
-    @classmethod
-    def nonblank(cls,value):
-        if not value.strip(): raise ValueError('Memory content cannot be blank')
-        return value
-
-class MemorySource(BaseModel):
-    kind: Literal['user_edit','user_request'] = Field(description='Explicit management API update, or a durable topic supported by the current user quote.')
-    run_id: str | None = Field(default=None, description='Source public Run ID for Agent extraction. No new Run is created for manual memory edits.')
-    quote: str | None = Field(default=None, description='Exact current user quote supporting an automatic topic update; absent for manual edits.')
-    intent: Literal['project_context','preference_change','remember'] | None = Field(default=None, description='Durable project_context, preference_change or explicit remember intent; absent for manual edits.')
-    session_id: str | None = Field(default=None, description='Source session for audit only; entries are shared within this project.')
-
-class MemoryEntry(BaseModel):
-    section: MemorySection = Field(description='Background, analysis/report preferences, or explicitly shared findings.')
-    key: str = Field(description='Stable topic key within this section and project.')
-    content: str = Field(description='Shared text. Empty on a deleted version marker; it never grants execution approval.')
-    version: int = Field(description='Monotonically increasing topic version, including delete and restore operations.')
-    is_deleted: bool = Field(description='Deleted entries are excluded from usable knowledge; their versions prevent stale recreation.')
-    source: MemorySource = Field(description='The service-assigned provenance of the latest update.')
-    updated_at: str = Field(description='UTC ISO timestamp of the latest update.')
+    content: str = Field(max_length=MAX_STORAGE_CHARS, description='Complete project Markdown document. Empty clears it. Configured max_chars applies to content, not metadata.')
+    expected_version: int = Field(ge=0, description='Echo the GET version. 0 only before the first write; reset never returns it to 0.')
 
 class MemoryResource(BaseModel):
-    schema_version: Literal[1] = Field(description='Project memory document format version.')
-    user_id: str = Field(description='Internal owner UUID. Caller identity still comes from the authenticated SSO session.')
-    project_id: str = Field(description='The one project whose sessions can use this document.')
-    entries: list[MemoryEntry] = Field(description='Bounded topics and deleted version markers, sorted by section/key.')
-
-class MemoryWrittenEntry(BaseModel):
-    section: MemorySection
-    key: str
-    version: int = Field(description='Committed topic version after this write, or the original version on idempotent replay.')
-    is_deleted: bool = Field(description='True when this write deleted the topic.')
-
-class MemoryWriteResult(BaseModel):
-    status: Literal['saved'] = Field(description='This write committed, or an identical idempotent request was already committed.')
-    entries: list[MemoryWrittenEntry] = Field(description='Written topics; no model-generated content is echoed as a save receipt.')
+    schema_version: Literal[2] = Field(description='Single Markdown document format.')
+    project_id: str = Field(description='Project owning this one memory resource; no separate memory ID.')
+    content: str = Field(description='Reference Markdown shared across project sessions. Empty before first write or after reset; not execution approval.')
+    version: int = Field(ge=0, description='Document version, increasing on every committed change/reset. Unchanged PUT does not increment it.')
+    updated_at: str | None = Field(description='UTC ISO timestamp of the latest change; null before the first write.')

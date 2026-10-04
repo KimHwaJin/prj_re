@@ -12,10 +12,10 @@ ROOT = Path(__file__).resolve().parents[2]
 FIELDS = {
     'quote': '자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다.',
     'intent': '자동 메모리 갱신 사유. project_context=지속적인 배경, preference_change=선호 변경, remember=명시적 기억 요청.',
-    'section': '프로젝트 메모리의 분류. background/analysis_preferences/report_preferences/shared_findings를 구분한다.',
-    'key': '프로젝트 메모리 section 내에서 같은 주제를 식별하는 안정적인 키. 최대 48자다.',
+    'section': 'Agent 내부 메모리 부분 갱신의 고정 분류. 공개 관리 API에는 section path가 없다.',
+    'key': '객체의 내부 참조 키. 프로젝트 메모리의 공개 항목 ID를 뜻하지 않는다.',
     'entries': '프로젝트 공유 메모리 항목 또는 이번 쓰기가 반영한 항목 버전 목록.',
-    'expected_version': '쓰기 전에 조회한 항목 버전. 새 key는 0이며 오래된 수정/삭제/복원은 409다.',
+    'expected_version': '쓰기 전에 조회한 프로젝트 메모리 문서 버전. 최초 저장 전만 0이며 오래된 쓰기·초기화는 409다.',
     'is_deleted': '삭제된 메모리의 버전 표시. 사용 가능한 지식이 아니며 자동으로 복원하지 않는다.',
 
     'schema_version': '계약 형식 버전. SSE는 1, 새 Workflow는 2.0-draft, legacy 예제는 1.3을 사용한다. 정의 수정 횟수와 구분한다.',
@@ -221,8 +221,8 @@ OPENAPI = {
     'openapi': 'OpenAPI 명세 버전.', 'info': 'API 명세의 제목·버전 등 기본 정보.',
     'version': 'OpenAPI 문서에 선언된 서비스 버전.', 'paths': 'URL 경로별 HTTP operation 정의.',
     'get': 'GET operation. 조회·SSE 구독 또는 SSO 로그인 이동에 사용한다.',
-    'put': 'PUT operation. 프로젝트 메모리 항목을 명시적으로 생성·수정·복원한다.',
-    'delete': 'DELETE operation. 프로젝트 메모리 항목에 삭제 버전을 기록한다.',
+    'put': 'PUT operation. 프로젝트 메모리 Markdown 문서 전체를 명시적으로 수정한다.',
+    'delete': 'DELETE operation. 프로젝트 메모리 문서를 초기화하고 문서 버전을 증가시킨다.',
     'post': 'POST operation. 새 요청·resume·취소·로그아웃 등에 사용한다.',
     'summary': 'Swagger 등에 표시할 operation 요약.', 'operationId': 'OpenAPI operation 식별자.',
     'parameters': 'path/query/header의 요청 파라미터 목록. JSON body 필드와 별개다.',
@@ -237,12 +237,8 @@ OPENAPI = {
     'application/json': '일반 JSON body/응답 MIME type. 현재 사본의 SSE 표기는 실제 text/event-stream과 다를 수 있다.',
 }
 MODELS = {
-    'MemoryPut': '프로젝트 메모리 항목 본문과 현재 버전의 명시적 쓰기 요청.',
-    'MemoryResource': '프로젝트 소유자와 항목·출처·삭제 버전의 조회 응답.',
-    'MemoryEntry': '하나의 프로젝트 공유 메모리 항목과 최신 버전.',
-    'MemorySource': '서비스가 부여한 메모리 출처. 자동 갱신은 Run/Session·원문 quote·지속적인 갱신 intent를 보존한다.',
-    'MemoryWriteResult': '커밋되거나 멱등 재생된 메모리 쓰기 결과.',
-    'MemoryWrittenEntry': '이번 쓰기로 반영한 항목의 버전과 삭제 여부.',
+    'MemoryPut': '프로젝트 메모리 Markdown 문서 전체와 현재 버전의 명시적 수정 요청.',
+    'MemoryResource': '프로젝트당 하나의 메모리 문서와 버전·최종 변경 시각. 별도 memory_id가 없다.',
 
     'RunRequest': '새 입력 또는 현재 Run의 사용자 재개 요청.', 'RunCancel': 'Run 취소 API body.',
     'PublicRunResource': '공개 Run의 상태·대기 화면·최종 결과.', 'AgentRunLogResource': '저장된 Agent 실행 로그.',
@@ -283,14 +279,11 @@ def field_description(key, path=(), parent=None):
     """Explain fields using the containing object, not only their spelling."""
     parent = parent or {}
     memory_context = any(k.startswith('Memory') for k in path)
-    if memory_context and key == 'user_id': return '프로젝트 소유자의 내부 UUID. 로그인 인증이나 공개 사용자 ID를 대신하지 않는다.'
-    if memory_context and key == 'content': return '명시적으로 공유하거나 현재 요청에서 원문 추출한 항목 본문. 콘텐츠 블록 배열이 아니다.'
-    if memory_context and key == 'version': return '항목 수정·삭제·복원마다 증가하는 메모리 버전. OpenAPI 문서 버전이나 Run ID가 아니다.'
-    if memory_context and key == 'source': return '서버가 기록한 최신 항목의 출처. 사용자 직접 편집 또는 source Run/Session의 요청 원문이다.'
-    if memory_context and key == 'kind': return 'user_edit는 관리 API 명시적 편집, user_request는 현재 사용자 요청에서 추출한 메모리다.'
-    if memory_context and key == 'run_id': return '자동 추출 원문이 전달된 공개 Run ID. 명시적 관리 API 편집이면 없을 수 있다.'
-    if memory_context and key == 'session_id': return '자동 추출 원문의 세션 ID. 감사용 출처이며 공유 범위는 프로젝트다.'
-    if memory_context and key == 'status': return 'saved는 이번 메모리 쓰기가 커밋되었거나 동일 요청이 이미 커밋되었음을 뜻한다.'
+    if memory_context and key == 'schema_version': return '프로젝트 메모리 단일 문서 형식 버전 2. 문서 변경 횟수인 version과 별개다.'
+    if memory_context and key == 'project_id': return '이 메모리를 소유한 프로젝트 ID. 프로젝트당 문서는 하나이며 별도 메모리 ID가 없다.'
+    if memory_context and key == 'content': return '프로젝트 공유 Markdown 문서 전체. 빈 문자열이면 초기화된 상태이며 콘텐츠 블록 배열이 아니다.'
+    if memory_context and key == 'version': return '문서 변경·초기화 때 증가하는 버전. 개별 항목 버전이나 Run ID가 아니다.'
+    if memory_context and key == 'expected_version': return '조회한 문서 버전. 첫 저장 전만 0이며 초기화 후에는 조회한 증가 버전을 그대로 보낸다.'
 
     schema_context = any(k in path for k in ('value_schema', 'output_schema', 'schema'))
     business_property = key in parent.get('properties', {})

@@ -1,6 +1,6 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +12,9 @@ from api_service.models import ProjectModel
 from api_service.schemas.common.api_schema import Page, ProjectResource
 from api_service.schemas.common.project_schema import ProjectCreate, ProjectUpdate
 from api_service.services.project_service import ProjectService
+from service_contracts.project_memory import MemoryConflict, MemoryLimit
+from api_service.schemas.common.project_memory_schema import MemoryPut, MemoryResource
+from api_service.services.project_memory_policy import ProjectMemoryPolicy
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -78,40 +81,38 @@ async def delete_project(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+# One memory resource per project; same SSO/CSRF and owner boundary as CRUD.
 
-# Explicit project-wide memory sharing uses the same SSO/CSRF and owner boundary.
-from typing import Annotated
-from fastapi import Header, HTTPException, Query, Path as PathParam
-from uuid import uuid4
-from service_contracts.project_memory import MemoryChange, MemorySection, MemoryConflict, MemoryLimit
-from api_service.schemas.common.project_memory_schema import MemoryPut, MemoryResource, MemoryWriteResult
-from api_service.services.project_memory_policy import ProjectMemoryPolicy
 
-@router.get('/{project_id}/memory',response_model=MemoryResource,response_model_exclude_none=True)
-async def read_project_memory(project_id:UUID,user_id:UUID=Depends(get_current_user_id),db:AsyncSession=Depends(get_db)):
-    return await ProjectMemoryPolicy(db=db).read(user_id,project_id)
+@router.get('/{project_id}/memory', response_model=MemoryResource)
+async def read_project_memory(project_id: UUID, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    return await ProjectMemoryPolicy(db=db).read(user_id, project_id)
 
-async def write_memory(user_id,project_id,section,key,payload,idempotency_key,*,db,delete=False):
+
+async def write_memory(user_id, project_id, expected_version, idempotency_key, *, db, content=None):
+    if idempotency_key is not None and not idempotency_key.strip():
+        raise HTTPException(422, 'Invalid Idempotency-Key')
+    source_id = 'user:' + str(user_id) + ':' + (idempotency_key or str(uuid4()))
+    policy = ProjectMemoryPolicy(db=db)
     try:
-        change=MemoryChange(section=section,key=key,content=payload.content,expected_version=payload.expected_version)
-    except ValueError as exc:
-        raise HTTPException(422,'Invalid memory topic') from exc
-    if idempotency_key is not None and (not idempotency_key.strip() or not 1 <= len(idempotency_key) <= 100):
-        raise HTTPException(422,'Invalid Idempotency-Key')
-    try:
-        return await ProjectMemoryPolicy(db=db).apply(user_id,project_id,[change.model_dump()],
-            source_id='user:'+str(user_id)+':'+(idempotency_key or str(uuid4())),source={'kind':'user_edit'},delete=delete)
-    except MemoryConflict as exc: raise HTTPException(409,str(exc)) from exc
-    except MemoryLimit as exc: raise HTTPException(422,str(exc)) from exc
+        if content is None:
+            return await policy.reset(user_id, project_id, expected_version, source_id=source_id)
+        return await policy.replace(user_id, project_id, content, expected_version, source_id=source_id)
+    except MemoryConflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except MemoryLimit as exc:
+        raise HTTPException(422, str(exc)) from exc
 
-@router.put('/{project_id}/memory/{section}/{key}',response_model=MemoryWriteResult)
-async def put_project_memory(project_id:UUID,section:MemorySection,key:Annotated[str,PathParam(min_length=1,max_length=48,pattern=r"^[a-z][a-z0-9_]*$")],payload:MemoryPut,
-                             idempotency_key:str|None=Header(default=None,min_length=1,max_length=100,alias='Idempotency-Key'),
-                             user_id:UUID=Depends(get_current_user_id),db:AsyncSession=Depends(get_db)):
-    return await write_memory(user_id,project_id,section,key,payload,idempotency_key,db=db)
 
-@router.delete('/{project_id}/memory/{section}/{key}',response_model=MemoryWriteResult)
-async def delete_project_memory(project_id:UUID,section:MemorySection,key:Annotated[str,PathParam(min_length=1,max_length=48,pattern=r"^[a-z][a-z0-9_]*$")],expected_version:int=Query(ge=1),
-                                idempotency_key:str|None=Header(default=None,min_length=1,max_length=100,alias='Idempotency-Key'),
-                                user_id:UUID=Depends(get_current_user_id),db:AsyncSession=Depends(get_db)):
-    return await write_memory(user_id,project_id,section,key,MemoryPut(content='deleted',expected_version=expected_version),idempotency_key,db=db,delete=True)
+@router.put('/{project_id}/memory', response_model=MemoryResource)
+async def put_project_memory(project_id: UUID, payload: MemoryPut,
+                             idempotency_key: str | None = Header(default=None, min_length=1, max_length=100, alias='Idempotency-Key'),
+                             user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    return await write_memory(user_id, project_id, payload.expected_version, idempotency_key, db=db, content=payload.content)
+
+
+@router.delete('/{project_id}/memory', response_model=MemoryResource)
+async def delete_project_memory(project_id: UUID, expected_version: int = Query(ge=0),
+                                idempotency_key: str | None = Header(default=None, min_length=1, max_length=100, alias='Idempotency-Key'),
+                                user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
+    return await write_memory(user_id, project_id, expected_version, idempotency_key, db=db)

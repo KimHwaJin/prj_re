@@ -165,13 +165,12 @@ class AgentSettings:
     # 0 disables it; full reports/results remain in Run/Executor records, independent of this excerpt.
     agent_session_analysis_max_chars: int = 16000
     # off=no read/write; manual=read plus explicit memory API; auto_context=extract current user background/preferences.
-    # Session data/results are never auto-shared, and deletion cannot be automatically reversed.
+    # Session data/results are never auto-shared; stale writes cannot reverse a reset.
     agent_project_memory_mode: str = "manual"
-    # Storage guards: all topics (including tombstones), serialized JSON chars,
-    # per-topic content chars and atomic batch size. No automatic eviction.
-    agent_project_memory_max_topics: int = 64
+    # Stored Markdown chars; metadata is separate. No automatic eviction.
     agent_project_memory_max_chars: int = 16000
-    agent_project_memory_topic_max_chars: int = 1000
+    # Agent section replacement/quote chars; manual PUT uses max_chars.
+    agent_project_memory_patch_max_chars: int = 4000
     agent_project_memory_max_updates: int = 4
     # Complete memory reference message budget, separate from durable storage.
     # UTF-8 bytes conservatively estimate tokens; 0 in either disables injection.

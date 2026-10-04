@@ -316,4 +316,4 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 ## 프로젝트 메모리 갱신 결과 051
 
-Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리는 `/projects/{project_id}/memory`의 별도 GET과 section/key PUT·DELETE로 제공한다. `auto_context`에서 실제 메모리 갱신을 시도한 경우 활동 이벤트의 `kind=project_memory`와 답변 최종 결과의 `final_response.project_memory`에 saved/not_saved 결과를 전달한다. 실패·동시 갱신 충돌을 저장 성공으로 표시하지 않는다. 내부 model의 memory_updates는 프론트가 전달하는 필드가 아니다. [각 필드와 설정](project-memory.md)을 참고한다.
+Run 요청·재개·Run 식별자는 그대로다. 프로젝트 메모리 관리는 `/projects/{project_id}/memory`의 동일 경로의 GET·PUT·DELETE로 제공한다. 프로젝트당 하나의 Markdown content와 문서 version을 사용하며, PUT은 전체 문서 수정, DELETE는 버전을 증가시키는 초기화다. `auto_context`에서 실제 메모리 갱신을 시도한 경우 활동 이벤트의 `kind=project_memory`와 답변 최종 결과의 `final_response.project_memory`에 saved/not_saved 결과를 전달한다. 실패·동시 갱신 충돌을 저장 성공으로 표시하지 않는다. 내부 model의 memory_updates는 프론트가 전달하는 필드가 아니다. [각 필드와 설정](project-memory.md)을 참고한다.

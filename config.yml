@@ -11,10 +11,9 @@ service:
     # 프로젝트 메모리: 아래는 기본값 예시. 주입하려면 필요한 항목의 주석을 해제.
     # YAML에 명시한 값이 환경변수보다 우선하며, 변경 후 프로세스 재시작 필요.
     # agent_project_memory_mode: manual  # off/manual/auto_context; 기본 자동 쓰기 없음.
-    # agent_project_memory_max_topics: 64  # 삭제 표시 포함, 자동 삭제 없음.
-    # agent_project_memory_max_chars: 16000  # 출처 포함 저장 JSON 문자 수.
-    # agent_project_memory_topic_max_chars: 1000  # 항목 본문/자동 원문 인용 문자 수.
-    # agent_project_memory_max_updates: 4  # 원자 갱신의 최대 서로 다른 주제 수.
+    # agent_project_memory_max_chars: 16000  # 저장 Markdown 본문 문자 수; 출처 제외.
+    # agent_project_memory_patch_max_chars: 4000  # Agent 섹션 교체 본문/원문 인용 문자 수.
+    # agent_project_memory_max_updates: 4  # 한 번에 갱신할 최대 섹션 수(1~4).
     # agent_project_memory_prompt_max_chars: 6000  # 모델에 넣는 참조 메시지 전체 문자 수.
     # agent_project_memory_prompt_max_tokens: 4096  # UTF-8 byte 기반 보수적 토큰 추정; 정확한 모델 토큰 수 아님.
     # 두 prompt 한도 중 하나가 0이면 Agent 읽기/자동 갱신 중단; 관리 API 유지.

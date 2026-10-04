@@ -43,4 +43,4 @@ events 파일은 SSE data의 JSON이다. 실제 전송 시 저장 이벤트에 i
 
 Schema를 수정하면 current code에서 다시 생성하고 예제를 재검증해야 한다. OpenAPI만으로 SSE 및 유연한 최종 결과 payload를 완전히 복원할 수 없으므로 주 문서와 함께 사용한다.
 
-051에서 프로젝트 공유 메모리 조회·수정·삭제의 두 경로를 OpenAPI snapshot에 추가했다. 기존 Run 요청·응답·SSE envelope 계약은 유지한다. [메모리 필드·설정·예제](../../project-memory.md)를 참고한다.
+075에서 프로젝트 공유 메모리 조회·전체 수정·초기화를 `/projects/{project_id}/memory` 하나의 경로로 통일했다. section/key 경로와 항목별 응답 모델은 제거했으며 문서 content/version을 사용한다. 기존 Run 요청·응답·SSE envelope 계약은 유지한다. [메모리 필드·설정·예제](../../project-memory.md)를 참고한다.
