@@ -152,3 +152,8 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 [085](085-api-contract-flow-verification.md)에서 실제 서버 연계14항목과 PG 회귀81개를 확인했다. 다음 우선 검토는 사용자에게 필요한 Tool 선택 인자/기본값을 계획·typed form에 얼마나 노출할지다. 현재 arguments와 편집 정책에 선언한 인자만 수정하며 모든 Python 인자를 자동 노출하지 않는다. statistics.columns 수정422를 실제 확인했고 운영 정책을 임의로 확대하지 않았다. 입력/출력 참조와 사용자가 수정할 파라미터를 구분하여 생성 규칙·Workflow 작성 가이드·UI를 맞춘다.
 
 승인 계획의 사용자 제외와 최종 skipped_steps의 실행 중 조건/의존성 skip은 별개다. UI는 interaction.resolved/승인 계획을 함께 사용한다. 실제 프론트 적용과 사내SDK 왕복·실제 모델 의도 분류/보고서 품질은 여전히 미검증이다. Markdown Run 결과는 제공하지만 Artifact POST·파일/노트북 셀 저장은 미확정 후속이다. 데이터 registry 외부 구현과 모델 호출 최적화·장애 대응의 후순위 결정을 유지한다. 이번 기능 검증 시간은 처리량/성능 개선 수치가 아니다.
+
+
+## 기능 테스트 화면 086
+
+[086](086-functional-test-console.md)에서 기존 demo와 별개인 [독립 HTML](../../tools/test-console/index.html)을 만들었다. 현재 API·SSE/HITL·관리 기능은 이 화면으로 수동 확인할 수 있다. Node/실제 HTTP 연계는 검증했지만 Mac 잠금으로 실제 브라우저 레이아웃·클릭·다운로드·SSO 왕복은 미검증이다. UI를 직접 확인하고 실제 SDK/모델/플랫폼에서 연결을 검증해야 한다. 보고서 파일 등록·데이터 registry·파라미터 노출 정책 등 기존 후속을 화면 구현으로 완료 처리하지 않는다. 운영 프론트 제품화·전체 접근성/브라우저/성능 검증은 별도다.

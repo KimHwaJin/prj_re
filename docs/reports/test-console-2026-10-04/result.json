@@ -1,0 +1,39 @@
+{
+  "source_base_commit": "635a4f8",
+  "core_preview": {
+    "passed": 7
+  },
+  "controller_http": {
+    "passed": true,
+    "checks": [
+      "SSO fixture login uses real cookie, CSRF and default project",
+      "project CRUD prompt and LangGraph Store memory save",
+      "session create and real GET SSE plan arrival with input lock",
+      "typed plan parameter edit keeps Run ID and latest token",
+      "actual Executor analysis and finalize, report display and input unlock",
+      "same request retransmission preserves exact key and body",
+      "manual stream disconnect and durable cursor reconnect",
+      "POST SSE new Run and grounded follow-up answer",
+      "OpenAPI explorer and real role enforcement",
+      "memory conflict preserves local edits and shows latest server document",
+      "page return restores project session and Run IDs without persisting tokens"
+    ],
+    "mode": "Node controller / development DOM double / actual loopback API DB Worker Executor",
+    "browser_visual_verified": false
+  },
+  "administrator_http": {
+    "passed": true,
+    "checks": [
+      "fixture_admin_login",
+      "user_list",
+      "create_user_with_role",
+      "update_user",
+      "soft_delete_user_and_read_deleted",
+      "workflow_list"
+    ],
+    "boundary": "actual admin API HTTP; not visual browser checks"
+  },
+  "visual_browser_verified": false,
+  "production_source_changed": false,
+  "note": "Live controller uses a development DOM double. SDK verdict and model transport are fixtures; API DB Worker Redis Executor are actual."
+}

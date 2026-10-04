@@ -15,6 +15,8 @@ Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agen
 
 사용하지 않는 `/api/v1/jupyter-servers*`, `/api/v1/redis/ping` 관리 API는 제거했다. 실제 Jupyter 실행은 Executor를 통하며 SSO·Streams의 Redis 사용은 유지한다. [설정·기존 DB 보존 안내](docs/infrastructure-api-cleanup.md)를 따른다.
 
+새 기능 확인 화면은 [독립 HTML 테스트 콘솔](tools/test-console/README.md)이다. 파일을 직접 열어 샘플을 보거나 같은 origin 진단 도구로 현재 API·SSE·HITL·관리 기능을 테스트한다. 기존 demo를 재사용하지 않으며 실제 모델/사내 SSO 여부와 검증 경계는 해당 안내를 따른다.
+
 아래의 기존 Docker·Locust 안내는 이전 실행 환경 기록이다. 헤더로 사용자를 선택하는 과거 부하테스트·진단 클라이언트는 현재 SSO API와 그대로 호환되지 않으며 쿠키·CSRF 세션 입력으로 이관해야 한다. 현재 내부 데모와 Swagger는 쿠키·CSRF를 사용한다. 기존 실행 컨테이너는 변경하지 않았다.
 
 ## 로컬 Docker 개발 환경
