@@ -1,0 +1,24 @@
+{
+  "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+  "source_run_nullable": {
+    "is_nullable": "YES"
+  },
+  "task_event_sequence_indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX uq_task_events_task_sequence ON public.task_events USING btree (task_id, sequence)",
+      "indisvalid": true,
+      "indisunique": true,
+      "predicate": null,
+      "indnkeyatts": 2,
+      "indnatts": 2
+    },
+    {
+      "definition": "CREATE INDEX ix_task_events_task_sequence ON public.task_events USING btree (task_id, sequence)",
+      "indisvalid": true,
+      "indisunique": false,
+      "predicate": null,
+      "indnkeyatts": 2,
+      "indnatts": 2
+    }
+  ]
+}

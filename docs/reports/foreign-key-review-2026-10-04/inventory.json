@@ -1,0 +1,2766 @@
+{
+  "source_commit": "dbfc002f032d76f20c0fd6fd2d7a56e70f23e32f",
+  "versions": {
+    "crud": [
+      {
+        "version_num": "20261003_0027"
+      }
+    ],
+    "worker": [
+      {
+        "version_num": "ew_0002"
+      }
+    ]
+  },
+  "model_fk_count": 36,
+  "database_fk_count": 40,
+  "model_database_fk_differences": [],
+  "foreign_keys": [
+    {
+      "conname": "agent_commands_invocation_id_fkey",
+      "child": "agent_commands",
+      "parent": "agent_runs",
+      "columns": [
+        "invocation_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (invocation_id) REFERENCES agent_runs(run_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "agent_commands_session_id_fkey",
+      "child": "agent_commands",
+      "parent": "sessions",
+      "columns": [
+        "session_id"
+      ],
+      "parent_columns": [
+        "session_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": [
+        "agent_commands_session_order"
+      ]
+    },
+    {
+      "conname": "agent_run_logs_run_id_fkey",
+      "child": "agent_run_logs",
+      "parent": "agent_runs",
+      "columns": [
+        "run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (run_id) REFERENCES agent_runs(run_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_agent_run_logs_run_id",
+        "uq_agent_run_logs_event"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "agent_runs_agent_message_id_fkey",
+      "child": "agent_runs",
+      "parent": "messages",
+      "columns": [
+        "agent_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (agent_message_id) REFERENCES messages(message_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "agent_runs_interpreted_message_id_fkey",
+      "child": "agent_runs",
+      "parent": "messages",
+      "columns": [
+        "interpreted_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (interpreted_message_id) REFERENCES messages(message_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "agent_runs_session_id_fkey",
+      "child": "agent_runs",
+      "parent": "sessions",
+      "columns": [
+        "session_id"
+      ],
+      "parent_columns": [
+        "session_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_agent_runs_session_id",
+        "uq_agent_runs_session_idempotency"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "agent_runs_trigger_message_id_fkey",
+      "child": "agent_runs",
+      "parent": "messages",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (trigger_message_id) REFERENCES messages(message_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_agent_runs_trigger_message_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "fk_agent_runs_public_run",
+      "child": "agent_runs",
+      "parent": "agent_runs",
+      "columns": [
+        "public_run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": true,
+      "condeferred": true,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (public_run_id) REFERENCES agent_runs(run_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED",
+      "usable_unfiltered_leading_index": [
+        "ix_agent_runs_public_latest"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "fk_agent_runs_task",
+      "child": "agent_runs",
+      "parent": "tasks",
+      "columns": [
+        "task_id"
+      ],
+      "parent_columns": [
+        "task_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_agent_runs_task_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "ew_commands_namespace_event_id_fkey",
+      "child": "ew_commands",
+      "parent": "ew_inbox",
+      "columns": [
+        "namespace",
+        "event_id"
+      ],
+      "parent_columns": [
+        "namespace",
+        "event_id"
+      ],
+      "confdeltype": "a",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (namespace, event_id) REFERENCES ew_inbox(namespace, event_id)",
+      "usable_unfiltered_leading_index": [
+        "ew_commands_namespace_event_id_key",
+        "ew_commands_pkey"
+      ],
+      "partial_or_nonleading_indexes": [
+        "ew_commands_order"
+      ]
+    },
+    {
+      "conname": "ew_outbox_namespace_command_id_fkey",
+      "child": "ew_outbox",
+      "parent": "ew_commands",
+      "columns": [
+        "namespace",
+        "command_id"
+      ],
+      "parent_columns": [
+        "namespace",
+        "command_id"
+      ],
+      "confdeltype": "a",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (namespace, command_id) REFERENCES ew_commands(namespace, command_id)",
+      "usable_unfiltered_leading_index": [
+        "ew_outbox_pending",
+        "ew_outbox_pkey"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "jupyter_servers_created_by_user_id_fkey",
+      "child": "jupyter_servers",
+      "parent": "users",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "parent_columns": [
+        "user_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (created_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_jupyter_servers_created_by_user_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "llm_runs_assistant_message_id_fkey",
+      "child": "llm_runs",
+      "parent": "messages",
+      "columns": [
+        "assistant_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (assistant_message_id) REFERENCES messages(message_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "uq_llm_runs_assistant_message"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "llm_runs_session_id_fkey",
+      "child": "llm_runs",
+      "parent": "sessions",
+      "columns": [
+        "session_id"
+      ],
+      "parent_columns": [
+        "session_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_llm_runs_session_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "llm_runs_trigger_message_id_fkey",
+      "child": "llm_runs",
+      "parent": "messages",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (trigger_message_id) REFERENCES messages(message_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "uq_llm_runs_trigger_message"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "messages_session_id_fkey",
+      "child": "messages",
+      "parent": "sessions",
+      "columns": [
+        "session_id"
+      ],
+      "parent_columns": [
+        "session_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_messages_session_id"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_messages_client_request",
+        "uq_messages_message_session"
+      ]
+    },
+    {
+      "conname": "project_members_project_id_fkey",
+      "child": "project_members",
+      "parent": "projects",
+      "columns": [
+        "project_id"
+      ],
+      "parent_columns": [
+        "project_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "project_members_pkey"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "project_members_user_id_fkey",
+      "child": "project_members",
+      "parent": "users",
+      "columns": [
+        "user_id"
+      ],
+      "parent_columns": [
+        "user_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": [
+        "project_members_pkey"
+      ]
+    },
+    {
+      "conname": "projects_user_id_fkey",
+      "child": "projects",
+      "parent": "users",
+      "columns": [
+        "user_id"
+      ],
+      "parent_columns": [
+        "user_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_projects_user_id"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_projects_project_owner"
+      ]
+    },
+    {
+      "conname": "fk_sessions_current_leaf",
+      "child": "sessions",
+      "parent": "messages",
+      "columns": [
+        "current_leaf_message_id",
+        "session_id"
+      ],
+      "parent_columns": [
+        "message_id",
+        "session_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": true,
+      "condeferred": true,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (current_leaf_message_id, session_id) REFERENCES messages(message_id, session_id) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED",
+      "usable_unfiltered_leading_index": [
+        "sessions_pkey"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "sessions_project_id_fkey",
+      "child": "sessions",
+      "parent": "projects",
+      "columns": [
+        "project_id"
+      ],
+      "parent_columns": [
+        "project_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_sessions_project_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "sessions_user_id_fkey",
+      "child": "sessions",
+      "parent": "users",
+      "columns": [
+        "user_id"
+      ],
+      "parent_columns": [
+        "user_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_sessions_user_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "fk_task_events_agent_run_log",
+      "child": "task_events",
+      "parent": "agent_run_logs",
+      "columns": [
+        "agent_run_log_id"
+      ],
+      "parent_columns": [
+        "log_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (agent_run_log_id) REFERENCES agent_run_logs(log_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "uq_task_events_agent_run_log"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "task_events_run_id_fkey",
+      "child": "task_events",
+      "parent": "agent_runs",
+      "columns": [
+        "run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (run_id) REFERENCES agent_runs(run_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_task_events_run_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "task_events_task_id_fkey",
+      "child": "task_events",
+      "parent": "tasks",
+      "columns": [
+        "task_id"
+      ],
+      "parent_columns": [
+        "task_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_task_events_task_sequence",
+        "uq_task_events_task_sequence"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "fk_tasks_checkpoint_run",
+      "child": "tasks",
+      "parent": "agent_runs",
+      "columns": [
+        "checkpoint_run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (checkpoint_run_id) REFERENCES agent_runs(run_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_tasks_checkpoint_run_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "fk_tasks_root_run",
+      "child": "tasks",
+      "parent": "agent_runs",
+      "columns": [
+        "root_run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (root_run_id) REFERENCES agent_runs(run_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_tasks_root_run_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "tasks_session_id_fkey",
+      "child": "tasks",
+      "parent": "sessions",
+      "columns": [
+        "session_id"
+      ],
+      "parent_columns": [
+        "session_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_tasks_session_id",
+        "uq_tasks_session_idempotency"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_tasks_session_active"
+      ]
+    },
+    {
+      "conname": "tasks_trigger_message_id_fkey",
+      "child": "tasks",
+      "parent": "messages",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (trigger_message_id) REFERENCES messages(message_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_adaptive_history_execution_id_fkey",
+      "child": "workflow_adaptive_history",
+      "parent": "workflow_executions",
+      "columns": [
+        "execution_id"
+      ],
+      "parent_columns": [
+        "execution_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (execution_id) REFERENCES workflow_executions(execution_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "workflow_adaptive_history_pkey"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_embeddings_workflow_id_fkey",
+      "child": "workflow_embeddings",
+      "parent": "workflows",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (workflow_id) REFERENCES workflows(workflow_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_embeddings_workflow_id",
+        "uq_workflow_embeddings_source_model"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_workflow_embeddings_active_model"
+      ]
+    },
+    {
+      "conname": "workflow_execution_logs_agent_run_id_fkey",
+      "child": "workflow_execution_logs",
+      "parent": "agent_runs",
+      "columns": [
+        "agent_run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (agent_run_id) REFERENCES agent_runs(run_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_execution_logs_agent_run_id"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_workflow_execution_logs_attempt"
+      ]
+    },
+    {
+      "conname": "workflow_execution_logs_message_id_fkey",
+      "child": "workflow_execution_logs",
+      "parent": "messages",
+      "columns": [
+        "message_id"
+      ],
+      "parent_columns": [
+        "message_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_execution_logs_message_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_execution_logs_task_id_fkey",
+      "child": "workflow_execution_logs",
+      "parent": "tasks",
+      "columns": [
+        "task_id"
+      ],
+      "parent_columns": [
+        "task_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_execution_logs_task_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_execution_logs_workflow_id_fkey",
+      "child": "workflow_execution_logs",
+      "parent": "workflows",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (workflow_id) REFERENCES workflows(workflow_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_execution_logs_workflow_id",
+        "uq_workflow_execution_logs_attempt"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_executions_catalog_id_fkey",
+      "child": "workflow_executions",
+      "parent": "workflow_catalog",
+      "columns": [
+        "catalog_id"
+      ],
+      "parent_columns": [
+        "catalog_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (catalog_id) REFERENCES workflow_catalog(catalog_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflow_tags_workflow_id_fkey",
+      "child": "workflow_tags",
+      "parent": "workflows",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "confdeltype": "c",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (workflow_id) REFERENCES workflows(workflow_id) ON DELETE CASCADE",
+      "usable_unfiltered_leading_index": [
+        "ix_workflow_tags_workflow_id",
+        "uq_workflow_tags_workflow_tag"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflows_created_by_user_id_fkey",
+      "child": "workflows",
+      "parent": "users",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "parent_columns": [
+        "user_id"
+      ],
+      "confdeltype": "n",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (created_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL",
+      "usable_unfiltered_leading_index": [
+        "ix_workflows_created_by_user_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    },
+    {
+      "conname": "workflows_source_run_id_fkey",
+      "child": "workflows",
+      "parent": "agent_runs",
+      "columns": [
+        "source_run_id"
+      ],
+      "parent_columns": [
+        "run_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (source_run_id) REFERENCES agent_runs(run_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_workflows_source_run_id"
+      ],
+      "partial_or_nonleading_indexes": [
+        "uq_workflows_root_candidate_run"
+      ]
+    },
+    {
+      "conname": "workflows_source_workflow_id_fkey",
+      "child": "workflows",
+      "parent": "workflows",
+      "columns": [
+        "source_workflow_id"
+      ],
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "confdeltype": "r",
+      "confupdtype": "a",
+      "condeferrable": false,
+      "condeferred": false,
+      "convalidated": true,
+      "definition": "FOREIGN KEY (source_workflow_id) REFERENCES workflows(workflow_id) ON DELETE RESTRICT",
+      "usable_unfiltered_leading_index": [
+        "ix_workflows_source_workflow_id"
+      ],
+      "partial_or_nonleading_indexes": []
+    }
+  ],
+  "indexes": [
+    {
+      "table_name": "agent_commands",
+      "index_name": "agent_commands_ordinal_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "ordinal"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX agent_commands_ordinal_key ON public.agent_commands USING btree (ordinal)"
+    },
+    {
+      "table_name": "agent_commands",
+      "index_name": "agent_commands_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "command_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX agent_commands_pkey ON public.agent_commands USING btree (namespace, command_id)"
+    },
+    {
+      "table_name": "agent_commands",
+      "index_name": "agent_commands_ready",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "available_at",
+        "ordinal"
+      ],
+      "predicate": "(state = 'READY'::text)",
+      "definition": "CREATE INDEX agent_commands_ready ON public.agent_commands USING btree (namespace, available_at, ordinal) WHERE (state = 'READY'::text)"
+    },
+    {
+      "table_name": "agent_commands",
+      "index_name": "agent_commands_session_order",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id",
+        "ordinal"
+      ],
+      "predicate": "(state <> ALL (ARRAY['DONE'::text, 'IGNORED'::text, 'FAILED'::text]))",
+      "definition": "CREATE INDEX agent_commands_session_order ON public.agent_commands USING btree (session_id, ordinal) WHERE (state <> ALL (ARRAY['DONE'::text, 'IGNORED'::text, 'FAILED'::text]))"
+    },
+    {
+      "table_name": "agent_run_logs",
+      "index_name": "agent_run_logs_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "log_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX agent_run_logs_pkey ON public.agent_run_logs USING btree (log_id)"
+    },
+    {
+      "table_name": "agent_run_logs",
+      "index_name": "ix_agent_run_logs_agent_name",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "agent_name"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_run_logs_agent_name ON public.agent_run_logs USING btree (agent_name)"
+    },
+    {
+      "table_name": "agent_run_logs",
+      "index_name": "ix_agent_run_logs_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_run_logs_run_id ON public.agent_run_logs USING btree (run_id)"
+    },
+    {
+      "table_name": "agent_run_logs",
+      "index_name": "uq_agent_run_logs_event",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "run_id",
+        "event_key"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_agent_run_logs_event ON public.agent_run_logs USING btree (run_id, event_key)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "agent_runs_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX agent_runs_pkey ON public.agent_runs USING btree (run_id)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_cancel_requested_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "cancel_requested_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_cancel_requested_at ON public.agent_runs USING btree (cancel_requested_at)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_next_attempt_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "next_attempt_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_next_attempt_at ON public.agent_runs USING btree (next_attempt_at)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_public_latest",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "public_run_id",
+        "created_at",
+        "run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_public_latest ON public.agent_runs USING btree (public_run_id, created_at, run_id)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_redis_key",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "redis_key"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_redis_key ON public.agent_runs USING btree (redis_key)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_session_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_session_id ON public.agent_runs USING btree (session_id)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_task_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_task_id ON public.agent_runs USING btree (task_id)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_trigger_message_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_trigger_message_id ON public.agent_runs USING btree (trigger_message_id)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "ix_agent_runs_workflow_stage",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_stage"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_agent_runs_workflow_stage ON public.agent_runs USING btree (workflow_stage)"
+    },
+    {
+      "table_name": "agent_runs",
+      "index_name": "uq_agent_runs_session_idempotency",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id",
+        "idempotency_key"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_agent_runs_session_idempotency ON public.agent_runs USING btree (session_id, idempotency_key)"
+    },
+    {
+      "table_name": "alembic_version",
+      "index_name": "alembic_version_pkc",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "version_num"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX alembic_version_pkc ON public.alembic_version USING btree (version_num)"
+    },
+    {
+      "table_name": "ew_alembic_version",
+      "index_name": "ew_alembic_version_pkc",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "version_num"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_alembic_version_pkc ON public.ew_alembic_version USING btree (version_num)"
+    },
+    {
+      "table_name": "ew_audit",
+      "index_name": "ew_audit_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_audit_pkey ON public.ew_audit USING btree (id)"
+    },
+    {
+      "table_name": "ew_bindings",
+      "index_name": "ew_bindings_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "execution_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_bindings_pkey ON public.ew_bindings USING btree (namespace, execution_id)"
+    },
+    {
+      "table_name": "ew_bindings",
+      "index_name": "ew_bindings_scan",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "next_scan_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ew_bindings_scan ON public.ew_bindings USING btree (namespace, next_scan_at)"
+    },
+    {
+      "table_name": "ew_commands",
+      "index_name": "ew_commands_namespace_event_id_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "event_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_commands_namespace_event_id_key ON public.ew_commands USING btree (namespace, event_id)"
+    },
+    {
+      "table_name": "ew_commands",
+      "index_name": "ew_commands_order",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "execution_id",
+        "sequence"
+      ],
+      "predicate": "(state <> ALL (ARRAY['DONE'::text, 'IGNORED'::text]))",
+      "definition": "CREATE INDEX ew_commands_order ON public.ew_commands USING btree (namespace, execution_id, sequence) WHERE (state <> ALL (ARRAY['DONE'::text, 'IGNORED'::text]))"
+    },
+    {
+      "table_name": "ew_commands",
+      "index_name": "ew_commands_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "command_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_commands_pkey ON public.ew_commands USING btree (namespace, command_id)"
+    },
+    {
+      "table_name": "ew_inbox",
+      "index_name": "ew_inbox_namespace_execution_id_sequence_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "execution_id",
+        "sequence"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_inbox_namespace_execution_id_sequence_key ON public.ew_inbox USING btree (namespace, execution_id, sequence)"
+    },
+    {
+      "table_name": "ew_inbox",
+      "index_name": "ew_inbox_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "event_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_inbox_pkey ON public.ew_inbox USING btree (namespace, event_id)"
+    },
+    {
+      "table_name": "ew_inbox",
+      "index_name": "ew_inbox_unrouted",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "execution_id",
+        "sequence"
+      ],
+      "predicate": "(state = 'RECEIVED'::text)",
+      "definition": "CREATE INDEX ew_inbox_unrouted ON public.ew_inbox USING btree (namespace, execution_id, sequence) WHERE (state = 'RECEIVED'::text)"
+    },
+    {
+      "table_name": "ew_outbox",
+      "index_name": "ew_outbox_pending",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "state",
+        "claim_until"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ew_outbox_pending ON public.ew_outbox USING btree (namespace, state, claim_until)"
+    },
+    {
+      "table_name": "ew_outbox",
+      "index_name": "ew_outbox_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "namespace",
+        "command_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX ew_outbox_pkey ON public.ew_outbox USING btree (namespace, command_id)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "ix_jupyter_servers_created_by_user_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_jupyter_servers_created_by_user_id ON public.jupyter_servers USING btree (created_by_user_id)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "ix_jupyter_servers_health_status",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "health_status"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_jupyter_servers_health_status ON public.jupyter_servers USING btree (health_status)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "ix_jupyter_servers_last_checked_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "last_checked_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_jupyter_servers_last_checked_at ON public.jupyter_servers USING btree (last_checked_at)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "jupyter_servers_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "jupyter_server_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX jupyter_servers_pkey ON public.jupyter_servers USING btree (jupyter_server_id)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "uq_jupyter_servers_active_endpoint",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "endpoint"
+      ],
+      "predicate": "(deleted_at IS NULL)",
+      "definition": "CREATE UNIQUE INDEX uq_jupyter_servers_active_endpoint ON public.jupyter_servers USING btree (endpoint) WHERE (deleted_at IS NULL)"
+    },
+    {
+      "table_name": "jupyter_servers",
+      "index_name": "uq_jupyter_servers_active_name",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "name"
+      ],
+      "predicate": "(deleted_at IS NULL)",
+      "definition": "CREATE UNIQUE INDEX uq_jupyter_servers_active_name ON public.jupyter_servers USING btree (name) WHERE (deleted_at IS NULL)"
+    },
+    {
+      "table_name": "llm_runs",
+      "index_name": "ix_llm_runs_session_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_llm_runs_session_id ON public.llm_runs USING btree (session_id)"
+    },
+    {
+      "table_name": "llm_runs",
+      "index_name": "llm_runs_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX llm_runs_pkey ON public.llm_runs USING btree (run_id)"
+    },
+    {
+      "table_name": "llm_runs",
+      "index_name": "uq_llm_runs_assistant_message",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "assistant_message_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_llm_runs_assistant_message ON public.llm_runs USING btree (assistant_message_id)"
+    },
+    {
+      "table_name": "llm_runs",
+      "index_name": "uq_llm_runs_trigger_message",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_llm_runs_trigger_message ON public.llm_runs USING btree (trigger_message_id)"
+    },
+    {
+      "table_name": "messages",
+      "index_name": "ix_messages_session_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_messages_session_id ON public.messages USING btree (session_id)"
+    },
+    {
+      "table_name": "messages",
+      "index_name": "messages_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "message_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (message_id)"
+    },
+    {
+      "table_name": "messages",
+      "index_name": "messages_sequence_no_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "sequence_no"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX messages_sequence_no_key ON public.messages USING btree (sequence_no)"
+    },
+    {
+      "table_name": "messages",
+      "index_name": "uq_messages_client_request",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id",
+        "client_request_id"
+      ],
+      "predicate": "(client_request_id IS NOT NULL)",
+      "definition": "CREATE UNIQUE INDEX uq_messages_client_request ON public.messages USING btree (session_id, client_request_id) WHERE (client_request_id IS NOT NULL)"
+    },
+    {
+      "table_name": "messages",
+      "index_name": "uq_messages_message_session",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "message_id",
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_messages_message_session ON public.messages USING btree (message_id, session_id)"
+    },
+    {
+      "table_name": "project_members",
+      "index_name": "project_members_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "project_id",
+        "user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX project_members_pkey ON public.project_members USING btree (project_id, user_id)"
+    },
+    {
+      "table_name": "projects",
+      "index_name": "ix_projects_user_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_projects_user_id ON public.projects USING btree (user_id)"
+    },
+    {
+      "table_name": "projects",
+      "index_name": "projects_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "project_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX projects_pkey ON public.projects USING btree (project_id)"
+    },
+    {
+      "table_name": "projects",
+      "index_name": "uq_projects_project_owner",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "project_id",
+        "user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_projects_project_owner ON public.projects USING btree (project_id, user_id)"
+    },
+    {
+      "table_name": "session_executions",
+      "index_name": "session_executions_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX session_executions_pkey ON public.session_executions USING btree (session_id)"
+    },
+    {
+      "table_name": "sessions",
+      "index_name": "ix_sessions_project_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "project_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_sessions_project_id ON public.sessions USING btree (project_id)"
+    },
+    {
+      "table_name": "sessions",
+      "index_name": "ix_sessions_user_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_sessions_user_id ON public.sessions USING btree (user_id)"
+    },
+    {
+      "table_name": "sessions",
+      "index_name": "sessions_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (session_id)"
+    },
+    {
+      "table_name": "store",
+      "index_name": "idx_store_expires_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "expires_at"
+      ],
+      "predicate": "(expires_at IS NOT NULL)",
+      "definition": "CREATE INDEX idx_store_expires_at ON public.store USING btree (expires_at) WHERE (expires_at IS NOT NULL)"
+    },
+    {
+      "table_name": "store",
+      "index_name": "store_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "prefix",
+        "key"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX store_pkey ON public.store USING btree (prefix, key)"
+    },
+    {
+      "table_name": "store",
+      "index_name": "store_prefix_idx",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "prefix"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX store_prefix_idx ON public.store USING btree (prefix text_pattern_ops)"
+    },
+    {
+      "table_name": "store_migrations",
+      "index_name": "store_migrations_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "v"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX store_migrations_pkey ON public.store_migrations USING btree (v)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "ix_task_events_event_type",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "event_type"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_task_events_event_type ON public.task_events USING btree (event_type)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "ix_task_events_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_task_events_run_id ON public.task_events USING btree (run_id)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "ix_task_events_task_sequence",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_id",
+        "sequence"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_task_events_task_sequence ON public.task_events USING btree (task_id, sequence)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "task_events_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_event_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX task_events_pkey ON public.task_events USING btree (task_event_id)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "uq_task_events_agent_run_log",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "agent_run_log_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_task_events_agent_run_log ON public.task_events USING btree (agent_run_log_id)"
+    },
+    {
+      "table_name": "task_events",
+      "index_name": "uq_task_events_task_sequence",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_id",
+        "sequence"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_task_events_task_sequence ON public.task_events USING btree (task_id, sequence)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "ix_tasks_cancel_requested_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "cancel_requested_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_tasks_cancel_requested_at ON public.tasks USING btree (cancel_requested_at)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "ix_tasks_checkpoint_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "checkpoint_run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_tasks_checkpoint_run_id ON public.tasks USING btree (checkpoint_run_id)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "ix_tasks_lease_expires_at",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "lease_expires_at"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_tasks_lease_expires_at ON public.tasks USING btree (lease_expires_at)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "ix_tasks_root_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "root_run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_tasks_root_run_id ON public.tasks USING btree (root_run_id)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "ix_tasks_session_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_tasks_session_id ON public.tasks USING btree (session_id)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "tasks_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX tasks_pkey ON public.tasks USING btree (task_id)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "uq_tasks_graph_task_id",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "graph_task_id"
+      ],
+      "predicate": "(graph_task_id IS NOT NULL)",
+      "definition": "CREATE UNIQUE INDEX uq_tasks_graph_task_id ON public.tasks USING btree (graph_task_id) WHERE (graph_task_id IS NOT NULL)"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "uq_tasks_session_active",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id"
+      ],
+      "predicate": "(status = ANY (ARRAY['pending'::task_status, 'running'::task_status]))",
+      "definition": "CREATE UNIQUE INDEX uq_tasks_session_active ON public.tasks USING btree (session_id) WHERE (status = ANY (ARRAY['pending'::task_status, 'running'::task_status]))"
+    },
+    {
+      "table_name": "tasks",
+      "index_name": "uq_tasks_session_idempotency",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id",
+        "idempotency_key"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_tasks_session_idempotency ON public.tasks USING btree (session_id, idempotency_key)"
+    },
+    {
+      "table_name": "users",
+      "index_name": "uq_users_public_user_id",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "public_user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_users_public_user_id ON public.users USING btree (public_user_id)"
+    },
+    {
+      "table_name": "users",
+      "index_name": "users_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (user_id)"
+    },
+    {
+      "table_name": "workflow_adaptive_history",
+      "index_name": "workflow_adaptive_history_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "execution_id",
+        "decision_round"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_adaptive_history_pkey ON public.workflow_adaptive_history USING btree (execution_id, decision_round)"
+    },
+    {
+      "table_name": "workflow_catalog",
+      "index_name": "workflow_catalog_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "catalog_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_catalog_pkey ON public.workflow_catalog USING btree (catalog_id)"
+    },
+    {
+      "table_name": "workflow_catalog",
+      "index_name": "workflow_catalog_recommendation_lookup",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "intent",
+        "reusable",
+        "validation_status"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX workflow_catalog_recommendation_lookup ON public.workflow_catalog USING btree (intent, reusable, validation_status)"
+    },
+    {
+      "table_name": "workflow_catalog",
+      "index_name": "workflow_catalog_source_revision_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "source_task_id",
+        "workflow_id",
+        "revision"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_catalog_source_revision_key ON public.workflow_catalog USING btree (source_task_id, workflow_id, revision)"
+    },
+    {
+      "table_name": "workflow_embeddings",
+      "index_name": "ix_workflow_embeddings_search_metadata",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "gin",
+      "columns": [
+        "search_metadata"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_embeddings_search_metadata ON public.workflow_embeddings USING gin (search_metadata)"
+    },
+    {
+      "table_name": "workflow_embeddings",
+      "index_name": "ix_workflow_embeddings_workflow_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_embeddings_workflow_id ON public.workflow_embeddings USING btree (workflow_id)"
+    },
+    {
+      "table_name": "workflow_embeddings",
+      "index_name": "uq_workflow_embeddings_active_model",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id",
+        "model_provider",
+        "model_name",
+        "model_revision"
+      ],
+      "predicate": "((is_active = true) AND ((status)::text = 'ready'::text))",
+      "definition": "CREATE UNIQUE INDEX uq_workflow_embeddings_active_model ON public.workflow_embeddings USING btree (workflow_id, model_provider, model_name, model_revision) WHERE ((is_active = true) AND ((status)::text = 'ready'::text))"
+    },
+    {
+      "table_name": "workflow_embeddings",
+      "index_name": "uq_workflow_embeddings_source_model",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id",
+        "model_provider",
+        "model_name",
+        "model_revision",
+        "embedded_text_sha256"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_workflow_embeddings_source_model ON public.workflow_embeddings USING btree (workflow_id, model_provider, model_name, model_revision, embedded_text_sha256)"
+    },
+    {
+      "table_name": "workflow_embeddings",
+      "index_name": "workflow_embeddings_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "embedding_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_embeddings_pkey ON public.workflow_embeddings USING btree (embedding_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "ix_workflow_execution_logs_agent_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "agent_run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_execution_logs_agent_run_id ON public.workflow_execution_logs USING btree (agent_run_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "ix_workflow_execution_logs_execution_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "execution_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_execution_logs_execution_id ON public.workflow_execution_logs USING btree (execution_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "ix_workflow_execution_logs_message_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "message_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_execution_logs_message_id ON public.workflow_execution_logs USING btree (message_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "ix_workflow_execution_logs_task_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "task_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_execution_logs_task_id ON public.workflow_execution_logs USING btree (task_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "ix_workflow_execution_logs_workflow_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_execution_logs_workflow_id ON public.workflow_execution_logs USING btree (workflow_id)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "uq_workflow_execution_logs_attempt",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id",
+        "agent_run_id",
+        "attempt_no"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_workflow_execution_logs_attempt ON public.workflow_execution_logs USING btree (workflow_id, agent_run_id, attempt_no)"
+    },
+    {
+      "table_name": "workflow_execution_logs",
+      "index_name": "workflow_execution_logs_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_log_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_execution_logs_pkey ON public.workflow_execution_logs USING btree (workflow_log_id)"
+    },
+    {
+      "table_name": "workflow_executions",
+      "index_name": "workflow_executions_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "execution_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_executions_pkey ON public.workflow_executions USING btree (execution_id)"
+    },
+    {
+      "table_name": "workflow_executions",
+      "index_name": "workflow_executions_task_lookup",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "session_id",
+        "task_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX workflow_executions_task_lookup ON public.workflow_executions USING btree (session_id, task_id)"
+    },
+    {
+      "table_name": "workflow_tags",
+      "index_name": "ix_workflow_tags_tag",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "tag"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_tags_tag ON public.workflow_tags USING btree (tag)"
+    },
+    {
+      "table_name": "workflow_tags",
+      "index_name": "ix_workflow_tags_workflow_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflow_tags_workflow_id ON public.workflow_tags USING btree (workflow_id)"
+    },
+    {
+      "table_name": "workflow_tags",
+      "index_name": "uq_workflow_tags_workflow_tag",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id",
+        "tag"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX uq_workflow_tags_workflow_tag ON public.workflow_tags USING btree (workflow_id, tag)"
+    },
+    {
+      "table_name": "workflow_tags",
+      "index_name": "workflow_tags_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_tag_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflow_tags_pkey ON public.workflow_tags USING btree (workflow_tag_id)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "ix_workflows_active_created",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "lifecycle",
+        "created_at"
+      ],
+      "predicate": "(deleted_at IS NULL)",
+      "definition": "CREATE INDEX ix_workflows_active_created ON public.workflows USING btree (lifecycle, created_at) WHERE (deleted_at IS NULL)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "ix_workflows_created_by_user_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflows_created_by_user_id ON public.workflows USING btree (created_by_user_id)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "ix_workflows_lifecycle",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "lifecycle"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflows_lifecycle ON public.workflows USING btree (lifecycle)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "ix_workflows_source_run_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "source_run_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflows_source_run_id ON public.workflows USING btree (source_run_id)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "ix_workflows_source_workflow_id",
+      "indisunique": false,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "source_workflow_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE INDEX ix_workflows_source_workflow_id ON public.workflows USING btree (source_workflow_id)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "uq_workflows_root_candidate_run",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "source_run_id"
+      ],
+      "predicate": "(((lifecycle)::text = 'candidate'::text) AND (source_workflow_id IS NULL))",
+      "definition": "CREATE UNIQUE INDEX uq_workflows_root_candidate_run ON public.workflows USING btree (source_run_id) WHERE (((lifecycle)::text = 'candidate'::text) AND (source_workflow_id IS NULL))"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "workflows_file_path_key",
+      "indisunique": true,
+      "indisprimary": false,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "file_path"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflows_file_path_key ON public.workflows USING btree (file_path)"
+    },
+    {
+      "table_name": "workflows",
+      "index_name": "workflows_pkey",
+      "indisunique": true,
+      "indisprimary": true,
+      "indisvalid": true,
+      "amname": "btree",
+      "columns": [
+        "workflow_id"
+      ],
+      "predicate": null,
+      "definition": "CREATE UNIQUE INDEX workflows_pkey ON public.workflows USING btree (workflow_id)"
+    }
+  ],
+  "model_foreign_keys": [
+    {
+      "child": "agent_commands",
+      "columns": [
+        "invocation_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_commands",
+      "columns": [
+        "session_id"
+      ],
+      "parent": "sessions",
+      "parent_columns": [
+        "session_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_run_logs",
+      "columns": [
+        "run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "agent_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "interpreted_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "public_run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": true,
+      "deferred": true
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "session_id"
+      ],
+      "parent": "sessions",
+      "parent_columns": [
+        "session_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "task_id"
+      ],
+      "parent": "tasks",
+      "parent_columns": [
+        "task_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "agent_runs",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "jupyter_servers",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "parent": "users",
+      "parent_columns": [
+        "user_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "llm_runs",
+      "columns": [
+        "assistant_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "llm_runs",
+      "columns": [
+        "session_id"
+      ],
+      "parent": "sessions",
+      "parent_columns": [
+        "session_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "llm_runs",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "messages",
+      "columns": [
+        "session_id"
+      ],
+      "parent": "sessions",
+      "parent_columns": [
+        "session_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "project_members",
+      "columns": [
+        "project_id"
+      ],
+      "parent": "projects",
+      "parent_columns": [
+        "project_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "project_members",
+      "columns": [
+        "user_id"
+      ],
+      "parent": "users",
+      "parent_columns": [
+        "user_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "projects",
+      "columns": [
+        "user_id"
+      ],
+      "parent": "users",
+      "parent_columns": [
+        "user_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "sessions",
+      "columns": [
+        "current_leaf_message_id",
+        "session_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id",
+        "session_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": true,
+      "deferred": true
+    },
+    {
+      "child": "sessions",
+      "columns": [
+        "project_id"
+      ],
+      "parent": "projects",
+      "parent_columns": [
+        "project_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "sessions",
+      "columns": [
+        "user_id"
+      ],
+      "parent": "users",
+      "parent_columns": [
+        "user_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "task_events",
+      "columns": [
+        "agent_run_log_id"
+      ],
+      "parent": "agent_run_logs",
+      "parent_columns": [
+        "log_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "task_events",
+      "columns": [
+        "run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "task_events",
+      "columns": [
+        "task_id"
+      ],
+      "parent": "tasks",
+      "parent_columns": [
+        "task_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "tasks",
+      "columns": [
+        "checkpoint_run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "tasks",
+      "columns": [
+        "root_run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "tasks",
+      "columns": [
+        "session_id"
+      ],
+      "parent": "sessions",
+      "parent_columns": [
+        "session_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "tasks",
+      "columns": [
+        "trigger_message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_embeddings",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent": "workflows",
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_execution_logs",
+      "columns": [
+        "agent_run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_execution_logs",
+      "columns": [
+        "message_id"
+      ],
+      "parent": "messages",
+      "parent_columns": [
+        "message_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_execution_logs",
+      "columns": [
+        "task_id"
+      ],
+      "parent": "tasks",
+      "parent_columns": [
+        "task_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_execution_logs",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent": "workflows",
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflow_tags",
+      "columns": [
+        "workflow_id"
+      ],
+      "parent": "workflows",
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "ondelete": "CASCADE",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflows",
+      "columns": [
+        "created_by_user_id"
+      ],
+      "parent": "users",
+      "parent_columns": [
+        "user_id"
+      ],
+      "ondelete": "SET NULL",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflows",
+      "columns": [
+        "source_run_id"
+      ],
+      "parent": "agent_runs",
+      "parent_columns": [
+        "run_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    },
+    {
+      "child": "workflows",
+      "columns": [
+        "source_workflow_id"
+      ],
+      "parent": "workflows",
+      "parent_columns": [
+        "workflow_id"
+      ],
+      "ondelete": "RESTRICT",
+      "deferrable": false,
+      "deferred": false
+    }
+  ]
+}

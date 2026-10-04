@@ -1,0 +1,601 @@
+{
+  "all_passed": true,
+  "checks": [
+    {
+      "name": "36 API model FK",
+      "passed": true
+    },
+    {
+      "name": "40 migrated FK",
+      "passed": true
+    },
+    {
+      "name": "No FK definition differences",
+      "passed": true
+    },
+    {
+      "name": "All FK validated",
+      "passed": true
+    },
+    {
+      "name": "CRUD migration head",
+      "passed": true
+    },
+    {
+      "name": "Worker migration head",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_commands_invocation_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_commands_session_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_run_logs_run_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_runs_agent_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_runs_interpreted_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_runs_session_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: agent_runs_trigger_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_agent_runs_public_run",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_agent_runs_task",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: ew_commands_namespace_event_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: ew_outbox_namespace_command_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: jupyter_servers_created_by_user_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: llm_runs_assistant_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: llm_runs_session_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: llm_runs_trigger_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: messages_session_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: project_members_project_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: project_members_user_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: projects_user_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_sessions_current_leaf",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: sessions_project_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: sessions_user_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_task_events_agent_run_log",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: task_events_run_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: task_events_task_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_tasks_checkpoint_run",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: fk_tasks_root_run",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: tasks_session_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: tasks_trigger_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_adaptive_history_execution_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_embeddings_workflow_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_execution_logs_agent_run_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_execution_logs_message_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_execution_logs_task_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_execution_logs_workflow_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_executions_catalog_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflow_tags_workflow_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflows_created_by_user_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflows_source_run_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Index coverage recomputed: workflows_source_workflow_id_fkey",
+      "passed": true
+    },
+    {
+      "name": "Exactly seven specified index coverage gaps",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_commands.invocation_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_commands.session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_run_logs.run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.agent_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.interpreted_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.public_run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.task_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: agent_runs.trigger_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: jupyter_servers.created_by_user_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: llm_runs.assistant_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: llm_runs.session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: llm_runs.trigger_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: messages.session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: project_members.project_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: project_members.user_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: projects.user_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: sessions.current_leaf_message_id,session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: sessions.project_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: sessions.user_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: task_events.agent_run_log_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: task_events.run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: task_events.task_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: tasks.checkpoint_run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: tasks.root_run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: tasks.session_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: tasks.trigger_message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_embeddings.workflow_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_execution_logs.agent_run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_execution_logs.message_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_execution_logs.task_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_execution_logs.workflow_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflow_tags.workflow_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflows.created_by_user_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflows.source_run_id",
+      "passed": true
+    },
+    {
+      "name": "Model FK alignment: workflows.source_workflow_id",
+      "passed": true
+    },
+    {
+      "name": "16 distinct final probes",
+      "passed": true
+    },
+    {
+      "name": "Final outcomes match expectations",
+      "passed": true
+    },
+    {
+      "name": "Six directly accepted cross-owner/run/session fixtures",
+      "passed": true
+    },
+    {
+      "name": "Observed FK rejects",
+      "passed": true
+    },
+    {
+      "name": "Observed lock timeout",
+      "passed": true
+    },
+    {
+      "name": "Nullable Workflow source Run",
+      "passed": true
+    },
+    {
+      "name": "Exact duplicate sequence index keys",
+      "passed": true
+    },
+    {
+      "name": "No INCLUDE columns on duplicate indexes",
+      "passed": true
+    },
+    {
+      "name": "Owned temporary resource removed",
+      "passed": true
+    },
+    {
+      "name": "All 18 original services still running",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/__init__.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/__init__.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/agent_command_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/agent_run_log_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/agent_run_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/jupyter_server_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/llm_run_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/message_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/project_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/session_execution_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/session_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/task_event_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/task_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/user_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/common/workflow_model.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/models/model_base.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/env.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260821_0001_initial_chat_schema.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260821_0002_e03_task_session_lock.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260821_0003_remove_message_parent.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260821_0004_rename_sessions_table.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260824_0005_cooperative_run_cancellation.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260824_0006_e13_workflow_catalog.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260824_0007_workflow_origin_guard.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260824_0008_e10_jupyter_server_registry.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260824_0009_e05_task_sse_events.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260826_0010_workflow_embeddings_and_execution_logs.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260831_0011_task_job_lifecycle.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260831_0012_agent_run_retry.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260903_0013_agent_message_type.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260903_0014_backfill_agent_message_roles.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260903_0015_backfill_workflow_message_text.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260904_0016_align_sessions_with_public_ddl.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260907_0017_link_graph_task.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260928_0018_user_identity.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260928_0019_task_recovery_guard.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260929_0020_session_execution.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260929_0021_public_run_identity.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260929_0022_run_notifications.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20260930_0023_agent_log_event_link.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20261002_0024_project_memory.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20261002_0025_langgraph_memory_store.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20261003_0026_agent_commands.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: crud_migrations/versions/20261003_0027_command_notifications.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: migrations/env.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: migrations/versions/0001_worker_tables.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: migrations/versions/0002_workflow_catalog.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/runs/commands/claim.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/runs/admission.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/services/resource_lifecycle.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/services/task_event_service.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/services/user_service.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/services/project_service.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/services/session_service.py",
+      "passed": true
+    },
+    {
+      "name": "Source unchanged: src/api_service/test/test_run_concurrency_postgres.py",
+      "passed": true
+    },
+    {
+      "name": "All 40 FK decisions in report",
+      "passed": true
+    }
+  ]
+}

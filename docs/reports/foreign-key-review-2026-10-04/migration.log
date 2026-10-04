@@ -1,0 +1,37 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 20260821_0001, Initial chat CRUD schema baseline.
+INFO  [alembic.runtime.migration] Running upgrade 20260821_0001 -> 20260821_0002, Add E03 tasks and agent run logs.
+INFO  [alembic.runtime.migration] Running upgrade 20260821_0002 -> 20260821_0003, Remove messages.parent_message_id.
+INFO  [alembic.runtime.migration] Running upgrade 20260821_0003 -> 20260821_0004, Rename chat_sessions to sessions without losing existing data.
+INFO  [alembic.runtime.migration] Running upgrade 20260821_0004 -> 20260824_0005, Add cooperative cancellation request timestamps.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0005 -> 20260824_0006, Add E13 global workflow catalog and normalized tags.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0006 -> 20260824_0007, Prevent duplicate root workflow candidates per run.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0007 -> 20260824_0008, Add E10-T04 Jupyter server registry.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0008 -> 20260824_0009, Add durable task SSE events.
+INFO  [alembic.runtime.migration] Running upgrade 20260824_0009 -> 20260826_0010, Add workflow search embeddings and execution history.
+INFO  [alembic.runtime.migration] Running upgrade 20260826_0010 -> 20260831_0011, Rebuild Task as a long-lived analysis job with many AgentRuns.
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0011 -> 20260831_0012, Add durable AgentRun retry scheduling fields.
+INFO  [alembic.runtime.migration] Running upgrade 20260831_0012 -> 20260903_0013, Add the agent role to chat messages.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0013 -> 20260903_0014, Backfill graph-generated agent message roles.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0014 -> 20260903_0015, Backfill user-facing Workflow agent message text.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0015 -> 20260904_0016, Align sessions columns with public DDL.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0016 -> 20260907_0017, Link CRUD tasks to LangGraph and Executor task identities.
+INFO  [alembic.runtime.migration] Running upgrade 20260907_0017 -> 20260928_0018, Public user IDs and service roles, preserving all internal UUID references.
+INFO  [alembic.runtime.migration] Running upgrade 20260928_0018 -> 20260928_0019, Keep uncertain Run ownership out of automatic retry.
+INFO  [alembic.runtime.migration] Running upgrade 20260928_0019 -> 20260929_0020, One persistent graph owner across API Runs and Executor events.
+INFO  [alembic.runtime.migration] Running upgrade 20260929_0020 -> 20260929_0021, Stable public Run identity; retain invocation, Task and checkpoint IDs.
+INFO  [alembic.runtime.migration] Running upgrade 20260929_0021 -> 20260929_0022, Commit-coupled wakeups for Run SSE; durable payloads remain in existing tables.
+INFO  [alembic.runtime.migration] Running upgrade 20260929_0022 -> 20260930_0023, Link each Agent log to its durable event; preserve historical event sequences.
+INFO  [alembic.runtime.migration] Running upgrade 20260930_0023 -> 20261002_0024, Create project topic memory and replay receipts; do not alter checkpoints.
+INFO  [alembic.runtime.migration] Running upgrade 20261002_0024 -> 20261002_0025, Move project memory into the official LangGraph PostgreSQL Store.
+INFO  [alembic.runtime.migration] Running upgrade 20261002_0025 -> 20261003_0026, Common graph command ledger; drain old dispatchers before upgrading.
+INFO  [alembic.runtime.migration] Running upgrade 20261003_0026 -> 20261003_0027, Commit-coupled command hints; ledger and SKIP LOCKED remain authoritative.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> ew_0001, Create durable Executor event worker tables.
+INFO  [alembic.runtime.migration] Running upgrade  -> ew_0001, Create durable Executor event worker tables.
+INFO  [alembic.runtime.migration] Running upgrade ew_0001 -> ew_0002, Create reusable Workflow catalog and execution history tables.
+INFO  [alembic.runtime.migration] Running upgrade ew_0001 -> ew_0002, Create reusable Workflow catalog and execution history tables.

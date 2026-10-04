@@ -1,0 +1,156 @@
+[
+  {
+    "name": "missing_parent_user_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "projects_user_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "missing_parent_session_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "messages_session_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "leaf_from_other_session_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "fk_sessions_current_leaf",
+    "passed": true
+  },
+  {
+    "name": "session_project_owner_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Session owner and Project owner differ; service must reject this"
+    },
+    "passed": true
+  },
+  {
+    "name": "run_task_session_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Run and Task belong to different sessions"
+    },
+    "passed": true
+  },
+  {
+    "name": "task_root_checkpoint_session_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Task root/checkpoint refer to another session"
+    },
+    "passed": true
+  },
+  {
+    "name": "event_task_run_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Event Task and Run differ"
+    },
+    "passed": true
+  },
+  {
+    "name": "event_log_run_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Event and Log refer to different runs; unique log pairing preserved"
+    },
+    "passed": true
+  },
+  {
+    "name": "command_invocation_session_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Command and invocation refer to different sessions"
+    },
+    "passed": true
+  },
+  {
+    "name": "referenced_trigger_message_delete_is_restricted",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "agent_runs_trigger_message_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "soft_delete_does_not_execute_cascade",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "child_counts_unchanged": {
+        "messages": 2,
+        "agent_runs": 2,
+        "tasks": 2,
+        "agent_run_logs": 2,
+        "task_events": 2
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "log_physical_delete_cascades_to_sse_event",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "event_removed": true,
+      "last_event_sequence": 1
+    },
+    "passed": true
+  },
+  {
+    "name": "task_physical_delete_clears_run_link_and_events",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "run_retained_task_id_cleared": true,
+      "events_removed": true
+    },
+    "passed": true
+  },
+  {
+    "name": "public_root_delete_cascades_to_resumes",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "root_and_resume_deleted": true,
+      "task_retained_without_root_checkpoint": true
+    },
+    "passed": true
+  },
+  {
+    "name": "workflow_source_blocks_run_purge",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "workflows_source_run_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "fk_child_insert_blocks_parent_delete_but_not_nonkey_update",
+    "expected_sqlstate": "55P03",
+    "actual_sqlstate": "55P03",
+    "passed": true,
+    "observations": {
+      "nonkey_update_succeeded": true
+    }
+  }
+]

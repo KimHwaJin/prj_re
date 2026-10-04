@@ -1,0 +1,15 @@
+{
+  "inventory_attempts": 3,
+  "inventory_repairs": [
+    "Wrong presumed alembic_version_crud name; actual CRUD is alembic_version",
+    "Wrong presumed alembic_version_worker name; source confirms ew_alembic_version"
+  ],
+  "initial_probe_failed": true,
+  "initial_probe_actual_sqlstate": "23502",
+  "probe_repair": "Added required payload to isolated agent_run_logs seed; production schema unchanged",
+  "second_probe_failure": {
+    "sqlstate": "23505",
+    "constraint": "uq_task_events_agent_run_log",
+    "repair": "Freed the second event log association before testing a cross-run FK reference; keeps the uniqueness constraint intact"
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "name": "missing_parent_user_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23502",
+    "observations": null,
+    "constraint": null,
+    "passed": false
+  }
+]

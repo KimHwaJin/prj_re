@@ -1,0 +1,74 @@
+[
+  {
+    "name": "missing_parent_user_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "projects_user_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "missing_parent_session_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "messages_session_id_fkey",
+    "passed": true
+  },
+  {
+    "name": "leaf_from_other_session_is_rejected",
+    "expected_sqlstate": "23503",
+    "actual_sqlstate": "23503",
+    "observations": null,
+    "constraint": "fk_sessions_current_leaf",
+    "passed": true
+  },
+  {
+    "name": "session_project_owner_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Session owner and Project owner differ; service must reject this"
+    },
+    "passed": true
+  },
+  {
+    "name": "run_task_session_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Run and Task belong to different sessions"
+    },
+    "passed": true
+  },
+  {
+    "name": "task_root_checkpoint_session_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Task root/checkpoint refer to another session"
+    },
+    "passed": true
+  },
+  {
+    "name": "event_task_run_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": null,
+    "observations": {
+      "database_accepts": true,
+      "meaning": "Event Task and Run differ"
+    },
+    "passed": true
+  },
+  {
+    "name": "event_log_run_mismatch_is_not_checked_by_fk",
+    "expected_sqlstate": null,
+    "actual_sqlstate": "23505",
+    "observations": null,
+    "constraint": "uq_task_events_agent_run_log",
+    "passed": false
+  }
+]

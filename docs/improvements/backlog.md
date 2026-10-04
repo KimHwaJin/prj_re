@@ -104,3 +104,7 @@
 ## 074 SQL 준비·ORM 결과 비용 분해
 
 [074](074-sqlalchemy-cost-diagnosis.md)에서 서비스 소스를 변경하지 않고 caller CPU 진단을 수행했다. 표준10명 SQL expression/cache0.734초·compiler0.078초 대 ORM loading 모듈0.104초, Log/Event 쌍410 SELECT·Task 연결230 SELECT를 확인했다. driver/JSON/builtin을 포함한 전체 읽기 비용이나 불필요 중복 횟수로 해석하지 않는다. 다음 후보는 Log/Event 및 공통 User/Session 조회의 SQL 구조 재사용을 한 묶음으로 검토하고 profiler off 전후 비교로 채택을 판단하는 것이다. 권한/잠금/복구·매 호출 실제 SELECT를 유지한다. 4시도22흐름 오류0·진단 테스트3개·원본 검산 완료이며 속도 개선 주장은 없다. 073 runtime과066/067/071/072 보류, 모델/Registry/Workflow CRUD/운영 후순위를 유지한다. 베이스 미병합·미푸시·미배포다.
+
+## FK·역참조 인덱스 검토 — 2026-10-04
+
+[40개 FK 검토·격리 16개 probe](../reports/foreign-key-review-2026-10-04/README.md)를 완료했다. 서비스/DDL 변경과 성능 개선 측정은 없다. 핵심 FK는 유지하며 성능 후보로 `task_events(task_id,sequence)`의 중복 일반 인덱스 제거를 단독 검증할 수 있다. 누락 7개 역참조 인덱스는 물리 정리/조회 패턴에 따라 선택하고 일괄 추가하지 않는다. Command/Run/Task 소속 검증, Log→SSE CASCADE 및 Workflow 출처 보존·레거시 테이블 정리는 별도 기능/정책/운영 후속이며 기존 우선순위와 074 후보를 자동 대체하지 않는다.
