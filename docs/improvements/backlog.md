@@ -145,3 +145,10 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## 미사용 인프라 관리 API 정리 — 084
 
 [084](084-unused-infrastructure-apis.md)에서 실행 경로와 연결되지 않은 Jupyter registry3개·Redis ping1개 operation과 전용 코드·설정을 제거했다. [설정/클라이언트 이행](../infrastructure-api-cleanup.md)을 따른다. 기존 jupyter_servers 테이블은 이력·데이터 보존을 위해 남기고 autogenerate의 우발적 삭제 제안만 제외한다. 실제 물리 정리는 데이터 보존/복원 검토 이후 별도 migration이다. 다음은 SSO→프로젝트→세션→Run→HITL/resume→Executor 결과/SSE의 통합 계약 검증이다. 실제 외부 프론트 이행·사내SDK 연결·Executor 데이터 registry 계약은 미완료이며 Message CUD·Workflow CRUD·운영 복구·모델 호출 수 최적화는 기존 후순위를 유지한다. 이번 API 삭제를 Worker 구조/처리량 개선이나 실제 배포로 해석하지 않는다. 베이스 미병합·미푸시·미배포다.
+
+
+## 현재 API 통합 검증 후속 085
+
+[085](085-api-contract-flow-verification.md)에서 실제 서버 연계14항목과 PG 회귀81개를 확인했다. 다음 우선 검토는 사용자에게 필요한 Tool 선택 인자/기본값을 계획·typed form에 얼마나 노출할지다. 현재 arguments와 편집 정책에 선언한 인자만 수정하며 모든 Python 인자를 자동 노출하지 않는다. statistics.columns 수정422를 실제 확인했고 운영 정책을 임의로 확대하지 않았다. 입력/출력 참조와 사용자가 수정할 파라미터를 구분하여 생성 규칙·Workflow 작성 가이드·UI를 맞춘다.
+
+승인 계획의 사용자 제외와 최종 skipped_steps의 실행 중 조건/의존성 skip은 별개다. UI는 interaction.resolved/승인 계획을 함께 사용한다. 실제 프론트 적용과 사내SDK 왕복·실제 모델 의도 분류/보고서 품질은 여전히 미검증이다. Markdown Run 결과는 제공하지만 Artifact POST·파일/노트북 셀 저장은 미확정 후속이다. 데이터 registry 외부 구현과 모델 호출 최적화·장애 대응의 후순위 결정을 유지한다. 이번 기능 검증 시간은 처리량/성능 개선 수치가 아니다.

@@ -236,6 +236,8 @@ parameter_controls는 직접 값/later Agent decision 파라미터의 편집 정
 
 대응 arguments.method binding이 필요하다. literal의 editable 기본은 false다. agent_decision은 output_schema를 기본 편집 범위로 사용하고 별도 control을 추가하면 교집합으로 제한한다. workflow_input/step_output/system_context를 Tool 직접 파라미터 편집 대상으로 열지 않는다. 입력 변경은 inputs의 editable을 사용한다.
 
+Python 함수의 선택 인자/기본값은 arguments와 화면에 자동 보충되지 않는다. 사용자에게 확인·수정을 받을 인자는 arguments에 binding을 선언하고 위 편집 정책을 설정해야 한다. docstring만 작성하거나 parameter_controls만 추가하고 대응 argument를 생략해도 편집 폼이 생기지 않는다. [085 검증에서 statistics.columns 수정422를 확인했다](reports/api-contract-flow-2026-10-04/README.md).
+
 ## 인자 연결 방식
 
 arguments는 함수 인자명→binding 객체다. 함수 signature의 필수 인자를 채우고 허용하지 않는 인자명을 추가하지 않는다. 인자마다 아래 출처 하나만 사용한다.

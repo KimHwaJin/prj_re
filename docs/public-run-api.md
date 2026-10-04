@@ -147,6 +147,8 @@ plan_revision은 1 이상 정수이며 선택한 후보의 버전이다. interac
 | execution_overrides.repair_level | 0~4 및 화면 repair_level_limit 이내 |
 | execution_overrides.max_repair_attempts | 0 이상 및 화면 max_repair_attempts_limit 이내 |
 
+Tool 함수의 signature/docstring에 있는 모든 선택 인자와 기본값을 자동으로 화면에 추가하지 않는다. 계획 arguments에 선언한 인자 중 parameter_controls 또는 Agent decision schema가 허용한 항목만 step_changes로 편집할 수 있다. 예를 들어 quality-review의 statistics.columns는 미선언 상태이므로 수정 요청422이며 기존 계획·토큰은 유지된다. Workflow 작성자는 사용자에게 필요한 인자와 편집 schema를 계획에 명시한다. [085 실제 검증](reports/api-contract-flow-2026-10-04/README.md)을 참고한다.
+
 input_values/step_changes/execution_overrides 생략은 기존 값 유지다. 이전 단계 객체·시스템 문맥 참조는 Tool 파라미터로 편집하지 않는다. 제외가 의존성·근거·필수 출력을 깨뜨리면 422다. 단순 편집은 LLM 재호출 없이 검증한다. edit_plan은 화면을 다시 열고 approve_plan은 승인 snapshot을 고정한다. 편집으로 실제 값이 바뀌면 plan_revision이 증가한다.
 
 ### 자연어 재작성과 추가 질문
@@ -275,6 +277,8 @@ terminal의 result는 route/final_response/service_response/workflow_origin/sele
 | analysis_failed | 같은 실행 결과 구조. 실패·부분 성공을 보존하고 상위 Run은 error |
 
 planning은 revision_count/execution_kind/approval_mode/workflow_eligible다. observations 각 항목은 step_id/tool_id/status/summary/has_image/incomplete/repair_attempt/error다. 전체 DataFrame·원본 코드·파일 경로 대신 제한된 관찰 요약을 제공한다. error는 공개용 일반 설명이며 원문 traceback은 내부 기록에 보관한다.
+
+skipped_steps는 실행 중 조건/의존성 때문에 건너뛴 단계 ID다. 사용자 excluded_step_ids는 승인 전에 단계에서 제거되고 승인 계획에 보존되므로 이 목록에 자동 합쳐지지 않는다. 사용자 제외 표시에는 승인 계획/interaction.resolved의 화면을 사용한다.
 
 repair는 attempts/max_attempts/authorized_level/stop_reason/history/workflow_eligible다. history에는 attempt/required_level/summary/changed_step_ids/status/outcome이 있다.
 

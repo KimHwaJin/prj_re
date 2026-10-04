@@ -127,7 +127,7 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 | AGENT_OBSERVATION_MAX_CHARS | Step 텍스트/구조 관찰 크기 제한, 기본 16000, 허용 1024~64000 |
 | AGENT_MAX_OPERATIONS | 한 분석의 MULTI Operation 상한, 기본 64, 허용 1~256. 초과하면 Cancel 요청 후 최종 이벤트 대기 |
 | EW_DISPATCH_CONCURRENCY | 이벤트 재개·모델 결과 판단·리포트 생성의 실행 동시성 |
-| EW_EXECUTOR_BASE_URL | 누락 이벤트 history를 조회할 /api/v1 포함 URL. 제출용 EXECUTOR_BASE_URL과 path 기준이 다름 |
+| EXECUTOR_BASE_URL | 제출·관찰·누락 이벤트 이력을 조회하는 정본 root URL. /api/v1 경로는 client가 조합한다. EW_EXECUTOR_BASE_URL은 구 별칭이며 서로 다른 값을 중복 주입하지 않는다 |
 
 설정은 중앙 YAML→env→기본값 우선순위를 따른다. memory checkpointer/독립 port 없는 PlanningRuntime은 계획 승인 저장용이다. 실제 비동기 배포에는 영속 checkpoint·binding 테이블 migration·Redis 소비 설정·PV mount가 필요하다. Worker 테이블은 top-level `alembic.ini`, API 관리 테이블은 `alembic.crud.ini`로 migration한다.
 
@@ -135,7 +135,19 @@ execution.review_mode은 `decision_boundary`, `every_tool`, `every_n_tools`를 �
 
 기존 graph/CLI는 아직 남아 있으나 공개 API와 이벤트 Worker는 새 Runtime을 사용한다. 이전 그래프 checkpoint 및 진행 중 Run의 자동 이행은 하지 않는다. 038에서 이미 완료한 계획 승인 checkpoint는 실제 제출을 위해 새 Run을 시작한다.
 
-## 로컬 연계 재현
+## 현재 API 통합 검증
+
+084 이후 계약 흐름은 `scripts/diagnostics/verify_api_contract_flow.py`로 검증한다. 로그인·관리 조회·계획 편집·실제 Executor·SSE 재접속·후속 설명까지14항목과 설정/범위는 [085 결과](reports/api-contract-flow-2026-10-04/README.md)에 기록했다. 모델 transport와 사내 직원 검증만 고정하며 운영 코드/의존성을 우회하지 않는다. 파일 등록 완료나 실제 모델 품질 검증은 아니다.
+
+```sh
+PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_api_contract_flow.py \
+  --settings-file /tmp/private-api-flow-settings.json \
+  --output /tmp/private-api-flow-result.json
+```
+
+이 도구는 같은 CRUD DB를 API/이벤트 Worker에 적용하고 EXECUTOR_BASE_URL/REDIS_URL 정본을 사용한다. 아래055 진단 명령은 당시 구현 이력이다. 해당 구 도구에는 Executor endpoint 중복 별칭과 과거 DB 분리 전제가 남아 있어 현 설정으로 바로 실행 가능한 것으로 해석하지 않는다. 이번 작업에서 구 도구 자체를 이행하지 않았다.
+
+## 이전 로컬 연계 재현
 
 `scripts/diagnostics/verify_agentic_executor_http.py`는 기본 포트 18091에 임시 API를 열고 항상 마지막에 종료한다. 테스트 DB 이름과 host를 검사하고 이 DB에만 관리/Worker migration을 실행한다. 기존 업무 DB를 지정하지 않는다. 실제 모델을 쓰려면 `--real`을 추가한다.
 
@@ -148,7 +160,7 @@ PYTHONPATH=src .venv/bin/python scripts/diagnostics/verify_agentic_executor_http
 settings-file은 비밀 값을 Git에 넣지 않은 flat JSON 중앙 설정 mapping이다. DATABASE_URL은 로컬 agentic_runtime_test, CHECKPOINT_DB_URI는 로컬 agentic_checkpoint_test를 지정한다. EXECUTOR_BASE_URL은 로컬 8000, EXECUTOR_SHARED_RESULT_ROOT는 host에서 읽을 수 있는 executor/shared_dir이며 ANALYSIS_DATASETS에 default-nce Jupyter 경로를 선언한다. 실제 모델에는 MODEL_NAME/API_BASE_URL/MODEL_API_KEY 및 Phoenix 설정을 추가한다. 파일 접근 권한은 600으로 둔다. 이 harness는 로컬 Redis 6379와 기본 kernel profile을 사용하고 매 시험 전용 namespace/group을 만든다. 기존 Executor 이벤트 stream이나 다른 consumer group을 변경하지 않는다. 원천 파일은 수정하지 않지만 새 notebook/execution 결과는 Executor에 생성된다. 부하 테스트나 운영 배포 스크립트가 아니다.
 043에서 terminal 이후의 실제 관찰·결정값·리포트를 제한된 세션 문맥으로 보관하고 후속 conversation/plan_revision에 연결했다. [후속 분석 문맥 안내](agentic-session-analysis-context.md)를 참고한다. execution_review의 근거·값 검증 실패는 최대 두 번의 모델 응답 시도 안에서 정정하고, 여전히 실패하면 HITL을 유지한다. Dataset 등록 API는 연결하지 않았다.
 
-## 현재 인증을 포함한 HTTP 연계 검증 (055)
+## 이전 인증을 포함한 HTTP 연계 검증 (055)
 
 현재 세 진단 도구는 X-User-Id를 쓰지 않는다. `cookie_auth.py`가 임시 loopback 앱의 사내 SDK 검증 결과만 명시적 fixture로 제공한다. 최초 일반 사용자/기본 프로젝트 자동 등록, 실제 localhost Redis 로그인 세션, HttpOnly cookie, /users/me CSRF와 실제 권한 의존성을 사용한다. 운영 라우터·인증 우회 endpoint를 추가하지 않으며 사내 SDK·사내 브라우저 SSO 왕복 검증으로 해석하지 않는다.
 

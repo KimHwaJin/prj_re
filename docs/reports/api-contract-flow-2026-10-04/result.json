@@ -1,0 +1,158 @@
+{
+  "namespace": "api-contract-flow-58f7367e12fd",
+  "passed": true,
+  "checks": [
+    {
+      "name": "login_default_project_summary_detail_csrf_and_role",
+      "passed": true
+    },
+    {
+      "name": "project_create_prompt_and_session_list",
+      "passed": true,
+      "session_count": 2
+    },
+    {
+      "name": "plain_answer_without_hitl_or_executor",
+      "passed": true,
+      "run_id": "b3c1f3c0-5c1a-4fb3-b871-36b435f7e2a7"
+    },
+    {
+      "name": "live_sse_hitl_disconnect_and_new_input_lock",
+      "passed": true,
+      "events": 9
+    },
+    {
+      "name": "undeclared_parameter_edit_rejected_without_mutation",
+      "passed": true
+    },
+    {
+      "name": "plan_parameter_edit_tool_exclusion_and_stable_run_id",
+      "passed": true,
+      "revision": 3
+    },
+    {
+      "name": "login_renewal_preserves_hitl_and_rejects_stale_token",
+      "passed": true
+    },
+    {
+      "name": "executor_wait_locks_same_session_but_other_session_runs",
+      "passed": true
+    },
+    {
+      "name": "actual_executor_finalize_result_and_idempotent_approval",
+      "passed": true,
+      "execution_id": "c4f15dff-fcf9-4bba-9191-96cc9847e02b",
+      "executed_steps": [
+        "load",
+        "profile",
+        "statistics"
+      ],
+      "report_chars": 3713,
+      "artifact_registration": "deferred"
+    },
+    {
+      "name": "sse_reconnect_exact_suffix_and_no_tool_code",
+      "passed": true,
+      "total_events": 26,
+      "cursor": 7
+    },
+    {
+      "name": "explanation_reuses_analysis_without_executor",
+      "passed": true,
+      "new_run_id": "7c3de233-a3bd-4d8b-9e1b-1065cd8fb78e"
+    },
+    {
+      "name": "report_revision_reuses_analysis_without_executor",
+      "passed": true,
+      "new_run_id": "a1057dcb-bd12-402c-ae3d-e0990d819c10"
+    },
+    {
+      "name": "completed_session_accepts_input_and_report_file_registration_remains_deferred",
+      "passed": true
+    },
+    {
+      "name": "new_analysis_creates_new_execution_and_edited_method_executes",
+      "passed": true,
+      "execution_id": "025cc430-9a34-4809-a038-0b73e2e52265",
+      "run_id": "a8a57b8c-e815-4941-bbc8-9d5009fab262",
+      "method": "zscore"
+    }
+  ],
+  "boundaries": {
+    "corporate_sdk": "verified_employee_fixture",
+    "model": "fixed_transport_real_agents_and_middleware",
+    "executor": "actual_local",
+    "api_database_and_worker": "actual_dedicated_postgresql",
+    "login_and_streams": "actual_local_redis",
+    "artifact_registration": "deferred_not_tested",
+    "frontend": "HTTP_client_no_browser"
+  },
+  "session_id": "fb5cbe1f-ba38-4ec4-8d36-a09d795adee4",
+  "run_id": "a73fa85a-e67a-42b3-91a5-0301f4c17dcb",
+  "findings": [
+    {
+      "kind": "parameter_editability_contract",
+      "description": "Only Agent decisions or explicit parameter_controls are editable; absent Tool arguments are not auto-exposed.",
+      "observed": "statistics.columns absent in quality-review plan: 422, no partial mutation"
+    },
+    {
+      "kind": "excluded_vs_skipped_steps",
+      "description": "User exclusions live in the approved plan; final skipped_steps is not their combined list.",
+      "user_excluded_step_ids": [
+        "outliers"
+      ],
+      "runtime_skipped_step_ids": []
+    }
+  ],
+  "executor_posts": [
+    {
+      "path": "/api/v1/executions",
+      "status": 202
+    },
+    {
+      "path": "/api/v1/executions/c4f15dff-fcf9-4bba-9191-96cc9847e02b/finalize",
+      "status": 202
+    },
+    {
+      "path": "/api/v1/executions",
+      "status": 202
+    },
+    {
+      "path": "/api/v1/executions/025cc430-9a34-4809-a038-0b73e2e52265/operations",
+      "status": 202
+    },
+    {
+      "path": "/api/v1/executions/025cc430-9a34-4809-a038-0b73e2e52265/finalize",
+      "status": 202
+    }
+  ],
+  "model_roles": [
+    "answer",
+    "planning_select",
+    "planning_plan",
+    "answer",
+    "report",
+    "answer",
+    "answer",
+    "planning_select",
+    "planning_plan",
+    "review",
+    "report"
+  ],
+  "final_status": "success",
+  "report_status": "ready",
+  "elapsed_seconds": 13.771,
+  "source_commit": "2f3b0f6",
+  "regression": {
+    "identity_project_session_run_read": {
+      "passed": 77,
+      "skipped": 1,
+      "seconds": 73.65
+    },
+    "planning_and_cookie_post_sse": {
+      "passed": 4,
+      "seconds": 11.46
+    },
+    "note": "The previously skipped cookie Run/POST-SSE case passed in the separate planning DB run."
+  }
+}
