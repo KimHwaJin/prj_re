@@ -14,7 +14,6 @@ from api_service.repositories.project_repository import ProjectRepository
 from api_service.repositories.user_repository import UserRepository
 from api_service.schemas.common.project_schema import (
     ProjectCreate,
-    ProjectDeleteResult,
     ProjectUpdate,
 )
 from api_service.services.cascade_service import (
@@ -132,7 +131,7 @@ class ProjectService:
         db: AsyncSession,
         user_id: UUID,
         project_id: UUID,
-    ) -> ProjectDeleteResult:
+    ) -> None:
         projects = await lifecycle.lock_projects(db, user_id, [project_id], exclusive=True)
         project = projects[project_id]
         if project.is_default:
@@ -154,20 +153,10 @@ class ProjectService:
             ).all()
         )
 
-        deleted_message_count = await soft_delete_messages_for_sessions(db, session_ids)
-        deleted_session_count = await soft_delete_sessions(db, session_ids)
+        await soft_delete_messages_for_sessions(db, session_ids)
+        await soft_delete_sessions(db, session_ids)
 
         project.delete_yn = DeleteYN.Y
         project.deleted_at = utc_now()
-        project_deleted = True
-        detail = "Project와 하위 Session/Message를 삭제했습니다."
 
         await db.commit()
-        return ProjectDeleteResult(
-            project_id=project_id,
-            project_deleted=project_deleted,
-            deleted_session_count=deleted_session_count,
-            deleted_message_count=deleted_message_count,
-            detail=detail,
-        )
-

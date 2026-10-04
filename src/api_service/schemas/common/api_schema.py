@@ -23,16 +23,6 @@ class Page(APIModel, Generic[T]):
     page: PageInfo
 
 
-class ProjectResource(APIModel):
-    id: UUID = Field(validation_alias="project_id")
-    name: str = Field(validation_alias="project_name")
-    system_prompt: str
-    prompt_version: int
-    is_default: bool
-    created_at: datetime
-    updated_at: datetime
-
-
 class SessionResource(APIModel):
     id: UUID = Field(validation_alias="session_id")
     project_id: UUID

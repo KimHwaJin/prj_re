@@ -10,6 +10,10 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 FIELDS = {
+    'project_name': '프로젝트 이름. 요청 body에서 사용하고 공개 응답은 name으로 표시한다.',
+    'system_prompt': '사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다.',
+    'prompt_version': '프로젝트 지침 변경 버전. 생성1, system_prompt 내용이 실제 변경될 때만 증가하며 메모리 문서 version과 별개다.',
+    'is_default': '사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다.',
     'q': '사용자 공개 ID·표시 이름의 대소문자 무시 부분 검색어. 앞뒤 공백을 제거하고 %, _, 역슬래시는 문자 그대로 찾는다.',
     'is_active': '사용자가 soft delete되지 않았는지. 로그인 세션의 유효성이나 자동 복구를 뜻하지 않는다.',
     'quote': '자동 메모리 갱신 내용을 뒷받침하는 현재 사용자 발언의 정확한 원문. 수동 편집에는 없다.',
@@ -213,6 +217,7 @@ KEYWORDS = {
     'minimum': '허용 숫자의 포함 하한.', 'maximum': '허용 숫자의 포함 상한.',
     'exclusiveMinimum': '허용 숫자의 제외 하한.', 'exclusiveMaximum': '허용 숫자의 제외 상한.',
     'minLength': '허용 문자열의 최소 길이.', 'maxLength': '허용 문자열의 최대 길이.',
+    'minProperties': '객체에 필요한 최소 필드 수. Project PATCH는 이름 또는 지침 중 적어도 하나를 지정한다.',
     'minItems': '허용 배열의 최소 원소 수.', 'maxItems': '허용 배열의 최대 원소 수.',
     'uniqueItems': '배열 원소의 중복을 허용하지 않는지 표시한다.',
     'pattern': '문자열이 만족해야 하는 정규식.', 'discriminator': '선택 구조를 구분하는 필드 정보.',
@@ -270,6 +275,11 @@ MODELS = {
     'DeleteYN': '비활성/삭제 표시 Y/N.', 'HTTPValidationError': '요청 유효성 검증 실패 상세.',
     'Page_AgentRunLogResource_': '진단 로그 목록과 페이지 정보. 기본50개·최대200개를 반환한다.',
     'PageInfo': '다음 페이지 커서·존재 여부.', 'Page_PublicRunResource_': '과거 전체 Run 응답 목록 형식.', 'Page_PublicRunSummary_': 'Run 요약 목록 및 페이지 정보.',
+    'ProjectSummary': '프로젝트 선택 목록의 ID·이름·기본 여부·생성/변경 시각. 지침·하위 세션은 읽지 않는다.',
+    'Page_ProjectSummary_': '소유한 활성 프로젝트 요약 목록과 페이지. 기본50·최대200개다.',
+    'ProjectResource': '프로젝트 상세·생성·수정 응답. 공통 지침과 그 변경 버전을 포함한다.',
+    'ProjectCreate': '프로젝트 생성 요청. 이름·공통 지침만 허용하며 공백 이름은 기존 기본 프로젝트 충돌 정책을 따른다.',
+    'ProjectUpdate': '프로젝트 이름·공통 지침 부분 수정. 지정한 null은 거절하고 빈 지침은 초기화한다.',
     'UserSummary': '관리자 사용자 목록용 요약. 기본 프로젝트·로그인 세션 정보는 포함하지 않는다.',
     'Page_UserSummary_': '관리자 사용자 요약 목록·페이지. 기본50·최대200개다.',
     'UserRead': '본인 또는 관리자의 사용자 상세. 관리자만 삭제된 사용자도 조회한다.',
@@ -340,6 +350,22 @@ DIAGNOSTIC_FIELDS = {
 def field_description(key, path=(), parent=None):
     """Explain fields using the containing object, not only their spelling."""
     parent = parent or {}
+    project_context = any(k in {'ProjectSummary', 'Page_ProjectSummary_', 'ProjectResource', 'ProjectCreate',
+        'ProjectUpdate', 'project_list.json', 'project_detail.json', 'project_create.json', 'project_update.json',
+        'docs/project-api.md'} for k in path)
+    if project_context:
+        descriptions = {
+            'id': '프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다.',
+            'name': '프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다.',
+            'project_name': '변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다.',
+            'system_prompt': FIELDS['system_prompt'] + ' 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다.',
+            'prompt_version': FIELDS['prompt_version'],
+            'is_default': FIELDS['is_default'],
+            'created_at': '프로젝트 최초 생성 시각.',
+            'updated_at': '프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다.',
+            'items': '현재 페이지의 프로젝트 요약 목록. system_prompt·prompt_version과 하위 세션/메시지는 포함하지 않는다.',
+        }
+        if key in descriptions: return descriptions[key]
     if '/api/v1/users' in path and parent.get('in') == 'query' and key == 'name':
         query = parent.get('name')
         descriptions = {'q': FIELDS['q'], 'role': '사용자 권한 admin/user 정확 일치 필터.',
@@ -568,7 +594,7 @@ def main():
         total_fields += sum(line.lstrip().startswith('//') for line in rendered.splitlines()) - 1
         p.with_suffix('.jsonc').write_text(rendered)
     inline_blocks = 0
-    for rel in ('docs/public-run-api.md','docs/workflow-json-reference.md'):
+    for rel in ('docs/public-run-api.md','docs/workflow-json-reference.md','docs/project-api.md'):
         document = ROOT/rel
         def replace_block(match):
             nonlocal inline_blocks

@@ -135,3 +135,8 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## 관리자 사용자 읽기 계약 — 082
 
 [082](082-admin-user-read-contract.md)에서 관리자 GET /users의 요약 페이지·검색·role/status 필터와 삭제 사용자 상세 읽기를 구현했다. SSO 일반 사용자/기본 프로젝트 자동 생성·삭제 사용자 자동 복구 금지·관리자 보호·소유권을 유지한다. 관리 화면은 [현재 사용자 계약](../user-identity-api.md)의 공개 user_id·목록 is_active·상세 delete_yn을 사용한다. 이번 검증은 격리PG37·전체src681·wheel·필드 주석이며 사내SDK 실연결·실제 프론트 이행·대규모 사용자 부분 검색의 성능 측정은 남아 있다. 사용자 복구 API는 이번 요구사항이 아니며 추가하지 않았다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위는 유지한다. 베이스 미병합·미푸시·미배포다.
+
+
+## 프로젝트 기본 CRUD 계약 — 083
+
+[083](083-project-crud-contract.md)에서 프로젝트 요약 목록과 상세를 분리하고 요청의 알 수 없는 필드·명시적 null·빈 PATCH를 거절했다. 지침의 빈 문자열 초기화·내용 변경 시 버전 증가, 새 Run 실행 시 snapshot·기존 재개 고정을 문서화하고 PG/Worker/checkpoint·middleware로 검증했다. 삭제 결과 DTO를 제거하고 기본 프로젝트/미종료/점유/소유권 보호는 유지한다. [현재 계약](../project-api.md)을 따른다. 실제 프론트는 목록의 지침/버전 접근을 상세 GET으로 바꾸고 미변경 PATCH 필드를 생략해야 한다. SSO SDK 실연결·실제 모델의 지침 준수·Pod 성능/이행 확인은 후속 통합 검증이며 속도 향상 측정은 이번 범위가 아니다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위와 미병합·미푸시·미배포 상태는 유지한다.

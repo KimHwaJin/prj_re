@@ -63,7 +63,8 @@ async def probes():
     from api_service.repositories.session_repository import SessionRepository
     from api_service.repositories.user_repository import UserRepository
     from api_service.schemas.common.message_schema import MessageCreate
-    from api_service.schemas.common.api_schema import ProjectResource, SessionResource
+    from api_service.schemas.common.api_schema import SessionResource
+    from api_service.schemas.common.project_schema import ProjectResource
     from api_service.services.session_service import SessionService
 
     now, owner, project = datetime.now(timezone.utc), uuid4(), uuid4()

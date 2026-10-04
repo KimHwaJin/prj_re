@@ -56,7 +56,16 @@ async def sign_in(h):
 async def test_first_sso_login_atomically_creates_user_default_project_and_membership(cookie_api):
     h=cookie_api
     user=await sign_in(h)
-    assert user["user_id"]=="000123" and user["role"]=="user" and user["default_project_id"]
+    assert user["user_id"]=="000123" and user["role"]=="user"
+    projects = await h.client.get("/api/v1/projects")
+    assert projects.status_code == 200, projects.text
+    assert len(projects.json()["items"]) == 1
+    default = projects.json()["items"][0]
+    assert set(default) == {"id", "name", "is_default", "created_at", "updated_at"}
+    assert default["id"] == user["default_project_id"] and default["is_default"]
+    detail = await h.client.get("/api/v1/projects/" + default["id"])
+    assert detail.status_code == 200 and detail.json()["system_prompt"] == ""
+    assert detail.json()["prompt_version"] == 1
     async with h.factory() as db:
         row=await db.scalar(select(UserModel).where(UserModel.public_user_id=="000123"))
         project=await db.scalar(select(ProjectModel).where(ProjectModel.project_id==UUID(user["default_project_id"])))

@@ -2,6 +2,8 @@
 
 프로젝트당 **하나의 Markdown 문서**를 관리한다. 관리 화면은 문자열 하나를 조회·편집·초기화하며 별도 memory_id, entries, topic key는 없다. `system_prompt`는 사용자가 작성하는 명시적 프로젝트 지침이고 `project_memory`는 사용자와 Agent가 갱신하는 참고 맥락이다. 세션의 대화/체크포인트와 실제 분석 결과·보고서·아티팩트는 각 원본에 보존한다. 075가 051~053의 항목 저장·API를 대체한다.
 
+프로젝트 기본 CRUD와 system_prompt/prompt_version의 적용 시점은 [프로젝트 API](project-api.md)를 따른다. 메모리 문서 version과 지침 버전은 별개다.
+
 ## 공개 관리 API
 
 기본 prefix `/api/v1`. 기존 SSO 쿠키·쓰기 CSRF 헤더·활성 사용자/프로젝트 소유권 검사를 적용한다. body의 user_id나 memory_id를 받지 않는다.

@@ -1,16 +1,14 @@
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api_service.core.auth import get_current_user_id
 from api_service.core.database import get_db
-from api_service.core.enums import DeleteYN
-from api_service.core.pagination import ListParams, fetch_page, list_params
-from api_service.models import ProjectModel
-from api_service.schemas.common.api_schema import Page, ProjectResource
-from api_service.schemas.common.project_schema import ProjectCreate, ProjectUpdate
+from api_service.core.pagination import ListParams, list_params
+from api_service.schemas.common.api_schema import Page
+from api_service.schemas.common.project_schema import ProjectCreate, ProjectUpdate, ProjectSummary, ProjectResource
+from api_service.services.project_queries import list_project_summaries
 from api_service.services.project_service import ProjectService
 from service_contracts.project_memory import MemoryConflict, MemoryLimit
 from api_service.schemas.common.project_memory_schema import MemoryPut, MemoryResource
@@ -32,31 +30,25 @@ async def create_project(
     return ProjectResource.model_validate(project)
 
 
-@router.get("", response_model=Page[ProjectResource])
+@router.get("", response_model=Page[ProjectSummary])
 async def list_projects(
+    response: Response,
     params: ListParams = Depends(list_params),
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    items, page = await fetch_page(
-        db,
-        select(ProjectModel).where(
-            ProjectModel.user_id == user_id,
-            ProjectModel.delete_yn == DeleteYN.N,
-        ),
-        model=ProjectModel,
-        id_name="project_id",
-        params=params,
-    )
-    return {"items": [ProjectResource.model_validate(item) for item in items], "page": page}
+    response.headers["Cache-Control"] = "no-store"
+    return await list_project_summaries(db, user_id, params)
 
 
 @router.get("/{project_id}", response_model=ProjectResource)
 async def read_project(
     project_id: UUID,
+    response: Response,
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
+    response.headers["Cache-Control"] = "no-store"
     return ProjectResource.model_validate(await ProjectService.read(db, user_id, project_id))
 
 

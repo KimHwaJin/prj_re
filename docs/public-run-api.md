@@ -4,7 +4,7 @@
 
 새 요청과 모든 HITL 재개는 같은 POST를 사용한다. 일반 POST는 실행을 durable queue에 접수하고 Run 상태를 반환한다. 진행 메시지·승인 화면·최종 결과는 상태 GET 또는 SSE로 받는다. 최종 LLM 답변을 일반 POST의 응답까지 기다리는 방식이 아니다.
 
-[프로젝트 공유 메모리 API](project-memory.md), [SSO 설정](sso-authentication.md), [Workflow JSON](workflow-json-reference.md), [검증된 JSON 예제와 schema](contracts/agent-api/README.md)를 함께 참고한다. 이미지·파일 입력과 Gaia adapter, 새 Workflow 관리 API·pgvector 추천, 동적 Dataset Registry는 아직 연결되지 않았다.
+[프로젝트 관리·지침 적용](project-api.md), [프로젝트 공유 메모리 API](project-memory.md), [SSO 설정](sso-authentication.md), [Workflow JSON](workflow-json-reference.md), [검증된 JSON 예제와 schema](contracts/agent-api/README.md)를 함께 참고한다. 이미지·파일 입력과 Gaia adapter, 새 Workflow 관리 API·pgvector 추천, 동적 Dataset Registry는 아직 연결되지 않았다.
 
 본문 `jsonc` 예제와 [주석 파일 안내](contracts/field-comments.md)는 필드별 설명을 포함한다. API에 전송할 때는 주석 없는 `.json` 예제를 사용한다. 주석은 요청 필드가 아니다.
 

@@ -111,6 +111,20 @@ assert set(schemas['SessionAvailability']['properties']) == {'status', 'allowed_
 assert set(schemas['SessionUpdate']['properties']) == {'session_name'}
 assert schemas['SessionUpdate']['additionalProperties'] is False
 assert app.openapi()['components']['securitySchemes']['LoginSession']['in'] == 'cookie'
+projects = paths['/api/v1/projects']['get']
+assert projects['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_ProjectSummary_')
+assert set(schemas['ProjectSummary']['properties']) == {'id', 'name', 'is_default', 'created_at', 'updated_at'}
+assert set(schemas['ProjectResource']['properties']) == {'id', 'name', 'is_default', 'created_at', 'updated_at', 'system_prompt', 'prompt_version'}
+assert schemas['ProjectCreate']['additionalProperties'] is False
+assert schemas['ProjectUpdate']['additionalProperties'] is False
+assert schemas['ProjectUpdate']['minProperties'] == 1
+for field in ('project_name', 'system_prompt'):
+    assert schemas['ProjectUpdate']['properties'][field]['type'] == 'string'
+    assert 'anyOf' not in schemas['ProjectUpdate']['properties'][field]
+    assert 'default' not in schemas['ProjectUpdate']['properties'][field]
+
+assert 'ProjectDeleteResult' not in schemas
+assert 'api_service/services/project_queries.py' in names
 users = paths['/api/v1/users']['get']
 assert users['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_UserSummary_')
 assert {'q', 'role', 'status', 'limit', 'cursor', 'sort', 'created_at_from', 'created_at_to'} == {p['name'] for p in users['parameters'] if p['in'] == 'query'}
@@ -182,7 +196,7 @@ async def smoke():
     return len(state['approved_snapshot']['steps'])
 
 print(json.dumps({'wheel':wheel.name, 'source_checkout_imported':False,
-    'admin_user_read_contract':True, 'session_settings_contract':True, 'session_activity_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
+    'project_crud_contract':True, 'admin_user_read_contract':True, 'session_settings_contract':True, 'session_activity_contract':True, 'api_openapi_paths':len(paths), 'current_approved_plan_steps':asyncio.run(smoke()),
     'retired_graph_packages_absent':True, 'unified_workflow_package_present':True, 'tests_in_wheel':False, 'resources_present':True,
     'role_prompts_present':len(roles), 'production_builders_constructed':True,
     'create_agent_roles':len(roles), 'role_checkpointers_disabled':True}))

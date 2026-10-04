@@ -7838,5 +7838,241 @@
     "title": "UserRead",
     // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
     "type": "object"
+  },
+  // 프로젝트 생성 요청. 이름·공통 지침만 허용하며 공백 이름은 기존 기본 프로젝트 충돌 정책을 따른다.
+  "ProjectCreate": {
+    // 정의되지 않은 필드 허용 여부 또는 동적 키의 값 schema. false면 임의 필드를 거절한다.
+    "additionalProperties": false,
+    // 객체 필드 이름별 검증 규칙.
+    "properties": {
+      // 변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 필수 필드.
+      "project_name": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 필수 필드.",
+        // 허용 문자열의 최대 길이.
+        "maxLength": 200,
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Project Name",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+      "system_prompt": {
+        // Schema의 기본값 설명. 업무 실행 시 실제 값 주입 여부는 해당 계약을 따른다.
+        "default": "",
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "System Prompt",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      }
+    },
+    // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+    "required": [
+      "project_name"
+    ],
+    // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+    "title": "ProjectCreate",
+    // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+    "type": "object"
+  },
+  // 프로젝트 이름·공통 지침 부분 수정. 지정한 null은 거절하고 빈 지침은 초기화한다.
+  "ProjectUpdate": {
+    // 정의되지 않은 필드 허용 여부 또는 동적 키의 값 schema. false면 임의 필드를 거절한다.
+    "additionalProperties": false,
+    // 객체에 필요한 최소 필드 수. Project PATCH는 이름 또는 지침 중 적어도 하나를 지정한다.
+    "minProperties": 1,
+    // 객체 필드 이름별 검증 규칙.
+    "properties": {
+      // 변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+      "project_name": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+        // 허용 문자열의 최대 길이.
+        "maxLength": 200,
+        // 허용 문자열의 최소 길이.
+        "minLength": 1,
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Project Name",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.
+      "system_prompt": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "System Prompt",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      }
+    },
+    // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+    "title": "ProjectUpdate",
+    // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+    "type": "object"
+  },
+  // 프로젝트 선택 목록의 ID·이름·기본 여부·생성/변경 시각. 지침·하위 세션은 읽지 않는다.
+  "ProjectSummary": {
+    // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+    "description": "Project selection list; no prompt or child collections.",
+    // 객체 필드 이름별 검증 규칙.
+    "properties": {
+      // 프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드.
+      "id": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "uuid",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Id",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드.
+      "name": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Name",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드.
+      "is_default": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Is Default",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "boolean"
+      },
+      // 프로젝트 최초 생성 시각. 필수 필드.
+      "created_at": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 최초 생성 시각. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "date-time",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Created At",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드.
+      "updated_at": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "date-time",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Updated At",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      }
+    },
+    // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+    "required": [
+      "id",
+      "name",
+      "is_default",
+      "created_at",
+      "updated_at"
+    ],
+    // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+    "title": "ProjectSummary",
+    // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+    "type": "object"
+  },
+  // 프로젝트 상세·생성·수정 응답. 공통 지침과 그 변경 버전을 포함한다.
+  "ProjectResource": {
+    // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+    "description": "Full project detail, also returned by create and update.",
+    // 객체 필드 이름별 검증 규칙.
+    "properties": {
+      // 프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드.
+      "id": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "uuid",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Id",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드.
+      "name": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Name",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드.
+      "is_default": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Is Default",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "boolean"
+      },
+      // 프로젝트 최초 생성 시각. 필수 필드.
+      "created_at": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 최초 생성 시각. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "date-time",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Created At",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드.
+      "updated_at": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드.",
+        // Schema 형식 제약. uuid/date-time 등의 문자열 표현을 설명한다.
+        "format": "date-time",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Updated At",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 필수 필드.
+      "system_prompt": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "System Prompt",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "string"
+      },
+      // 프로젝트 지침 변경 버전. 생성1, system_prompt 내용이 실제 변경될 때만 증가하며 메모리 문서 version과 별개다. 필수 필드.
+      "prompt_version": {
+        // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+        "description": "프로젝트 지침 변경 버전. 생성1, system_prompt 내용이 실제 변경될 때만 증가하며 메모리 문서 version과 별개다. 필수 필드.",
+        // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+        "title": "Prompt Version",
+        // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+        "type": "integer"
+      }
+    },
+    // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
+    "required": [
+      "id",
+      "name",
+      "is_default",
+      "created_at",
+      "updated_at",
+      "system_prompt",
+      "prompt_version"
+    ],
+    // 사용자 화면의 표시 제목. value_schema 내부에서는 JSON Schema 표시 제목이다.
+    "title": "ProjectResource",
+    // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+    "type": "object"
   }
 }

@@ -30,7 +30,11 @@
 | [contracts/agent-api/requests/edit_plan.jsonc](agent-api/requests/edit_plan.jsonc) | 계획 입력·인자·Step 제외·실행 정책 편집 |
 | [contracts/agent-api/requests/reject_repair.jsonc](agent-api/requests/reject_repair.jsonc) | 수정 제안 거절 |
 | [contracts/agent-api/requests/replan.jsonc](agent-api/requests/replan.jsonc) | 자연어 계획 재작성 |
+| [contracts/agent-api/requests/project_create.jsonc](agent-api/requests/project_create.jsonc) | 프로젝트 이름·공통 지침 생성 |
+| [contracts/agent-api/requests/project_update.jsonc](agent-api/requests/project_update.jsonc) | 빈 문자열로 프로젝트 지침 초기화 |
 | [contracts/agent-api/requests/start.jsonc](agent-api/requests/start.jsonc) | 새 사용자 입력·모델 선택 |
+| [contracts/agent-api/responses/project_list.jsonc](agent-api/responses/project_list.jsonc) | 프로젝트 요약5필드·페이지 |
+| [contracts/agent-api/responses/project_detail.jsonc](agent-api/responses/project_detail.jsonc) | 프로젝트 상세 지침·변경 버전 |
 | [contracts/agent-api/responses/user_list.jsonc](agent-api/responses/user_list.jsonc) | 관리자 사용자 요약·권한·활성 상태·페이지 |
 | [contracts/agent-api/responses/deleted_user.jsonc](agent-api/responses/deleted_user.jsonc) | 관리자용 삭제 사용자 상세·기본 프로젝트 null |
 | [contracts/agent-api/responses/run_list.jsonc](agent-api/responses/run_list.jsonc) | 공개 Run 요약 목록·페이지 |

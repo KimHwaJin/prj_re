@@ -10,13 +10,15 @@ OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명�
 
 ## 기계 판독 파일
 
-- [openapi.snapshot.json](openapi.snapshot.json) · [필드 주석](openapi.snapshot.jsonc): 현재 app의 Run 9개 operation·관리자 진단2개 operation과 login/logout/me 및 프로젝트 memory GET/PUT/DELETE 및 사용자 목록/등록·단건 조회/수정/삭제. scoped 사본은 현재16paths/39models이며 전체 app 경로를 모두 포함하지 않는다. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
-- [payload-schemas.json](payload-schemas.json) · [필드 주석](payload-schemas.jsonc): RunRequest, RunCancel, PublicRunResource, AgentRunLogResource, RunDiagnosticsResource, RunInvocationResource, UserSummary, UserRead, RunEvent, PlanView 및 typed interaction schema. 이 객체의 key별 JSON Schema를 독립 schema로 읽는다.
+- [openapi.snapshot.json](openapi.snapshot.json) · [필드 주석](openapi.snapshot.jsonc): 현재 app의 Run 9개 operation·관리자 진단2개 operation과 login/logout/me 및 프로젝트 memory GET/PUT/DELETE 및 사용자·프로젝트 목록/등록·단건 조회/수정/삭제. scoped 사본은 현재18paths/44models이며 전체 app 경로를 모두 포함하지 않는다. 실제 자동 OpenAPI의 SSE/redirect content annotation 제한을 보존한다.
+- [payload-schemas.json](payload-schemas.json) · [필드 주석](payload-schemas.jsonc): RunRequest, RunCancel, PublicRunResource, AgentRunLogResource, RunDiagnosticsResource, RunInvocationResource, UserSummary, UserRead, ProjectCreate, ProjectUpdate, ProjectSummary, ProjectResource, RunEvent, PlanView 및 typed interaction schema. 이 객체의 key별 JSON Schema를 독립 schema로 읽는다.
 
 ## 요청
 
 | 파일 | 액션 |
 |---|---|
+| [project_create.json](requests/project_create.json) · [필드 주석](requests/project_create.jsonc) | 프로젝트 생성 |
+| [project_update.json](requests/project_update.json) · [필드 주석](requests/project_update.jsonc) | 프로젝트 지침 초기화 PATCH |
 | [start.json](requests/start.json) · [필드 주석](requests/start.jsonc) | 새 요청 |
 | [edit_plan.json](requests/edit_plan.json) · [필드 주석](requests/edit_plan.jsonc) | 계획 편집 |
 | [approve_plan.json](requests/approve_plan.json) · [필드 주석](requests/approve_plan.jsonc) | 계획 최종 승인 |
@@ -27,10 +29,12 @@ OpenAPI·payload schema에는 필드 `description`도 추가했다. 이 설명�
 | [reject_repair.json](requests/reject_repair.json) · [필드 주석](requests/reject_repair.jsonc) | 수정 거절 |
 | [cancel.json](requests/cancel.json) · [필드 주석](requests/cancel.jsonc) | 별도 cancel API body |
 
-각 JSON은 단독 POST body다. 요청 파일들을 배열로 묶어 제출하는 API가 아니다. 새 입력 또는 각 resume에 별도 Idempotency-Key를 적용하고 서버의 실제 ID/token/revision으로 교체한다. default-nce는 설명용 등록 데이터 참조로 실제 ANALYSIS_DATASETS에 같은 참조가 있어야 한다. replan/질문/decision/repair는 각기 다른 대기 화면 예제이며 하나의 실제 화면이 모든 action을 받는다는 뜻이 아니다.
+Run 요청 JSON은 단독 POST body다. project_create는 POST /projects, project_update는 PATCH /projects/{project_id}에 보내며 [프로젝트 계약](../../project-api.md)을 따른다. 요청 파일들을 배열로 묶어 제출하는 API가 아니다. 새 입력 또는 각 resume에 별도 Idempotency-Key를 적용하고 서버의 실제 ID/token/revision으로 교체한다. default-nce는 설명용 등록 데이터 참조로 실제 ANALYSIS_DATASETS에 같은 참조가 있어야 한다. replan/질문/decision/repair는 각기 다른 대기 화면 예제이며 하나의 실제 화면이 모든 action을 받는다는 뜻이 아니다.
 
 ## 응답과 이벤트
 
+- [프로젝트 목록](responses/project_list.json) · [필드 주석](responses/project_list.jsonc): ProjectSummary의5개필드·페이지이며 지침을 읽지 않는다.
+- [프로젝트 상세](responses/project_detail.json) · [필드 주석](responses/project_detail.jsonc): 지침·버전을 포함한 ProjectResource. 생성/PATCH도 같은 형식이다.
 - [관리자 사용자 목록](responses/user_list.json) · [필드 주석](responses/user_list.jsonc): 공개 문자열 ID·권한·활성 여부의 요약 페이지. 기본 프로젝트·로그인 세션 정보는 없다.
 - [삭제 사용자 상세](responses/deleted_user.json) · [필드 주석](responses/deleted_user.jsonc): 관리자가 조회하는 UserRead. 조회에서 복구하지 않는다. [사용자 계약](../../user-identity-api.md)을 따른다.
 - [Run 목록](responses/run_list.json) · [필드 주석](responses/run_list.jsonc): PublicRunSummary 목록이며 결과/인터럽트/token이 없다. 해당 Run의 단건 조회로 상세를 받는다.
@@ -54,3 +58,5 @@ Schema를 수정하면 current code에서 다시 생성하고 예제를 재검�
 079에서 Run 목록을 PublicRunSummary로 분리하고 중복 join 경로를 삭제했다. 이 사본도 현재 scoped OpenAPI로 재생성했다. 상세 접수/조회/SSE와 로그 조회 계약은 유지했다.
 
 082에서 관리자 사용자 목록을 추가하고 삭제 사용자 상세 조회를 허용했다. UserSummary와 UserRead 문서 schema는 응답 직렬화 모드로 추출하여 외부 필드 user_id를 유지한다. UserRead의 ORM 입력용 validation_alias public_user_id는 외부 응답 필드가 아니다.
+
+083에서 프로젝트 목록을 ProjectSummary로 분리하고 생성/수정의 알 수 없는 필드·명시적 null을 거절했다. ProjectResource의 공개 id/name은 유지하며 프로젝트 관련 schema를 project_schema.py로 모았다. 문서용 읽기 schema는 serialization mode로 추출한다.

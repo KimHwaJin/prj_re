@@ -2189,6 +2189,404 @@
           }
         ]
       }
+    },
+    "/api/v1/projects": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Create Project",
+        "operationId": "create_project_api_v1_projects_post",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "List Projects",
+        "operationId": "list_projects_api_v1_projects_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "목록 페이지 크기. 기본 50, 최대 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "다음 목록 페이지를 요청할 때 사용하는 토큰. SSE Last-Event-ID와 별개다."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^-?created_at$",
+              "default": "-created_at",
+              "title": "Sort"
+            },
+            "description": "목록 정렬. created_at 또는 -created_at으로 오름/내림차순을 선택한다."
+          },
+          {
+            "name": "created_at_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At From"
+            },
+            "description": "목록 생성 시각의 포함 하한."
+          },
+          {
+            "name": "created_at_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created At To"
+            },
+            "description": "목록 생성 시각의 제외 상한."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ProjectSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Read Project",
+        "operationId": "read_project_api_v1_projects__project_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            },
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Update Project",
+        "operationId": "update_project_api_v1_projects__project_id__patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            },
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResource"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Delete Project",
+        "operationId": "delete_project_api_v1_projects__project_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            },
+            "description": "프로젝트 UUID. 프로젝트 소유권·공유 문맥을 구분한다."
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required for cookie-authenticated POST/PUT/PATCH/DELETE requests.",
+              "title": "X-Csrf-Token"
+            },
+            "description": "로그인 쿠키와 함께 POST/PUT/PATCH/DELETE에 필요한 CSRF 헤더. GET에는 검증을 요구하지 않는다."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "LoginSession": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2591,6 +2989,28 @@
         ],
         "title": "Page[AgentRunLogResource]"
       },
+      "Page_ProjectSummary_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectSummary"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "현재 페이지의 프로젝트 요약 목록. system_prompt·prompt_version과 하위 세션/메시지는 포함하지 않는다. 필수 필드."
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo",
+            "description": "목록 응답의 페이지 정보. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "Page[ProjectSummary]"
+      },
       "Page_PublicRunSummary_": {
         "properties": {
           "items": {
@@ -2781,6 +3201,144 @@
           "feedback"
         ],
         "title": "PlanRevisionAction"
+      },
+      "ProjectCreate": {
+        "properties": {
+          "project_name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Project Name",
+            "description": "변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 필수 필드."
+          },
+          "system_prompt": {
+            "type": "string",
+            "title": "System Prompt",
+            "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다.",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_name"
+        ],
+        "title": "ProjectCreate"
+      },
+      "ProjectResource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드."
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "description": "사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "프로젝트 최초 생성 시각. 필수 필드."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드."
+          },
+          "system_prompt": {
+            "type": "string",
+            "title": "System Prompt",
+            "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 필수 필드."
+          },
+          "prompt_version": {
+            "type": "integer",
+            "title": "Prompt Version",
+            "description": "프로젝트 지침 변경 버전. 생성1, system_prompt 내용이 실제 변경될 때만 증가하며 메모리 문서 version과 별개다. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "created_at",
+          "updated_at",
+          "system_prompt",
+          "prompt_version"
+        ],
+        "title": "ProjectResource",
+        "description": "Full project detail, also returned by create and update."
+      },
+      "ProjectSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "프로젝트 UUID. 요청 경로에서는 project_id, 기존 공개 응답 필드는 id다. 필수 필드."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "프로젝트 표시 이름. 요청 body에서는 project_name을 사용한다. 필수 필드."
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "description": "사용자의 기본 프로젝트인지. 개별 이름 변경·삭제는 허용하지 않는다. 필수 필드."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "프로젝트 최초 생성 시각. 필수 필드."
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "프로젝트 레코드 변경 시각. 하위 세션의 최근 대화 시각을 뜻하지 않는다. 필수 필드."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProjectSummary",
+        "description": "Project selection list; no prompt or child collections."
+      },
+      "ProjectUpdate": {
+        "properties": {
+          "project_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Project Name",
+            "description": "변경/생성할 프로젝트 이름. 연속 공백을 정규화한다. 기본 프로젝트의 이름은 바꿀 수 없다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          },
+          "system_prompt": {
+            "type": "string",
+            "title": "System Prompt",
+            "description": "사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다. 수정에서 생략은 유지, 명시적 null은422, 빈 문자열은 초기화다. 생략 가능한 필드. 조건부 필수 여부는 업무 계약을 함께 확인한다."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "minProperties": 1,
+        "title": "ProjectUpdate"
       },
       "PublicRunResource": {
         "properties": {
