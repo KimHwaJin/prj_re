@@ -286,8 +286,17 @@ def test_actual_app_openapi_and_health_need_no_external_services(monkeypatch):
     app = create_app(local_settings())
     operations = app.openapi()["paths"]
     assert "/api/v1/projects" in operations
+    assert not any(path.startswith(("/api/v1/jupyter-servers", "/api/v1/redis")) for path in operations)
+    assert not any("JupyterServer" in name or "RedisPing" in name
+                   for name in app.openapi()["components"]["schemas"])
     with TestClient(app) as client:
         assert client.get("/health").json() == {"status": "ok"}
+        # Removed routes must not run auth, DB or an external probe, even for POST.
+        for method, path in (("GET", "/api/v1/jupyter-servers"),
+                ("GET", "/api/v1/jupyter-servers/00000000-0000-0000-0000-000000000001"),
+                ("POST", "/api/v1/jupyter-servers/00000000-0000-0000-0000-000000000001/health"),
+                ("GET", "/api/v1/redis/ping")):
+            assert client.request(method, path).status_code == 404
         assert client.get("/service/ready").json() == {"ready": True}
     assert database._engine is None
 

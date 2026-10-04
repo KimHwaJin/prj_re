@@ -1,3 +1,5 @@
+> 후속 결정(2026-10-04,084): 아래는 2026-09-28 당시 검토 기록이다. Jupyter registry·Redis ping의 현재 계약은 [미사용 API 제거 안내](../infrastructure-api-cleanup.md)이며, 아래 당시 유지/보강 의견과 파일 경로는 현행 API로 적용하지 않는다.
+
 # 기본 CRUD 및 실행 연계 API 검토
 
 작성일: 2026-09-28 · 대상: `feature/runtime-hardening`의 현재 작업 트리

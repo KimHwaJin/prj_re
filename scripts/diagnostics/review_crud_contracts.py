@@ -25,10 +25,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 
 def inventory():
-    """Read the nine router modules explicitly mounted by the current API router."""
+    """Read the current business router modules; saved 2026-09-28 evidence stays historical."""
     result = []
-    for name in ("users", "projects", "sessions", "messages", "runs", "tasks",
-                 "workflows", "jupyter_servers", "redis"):
+    for name in ("users", "projects", "sessions", "messages", "runs",
+                 "workflows", "run_diagnostics"):
         path = ROOT / f"src/api_service/api/v1/routes/{name}.py"
         tree = ast.parse(path.read_text())
         prefix = ""

@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [083 프로젝트 CRUD 계약](083-project-crud-contract.md). 프로젝트 목록을5개 필드 요약으로 분리하고 생성/수정의 unknown/null 규칙, 지침 초기화·버전·새 Run/재개 수명을 명시했다. 삭제 DTO를 제거하고 기존 보호를 유지한다. PG94·전체 src681·wheel·필드 주석 검증 완료. 베이스 미병합·미푸시·미배포다.
+최신 작업: [084 미사용 Jupyter·Redis 관리 API 정리](084-unused-infrastructure-apis.md). 공개4개 operation·라우터/서비스/스키마·Jupyter ORM·전용 설정을 제거하고 기존 DB 테이블은 보존한다. 관련134·전체src692·실제 격리Redis3·wheel 검증 완료. 베이스 미병합·미푸시·미배포다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -127,6 +127,7 @@
 | 081 | Task 진단을 Run diagnostics·invocations로 통합 | 구현·PG93·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [081 기록](081-run-diagnostics-contract.md) |
 | 082 | 관리자 사용자 요약 목록·삭제 사용자 상세 | 구현·PG37·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [082 기록](082-admin-user-read-contract.md) |
 | 083 | 프로젝트 요약 목록·CRUD 입력·지침 수명 | 구현·PG94·전체src681·wheel·주석 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [083 기록](083-project-crud-contract.md) |
+| 084 | 미사용 Jupyter·Redis 관리 API·전용 코드/설정 제거 | 구현·관련134·전체src692·Redis3·wheel 검증 / 미병합·미푸시·미배포 | 2026-10-04 | [084 기록](084-unused-infrastructure-apis.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

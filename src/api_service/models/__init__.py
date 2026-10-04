@@ -13,7 +13,6 @@ from api_service.models.common.workflow_model import (
     WorkflowModel,
     WorkflowTagModel,
 )
-from api_service.models.common.jupyter_server_model import JupyterServerModel
 from api_service.models.common.task_event_model import TaskEventModel
 
 __all__ = [
@@ -33,7 +32,6 @@ __all__ = [
     "WorkflowTagModel",
     "WorkflowEmbeddingModel",
     "WorkflowExecutionLogModel",
-    "JupyterServerModel",
     "TaskEventModel",
 ]
 

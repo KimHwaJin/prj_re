@@ -23,6 +23,8 @@
 | `PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY` | 프로세스 공용 관측 설정 | 구 `PHOENIX_CONFIG_PATH` 자동 탐색 없음 |
 | `EW_NAMESPACE` | 이벤트 DB/Redis group 기본 이름 | stream/group은 namespace에서 파생, Executor 원본 stream은 별도 계약 |
 
+084에서 사용자용 Jupyter registry·Redis ping API를 제거했다. `JUPYTER_ALLOWED_HOSTS`, `JUPYTER_HEALTH_TIMEOUT_SECONDS`, `JUPYTER_TOKEN_ENCRYPTION_KEY`, `REDIS_PING_TIMEOUT_SECONDS`, 미사용 `REDIS_HOST`는 삭제된 설정이며 YAML/env에 남으면 기동 설정 오류다. Redis 주소는 `REDIS_URL`이다. 기존 Executor·SSO·이벤트 설정과 `/service/*`는 유지한다. [설정·기존 DB 이행 안내](infrastructure-api-cleanup.md)를 따른다.
+
 `EW_INSTANCE_ID`를 생략하면 startup UUID를 사용한다. 기존 .env에 고정 값이 남아 있어도 그 값은 prefix로만 취급하고 UUID를 추가한다. 같은 consumer ID가 여러 Pod/기동에 복제되지 않는다.
 
 구 주소 별칭과 정본을 같은 소스에 서로 다른 값으로 주입하면 **오류로 중단**한다. YAML의 구 별칭은 정본으로 정규화한 뒤 env를 덮어쓴다. 따라서 YAML 우선순위는 유지된다. 새 예제는 정본 이름만 사용한다.

@@ -106,11 +106,6 @@ class Settings(BaseModel):
     )
     # E13: DB에는 이 root 기준 상대 경로만 저장해 서버 이동과 path traversal 방지를 돕습니다.
     workflow_storage_root: Path = Path("var/workflows")
-    # E10-T04: comma-separated exact host allowlist. 운영 내부 DNS는 환경변수로 추가합니다.
-    jupyter_allowed_hosts: str = "127.0.0.1,localhost"
-    jupyter_health_timeout_seconds: float = 5.0
-    # Fernet key. Token을 등록할 때 비어 있으면 503으로 거부해 평문 저장을 막습니다.
-    jupyter_token_encryption_key: str = ""
     # SSE: fast disconnect checks, commit notifications, slow reconciliation.
     sse_poll_interval_seconds: float = 0.5
     sse_reconcile_interval_seconds: float = 15.0
@@ -131,10 +126,8 @@ class Settings(BaseModel):
         default=Path("/workspace/pv"),
         validation_alias="EXECUTOR_SHARED_INPUT_ROOT",
     )
-    # Workflow 송수신용 Redis broker. 비밀번호 특수문자는 URL 인코딩이 필요할 수 있습니다.
-    redis_host: str = "127.0.0.1:6379"
+    # SSO 로그인 세션과 Executor Streams의 공통 주소. 용도별 연결풀은 분리합니다.
     redis_url: str = "redis://127.0.0.1:6379/0"
-    redis_ping_timeout_seconds: float = 5.0
     model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
 
     @model_validator(mode="after")
@@ -149,7 +142,6 @@ class Settings(BaseModel):
             "database_pool_timeout_seconds", "task_lease_seconds", "task_reconcile_interval_seconds",
             "agent_worker_poll_interval_seconds", "agent_worker_reconcile_interval_seconds", "task_cancel_poll_interval_seconds",
             "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
-            "redis_ping_timeout_seconds", "jupyter_health_timeout_seconds",
             "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",
             "llm_token_flush_interval_seconds", "llm_token_enqueue_timeout_seconds", "llm_token_write_timeout_seconds",
         ):

@@ -42,6 +42,11 @@ REMOVED_SETTINGS = frozenset({
     "EW_COMMAND_STREAM_NAME", "EW_COMMAND_GROUP_NAME",
     "EW_DISPATCH_CONCURRENCY", "EW_PUBLISH_LEASE_SECONDS",
 })
+# Removed API-only controls are rejected even in env, where unrelated keys are ignored.
+REMOVED_INFRASTRUCTURE_SETTINGS = frozenset({
+    "JUPYTER_ALLOWED_HOSTS", "JUPYTER_HEALTH_TIMEOUT_SECONDS",
+    "JUPYTER_TOKEN_ENCRYPTION_KEY", "REDIS_PING_TIMEOUT_SECONDS", "REDIS_HOST",
+})
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
 GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics", "auth"}
 # Extra settings consumed by the legacy Agent adapter, outside the API model.
@@ -126,6 +131,11 @@ def _normalize(values: Mapping[str, Any], known: set[str], *, strict: bool) -> d
         key = _key(raw)
         if key in {'AGENT_PROJECT_MEMORY_MAX_TOPICS', 'AGENT_PROJECT_MEMORY_TOPIC_MAX_CHARS'}:
             raise ConfigurationError(f'Removed topic memory setting: {key}; use AGENT_PROJECT_MEMORY_MAX_CHARS and AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS for the single document.')
+        if key in REMOVED_INFRASTRUCTURE_SETTINGS:
+            raise ConfigurationError(
+                f"Removed infrastructure API setting: {key}; remove it from configuration. "
+                "Jupyter execution uses Executor; Redis connections use REDIS_URL."
+            )
         if key in REMOVED_SETTINGS:
             raise ConfigurationError(
                 f"Removed service setting: {key}; remove it from configuration. "

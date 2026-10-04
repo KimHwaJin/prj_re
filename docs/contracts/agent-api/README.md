@@ -60,3 +60,6 @@ Schema를 수정하면 current code에서 다시 생성하고 예제를 재검�
 082에서 관리자 사용자 목록을 추가하고 삭제 사용자 상세 조회를 허용했다. UserSummary와 UserRead 문서 schema는 응답 직렬화 모드로 추출하여 외부 필드 user_id를 유지한다. UserRead의 ORM 입력용 validation_alias public_user_id는 외부 응답 필드가 아니다.
 
 083에서 프로젝트 목록을 ProjectSummary로 분리하고 생성/수정의 알 수 없는 필드·명시적 null을 거절했다. ProjectResource의 공개 id/name은 유지하며 프로젝트 관련 schema를 project_schema.py로 모았다. 문서용 읽기 schema는 serialization mode로 추출한다.
+
+
+084에서 미사용 Jupyter registry·Redis ping4개 operation을 실제 앱/자동 OpenAPI에서 제거했다. 이 scoped OpenAPI snapshot은 원래 그 경로를 포함하지 않아18paths/44models 그대로이며 해당 schema·예제 변경도 없다. 현재 전체 앱은30paths다. [클라이언트·설정·기존 DB 이행](../../infrastructure-api-cleanup.md)을 따른다. 과거 보고서의34paths는 당시 snapshot을 뜻한다.

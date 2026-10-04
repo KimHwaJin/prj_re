@@ -38,9 +38,11 @@ def run_migrations_offline() -> None:
 
 
 def include_object(obj, name, type_, reflected, compare_to):
-    # Official LangGraph Store owns its SQL schema; never propose deleting it
-    # merely because application ORM metadata intentionally has no Store models.
-    return not (type_ == 'table' and name in {'store', 'store_migrations'} and reflected and compare_to is None)
+    # Store is SDK-owned; the retired Jupyter registry is preserved until an
+    # explicit data-retention migration. Neither belongs to active ORM metadata.
+    # Skip only reflected tables with no mapped counterpart, not future models.
+    return not (type_ == 'table' and name in {'store', 'store_migrations', 'jupyter_servers'}
+                and reflected and compare_to is None)
 
 
 def do_run_migrations(connection) -> None:

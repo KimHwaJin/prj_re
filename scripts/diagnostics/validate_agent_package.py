@@ -101,6 +101,17 @@ settings = load_settings(config={'MODEL_PROVIDER':'mock', 'AGENT_WORKER_ENABLED'
 app = create_app(settings)
 paths = app.openapi()['paths']
 schemas = app.openapi()['components']['schemas']
+assert not any(path.startswith(('/api/v1/jupyter-servers', '/api/v1/redis')) for path in paths)
+assert not any('JupyterServer' in name or 'RedisPing' in name for name in schemas)
+for retired in ('api_service/api/v1/routes/jupyter_servers.py', 'api_service/api/v1/routes/redis.py',
+                'api_service/services/jupyter_server_service.py', 'api_service/services/redis_service.py',
+                'api_service/schemas/common/jupyter_server_schema.py', 'api_service/schemas/common/redis_schema.py',
+                'api_service/models/common/jupyter_server_model.py'):
+    assert retired not in names
+from config import Settings
+assert not ({'jupyter_allowed_hosts', 'jupyter_health_timeout_seconds', 'jupyter_token_encryption_key',
+             'redis_ping_timeout_seconds', 'redis_host'} & Settings.model_fields.keys())
+assert 'redis_url' in Settings.model_fields
 assert set(schemas['SessionCreate']['properties']) == {'session_name', 'settings'}
 assert schemas['SessionCreate']['additionalProperties'] is False
 assert set(schemas['SessionSettings']['properties']) == {'kernel_profile'}

@@ -221,6 +221,15 @@ def test_removed_dispatch_settings_fail_with_migration_instructions(name,source)
             environ={name:'obsolete'} if source=='env' else {})
 
 
+@pytest.mark.parametrize('name', sorted(service_settings.REMOVED_INFRASTRUCTURE_SETTINGS))
+@pytest.mark.parametrize('source', ['config', 'env'])
+def test_removed_infrastructure_settings_fail_without_exposing_values(name, source):
+    with pytest.raises(ConfigurationError, match='Removed infrastructure API setting: '+name) as error:
+        load_settings(config={name: 'private-value'} if source == 'config' else {},
+            environ={name: 'private-value'} if source == 'env' else {})
+    assert 'private-value' not in str(error.value)
+
+
 def test_ingress_has_one_limit_and_old_common_spelling_is_only_an_alias():
     settings=load_settings(config={'EW_CONCURRENCY':3},environ={})
     assert settings.worker.ingress_concurrency==3

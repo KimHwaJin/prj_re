@@ -140,3 +140,8 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## 프로젝트 기본 CRUD 계약 — 083
 
 [083](083-project-crud-contract.md)에서 프로젝트 요약 목록과 상세를 분리하고 요청의 알 수 없는 필드·명시적 null·빈 PATCH를 거절했다. 지침의 빈 문자열 초기화·내용 변경 시 버전 증가, 새 Run 실행 시 snapshot·기존 재개 고정을 문서화하고 PG/Worker/checkpoint·middleware로 검증했다. 삭제 결과 DTO를 제거하고 기본 프로젝트/미종료/점유/소유권 보호는 유지한다. [현재 계약](../project-api.md)을 따른다. 실제 프론트는 목록의 지침/버전 접근을 상세 GET으로 바꾸고 미변경 PATCH 필드를 생략해야 한다. SSO SDK 실연결·실제 모델의 지침 준수·Pod 성능/이행 확인은 후속 통합 검증이며 속도 향상 측정은 이번 범위가 아니다. Message CUD·Workflow CRUD·운영 복구·모델 호출 수의 후순위와 미병합·미푸시·미배포 상태는 유지한다.
+
+
+## 미사용 인프라 관리 API 정리 — 084
+
+[084](084-unused-infrastructure-apis.md)에서 실행 경로와 연결되지 않은 Jupyter registry3개·Redis ping1개 operation과 전용 코드·설정을 제거했다. [설정/클라이언트 이행](../infrastructure-api-cleanup.md)을 따른다. 기존 jupyter_servers 테이블은 이력·데이터 보존을 위해 남기고 autogenerate의 우발적 삭제 제안만 제외한다. 실제 물리 정리는 데이터 보존/복원 검토 이후 별도 migration이다. 다음은 SSO→프로젝트→세션→Run→HITL/resume→Executor 결과/SSE의 통합 계약 검증이다. 실제 외부 프론트 이행·사내SDK 연결·Executor 데이터 registry 계약은 미완료이며 Message CUD·Workflow CRUD·운영 복구·모델 호출 수 최적화는 기존 후순위를 유지한다. 이번 API 삭제를 Worker 구조/처리량 개선이나 실제 배포로 해석하지 않는다. 베이스 미병합·미푸시·미배포다.
