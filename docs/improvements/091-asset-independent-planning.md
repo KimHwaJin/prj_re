@@ -2,6 +2,8 @@
 
 날짜: 2026-10-05. 브랜치 `feature/asset-independent-planning`, 090의 `f66a9a6`에서 분기. 구현·검증 완료. 베이스 미병합·미푸시·운영 미배포.
 
+구현·검증 커밋: `b7872f4` (`refactor: decouple planning from sample skill and tool assets`).
+
 ## 문제와 원인
 
 사용자는 현재 Skill·Tool이 예시이며 지속적으로 교체·확장될 자산이라고 재확인했다. 현재 2.0 실행 경로에는 특정 로드 함수명과 인자명에 따른 검증이 conversation/revision/repair에 중복돼 있었다. 공통 계획 prompt도 특정 함수·컬럼·데이터 형식·판단 방법의 예제로 동작을 안내했다. 이름이 다른 자산으로 교체하면 같은 데이터 참조 보호가 적용되지 않거나 불필요한 기존 Tool을 계획할 수 있는 구조였다.
