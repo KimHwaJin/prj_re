@@ -2,6 +2,8 @@
 from copy import deepcopy
 import json
 
+from .analysis_scope import execution_scope
+
 
 def encoded(value):
     return json.dumps(value, ensure_ascii=False, allow_nan=False, separators=(',', ':'))
@@ -12,8 +14,9 @@ def bounded_analysis(payload, max_chars):
     if not max_chars:
         return None
     result = {k:payload[k] for k in ('source_run_id','execution_id','status')}
-    goal = payload.get('goal','')
-    result.update(goal=goal[:1000], goal_truncated=len(goal)>1000 or payload.get('goal_truncated',False),
+    goal = payload.get('requested_goal', payload.get('goal',''))
+    result.update(requested_goal=goal[:1000], requested_goal_truncated=len(goal)>1000 or payload.get('requested_goal_truncated',payload.get('goal_truncated',False)),
+        execution_scope=None, execution_scope_omitted=payload.get('execution_scope_omitted',False),
         dataset_references=[], decisions={}, observations=[], step_outcomes=[],
         omitted_step_outcomes=payload.get('omitted_step_outcomes',0),
         omitted_dataset_references=payload.get('omitted_dataset_references',0),
@@ -24,6 +27,14 @@ def bounded_analysis(payload, max_chars):
 
     def fits(candidate, reserve=0):
         return len(encoded(candidate)) <= max_chars-reserve
+
+    # Scope is authoritative only when complete. Never slice a parameter value
+    # into a different approved value; disclose omission when the budget is small.
+    scope = payload.get('execution_scope')
+    if scope is not None:
+        candidate = {**result, 'execution_scope':scope}
+        if fits(candidate, max_chars//2):result = candidate
+        else:result['execution_scope_omitted'] = True
 
     # Reserve space for observations and report rather than let parameters fill all context.
     for row in payload.get('dataset_references',[]):
@@ -79,7 +90,8 @@ def capture_analysis(state, snapshot, final, max_chars):
     if not max_chars:
         return None
     payload = {'source_run_id':snapshot['run_id'], 'execution_id':final['execution_id'],
-        'status':final['status'], 'goal':snapshot['document']['goal'],
+        'status':final['status'], 'requested_goal':snapshot['document']['goal'],
+        'execution_scope':execution_scope(state,snapshot,final['observations'],final.get('skipped_steps',[])),
         'dataset_references':[{'input_name':name,'dataset_id':item['dataset_id'],'title':item['title']}
             for name,item in snapshot.get('dataset_bindings',{}).items()],
         'decisions':state.get('execution_decisions',{}),

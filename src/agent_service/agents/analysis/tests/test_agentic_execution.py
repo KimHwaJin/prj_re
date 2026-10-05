@@ -95,7 +95,7 @@ class LocalExecutor:
             'state':{'status':'QUEUED','version':self.version-2}}}
 
 
-async def setup(tmp_path,monkeypatch,*,single=False,missing=False):
+async def setup(tmp_path,monkeypatch,*,single=False,missing=False,approval_changes=None):
     pd=pytest.importorskip('pandas')
     file=tmp_path/'data.parquet'
     pd.DataFrame({'value':[1.,2.,3.,4.,5.,90.]}).to_parquet(file)
@@ -118,7 +118,7 @@ async def setup(tmp_path,monkeypatch,*,single=False,missing=False):
     value.update(user_request='품질 분석',model_selection=runtime.models.select().model_dump(),initial_request_identity={'command_id':value['run_id']})
     config={'configurable':{'thread_id':value['session_id']}}
     state=await graph.ainvoke(value,config,durability='sync')
-    view=state['plan_views'][0];command={'resume':{'action':'approve_plan','plan_id':view['plan_id'],'plan_revision':view['plan_revision']}}
+    view=state['plan_views'][0];command={'resume':{'action':'approve_plan','plan_id':view['plan_id'],'plan_revision':view['plan_revision'],**(approval_changes or {})}}
     boundary=state['__interrupt__'][0];identity=resume_identity(str(uuid4()),boundary.id,command)
     state=await graph.ainvoke(Command(resume={boundary.id:resume_envelope(identity,command)}),config,durability='sync')
     import api_service.services.graph_crud_persistence as persistence

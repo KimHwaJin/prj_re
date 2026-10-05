@@ -29,7 +29,8 @@ from model_connection import load_model_env, model_host_alias
 REQUESTS = {
     'autofill': 'default-nce의 max_val 컬럼만 기초 통계 분석해줘. 등록된 툴을 사용해서 실행 계획을 제안해줘.',
     'missing': '기초 통계 분석 계획을 만들어줘. 아직 분석할 데이터는 선택하지 않았으니 임의로 고르지 말고, 내가 확인하거나 입력할 수 있게 해줘.',
-    'edit': 'default-nce의 max_val과 min_val 두 컬럼에 대한 기초 통계 분석 계획을 제안해줘. 통계 결과를 Markdown 리포트로 설명해줘.',
+    'edit': 'default-nce의 max_val과 x 두 컬럼에 대한 기초 통계 분석 계획을 제안해줘. 통계 결과를 Markdown 리포트로 설명해줘.',
+    'exclude': 'default-nce의 max_val과 x 컬럼에 대한 기초 통계를 계산하고 iqr 이상치 탐지도 함께 하는 SINGLE 실행 계획을 제안해줘. 이상치 탐지 방법은 iqr로 확정해도 돼. 실제로는 승인 전에 탐지 Tool을 제외할 수도 있으니 기초 통계와 이상치 탐지는 별도 단계로 해줘. 결과는 Markdown 리포트로 설명해줘.',
     'decision': 'default-nce의 max_val 컬럼에 대한 기초 통계를 계산한 뒤, 실제 통계 결과를 보고 iqr와 zscore 중 이상치 탐지 방법을 결정해서 max_val만 확인해줘. 등록된 스킬과 툴을 사용하는 MULTI 계획으로 제안하고, 결과는 Markdown 리포트로 설명해줘. 아직 결과를 읽기 전이므로 탐지 방법은 미리 확정하지 마.',
 }
 
@@ -69,6 +70,16 @@ def observe(report, active):
                 print(json.dumps({'scenario': active['name'], 'phase': 'model_response', 'schema': self.schema.__name__, 'seconds': item['seconds'], 'correction': bool(item['validation_feedback'])}, ensure_ascii=False), flush=True)
         return await old_model(self, request, measured)
     PromptJsonMiddleware.awrap_model_call = model
+
+    # Capture at the model boundary, after inner middleware injects session evidence.
+    # PromptJson's handler input is earlier in that chain and cannot prove delivery.
+    from langchain_openai.chat_models.base import BaseChatOpenAI
+    old_generate = BaseChatOpenAI._agenerate
+    async def generate(self, messages, *args, **kwargs):
+        report['model_inputs'].append({'scenario': active['name'],
+            'human_inputs': [m.content for m in messages if m.type == 'human']})
+        return await old_generate(self, messages, *args, **kwargs)
+    BaseChatOpenAI._agenerate = generate
 
     from integrations.executor.client import ExecutorClient
     old_http = ExecutorClient.request
@@ -181,17 +192,23 @@ async def verify(args, config, namespace, report):
                     def resolved(step, parameter):
                         p = next((p for p in step['parameters'] if p['name'] == parameter), {})
                         return next((i.get('value') for i in plan['inputs'] if i['name'] == p.get('input_name')), None) if p.get('kind') == 'workflow_input' else p.get('value')
-                    expected = ['max_val', 'min_val'] if name == 'edit' else ['max_val']
+                    expected = ['max_val', 'x'] if name in ('edit', 'exclude') else ['max_val']
                     check(case, 'explicit_columns_prefilled', stats is not None and resolved(stats, 'columns') == expected, expected=expected, actual=resolved(stats, 'columns') if stats else None)
                     if args.planning_only:
                         continue
                     if not all(c['passed'] for c in case['checks']):
                         case['execution_not_attempted'] = 'Invalid/missing user-requested values are not silently repaired by this harness'
                         continue
-                    if name == 'edit':
+                    if name in ('edit', 'exclude'):
                         cols = next(p for p in stats['parameters'] if p['name'] == 'columns')
                         changes = {'input_values': {cols['input_name']: ['max_val']}} if cols['kind'] == 'workflow_input' else {
                             'step_changes': [{'step_id': stats['step_id'], 'parameter': 'columns', 'value': ['max_val']}]}
+                        if name == 'exclude':
+                            outlier = next((s for s in plan['steps'] if s['tool_id'] == 'detect_outliers'), None)
+                            check(case, 'optional_outlier_tool_proposed', outlier is not None)
+                            if outlier is None:
+                                continue
+                            changes['excluded_step_ids'] = [outlier['step_id']]
                         old = run['resume_token']
                         action = {'action': 'edit_plan', 'plan_id': plan['plan_id'], 'plan_revision': plan['plan_revision'], **changes}
                         await submit({'run_id': rid, 'resume_token': old, 'command': {'resume': action}})
@@ -236,7 +253,7 @@ async def verify(args, config, namespace, report):
                         continue
                     final = run['result']['final_response']
                     case['final_response'] = final
-                    if name in ('autofill', 'edit'):
+                    if name in ('autofill', 'edit', 'exclude'):
                         observed = next(o for o in final['observations'] if o['step_id'] == stats['step_id'])
                         keys = list(observed['summary']['items']['statistics']['items'])
                         calls = report['executor_calls'][before:]
@@ -247,11 +264,23 @@ async def verify(args, config, namespace, report):
                         reviews = [r for r in report['execution_roles'] if r['scenario'] == name and r['role'] == 'review']
                         check(case, 'decision_reads_completed_evidence', bool(reviews) and all(set(c['evidence_steps']) <= set(r['completed_steps']) for r in reviews for c in r['reply']['choices']))
                         check(case, 'decision_resolved_after_execution', bool(state.get('execution_decisions')) and all(v in ('iqr', 'zscore') for v in state['execution_decisions'].values()))
-                    if name == 'edit':
+                    if name in ('edit', 'exclude'):
+                        roles = [r for r in report['execution_roles'] if r['scenario'] == name and r['role'] == 'report']
+                        scope = (roles[-1]['input'] if roles else {}).get('execution_scope', {})
+                        arguments = next((s['arguments'] for s in scope.get('steps', []) if s['step_id'] == stats['step_id']), {})
+                        check(case, 'report_receives_final_approved_columns', arguments.get('columns', {}).get('value') == ['max_val'])
+                        saved_scope = state.get('last_analysis_context', {}).get('payload', {}).get('execution_scope')
+                        check(case, 'completed_context_preserves_report_scope', saved_scope == scope and bool(scope))
+                        case['completed_context'] = state.get('last_analysis_context')
+                        if name == 'exclude':
+                            check(case, 'user_excluded_tool_separated_from_observations',
+                                any(s['step_id'] == outlier['step_id'] and s['status'] == 'EXCLUDED_BY_USER' for s in scope.get('excluded_steps', []))
+                                and all(o['step_id'] != outlier['step_id'] for o in final['observations']))
                         case['followups'] = []
                         for question in ('방금 결과의 의미와 한계를 비전문가에게 설명해줘. 새 분석이나 계산은 필요 없어.',
                             '방금 결과를 Markdown 리포트로 다시 작성해줘. 로드 과정 설명은 빼고 통계 해석과 한계를 부각해줘. 새 계산이나 파일 등록은 하지 마.'):
                             active['name'] = 'followup'
+                            model_before = len(report['model_inputs'])
                             count = len(report['executor_calls']); started = time.perf_counter()
                             follow_id = (await submit({'input': {'content': [{'type': 'text', 'text': question}]}}))['run_id']
                             following = await wait(follow_id)
@@ -260,6 +289,18 @@ async def verify(args, config, namespace, report):
                             case['followups'].append(item)
                             result = following.get('result', {}).get('final_response', {})
                             check(case, 'followup_grounded_without_executor', following['status'] == 'success' and result.get('status') == 'answer' and '근거 Step:' in result.get('message', '') and len(report['executor_calls']) == count and not values.get('execution_id') and not values.get('executor_operation_number'))
+                            references = []
+                            for call in report['model_inputs'][model_before:]:
+                                for message in call.get('human_inputs', []):
+                                    if not isinstance(message, str):
+                                        continue
+                                    try:
+                                        value = json.loads(message)
+                                    except json.JSONDecodeError:
+                                        continue
+                                    if value.get('reference_type') == 'previous_completed_session_analysis':
+                                        references.append(value.get('analysis', {}).get('execution_scope'))
+                            check(case, 'followup_model_receives_final_scope', bool(references) and all(s == scope for s in references))
                             if len(case['followups']) == 2:
                                 import re
                                 prose = result.get('message', '').split('\n\n## 확인된 출력값', 1)[0]
@@ -297,7 +338,7 @@ def main():
     namespace = 'real-model-parameters-'+uuid4().hex[:12]
     container = 'dtest-'+namespace
     report = {'namespace': namespace, 'passed': False, '_started': time.perf_counter(), 'scenarios': [],
-              'model_calls': [], 'executor_calls': [], 'execution_roles': [],
+              'model_calls': [], 'model_inputs': [], 'executor_calls': [], 'execution_roles': [],
               'boundaries': {'model': 'actual_openai_compatible', 'sso': 'employee_verdict_fixture',
                   'database': 'owned_temporary_postgresql', 'executor': 'actual_local', 'phoenix': 'disabled', 'browser': 'not_tested'}}
     with tempfile.TemporaryDirectory(prefix=namespace+'-') as workspace:

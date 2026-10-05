@@ -22,7 +22,7 @@ flowchart LR
 
 ## 저장하는 내용과 수명
 
-record는 schema_version=1, owner(user_id/project_id/session_id), payload를 갖는다. payload에는 이전 Run/Execution ID, 분석 goal, 공개 데이터 참조 ID/제목, 실제 결정값, 공개 Step 관찰, 보고서 발췌가 들어간다.
+record는 schema_version=1, owner(user_id/project_id/session_id), payload를 갖는다. payload에는 이전 Run/Execution ID, 최초 요청 목표(`requested_goal`), 최종 승인 범위(`execution_scope`), 공개 데이터 참조 ID/제목, 실제 결정값, 공개 Step 관찰, 보고서 발췌가 들어간다.
 
 원시 manifest/result_ref·PVC 경로·Tool 소스·Python 변수·전체 로그·DB client를 구조 필드로 넣지 않는다. 관찰값과 리포트의 자유 텍스트가 자동으로 민감정보 제거·의미 검증된다는 뜻은 아니다. 원본 실행 기록과 전체 보고서는 기존 Run/Executor 보관 수명을 따른다.
 
@@ -46,7 +46,11 @@ service:
 
 env 이름은 `AGENT_SESSION_ANALYSIS_MAX_CHARS`. 허용값은 **0 또는 2048~64000**, 기본 16000이다. `agent_history_message_limit`은 대화 메시지 수, `agent_observation_max_chars`는 Step 출력 관찰 크기이며 목적이 다르다. 운영 YAML/env 파일에 필수로 새 값을 추가할 필요는 없다.
 
-크기는 JSON escaping 이후 Python 문자 수로 측정하며 토큰 수나 HTTP 바이트 수가 아니다. goal은 일부 발췌할 수 있다. 데이터 참조·결정값·관찰은 들어갈 수 있는 것만 보관한다. 관찰은 최근 결과를 우선하고 보관 순서는 실행 순서를 유지한다. 개별 수치의 문자열 중간을 잘라 다른 수치처럼 만들지 않는다. summary가 빠지면 summary_omitted=true, 관찰·참조·결정이 빠지면 각 omitted count를 남긴다. 보고서는 excerpt와 truncated를 함께 전달한다. 작은 새 상한으로 읽을 때도 다시 제한한다.
+크기는 JSON escaping 이후 Python 문자 수로 측정하며 토큰 수나 HTTP 바이트 수가 아니다. requested_goal은 일부 발췌할 수 있다. 데이터 참조·결정값·관찰은 들어갈 수 있는 것만 보관한다. 관찰은 최근 결과를 우선하고 보관 순서는 실행 순서를 유지한다. 개별 수치의 문자열 중간을 잘라 다른 수치처럼 만들지 않는다. summary가 빠지면 summary_omitted=true, 관찰·참조·결정이 빠지면 각 omitted count를 남긴다. 보고서는 excerpt와 truncated를 함께 전달한다. 작은 새 상한으로 읽을 때도 다시 제한한다.
+
+090에서 최종 승인 범위를 추가했다. `execution_scope`는 plan_id/plan_revision, 현재 유효한 승인 계획의 Step별 Skill/Tool ID·최종 argument binding·실제 상태, 사용자 제외 Step 목록을 갖는다. literal/workflow_input/agent_decision 값은 정확하게 복사하며 step_output은 참조로 남긴다. 데이터는 공개 ID·제목을 쓰고 PVC 경로, system_context 값, frozen Tool 소스는 투영하지 않는다. 이는 각 재시도의 파라미터 원장이 아니며 실제 출력은 observations로 확인한다.
+
+이 범위는 예산 절반 안에 metadata와 함께 들어갈 때 전체 보관한다. 들어가지 않으면 통째로 생략하고 `execution_scope_omitted=true`를 남긴다. 배열이나 문자열을 잘라 다른 승인값처럼 전달하지 않는다. 최초 목표보다 최종 승인 범위·실제 관찰이 우선이며, 범위가 없으면 최초 요청으로 복원하지 않는다. 예전 schema_version=1의 goal은 읽을 때 requested_goal로 정규화하며 과거 기록에 없던 승인 범위를 새로 만들어내지 않는다. 새 DDL·공개 API 필드는 없다.
 
 상한을 나중에 늘려도 이전에 생략한 문맥이 자동 복원되지는 않는다. 원본 조회·과거 분석 검색을 연결한 기능은 아직 없다.
 

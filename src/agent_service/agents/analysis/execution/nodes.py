@@ -20,6 +20,7 @@ from .report import render_evidence_markdown
 from .repair_policy import effective_snapshot
 from .repair_nodes import RepairNodes
 from agent_service.runtime.session_analysis import capture_analysis
+from agent_service.runtime.analysis_scope import execution_scope
 
 
 class ExecutionNodes:
@@ -245,7 +246,9 @@ class ExecutionNodes:
         report_status='ready' if wants_report else 'not_requested'
         if wants_report and facts:
             try:
-                response=await self.runtime.execution_role('report',state,{'goal':snapshot['document']['goal'],'observations':self.role_facts(state),
+                response=await self.runtime.execution_role('report',state,{'requested_goal':snapshot['document']['goal'],
+                    'execution_scope':execution_scope(state,snapshot,facts,state.get('skipped_steps',[])),
+                    'observations':self.role_facts(state),
                     'decisions':state.get('execution_decisions',{}),'skipped_steps':state.get('skipped_steps',[]),'execution_status':state['execution_status']})
             except StructuredResponseError:
                 # Execution already ended. Invalid interpretation must not strand its session.

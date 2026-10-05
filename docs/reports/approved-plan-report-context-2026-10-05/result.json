@@ -1,0 +1,410 @@
+{
+  "date": "2026-10-05",
+  "base_commit": "9a52d3f",
+  "branch": "feature/approved-plan-report-context",
+  "boundaries": {
+    "model": "actual_qwen38-27b-nvfp4",
+    "sso": "synthetic_employee_verdict_fixture",
+    "executor": "actual_local_jupyter",
+    "database": "owned_temporary_postgresql17",
+    "redis": "local_isolated_namespace",
+    "phoenix": "disabled",
+    "browser": "not_tested_this_change"
+  },
+  "regression": {
+    "analysis_agent": 345,
+    "diagnostics": 13,
+    "focused_analysis_subset": 65,
+    "new_analysis_tests_included": 4,
+    "wheel_module_and_prompts": true
+  },
+  "final_scope_checks": {
+    "edit": 15,
+    "exclude": 17,
+    "all_passed": true
+  },
+  "trials": [
+    {
+      "trial": "initial_edit_pre_injection_probe",
+      "scenario": "edit",
+      "passed": false,
+      "checks": [
+        {
+          "name": "no_execution_before_approval",
+          "passed": true
+        },
+        {
+          "name": "valid_plan_returned",
+          "passed": true
+        },
+        {
+          "name": "explicit_dataset_prefilled",
+          "passed": true
+        },
+        {
+          "name": "explicit_columns_prefilled",
+          "passed": true
+        },
+        {
+          "name": "human_columns_edit_preserved",
+          "passed": true
+        },
+        {
+          "name": "actual_executor_success",
+          "passed": true
+        },
+        {
+          "name": "only_requested_column_computed",
+          "passed": true
+        },
+        {
+          "name": "columns_reached_actual_executor",
+          "passed": true
+        },
+        {
+          "name": "report_receives_final_approved_columns",
+          "passed": true
+        },
+        {
+          "name": "completed_context_preserves_report_scope",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": false
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": false
+        },
+        {
+          "name": "report_revision_contains_actual_markdown_body",
+          "passed": true
+        }
+      ],
+      "model_calls": 11,
+      "validation_corrections": 3,
+      "executor_post_calls": 1,
+      "analysis_status": "analysis_completed",
+      "initial_run_status": "waiting_input",
+      "followup_statuses": [
+        "success",
+        "success"
+      ],
+      "final_approved_columns": [
+        "max_val"
+      ],
+      "excluded_tool_statuses": [],
+      "failure_class": "diagnostic_probe_before_session_middleware_not_service_failure"
+    },
+    {
+      "trial": "initial_exclude_pre_injection_probe",
+      "scenario": "exclude",
+      "passed": false,
+      "checks": [
+        {
+          "name": "no_execution_before_approval",
+          "passed": true
+        },
+        {
+          "name": "valid_plan_returned",
+          "passed": true
+        },
+        {
+          "name": "explicit_dataset_prefilled",
+          "passed": true
+        },
+        {
+          "name": "explicit_columns_prefilled",
+          "passed": true
+        },
+        {
+          "name": "optional_outlier_tool_proposed",
+          "passed": true
+        },
+        {
+          "name": "human_columns_edit_preserved",
+          "passed": true
+        },
+        {
+          "name": "actual_executor_success",
+          "passed": true
+        },
+        {
+          "name": "only_requested_column_computed",
+          "passed": true
+        },
+        {
+          "name": "columns_reached_actual_executor",
+          "passed": true
+        },
+        {
+          "name": "report_receives_final_approved_columns",
+          "passed": true
+        },
+        {
+          "name": "completed_context_preserves_report_scope",
+          "passed": true
+        },
+        {
+          "name": "user_excluded_tool_separated_from_observations",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": false
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": false
+        },
+        {
+          "name": "report_revision_contains_actual_markdown_body",
+          "passed": true
+        }
+      ],
+      "model_calls": 11,
+      "validation_corrections": 3,
+      "executor_post_calls": 1,
+      "analysis_status": "analysis_completed",
+      "initial_run_status": "waiting_input",
+      "followup_statuses": [
+        "success",
+        "success"
+      ],
+      "final_approved_columns": [
+        "max_val"
+      ],
+      "excluded_tool_statuses": [
+        {
+          "tool_id": "detect_outliers",
+          "status": "EXCLUDED_BY_USER"
+        }
+      ],
+      "failure_class": "diagnostic_probe_before_session_middleware_not_service_failure"
+    },
+    {
+      "trial": "final_edit_model_boundary_probe",
+      "scenario": "edit",
+      "passed": true,
+      "checks": [
+        {
+          "name": "no_execution_before_approval",
+          "passed": true
+        },
+        {
+          "name": "valid_plan_returned",
+          "passed": true
+        },
+        {
+          "name": "explicit_dataset_prefilled",
+          "passed": true
+        },
+        {
+          "name": "explicit_columns_prefilled",
+          "passed": true
+        },
+        {
+          "name": "human_columns_edit_preserved",
+          "passed": true
+        },
+        {
+          "name": "actual_executor_success",
+          "passed": true
+        },
+        {
+          "name": "only_requested_column_computed",
+          "passed": true
+        },
+        {
+          "name": "columns_reached_actual_executor",
+          "passed": true
+        },
+        {
+          "name": "report_receives_final_approved_columns",
+          "passed": true
+        },
+        {
+          "name": "completed_context_preserves_report_scope",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": true
+        },
+        {
+          "name": "report_revision_contains_actual_markdown_body",
+          "passed": true
+        }
+      ],
+      "model_calls": 10,
+      "validation_corrections": 2,
+      "executor_post_calls": 1,
+      "analysis_status": "analysis_completed",
+      "initial_run_status": "waiting_input",
+      "followup_statuses": [
+        "success",
+        "success"
+      ],
+      "final_approved_columns": [
+        "max_val"
+      ],
+      "excluded_tool_statuses": []
+    },
+    {
+      "trial": "exclude_model_plan_validation_failure",
+      "scenario": "exclude",
+      "passed": false,
+      "checks": [
+        {
+          "name": "no_execution_before_approval",
+          "passed": true
+        },
+        {
+          "name": "valid_plan_returned",
+          "passed": false
+        }
+      ],
+      "model_calls": 8,
+      "validation_corrections": 3,
+      "executor_post_calls": 0,
+      "analysis_status": null,
+      "initial_run_status": "recovery_required",
+      "followup_statuses": [],
+      "final_approved_columns": null,
+      "excluded_tool_statuses": [],
+      "failure_class": "model_plan_parameter_controls_conflict_before_approval"
+    },
+    {
+      "trial": "final_exclude_model_boundary_probe",
+      "scenario": "exclude",
+      "passed": true,
+      "checks": [
+        {
+          "name": "no_execution_before_approval",
+          "passed": true
+        },
+        {
+          "name": "valid_plan_returned",
+          "passed": true
+        },
+        {
+          "name": "explicit_dataset_prefilled",
+          "passed": true
+        },
+        {
+          "name": "explicit_columns_prefilled",
+          "passed": true
+        },
+        {
+          "name": "optional_outlier_tool_proposed",
+          "passed": true
+        },
+        {
+          "name": "human_columns_edit_preserved",
+          "passed": true
+        },
+        {
+          "name": "actual_executor_success",
+          "passed": true
+        },
+        {
+          "name": "only_requested_column_computed",
+          "passed": true
+        },
+        {
+          "name": "columns_reached_actual_executor",
+          "passed": true
+        },
+        {
+          "name": "report_receives_final_approved_columns",
+          "passed": true
+        },
+        {
+          "name": "completed_context_preserves_report_scope",
+          "passed": true
+        },
+        {
+          "name": "user_excluded_tool_separated_from_observations",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": true
+        },
+        {
+          "name": "followup_grounded_without_executor",
+          "passed": true
+        },
+        {
+          "name": "followup_model_receives_final_scope",
+          "passed": true
+        },
+        {
+          "name": "report_revision_contains_actual_markdown_body",
+          "passed": true
+        }
+      ],
+      "model_calls": 11,
+      "validation_corrections": 3,
+      "executor_post_calls": 1,
+      "analysis_status": "analysis_completed",
+      "initial_run_status": "waiting_input",
+      "followup_statuses": [
+        "success",
+        "success"
+      ],
+      "final_approved_columns": [
+        "max_val"
+      ],
+      "excluded_tool_statuses": [
+        {
+          "tool_id": "detect_outliers",
+          "status": "EXCLUDED_BY_USER"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Not a semantic truth verifier or a throughput benchmark",
+    "One real model plan validation failure preserved",
+    "Head preview vs full statistics wording still needs review"
+  ],
+  "console": {
+    "latest_url": "http://127.0.0.1:18103/test-console",
+    "db_port": 53604,
+    "existing_18102_preserved": true
+  }
+}
