@@ -1,0 +1,2 @@
+# Received Workflow draft: preserve exact bytes, including CRLF.
+docs/contracts/workflow-standard/original-1.0/* -text whitespace=cr-at-eol

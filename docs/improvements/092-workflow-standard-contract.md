@@ -2,11 +2,13 @@
 
 날짜: 2026-10-05. 브랜치 `feature/workflow-standard-contract`, 기준 `4ecc416`. 구현·격리 검증 완료. 베이스 미병합·미푸시·운영 미배포.
 
+구현 커밋: `441420a` (`feat: standardize workflow authoring with tracked draft migration`).
+
 ## 요청과 문서 구분
 
 받은 Workflow 1.0 초안을 일반화하여 구현하되, 원본의 어느 내용을 바꿨는지 추적하고 별도 확정 문서를 제공한다.
 
-- [보존 원본](../contracts/workflow-standard/original-1.0/): ZIP의 4개 파일을 byte 그대로 보존하고 ZIP/파일 SHA256을 기록했다.
+- [보존 원본](../contracts/workflow-standard/original-1.0/): ZIP의 4개 파일을 byte 그대로 보존하고 ZIP/파일 SHA256을 기록했다. 원본 CRLF도 보존하며 `.gitattributes`로 Git 줄바꿈 변환을 제외했다.
 - [변경 추적표](../review/workflow-standard-changes.md): W01~W17별 원본 필드·명세 줄 번호, 변경 내용, 이유, 구현과 검증 위치, 이행 방법을 기록했다.
 - [확정 규격 2.0](../workflow-standard.md): 작성자가 사용할 필드·기본값·조건·참조·승인·API·지원 경계를 정의했다.
 - [Schema·예제 묶음](../contracts/workflow-standard/README.md): 공식 JSON Schema와 static/adaptive JSON, 한국어 주석 JSONC를 제공한다. 받은 예제를 조용히 덮어쓰지 않았다.
@@ -38,6 +40,8 @@ DB DDL/환경변수/서비스 배포/Executor HTTP 규격/Redis 이벤트 규격
 검증 명령은 프로젝트 venv Python, `PYTHONPATH=src`, pytest `-p no:cacheprovider`를 사용했다. 회귀 대상은 `src/agent_service/agents/analysis/tests`와 API의 `test_package_boundaries.py`, `test_workflow_persistence.py`, `test_graph_invocation_boundary.py`, `test_graceful_shutdown.py`, `test_deployment_configuration.py`다. PostgreSQL은 `test_workflow_standard_postgres.py`와 `test_planning_api_postgres.py`를 opt-in 임시 설정으로 실행했다. 패키지는 깨끗한 소스 사본의 offline wheel과 `scripts/diagnostics/validate_agent_package.py`로 검사했다.
 
 PostgreSQL 테스트용 컨테이너 `dtest-workflow-standard-092`는 localhost:53606에 별도로 생성한 postgres:17이며 종료 후 제거했다. 실 서비스 DB나 기존 테스트 콘솔을 재설정하지 않았다. 실제 사내 LLM·Executor HTTP/Redis·Pod를 통한 새 규격 연계 및 처리량 측정은 이번 검증 범위가 아니다.
+
+원본의 CRLF를 기본 diff 검사가 trailing whitespace로 표시하여, 원본 경로에만 `whitespace=cr-at-eol`을 선언했다. 원본 byte를 바꾸어 경고를 없애지 않았다. 그 규칙으로 전체 diff check를 통과했다.
 
 ## 발견·보완한 내용
 
