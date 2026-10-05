@@ -1,8 +1,10 @@
-# Workflow 표준 규격2.0 — 확정
+# Workflow 실행 정의 표준2.0 — 확정
 
 2026-10-05, feature/workflow-standard-contract 구현 계약. 사람과 Agent가 같은 의미의 등록 Skill·Tool Workflow를 작성하기 위한 공개 규격이다. 내부 승인·실행 계획의2.0-draft 및 과거1.3과 별개다. 운영 배포 완료를 의미하지 않는다.
 
 공식 [JSON Schema](contracts/workflow-standard/workflow-standard.schema.json), [static 예제](contracts/workflow-standard/workflow_static.example.json), [adaptive 예제](contracts/workflow-standard/workflow_adaptive.example.json), [필드 주석 예제](contracts/workflow-standard/workflow_adaptive.example.jsonc)를 함께 사용한다. [원본 대비 변경표](review/workflow-standard-changes.md)는 별도 문서다.
+
+확정 범위는 **실행 정의2.0과 현행 CRUD**다. 다중 검색용 user_queries 등록·embedding 상태·추천 검색 계약은 아직 확정/구현하지 않았다. [등록·추천 설계 검토](design/workflow-retrieval-and-registration.md)와 [pgvector 검증 결과](reports/workflow-retrieval-2026-10-05/report.html)를 따른다. 현행 서버에 user_queries를 보내도 저장되지 않으므로 신규 계약처럼 호출하지 않는다.
 
 ## 목적과 책임
 

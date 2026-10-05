@@ -45,3 +45,15 @@
 - [작업 완료·검증 기록](../improvements/092-workflow-standard-contract.md)
 
 변경 전 정의는 이 파일이 아니라 보존 원본이다. 변경 후 작성/개발 기준은 확정 문서다. 추적표는 확정 규격을 대신하지 않는다.
+
+## 092 이후 등록·추천 논의 추적 — 093
+
+W01~W17은 위 구현 이력을 유지한다. 아래는 새 검색 요구·실측에 따른 제안이며 실행 정의2.0 수정/신규 API 구현 완료를 뜻하지 않는다. 상세는 [설계 검토](../design/workflow-retrieval-and-registration.md), [측정](../reports/workflow-retrieval-2026-10-05/report.html)를 따른다. 받은 원본 byte는 그대로 보존한다.
+
+| ID | 이전 정의/설명 | 변경·추가 방향 | 이유·근거 | 상태 |
+|---|---|---|---|---|
+| R01 | W03의 user_request는 분석 목표, W17 POST는 document 중심 | envelope user_queries[]로 여러 검색용 요청을 한 resource에 연결. 실행 JSON 목표는 유지 | 사용자가 다중 요청→한 Workflow를 요구 | 제안·미구현 |
+| R02 | 쿼리 row TOPK 뒤 중복 제거/고정 넉넉한 후보 수 | Workflow 단위 반환. 고정 배수로 그룹 개수/완전성 보장 금지 | 50개/WF 후보200도4WF, 500개/WF 후보1000도2WF | 반례 실측 완료·검색 정책 미확정 |
+| R03 | 제외 WHERE로 후보를 반복 검색하면 충분할 수 있다는 논의 | iterative/활성 인덱스 후보 유지, 개수와 정확한 전역TOP5 분리 | 기본 제외1WF; iterative 경계Recall68%, 활성80% | 검증 완료·근사 허용 조건 결정 필요 |
+| R04 | W17 정의 SHA로 수정 경합 감지 | 파일 SHA 유지+별도 resource/search revision·embedding 상태 검토 | 쿼리만 수정하면 정의SHA는 바뀌지 않음 | 제안·미구현 |
+| R05 | 문서를 전체 Workflow 계약 확정으로 읽을 여지 | 실행 정의/현행CRUD와 미확정 추천·등록 계약을 명시 분리. 최종 검색API 문서는 구현 시 별도로 확정 | 실제 모델/차원·품질 목표·응답 상태 미정 | 문서 반영 완료·최종검색API 미작성 |

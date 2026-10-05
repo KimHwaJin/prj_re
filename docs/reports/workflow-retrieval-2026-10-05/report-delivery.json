@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "html": "docs/reports/workflow-retrieval-2026-10-05/report.html",
+  "stages": {
+    "validation": "passed",
+    "package": "passed",
+    "verification": "structural_only"
+  },
+  "browserWarning": {
+    "code": "browser_unavailable",
+    "message": "No installed Chromium headless-shell executable was found. Set CHROMIUM_EXECUTABLE_PATH (or the legacy PLAYWRIGHT_EXECUTABLE_PATH) or preinstall Chromium headless-shell under PLAYWRIGHT_BROWSERS_PATH; portable tooling never downloads browsers."
+  },
+  "counts": {
+    "blocks": 17,
+    "charts": 2,
+    "html": 0,
+    "metrics": 0,
+    "tables": 3
+  },
+  "sourceDialog": "not_verified",
+  "sourceInteraction": "not_verified",
+  "viewports": [],
+  "timings": {
+    "validateAndPackageMs": 61.5,
+    "staticChartExtractionMs": 1.5,
+    "structuralVerificationMs": 3.7,
+    "totalMs": 66.4
+  },
+  "visual_attempts": [
+    {
+      "browser": "installed Google Chrome",
+      "stage": "static_charts",
+      "code": "browser_timeout",
+      "browser_timeout_ms": 11210,
+      "total_ms": 11633.5
+    },
+    {
+      "browser": "installed Google Chrome",
+      "stage": "static_charts",
+      "code": "browser_timeout",
+      "browser_timeout_ms": 33710,
+      "total_ms": 33870.6
+    }
+  ],
+  "canonical_sha256": "98f8484ade9ad9239eaa257a8ff5d20378d356567b9776e1cd0d74ae7d50a2ad",
+  "html_sha256": "4cfe8b7e8d392a79c76193cb4810240fa525424066ef15bd490f7b3aeffcc804"
+}

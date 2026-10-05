@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [092 Workflow 표준 계약·초안 대비 추적](092-workflow-standard-contract.md). 원본 1.0 보존·17개 변경 추적·공개 2.0 확정 Schema/문서와 직접 등록·수정·승인 실행 연결을 구현했다. 회귀485·격리 PostgreSQL8·설치 wheel 검증 통과. 베이스 미병합·미푸시·운영 미배포.
+최신 작업: [093 다중 쿼리 Workflow 검색 검증](093-workflow-retrieval-benchmark.md). 2,100개 합성 pgvector 측정·2,200개 독립 검산으로 고정 후보 부족과 ANN 그룹 TOP5 누락을 확인했다. HTML 보고서·등록/추천 설계와 변경 추적을 갱신했다. API/DDL 미변경·베이스 미병합·미푸시·미배포. 이전 실행 정의 표준/CRUD 구현은 [092](092-workflow-standard-contract.md)를 따른다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -136,6 +136,7 @@
 | 090 | 최종 승인 파라미터·사용자 제외와 보고서/후속 문맥 일치 | Agent345·진단13·wheel·실제모델 검증 / 미병합·미푸시·미배포 | 2026-10-05 | [090 기록](090-approved-plan-report-context.md) |
 | 091 | 예시 Skill·Tool과 공통 Agent 분리·다중 함수 등록 | 회귀389·PG4·실제모델16·wheel / 미병합·미푸시·미배포 | 2026-10-05 | [091 기록](091-asset-independent-planning.md) |
 | 092 | Workflow 표준 계약·원본 추적·확정 문서 | 구현·회귀485/격리PG8/wheel 검증 완료 / 미병합·미푸시·미배포 | 2026-10-05 | [작업 기록](092-workflow-standard-contract.md) |
+| 093 | 다중 쿼리 Workflow pgvector 검색·등록 설계 | 2,100측정·2,200검산·보고 완료 / API 미구현·미병합·미푸시 | 2026-10-05 | [작업 기록](093-workflow-retrieval-benchmark.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

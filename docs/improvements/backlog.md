@@ -202,3 +202,12 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 ## 092 Workflow 표준 이후 남은 이행
 
 공개 규격과 직접 POST/PATCH/승격·공통 실행 계획 연결은 [092](092-workflow-standard-contract.md)에서 구현했다. 남은 작업은 pgvector 검색/embedding 재색인, 등록 template을 현재 conversation의 실제 추천 후보로 연결, 내부 생성 계획의 공개 규격 exporter,1.0/1.3 명시 마이그레이션, 기대 산출물의 실제 파일/Artifact/Dataset 연계다. 순차 공개 계획의 Agent 재계획·오류 수정은 기존 상한과 승인 정책을 유지한다. 실제 사내 LLM·Executor HTTP/Redis 연계와 Pod 배포 검증은 별도이며 double 실행 검증을 대체 근거로 사용하지 않는다.
+
+
+## 093 다중 쿼리 Workflow 검색 이후
+
+[093](093-workflow-retrieval-benchmark.md)에서 50/500개 쿼리 집중의 후보 소진과 HNSW 반복 제외의 속도·그룹 TOP5 누락을 검증했다. [설계](../design/workflow-retrieval-and-registration.md)를 따르며 고정 overfetch 배수나 결과5개 확보를 정확성 보장으로 쓰지 않는다. 실행 정의2.0과 현행CRUD는 유지한다.
+
+바로 다음은 근사 추천의 허용 품질/정확한 전역TOP5 요구, 실제 embedding 모델·차원·현업 정답 쿼리·corpus/지연 목표 확인이다. 이를 바탕으로 user_queries 등록·검색 revision·pending/ready/failed·POST/PATCH/승격/복제·검색 응답 계약을 확정하고 Agent 추천 풀에 연결한다. 정확 fallback의 전량 비용과 개수5개 확보 시에도 후보 누락을 감지하지 못하는 문제를 함께 다룬다. 신규 API·migration·실제 embedding·자연어 추천/E2E·동시부하는 아직 미구현/미검증이다.
+
+HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과로 미완료다. 모델 호출 수·Dataset Registry·Artifact·운영 후순위와 기존 성능/배포 과제는 이번 검색 진단으로 완료 처리하지 않는다.

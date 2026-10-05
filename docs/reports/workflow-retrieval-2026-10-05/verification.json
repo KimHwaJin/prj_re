@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "independent_checks": 2200,
+  "raw_record_count": 2100,
+  "datasets": [
+    {
+      "label": "main",
+      "rows": 1260,
+      "record_sha256": "137cfede94ca5ab31154ab36d663247ca60cde42a90aa1f61b91e25a1aad7ed6"
+    },
+    {
+      "label": "partial",
+      "rows": 420,
+      "record_sha256": "1347b38b2fccd212a65b5da62ed97252b1a04e2f28e548adafb25c27d5d8f7a4"
+    },
+    {
+      "label": "scale",
+      "rows": 420,
+      "record_sha256": "c2cb52f76cf610c927a38b62e5b245836329bd6f245a18c486a738fee505bf61"
+    }
+  ],
+  "limitations": [
+    "Synthetic vectors validate retrieval mechanics, not natural-language semantic relevance.",
+    "Distances verified for exact references; approximate search may miss the globally best query within a returned Workflow.",
+    "p95 is a descriptive percentile of this small warm sequential sample, not production tail latency."
+  ]
+}

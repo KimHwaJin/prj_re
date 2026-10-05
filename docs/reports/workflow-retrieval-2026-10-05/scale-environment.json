@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-10-05T12:55:37.193603+00:00",
+  "postgres": "PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "pgvector": "0.8.6",
+  "numpy": "2.4.6",
+  "dimensions": 768,
+  "workflows": 1000,
+  "counts": [
+    50
+  ],
+  "repeats": 3,
+  "top_k": 5,
+  "seed": 9305,
+  "jit": "off",
+  "hnsw_ef_search": 100,
+  "hnsw_tuned_ef_search": 500,
+  "hnsw_max_scan_tuples": 20000,
+  "hnsw_scan_mem_multiplier": 2,
+  "hnsw_index": {
+    "m": 16,
+    "ef_construction": 128
+  },
+  "note": "Synthetic float32 normalized vectors; warm sequential DB benchmark, no LLM/Executor/API/embedding HTTP."
+}

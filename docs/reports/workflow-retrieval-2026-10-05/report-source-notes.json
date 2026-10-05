@@ -1,0 +1,60 @@
+{
+  "audience": "technical",
+  "delivery": "portable HTML in Codex; repository documents are supporting audit/design files",
+  "structure_map": {
+    "Title": "title",
+    "Technical summary": "summary",
+    "Key findings": "concentration,quality,cost",
+    "Scope and metrics": "scope",
+    "Methodology": "method",
+    "Limitations": "limitations",
+    "Next steps": "next",
+    "Further questions": "questions"
+  },
+  "chart_contracts": [
+    {
+      "chart": "count",
+      "question": "Does fixed row retrieval retain five distinct Workflows as aliases grow?",
+      "family": "grouped bar",
+      "rows": 12,
+      "grain": "query-count × method; main concentrated only",
+      "palette": "categorical, up to four approved roots",
+      "zero_baseline": true
+    },
+    {
+      "chart": "recall",
+      "question": "Does filling five results imply exact group TOP5?",
+      "family": "grouped bar",
+      "rows": 8,
+      "grain": "index × method; 500/query boundary only",
+      "palette": "two categorical roots",
+      "zero_baseline": true
+    }
+  ],
+  "source_sha256": {
+    "summary.json": "39d513deec5b1723d14186ed56fe353f948b48b54ffdf2c72b8a1b3c689a6017"
+  },
+  "not_claimed": [
+    "production SLA",
+    "semantic model quality",
+    "global ANN top5 guarantee",
+    "partial-index causal improvement"
+  ],
+  "query_plans": [
+    "main-plans-5-boundary-0.json",
+    "main-plans-5-concentrated-0.json",
+    "main-plans-5-filtered-0.json",
+    "main-plans-50-boundary-0.json",
+    "main-plans-50-concentrated-0.json",
+    "main-plans-50-filtered-0.json",
+    "main-plans-500-boundary-0.json",
+    "main-plans-500-concentrated-0.json",
+    "main-plans-500-filtered-0.json",
+    "partial-plans-500-boundary-0.json",
+    "partial-plans-500-concentrated-0.json",
+    "partial-plans-500-filtered-0.json",
+    "scale-plans-50-boundary-0.json",
+    "scale-plans-50-concentrated-0.json",
+    "scale-plans-50-filtered-0.json"
+  ]
+}
