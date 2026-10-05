@@ -12,11 +12,14 @@ import yaml
 
 from agent_service.agents.analysis.workflow.paths import WORKFLOW_ROOT
 from .parameters import parameter_controls
+from service_contracts.tool_bindings import parameter_bindings
+from agent_service.agents.analysis.workflow.tools.generate_tool_registry import function_metadata
 
 
 class AssetCatalog:
     def __init__(self, root: Path = WORKFLOW_ROOT):
         self.root = root.resolve()
+        root = self.root
         registry = yaml.safe_load((root / 'tools/tool_registry.yaml').read_text())['tools']
         index = yaml.safe_load((root / 'skills/skill_index.yaml').read_text())['skills']
         self.metadata = {'skills': {}, 'tools': {}}
@@ -35,19 +38,23 @@ class AssetCatalog:
             module = path.read_text(encoding='utf-8')
             function = next(n for n in ast.parse(module).body
                             if isinstance(n, ast.FunctionDef) and n.name == item['function_name'])
-            if function.decorator_list or function.args.posonlyargs:
+            if function.decorator_list or function.args.posonlyargs or function.args.vararg:
                 raise ValueError('Registered Tools must be ordinary keyword-callable functions')
             positional = function.args.args
             parameters = [p.arg for p in positional + function.args.kwonlyargs]
             required = [p.arg for p in positional[:len(positional)-len(function.args.defaults)]]
             required += [p.arg for p, default in zip(function.args.kwonlyargs, function.args.kw_defaults) if default is None]
+            derived = function_metadata(path, root / 'tools', function)
             self.metadata['tools'][key] = {
                 'function_name': function.name, 'description': ast.get_docstring(function) or '',
-                'signature': item['signature'], 'parameters': parameters,
+                'signature': derived['signature'], 'returns': derived['returns'], 'parameters': parameters,
                 'required_parameters': required, 'allows_extra_arguments': function.args.kwarg is not None,
             }
             if 'parameter_controls' in item:
                 self.metadata['tools'][key]['parameter_controls'] = parameter_controls(function, item['parameter_controls'])
+            if 'parameter_bindings' in item:
+                self.metadata['tools'][key]['parameter_bindings'] = parameter_bindings(item['parameter_bindings'], parameters,
+                    self.metadata['tools'][key].get('parameter_controls'))
             raw = ast.get_source_segment(module, function)
             expected = deepcopy(ast.parse(raw).body[0])
             if expected.body and isinstance(expected.body[0], ast.Expr) and isinstance(expected.body[0].value, ast.Constant) and isinstance(expected.body[0].value.value, str):
@@ -70,13 +77,16 @@ class AssetCatalog:
                 raise ValueError('Skill source leaves its asset directory')
             markdown = path.read_text(encoding='utf-8')
             self.skill_sources[key] = {'markdown': markdown, 'sha256': sha256(markdown.encode()).hexdigest()}
+            unknown = {t['tool'] for t in item['tools']} - registry.keys()
+            if unknown:
+                raise ValueError(f'Skill {key!r} refers to unregistered Tools: {sorted(unknown)}')
             self.metadata['skills'][key] = {
                 'name': key, 'description': item['description'],
                 'tools': [t['tool'] for t in item['tools'] if t['tool'] in self.sources],
                 'limitations': item.get('limitations', []),
             }
         self.revision = sha256(json.dumps({'tools': self.sources, 'skills': self.skill_sources,
-            'parameter_controls': {key: item.get('parameter_controls') for key, item in self.metadata['tools'].items()}}, sort_keys=True).encode()).hexdigest()
+            'metadata': self.metadata}, sort_keys=True).encode()).hexdigest()
 
     def public_skills(self):
         return [{'skill_id': key, **deepcopy(value)} for key, value in self.metadata['skills'].items()]

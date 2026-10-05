@@ -191,3 +191,10 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 추가 기능 검토: 실제 모델이 workflow_input 참조에 편집 가능한 Step parameter_controls를 중복 선언한 계획을 세 번의 JSON 교정 후에도 반환해 승인 전 검증에 실패했다. 090의 보고서 수정과 별개인 **계획 생성 계약 준수/교정 품질** 문제다. validator를 완화하거나 참조를 임의 literal로 바꾸지 않는다. 잘못된 필드/바인딩을 명확히 알려주는 피드백, 계획 예제/동적 prompt, 반복 자연어 요청 평가를 다음 Agent 기능 검토 후보로 남긴다. 모델 호출 횟수/재시도 비용 최적화는 계속 후순위다.
 
 보고서 정성 후속: 090 실모델에서 DataFrame head의 표시 제한을 통계 Tool의 전체 입력/산출 범위 제한처럼 서술한 사례가 남았다. observation preview가 잘렸다는 것과 Tool이 표본만 계산했다는 것은 다르다. 실행 근거의 표시 범위·입력 범위·통계 방법의 한계를 구분하는 prompt/관찰 계약과 실제 평가가 필요하다. 최종 승인 범위의 이번 구조 검산으로 완료 처리하지 않는다.
+
+
+## 예시 자산과 공통 Agent의 독립성 — 091
+
+사용자는 현재 예시 Skill·Tool에 핏한 공통 구현을 금지하고 지속적인 자산 유지보수를 재확인했다. [091](091-asset-independent-planning.md)에서 현재 2.0 실행 경로의 특정 함수명 검사·공통 prompt 예시를 등록 연결 정책과 metadata 기준으로 바꿨다. 한 파일의 여러 Tool, 변경 정책/소속의 revision, 반환 힌트, 별칭의 정책 상속, 심볼릭 링크 자산 root를 보완했다. 기존 예시 없이 두 풀의 그래프·실제 함수 실행, 실제 LLM 계획/HITL, 18 Skill·100 Tool 등록/조회, API/패키지 회귀를 확인했다. [계약 가이드](../agent-development/skill-tool-contract.md)를 따른다.
+
+현재 1.3 Workflow 관리·컴파일 지원에는 특정 로드 구성 가정이 남는다. Workflow CRUD/2.0 이행 검토 시 그 공통 가정을 제거하되, 사용자 요청대로 workflow 자산 패키지와 유지보수 경로를 보존한다. source/metadata revision이 달라지는 배포와 기존 HITL/실행 중 복구의 drain/호환 이행은 운영 후속이다. 두 실제 모델 성공을 090의 계획 교정 문제 전체 해결이나 실무 자산 의미 품질의 보장으로 해석하지 않는다. 관찰 preview와 실제 처리 범위의 구분, 다양한 입력/결과 기반 조건의 모델 평가가 남는다. Dataset Registry·보고서 Artifact·Workflow CRUD·SSO/Gaia/Pod 성능·운영/모델 호출 수의 기존 후순위를 유지한다. 베이스 미병합·미푸시·운영 미배포다.

@@ -69,7 +69,8 @@ def materialize_defaults(document, catalog):
         origins[step['id']] = {name: 'agent' if binding['source'] == 'literal' else 'unresolved'
                                for name, binding in step['arguments'].items()}
         for name, control in tool.get('parameter_controls', {}).items():
-            if name not in step['arguments'] and control.get('has_default'):
+            literal_allowed = 'literal' in tool.get('parameter_bindings', {}).get(name, {}).get('allowed_sources', ['literal'])
+            if name not in step['arguments'] and control.get('has_default') and literal_allowed:
                 step['arguments'][name] = {'source': 'literal', 'value': deepcopy(control['default'])}
                 origins[step['id']][name] = 'tool_default'
             binding = step['arguments'].get(name)

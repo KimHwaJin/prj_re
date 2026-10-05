@@ -43,6 +43,8 @@ CLI는 typed HITL action JSON을 받으며 현재 plan_id/plan_revision을 출�
 
 ## Skill·Tool 유지보수
 
+현재 예시 자산에 공통 Agent를 맞추지 않는다. [자산과 공통 실행 계약](skill-tool-contract.md)에 한 파일의 여러 Tool·연결 정책·등록 ID·변경 영향과 검증 방법을 정리했다.
+
 ```sh
 python src/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
 python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py

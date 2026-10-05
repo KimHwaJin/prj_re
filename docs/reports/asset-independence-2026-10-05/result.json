@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-05",
+  "model": "real",
+  "executor": "not_called",
+  "assets": "isolated_synthetic",
+  "scope": "LangChain metadata discovery and LangGraph HITL; no API/worker/database performance measurement",
+  "cases": [
+    {
+      "name": "inventory",
+      "checks": [
+        {
+          "name": "real_model_returned_plan",
+          "passed": true
+        },
+        {
+          "name": "only_alternate_registered_tools",
+          "passed": true
+        },
+        {
+          "name": "declared_input_binding",
+          "passed": true
+        },
+        {
+          "name": "different_return_selector",
+          "passed": true
+        },
+        {
+          "name": "configured_value_appears_for_user",
+          "passed": true
+        },
+        {
+          "name": "hitl_approval_completed_without_executor",
+          "passed": true
+        },
+        {
+          "name": "user_input_change_frozen",
+          "passed": true
+        },
+        {
+          "name": "user_parameter_change_frozen",
+          "passed": true
+        }
+      ],
+      "step_count": 2,
+      "tools": [
+        "decode_lots",
+        "summarize_lots"
+      ],
+      "user_parameter_check": "offline verification of captured approved snapshot"
+    },
+    {
+      "name": "billing",
+      "checks": [
+        {
+          "name": "real_model_returned_plan",
+          "passed": true
+        },
+        {
+          "name": "only_alternate_registered_tools",
+          "passed": true
+        },
+        {
+          "name": "declared_input_binding",
+          "passed": true
+        },
+        {
+          "name": "different_return_selector",
+          "passed": true
+        },
+        {
+          "name": "configured_value_appears_for_user",
+          "passed": true
+        },
+        {
+          "name": "hitl_approval_completed_without_executor",
+          "passed": true
+        },
+        {
+          "name": "user_input_change_frozen",
+          "passed": true
+        },
+        {
+          "name": "user_parameter_change_frozen",
+          "passed": true
+        }
+      ],
+      "step_count": 2,
+      "tools": [
+        "extract_receipts",
+        "quote_invoice"
+      ],
+      "user_parameter_check": "offline verification of captured approved snapshot"
+    }
+  ]
+}

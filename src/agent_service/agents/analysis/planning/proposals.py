@@ -6,6 +6,7 @@ from pydantic import Field, model_validator
 from service_contracts.plan_interaction import StrictModel
 from service_contracts.plan_review import new_review, patch_review, require, canonical
 from service_contracts.workflow_validation import workflow_schema
+from service_contracts.tool_bindings import inherit_parameter_policy
 from agent_service.agents.analysis.execution.sources import source_info
 
 
@@ -175,6 +176,7 @@ def prepare_review(proposal, runtime, state):
         if function.origin_tool_id:
             require(source['code_sha256'] != expected['code_sha256'], 'Unmodified registered Tool must use its registered ID')
             source['origin_tool_id'] = function.origin_tool_id
+            info = inherit_parameter_policy(info, metadata['tools'][function.origin_tool_id])
         sources[tool] = source
         metadata['tools'][tool] = info
         metadata['skills'][skill]['tools'].append(tool)
@@ -192,6 +194,7 @@ def prepare_review(proposal, runtime, state):
             require(step['skill_id'] == prior['skill_id'] and tool not in metadata['tools'] and tool not in sources,
                     'Inherited execution-local Tool must retain its registered Skill and unique ID')
             _, info = source_info(previous_source['code'], expected=previous_source)
+            info = inherit_parameter_policy(info, base['catalog']['tools'][tool])
             sources[tool] = deepcopy(previous_source)
             metadata['tools'][tool] = info
             metadata['skills'][step['skill_id']]['tools'].append(tool)
@@ -202,11 +205,6 @@ def prepare_review(proposal, runtime, state):
         for binding in step.get('arguments', {}).values():
             require(binding.get('source') != 'literal' or not isinstance(binding.get('value'), str) or
                     not binding['value'].startswith('/workspace/'), 'Runtime file paths must use trusted inputs/context')
-        if step.get('tool_id') == 'data_load' or sources.get(step.get('tool_id'), {}).get('origin_tool_id') == 'data_load':
-            binding = step.get('arguments', {}).get('parquet_path', {})
-            field = document.get('inputs', {}).get(binding.get('name'), {})
-            require(binding.get('source') == 'workflow_input' and field.get('kind') == 'data_reference',
-                    'Data load paths must reference a trusted data_reference input')
     policy = {'allowed_modes': ['MULTI'] if document.get('decisions') or any('when' in s for s in document.get('steps', [])) else ['SINGLE', 'MULTI'],
               'repair_level_limit': runtime.settings.agent_repair_level_limit,
               'max_repair_attempts_limit': runtime.settings.agent_max_repair_attempts,

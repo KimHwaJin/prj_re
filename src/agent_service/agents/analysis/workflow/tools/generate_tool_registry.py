@@ -50,17 +50,6 @@ def _annotation(node: ast.AST | None) -> str | None:
     return ast.unparse(node) if node is not None else None
 
 
-def _tool_function(tree: ast.Module, expected_name: str) -> ast.FunctionDef | None:
-    return next(
-        (
-            node
-            for node in tree.body
-            if isinstance(node, ast.FunctionDef) and node.name == expected_name
-        ),
-        None,
-    )
-
-
 def _parameters(function: ast.FunctionDef) -> dict[str, dict[str, Any]]:
     positional = [
         (argument, "positional_only")
@@ -218,7 +207,7 @@ def _packages(function: ast.FunctionDef) -> list[str]:
     )
 
 
-def _entry(path: Path, root: Path, function: ast.FunctionDef) -> dict[str, Any]:
+def function_metadata(path: Path, root: Path, function: ast.FunctionDef) -> dict[str, Any]:
     relative = path.relative_to(root)
     raw_docstring = ast.get_docstring(function, clean=False) or ""
     docstring = LiteralString(inspect.cleandoc(raw_docstring))
@@ -238,57 +227,53 @@ def _entry(path: Path, root: Path, function: ast.FunctionDef) -> dict[str, Any]:
 
 
 def build_registry(root: Path) -> dict[str, Any]:
-    tools: dict[str, Any] = {}
-    for path in sorted(root.rglob("*.py")):
-        relative = path.relative_to(root)
-        if (
-            path.name in EXCLUDED_FILES
-            or "past" in relative.parts
-            or "tmp" in relative.parts
-            or "__pycache__" in relative.parts
-        ):
-            continue
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        function = _tool_function(tree, path.stem)
-        if function is None:
-            continue
-        if path.stem in tools:
-            raise ValueError(f"Duplicate Tool id: {path.stem!r}")
-        tools[path.stem] = _entry(path, root, function)
-
-    # Availability is a deliberate maintainer policy, not inferable from AST.
-    # Preserve it when refreshing signatures/docstrings, including --output to
-    # a scratch location. Newly registered Tools default to ready.
+    # Maintainer policy cannot be inferred from Python names or docstrings.
     previous_path = root / 'tool_registry.yaml'
-    if previous_path.is_file():
-        previous = yaml.safe_load(previous_path.read_text(encoding='utf-8')) or {}
-        for key, item in tools.items():
-            status = previous.get('tools', {}).get(key, {}).get('availability')
-            if status is not None:
-                if status not in {'ready', 'test_only'}:
+    previous = yaml.safe_load(previous_path.read_text(encoding='utf-8')) if previous_path.is_file() else {}
+    previous_tools = (previous or {}).get('tools', {})
+    identities = {}
+    for key, item in previous_tools.items():
+        identity = (item['source'], item['function_name'])
+        if identity in identities:
+            raise ValueError('Duplicate registered source/function identity')
+        identities[identity] = key
+    tools = {}
+    for path in sorted(root.rglob('*.py')):
+        relative = path.relative_to(root)
+        if path.name in EXCLUDED_FILES or any(p in relative.parts for p in ('past','tmp','__pycache__')):
+            continue
+        tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+        public = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith('_')]
+        names = [n.name for n in public]
+        if len(set(names)) != len(names):
+            raise ValueError(f'Duplicate function definition in {relative}')
+        for function in public:
+            if not isinstance(function, ast.FunctionDef) or function.decorator_list or function.args.posonlyargs or function.args.vararg:
+                raise ValueError('Registered Tools must be ordinary keyword-callable functions without decorators')
+            key = identities.get((relative.as_posix(), function.name), function.name)
+            if key in tools:
+                raise ValueError(f'Duplicate Tool id: {key!r}; declare distinct registry IDs for source/function pairs')
+            item = function_metadata(path, root, function)
+            old = previous_tools.get(key, {})
+            if 'availability' in old:
+                if old['availability'] not in {'ready', 'test_only'}:
                     raise ValueError('Invalid Tool availability')
-                item['availability'] = status
-            controls = previous.get('tools', {}).get(key, {}).get('parameter_controls')
-            if controls is not None:
-                # UI policy is authored, not inferred from annotation/docstring.
+                item['availability'] = old['availability']
+            if 'parameter_controls' in old:
                 from agent_service.agents.analysis.planning.parameters import parameter_controls
-                tree = ast.parse((root / item['source']).read_text(encoding='utf-8'))
-                parameter_controls(_tool_function(tree, item['function_name']), controls)
-                item['parameter_controls'] = controls
-
+                parameter_controls(function, old['parameter_controls'])
+                item['parameter_controls'] = old['parameter_controls']
+            if 'parameter_bindings' in old:
+                from service_contracts.tool_bindings import parameter_bindings
+                parameter_bindings(old['parameter_bindings'], item['inputs'], old.get('parameter_controls'))
+                item['parameter_bindings'] = old['parameter_bindings']
+            tools[key] = item
     return {
-        "schema_version": "2.0",
-        "registry_type": "tool_registry",
-        "description": (
-            "Python Tool 파일에서 AST로 추출한 함수 호출 정보다. "
-            "Registry에 등록된 Tool은 모두 Workflow에서 사용할 수 있다."
-        ),
-        "generation": {
-            "method": "python_ast",
-            "llm_used": False,
-            "source_root": "agent_service/agents/analysis/workflow/tools",
-        },
-        "tools": tools,
+        'schema_version': '2.0', 'registry_type': 'tool_registry',
+        'description': 'Python Tool 파일에서 AST로 추출한 함수 호출 정보다. Registry에 등록된 Tool은 모두 Workflow에서 사용할 수 있다.',
+        'generation': {'method': 'python_ast', 'llm_used': False,
+                      'source_root': 'agent_service/agents/analysis/workflow/tools'},
+        'tools': tools,
     }
 
 

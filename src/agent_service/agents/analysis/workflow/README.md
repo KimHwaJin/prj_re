@@ -38,3 +38,5 @@ python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.p
 054에서 외부의 이전 설문형 그래프·노드를 제거했지만 이 패키지의 skills/tools/workflows 자산과 기존 Workflow 관리·컴파일 모듈은 보존했다. 새 승인 snapshot의 실제 코드 생성은 ../execution/compiler.py가 맡는다. 검색 placeholder인 workflow_recommender.py가 현재 pgvector 추천을 구현한 것으로 해석하지 않는다.
 
 사용자에게 노출할 Tool 파라미터는 [파라미터 작성 가이드](../../../../../docs/tool-parameter-policy.md)를 따른다. tool_registry.yaml의 parameter_controls는 수동 정책이며 생성 시 보존·검증된다. 함수 기본값은 Agent 계획 검토에서 AST로 읽어 승인 snapshot에 고정한다.
+
+091의 [Skill·Tool 자산 계약](../../../../../docs/agent-development/skill-tool-contract.md)은 한 파일의 여러 공개 함수, 고유 등록 ID, parameter_bindings, 자산 revision과 현재 2.0/레거시 1.3의 적용 범위를 설명한다. 공통 Agent는 이 디렉터리의 현재 예시 함수명으로 분기하지 않는다.

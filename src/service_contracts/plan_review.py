@@ -143,6 +143,17 @@ def patch_review(review, raw_action, *, datasets, context):
             require(Draft202012Validator(field['value_schema']).is_valid(value), 'Final input violates its schema')
             if field['kind'] == 'data_reference':
                 require(isinstance(value, str) and value in accessible, 'Dataset reference is unknown or inaccessible')
+    if action.action == 'approve_plan':
+        for step in document['steps']:
+            if step['id'] in excluded:
+                continue
+            tool = result['catalog']['tools'][step['tool_id']]
+            for name, binding in step['arguments'].items():
+                policy = tool.get('parameter_bindings', {}).get(name, {})
+                required = policy.get('required') or name in tool['required_parameters']
+                if required and binding['source'] == 'workflow_input':
+                    require(binding['name'] in result['input_values'],
+                            f"Required Tool input is missing: {step['id']}.{name}")
     if (document != review['document'] or result['input_values'] != review['input_values'] or
             result['excluded_step_ids'] != review['excluded_step_ids']):
         result['plan_revision'] += 1

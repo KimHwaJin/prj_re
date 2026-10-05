@@ -35,7 +35,7 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memo
         message: str = Field(min_length=1, max_length=12000, description=
             'For a report-writing/revision answer, include the complete Markdown report in message, not just an acknowledgement of completion. '
             'For answer with analysis grounding: qualitative interpretation ONLY, no digit characters, numeric values, percentages or numbered headings. '
-            'Do not describe row/column counts or IQR fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
+            'Do not describe observed counts or fractions numerically. Exact values appear in the server-rendered table from fact_ids. '
             'For plans or unrelated general FAQ, ordinary text is allowed.')
         memory_updates: list[proposal_type] = Field(default_factory=list, max_length=limits.max_updates, description="Only durable project background/preferences or explicit remember requests. Normalize briefly, preserve exact CURRENT quote and intent. Never session-only requests, findings, data or paths. Echo the document version and exact full old_text. Edit only visible/editable sections; empty when automatic_write=false or no change.")
         _memory_result: dict | None = PrivateAttr(default=None)
@@ -60,13 +60,6 @@ def reply_schema(catalog, max_candidates, repair_limit=4,repair_attempts=3, memo
                 review = new_review(proposal.definition, proposal.input_values, catalog.metadata, policy)
                 if review['document']['execution']['max_repair_attempts'] > repair_attempts:
                     raise ValueError('Repair attempts exceed the service limit')
-                # Paths are resolved by the service, never fabricated from chat.
-                for step in proposal.definition['steps']:
-                    if step['tool_id'] == 'data_load':
-                        binding = step['arguments'].get('parquet_path', {})
-                        field = proposal.definition['inputs'].get(binding.get('name'), {})
-                        if binding.get('source') != 'workflow_input' or field.get('kind') != 'data_reference':
-                            raise ValueError('data_load.parquet_path must reference a data_reference Workflow input')
             return self
     return Reply
 

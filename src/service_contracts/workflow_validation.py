@@ -2,6 +2,7 @@
 from functools import lru_cache
 from importlib.resources import files
 import json
+from .tool_bindings import binding_errors
 from jsonschema_rs import Draft202012Validator
 
 @lru_cache(maxsize=1)
@@ -131,6 +132,7 @@ def validate(document, catalog):
             if missing:
                 errors.append(f"{id}: missing tool arguments {sorted(missing)}")
         if tool is not None:
+            errors.extend(binding_errors(item, document, tool))
             for name, binding in item['arguments'].items():
                 if binding['source'] == 'literal' and name in tool.get('parameter_controls', {}):
                     if not Draft202012Validator(tool['parameter_controls'][name]['value_schema']).is_valid(binding['value']):
@@ -145,7 +147,10 @@ def validate(document, catalog):
             if binding is None:
                 errors.append(f"{id}: parameter control requires an explicit argument binding: {name}")
             elif control["editable"] and binding["source"] not in {"literal", "agent_decision"}:
-                errors.append(f"{id}: object/input/system references cannot be edited as Tool parameter values")
+                errors.append(f"{id}.parameter_controls.{name}: object/input/system references cannot be edited as Tool parameter values; "
+                    f"actual source={binding['source']}. Remove this Step control. "
+                    + (f"Edit inputs.{binding['name']}.editable instead." if binding['source']=='workflow_input'
+                       else "Keep runtime references read only."))
             elif binding["source"] == "literal" and not remote_references(control["value_schema"]):
                 try:
                     if not Draft202012Validator(control["value_schema"]).is_valid(binding["value"]):

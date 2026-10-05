@@ -9,6 +9,7 @@ from hashlib import sha256
 from service_contracts.execution_repair import RepairResponse
 from service_contracts.plan_review import canonical, require
 from service_contracts.workflow_validation import validate, bindings
+from service_contracts.tool_bindings import inherit_parameter_policy
 from service_contracts.plan_projection import plan_view
 from .compiler import verify_snapshot, ready_batch
 from .sources import source_info
@@ -98,6 +99,8 @@ def proposal_snapshot(state, raw, catalog, *, level_limit):
         if step['tool_id'].startswith('custom.'):
             pinned=original['tool_sources'][step['tool_id']]
             source,info=source_info(pinned['code'],expected=pinned if pinned.get('origin_tool_id') else None)
+            if pinned.get('origin_tool_id'):
+                info=inherit_parameter_policy(info,catalog.metadata['tools'][pinned['origin_tool_id']])
             metadata['tools'][step['tool_id']]=info
             metadata['skills'][step['skill_id']]['tools'].append(step['tool_id'])
     source_patches={}
@@ -121,7 +124,9 @@ def proposal_snapshot(state, raw, catalog, *, level_limit):
             if key in source_patches:
                 require(replan or key in failed, 'Tool implementation repair must target a failed Step')
                 source,info=source_info(source_patches[key],expected=existing if origin else None)
-                if origin:source['origin_tool_id']=origin
+                if origin:
+                    source['origin_tool_id']=origin
+                    info=inherit_parameter_policy(info,catalog.metadata['tools'][origin])
                 if not existing or source['code_sha256']!=existing['code_sha256']:source_effects.add(key)
                 sources[tool]=source; metadata['tools'][tool]=info
             else:require(tool in sources and tool in metadata['tools'], 'Custom Tool requires execution-local source')
@@ -137,6 +142,7 @@ def proposal_snapshot(state, raw, catalog, *, level_limit):
                     source_effects.add(key)
                     description=metadata['tools'][tool]['description']
                     source['origin_tool_id']=tool
+                    info=inherit_parameter_policy(info,metadata['tools'][tool])
                     tool=f'custom.repair_{sha256((key+source["code_sha256"]).encode()).hexdigest()[:16]}'
                     step['tool_id']=tool; sources[tool]=source; metadata['tools'][tool]={**info,'description':description}
                     metadata['skills'][step['skill_id']]['tools'].append(tool)
@@ -167,11 +173,18 @@ def proposal_snapshot(state, raw, catalog, *, level_limit):
     errors=validate(document,metadata); require(not errors,'; '.join(errors[:8]))
     # All paths resolve through the originally approved dataset map, not model-proposed input values.
     for step in document['steps']:
-        if step['tool_id']=='data_load':
-            b=step['arguments'].get('parquet_path',{})
-            require(b.get('source')=='workflow_input' and b.get('name') in original.get('dataset_bindings',{}), 'Data loads must use an approved dataset')
         for b in bindings([step['arguments'],step.get('when')]):
             if b['source']=='workflow_input':require(b['name'] in original['input_values'] or not document['inputs'][b['name']]['required'], 'Required repaired input has no approved value')
+    # Reference policies survive registered Tool renaming and custom aliases.
+    for step in document['steps']:
+        for name, policy in metadata['tools'][step['tool_id']].get('parameter_bindings', {}).items():
+            if policy.get('input_kind') == 'data_reference' and name in step['arguments']:
+                binding = step['arguments'][name]
+                name = binding['name']
+                absent_optional = (name not in original['input_values'] and not policy.get('required')
+                                   and not document['inputs'][name]['required'])
+                require(absent_optional or name in original.get('dataset_bindings', {}),
+                        'Repaired data reference has no originally approved dataset binding')
     updated.update(steps=deepcopy(document['steps']),tool_sources={s['tool_id']:sources[s['tool_id']] for s in document['steps']},skill_sources=skill_sources)
     seal(updated)
     proposed_batch,_=ready_batch(updated,state.get('completed_steps',[]),state.get('skipped_steps',[]),state.get('execution_decisions',{}),
