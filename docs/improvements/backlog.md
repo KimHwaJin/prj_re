@@ -211,3 +211,8 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 바로 다음은 근사 추천의 허용 품질/정확한 전역TOP5 요구, 실제 embedding 모델·차원·현업 정답 쿼리·corpus/지연 목표 확인이다. 이를 바탕으로 user_queries 등록·검색 revision·pending/ready/failed·POST/PATCH/승격/복제·검색 응답 계약을 확정하고 Agent 추천 풀에 연결한다. 정확 fallback의 전량 비용과 개수5개 확보 시에도 후보 누락을 감지하지 못하는 문제를 함께 다룬다. 신규 API·migration·실제 embedding·자연어 추천/E2E·동시부하는 아직 미구현/미검증이다.
 
 HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과로 미완료다. 모델 호출 수·Dataset Registry·Artifact·운영 후순위와 기존 성능/배포 과제는 이번 검색 진단으로 완료 처리하지 않는다.
+
+
+### 093 후속 사용자 결정 — HNSW 사용
+
+전량 거리 계산 기본안 대신 HNSW를 사용하기로 했다. [구현 방향](../design/workflow-retrieval-and-registration.md#사용자-결정-hnsw-사용--구현-방향)에 활성 검색용 인덱스·Workflow 제외 반복 탐색·발견 후보 내 대표 점수 재정렬·검색 예산/부분 결과·Agent 적용 가능성 판단을 기록했다. 후보 확보 수와 UI의 추천+신규 계획 최대 수를 분리한다. 후보 내 재정렬과 실제 임베딩/동시 부하는 아직 미측정이며 전역 TOP5를 보장하지 않는다. 다음은 다중 user_queries 등록/수정·DDL·검색 계약 확정과 구현이다. 이번 결정 기록만으로 해당 기능을 구현 완료로 표시하지 않는다.
