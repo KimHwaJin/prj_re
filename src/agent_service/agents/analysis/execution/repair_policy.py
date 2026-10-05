@@ -76,6 +76,8 @@ def proposal_snapshot(state, raw, catalog, *, level_limit):
         document['steps']=deepcopy(original['steps'])
     if response.replacement_decisions is not None:
         document['decisions']=deepcopy(response.replacement_decisions)
+    if 'ordered_call_ids' in document:
+        document['ordered_call_ids']=[s['id'] for s in document['steps']]
     after={s['id']:s for s in document['steps']}
     require(len(after)==len(document['steps']), 'Duplicate repaired Step ID')
     for key in frozen:

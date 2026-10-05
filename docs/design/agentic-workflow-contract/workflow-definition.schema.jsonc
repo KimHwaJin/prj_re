@@ -1,4 +1,4 @@
-// 필드별 한국어 설명. 문서용 JSONC이며 API 제출에는 같은 이름의 .json을 사용한다.
+// 필드별 설명. 내부 실행 계획 참고 JSONC.
 {
   // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
   "type": "object",
@@ -139,6 +139,22 @@
       },
       // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
       "description": "Workflow가 기대하는 분석 결과·데이터·보고서 선언. 선언만으로 파일이 생성되는 것은 아니다. 필수 필드."
+    },
+    // 순차 실행 호출 ID 목록. 데이터 필수 의존성과 별개이며 생략된 호출은 순서 장벽을 해제한다. 공개 2.0 변환기가 생성한다.
+    "ordered_call_ids": {
+      // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+      "type": "array",
+      // 허용 배열의 최소 원소 수.
+      "minItems": 1,
+      // 배열 원소의 중복을 허용하지 않는지 표시한다.
+      "uniqueItems": true,
+      // 배열 원소에 적용할 Schema.
+      "items": {
+        // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
+        "$ref": "#/$defs/id"
+      },
+      // 해당 정의·입력·Skill·Step·산출물의 의미를 사람이 읽을 수 있게 설명한 문자열.
+      "description": "순차 실행 호출 ID 목록. 데이터 필수 의존성과 별개이며 생략된 호출은 순서 장벽을 해제한다. 공개 2.0 변환기가 생성한다."
     }
   },
   // 해당 객체에서 반드시 포함할 필드 이름 배열. 값이 null인지와 필드 생략 가능 여부는 별개다.
@@ -607,8 +623,8 @@
           "propertyNames": {
             // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
             "type": "string",
-            // 문자열이 만족해야 하는 정규식.
-            "pattern": "^[a-z][a-z0-9_.-]*$",
+            // 허용 문자열의 최소 길이.
+            "minLength": 1,
             // 허용 문자열의 최대 길이.
             "maxLength": 150
           },
@@ -633,8 +649,12 @@
           "type": "object",
           // Tool 함수 인자 propertyNames의 사용자 편집 허용 및 값 Schema.
           "propertyNames": {
-            // 같은 문서의 정의 또는 components schema 참조. 실제 업무 데이터 값이 아니다.
-            "$ref": "#/$defs/id"
+            // 허용하는 JSON 데이터 타입. 이 Schema의 입력값 형식을 제한한다.
+            "type": "string",
+            // 허용 문자열의 최소 길이.
+            "minLength": 1,
+            // 허용 문자열의 최대 길이.
+            "maxLength": 150
           },
           // Tool 함수 인자 additionalProperties의 사용자 편집 허용 및 값 Schema.
           "additionalProperties": {
@@ -975,5 +995,5 @@
     }
   },
   // Schema 작성자를 위한 주석. 업무 payload 필드 또는 검증 규칙이 아니다.
-  "$comment": "Used by the current agentic planning, approval and execution compiler. Workflow CRUD still uses the separate legacy 1.3 contract; this definition is not directly accepted by Workflow POST."
+  "$comment": "Internal normalized execution plan. Public workflow_version=2.0 documents are normalized by workflow_standard; legacy 1.3 remains a separate compatibility contract."
 }

@@ -13,6 +13,7 @@ import yaml
 from agent_service.agents.analysis.workflow.paths import WORKFLOW_ROOT
 from .parameters import parameter_controls
 from service_contracts.tool_bindings import parameter_bindings
+from service_contracts.tool_outputs import output_bindings, derived_outputs
 from agent_service.agents.analysis.workflow.tools.generate_tool_registry import function_metadata
 
 
@@ -49,6 +50,7 @@ class AssetCatalog:
                 'function_name': function.name, 'description': ast.get_docstring(function) or '',
                 'signature': derived['signature'], 'returns': derived['returns'], 'parameters': parameters,
                 'required_parameters': required, 'allows_extra_arguments': function.args.kwarg is not None,
+                'outputs': output_bindings(item['outputs']) if 'outputs' in item else derived_outputs(derived['returns']),
             }
             if 'parameter_controls' in item:
                 self.metadata['tools'][key]['parameter_controls'] = parameter_controls(function, item['parameter_controls'])

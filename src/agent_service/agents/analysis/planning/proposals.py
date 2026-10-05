@@ -152,6 +152,8 @@ def prepare_review(proposal, runtime, state):
     else:
         document = deepcopy(proposal.definition)
         values = proposal.input_values
+    if 'ordered_call_ids' in document:
+        document['ordered_call_ids'] = [s['id'] for s in document['steps']]
     metadata = deepcopy(runtime.catalog.metadata)
     sources = {}
     custom_steps = {}

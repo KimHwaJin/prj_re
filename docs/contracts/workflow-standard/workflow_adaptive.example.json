@@ -1,0 +1,127 @@
+{
+  "workflow_version": "2.0",
+  "workflow": {
+    "name": "Independent standard example",
+    "user_request": "Calculate the approved total",
+    "inputs": {
+      "payload": {
+        "value_schema": {
+          "type": "string"
+        }
+      },
+      "include_optional": {
+        "value_schema": {
+          "type": "boolean"
+        },
+        "default": false
+      }
+    },
+    "steps": [
+      {
+        "id": "operations",
+        "skill": "accounting",
+        "tools": [
+          {
+            "id": "decode",
+            "tool": "extract_receipts",
+            "arguments": {
+              "encoded": {
+                "source": "input",
+                "name": "payload"
+              }
+            }
+          },
+          {
+            "id": "calculate",
+            "tool": "quote_invoice",
+            "arguments": {
+              "lines": {
+                "source": "tool_output",
+                "call_id": "decode",
+                "output": "receipts"
+              },
+              "coefficient": {
+                "source": "agent_decision",
+                "decision_id": "scale"
+              }
+            }
+          },
+          {
+            "id": "optional",
+            "tool": "quote_invoice",
+            "arguments": {
+              "lines": {
+                "source": "tool_output",
+                "call_id": "decode",
+                "output": "receipts"
+              },
+              "coefficient": {
+                "source": "literal",
+                "value": 2
+              }
+            },
+            "when": {
+              "op": "eq",
+              "left": {
+                "source": "input",
+                "name": "include_optional"
+              },
+              "right": {
+                "source": "literal",
+                "value": true
+              }
+            }
+          },
+          {
+            "id": "tail",
+            "tool": "quote_invoice",
+            "arguments": {
+              "lines": {
+                "source": "tool_output",
+                "call_id": "decode",
+                "output": "receipts"
+              },
+              "coefficient": {
+                "source": "agent_decision",
+                "decision_id": "scale"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "expected_outputs": [
+      {
+        "id": "report",
+        "kind": "report",
+        "description": "Explain actual results",
+        "required": true,
+        "format": "markdown",
+        "source": {
+          "source": "agent_report",
+          "evidence_calls": [
+            "calculate",
+            "tail"
+          ]
+        }
+      }
+    ],
+    "decisions": [
+      {
+        "id": "scale",
+        "after_calls": [
+          "decode"
+        ],
+        "instruction": "Choose an allowed multiplier from the observed values.",
+        "output_schema": {
+          "type": "integer",
+          "enum": [
+            2,
+            3
+          ]
+        }
+      }
+    ],
+    "description": "독립 예시 자산 풀의 수열을 집계하는 규격 예제. 업무 함수명을 공통 실행기에 하드코딩하지 않는다."
+  }
+}

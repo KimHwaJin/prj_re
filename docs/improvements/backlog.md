@@ -198,3 +198,7 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 사용자는 현재 예시 Skill·Tool에 핏한 공통 구현을 금지하고 지속적인 자산 유지보수를 재확인했다. [091](091-asset-independent-planning.md)에서 현재 2.0 실행 경로의 특정 함수명 검사·공통 prompt 예시를 등록 연결 정책과 metadata 기준으로 바꿨다. 한 파일의 여러 Tool, 변경 정책/소속의 revision, 반환 힌트, 별칭의 정책 상속, 심볼릭 링크 자산 root를 보완했다. 기존 예시 없이 두 풀의 그래프·실제 함수 실행, 실제 LLM 계획/HITL, 18 Skill·100 Tool 등록/조회, API/패키지 회귀를 확인했다. [계약 가이드](../agent-development/skill-tool-contract.md)를 따른다.
 
 현재 1.3 Workflow 관리·컴파일 지원에는 특정 로드 구성 가정이 남는다. Workflow CRUD/2.0 이행 검토 시 그 공통 가정을 제거하되, 사용자 요청대로 workflow 자산 패키지와 유지보수 경로를 보존한다. source/metadata revision이 달라지는 배포와 기존 HITL/실행 중 복구의 drain/호환 이행은 운영 후속이다. 두 실제 모델 성공을 090의 계획 교정 문제 전체 해결이나 실무 자산 의미 품질의 보장으로 해석하지 않는다. 관찰 preview와 실제 처리 범위의 구분, 다양한 입력/결과 기반 조건의 모델 평가가 남는다. Dataset Registry·보고서 Artifact·Workflow CRUD·SSO/Gaia/Pod 성능·운영/모델 호출 수의 기존 후순위를 유지한다. 베이스 미병합·미푸시·운영 미배포다.
+
+## 092 Workflow 표준 이후 남은 이행
+
+공개 규격과 직접 POST/PATCH/승격·공통 실행 계획 연결은 [092](092-workflow-standard-contract.md)에서 구현했다. 남은 작업은 pgvector 검색/embedding 재색인, 등록 template을 현재 conversation의 실제 추천 후보로 연결, 내부 생성 계획의 공개 규격 exporter,1.0/1.3 명시 마이그레이션, 기대 산출물의 실제 파일/Artifact/Dataset 연계다. 순차 공개 계획의 Agent 재계획·오류 수정은 기존 상한과 승인 정책을 유지한다. 실제 사내 LLM·Executor HTTP/Redis 연계와 Pod 배포 검증은 별도이며 double 실행 검증을 대체 근거로 사용하지 않는다.

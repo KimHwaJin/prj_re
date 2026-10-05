@@ -25,6 +25,9 @@ def canonical(value):
 
 
 def new_review(document, values, catalog, policy):
+    if document.get('workflow_version') == '2.0':
+        from service_contracts.workflow_standard import normalize
+        document = normalize(document, catalog)
     errors = validate(document, catalog)
     require(not errors, '; '.join(errors[:8]))
     document, parameter_origins = materialize_defaults(document, catalog)

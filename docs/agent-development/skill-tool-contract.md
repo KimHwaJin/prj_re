@@ -94,3 +94,9 @@ source·Skill 문서뿐 아니라 전체 유효 메타데이터/소속/정책을
 현재 2.0의 계획·승인·Executor 실행 경로를 대상으로 했다. 개발자 친숙성을 위해 유지한 workflow 패키지의 **기존 1.3 관리·컴파일 코드에는 특정 데이터 로드 구성 가정이 남아 있다.** 이번 완료를 레거시 Workflow 관리 전체의 자산 독립성 완료라고 표현하지 않는다. 그 부분은 Workflow CRUD/1.3→2.0 이행 검토와 함께 후속으로 정리한다.
 
 공개 Run/HITL/SSE·Executor 제출 JSON, DB schema, 설정은 변경하지 않았다. MinIO 정책·미구현 Dataset Registry·Artifact 등록·Workflow 검색을 추가한 작업도 아니다. 실제 LLM의 계약 준수, 출력 의미의 정확성과 다양한 실무 자산의 조합 품질은 계속 평가해야 한다.
+
+## 092 공개 Workflow 출력 별칭 계약
+
+[확정 Workflow2.0](../workflow-standard.md)의 tool_output.output은 등록 outputs 별칭을 참조한다. tool_registry.yaml에 `outputs: {data: {selector: []}, metric: {selector: [summary, metric]}}`를 선언할 수 있다. 생성기는 이 수동 매핑을 보존하고 기동 시 검증한다. 없으면 실제 AST 반환 key 힌트/전체 result를 안전한 selector 배열로 변환한다. Tool 이름으로 반환 구조를 추측하지 않는다. 자동 힌트는 실행 경로의 실제 shape를 증명하지 않으므로 동적 반환은 명시 매핑과 실행 시험이 필요하다. 함수 본문·docstring 작성 계약은 그대로다. 출력 매핑도 catalog revision에 포함되어 승인 후 배포 변경을 섞지 않는다.
+
+반환 dict key가 공개 출력 ID 규칙에 맞지 않으면 자동 별칭으로 사용하지 않는다. 사용 가능한 자동 별칭이 없으면 result를 전체 반환값으로 제공하며, 예를 들어 `ROC AUC` key는 `auc: {selector: ["ROC AUC"]}`처럼 명시 등록한다. 실제 반환 key를 조용히 개명하거나 그 이유로 함수 등록을 실패시키지 않는다.

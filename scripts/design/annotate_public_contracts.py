@@ -10,6 +10,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 FIELDS = {
+    'ordered_call_ids': '공개 Workflow의 순차 호출 ID 목록. 실제 데이터 의존성과 구분한다.',
     'project_name': '프로젝트 이름. 요청 body에서 사용하고 공개 응답은 name으로 표시한다.',
     'system_prompt': '사용자 지정 프로젝트 공통 지침. 새 Run 실행 시작 시 고정하며 기존 Run 재개에서는 변경하지 않는다. 빈 문자열은 지침 없음이다.',
     'prompt_version': '프로젝트 지침 변경 버전. 생성1, system_prompt 내용이 실제 변경될 때만 증가하며 메모리 문서 version과 별개다.',
@@ -551,7 +552,9 @@ def strip_annotations(node, property_map=False):
 
 
 def main():
-    sources = sorted((ROOT/'docs/contracts').rglob('*.json'))
+    # Workflow 표준은 전용 Schema·주석 예제를 제공한다. 받은 원본은 수정하지 않는다.
+    sources = sorted(p for p in (ROOT/'docs/contracts').rglob('*.json')
+                     if 'workflow-standard' not in p.parts)
     workflow_schema = ROOT/'src/service_contracts/resources/workflow-definition.schema.json'
     schema_copy = ROOT/'docs/design/agentic-workflow-contract/workflow-definition.schema.json'
     workflow = json.loads(workflow_schema.read_text());original=strip_annotations(workflow)

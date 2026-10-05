@@ -15,6 +15,7 @@ from typing import Any, Mapping
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
+from functools import lru_cache
 
 from agent_config import build_langgraph_thread_id, load_agent_settings
 from config import settings
@@ -30,6 +31,17 @@ from api_service.services.agent_project_context import read_project_snapshot
 
 GRAPH_MESSAGE_SOURCE = "dtest-agent"
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def deployed_analysis_assets():
+    """Shared immutable assets for Workflow validation and graph composition.
+
+    Reading metadata opens no model client, graph, database or Executor resource.
+    Source/metadata changes take effect on deployment, never during approval.
+    """
+    from agent_service.agents.analysis.planning.catalog import AssetCatalog
+    return AssetCatalog()
 
 
 class GraphResourcesBusy(RuntimeError):
@@ -74,7 +86,7 @@ class AgentGraphRuntime:
 
         agent_settings = load_agent_settings()
         from api_service.services.project_memory_policy import ProjectMemoryPolicy
-        dependencies = PlanningRuntime(agent_settings, memory_policy_factory=ProjectMemoryPolicy().for_context)
+        dependencies = PlanningRuntime(agent_settings, catalog=deployed_analysis_assets(), memory_policy_factory=ProjectMemoryPolicy().for_context)
         checkpointer = (settings.graph_checkpointer or "postgres").strip().lower()
         return dependencies, agent_settings, checkpointer
 

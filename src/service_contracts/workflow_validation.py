@@ -2,6 +2,7 @@
 from functools import lru_cache
 from importlib.resources import files
 import json
+import keyword
 from .tool_bindings import binding_errors
 from jsonschema_rs import Draft202012Validator
 
@@ -40,6 +41,9 @@ def validate(document, catalog):
         return errors
 
     steps = {item["id"]: item for item in document["steps"]}
+    order = document.get('ordered_call_ids')
+    if order is not None and (len(order) != len(steps) or set(order) != set(steps) or order != [s['id'] for s in document['steps']]):
+        errors.append('ordered_call_ids must list every call once in array order')
     decisions = {item["id"]: item for item in document["decisions"]}
     outputs = {item["id"]: item for item in document["expected_outputs"]}
     for name, items, index in [
@@ -124,6 +128,8 @@ def validate(document, catalog):
             errors.append(f"{id}: unregistered tool {item['tool_id']}")
         else:
             provided = set(item["arguments"])
+            if any(not name.isidentifier() or keyword.iskeyword(name) for name in provided):
+                errors.append(f'{id}: Tool argument names must be Python identifiers, not Workflow IDs')
             if not tool.get("allows_extra_arguments", False):
                 unknown = provided - set(tool["parameters"])
                 if unknown:

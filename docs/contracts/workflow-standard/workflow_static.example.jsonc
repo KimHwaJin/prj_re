@@ -1,0 +1,91 @@
+// 필드 설명용 JSONC. 실제 제출은 동일 이름의 .json 파일을 사용한다.
+{
+  // 공개 작성 규격 버전. 고정 2.0이며 문서 수정 횟수가 아니다.
+  "workflow_version": "2.0",
+  // 재사용할 분석 정의. 실행별 실제 입력값·코드·실행 상태를 넣지 않는다.
+  "workflow": {
+    // Workflow 이름 또는 inputs에 정의한 입력 이름 참조.
+    "name": "Independent standard example",
+    // 재사용할 분석 목표. 특정 실행의 사용자 원문을 그대로 누적하는 필드가 아니다.
+    "user_request": "Calculate the approved total",
+    // 입력 이름별 재사용 정의. 실제 값은 실행 계획 input_values에 저장한다.
+    "inputs": {
+      "payload": {
+        // 값 검증에 사용하는 로컬 JSON Schema. 원격 참조는 지원하지 않는다.
+        "value_schema": {
+          "type": "string"
+        }
+      }
+    },
+    // Skill 그룹 배열. 그룹 순서와 내부 Tool 배열 순서대로 실행한다.
+    "steps": [
+      {
+        // 그룹·호출·판단·산출물의 고정 식별자. Tool 등록 ID와 호출 ID를 구분한다.
+        "id": "operations",
+        // 배포된 Skill의 등록 ID. 디렉터리/함수 이름을 추측하여 해결하지 않는다.
+        "skill": "warehouse",
+        // 해당 Skill에서 사용할 Tool 호출 배열. 같은 Tool을 서로 다른 호출 ID로 여러 번 사용할 수 있다.
+        "tools": [
+          {
+            // 그룹·호출·판단·산출물의 고정 식별자. Tool 등록 ID와 호출 ID를 구분한다.
+            "id": "decode",
+            // 배포된 Tool 등록 ID. id는 이 함수를 사용하는 개별 호출 ID다.
+            "tool": "decode_lots",
+            // 실제 함수 파라미터별 값 출처. 생략한 선택 인자는 원래 함수 기본값을 따른다.
+            "arguments": {
+              "document": {
+                // literal/input/tool_output/agent_decision/system_context를 구분한다. 보고서 근거는 agent_report다.
+                "source": "input",
+                // Workflow 이름 또는 inputs에 정의한 입력 이름 참조.
+                "name": "payload"
+              }
+            }
+          },
+          {
+            // 그룹·호출·판단·산출물의 고정 식별자. Tool 등록 ID와 호출 ID를 구분한다.
+            "id": "calculate",
+            // 배포된 Tool 등록 ID. id는 이 함수를 사용하는 개별 호출 ID다.
+            "tool": "summarize_lots",
+            // 실제 함수 파라미터별 값 출처. 생략한 선택 인자는 원래 함수 기본값을 따른다.
+            "arguments": {
+              "batch": {
+                // literal/input/tool_output/agent_decision/system_context를 구분한다. 보고서 근거는 agent_report다.
+                "source": "tool_output",
+                // 배열 위치가 아닌 고정 호출 ID. 선행 호출의 등록된 출력만 참조한다.
+                "call_id": "decode",
+                // Tool 등록 메타데이터의 출력 별칭. 실제 반환값 selector는 등록 정보에서 해결한다.
+                "output": "batches"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    // 분석 결과·데이터·보고서의 기대사항과 근거. 선언만으로 파일 생성/등록되지는 않는다.
+    "expected_outputs": [
+      {
+        // 그룹·호출·판단·산출물의 고정 식별자. Tool 등록 ID와 호출 ID를 구분한다.
+        "id": "report",
+        // 입력은 parameter/data_reference, 산출물은 analysis_result/dataset/report.
+        "kind": "report",
+        // 작성자가 제공하는 설명. 생략 가능한 곳에서는 정규화 규칙으로 보충한다.
+        "description": "Explain actual results",
+        // 필수 입력 또는 기대 산출물 여부. false도 명시값으로 보존한다.
+        "required": true,
+        // native/parquet/markdown/html/json. 현재 자동 보고서 생성은 markdown이다.
+        "format": "markdown",
+        // literal/input/tool_output/agent_decision/system_context를 구분한다. 보고서 근거는 agent_report다.
+        "source": {
+          // literal/input/tool_output/agent_decision/system_context를 구분한다. 보고서 근거는 agent_report다.
+          "source": "agent_report",
+          // 보고서 작성에 사용할 실행 호출 ID 목록.
+          "evidence_calls": [
+            "calculate"
+          ]
+        }
+      }
+    ],
+    // 작성자가 제공하는 설명. 생략 가능한 곳에서는 정규화 규칙으로 보충한다.
+    "description": "독립 예시 자산 풀의 수열을 집계하는 규격 예제. 업무 함수명을 공통 실행기에 하드코딩하지 않는다."
+  }
+}

@@ -4,10 +4,12 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-def _normalize_tags(tags: list[str]) -> list[str]:
+def _normalize_tags(tags: list[str] | None) -> list[str] | None:
+    if tags is None:
+        return None
     normalized = []
     for value in tags:
         tag = value.strip().lower()
@@ -21,8 +23,8 @@ def _normalize_tags(tags: list[str]) -> list[str]:
 
 
 class WorkflowCandidateCreate(BaseModel):
-    # 자동 생성 candidate는 반드시 성공 여부를 검증할 원본 Run이 필요합니다.
-    source_run_id: UUID
+    # Public 2.0 permits direct authoring; a supplied Run remains provenance.
+    source_run_id: UUID | None = None
     document: dict[str, Any]
     tags: list[str] = Field(default_factory=list)
 
@@ -30,6 +32,16 @@ class WorkflowCandidateCreate(BaseModel):
 
 
 class WorkflowUpdate(BaseModel):
+    document: dict[str, Any] | None = None
+    # Content SHA is an optimistic revision token, not the format version.
+    expected_content_sha256: str | None = Field(default=None, pattern=r'^[0-9a-f]{64}$')
+
+    @model_validator(mode='after')
+    def revision_required(self):
+        if self.document is not None and self.expected_content_sha256 is None:
+            raise ValueError('document update requires expected_content_sha256')
+        return self
+
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=5000)
     tags: list[str] | None = None

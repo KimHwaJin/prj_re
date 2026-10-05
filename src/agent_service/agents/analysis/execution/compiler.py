@@ -102,11 +102,17 @@ def ready_batch(snapshot, completed, skipped, decisions, evidence=None):
     batch = []
     mode = snapshot['execution']['review_mode']
     limit = 1 if mode == 'every_tool' else snapshot['execution'].get('review_interval_tools', 1) if mode == 'every_n_tools' else len(snapshot['steps'])
-    # Topological readiness is independent of the JSON array order.
+    # Public sequential plans use an order barrier, separate from required data dependencies.
+    ordered = snapshot['document'].get('ordered_call_ids')
+    active = {s['id'] for s in snapshot['steps']}
+    order = [key for key in (ordered or []) if key in active]
+    # Legacy internal plans retain topological readiness.
     pending = [s for s in snapshot['steps'] if s['id'] not in complete | skip]
     while pending:
         progressed = False
         for step in pending[:]:
+            if ordered is not None and not set(order[:order.index(step['id'])]) <= available | skip:
+                continue
             if set(step['depends_on']) & skip:
                 skip.add(step['id']); pending.remove(step); progressed = True
                 continue

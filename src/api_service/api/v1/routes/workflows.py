@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from uuid import UUID
+import asyncio
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy import exists, or_, select
@@ -25,7 +26,7 @@ from api_service.services.workflow_service import WorkflowService
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
 
-def _resource(workflow: WorkflowModel, *, include_document: bool = False) -> WorkflowResource:
+async def _resource(workflow: WorkflowModel, *, include_document: bool = False) -> WorkflowResource:
     return WorkflowResource(
         workflow_id=workflow.workflow_id,
         name=workflow.name,
@@ -40,7 +41,7 @@ def _resource(workflow: WorkflowModel, *, include_document: bool = False) -> Wor
         created_by_user_id=workflow.created_by_user_id,
         is_recommendable=workflow.is_recommendable,
         tags=[item.tag for item in workflow.tags],
-        document=WorkflowFileStore.read(workflow.file_path) if include_document else None,
+        document=await asyncio.to_thread(WorkflowFileStore.read, workflow.file_path) if include_document else None,
         created_at=workflow.created_at,
         updated_at=workflow.updated_at,
         deleted_at=workflow.deleted_at,
@@ -49,7 +50,7 @@ def _resource(workflow: WorkflowModel, *, include_document: bool = False) -> Wor
 
 @router.post("", response_model=WorkflowResource, status_code=status.HTTP_201_CREATED)
 async def create_candidate(payload: WorkflowCandidateCreate, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return _resource(await WorkflowService.create_candidate(db, user_id, payload), include_document=True)
+    return await _resource(await WorkflowService.create_candidate(db, user_id, payload), include_document=True)
 
 
 @router.get("", response_model=Page[WorkflowResource])
@@ -72,27 +73,27 @@ async def list_workflows(
     if tag:
         stmt = stmt.where(exists().where(WorkflowTagModel.workflow_id == WorkflowModel.workflow_id, WorkflowTagModel.tag == tag.strip().lower()))
     items, page = await fetch_page(db, stmt, model=WorkflowModel, id_name="workflow_id", params=params)
-    return {"items": [_resource(item) for item in items], "page": page}
+    return {"items": [await _resource(item) for item in items], "page": page}
 
 
 @router.get("/{workflow_id}", response_model=WorkflowResource)
 async def read_workflow(workflow_id: UUID, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return _resource(await WorkflowService.get(db, user_id, workflow_id), include_document=True)
+    return await _resource(await WorkflowService.get(db, user_id, workflow_id), include_document=True)
 
 
 @router.patch("/{workflow_id}", response_model=WorkflowResource)
 async def update_workflow(workflow_id: UUID, payload: WorkflowUpdate, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return _resource(await WorkflowService.update(db, user_id, workflow_id, payload))
+    return await _resource(await WorkflowService.update(db, user_id, workflow_id, payload), include_document=True)
 
 
 @router.post("/{workflow_id}/promote", response_model=WorkflowResource, status_code=status.HTTP_201_CREATED)
 async def promote_workflow(workflow_id: UUID, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return _resource(await WorkflowService.promote(db, user_id, workflow_id), include_document=True)
+    return await _resource(await WorkflowService.promote(db, user_id, workflow_id), include_document=True)
 
 
 @router.post("/{workflow_id}/clone", response_model=WorkflowResource, status_code=status.HTTP_201_CREATED)
 async def clone_workflow(workflow_id: UUID, payload: WorkflowClone, user_id: UUID = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)):
-    return _resource(await WorkflowService.clone(db, user_id, workflow_id, payload), include_document=True)
+    return await _resource(await WorkflowService.clone(db, user_id, workflow_id, payload), include_document=True)
 
 
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)

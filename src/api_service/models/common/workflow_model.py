@@ -23,7 +23,7 @@ class WorkflowModel(TimestampMixin, Base):
     # 추천 프롬프트와 FE 상세 설명에 사용하는 Workflow의 최종 목적입니다.
     goal: Mapped[str] = mapped_column(Text, nullable=False, default="")
     schema_version: Mapped[str] = mapped_column(String(30), nullable=False, default="1.0")
-    # candidate는 실행 결과 후보, template은 성공 검증을 통과한 전역 자산입니다.
+    # candidate는 작성자 전용 후보, template은 승격된 전역 자산입니다. 공개 2.0은 실행 성공을 요구하지 않습니다.
     lifecycle: Mapped[str] = mapped_column(String(20), nullable=False, default="candidate", index=True)
     file_path: Mapped[str] = mapped_column(String(1000), nullable=False, unique=True)
     content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)

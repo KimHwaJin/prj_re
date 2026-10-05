@@ -77,6 +77,15 @@
         "$ref": "#/$defs/output"
       },
       "description": "Workflow가 기대하는 분석 결과·데이터·보고서 선언. 선언만으로 파일이 생성되는 것은 아니다. 필수 필드."
+    },
+    "ordered_call_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "description": "순차 실행 호출 ID 목록. 데이터 필수 의존성과 별개이며 생략된 호출은 순서 장벽을 해제한다. 공개 2.0 변환기가 생성한다."
     }
   },
   "required": [
@@ -380,7 +389,7 @@
           "type": "object",
           "propertyNames": {
             "type": "string",
-            "pattern": "^[a-z][a-z0-9_.-]*$",
+            "minLength": 1,
             "maxLength": 150
           },
           "additionalProperties": {
@@ -395,7 +404,9 @@
         "parameter_controls": {
           "type": "object",
           "propertyNames": {
-            "$ref": "#/$defs/id"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
           },
           "additionalProperties": {
             "type": "object",
@@ -617,5 +628,5 @@
       "required": []
     }
   },
-  "$comment": "Used by the current agentic planning, approval and execution compiler. Workflow CRUD still uses the separate legacy 1.3 contract; this definition is not directly accepted by Workflow POST."
+  "$comment": "Internal normalized execution plan. Public workflow_version=2.0 documents are normalized by workflow_standard; legacy 1.3 remains a separate compatibility contract."
 }

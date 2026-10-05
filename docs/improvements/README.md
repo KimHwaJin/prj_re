@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [088 실제 모델 파라미터·실행·보고서 검증](088-real-model-parameter-validation.md). 미정 데이터 null 오류·보고서 본문 누락을 실제 모델에서 발견해 수정·재검증했다. Agent341회귀·실제모델 구조28+재검증11·현행API15 확인. 실제 브라우저/SDK·베이스 병합·push·운영 배포는 미완료다.
+최신 작업: [092 Workflow 표준 계약·초안 대비 추적](092-workflow-standard-contract.md). 원본 1.0 보존·17개 변경 추적·공개 2.0 확정 Schema/문서와 직접 등록·수정·승인 실행 연결을 구현했다. 회귀485·격리 PostgreSQL8·설치 wheel 검증 통과. 베이스 미병합·미푸시·운영 미배포.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -135,6 +135,7 @@
 | 089 | 테스트 로그인·실제 LLM 분리 및 브라우저 E2E | 설정12·Node9·실제HTTP12·실제모델 브라우저4Run / 미병합·미푸시·미배포 | 2026-10-05 | [089 기록](089-real-model-test-console.md) |
 | 090 | 최종 승인 파라미터·사용자 제외와 보고서/후속 문맥 일치 | Agent345·진단13·wheel·실제모델 검증 / 미병합·미푸시·미배포 | 2026-10-05 | [090 기록](090-approved-plan-report-context.md) |
 | 091 | 예시 Skill·Tool과 공통 Agent 분리·다중 함수 등록 | 회귀389·PG4·실제모델16·wheel / 미병합·미푸시·미배포 | 2026-10-05 | [091 기록](091-asset-independent-planning.md) |
+| 092 | Workflow 표준 계약·원본 추적·확정 문서 | 구현·회귀485/격리PG8/wheel 검증 완료 / 미병합·미푸시·미배포 | 2026-10-05 | [작업 기록](092-workflow-standard-contract.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

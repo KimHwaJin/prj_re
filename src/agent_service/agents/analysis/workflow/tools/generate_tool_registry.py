@@ -263,6 +263,9 @@ def build_registry(root: Path) -> dict[str, Any]:
                 from agent_service.agents.analysis.planning.parameters import parameter_controls
                 parameter_controls(function, old['parameter_controls'])
                 item['parameter_controls'] = old['parameter_controls']
+            if 'outputs' in old:
+                from service_contracts.tool_outputs import output_bindings
+                item['outputs'] = output_bindings(old['outputs'])
             if 'parameter_bindings' in old:
                 from service_contracts.tool_bindings import parameter_bindings
                 parameter_bindings(old['parameter_bindings'], item['inputs'], old.get('parameter_controls'))

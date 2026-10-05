@@ -1,0 +1,10 @@
+{
+  "received": "2026-10-05",
+  "archive_sha256": "76c4b54cc0fadfb1db1d8d955070f404af758d27f6d854d72cc6e710885e3e31",
+  "files": {
+    "workflow_adaptive.example.json": "08c97a985d8a5f6398c30fcc930d8e3bde6b8782414a585909f5ab29007ee2e9",
+    "workflow_schema_1.0.json": "11f063311a62eb6ef4fe9a09c4c64a13529807e996e0eeab94a7590fa4e62efb",
+    "workflow_spec_1.0.md": "3f08101cbc2e94146072fa603399485036e353c9fe96418427e52ca3801d3d3a",
+    "workflow_static.example.json": "bf79fbc2beaac944637c42e574d2bf52d946d3a6406f6cecda224198b9c7877e"
+  }
+}
