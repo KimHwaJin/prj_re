@@ -66,6 +66,8 @@ async def planning(test_config, monkeypatch):
         'TASK_CANCEL_POLL_INTERVAL_SECONDS': .2, 'AGENT_WORKER_POLL_INTERVAL_SECONDS': .1,
         'ANALYSIS_DATASETS': {'default-nce': {'title': 'NCE', 'scope': 'GLOBAL',
             'runtime_path': '/workspace/pv/default_data/df_nce_long_format.parquet'}}}, environ={})
+    from api_service.workflows import runtime as workflow_runtime
+    monkeypatch.setattr(workflow_runtime, "_runtime", None)
     app = create_app(settings)
     for module in (database, worker, runs, tasks, tokens, monitoring):
         monkeypatch.setattr(module, 'get_session_factory', lambda: factory)
@@ -88,6 +90,7 @@ async def planning(test_config, monkeypatch):
     await app.state.run_stream_hub.close()
     await graph_runtime.shutdown()
     await store_runtime.shutdown()
+    await workflow_runtime.close_workflow_runtime()
     await engine.dispose()
 
 

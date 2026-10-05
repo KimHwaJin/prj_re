@@ -1,0 +1,231 @@
+{
+  "date": "2026-10-05",
+  "branch": "feature/workflow-hnsw-retrieval",
+  "base_commit": "a141c11",
+  "python": "3.11.15",
+  "regression": {
+    "tests": 1292,
+    "passed": 800,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 492,
+    "seconds": 31.661
+  },
+  "focused": {
+    "tests": 27,
+    "passed": 27,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 18.485
+  },
+  "html_console": {
+    "passed": 9,
+    "failures": 0
+  },
+  "focused_cases": [
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_distinct_workflows_repeat_exclusion_and_native_hnsw[50]",
+      "seconds": 2.788
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_distinct_workflows_repeat_exclusion_and_native_hnsw[500]",
+      "seconds": 2.312
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_query_only_edit_cas_and_delete_deactivate",
+      "seconds": 0.935
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_embedding_failure_preserves_registration_and_retry",
+      "seconds": 0.903
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_delayed_publish_cannot_restore_old_query_and_releases_db",
+      "seconds": 0.743
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_missing_index_no_hidden_exact_fallback_and_bounded_rounds",
+      "seconds": 0.657
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_query_validation_and_conflict_token",
+      "seconds": 0.71
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_failed_concurrent_reindex_preserves_success",
+      "seconds": 0.818
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_search_budget_includes_pool_admission",
+      "seconds": 0.294
+    },
+    {
+      "class": "src.api_service.test.test_workflow_retrieval_postgres",
+      "name": "test_model_space_switch_preserves_prior_vectors",
+      "seconds": 0.754
+    },
+    {
+      "class": "src.api_service.test.test_workflow_standard_postgres",
+      "name": "test_direct_author_update_conflict_clone_promote_visibility_and_delete",
+      "seconds": 2.448
+    },
+    {
+      "class": "src.api_service.test.test_workflow_standard_postgres",
+      "name": "test_invalid_original_and_invalid_catalog_reference_rejected",
+      "seconds": 0.342
+    },
+    {
+      "class": "src.api_service.test.test_workflow_standard_postgres",
+      "name": "test_concurrent_content_updates_accept_one_revision_only",
+      "seconds": 0.608
+    },
+    {
+      "class": "src.api_service.test.test_workflow_standard_postgres",
+      "name": "test_failed_db_commit_preserves_previous_document",
+      "seconds": 0.785
+    },
+    {
+      "class": "src.api_service.test.test_workflow_standard_postgres",
+      "name": "test_rollback_reusing_historical_revision_never_deletes_it",
+      "seconds": 0.638
+    },
+    {
+      "class": "src.api_service.test.test_workflow_embedding",
+      "name": "test_batches_reorder_vectors_and_reject_bad_dimensions",
+      "seconds": 0.002
+    },
+    {
+      "class": "src.api_service.test.test_workflow_embedding",
+      "name": "test_embedding_deadline_includes_semaphore_admission",
+      "seconds": 0.012
+    },
+    {
+      "class": "src.api_service.test.test_workflow_embedding",
+      "name": "test_disabled_and_unconfigured_search_open_no_db_or_model",
+      "seconds": 0.002
+    },
+    {
+      "class": "src.api_service.test.test_workflow_embedding",
+      "name": "test_central_configuration_and_model_space",
+      "seconds": 0.002
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_full_analysis_selects_pinned_template_without_mutation[prompt_json-inventory]",
+      "seconds": 0.525
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_full_analysis_selects_pinned_template_without_mutation[prompt_json-billing]",
+      "seconds": 0.037
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_full_analysis_selects_pinned_template_without_mutation[provider_json_schema-inventory]",
+      "seconds": 0.043
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_full_analysis_selects_pinned_template_without_mutation[provider_json_schema-billing]",
+      "seconds": 0.047
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_faq_and_incremental_do_not_search_and_sessions_are_isolated",
+      "seconds": 0.047
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_combined_limit_and_definition_reference_exclusion",
+      "seconds": 0.013
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_catalog_reference_survives_user_edit_and_frozen_approval",
+      "seconds": 0.063
+    },
+    {
+      "class": "src.agent_service.agents.analysis.tests.test_workflow_recommendations",
+      "name": "test_unavailable_search_generates_new_plan_and_unreturned_id_rejected",
+      "seconds": 0.049
+    }
+  ],
+  "migration": {
+    "pgvector": "0.8.6",
+    "postgres": "17.11 (Debian 17.11-1.pgdg12+2)",
+    "old_array_preserved_as_float32": true,
+    "old_vector_deactivated": true,
+    "user_queries_not_inferred_from_legacy_text": true,
+    "provision_twice_single_index": true,
+    "downgrade_then_upgrade": true
+  },
+  "group_smoke": [
+    {
+      "aliases_per_major_workflow": 50,
+      "expected_distinct": 3,
+      "returned_distinct": 3,
+      "diagnostics": {
+        "mode": "hnsw",
+        "approximate": true,
+        "termination": "candidate_limit",
+        "rounds": 3,
+        "ann_rows": 5,
+        "distinct_candidates": 3,
+        "elapsed_ms": 56.41,
+        "reranked": true
+      }
+    },
+    {
+      "aliases_per_major_workflow": 500,
+      "expected_distinct": 3,
+      "returned_distinct": 1,
+      "diagnostics": {
+        "mode": "hnsw",
+        "approximate": true,
+        "termination": "no_more_ann_candidates",
+        "rounds": 2,
+        "ann_rows": 2,
+        "distinct_candidates": 1,
+        "elapsed_ms": 30.67,
+        "reranked": true
+      }
+    }
+  ],
+  "group_smoke_settings": {
+    "dimensions": 3,
+    "candidate_limit": 3,
+    "batch_size": 2,
+    "max_rounds": 8,
+    "ef_search": 1000,
+    "max_scan_tuples": 20000,
+    "scan_mem_multiplier": 2,
+    "similarity_threshold": 0
+  },
+  "evidence_limits": [
+    "Embeddings and chat responses are doubles; PostgreSQL and native HNSW are real.",
+    "Group cases have identical vectors within each workflow, not real natural-language embeddings.",
+    "Group timings are small smoke tests, not production latency or throughput measurements.",
+    "Focused and regression suites overlap; counts must not be summed as unique tests.",
+    "492 regression tests are opt-in and skipped; focused suite enables only isolated HNSW/Workflow DB cases.",
+    "Actual embedding endpoint/model/dimensions and production tuning remain unverified."
+  ],
+  "package": {
+    "wheel_build": true,
+    "installed_import_openapi_and_assets": true,
+    "obsolete_recommender_absent": true,
+    "schema_examples": true,
+    "received_draft_files_sha": 4,
+    "final_wheel_sha256": "b384f382a15f005ed1034025c5aad7ffb5998f0faa2a7187ac1d08150bab93f1",
+    "final_source_match": true
+  }
+}

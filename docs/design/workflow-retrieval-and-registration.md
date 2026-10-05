@@ -1,8 +1,10 @@
 # Workflow 등록·다중 쿼리 추천 설계 검토
 
-2026-10-05, feature/workflow-retrieval-benchmark. 구현된 계약과 제안을 구분한다. [공개 실행 정의2.0](../workflow-standard.md)은 확정했지만, 이 문서의 다중 쿼리 등록/검색은 미구현 설계다. [측정 보고서](../reports/workflow-retrieval-2026-10-05/report.html), [추적표 R01~R05](../review/workflow-standard-changes.md)를 근거로 한다.
+2026-10-05. 094에서 구현한 현재 계약은 [등록·검색 확정 문서](../workflow-registration-and-search.md)와 [작업 기록](../improvements/094-workflow-hnsw-retrieval.md)를 따른다. 아래 093의 검토·측정 기록은 당시 판단 과정으로 보존한다.
 
-## 현재 구현과 변경안
+093 당시: feature/workflow-retrieval-benchmark. 구현된 계약과 제안을 구분한다. [공개 실행 정의2.0](../workflow-standard.md)은 확정했지만, 이 문서의 다중 쿼리 등록/검색은 미구현 설계다. [측정 보고서](../reports/workflow-retrieval-2026-10-05/report.html), [추적표 R01~R05](../review/workflow-standard-changes.md)를 근거로 한다.
+
+## 093 당시 구현과 변경안
 
 현행 POST는 document/tags/source_run_id만 받으며 candidate를 만든다. GET의 q는 이름/설명 문자열 필터이고 벡터 추천이 아니다. `WorkflowCandidateCreate`는 추가 필드를 금지하지 않아 현행 서버에 user_queries를 보내도 무시될 수 있다. 요청 성공을 다중 쿼리 저장 성공으로 해석하면 안 된다. 이 단계는 API/DDL/런타임을 바꾸지 않았다.
 
@@ -99,3 +101,8 @@ pgvector HNSW는 쿼리 행을 근사 검색한다. 고정 overfetch 배수나 L
 다중 쿼리 등록/PATCH/승격/복제 계약과 DDL을 확정하고 HNSW 검색·후보 재정렬을 구현한다. 실제 embedding 데이터로 후보 누락률·Workflow 수·대표 점수/순위·지연·DB 비용·동시 부하를 검증한다. 전체 거리 계산은 오프라인/격리 검증의 비교 기준으로 유지한다. 093의 합성68%를 운영 품질이나 고정 상한으로 쓰지 않는다. 품질 목표에 미달하면 검색/구축 설정과 데이터·필터 원인을 조정하여 다시 확인하며 미검증 상태를 완료로 표시하지 않는다.
 
 원본 대비 W01~W17과 R01~R05는 이력으로 유지하고 R06에 이번 결정을 기록한다. 공개 실행 정의2.0을 변경하는 결정은 아니며, 최종 등록/추천 API 문서는 실제 구현 계약이 확정될 때 별도로 완성한다.
+
+
+## 094 구현 반영
+
+다중 user_queries 등록·수정, native vector 마이그레이션, 모델 공간별 partial HNSW, 제외 반복·발견 후보 점수 재계산, 별도 버전/실패 상태 및 Agent scope 미들웨어를 구현했다. POST에서 비활성 후보 벡터를 만들고 승격 때 활성화하며 동일 쿼리/공간의 벡터를 재사용한다. 실제 임베딩 설정·품질·동시 부하 수치는 미검증이다. 원본 실행 JSON2.0은 변경하지 않았다.

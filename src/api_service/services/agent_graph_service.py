@@ -99,6 +99,10 @@ class AgentGraphRuntime:
         from langgraph.checkpoint.memory import InMemorySaver
         from api_service.core.memory_store import runtime as store_runtime
         async with AsyncExitStack() as stack:
+            from api_service.workflows.runtime import get_workflow_runtime
+            planning.workflow_retriever = get_workflow_runtime().search
+            from service_settings import get_settings
+            planning.workflow_context_max_chars = get_settings().workflow_search.context_max_chars
             if agent_settings.agent_project_memory_mode != 'off':
                 planning.store = await stack.enter_async_context(store_runtime.open_store())
             if kind == 'postgres':

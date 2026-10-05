@@ -201,7 +201,7 @@ logs GET의 배열 응답을 items/page로 바꾸었으므로 외부 관리/진�
 
 ## 092 Workflow 표준 이후 남은 이행
 
-공개 규격과 직접 POST/PATCH/승격·공통 실행 계획 연결은 [092](092-workflow-standard-contract.md)에서 구현했다. 남은 작업은 pgvector 검색/embedding 재색인, 등록 template을 현재 conversation의 실제 추천 후보로 연결, 내부 생성 계획의 공개 규격 exporter,1.0/1.3 명시 마이그레이션, 기대 산출물의 실제 파일/Artifact/Dataset 연계다. 순차 공개 계획의 Agent 재계획·오류 수정은 기존 상한과 승인 정책을 유지한다. 실제 사내 LLM·Executor HTTP/Redis 연계와 Pod 배포 검증은 별도이며 double 실행 검증을 대체 근거로 사용하지 않는다.
+공개 규격과 직접 POST/PATCH/승격·공통 실행 계획 연결은 [092](092-workflow-standard-contract.md)에서 구현했다. pgvector 검색/embedding 재색인·등록 template conversation 연결은 [094](094-workflow-hnsw-retrieval.md)에서 구현했다. 남은 작업은 실제 embedding 품질/동시 부하·ANN tuning, 내부 생성 계획의 공개 규격 exporter,1.0/1.3 명시 마이그레이션, 기대 산출물의 실제 파일/Artifact/Dataset 연계다. 순차 공개 계획의 Agent 재계획·오류 수정은 기존 상한과 승인 정책을 유지한다. 실제 사내 LLM·Executor HTTP/Redis 연계와 Pod 배포 검증은 별도이며 double 실행 검증을 대체 근거로 사용하지 않는다.
 
 
 ## 093 다중 쿼리 Workflow 검색 이후
@@ -215,4 +215,9 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 
 ### 093 후속 사용자 결정 — HNSW 사용
 
-전량 거리 계산 기본안 대신 HNSW를 사용하기로 했다. [구현 방향](../design/workflow-retrieval-and-registration.md#사용자-결정-hnsw-사용--구현-방향)에 활성 검색용 인덱스·Workflow 제외 반복 탐색·발견 후보 내 대표 점수 재정렬·검색 예산/부분 결과·Agent 적용 가능성 판단을 기록했다. 후보 확보 수와 UI의 추천+신규 계획 최대 수를 분리한다. 후보 내 재정렬과 실제 임베딩/동시 부하는 아직 미측정이며 전역 TOP5를 보장하지 않는다. 다음은 다중 user_queries 등록/수정·DDL·검색 계약 확정과 구현이다. 이번 결정 기록만으로 해당 기능을 구현 완료로 표시하지 않는다.
+전량 거리 계산 기본안 대신 HNSW를 사용하기로 했다. [구현 방향](../design/workflow-retrieval-and-registration.md#사용자-결정-hnsw-사용--구현-방향)에 활성 검색용 인덱스·Workflow 제외 반복 탐색·발견 후보 내 대표 점수 재정렬·검색 예산/부분 결과·Agent 적용 가능성 판단을 기록했다. 후보 확보 수와 UI의 추천+신규 계획 최대 수를 분리한다. 후보 내 재정렬과 실제 임베딩/동시 부하는 아직 미측정이며 전역 TOP5를 보장하지 않는다. 다중 user_queries 등록/수정·DDL·검색 계약·Agent 연결은 [094](094-workflow-hnsw-retrieval.md)에서 구현했다. 실제 embedding 품질·동시 부하·검색 튜닝을 다음 검증으로 남긴다. 이번 결정 기록만으로 해당 기능을 구현 완료로 표시하지 않는다.
+
+
+## 094 이후 — 실제 임베딩 검증
+
+[등록·검색 계약](../workflow-registration-and-search.md)이 현재 구현 기준이다. 실제 embedding BASE_URL/MODEL/DIMENSIONS 제공 후 운영 후보 모델 공간의 index provision·기존 자산 쿼리 등록/재색인, 자연어 E2E/부분 요청 scope와 적용 가능성 평가, 중복/집중별 그룹 Recall·동시 부하·threshold/ef_search/scan memory/문맥 예산 튜닝을 진행한다. 동일 벡터500개의3개 그룹 중1개만 찾은 smoke 한계를 완료로 닫지 않는다. 전체 exact fallback은 사용자 HNSW 결정에 따라 넣지 않았다. 운영 서버/사내 모델/Executor는 이번 작업에서 변경하지 않았다.

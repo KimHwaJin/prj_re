@@ -194,5 +194,7 @@ def freeze_approval(review, sources, skill_sources, context, asset_revision, dat
         snapshot['execution_kind'] = review['execution_kind']
         snapshot['workflow_eligible'] = review['workflow_eligible']
         snapshot['approval_mode'] = review.get('approval_mode', 'user')
+    if review.get("catalog_reference") is not None:
+        snapshot["catalog_reference"] = deepcopy(review["catalog_reference"])
     snapshot['approval_sha256'] = sha256(canonical(snapshot).encode()).hexdigest()
     return snapshot

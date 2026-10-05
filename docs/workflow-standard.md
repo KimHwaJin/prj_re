@@ -4,7 +4,7 @@
 
 공식 [JSON Schema](contracts/workflow-standard/workflow-standard.schema.json), [static 예제](contracts/workflow-standard/workflow_static.example.json), [adaptive 예제](contracts/workflow-standard/workflow_adaptive.example.json), [필드 주석 예제](contracts/workflow-standard/workflow_adaptive.example.jsonc)를 함께 사용한다. [원본 대비 변경표](review/workflow-standard-changes.md)는 별도 문서다.
 
-확정 범위는 **실행 정의2.0과 현행 CRUD**다. 다중 검색용 user_queries 등록·embedding 상태·추천 검색 계약은 아직 확정/구현하지 않았다. [등록·추천 설계 검토](design/workflow-retrieval-and-registration.md)와 [pgvector 검증 결과](reports/workflow-retrieval-2026-10-05/report.html)를 따른다. 현행 서버에 user_queries를 보내도 저장되지 않으므로 신규 계약처럼 호출하지 않는다.
+확정 범위는 실행 정의2.0과 [등록·다중 쿼리·HNSW 검색 계약](workflow-registration-and-search.md)이다. 094에서 등록 시 쿼리별 임베딩·버전별 활성 색인·고유 Workflow 검색·Agent 추천을 구현했다. 실행 JSON은 그대로 유지하며 실제 embedding 모델 품질/운영 성능은 후속 검증이다.
 
 ## 목적과 책임
 
@@ -165,21 +165,23 @@ expected_outputs는 기대사항 선언이다. 파일 저장·등록을 수행�
 
 | API | 요청/동작 |
 |---|---|
-| POST /api/v1/workflows | `{document: 공개2.0 JSON객체, tags?:[], source_run_id?:UUID}`. Run 없이 직접 등록 가능. candidate 반환 |
+| POST /api/v1/workflows | `{user_queries: 문자열 배열, document: 공개2.0 JSON객체, tags?:[], source_run_id?:UUID}`. Run 없이 직접 등록 가능. candidate 반환 |
 | GET /api/v1/workflows | 접근 가능한 candidate와 공개 template 목록. 기존 q/lifecycle/tag·pagination 유지 |
-| GET /api/v1/workflows/{UUID} | metadata + 공개 document + content_sha256 |
-| PATCH /api/v1/workflows/{UUID} | document/name/description 내용 수정에는 expected_content_sha256 필수. 이전 내용과 다르면409 |
+| GET /api/v1/workflows/{UUID} | metadata + 공개 document + content_sha256 + user_queries/resource_revision/search_revision/index_state |
+| PATCH /api/v1/workflows/{UUID} | 쿼리 수정은 expected_resource_revision 필수. JSON 내용은 이 토큰 또는 기존 SHA로 충돌 검사. 색인 결과 포함 |
 | POST /api/v1/workflows/{UUID}/promote | 본인 candidate를 새 template UUID로 승격.2.0은 Executor/Run 실행 성공을 요구하지 않음 |
 | POST /api/v1/workflows/{UUID}/clone | 새 candidate. name/tags 선택. 원본 ID 연결 |
 | DELETE /api/v1/workflows/{UUID} | 작성자 soft delete. 이전 파일 보존 |
 
 candidate 수정·승격·삭제는 작성자가 수행한다. template은 서비스 사용자에게 공개된다. supplied source_run_id는 본인 소유 Run만 허용하며 권한 부여가 아니라 출처다. Run 없는 직접 POST는 매번 새 candidate를 만든다. source_run_id가 있는 root candidate는 기존 동일 Run 유일성 규칙을 유지한다.
 
-본문 수정은 새 파일·새 content_sha256을 만들고 DB가 최신 파일을 가리킨다. 기존 파일은 이전 승인/로그의 근거로 보존한다. 같은 JSON 내용의 SHA는 같을 수 있으므로 SHA는 수정 횟수가 아니라 내용 지문이다. 임베딩은 내용 변경 시 기존 항목을 superseded/inactive로 전환하고 실제 재색인은 별도 검색 이행에서 수행한다.
+본문 수정은 새 파일·새 content_sha256을 만들고 DB가 최신 파일을 가리킨다. 기존 파일은 이전 승인/로그의 근거로 보존한다. 같은 JSON 내용의 SHA는 같을 수 있으므로 SHA는 수정 횟수가 아니라 내용 지문이다. 임베딩은 내용 변경 시 기존 항목을 superseded/inactive로 전환하고 새 search_revision에 대해 DB 연결 밖에서 재색인하고 게시 전 버전을 다시 검사한다.
 
 DB resource UUID가 재사용 자산 ID다. 공개2.0 파일은 `{workflow_id}.{content_sha256}.json` 경로로 저장하여 특정 내용의 이전 revision을 찾을 수 있다. 경로는 서버가 관리한다. 공개 JSON에 resource UUID를 강제로 복사하지 않는다. normalize(workflow_id=..., definition_version=...)를 사용하는 caller가 내부 identity를 지정할 수 있다. 지정하지 않으면 정의 내용 지문으로 내부 ID를 만든다.
 
 원본1.0은 자동 수용하지 않는다. 인덱스·입력·조건·출력 정보를 명시적으로 이행해야 한다. 기존1.3 CRUD compatibility는 보존하며 과거 성공/READY guard를 유지한다. 신규 작성 기준은 이2.0 문서다.
+
+검색/reindex API와 상태·예산·배포는 [등록·검색 확정 문서](workflow-registration-and-search.md)를 따른다.
 
 ## 검증과 현재 지원 경계
 

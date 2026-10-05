@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "WorkflowSearchCandidate": {
+      "properties": {
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "content_sha256": {
+          "title": "Content Sha256",
+          "type": "string"
+        },
+        "resource_revision": {
+          "title": "Resource Revision",
+          "type": "integer"
+        },
+        "search_revision": {
+          "title": "Search Revision",
+          "type": "integer"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "similarity": {
+          "title": "Similarity",
+          "type": "number"
+        },
+        "matched_query": {
+          "title": "Matched Query",
+          "type": "string"
+        },
+        "document": {
+          "additionalProperties": true,
+          "title": "Document",
+          "type": "object"
+        }
+      },
+      "required": [
+        "workflow_id",
+        "content_sha256",
+        "resource_revision",
+        "search_revision",
+        "name",
+        "similarity",
+        "matched_query",
+        "document"
+      ],
+      "title": "WorkflowSearchCandidate",
+      "type": "object"
+    },
+    "WorkflowSearchDiagnostics": {
+      "properties": {
+        "mode": {
+          "const": "hnsw",
+          "default": "hnsw",
+          "title": "Mode",
+          "type": "string"
+        },
+        "approximate": {
+          "const": true,
+          "default": true,
+          "title": "Approximate",
+          "type": "boolean"
+        },
+        "termination": {
+          "enum": [
+            "candidate_limit",
+            "no_more_ann_candidates",
+            "round_limit",
+            "timeout",
+            "disabled",
+            "unconfigured",
+            "index_unavailable",
+            "embedding_unavailable",
+            "database_unavailable"
+          ],
+          "title": "Termination",
+          "type": "string"
+        },
+        "rounds": {
+          "default": 0,
+          "title": "Rounds",
+          "type": "integer"
+        },
+        "ann_rows": {
+          "default": 0,
+          "title": "Ann Rows",
+          "type": "integer"
+        },
+        "distinct_candidates": {
+          "default": 0,
+          "title": "Distinct Candidates",
+          "type": "integer"
+        },
+        "elapsed_ms": {
+          "default": 0,
+          "title": "Elapsed Ms",
+          "type": "number"
+        },
+        "reranked": {
+          "default": false,
+          "title": "Reranked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "termination"
+      ],
+      "title": "WorkflowSearchDiagnostics",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/WorkflowSearchCandidate"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "diagnostics": {
+      "$ref": "#/$defs/WorkflowSearchDiagnostics"
+    }
+  },
+  "required": [
+    "diagnostics"
+  ],
+  "title": "WorkflowSearchResult",
+  "type": "object"
+}

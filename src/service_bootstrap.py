@@ -129,6 +129,7 @@ def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event, 
 async def _close_resources() -> None:
     from api_service.services.agent_graph_service import GraphResourcesBusy, runtime
     from api_service.core.database import close_database
+    from api_service.workflows.runtime import close_workflow_runtime
     from api_service.core.memory_store import runtime as memory_store_runtime
     from api_service.agent_worker.api_bridge import close_api_worker_bridge
     # A live borrower still uses CRUD/bridge resources too. Preserve all of them
@@ -140,11 +141,13 @@ async def _close_resources() -> None:
     except BaseException:
         async with AsyncExitStack() as stack:
             stack.push_async_callback(close_database)
+            stack.push_async_callback(close_workflow_runtime)
             stack.push_async_callback(memory_store_runtime.shutdown)
             stack.push_async_callback(close_api_worker_bridge)
         raise
     async with AsyncExitStack() as stack:
         stack.push_async_callback(close_database)
+        stack.push_async_callback(close_workflow_runtime)
         stack.push_async_callback(memory_store_runtime.shutdown)
         stack.push_async_callback(close_api_worker_bridge)
 

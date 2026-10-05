@@ -7,7 +7,7 @@ dtest 프로젝트 공유
 
 ## 리팩토링 브랜치의 현재 실행 계약
 
-분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 새 규격·pgvector 추천, 동적 Dataset Registry, Gaia adapter는 후속이다. 프로젝트 메모리는 공식 LangGraph Store·설정 가능한 입력/저장 예산·선택적 auto_context 정책을 구현했다. [Agent 개발 안내](docs/agent-development/README.md)는 현재 다섯 역할과 실행 경로를 설명한다.
+분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 공개2.0·다중 쿼리 HNSW 추천은 [등록·검색 계약](docs/workflow-registration-and-search.md)으로 구현했다. 실제 임베딩 모델 검증, 동적 Dataset Registry, Gaia adapter는 후속이다. 프로젝트 메모리는 공식 LangGraph Store·설정 가능한 입력/저장 예산·선택적 auto_context 정책을 구현했다. [Agent 개발 안내](docs/agent-development/README.md)는 현재 다섯 역할과 실행 경로를 설명한다.
 
 Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 
@@ -42,6 +42,8 @@ LLM 응답을 고정하고 프로젝트·세션 생성 또는 Executor 제출까
 API 포트는 `18080`, Locust UI는 `18089`이며 `crud` / `submit` / `approval` 시나리오를 선택한다.
 HTTP 시나리오 실행기와 Locust 파일, 지표 해석은 [서비스 부하테스트 가이드](docs/service-loadtest.md)를 참고한다.
 
+PostgreSQL 서버는 pgvector>=0.8.0이 필요합니다. 기존 PostgreSQL17 볼륨을 유지할 때 서버 extension 설치가 가능한 이미지를 사용하고 실행 중 쓰기를 정리한 뒤 migration을 적용합니다. 설정 미확정 상태에서 임의 모델/차원으로 index를 생성하지 않습니다.
+
 ## CRUD API와 테스트 화면
 
 LangGraph/노드 구현과 분리된 FastAPI 계층에서 사용자, 프로젝트, 세션, 메시지,
@@ -51,6 +53,8 @@ LangGraph/노드 구현과 분리된 FastAPI 계층에서 사용자, 프로젝�
 ```bash
 uv sync
 alembic -c alembic.crud.ini upgrade head
+# embedding 설정 후 모델 공간의 HNSW index를 배포 DDL 권한으로 준비:
+uv run python tools/provision_workflow_index.py
 uv run dtest-agent-api
 ```
 

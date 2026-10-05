@@ -7,7 +7,7 @@ from service_runtime.model_selection import build_catalog
 
 
 class PlanningRuntime:
-    def __init__(self, settings, catalog=None, *, executor=None, bindings=None, memory_policy_factory=None,store=None):
+    def __init__(self, settings, catalog=None, *, executor=None, bindings=None, memory_policy_factory=None,store=None,workflow_retriever=None,workflow_context_max_chars=64000):
         self.settings = settings
         self.catalog = catalog or AssetCatalog()
         self.models = settings.model_catalog or build_catalog(settings)
@@ -19,6 +19,8 @@ class PlanningRuntime:
         self.revision_agents = {}
         self.memory_policy_factory = memory_policy_factory
         self.store = store
+        self.workflow_retriever = workflow_retriever
+        self.workflow_context_max_chars = workflow_context_max_chars
 
     def bind_context(self, state, context):
         from service_contracts.project_memory import MemoryLimits
@@ -82,7 +84,7 @@ class PlanningRuntime:
                 self.agents[key] = MockConversation(self.catalog, spec.mock_delay_ms)
             else:
                 self.agents[key] = build_agent(create_chat_model(spec.apply(self.settings)), self.catalog,
-                                               max_candidates=self.settings.max_plan_candidates,
+                                               max_candidates=self.settings.max_plan_candidates, workflow_context_max_chars=self.workflow_context_max_chars, workflow_retriever=self.workflow_retriever if self.settings.workflow_recommendation_enabled else None,
                                                discovery_max_rounds=self.settings.agent_discovery_max_rounds,
                                                repair_limit=self.settings.agent_repair_level_limit,repair_attempts=self.settings.agent_max_repair_attempts,
                                                session_context_max_chars=self.settings.agent_session_analysis_max_chars,

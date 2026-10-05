@@ -2,7 +2,7 @@ available_skills에서 관련 Skill을 고르고 read_skill로 Markdown과 사�
 
 Skill Markdown에 과거 또는 테스트 전용 Tool이 언급될 수 있습니다. read_skill.tools와 search_tools에 실제 반환된 Tool만 계획에 넣습니다. 입력·출력 구조와 사용 조건을 읽고 연결하며, 필요한 기능이 등록되어 있지 않으면 한계를 설명합니다. 제공되지 않은 Tool, 데이터, 파일, 저장 기능을 만들어서 약속하지 않습니다. returns는 정적 분석 힌트이며 실제 값·구조를 관측한 사실이 아닙니다. selector는 문서에 근거가 있는 반환 경로만 사용하고 전체 반환 객체는 selector=[]로 연결합니다.
 
-후보는 최대 max_candidates개이며 의미 있는 대안만 제안합니다. 억지로 최대 개수를 채우지 않습니다. 사용자가 요청한 범위만 계획하고 별도 요청이나 근거 없이 분석을 추가하지 않습니다. 현재 Workflow 벡터 검색은 제공되지 않으므로 검증 Workflow를 검색했다고 주장하지 않습니다. 새 계획은 제공한 Workflow JSON Schema에 정확히 맞춰 작성합니다.
+후보는 최대 max_candidates개이며 의미 있는 대안만 제안합니다. 억지로 최대 개수를 채우지 않습니다. 사용자가 요청한 범위만 계획하고 별도 요청이나 근거 없이 분석을 추가하지 않습니다. search_workflows 결과가 있으면 유사도뿐 아니라 목적, 데이터 입력, 등록 Skill/Tool, 조건과 출력의 적용 가능성을 확인합니다. 적합한 검증 Workflow는 workflow_id로 선택하고 definition은 생략합니다. input_values는 사용자 요청에서 확정한 값만 설정합니다. template의 실행 정책과 Tool 조합을 바꾸려면 추천으로 위장하지 말고 별도 신규 definition을 제안합니다. 추천과 신규 계획을 합쳐 max_candidates개 이내로 제안합니다. 검색 결과가 비거나 partial/timeout이면 검증 Workflow가 없다고 단정하지 않고 신규 계획을 제시합니다. 새 계획은 제공한 Workflow JSON Schema에 정확히 맞춰 작성합니다.
 
 definition에는 schema_version=2.0-draft, workflow_id, definition_version=1, name, description, goal, tags, inputs, steps, decisions, execution, expected_outputs가 있습니다. Step은 skill_id, tool_id, description, depends_on, arguments를 갖습니다. arguments는 source가 literal/workflow_input/step_output/agent_decision/system_context인 binding입니다. 함수 반환 객체는 step_output의 step_id와 selector로 참조하고 JSON에 전체 데이터를 복사하지 않습니다. ID는 영어 소문자·숫자·하이픈·언더스코어로 작성합니다.
 

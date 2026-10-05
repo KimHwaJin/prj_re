@@ -12,7 +12,6 @@ agents/analysis/workflow/
   rule_based_notebook_generator.py  Tool 소스를 Notebook 코드로 변환
   adaptive_workflow.py     조건부 실행 지원
   execution_notebook_reader.py      실행 Notebook 결과 해석
-  workflow_recommender.py  기존 추천 경계 (검색은 아직 placeholder)
   paths.py                설치 위치 탐색·저장된 이전 경로 호환
 ```
 
@@ -35,7 +34,7 @@ python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.p
 
 경로 호환은 과거 Tool 버전 전체의 보존을 뜻하지 않는다. 이미 제출된 Executor payload를 새 경로로 재생성하지 않는다. 생성 산출물의 공유 PV 경로는 이번 작업에서 바꾸지 않았다. workflows/workflow_lifecycle.md는 기존 정책 문서를 보존한 것으로 모든 단계의 구현 완료를 뜻하지 않는다.
 
-054에서 외부의 이전 설문형 그래프·노드를 제거했지만 이 패키지의 skills/tools/workflows 자산과 기존 Workflow 관리·컴파일 모듈은 보존했다. 새 승인 snapshot의 실제 코드 생성은 ../execution/compiler.py가 맡는다. 검색 placeholder인 workflow_recommender.py가 현재 pgvector 추천을 구현한 것으로 해석하지 않는다.
+054에서 외부의 이전 설문형 그래프·노드를 제거했지만 이 패키지의 skills/tools/workflows 자산과 기존 Workflow 관리·컴파일 모듈은 보존했다. 새 승인 snapshot의 실제 코드 생성은 ../execution/compiler.py가 맡는다. 094에서 미사용 workflow_recommender.py placeholder는 삭제했다. 등록·색인·HNSW 검색은 api_service/workflows/, Agent의 검색 포트/추천 snapshot 해결은 ../planning/recommendations.py, 호출 범위는 agent_service/middleware/planning_contract.py에서 관리한다. Skill/Tool 자산 패키지는 그대로 유지한다.
 
 사용자에게 노출할 Tool 파라미터는 [파라미터 작성 가이드](../../../../../docs/tool-parameter-policy.md)를 따른다. tool_registry.yaml의 parameter_controls는 수동 정책이며 생성 시 보존·검증된다. 함수 기본값은 Agent 계획 검토에서 AST로 읽어 승인 snapshot에 고정한다.
 

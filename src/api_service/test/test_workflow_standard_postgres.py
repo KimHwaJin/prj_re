@@ -17,13 +17,13 @@ async def test_direct_author_update_conflict_clone_promote_visibility_and_delete
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case,adaptive=True)
-    response=await h.client.post('/api/v1/workflows',headers=auth,json={'document':doc,'tags':['TEST']})
+    response=await h.client.post('/api/v1/workflows',headers=auth,json={'user_queries':['Calculate approved totals'], 'document':doc,'tags':['TEST']})
     assert response.status_code==201,response.text
     resource=response.json();wid=resource['workflow_id'];old_path=resource['file_path'];old_sha=resource['content_sha256']
     assert resource['source_run_id'] is None and resource['schema_version']=='2.0'
     assert resource['document']==doc
     # Distinct direct authoring requests must not collapse through source_run_id=NULL.
-    second=await h.client.post('/api/v1/workflows',headers=auth,json={'document':doc})
+    second=await h.client.post('/api/v1/workflows',headers=auth,json={'user_queries':['Calculate approved totals'], 'document':doc})
     assert second.status_code==201 and second.json()['workflow_id']!=wid
     other=await add_user(h,name="workflow-other")
     assert (await h.client.get('/api/v1/workflows/'+wid,headers=headers(other['user_id']))).status_code==404
@@ -66,10 +66,10 @@ async def test_invalid_original_and_invalid_catalog_reference_rejected(planning,
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     doc=public_document(case);doc['workflow']['steps'][0]['tools'][1]['arguments'][case['object_arg']]['output']='unknown'
-    invalid=await h.client.post('/api/v1/workflows',headers=headers(h.user['user_id']),json={'document':doc})
+    invalid=await h.client.post('/api/v1/workflows',headers=headers(h.user['user_id']),json={'user_queries':['Calculate approved totals'], 'document':doc})
     assert invalid.status_code==422 and 'Unknown registered output' in invalid.text
     doc['workflow_version']='1.0'
-    original=await h.client.post('/api/v1/workflows',headers=headers(h.user['user_id']),json={'document':doc})
+    original=await h.client.post('/api/v1/workflows',headers=headers(h.user['user_id']),json={'user_queries':['Calculate approved totals'], 'document':doc})
     assert original.status_code==422 and 'explicitly migrated' in original.text
     assert not (tmp_path/'workflows').exists()
 
@@ -82,7 +82,7 @@ async def test_concurrent_content_updates_accept_one_revision_only(planning,tmp_
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)
-    created=await h.client.post('/api/v1/workflows',headers=auth,json={'document':doc})
+    created=await h.client.post('/api/v1/workflows',headers=auth,json={'user_queries':['Calculate approved totals'], 'document':doc})
     row=created.json();path='/api/v1/workflows/'+row['workflow_id']
     alternatives=[]
     for name in ['Concurrent A','Concurrent B']:
@@ -103,7 +103,7 @@ async def test_failed_db_commit_preserves_previous_document(planning,tmp_path,mo
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)
-    created=await h.client.post('/api/v1/workflows',headers=auth,json={'document':doc})
+    created=await h.client.post('/api/v1/workflows',headers=auth,json={'user_queries':['Calculate approved totals'], 'document':doc})
     row=created.json();path='/api/v1/workflows/'+row['workflow_id']
     replacement=deepcopy(doc);replacement['workflow']['name']='Rolled back'
     async def fail_commit(self):raise RuntimeError('Injected commit failure')
@@ -125,7 +125,7 @@ async def test_rollback_reusing_historical_revision_never_deletes_it(planning,tm
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)
-    created=await h.client.post('/api/v1/workflows',headers=auth,json={'document':doc})
+    created=await h.client.post('/api/v1/workflows',headers=auth,json={'user_queries':['Calculate approved totals'], 'document':doc})
     old=created.json();path='/api/v1/workflows/'+old['workflow_id']
     changed=deepcopy(doc);changed['workflow']['name']='Second revision'
     edited=await h.client.patch(path,headers=auth,json={'document':changed,'expected_content_sha256':old['content_sha256']})

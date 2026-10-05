@@ -58,7 +58,7 @@ def command(*args):
 def temporary_database(args, name):
     command('docker', 'run', '--rm', '-d', '--name', name,
             '-e', 'POSTGRES_USER=console_test', '-e', 'POSTGRES_PASSWORD=console_test_only',
-            '-p', f'127.0.0.1:{args.db_port}:5432', 'postgres:17')
+            '-p', f'127.0.0.1:{args.db_port}:5432', 'pgvector/pgvector:0.8.6-pg17')
     for _ in range(60):
         try:
             command('docker', 'exec', name, 'pg_isready', '-h', '127.0.0.1', '-U', 'console_test')

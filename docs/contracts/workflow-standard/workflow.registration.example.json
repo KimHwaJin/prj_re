@@ -1,0 +1,68 @@
+{
+  "user_queries": [
+    "예제 요청의 입력을 읽고 승인한 값을 계산해 줘",
+    "입력을 계산하고 확인된 결과를 보고서로 정리해 줘"
+  ],
+  "document": {
+    "workflow_version": "2.0",
+    "workflow": {
+      "name": "Independent standard example",
+      "user_request": "Calculate the approved total",
+      "inputs": {
+        "payload": {
+          "value_schema": {
+            "type": "string"
+          }
+        }
+      },
+      "steps": [
+        {
+          "id": "operations",
+          "skill": "warehouse",
+          "tools": [
+            {
+              "id": "decode",
+              "tool": "decode_lots",
+              "arguments": {
+                "document": {
+                  "source": "input",
+                  "name": "payload"
+                }
+              }
+            },
+            {
+              "id": "calculate",
+              "tool": "summarize_lots",
+              "arguments": {
+                "batch": {
+                  "source": "tool_output",
+                  "call_id": "decode",
+                  "output": "batches"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "expected_outputs": [
+        {
+          "id": "report",
+          "kind": "report",
+          "description": "Explain actual results",
+          "required": true,
+          "format": "markdown",
+          "source": {
+            "source": "agent_report",
+            "evidence_calls": [
+              "calculate"
+            ]
+          }
+        }
+      ],
+      "description": "독립 예시 자산 풀의 수열을 집계하는 규격 예제. 업무 함수명을 공통 실행기에 하드코딩하지 않는다."
+    }
+  },
+  "tags": [
+    "example"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "user_queries": {
+      "description": "이 Workflow가 해결할 사용자 질문 예시. 각 항목은 별도로 임베딩합니다.",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "User Queries",
+      "type": "array"
+    },
+    "source_run_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Run Id"
+    },
+    "document": {
+      "additionalProperties": true,
+      "title": "Document",
+      "type": "object"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "user_queries",
+    "document"
+  ],
+  "title": "WorkflowCandidateCreate",
+  "type": "object"
+}

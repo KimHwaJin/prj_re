@@ -52,9 +52,25 @@ W01~W17은 위 구현 이력을 유지한다. 아래는 새 검색 요구·실�
 
 | ID | 이전 정의/설명 | 변경·추가 방향 | 이유·근거 | 상태 |
 |---|---|---|---|---|
-| R01 | W03의 user_request는 분석 목표, W17 POST는 document 중심 | envelope user_queries[]로 여러 검색용 요청을 한 resource에 연결. 실행 JSON 목표는 유지 | 사용자가 다중 요청→한 Workflow를 요구 | 제안·미구현 |
-| R02 | 쿼리 row TOPK 뒤 중복 제거/고정 넉넉한 후보 수 | Workflow 단위 반환. 고정 배수로 그룹 개수/완전성 보장 금지 | 50개/WF 후보200도4WF, 500개/WF 후보1000도2WF | 반례 실측 완료·검색 정책 미확정 |
-| R03 | 제외 WHERE로 후보를 반복 검색하면 충분할 수 있다는 논의 | iterative/활성 인덱스 후보 유지, 개수와 정확한 전역TOP5 분리 | 기본 제외1WF; iterative 경계Recall68%, 활성80% | 검증 완료·근사 허용 조건 결정 필요 |
-| R04 | W17 정의 SHA로 수정 경합 감지 | 파일 SHA 유지+별도 resource/search revision·embedding 상태 검토 | 쿼리만 수정하면 정의SHA는 바뀌지 않음 | 제안·미구현 |
-| R05 | 문서를 전체 Workflow 계약 확정으로 읽을 여지 | 실행 정의/현행CRUD와 미확정 추천·등록 계약을 명시 분리. 최종 검색API 문서는 구현 시 별도로 확정 | 실제 모델/차원·품질 목표·응답 상태 미정 | 문서 반영 완료·최종검색API 미작성 |
-| R06 | R03의 HNSW는 검토 후보, 이후 전량 검색 기본안 제안 | 사용자 결정으로 HNSW 채택. 활성 검색 인덱스·반복 제외·발견한 Workflow 후보 내 점수 재정렬·검색 예산으로 구현 설계 | 근사 검색 사용 요구. 그룹 중복/후보 점수/전역 누락을 분리 | 방향 확정·설계 반영 / 운영 구현·실제 품질 검증 미완료 |
+| R01 | W03의 user_request는 분석 목표, W17 POST는 document 중심 | envelope user_queries[]로 여러 검색용 요청을 한 resource에 연결. 실행 JSON 목표는 유지 | 사용자가 다중 요청→한 Workflow를 요구 | 094 구현·API 검증. 별도 작성/검색 버전과 상태 |
+| R02 | 쿼리 row TOPK 뒤 중복 제거/고정 넉넉한 후보 수 | Workflow 단위 반환. 고정 배수로 그룹 개수/완전성 보장 금지 | 50개/WF 후보200도4WF, 500개/WF 후보1000도2WF | 094 HNSW 제외 반복·고유 Workflow 반환. 부분 결과 진단 |
+| R03 | 제외 WHERE로 후보를 반복 검색하면 충분할 수 있다는 논의 | iterative/활성 인덱스 후보 유지, 개수와 정확한 전역TOP5 분리 | 기본 제외1WF; iterative 경계Recall68%, 활성80% | HNSW 근사 검색 채택. 전역 최적/후보 개수 미보장 |
+| R04 | W17 정의 SHA로 수정 경합 감지 | 파일 SHA 유지+별도 resource/search revision·embedding 상태 검토 | 쿼리만 수정하면 정의SHA는 바뀌지 않음 | 094 구현·API 검증. 별도 작성/검색 버전과 상태 |
+| R05 | 문서를 전체 Workflow 계약 확정으로 읽을 여지 | 실행 정의/현행CRUD와 미확정 추천·등록 계약을 명시 분리. 최종 검색API 문서는 구현 시 별도로 확정 | 실제 모델/차원·품질 목표·응답 상태 미정 | [등록·검색 확정 문서](../workflow-registration-and-search.md)·실제 class 생성 Schema 작성 |
+| R06 | R03의 HNSW는 검토 후보, 이후 전량 검색 기본안 제안 | 사용자 결정으로 HNSW 채택. 활성 검색 인덱스·반복 제외·발견한 Workflow 후보 내 점수 재정렬·검색 예산으로 구현 설계 | 근사 검색 사용 요구. 그룹 중복/후보 점수/전역 누락을 분리 | 094 서버·Agent 구현 및 격리 검증. 실제 모델 품질/운영 부하는 후속 |
+
+
+## 094 실제 구현 추적
+
+실행2.0 필드는 추가 변경하지 않았다. 등록 envelope만 user_queries 필수·추가 필드 거절로 확정했다. received1.0 원본 byte/SHA는 변경하지 않았다.
+
+| ID | 변경 전 → 변경 후 | 검증/설명 |
+|---|---|---|
+| R07 | POST document만 → user_queries+document. 과거 추가 필드 무시 → 422 | Schema·실제 PostgreSQL API, 직접 작성 예시 |
+| R08 | Workflow당 한 활성 벡터 → 쿼리·검색 revision·모델 공간별 벡터 | ARRAY→native vector migration, 기존 이력 inactive. 같은 모델 쿼리 벡터 재사용 |
+| R09 | 수정 SHA만 → 작성 resource_revision과 search_revision 추가 | 쿼리만 수정해도 충돌409. 지연 게시/삭제 이후 재활성화 차단 |
+| R10 | 추천 stub 미연결 → API-boundary retrieval port + 기존 create_agent metadata 미들웨어 | 전체 E2E만 검색. FAQ/부분/열린 계획 변경 생략. 미사용 workflow_recommender.py 제거, skills/tools/workflows 자산 패키지 유지 |
+| R11 | 모델이 정의 새로 작성 → 추천 ID는 이번 검색 snapshot에서 서버 해결 | 원본 정책·출처 SHA 유지, 사용자 편집/승인 snapshot 고정, 추천+신규 합계 상한 |
+| R12 | 모델 검색 연결 미설정 → 명시적 설정/색인 실패 진단 | 등록 보존, reindex, 검색 시간/반복 예산, missing index의 전량 검색 대체 없음 |
+
+[완성 계약](../workflow-registration-and-search.md)과 [094 검증 기록](../improvements/094-workflow-hnsw-retrieval.md)을 개발 기준으로 사용한다. R01~R06의 최초 제안·실측 원문은 Git 이력에서 확인할 수 있다.

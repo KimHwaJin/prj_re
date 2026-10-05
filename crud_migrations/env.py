@@ -41,6 +41,8 @@ def include_object(obj, name, type_, reflected, compare_to):
     # Store is SDK-owned; the retired Jupyter registry is preserved until an
     # explicit data-retention migration. Neither belongs to active ORM metadata.
     # Skip only reflected tables with no mapped counterpart, not future models.
+    if type_ == "index" and name.startswith("ix_workflow_hnsw_"):
+        return False  # model-space indexes are managed by the provisioning tool
     return not (type_ == 'table' and name in {'store', 'store_migrations', 'jupyter_servers'}
                 and reflected and compare_to is None)
 

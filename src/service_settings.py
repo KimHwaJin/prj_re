@@ -48,7 +48,9 @@ REMOVED_INFRASTRUCTURE_SETTINGS = frozenset({
     "JUPYTER_TOKEN_ENCRYPTION_KEY", "REDIS_PING_TIMEOUT_SECONDS", "REDIS_HOST",
 })
 CANONICAL = {alias: key for key, aliases in ALIASES.items() for alias in aliases}
-GROUPS = {"runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics", "auth"}
+from service_runtime.workflow_search_settings import WorkflowSearchSettings, SETTING_FIELDS as WORKFLOW_SEARCH_FIELDS
+
+GROUPS = {"workflow_search", "runtime", "database", "checkpoint", "llm", "agent", "executor", "events", "storage", "diagnostics", "auth"}
 # Extra settings consumed by the legacy Agent adapter, outside the API model.
 AGENT_KEYS = set("""
 APP_ENV MODEL_MOCK_DELAY_MS MODEL_TEMPERATURE MODEL_PROVIDER MODEL_NAME
@@ -208,6 +210,7 @@ class ServiceSettings:
     diagnostics_dir: Path | None
     diagnostics_stall_seconds: float
     sources: Mapping[str, str]
+    workflow_search: WorkflowSearchSettings = field(default_factory=WorkflowSearchSettings)
 
     def summary(self) -> dict[str, Any]:
         """Safe for startup logs / --check-config; never dump values or DSNs."""
@@ -272,7 +275,7 @@ def load_settings(
     api_fields = {name: _api_key(name, info) for name, info in APISettings.model_fields.items()}
     worker_keys = {_key("EW_" + name.upper()) for name in WorkerSettings.model_fields}
     sso_keys = {"SSO_" + name.upper() for name in SsoSettings.model_fields}
-    known = set(api_fields.values()) | worker_keys | AGENT_KEYS | EXTRA_KEYS | sso_keys
+    known = set(api_fields.values()) | worker_keys | AGENT_KEYS | EXTRA_KEYS | sso_keys | set(WORKFLOW_SEARCH_FIELDS)
     sources: dict[str, str] = {}
     merged: dict[str, Any] = {}
 
@@ -432,8 +435,13 @@ def load_settings(
     mock_root = merged.get("MOCK_DATA_ROOT", "/workspace/pv")
     if not isinstance(mock_root, (str, Path)) or not str(mock_root).strip():
         raise ConfigurationError("Invalid path setting: MOCK_DATA_ROOT")
+    try:
+        workflow_search = WorkflowSearchSettings.model_validate({field: merged[key] for key, field in WORKFLOW_SEARCH_FIELDS.items() if key in merged})
+    except ValidationError as exc:
+        fields = ", ".join(".".join(map(str, e["loc"])) for e in exc.errors())
+        raise ConfigurationError("Invalid Workflow search settings: " + fields) from None
     return ServiceSettings(
-        api=api, agent=agent, worker=worker, sso=sso, profile=selected,
+        api=api, agent=agent, worker=worker, sso=sso, profile=selected, workflow_search=workflow_search,
         event_worker_enabled=event_enabled,
         workflow_database_url=workflow_url if workflow_enabled else None,
         mock_data_root=Path(mock_root),

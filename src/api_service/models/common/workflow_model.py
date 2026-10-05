@@ -5,7 +5,9 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import ARRAY, Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
+from pgvector.sqlalchemy import VECTOR
+
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,6 +29,11 @@ class WorkflowModel(TimestampMixin, Base):
     lifecycle: Mapped[str] = mapped_column(String(20), nullable=False, default="candidate", index=True)
     file_path: Mapped[str] = mapped_column(String(1000), nullable=False, unique=True)
     content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_queries: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list, server_default="[]")
+    resource_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    search_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    index_state: Mapped[str] = mapped_column(String(20), nullable=False, default="not_indexed", server_default="not_indexed")
+    index_error: Mapped[str | None] = mapped_column(String(100))
     source_run_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("agent_runs.run_id", ondelete="RESTRICT"), nullable=True, index=True
     )
@@ -51,6 +58,8 @@ class WorkflowModel(TimestampMixin, Base):
     execution_logs = relationship("WorkflowExecutionLogModel", back_populates="workflow")
 
     __table_args__ = (
+        CheckConstraint("resource_revision > 0 AND search_revision > 0", name="ck_workflows_revisions"),
+        CheckConstraint("index_state IN ('not_indexed', 'pending', 'ready', 'failed')", name="ck_workflows_index_state"),
         CheckConstraint("lifecycle IN ('candidate', 'template')", name="ck_workflows_lifecycle"),
         Index("ix_workflows_active_created", "lifecycle", "created_at", postgresql_where=text("deleted_at IS NULL")),
         # 동일 Run의 자동 저장/재시도는 root candidate 하나로 수렴합니다.
@@ -88,7 +97,9 @@ class WorkflowEmbeddingModel(Base):
     workflow_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("workflows.workflow_id", ondelete="CASCADE"), nullable=False, index=True
     )
-    # name + description + goal + 정규화된 skill/tool 요약으로 만든 실제 임베딩 입력입니다.
+    search_revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    model_space: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # 한 user_queries 항목을 그대로 임베딩합니다. JSON/코드는 임베딩 입력에 넣지 않습니다.
     embedded_text: Mapped[str] = mapped_column(Text, nullable=False)
     embedded_text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     search_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict, server_default="{}")
@@ -96,8 +107,8 @@ class WorkflowEmbeddingModel(Base):
     model_name: Mapped[str] = mapped_column(String(200), nullable=False)
     model_revision: Mapped[str] = mapped_column(String(100), nullable=False, default="default")
     dimensions: Mapped[int] = mapped_column(Integer, nullable=False)
-    # pgvector 미승인 환경에서도 적재 가능하도록 배열을 사용합니다. 승인 후 VECTOR로 변경할 수 있습니다.
-    vector_values: Mapped[list[float] | None] = mapped_column(ARRAY(Float))
+    # 모델 차원은 배포 설정으로 지정하며 해당 공간에만 고정 차원 HNSW expression index를 만듭니다.
+    vector_values: Mapped[list[float] | None] = mapped_column(VECTOR())
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     failure_reason: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -114,20 +125,14 @@ class WorkflowEmbeddingModel(Base):
             name="ck_workflow_embeddings_status",
         ),
         CheckConstraint(
-            "status <> 'ready' OR (vector_values IS NOT NULL AND cardinality(vector_values) = dimensions)",
+            "status <> 'ready' OR (vector_values IS NOT NULL AND vector_dims(vector_values) = dimensions)",
             name="ck_workflow_embeddings_ready_vector",
         ),
         UniqueConstraint(
-            "workflow_id", "model_provider", "model_name", "model_revision", "embedded_text_sha256",
+            "workflow_id", "search_revision", "model_space", "embedded_text_sha256",
             name="uq_workflow_embeddings_source_model",
         ),
         Index("ix_workflow_embeddings_search_metadata", "search_metadata", postgresql_using="gin"),
-        Index(
-            "uq_workflow_embeddings_active_model",
-            "workflow_id", "model_provider", "model_name", "model_revision",
-            unique=True,
-            postgresql_where=text("is_active = true AND status = 'ready'"),
-        ),
     )
 
 

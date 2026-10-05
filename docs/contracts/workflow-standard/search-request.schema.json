@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "query": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "title": "WorkflowSearchRequest",
+  "type": "object"
+}

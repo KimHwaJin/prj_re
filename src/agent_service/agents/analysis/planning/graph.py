@@ -61,6 +61,8 @@ def build_planning_graph(runtime, *, checkpointer):
             review = new_review(definition, proposal.input_values, runtime.catalog.metadata, policy)
             # Validate proposed data references with exactly the same rules as user edits.
             patch_review(review, {'action': 'edit_plan', 'plan_id': review['plan_id'], 'plan_revision': 1}, datasets=runtime.datasets, context=state)
+            if getattr(proposal, "_catalog_reference", None) is not None:
+                review["catalog_reference"] = proposal._catalog_reference
             reviews.append(review)
         from ..execution.grounding import grounded_message
         # Explicit mock-provider responses intentionally have no LLM grounding contract.

@@ -92,3 +92,8 @@ PYTHONPATH=src python scripts/design/update_test_console_fixtures.py
 ```
 
 DOM double은 tests/dom-harness.cjs에 있고 개발용 Node 테스트에만 쓴다. 운영 HTML은 Node·bundler·npm package가 필요 없다. 기존 demo의 코드를 옮기거나 복제하지 않았다.
+
+
+## 094 Workflow 계약 갱신
+
+샘플 OpenAPI도 다중 user_queries 필수·수정 resource_revision·검색/reindex 경로·색인 상태와 추천 PlanView.catalog_reference를 포함한다. 전체 API 화면에서 등록/승격/검색/재색인과 실패 상태를 확인할 수 있다. 실제 embedding 모델은 서버 중앙 설정으로 주입하고 HNSW index를 먼저 생성해야 한다. 콘솔에 인증키·embedding endpoint를 주입하지 않는다. [확정 계약](../../docs/workflow-registration-and-search.md)을 따른다.

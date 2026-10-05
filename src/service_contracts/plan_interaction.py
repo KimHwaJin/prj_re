@@ -146,7 +146,16 @@ class SkillView(StrictModel):
     description: str
 
 
+class WorkflowCatalogReference(StrictModel):
+    workflow_id: str
+    content_sha256: str
+    resource_revision: int
+    search_revision: int
+    similarity: float
+
+
 class PlanView(StrictModel):
+    catalog_reference: WorkflowCatalogReference | None = None
     plan_id: str
     plan_revision: int
     workflow_id: str

@@ -6,7 +6,7 @@ from copy import deepcopy
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -109,7 +109,10 @@ class WorkflowService:
             )
         )
         if payload.source_run_id is not None and existing is not None:
-            # 성공 응답 재시도에서도 같은 root candidate로 수렴합니다.
+            # 같은 출처 Run의 다른 등록 내용은 조용히 무시하지 않습니다.
+            prior = await asyncio.to_thread(WorkflowFileStore.read, existing.file_path)
+            if prior != payload.document or existing.user_queries != payload.user_queries:
+                raise HTTPException(status_code=409, detail="Source Run already has a different Workflow candidate.")
             return existing
         workflow_id = uuid4()
         path, checksum = await asyncio.to_thread(WorkflowFileStore.write, workflow_id, payload.document)
@@ -126,6 +129,8 @@ class WorkflowService:
             created_by_user_id=user_id,
             is_recommendable=False,
             tags=[WorkflowTagModel(tag=tag) for tag in payload.tags],
+            user_queries=payload.user_queries,
+            index_state="pending",
         )
         db.add(workflow)
         try:
@@ -152,6 +157,7 @@ class WorkflowService:
             WorkflowCandidateCreate(
                 source_run_id=source_run_id,
                 document=document,
+                user_queries=[(await WorkflowService._describe(document))[2]],
                 tags=[],
             ),
         )
@@ -188,6 +194,8 @@ class WorkflowService:
             created_by_user_id=user_id,
             is_recommendable=True,
             tags=[WorkflowTagModel(tag=item.tag) for item in candidate.tags],
+            user_queries=list(candidate.user_queries),
+            index_state="pending",
         )
         db.add(promoted)
         try:
@@ -225,6 +233,8 @@ class WorkflowService:
             created_by_user_id=user_id,
             is_recommendable=False,
             tags=[WorkflowTagModel(tag=tag) for tag in tags],
+            user_queries=list(source.user_queries),
+            index_state="pending",
         )
         db.add(clone)
         try:
@@ -250,6 +260,8 @@ class WorkflowService:
             .execution_options(populate_existing=True))
         if workflow is None or workflow.deleted_at is not None:
             raise HTTPException(status_code=404, detail='Workflow not found.')
+        if payload.expected_resource_revision is not None and payload.expected_resource_revision != workflow.resource_revision:
+            raise HTTPException(status_code=409, detail="Workflow changed; reload before updating.")
         previous_path = workflow.file_path
         replacement_path = None
         created_revision = False
@@ -257,8 +269,8 @@ class WorkflowService:
             raise HTTPException(status_code=409, detail='Workflow changed; reload before updating.')
         content_edit = payload.document is not None or (workflow.schema_version == '2.0' and (payload.name is not None or payload.description is not None))
         if content_edit:
-            if payload.expected_content_sha256 is None:
-                raise HTTPException(status_code=422, detail='Content update requires expected_content_sha256.')
+            if payload.expected_content_sha256 is None and payload.expected_resource_revision is None:
+                raise HTTPException(status_code=422, detail="Content update requires expected_resource_revision or expected_content_sha256.")
             document = deepcopy(payload.document) if payload.document is not None else await asyncio.to_thread(WorkflowFileStore.read, previous_path)
             if not WorkflowService._public(document):
                 raise HTTPException(status_code=422, detail='Content replacement requires public Workflow 2.0.')
@@ -270,12 +282,22 @@ class WorkflowService:
             replacement_path, checksum, created_revision = await asyncio.to_thread(WorkflowFileStore.write_revision, workflow_id, document)
             workflow.file_path, workflow.content_sha256 = replacement_path, checksum
             workflow.name, workflow.description, workflow.goal, workflow.schema_version = name, description, goal, version
-            for embedding in (await db.scalars(select(WorkflowEmbeddingModel).where(WorkflowEmbeddingModel.workflow_id == workflow_id))).all():
-                embedding.is_active = False
-                embedding.status = 'superseded'
+
         else:
             if payload.name is not None: workflow.name = payload.name.strip()
             if payload.description is not None: workflow.description = payload.description
+        query_edit = payload.user_queries is not None and payload.user_queries != workflow.user_queries
+        if query_edit:
+            workflow.user_queries = payload.user_queries
+        if content_edit or query_edit:
+            workflow.search_revision += 1
+            workflow.index_state = "pending"
+            workflow.index_error = None
+            await db.execute(update(WorkflowEmbeddingModel).where(
+                WorkflowEmbeddingModel.workflow_id == workflow_id,
+                WorkflowEmbeddingModel.status != "superseded"
+            ).values(is_active=False, status="superseded"))
+        workflow.resource_revision += 1
         if payload.tags is not None:
             existing_tags = {item.tag: item for item in workflow.tags}
             workflow.tags = [existing_tags.get(tag) or WorkflowTagModel(tag=tag) for tag in payload.tags]
@@ -294,6 +316,16 @@ class WorkflowService:
         workflow = await WorkflowService.get(db, user_id, workflow_id)
         if workflow.created_by_user_id != user_id:
             raise HTTPException(status_code=403, detail="Only the creator can delete this workflow.")
+        workflow = await db.scalar(select(WorkflowModel).where(WorkflowModel.workflow_id == workflow_id).with_for_update().execution_options(populate_existing=True))
+        if workflow is None or workflow.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Workflow not found.")
+        await db.execute(update(WorkflowEmbeddingModel).where(
+            WorkflowEmbeddingModel.workflow_id == workflow_id,
+            WorkflowEmbeddingModel.status != "superseded"
+        ).values(is_active=False, status="superseded"))
+        workflow.resource_revision += 1
+        workflow.search_revision += 1
+        workflow.index_state = "not_indexed"
         # Soft Delete이므로 JSON 원본도 감사/복구를 위해 그대로 보존합니다.
         workflow.deleted_at = utc_now()
         await db.commit()

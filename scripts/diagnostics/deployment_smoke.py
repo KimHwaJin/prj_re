@@ -40,7 +40,7 @@ def main():
     app = {'image':args.image, 'environment':env}
     healthy = lambda command: {'test':command, 'interval':'1s', 'timeout':'3s', 'retries':30}
     definition = {'name':project, 'services':{
-        'postgres':{'image':'postgres:17', 'environment':{'POSTGRES_USER':'dtest',
+        'postgres':{'image':'pgvector/pgvector:0.8.6-pg17', 'environment':{'POSTGRES_USER':'dtest',
             'POSTGRES_PASSWORD':'smoke-local','POSTGRES_DB':'chat_app'},
             'volumes':[str(init_sql)+':/docker-entrypoint-initdb.d/01-agent.sql:ro'],
             'healthcheck':healthy(['CMD-SHELL','pg_isready -U dtest -d chat_app'])},

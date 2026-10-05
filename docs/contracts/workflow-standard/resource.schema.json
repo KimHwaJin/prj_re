@@ -1,0 +1,184 @@
+{
+  "properties": {
+    "workflow_id": {
+      "format": "uuid",
+      "title": "Workflow Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "goal": {
+      "title": "Goal",
+      "type": "string"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "lifecycle": {
+      "enum": [
+        "candidate",
+        "template"
+      ],
+      "title": "Lifecycle",
+      "type": "string"
+    },
+    "file_path": {
+      "title": "File Path",
+      "type": "string"
+    },
+    "content_sha256": {
+      "title": "Content Sha256",
+      "type": "string"
+    },
+    "user_queries": {
+      "items": {
+        "type": "string"
+      },
+      "title": "User Queries",
+      "type": "array"
+    },
+    "resource_revision": {
+      "title": "Resource Revision",
+      "type": "integer"
+    },
+    "search_revision": {
+      "title": "Search Revision",
+      "type": "integer"
+    },
+    "index_state": {
+      "enum": [
+        "not_indexed",
+        "pending",
+        "ready",
+        "failed"
+      ],
+      "title": "Index State",
+      "type": "string"
+    },
+    "index_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Index Error"
+    },
+    "source_run_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Run Id"
+    },
+    "source_workflow_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Workflow Id"
+    },
+    "created_by_user_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Created By User Id"
+    },
+    "is_recommendable": {
+      "title": "Is Recommendable",
+      "type": "boolean"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "document": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Document"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "deleted_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Deleted At"
+    }
+  },
+  "required": [
+    "workflow_id",
+    "name",
+    "description",
+    "goal",
+    "schema_version",
+    "lifecycle",
+    "file_path",
+    "content_sha256",
+    "user_queries",
+    "resource_revision",
+    "search_revision",
+    "index_state",
+    "index_error",
+    "source_run_id",
+    "source_workflow_id",
+    "created_by_user_id",
+    "is_recommendable",
+    "tags",
+    "created_at",
+    "updated_at",
+    "deleted_at"
+  ],
+  "title": "WorkflowResource",
+  "type": "object"
+}

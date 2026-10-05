@@ -10,9 +10,10 @@ from .prompt_json import response_text, unwrap_json
 
 
 class PlanningContractMiddleware(AgentMiddleware):
-    def __init__(self, planning_prompt: str, *, schema):
+    def __init__(self, planning_prompt: str, *, schema, workflow_search_enabled=False):
         self.planning_prompt = planning_prompt
         self.schema = schema
+        self.workflow_search_enabled = workflow_search_enabled
 
     @staticmethod
     def discovered(messages):
@@ -39,6 +40,8 @@ class PlanningContractMiddleware(AgentMiddleware):
             # standard ToolNode. No second classifier model or external execution.
             calls = [{"name":"read_skill", "args":{"skill_id":skill},
                       "id":"planning-"+uuid4().hex, "type":"tool_call"} for skill in selected.skill_ids]
+            if self.workflow_search_enabled and selected.planning_scope == "end_to_end":
+                calls.append({"name":"search_workflows", "args":{}, "id":"workflow-search-"+uuid4().hex, "type":"tool_call"})
             message = message.model_copy(update={"content":"", "tool_calls":calls})
             return replace(response, result=[*response.result[:-1], message], structured_response=None)
         # Derive the contract from invocation messages, never shared mutable state.
@@ -48,4 +51,5 @@ class PlanningContractMiddleware(AgentMiddleware):
             content += "\n\nPlanning contract (metadata has been requested). Skill selection is finished; return final answer/plans with skill_ids=[], never planning again:\n" + self.planning_prompt
         else:
             content = [*content, {"type":"text", "text":self.planning_prompt}]
-        return await handler(request.override(system_message=base.model_copy(update={"content":content})))
+        return await handler(request.override(system_message=base.model_copy(update={"content":content}),
+            tools=[t for t in request.tools if getattr(t,"name",None)!="search_workflows"]))

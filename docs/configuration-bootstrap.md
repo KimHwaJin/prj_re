@@ -163,3 +163,8 @@ Redis 연결풀의 설정·주석과 Swagger 테스트는 [SSO 가이드](sso-au
 `service.agent`의 `AGENT_PROJECT_MEMORY_*`는 중앙 설정에서 API 저장 정책·Agent 응답 schema·미들웨어에 동일하게 주입한다. 기본값과 문자/추정 토큰 단위, 0의 의미, 역할별 범위, 한도 변경 시 기존 문서 처리 정책은 [프로젝트 메모리](project-memory.md)를 따른다. config.yml에 각 설정의 주석 예시가 있다. 설정 변경은 프로세스 재시작 후 적용된다.
 
 060 현재 실행은 API·Inbox·명령 원장에 같은 DB 정본을 사용한다. 별도 Event DB override는 실행 활성 상태에서 거절하며 자료 이행은 [공통 Worker 안내](agent-command-worker.md)를 따른다. 내부 Redis command/group·dispatch/publish-lease 설정은 삭제되었고 남은 YAML/env 입력은 오류다.
+
+
+## Workflow 임베딩·HNSW 설정
+
+API와 Agent는 한 ServiceSettings.workflow_search snapshot을 공유한다. 채팅 모델 API와 임베딩 모델 API는 별도다. 모델 설정 세 항목(BASE_URL/MODEL/DIMENSIONS)을 함께 제공하고 secret·revision·검색 예산은 [config.yml](../config.yml)의 주석, 색인 이행은 [확정 계약](workflow-registration-and-search.md)을 따른다. 별도 .env 로더·별도 Workflow 검색 DB 풀을 만들지 않았다. 검색 DB는 DATABASE_URL의 CRUD DB이며 과거 WORKFLOW_DATABASE_URL의 독립 legacy catalog를 검색하지 않는다.
