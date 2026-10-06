@@ -31,19 +31,27 @@ def _frontmatter(text: str, path: Path) -> tuple[dict[str, Any], str]:
         raise ValueError(f"{path}: frontmatter가 없습니다.")
     values = yaml.safe_load(match.group(1))
     if not isinstance(values, dict) or set(values) != {"name", "description"}:
-        raise ValueError(f"{path}: frontmatter에는 name과 description만 필요합니다.")
-    return values, text[match.end():]
+        raise ValueError(
+            f"{path}: frontmatter에는 name과 description만 필요합니다."
+        )
+    return values, text[match.end() :]
 
 
 def _sections(body: str, path: Path) -> dict[str, str]:
     headings = list(re.finditer(r"^##\s+(.+?)\s*$", body, flags=re.MULTILINE))
     names = tuple(match.group(1) for match in headings)
     if names != SECTION_NAMES:
-        raise ValueError(f"{path}: Skill 섹션 이름 또는 순서가 다릅니다: {names!r}")
+        raise ValueError(
+            f"{path}: Skill 섹션 이름 또는 순서가 다릅니다: {names!r}"
+        )
     sections: dict[str, str] = {}
     for index, heading in enumerate(headings):
         start = heading.end()
-        end = headings[index + 1].start() if index + 1 < len(headings) else len(body)
+        end = (
+            headings[index + 1].start()
+            if index + 1 < len(headings)
+            else len(body)
+        )
         sections[heading.group(1)] = body[start:end]
     return sections
 
@@ -69,12 +77,16 @@ def _tools(section: str, path: Path) -> list[dict[str, str]]:
             continue
         columns = [value.strip() for value in stripped.strip("|").split("|")]
         if len(columns) != 5:
-            raise ValueError(f"{path}: Tool 표는 5개 컬럼이어야 합니다: {line!r}")
+            raise ValueError(
+                f"{path}: Tool 표는 5개 컬럼이어야 합니다: {line!r}"
+            )
         if columns[0] == "Tool" or set(columns[0]) == {"-"}:
             continue
         execution = EXECUTION_VALUES.get(columns[1])
         if execution is None:
-            raise ValueError(f"{path}: 알 수 없는 Tool 실행 방식입니다: {columns[1]!r}")
+            raise ValueError(
+                f"{path}: 알 수 없는 Tool 실행 방식입니다: {columns[1]!r}"
+            )
         tools.append(
             {
                 "tool": columns[0].strip("`"),
@@ -89,21 +101,26 @@ def _tools(section: str, path: Path) -> list[dict[str, str]]:
     return tools
 
 
-
-def _validate_condition_tools(name: str, definition: dict[str, Any], path: Path) -> None:
+def _validate_condition_tools(
+    name: str, definition: dict[str, Any], path: Path
+) -> None:
     previous_tools: set[str] = set()
     allowed_external_skills = {name, *definition["typical_previous_skills"]}
     for tool in definition["tools"]:
         condition_tool = tool["condition_tool"]
         if tool["execution"] == "always" and condition_tool != "없음":
-            raise ValueError(f"{path}: always tools must use condition_tool 없음: {tool['tool']!r}")
+            raise ValueError(
+                f"{path}: always tools must use condition_tool 없음: {tool['tool']!r}"
+            )
         if condition_tool == "없음":
             previous_tools.add(tool["tool"])
             continue
         if "." in condition_tool:
             skill_name, _, tool_name = condition_tool.partition(".")
             if not skill_name or not tool_name:
-                raise ValueError(f"{path}: invalid condition_tool: {condition_tool!r}")
+                raise ValueError(
+                    f"{path}: invalid condition_tool: {condition_tool!r}"
+                )
             if skill_name not in allowed_external_skills:
                 raise ValueError(
                     f"{path}: external condition_tool must reference the current skill "
@@ -115,6 +132,8 @@ def _validate_condition_tools(name: str, definition: dict[str, Any], path: Path)
                 f"{condition_tool!r}"
             )
         previous_tools.add(tool["tool"])
+
+
 def _skill(path: Path, root: Path) -> tuple[str, dict[str, Any]]:
     frontmatter, body = _frontmatter(path.read_text(encoding="utf-8"), path)
     sections = _sections(body, path)
@@ -153,12 +172,16 @@ def build_index(root: Path) -> dict[str, Any]:
         )
         unknown = references - known
         if unknown:
-            raise ValueError(f"{name}: 존재하지 않는 Skill 참조입니다: {sorted(unknown)}")
+            raise ValueError(
+                f"{name}: 존재하지 않는 Skill 참조입니다: {sorted(unknown)}"
+            )
 
     return {
         "schema_version": "2.0",
         "index_type": "skill_index",
-        "description": "Skill Markdown에서 규칙 기반으로 생성한 Workflow 탐색용 색인이다.",
+        "description": (
+            "Skill Markdown에서 규칙 기반으로 생성한 Workflow 탐색용 색인이다."
+        ),
         "skills": skills,
     }
 
@@ -182,13 +205,16 @@ def main() -> None:
     root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skills-dir", type=Path, default=root)
-    parser.add_argument("--output", type=Path, default=root / "skill_index.yaml")
+    parser.add_argument(
+        "--output", type=Path, default=root / "skill_index.yaml"
+    )
     arguments = parser.parse_args()
     index = build_index(arguments.skills_dir.resolve())
     write_index(index, arguments.output.resolve())
-    print(f"generated {len(index['skills'])} skills: {arguments.output.resolve()}")
+    print(
+        f"generated {len(index['skills'])} skills: {arguments.output.resolve()}"
+    )
 
 
 if __name__ == "__main__":
     main()
-

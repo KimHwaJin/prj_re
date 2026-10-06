@@ -18,12 +18,28 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # 초기 배포 template은 Agent Run 없이 등록될 수 있으므로 source_run_id를 선택값으로 바꿉니다.
-    op.execute("ALTER TABLE workflows ALTER COLUMN source_run_id DROP NOT NULL")
-    op.execute("ALTER TABLE workflows ADD COLUMN goal TEXT NOT NULL DEFAULT ''")
-    op.execute("ALTER TABLE workflows ADD COLUMN schema_version VARCHAR(30) NOT NULL DEFAULT '1.0'")
-    op.execute("ALTER TABLE workflows ADD COLUMN is_recommendable BOOLEAN NOT NULL DEFAULT false")
+    op.execute(
+        "ALTER TABLE workflows ALTER COLUMN source_run_id DROP NOT NULL"
+    )
+    op.execute(
+        "ALTER TABLE workflows ADD COLUMN goal TEXT NOT NULL DEFAULT ''"
+    )
+    op.execute(
+        "ALTER TABLE workflows ADD COLUMN schema_version "
+        "VARCHAR(30) NOT NULL DEFAULT "
+        "'1.0'"
+    )
+    op.execute(
+        "ALTER TABLE workflows ADD COLUMN is_recommendable BOOLEAN "
+        "NOT NULL DEFAULT "
+        "false"
+    )
     # 기존 승격 template은 현재 서비스에서 이미 공개된 자산이므로 추천 허용 상태로 이관합니다.
-    op.execute("UPDATE workflows SET is_recommendable = true WHERE lifecycle = 'template' AND deleted_at IS NULL")
+    op.execute(
+        "UPDATE workflows SET is_recommendable = true WHERE "
+        "lifecycle = 'template' AND deleted_at IS "
+        "NULL"
+    )
 
     op.execute(
         """
@@ -55,8 +71,15 @@ def upgrade() -> None:
         )
         """
     )
-    op.execute("CREATE INDEX ix_workflow_embeddings_workflow_id ON workflow_embeddings(workflow_id)")
-    op.execute("CREATE INDEX ix_workflow_embeddings_search_metadata ON workflow_embeddings USING gin(search_metadata)")
+    op.execute(
+        "CREATE INDEX ix_workflow_embeddings_workflow_id ON "
+        "workflow_embeddings(workflow_id)"
+    )
+    op.execute(
+        "CREATE INDEX ix_workflow_embeddings_search_metadata ON "
+        "workflow_embeddings USING "
+        "gin(search_metadata)"
+    )
     op.execute(
         """
         CREATE UNIQUE INDEX uq_workflow_embeddings_active_model
@@ -94,8 +117,16 @@ def upgrade() -> None:
         )
         """
     )
-    for column in ("workflow_id", "agent_run_id", "task_id", "execution_id", "message_id"):
-        op.execute(f"CREATE INDEX ix_workflow_execution_logs_{column} ON workflow_execution_logs({column})")
+    for column in (
+        "workflow_id",
+        "agent_run_id",
+        "task_id",
+        "execution_id",
+        "message_id",
+    ):
+        op.execute(
+            f"CREATE INDEX ix_workflow_execution_logs_{column} ON workflow_execution_logs({column})"
+        )
 
 
 def downgrade() -> None:
@@ -106,4 +137,3 @@ def downgrade() -> None:
     op.execute("ALTER TABLE workflows DROP COLUMN goal")
     # 초기 template의 NULL source_run_id가 있으면 되돌릴 수 없으므로 명시적으로 실패시키는 것이 안전합니다.
     op.execute("ALTER TABLE workflows ALTER COLUMN source_run_id SET NOT NULL")
-

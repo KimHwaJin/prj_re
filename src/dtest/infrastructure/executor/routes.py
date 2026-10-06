@@ -3,6 +3,7 @@
 EXECUTOR_BASE_URL is the service root, optionally including a reverse-proxy prefix.
 The API version prefix below is appended once; do not include /api/v1 in the base.
 """
+
 from enum import StrEnum
 from urllib.parse import quote
 

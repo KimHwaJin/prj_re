@@ -7,8 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dtest.contracts.enums import DeleteYN, MessageStatus, MessageType
 from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.session_model import SessionModel
-from dtest.infrastructure.database.repositories.message_repository import MessageRepository
-from dtest.infrastructure.database.repositories.session_repository import SessionRepository
+from dtest.infrastructure.database.repositories.message_repository import (
+    MessageRepository,
+)
+from dtest.infrastructure.database.repositories.session_repository import (
+    SessionRepository,
+)
 from dtest.contracts.resources.message_schema import (
     MessageCreate,
     MessageCreateResult,
@@ -24,7 +28,10 @@ class MessageService:
     @staticmethod
     def _normalize_content(payload_content, content_text: str) -> list[dict]:
         if payload_content:
-            return [part.model_dump(mode="json", exclude_none=True) for part in payload_content]
+            return [
+                part.model_dump(mode="json", exclude_none=True)
+                for part in payload_content
+            ]
         return [{"type": "text", "text": content_text}]
 
     @staticmethod
@@ -43,7 +50,11 @@ class MessageService:
         # The lifecycle barrier rechecks ownership/project after acquiring the
         # admission lock; return that row with the same final row lock we need.
         session = await lifecycle.lock_session(
-            db, user_id, session_id, expected_project_id=project_id, for_update=True,
+            db,
+            user_id,
+            session_id,
+            expected_project_id=project_id,
+            for_update=True,
         )
         return session, False
 
@@ -64,15 +75,19 @@ class MessageService:
 
     @staticmethod
     async def _create_locked(
-        db: AsyncSession, session: SessionModel, payload: MessageCreate,
-        *, commit: bool = True,
+        db: AsyncSession,
+        session: SessionModel,
+        payload: MessageCreate,
+        *,
+        commit: bool = True,
     ) -> MessageCreateResult:
         """Internal insert; caller holds lifecycle and Session locks until commit."""
         if payload.client_request_id is not None:
             duplicate = await db.scalar(
                 select(MessageModel).where(
                     MessageModel.session_id == session.session_id,
-                    MessageModel.client_request_id == payload.client_request_id,
+                    MessageModel.client_request_id
+                    == payload.client_request_id,
                     MessageModel.delete_yn == DeleteYN.N,
                 )
             )
@@ -89,7 +104,9 @@ class MessageService:
         message = MessageModel(
             session_id=session.session_id,
             message_type=payload.message_type,
-            content=MessageService._normalize_content(payload.content, payload.content_text),
+            content=MessageService._normalize_content(
+                payload.content, payload.content_text
+            ),
             content_text=payload.content_text,
             message_status=MessageStatus.COMPLETED,
             client_request_id=payload.client_request_id,
@@ -103,7 +120,10 @@ class MessageService:
 
         # Message CRUD에서 Session이 자동 생성됐거나 이름이 아직 기본값이면
         # 첫 User 메시지를 읽어 Session 제목을 자동 변경합니다.
-        if payload.message_type == MessageType.USER and session.session_name == "새 대화":
+        if (
+            payload.message_type == MessageType.USER
+            and session.session_name == "새 대화"
+        ):
             session.session_name = make_session_name(payload.content_text)
 
         # INSERT/flush returned sequence_no and server timestamps already.
@@ -119,14 +139,18 @@ class MessageService:
         return result
 
     @staticmethod
-    async def read(db: AsyncSession, user_id: UUID, message_id: UUID) -> MessageRead:
+    async def read(
+        db: AsyncSession, user_id: UUID, message_id: UUID
+    ) -> MessageRead:
         message = await MessageRepository.get_owned_active(
             db,
             user_id=user_id,
             message_id=message_id,
         )
         if message is None:
-            raise ApplicationError(status_code=404, detail="Message를 찾을 수 없습니다.")
+            raise ApplicationError(
+                status_code=404, detail="Message를 찾을 수 없습니다."
+            )
         return MessageRead.model_validate(message)
 
     @staticmethod
@@ -142,14 +166,20 @@ class MessageService:
             message_id=message_id,
         )
         if message is None:
-            raise ApplicationError(status_code=404, detail="Message를 찾을 수 없습니다.")
+            raise ApplicationError(
+                status_code=404, detail="Message를 찾을 수 없습니다."
+            )
 
         await lifecycle.lock_session(db, user_id, message.session_id)
-        message = await MessageRepository.get_owned_active(db, user_id=user_id, message_id=message_id)
+        message = await MessageRepository.get_owned_active(
+            db, user_id=user_id, message_id=message_id
+        )
         if message is None:
             raise ApplicationError(404, "Message not found.")
         message.content_text = payload.content_text
-        message.content = MessageService._normalize_content(payload.content, payload.content_text)
+        message.content = MessageService._normalize_content(
+            payload.content, payload.content_text
+        )
 
         await db.commit()
         await db.refresh(message)
@@ -167,7 +197,9 @@ class MessageService:
             message_id=message_id,
         )
         if root is None:
-            raise ApplicationError(status_code=404, detail="Message를 찾을 수 없습니다.")
+            raise ApplicationError(
+                status_code=404, detail="Message를 찾을 수 없습니다."
+            )
 
         await lifecycle.lock_session(db, user_id, root.session_id)
         session = await SessionRepository.get_active_by_user(
@@ -177,7 +209,9 @@ class MessageService:
             for_update=True,
         )
         if session is None:
-            raise ApplicationError(status_code=404, detail="Session을 찾을 수 없습니다.")
+            raise ApplicationError(
+                status_code=404, detail="Session을 찾을 수 없습니다."
+            )
 
         now = utc_now()
         await db.execute(
@@ -207,4 +241,3 @@ class MessageService:
             current_leaf_message_id=session.current_leaf_message_id,
             detail="Message를 삭제했습니다.",
         )
-

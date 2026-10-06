@@ -1,4 +1,5 @@
 """Public user IDs and service roles, preserving all internal UUID references."""
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -9,14 +10,30 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("users", sa.Column("public_user_id", sa.String(100), nullable=True))
+    op.add_column(
+        "users", sa.Column("public_user_id", sa.String(100), nullable=True)
+    )
     op.execute("UPDATE users SET public_user_id = user_id::text")
     op.alter_column("users", "public_user_id", nullable=False)
-    op.create_unique_constraint("uq_users_public_user_id", "users", ["public_user_id"])
-    op.create_check_constraint("ck_users_public_user_id", "users",
-                               "public_user_id ~ '^[a-z0-9][a-z0-9_.@-]{0,99}$' AND public_user_id <> 'me'")
-    op.add_column("users", sa.Column("role", sa.String(5), nullable=False, server_default="user"))
-    op.create_check_constraint("user_role", "users", "role IN ('admin', 'user')")
+    op.create_unique_constraint(
+        "uq_users_public_user_id", "users", ["public_user_id"]
+    )
+    op.create_check_constraint(
+        "ck_users_public_user_id",
+        "users",
+        (
+            "public_user_id ~ '^[a-z0-9][a-z0-9_.@-]{0,99}$' AND "
+            "public_user_id <> "
+            "'me'"
+        ),
+    )
+    op.add_column(
+        "users",
+        sa.Column("role", sa.String(5), nullable=False, server_default="user"),
+    )
+    op.create_check_constraint(
+        "user_role", "users", "role IN ('admin', 'user')"
+    )
 
 
 def downgrade():

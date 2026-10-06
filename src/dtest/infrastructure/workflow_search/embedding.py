@@ -46,7 +46,9 @@ class OpenAICompatibleEmbedding:
             raise EmbeddingUnavailable("embedding_unconfigured")
         # Includes admission wait and every batch; no invisible SDK retry loop.
         try:
-            async with asyncio.timeout(self.settings.embedding_timeout_seconds):
+            async with asyncio.timeout(
+                self.settings.embedding_timeout_seconds
+            ):
                 async with self._semaphore:
                     if self._client is None:
                         self._client = httpx.AsyncClient(
@@ -61,7 +63,8 @@ class OpenAICompatibleEmbedding:
                         0, len(texts), self.settings.embedding_batch_size
                     ):
                         batch = texts[
-                            offset : offset + self.settings.embedding_batch_size
+                            offset : offset
+                            + self.settings.embedding_batch_size
                         ]
                         headers = {}
                         key = self.settings.api_key.get_secret_value()
@@ -70,22 +73,33 @@ class OpenAICompatibleEmbedding:
                         response = await self._client.post(
                             self.settings.base_url.rstrip("/") + "/embeddings",
                             headers=headers,
-                            json={"model": self.settings.model, "input": batch},
+                            json={
+                                "model": self.settings.model,
+                                "input": batch,
+                            },
                         )
                         response.raise_for_status()
                         data = response.json().get("data")
                         if (
                             not isinstance(data, list)
                             or len(data) != len(batch)
-                            or {d.get("index") for d in data if isinstance(d, dict)}
+                            or {
+                                d.get("index")
+                                for d in data
+                                if isinstance(d, dict)
+                            }
                             != set(range(len(batch)))
                         ):
-                            raise EmbeddingUnavailable("embedding_response_invalid")
+                            raise EmbeddingUnavailable(
+                                "embedding_response_invalid"
+                            )
                         vectors.extend(
                             validate_vectors(
                                 [
                                     item.get("embedding")
-                                    for item in sorted(data, key=lambda d: d["index"])
+                                    for item in sorted(
+                                        data, key=lambda d: d["index"]
+                                    )
                                 ],
                                 len(batch),
                                 self.settings.dimensions,

@@ -1,5 +1,6 @@
 """No-op stand-in for the customer DataLake ``extract_data`` Tool."""
 
+
 def extract_data(
     data_type: str,
     lot_cd: str | None = None,

@@ -18,7 +18,10 @@ from dtest.contracts.enums import (
     DeleteYN,
     enum_values,
 )
-from dtest.infrastructure.database.models.model_base import Base, TimestampMixin
+from dtest.infrastructure.database.models.model_base import (
+    Base,
+    TimestampMixin,
+)
 
 
 class ProjectModel(TimestampMixin, Base):

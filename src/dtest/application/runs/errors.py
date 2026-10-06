@@ -23,11 +23,13 @@ class InvalidRunRequest(RunError):
 
 class RunUnavailable(RunError):
     """Execution dependencies are unavailable."""
+
     retryable = True
 
 
 class RunExecutionFailed(RunError):
     """Graph execution failed and its durable outcome was recorded."""
+
     retryable = True
 
 

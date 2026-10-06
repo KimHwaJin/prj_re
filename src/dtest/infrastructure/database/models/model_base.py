@@ -26,4 +26,3 @@ class TimestampMixin:
         DateTime(timezone=True),
         nullable=True,
     )
-

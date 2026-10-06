@@ -1,12 +1,15 @@
 """Executor HTTP request/receipt schemas shared without importing an Agent."""
+
 from __future__ import annotations
 from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
 
 class ExecutorLifecycle(StrictModel):
     operation_mode: Literal["SINGLE", "MULTI"]
@@ -87,7 +90,9 @@ class ExecutorSourceSpec(StrictModel):
     @model_validator(mode="after")
     def validate_steps(self) -> "ExecutorSourceSpec":
         sequences = [step.sequence for step in self.steps]
-        if sequences != list(range(sequences[0], sequences[0] + len(self.steps))):
+        if sequences != list(
+            range(sequences[0], sequences[0] + len(self.steps))
+        ):
             raise ValueError("source step sequence must be contiguous")
         paths = [
             step.payload.source.path
@@ -116,18 +121,22 @@ class ExecutorRequestBody(StrictModel):
     @model_validator(mode="after")
     def validate_operation_mode(self) -> "ExecutorRequestBody":
         if self.operation.spec.steps[0].sequence != 0:
-            raise ValueError("initial Execution Step sequence must start from 0")
+            raise ValueError(
+                "initial Execution Step sequence must start from 0"
+            )
         wait_timeout = self.lifecycle.operation_wait_timeout_seconds
         operation_timeout = self.operation.operation_timeout_seconds
         if self.lifecycle.operation_mode == "SINGLE":
             if wait_timeout is not None:
                 raise ValueError(
-                    "SINGLE executor request must not set operation_wait_timeout_seconds"
+                    "SINGLE executor request must not set "
+                    "operation_wait_timeout_seconds"
                 )
         else:
             if wait_timeout is None:
                 raise ValueError(
-                    "MULTI executor request requires operation_wait_timeout_seconds"
+                    "MULTI executor request requires "
+                    "operation_wait_timeout_seconds"
                 )
             if operation_timeout is None:
                 raise ValueError(
@@ -171,9 +180,13 @@ class ExecutorArtifactPathSource(StrictModel):
     def validate_report_path(self) -> "ExecutorArtifactPathSource":
         path = PurePosixPath(self.path)
         if path.is_absolute() or ".." in path.parts:
-            raise ValueError("artifact source.path must be a safe shared-PV path")
+            raise ValueError(
+                "artifact source.path must be a safe shared-PV path"
+            )
         if path.suffix.lower() != ".md":
-            raise ValueError("REPORT artifact source.path must point to Markdown")
+            raise ValueError(
+                "REPORT artifact source.path must point to Markdown"
+            )
         return self
 
 

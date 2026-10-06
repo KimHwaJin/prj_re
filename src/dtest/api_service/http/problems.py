@@ -50,7 +50,9 @@ def problem_response(
     )
 
 
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+async def http_exception_handler(
+    request: Request, exc: HTTPException
+) -> JSONResponse:
     titles = {
         400: "Bad request",
         401: "Unauthorized",
@@ -74,7 +76,9 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     errors = [
         {
-            "field": ".".join(str(part) for part in item["loc"] if part != "body"),
+            "field": ".".join(
+                str(part) for part in item["loc"] if part != "body"
+            ),
             "reason": item["type"],
             "message": item["msg"],
         }
@@ -89,7 +93,9 @@ async def validation_exception_handler(
     )
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+async def unhandled_exception_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
     """Avoid leaking database or runtime details in 500 responses."""
     return problem_response(
         request,
@@ -99,18 +105,32 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     )
 
 
-
 async def run_exception_handler(request: Request, exc) -> JSONResponse:
     """Translate Run application errors at the single HTTP boundary."""
     from dtest.application.runs.errors import (
-        InvalidRunRequest, RunConflict, RunExecutionFailed, RunNotFound, RunUnavailable,
+        InvalidRunRequest,
+        RunConflict,
+        RunExecutionFailed,
+        RunNotFound,
+        RunUnavailable,
     )
-    statuses = {RunNotFound: 404, RunConflict: 409, InvalidRunRequest: 422,
-                RunUnavailable: 503, RunExecutionFailed: 502}
+
+    statuses = {
+        RunNotFound: 404,
+        RunConflict: 409,
+        InvalidRunRequest: 422,
+        RunUnavailable: 503,
+        RunExecutionFailed: 502,
+    }
     return await http_exception_handler(
-        request, HTTPException(status_code=statuses.get(type(exc), 500), detail=exc.detail),
+        request,
+        HTTPException(
+            status_code=statuses.get(type(exc), 500), detail=exc.detail
+        ),
     )
 
 
 async def application_exception_handler(request, exc):
-    return await http_exception_handler(request, HTTPException(exc.status_code, exc.detail, exc.headers))
+    return await http_exception_handler(
+        request, HTTPException(exc.status_code, exc.detail, exc.headers)
+    )

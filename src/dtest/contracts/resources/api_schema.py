@@ -3,7 +3,10 @@ from typing import Generic, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-from dtest.contracts.resources.session_activity_schema import SessionActiveRun, SessionAvailability
+from dtest.contracts.resources.session_activity_schema import (
+    SessionActiveRun,
+    SessionAvailability,
+)
 
 
 class APIModel(BaseModel):
@@ -28,9 +31,27 @@ class SessionResource(APIModel):
     project_id: UUID
     name: str = Field(validation_alias="session_name")
     current_leaf_message_id: UUID | None
-    active_run: SessionActiveRun | None = Field(description="Current public Run, or null when none is identifiable; not Executor execution state.")
-    availability: SessionAvailability = Field(description="Snapshot of allowed conversation input; POST rechecks under the session admission lock.")
-    settings: dict = Field(description="New sessions store the resolved kernel_profile here. Legacy JSON is returned unchanged; session settings cannot be patched.")
+    active_run: SessionActiveRun | None = Field(
+        description=(
+            "Current public Run, or null when none is identifiable; not "
+            "Executor execution "
+            "state."
+        )
+    )
+    availability: SessionAvailability = Field(
+        description=(
+            "Snapshot of allowed conversation input; POST rechecks "
+            "under the session admission "
+            "lock."
+        )
+    )
+    settings: dict = Field(
+        description=(
+            "New sessions store the resolved kernel_profile here. "
+            "Legacy JSON is returned unchanged; session settings cannot "
+            "be patched."
+        )
+    )
     created_at: datetime
     updated_at: datetime
 
@@ -47,4 +68,3 @@ class MessageResource(APIModel):
     sequence_no: int
     created_at: datetime
     updated_at: datetime
-

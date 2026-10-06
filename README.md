@@ -69,3 +69,20 @@ PYTHONPATH=src python -m dtest.devtools.analysis.visualization --output /tmp/ana
 CLI와 `langgraph dev`는 같은 현재 builder의 offline mock 계획·승인 확인이다. `.env`·실제 LLM·Executor·서비스 DB·Redis·SSO를 사용하지 않는다. 실제 Runs/Redis 완료 연계는 `python app.py`로 실행하는 서비스와 [API 계약](docs/public-run-api.md)을 따른다. `langgraph dev`와 이벤트 Worker를 함께 띄운다고 서비스 연계가 되는 구조로 안내하지 않는다.
 
 현재 패키지 경계와 Agent 개발 위치는 [서비스 구조](docs/architecture/service-layout.md), Run 접수·실행·취소와 DB 수명은 [실행 인수인계](docs/run-execution-architecture.md)를 참고한다.
+
+## Python 코드 검사
+
+타입 검사는 ty, lint·포맷은 Ruff를 사용하고 줄 길이는 79자를 기준으로 한다.
+개발용 버전은 `pyproject.toml`과 `uv.lock`에 고정되어 있다.
+
+```bash
+uv sync --locked --group dev
+uv run --locked ruff format .
+uv run --locked ruff format --check .
+uv run --locked ruff check .
+uv run --locked ty check
+```
+
+포맷 검사 통과와 lint·타입 검사 통과는 별개다. 기존 lint·타입 진단은
+[104 작업 기록](docs/improvements/104-python-format-quality.md)을 참고한다.
+과거 측정 소스와 접수된 Workflow 원본은 보존하며 검사 대상에서 제외한다.

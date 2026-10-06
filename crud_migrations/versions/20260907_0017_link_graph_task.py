@@ -20,7 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.add_column(
         "tasks",
-        sa.Column("graph_task_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column(
+            "graph_task_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
     )
     op.create_index(
         "uq_tasks_graph_task_id",

@@ -1,4 +1,5 @@
 """Verify execution UoW separation on an isolated real PostgreSQL database."""
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 import pytest
 
@@ -10,7 +11,9 @@ from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 
 
 @pytest.mark.asyncio
-async def test_preparation_session_closed_before_graph_and_result_uses_new_session(runtime, monkeypatch):
+async def test_preparation_session_closed_before_graph_and_result_uses_new_session(
+    runtime, monkeypatch
+):
     h = runtime
     owned = []
 
@@ -24,7 +27,12 @@ async def test_preparation_session_closed_before_graph_and_result_uses_new_sessi
             await super().close()
             self.was_closed = True
 
-    factory = async_sessionmaker(h.engine, class_=ObservedSession, expire_on_commit=False, autoflush=False)
+    factory = async_sessionmaker(
+        h.engine,
+        class_=ObservedSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
     monkeypatch.setattr(execution, "get_session_factory", lambda: factory)
 
     async def graph(**kwargs):

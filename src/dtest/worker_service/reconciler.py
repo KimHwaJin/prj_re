@@ -26,14 +26,19 @@ async def run_forever(*, stop_event: asyncio.Event | None = None) -> None:
     """E03-T06: 설정된 주기로 stale lease를 감지합니다."""
 
     from dtest.application.runs.lifecycle import wait_for_stop
+
     stop_event = stop_event if stop_event is not None else asyncio.Event()
     while not stop_event.is_set():
         await reconcile_once()
-        await wait_for_stop(stop_event, get_settings().commands.task_reconcile_interval_seconds)
+        await wait_for_stop(
+            stop_event, get_settings().commands.task_reconcile_interval_seconds
+        )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Flag stale Task execution ownership")
+    parser = argparse.ArgumentParser(
+        description="Flag stale Task execution ownership"
+    )
     parser.add_argument(
         "--once",
         action="store_true",

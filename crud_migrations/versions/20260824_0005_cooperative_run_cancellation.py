@@ -21,11 +21,15 @@ def upgrade() -> None:
     # 요청 시각을 먼저 기록하고 Worker가 멈춘 뒤 기존 canceled 상태로 확정합니다.
     op.add_column(
         "agent_runs",
-        sa.Column("cancel_requested_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "cancel_requested_at", sa.DateTime(timezone=True), nullable=True
+        ),
     )
     op.add_column(
         "tasks",
-        sa.Column("cancel_requested_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "cancel_requested_at", sa.DateTime(timezone=True), nullable=True
+        ),
     )
     op.create_index(
         "ix_agent_runs_cancel_requested_at",
@@ -44,4 +48,3 @@ def downgrade() -> None:
     op.drop_index("ix_agent_runs_cancel_requested_at", table_name="agent_runs")
     op.drop_column("tasks", "cancel_requested_at")
     op.drop_column("agent_runs", "cancel_requested_at")
-

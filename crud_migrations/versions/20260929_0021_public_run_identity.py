@@ -3,6 +3,7 @@
 Drain API/event workers before upgrading. Old writers cannot populate the new
 required column. No checkpoint data or Executor binding is rewritten.
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -14,7 +15,9 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("agent_runs", sa.Column("public_run_id", postgresql.UUID(as_uuid=True)))
+    op.add_column(
+        "agent_runs", sa.Column("public_run_id", postgresql.UUID(as_uuid=True))
+    )
     # Prefer the persisted Task root, then a valid same-session checkpoint root.
     # Compare UUIDs as strings to avoid casts failing on malformed old metadata.
     op.execute("""
@@ -39,13 +42,26 @@ def upgrade():
         END $$
     """)
     op.alter_column("agent_runs", "public_run_id", nullable=False)
-    op.create_foreign_key("fk_agent_runs_public_run", "agent_runs", "agent_runs",
-                          ["public_run_id"], ["run_id"], ondelete="CASCADE",
-                          deferrable=True, initially="DEFERRED")
-    op.create_index("ix_agent_runs_public_latest", "agent_runs", ["public_run_id", "created_at", "run_id"])
+    op.create_foreign_key(
+        "fk_agent_runs_public_run",
+        "agent_runs",
+        "agent_runs",
+        ["public_run_id"],
+        ["run_id"],
+        ondelete="CASCADE",
+        deferrable=True,
+        initially="DEFERRED",
+    )
+    op.create_index(
+        "ix_agent_runs_public_latest",
+        "agent_runs",
+        ["public_run_id", "created_at", "run_id"],
+    )
 
 
 def downgrade():
     op.drop_index("ix_agent_runs_public_latest", table_name="agent_runs")
-    op.drop_constraint("fk_agent_runs_public_run", "agent_runs", type_="foreignkey")
+    op.drop_constraint(
+        "fk_agent_runs_public_run", "agent_runs", type_="foreignkey"
+    )
     op.drop_column("agent_runs", "public_run_id")

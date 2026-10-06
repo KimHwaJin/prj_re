@@ -1,4 +1,5 @@
 """Executor event ingestion/routing only; graph calls belong to Agent Worker."""
+
 from __future__ import annotations
 
 import asyncio
@@ -11,13 +12,20 @@ from dtest.worker_service.executor_events import ExecutorWorker
 from dtest.application.runs.lifecycle import execution_health
 
 
-async def main(*, install_signals: bool = True, stop_event=None,
-               on_worker: Callable | None = None) -> None:
+async def main(
+    *,
+    install_signals: bool = True,
+    stop_event=None,
+    on_worker: Callable | None = None,
+) -> None:
     from dtest.settings.loader import get_settings
+
     # Registry keys route events into the DB ledger; no graph callback is invoked here.
     async with ExecutorWorker(get_settings().worker, EVENT_TYPES) as worker:
+
         async def execution_ready():
             return execution_health.healthy
+
         worker.add_readiness_check("command-worker", execution_ready)
         loop = asyncio.get_running_loop()
         installed = []

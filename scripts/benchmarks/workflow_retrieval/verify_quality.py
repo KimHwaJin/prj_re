@@ -22,17 +22,25 @@ def verify(folder, runner):
     env = read(folder / "environment.json")
     corpora = read(folder / "corpora.json")
     records = [
-        json.loads(x) for x in (folder / "results.jsonl").read_text().splitlines()
+        json.loads(x)
+        for x in (folder / "results.jsonl").read_text().splitlines()
     ]
     expected = (
-        env["rebuilds"] * env["repeats"] * len(env["profiles"]) * (3 * 2 + 2 * 8)
+        env["rebuilds"]
+        * env["repeats"]
+        * len(env["profiles"])
+        * (3 * 2 + 2 * 8)
         + env["repeats"]
     )
     assert len(records) == expected, (len(records), expected)
     source = Path(
-        __import__("dtest.infrastructure.workflow_search.retrieval", fromlist=["x"]).__file__
+        __import__(
+            "dtest.infrastructure.workflow_search.retrieval", fromlist=["x"]
+        ).__file__
     )
-    assert hashlib.sha256(source.read_bytes()).hexdigest() == env["source_sha256"]
+    assert (
+        hashlib.sha256(source.read_bytes()).hexdigest() == env["source_sha256"]
+    )
     groups = defaultdict(list)
     for r in records:
         groups[r["case"]].append(r)
@@ -41,7 +49,10 @@ def verify(folder, runner):
         values, owners, queries, inactive = module.make_corpus(
             meta["kind"], meta["aliases"], meta["dimensions"]
         )
-        assert hashlib.sha256(values.tobytes()).hexdigest() == meta["vector_sha256"]
+        assert (
+            hashlib.sha256(values.tobytes()).hexdigest()
+            == meta["vector_sha256"]
+        )
         assert queries == meta["queries"] and inactive == meta["inactive"]
         v = values.astype(np.float64)
         norms = np.linalg.norm(v, axis=1)
@@ -63,9 +74,13 @@ def verify(folder, runner):
             assert r["target"] == maps[r["query_id"]]
             actual = r["returned"]
             top = actual[: r["top_k"]]
-            assert len(actual) == len(set(actual)) and not set(actual) & set(inactive)
+            assert len(actual) == len(set(actual)) and not set(actual) & set(
+                inactive
+            )
             assert len(actual) <= (3 if meta["kind"] == "duplicate" else 20)
-            assert r["recall"] == len(set(top) & set(r["target"])) / len(r["target"])
+            assert r["recall"] == len(set(top) & set(r["target"])) / len(
+                r["target"]
+            )
             assert r["ordered_match"] == (top == r["target"])
             assert r["elapsed_ms"] >= 0
             d = r["diagnostics"]
@@ -122,7 +137,8 @@ def verify(folder, runner):
 
         walk(p["Plan"])
         assert any(
-            s.get("Index Name", "").startswith("ix_workflow_hnsw_") for s in scans
+            s.get("Index Name", "").startswith("ix_workflow_hnsw_")
+            for s in scans
         )
         assert p["Execution Time"] >= 0
         checks += 1
@@ -153,11 +169,21 @@ def verify(folder, runner):
         },
         "source_unchanged": True,
         "limits": [
-            "Synthetic corpus validates search mechanics, not language or production quality.",
-            "A 24-request burst is not sustained-load capacity; DB execution time is not CPU time.",
+            (
+                "Synthetic corpus validates search mechanics, not "
+                "language or production "
+                "quality."
+            ),
+            (
+                "A 24-request burst is not sustained-load capacity; DB "
+                "execution time is not CPU "
+                "time."
+            ),
         ],
     }
-    (folder / "verification.json").write_text(json.dumps(receipt, indent=2) + "\n")
+    (folder / "verification.json").write_text(
+        json.dumps(receipt, indent=2) + "\n"
+    )
     print(json.dumps(receipt))
 
 
@@ -180,7 +206,11 @@ def verify_probes(duplicate, boundary, output):
         assert (
             len(row["groups"])
             <= row["returned_rows"]
-            <= (meta["count"] + 1 if row["excluded0"] else 2 * meta["count"] + 1)
+            <= (
+                meta["count"] + 1
+                if row["excluded0"]
+                else 2 * meta["count"] + 1
+            )
         )
         assert row["elapsed_ms"] >= 0
         checks += 1
@@ -191,9 +221,17 @@ def verify_probes(duplicate, boundary, output):
         checks += 1
     point = read(boundary)
     assert len(point["observations"]) == 12
-    assert {UUID(w).int - 1 for w, score in point["reference"]} == {0, 42, 2, 3, 1}
+    assert {UUID(w).int - 1 for w, score in point["reference"]} == {
+        0,
+        42,
+        2,
+        3,
+        1,
+    }
     assert point["limit"] == 50000 and point["max_scan_tuples"] == 1000000
-    assert any("m=32" in options for row in point["index_options"] for options in row)
+    assert any(
+        "m=32" in options for row in point["index_options"] for options in row
+    )
     for row in point["observations"]:
         assert "ix_workflow_hnsw_" in json.dumps(row["plan"])
         assert len(row["groups"]) == len(set(row["groups"]))
@@ -228,7 +266,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.results:
         verify(args.results, args.runner)
-    elif args.duplicate_probe and args.boundary_probe and args.probe_verification:
+    elif (
+        args.duplicate_probe
+        and args.boundary_probe
+        and args.probe_verification
+    ):
         verify_probes(
             args.duplicate_probe, args.boundary_probe, args.probe_verification
         )

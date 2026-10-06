@@ -1,5 +1,6 @@
 """Shared snapshot-to-service projection rules for initial turns and resumes."""
 
+
 class GraphProjectionError(RuntimeError):
     """Graph progress is durable; only service projection may be retried."""
 

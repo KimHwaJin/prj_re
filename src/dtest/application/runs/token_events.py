@@ -1,4 +1,5 @@
 """Bounded streaming callback buffer; commit token events before Run completion."""
+
 from __future__ import annotations
 
 import asyncio
@@ -8,7 +9,10 @@ from uuid import UUID
 
 
 from dtest.settings.api import settings
-from dtest.infrastructure.database.runtime import get_session_factory, short_session
+from dtest.infrastructure.database.runtime import (
+    get_session_factory,
+    short_session,
+)
 from dtest.application.runs.lifecycle import finish_observer
 from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.lifecycle import protected_cleanup
@@ -38,7 +42,9 @@ class LLMTokenEventBuffer:
     run_inline = True
     raise_error = True
 
-    def __init__(self, *, task_id: UUID, run_id: UUID, expose_tokens: bool = True) -> None:
+    def __init__(
+        self, *, task_id: UUID, run_id: UUID, expose_tokens: bool = True
+    ) -> None:
         self.expose_tokens = expose_tokens
         self.task_id = task_id
         self.run_id = run_id
@@ -66,7 +72,9 @@ class LLMTokenEventBuffer:
 
     def _check_accepting(self):
         if self.failure is not None:
-            raise TokenEventBufferError("Token event writer failed.") from self.failure
+            raise TokenEventBufferError(
+                "Token event writer failed."
+            ) from self.failure
         if self.closed or (self.consumer is not None and self.consumer.done()):
             raise TokenEventBufferError("Token event buffer is closed.")
         if self.consumer is None:
@@ -83,45 +91,73 @@ class LLMTokenEventBuffer:
                 # Serialize callback fragments, including split oversized tokens.
                 async with self._producer:
                     for offset in range(0, len(token), self.chunk_characters):
-                        text = token[offset:offset + self.chunk_characters]
+                        text = token[offset : offset + self.chunk_characters]
                         size = len(text.encode("utf-8"))
                         async with self._changed:
                             self._check_accepting()
                             try:
-                                while (self.buffered_items >= self.max_items or
-                                       self.buffered_bytes + size > self.max_bytes):
+                                while (
+                                    self.buffered_items >= self.max_items
+                                    or self.buffered_bytes + size
+                                    > self.max_bytes
+                                ):
                                     self._waiting_for_capacity = True
                                     self._changed.notify_all()
                                     await self._changed.wait()
                                     self._check_accepting()
                             finally:
                                 self._waiting_for_capacity = False
-                            self.queue.append(_Chunk(str(run_id), text, size, asyncio.get_running_loop().time()))
+                            self.queue.append(
+                                _Chunk(
+                                    str(run_id),
+                                    text,
+                                    size,
+                                    asyncio.get_running_loop().time(),
+                                )
+                            )
                             self.buffered_bytes += size
                             self.buffered_items += 1
-                            self.peak_buffered_bytes = max(self.peak_buffered_bytes, self.buffered_bytes)
-                            self.peak_buffered_items = max(self.peak_buffered_items, self.buffered_items)
+                            self.peak_buffered_bytes = max(
+                                self.peak_buffered_bytes, self.buffered_bytes
+                            )
+                            self.peak_buffered_items = max(
+                                self.peak_buffered_items, self.buffered_items
+                            )
                             self._changed.notify_all()
         except TimeoutError as exc:
             # Wake/stop both admission and the observer. Callback errors alone can
             # otherwise be swallowed by a model wrapper and leave a partial Run.
             if self.failure is None:
-                self.failure = TokenEventBufferError("Token event admission timed out.")
-            if self.consumer is not None and not self.consumer.done() and not self.consumer.cancelling():
+                self.failure = TokenEventBufferError(
+                    "Token event admission timed out."
+                )
+            if (
+                self.consumer is not None
+                and not self.consumer.done()
+                and not self.consumer.cancelling()
+            ):
                 self.consumer.cancel()
             async with self._changed:
                 self._changed.notify_all()
-            raise TokenEventBufferError("Token event admission timed out.") from exc
+            raise TokenEventBufferError(
+                "Token event admission timed out."
+            ) from exc
 
     async def _append(self, llm_run_id: str, delta: str) -> None:
         start = self.offsets[llm_run_id]
         end = start + len(delta)
         async with short_session(get_session_factory()) as db:
             await TaskEventService.append(
-                db, task_id=self.task_id, run_id=self.run_id,
+                db,
+                task_id=self.task_id,
+                run_id=self.run_id,
                 event_type="llm.token.delta",
-                payload={"llm_run_id": llm_run_id, "delta": delta,
-                         "offset_start": start, "offset_end": end},
+                payload={
+                    "llm_run_id": llm_run_id,
+                    "delta": delta,
+                    "offset_start": start,
+                    "offset_end": end,
+                },
             )
         self.offsets[llm_run_id] = end
 
@@ -146,7 +182,11 @@ class LLMTokenEventBuffer:
         try:
             while True:
                 async with self._changed:
-                    while not self.queue and not self.closed and self.failure is None:
+                    while (
+                        not self.queue
+                        and not self.closed
+                        and self.failure is None
+                    ):
                         if pending and self._waiting_for_capacity:
                             break
                         if deadline is None:
@@ -169,10 +209,17 @@ class LLMTokenEventBuffer:
                         if deadline is None:
                             deadline = chunk.admitted_at + self.interval
                     flush = bool(pending) and (
-                        characters >= self.flush_characters or
-                        (not self.queue and (self._waiting_for_capacity or
-                         self.buffered_items >= self.max_items or self.buffered_bytes >= self.max_bytes)) or
-                        loop.time() >= deadline or (self.closed and not self.queue)
+                        characters >= self.flush_characters
+                        or (
+                            not self.queue
+                            and (
+                                self._waiting_for_capacity
+                                or self.buffered_items >= self.max_items
+                                or self.buffered_bytes >= self.max_bytes
+                            )
+                        )
+                        or loop.time() >= deadline
+                        or (self.closed and not self.queue)
                     )
                     finished = self.closed and not self.queue and not pending
                 if finished:
@@ -197,14 +244,20 @@ class LLMTokenEventBuffer:
     def start(self) -> None:
         if self.consumer is not None or self.closed:
             raise RuntimeError("Token event buffer cannot be restarted.")
-        self.consumer = asyncio.create_task(self._consume(), name=f"llm-token-events:{self.run_id}")
+        self.consumer = asyncio.create_task(
+            self._consume(), name=f"llm-token-events:{self.run_id}"
+        )
 
     async def close(self) -> None:
         # No sentinel: shutdown must work even when every buffer slot is occupied.
         self.closed = True
+
         async def finish():
             async with self._changed:
                 self._changed.notify_all()
             if self.consumer is not None:
-                await finish_observer(self.consumer, run_id=self.run_id, stage="token_flush_stop")
+                await finish_observer(
+                    self.consumer, run_id=self.run_id, stage="token_flush_stop"
+                )
+
         await protected_cleanup(finish())

@@ -1,4 +1,6 @@
-from dtest.application.resources.message_queries import list_messages as list_session_messages
+from dtest.application.resources.message_queries import (
+    list_messages as list_session_messages,
+)
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
@@ -8,9 +10,15 @@ from dtest.api_service.http.dependencies import get_current_user_id
 from dtest.infrastructure.database.runtime import get_db
 from dtest.contracts.pagination import ListParams
 from dtest.api_service.http.pagination import list_params
-from dtest.infrastructure.database.repositories.project_repository import ProjectRepository
+from dtest.infrastructure.database.repositories.project_repository import (
+    ProjectRepository,
+)
 from dtest.contracts.resources.api_schema import MessageResource, Page
-from dtest.contracts.resources.message_schema import MessageCreate, MessageCreateResult, MessageUpdate
+from dtest.contracts.resources.message_schema import (
+    MessageCreate,
+    MessageCreateResult,
+    MessageUpdate,
+)
 from dtest.application.resources.messages import MessageService
 from dtest.application.resources.sessions import SessionService
 
@@ -22,7 +30,9 @@ def _idempotency_key(value: str | None) -> UUID | None:
     if value is None:
         return None
     if not value.strip():
-        raise HTTPException(status_code=422, detail="Idempotency-Key cannot be blank.")
+        raise HTTPException(
+            status_code=422, detail="Idempotency-Key cannot be blank."
+        )
     # The existing database column is UUID-based.  Namespacing preserves support
     # for opaque, standards-compliant header values without exposing that detail.
     return uuid5(NAMESPACE_URL, f"message-create:{value}")
@@ -36,14 +46,23 @@ def _idempotency_key(value: str | None) -> UUID | None:
 async def create_message_without_session(
     payload: MessageCreate,
     response: Response,
-    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    idempotency_key: str | None = Header(
+        default=None, alias="Idempotency-Key"
+    ),
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a message, creating a session first when session_id is omitted."""
     header_key = _idempotency_key(idempotency_key)
-    if payload.client_request_id and header_key and payload.client_request_id != header_key:
-        raise HTTPException(status_code=422, detail="Idempotency-Key does not match client_request_id.")
+    if (
+        payload.client_request_id
+        and header_key
+        and payload.client_request_id != header_key
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Idempotency-Key does not match client_request_id.",
+        )
     if header_key:
         payload.client_request_id = header_key
 
@@ -54,7 +73,9 @@ async def create_message_without_session(
         if project_id is None:
             project = await ProjectRepository.get_default(db, user_id=user_id)
             if project is None:
-                raise HTTPException(status_code=409, detail="default Project가 없습니다.")
+                raise HTTPException(
+                    status_code=409, detail="default Project가 없습니다."
+                )
             project_id = project.project_id
         session = await SessionService.create_internal(
             db, user_id=user_id, project_id=project_id, session_name="새 대화"
@@ -63,7 +84,9 @@ async def create_message_without_session(
 
     result = await MessageService.create(db, user_id, payload)
     result.session_created = session_created
-    response.headers["Location"] = f"/api/v1/messages/{result.message.message_id}"
+    response.headers["Location"] = (
+        f"/api/v1/messages/{result.message.message_id}"
+    )
     response.headers["X-Session-Id"] = str(result.session_id)
     response.headers["X-Session-Created"] = str(result.session_created).lower()
     return result
@@ -78,22 +101,35 @@ async def create_message(
     session_id: UUID,
     payload: MessageCreate,
     response: Response,
-    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    idempotency_key: str | None = Header(
+        default=None, alias="Idempotency-Key"
+    ),
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     payload.session_id = session_id
     header_key = _idempotency_key(idempotency_key)
-    if payload.client_request_id and header_key and payload.client_request_id != header_key:
-        raise HTTPException(status_code=422, detail="Idempotency-Key does not match client_request_id.")
+    if (
+        payload.client_request_id
+        and header_key
+        and payload.client_request_id != header_key
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Idempotency-Key does not match client_request_id.",
+        )
     if header_key:
         payload.client_request_id = header_key
     result = await MessageService.create(db, user_id, payload)
-    response.headers["Location"] = f"/api/v1/messages/{result.message.message_id}"
+    response.headers["Location"] = (
+        f"/api/v1/messages/{result.message.message_id}"
+    )
     return result
 
 
-@router.get("/sessions/{session_id}/messages", response_model=Page[MessageResource])
+@router.get(
+    "/sessions/{session_id}/messages", response_model=Page[MessageResource]
+)
 async def list_messages(
     session_id: UUID,
     params: ListParams = Depends(list_params),
@@ -109,7 +145,9 @@ async def read_message(
     user_id: UUID = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    return MessageResource.model_validate(await MessageService.read(db, user_id, message_id))
+    return MessageResource.model_validate(
+        await MessageService.read(db, user_id, message_id)
+    )
 
 
 @router.patch("/messages/{message_id}", response_model=MessageResource)
@@ -124,7 +162,9 @@ async def update_message(
     )
 
 
-@router.delete("/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_message(
     message_id: UUID,
     user_id: UUID = Depends(get_current_user_id),
@@ -132,4 +172,3 @@ async def delete_message(
 ):
     await MessageService.delete(db, user_id, message_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-

@@ -1,11 +1,14 @@
 """Corporate employee to existing internal UUID; no automatic administrator privileges."""
+
 from dtest.contracts.errors import ApplicationError
 from pydantic import ValidationError
 
 from dtest.infrastructure.database.runtime import short_session
 from dtest.contracts.enums import DeleteYN, UserRole
 from dtest.contracts.identity import normalize_user_id
-from dtest.infrastructure.database.repositories.user_repository import UserRepository
+from dtest.infrastructure.database.repositories.user_repository import (
+    UserRepository,
+)
 from dtest.contracts.resources.user_schema import UserCreate
 from dtest.application.resources.users import UserService
 from dtest.contracts.auth import VerifiedEmployee
@@ -13,29 +16,51 @@ from dtest.contracts.auth import VerifiedEmployee
 
 class SsoUserDirectory:
     def __init__(self, *, auto_register: bool, session_factory=None):
-        self.auto_register, self.session_factory = auto_register, session_factory
+        self.auto_register, self.session_factory = (
+            auto_register,
+            session_factory,
+        )
 
     async def bind(self, employee: VerifiedEmployee) -> str:
         try:
             public_id = normalize_user_id(employee.employee_id)
         except ValueError:
-            raise ApplicationError(502, "Corporate employee ID is not compatible with the user ID contract.") from None
+            raise ApplicationError(
+                502,
+                (
+                    "Corporate employee ID is not compatible with the "
+                    "user ID contract."
+                ),
+            ) from None
         async with short_session(self.session_factory) as db:
             # Serialize provisioning and account deletion/role updates under the same existing lock.
             await UserService._management_lock(db)
-            existing = await UserRepository.get_by_public_id(db, public_id, for_update=True)
+            existing = await UserRepository.get_by_public_id(
+                db, public_id, for_update=True
+            )
             if existing is not None:
                 if existing.delete_yn != DeleteYN.N:
-                    raise ApplicationError(403, "The service account is inactive.")
+                    raise ApplicationError(
+                        403, "The service account is inactive."
+                    )
                 internal_id = str(existing.user_id)
                 await db.commit()
                 return internal_id  # Preserve name, role, default project and all foreign keys.
             if not self.auto_register:
-                raise ApplicationError(403, "The employee has not been registered in this service.")
+                raise ApplicationError(
+                    403,
+                    "The employee has not been registered in this service.",
+                )
             try:
-                payload = UserCreate(user_id=public_id, user_name=employee.display_name, role=UserRole.USER)
+                payload = UserCreate(
+                    user_id=public_id,
+                    user_name=employee.display_name,
+                    role=UserRole.USER,
+                )
             except ValidationError:
-                raise ApplicationError(502, "Invalid corporate employee display name.") from None
+                raise ApplicationError(
+                    502, "Invalid corporate employee display name."
+                ) from None
             user = await UserService._insert(db, payload)
             internal_id = str(user.user_id)
             await db.commit()  # User, default Project and OWNER membership are one transaction.

@@ -1,16 +1,25 @@
 """Owner-scoped session reads and page projections."""
+
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from dtest.contracts.errors import ApplicationError
 from dtest.contracts.enums import DeleteYN
 from dtest.infrastructure.database.models import SessionModel
-from dtest.infrastructure.database.repositories.session_repository import SessionRepository
+from dtest.infrastructure.database.repositories.session_repository import (
+    SessionRepository,
+)
 from dtest.contracts.pagination import ListParams
 from dtest.infrastructure.database.pagination import fetch_page
 from dtest.application.resources.sessions import SessionService
-from dtest.application.resources.session_activity import SESSION_QUERY, resource
+from dtest.application.resources.session_activity import (
+    SESSION_QUERY,
+    resource,
+)
 
-async def require_owned_session(db: AsyncSession, user_id: UUID, session_id: UUID) -> SessionModel:
+
+async def require_owned_session(
+    db: AsyncSession, user_id: UUID, session_id: UUID
+) -> SessionModel:
     session = await SessionRepository.get_active_by_user(
         db, user_id=user_id, session_id=session_id
     )
@@ -20,8 +29,12 @@ async def require_owned_session(db: AsyncSession, user_id: UUID, session_id: UUI
     return session
 
 
-async def read_session_resource(db, user_id, session_id, *, after_mutation=False):
-    query = SESSION_QUERY.where(SessionModel.session_id == session_id, SessionModel.user_id == user_id)
+async def read_session_resource(
+    db, user_id, session_id, *, after_mutation=False
+):
+    query = SESSION_QUERY.where(
+        SessionModel.session_id == session_id, SessionModel.user_id == user_id
+    )
     # A concurrent soft delete after our successful commit must not turn the
     # completed create/rename into a misleading 404. Ordinary GET stays hidden.
     if not after_mutation:

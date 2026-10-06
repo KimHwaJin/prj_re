@@ -48,17 +48,29 @@ def upgrade() -> None:
         """
     )
     op.execute("CREATE INDEX ix_workflows_lifecycle ON workflows(lifecycle)")
-    op.execute("CREATE INDEX ix_workflows_source_run_id ON workflows(source_run_id)")
-    op.execute("CREATE INDEX ix_workflows_source_workflow_id ON workflows(source_workflow_id)")
-    op.execute("CREATE INDEX ix_workflows_created_by_user_id ON workflows(created_by_user_id)")
     op.execute(
-        "CREATE INDEX ix_workflows_active_created ON workflows(lifecycle, created_at) WHERE deleted_at IS NULL"
+        "CREATE INDEX ix_workflows_source_run_id ON workflows(source_run_id)"
     )
-    op.execute("CREATE INDEX ix_workflow_tags_workflow_id ON workflow_tags(workflow_id)")
+    op.execute(
+        "CREATE INDEX ix_workflows_source_workflow_id ON "
+        "workflows(source_workflow_id)"
+    )
+    op.execute(
+        "CREATE INDEX ix_workflows_created_by_user_id ON "
+        "workflows(created_by_user_id)"
+    )
+    op.execute(
+        "CREATE INDEX ix_workflows_active_created ON "
+        "workflows(lifecycle, created_at) WHERE deleted_at IS "
+        "NULL"
+    )
+    op.execute(
+        "CREATE INDEX ix_workflow_tags_workflow_id ON "
+        "workflow_tags(workflow_id)"
+    )
     op.execute("CREATE INDEX ix_workflow_tags_tag ON workflow_tags(tag)")
 
 
 def downgrade() -> None:
     op.execute("DROP TABLE workflow_tags")
     op.execute("DROP TABLE workflows")
-

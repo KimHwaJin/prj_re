@@ -38,13 +38,29 @@ def upgrade() -> None:
         )
         """
     )
-    op.execute("CREATE INDEX ix_jupyter_servers_health_status ON jupyter_servers(health_status)")
-    op.execute("CREATE INDEX ix_jupyter_servers_last_checked_at ON jupyter_servers(last_checked_at)")
-    op.execute("CREATE INDEX ix_jupyter_servers_created_by_user_id ON jupyter_servers(created_by_user_id)")
-    op.execute("CREATE UNIQUE INDEX uq_jupyter_servers_active_name ON jupyter_servers(name) WHERE deleted_at IS NULL")
-    op.execute("CREATE UNIQUE INDEX uq_jupyter_servers_active_endpoint ON jupyter_servers(endpoint) WHERE deleted_at IS NULL")
+    op.execute(
+        "CREATE INDEX ix_jupyter_servers_health_status ON "
+        "jupyter_servers(health_status)"
+    )
+    op.execute(
+        "CREATE INDEX ix_jupyter_servers_last_checked_at ON "
+        "jupyter_servers(last_checked_at)"
+    )
+    op.execute(
+        "CREATE INDEX ix_jupyter_servers_created_by_user_id ON "
+        "jupyter_servers(created_by_user_id)"
+    )
+    op.execute(
+        "CREATE UNIQUE INDEX uq_jupyter_servers_active_name ON "
+        "jupyter_servers(name) WHERE deleted_at IS "
+        "NULL"
+    )
+    op.execute(
+        "CREATE UNIQUE INDEX uq_jupyter_servers_active_endpoint ON "
+        "jupyter_servers(endpoint) WHERE deleted_at IS "
+        "NULL"
+    )
 
 
 def downgrade() -> None:
     op.execute("DROP TABLE jupyter_servers")
-

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass(frozen=True)
 class ListParams:
     limit: int = 50

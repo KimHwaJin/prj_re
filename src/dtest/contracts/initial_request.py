@@ -1,4 +1,5 @@
 """Stable identity and checkpoint fields for a service-admitted initial turn."""
+
 from __future__ import annotations
 
 import hashlib
@@ -14,10 +15,21 @@ class InitialRequestState(TypedDict, total=False):
 
 def initial_identity(values: dict) -> dict[str, str]:
     # Exclude volatile request IDs, mutable project context and generated output.
-    payload = {key: values.get(key) for key in (
-        "user_id", "project_id", "session_id", "run_id", "user_request",
-        "model_selection",
-    )}
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return {"command_id": str(values["run_id"]),
-            "digest": hashlib.sha256(encoded.encode()).hexdigest()}
+    payload = {
+        key: values.get(key)
+        for key in (
+            "user_id",
+            "project_id",
+            "session_id",
+            "run_id",
+            "user_request",
+            "model_selection",
+        )
+    }
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    return {
+        "command_id": str(values["run_id"]),
+        "digest": hashlib.sha256(encoded.encode()).hexdigest(),
+    }

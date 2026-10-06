@@ -6,13 +6,22 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtest.infrastructure.database.runtime import get_session_factory
-from dtest.contracts.enums import AgentRunStatus, DeleteYN, MessageStatus, MessageType, TaskStatus
+from dtest.contracts.enums import (
+    AgentRunStatus,
+    DeleteYN,
+    MessageStatus,
+    MessageType,
+    TaskStatus,
+)
 from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.models.task_model import TaskModel
 from dtest.application.runs.repository import lock_run_and_task
-from dtest.application.runs.runtime import interrupt_payload, run_status_from_state
+from dtest.application.runs.runtime import (
+    interrupt_payload,
+    run_status_from_state,
+)
 from dtest.contracts.values import utc_now
 from dtest.application.runs.task_events import TaskEventService
 from dtest.application.runs.tasks import TaskService
@@ -22,7 +31,13 @@ from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.infrastructure.observability.diagnostics import span
 
 
-TERMINAL_STATUSES = {AgentRunStatus.SUCCESS, AgentRunStatus.ERROR, AgentRunStatus.TIMEOUT, AgentRunStatus.CANCELED}
+TERMINAL_STATUSES = {
+    AgentRunStatus.SUCCESS,
+    AgentRunStatus.ERROR,
+    AgentRunStatus.TIMEOUT,
+    AgentRunStatus.CANCELED,
+}
+
 
 def finalize_canceled(
     run: AgentRunModel,
@@ -34,7 +49,13 @@ def finalize_canceled(
         TaskService.transition(task, TaskStatus.CANCELED)
 
 
-def finish_run(run: AgentRunModel, status: AgentRunStatus, *, failure: dict | None = None, interrupt=None) -> None:
+def finish_run(
+    run: AgentRunModel,
+    status: AgentRunStatus,
+    *,
+    failure: dict | None = None,
+    interrupt=None,
+) -> None:
     """AgentRun 상태는 실행 기록만 변경하며 Task 잠금은 TaskService가 처리합니다."""
     run.status = status
     run.failure = failure
@@ -51,7 +72,9 @@ async def append_error_system_message(
     error: Exception,
 ) -> None:
     """최종 실행 오류를 채팅 화면에 표시할 system 메시지로 한 번만 저장합니다."""
-    client_request_id = uuid5(NAMESPACE_URL, f"dtest-agent:task-error:{run.run_id}")
+    client_request_id = uuid5(
+        NAMESPACE_URL, f"dtest-agent:task-error:{run.run_id}"
+    )
     existing = await db.scalar(
         select(MessageModel).where(
             MessageModel.session_id == run.session_id,
@@ -90,7 +113,9 @@ async def append_error_system_message(
 async def require_invocation_recovery(db, run_id, reason):
     try:
         await db.rollback()
-        if not await TaskService.require_recovery(db, run_id=run_id, reason=reason):
+        if not await TaskService.require_recovery(
+            db, run_id=run_id, reason=reason
+        ):
             raise ExecutionNeedsRecovery("Could not quarantine invocation")
         run = await db.get(AgentRunModel, run_id, populate_existing=True)
         if run is None:
@@ -100,7 +125,9 @@ async def require_invocation_recovery(db, run_id, reason):
         raise
     except Exception as exc:
         # Never release the owner if the durable Task guard was not verified.
-        raise ExecutionNeedsRecovery("Could not verify invocation quarantine") from exc
+        raise ExecutionNeedsRecovery(
+            "Could not verify invocation quarantine"
+        ) from exc
 
 
 async def finalize_state(db, execution_run_id, user_id, state):
@@ -120,27 +147,41 @@ async def _finalize_locked_state(db, run, task, user_id, state):
     execution_run_id = run.run_id
     status = run_status_from_state(state)
     route = (state.get("routing_result") or {}).get("route")
-    boundaries = [getattr(item, "id", None) for item in state.get("__interrupt__", ())]
-    run.metadata_json = {**(run.metadata_json or {}),
-                         "_checkpoint_interrupt_id": boundaries[0] if len(boundaries) == 1 else None}
+    boundaries = [
+        getattr(item, "id", None) for item in state.get("__interrupt__", ())
+    ]
+    run.metadata_json = {
+        **(run.metadata_json or {}),
+        "_checkpoint_interrupt_id": boundaries[0]
+        if len(boundaries) == 1
+        else None,
+    }
     if run.cancel_requested_at is not None:
         finalize_canceled(run, task)
         await TaskEventService.append_for_run(
-            db, run_id=execution_run_id, event_type="task.canceled",
-            payload={"status": "canceled"}, commit=False,
+            db,
+            run_id=execution_run_id,
+            event_type="task.canceled",
+            payload={"status": "canceled"},
+            commit=False,
         )
         await db.commit()
         await db.refresh(run)
         return run
     finish_run(run, status, interrupt=interrupt_payload(state))
-    if state.get('agent_runtime') == 'agentic-planning-v1':
-        run.metadata_json = {**(run.metadata_json or {}), '_agent_runtime': 'agentic-planning-v1',
-                             '_plan_reviews': state.get('reviews', []),
-                             '_planning_interaction':state.get('interaction_data'),
-                             '_planning_revision_count':state.get('planning_revision_count',0),
-                             '_decision_review':state.get('decision_review'),
-                             '_repair_review':state.get('repair_review'),
-                             '_approved_plan': state.get('approved_snapshot')}
+    if state.get("agent_runtime") == "agentic-planning-v1":
+        run.metadata_json = {
+            **(run.metadata_json or {}),
+            "_agent_runtime": "agentic-planning-v1",
+            "_plan_reviews": state.get("reviews", []),
+            "_planning_interaction": state.get("interaction_data"),
+            "_planning_revision_count": state.get(
+                "planning_revision_count", 0
+            ),
+            "_decision_review": state.get("decision_review"),
+            "_repair_review": state.get("repair_review"),
+            "_approved_plan": state.get("approved_snapshot"),
+        }
     run.agent_response = {
         "route": route,
         "final_response": state.get("final_response"),
@@ -154,7 +195,11 @@ async def _finalize_locked_state(db, run, task, user_id, state):
     }
     if task is not None:
         task.trigger_type = route or task.trigger_type
-        task_status = TaskStatus.WAITING_INPUT if status == AgentRunStatus.INTERRUPTED else TaskStatus(status.value)
+        task_status = (
+            TaskStatus.WAITING_INPUT
+            if status == AgentRunStatus.INTERRUPTED
+            else TaskStatus(status.value)
+        )
         TaskService.transition(task, task_status)
     if task is not None:
         task_event_status = (
@@ -196,7 +241,9 @@ async def _finalize_locked_state(db, run, task, user_id, state):
     return run
 
 
-async def synchronize_executor_completion(context: EventContext, graph) -> None:
+async def synchronize_executor_completion(
+    context: EventContext, graph
+) -> None:
     snapshot = await graph.aget_state(context.graph_config)
     values = snapshot.values
     if values.get("agent_runtime") == "agentic-planning-v1":
@@ -205,28 +252,49 @@ async def synchronize_executor_completion(context: EventContext, graph) -> None:
     # A step event may only advance to another wait; do not release that session.
     if snapshot.next or not values:
         return
-    if values.get("task_id") != context.task_id or values.get("execution_id") != str(context.execution_id):
-        raise DeferEvent("Executor completion does not match the current graph")
-    if values.get("ew_receipts", {}).get(str(context.command_id)) != str(context.event.event_id):
+    if values.get("task_id") != context.task_id or values.get(
+        "execution_id"
+    ) != str(context.execution_id):
+        raise DeferEvent(
+            "Executor completion does not match the current graph"
+        )
+    if values.get("ew_receipts", {}).get(str(context.command_id)) != str(
+        context.event.event_id
+    ):
         raise DeferEvent("Executor completion has no durable graph receipt")
     async with get_session_factory()() as db:
-        task_id = await db.scalar(select(TaskModel.task_id).where(
-            TaskModel.session_id == UUID(context.session_id),
-            TaskModel.graph_task_id == UUID(context.task_id),
-        ))
-        if task_id is None:
-            pending_link = await db.scalar(select(TaskModel.task_id).where(
+        task_id = await db.scalar(
+            select(TaskModel.task_id).where(
                 TaskModel.session_id == UUID(context.session_id),
-                TaskModel.graph_task_id.is_(None),
-                TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
-            ).limit(1))
+                TaskModel.graph_task_id == UUID(context.task_id),
+            )
+        )
+        if task_id is None:
+            pending_link = await db.scalar(
+                select(TaskModel.task_id)
+                .where(
+                    TaskModel.session_id == UUID(context.session_id),
+                    TaskModel.graph_task_id.is_(None),
+                    TaskModel.status.not_in(TaskService.TERMINAL_STATUSES),
+                )
+                .limit(1)
+            )
             if pending_link is not None:
-                raise DeferEvent("API task has not recorded its graph identity")
+                raise DeferEvent(
+                    "API task has not recorded its graph identity"
+                )
             # Standalone Agent graphs need not have API-owned Task rows.
             return
-        run_id = await db.scalar(select(AgentRunModel.run_id).where(
-            AgentRunModel.task_id == task_id,
-        ).order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
+        run_id = await db.scalar(
+            select(AgentRunModel.run_id)
+            .where(
+                AgentRunModel.task_id == task_id,
+            )
+            .order_by(
+                AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()
+            )
+            .limit(1)
+        )
         if run_id is None:
             raise DeferEvent("Executor task has no API Run")
         run, task = await lock_run_and_task(db, run_id)
@@ -236,7 +304,10 @@ async def synchronize_executor_completion(context: EventContext, graph) -> None:
             return
         # Event delivery can beat the initial Run's post-interrupt DB commit.
         # Retry this projection from the graph receipt after that commit.
-        if task.status != TaskStatus.WAITING_INPUT or run.status != AgentRunStatus.INTERRUPTED:
+        if (
+            task.status != TaskStatus.WAITING_INPUT
+            or run.status != AgentRunStatus.INTERRUPTED
+        ):
             raise DeferEvent("Initial Run has not recorded its Executor wait")
         status = str(values.get("execution_status") or "")
         if status == "SUCCEEDED":
@@ -248,27 +319,41 @@ async def synchronize_executor_completion(context: EventContext, graph) -> None:
         else:
             raise DeferEvent("Executor graph has no terminal execution status")
         finish_run(run, target)
-        run.agent_response = {**(run.agent_response or {}),
-                              "final_response": values.get("final_response"),
-                              "report_status": values.get("report_status")}
+        run.agent_response = {
+            **(run.agent_response or {}),
+            "final_response": values.get("final_response"),
+            "report_status": values.get("report_status"),
+        }
         TaskService.transition(task, TaskStatus(target.value))
         await TaskEventService.append_for_run(
-            db, run_id=run_id, event_type=f"task.{target.value}",
-            payload={"status": target.value, "execution_id": str(context.execution_id)}, commit=False,
+            db,
+            run_id=run_id,
+            event_type=f"task.{target.value}",
+            payload={
+                "status": target.value,
+                "execution_id": str(context.execution_id),
+            },
+            commit=False,
         )
         await db.commit()
 
 
-async def synchronize_agentic_execution(context: EventContext, snapshot) -> None:
+async def synchronize_agentic_execution(
+    context: EventContext, snapshot
+) -> None:
     """Project decision/Executor waits and terminal results from a durable receipt."""
     from dtest.application.runs.persistence.graph import persist_graph_state
-    from dtest.application.runs.persistence.recovery import checkpoint_state, snapshot_interrupts
+    from dtest.application.runs.persistence.recovery import (
+        checkpoint_state,
+        snapshot_interrupts,
+    )
 
     values = snapshot.values
     matches_delivery = (
         values.get("task_id") == context.task_id
         and values.get("execution_id") == str(context.execution_id)
-        and values.get("ew_receipts", {}).get(str(context.command_id)) == str(context.event.event_id)
+        and values.get("ew_receipts", {}).get(str(context.command_id))
+        == str(context.event.event_id)
     )
     if not matches_delivery:
         raise DeferEvent("Execution state has no matching durable receipt")
@@ -278,22 +363,38 @@ async def synchronize_agentic_execution(context: EventContext, snapshot) -> None
     state = checkpoint_state(snapshot)
     # Receipt replay repairs events/messages before updating the public Run state.
     await persist_graph_state(
-        state, user_id=UUID(values["user_id"]), agent_run_id=values["agent_run_id"],
+        state,
+        user_id=UUID(values["user_id"]),
+        agent_run_id=values["agent_run_id"],
     )
     async with get_session_factory()() as db:
-        task_id = await db.scalar(select(TaskModel.task_id).where(
-            TaskModel.session_id == UUID(context.session_id),
-            TaskModel.graph_task_id == UUID(context.task_id),
-        ))
+        task_id = await db.scalar(
+            select(TaskModel.task_id).where(
+                TaskModel.session_id == UUID(context.session_id),
+                TaskModel.graph_task_id == UUID(context.task_id),
+            )
+        )
         if task_id is None:
             raise DeferEvent("API task has not recorded graph identity")
-        run_id = await db.scalar(select(AgentRunModel.run_id).where(
-            AgentRunModel.task_id == task_id,
-        ).order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
+        run_id = await db.scalar(
+            select(AgentRunModel.run_id)
+            .where(
+                AgentRunModel.task_id == task_id,
+            )
+            .order_by(
+                AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()
+            )
+            .limit(1)
+        )
         run, task = await lock_run_and_task(db, run_id)
         if task.status in TaskService.TERMINAL_STATUSES:
             return
-        if (task.recovery_required or task.status != TaskStatus.WAITING_INPUT
-                or run.status != AgentRunStatus.INTERRUPTED):
+        if (
+            task.recovery_required
+            or task.status != TaskStatus.WAITING_INPUT
+            or run.status != AgentRunStatus.INTERRUPTED
+        ):
             raise DeferEvent("API invocation has not committed its wait")
-        await _finalize_locked_state(db, run, task, UUID(values["user_id"]), state)
+        await _finalize_locked_state(
+            db, run, task, UUID(values["user_id"]), state
+        )

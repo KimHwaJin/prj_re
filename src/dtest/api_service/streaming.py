@@ -4,6 +4,7 @@ NOTIFY is an invalidation hint, never the event payload. Worker and live SSE
 subscriptions share one LISTEN connection with independent lifespans. Missed
 notifications are reconciled by slow reads. HTTP clients retain their own cursor.
 """
+
 from __future__ import annotations
 from dtest.settings.loader import get_settings
 
@@ -28,7 +29,11 @@ from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.models.project_model import ProjectModel
 from dtest.application.runs.service import PublicRunService, project, TERMINAL
 from dtest.application.runs.task_events import TaskEventService
-from dtest.infrastructure.database.signals import RUN_CHANNEL, PostgresSignals, process_signals
+from dtest.infrastructure.database.signals import (
+    RUN_CHANNEL,
+    PostgresSignals,
+    process_signals,
+)
 from dtest.lifecycle import protected_cleanup
 from dtest.contracts.run_events import public_event_payload
 
@@ -61,7 +66,12 @@ class Frame:
     size: int = field(init=False)
 
     def __post_init__(self):
-        object.__setattr__(self, "size", len(self.state.encode()) + sum(len(text.encode()) for _, text in self.events))
+        object.__setattr__(
+            self,
+            "size",
+            len(self.state.encode())
+            + sum(len(text.encode()) for _, text in self.events),
+        )
 
 
 class RunStreamHub:
@@ -70,7 +80,9 @@ class RunStreamHub:
 
     def __init__(self, settings, *, session_factory=None, connect=None):
         self.settings = settings
-        self.session_factory = session_factory or (lambda: database.get_session_factory()())
+        self.session_factory = session_factory or (
+            lambda: database.get_session_factory()()
+        )
         self.connect = connect or asyncpg.connect
         self.entries = {}
         self.cache = OrderedDict()
@@ -78,18 +90,20 @@ class RunStreamHub:
         self.subscribers = 0
         self.listener = None
         self._signals = None
-        self._private_signals = session_factory is not None or connect is not None
+        self._private_signals = (
+            session_factory is not None or connect is not None
+        )
         self.closed = False
         self.lifecycle_lock = asyncio.Lock()
         self.ready = asyncio.Event()
 
     def invalidate(self, payload):
         for entry in self.entries.values():
-            if payload == '*' or str(entry.key[2]) == payload:
+            if payload == "*" or str(entry.key[2]) == payload:
                 entry.invalidate()
         # Invalidate cached authorization and payloads immediately.
         for key in list(self.cache):
-            if payload == '*' or str(key[0][2]) == payload:
+            if payload == "*" or str(key[0][2]) == payload:
                 self.cached_bytes -= self.cache.pop(key).size
 
     @property
@@ -99,19 +113,26 @@ class RunStreamHub:
     async def _listen(self):
         # Production uses the process broker; explicit fixture/connector
         # injection creates a private broker for independent-process tests.
-        signals = (PostgresSignals(get_settings().database.database_url,
-                    connect=lambda *a, **kw: self.connect(*a, **kw))
-                   if self._private_signals else process_signals(get_settings().database.database_url))
+        signals = (
+            PostgresSignals(
+                get_settings().database.database_url,
+                connect=lambda *a, **kw: self.connect(*a, **kw),
+            )
+            if self._private_signals
+            else process_signals(get_settings().database.database_url)
+        )
         self._signals = signals
+
         def changed(payload):
             if payload is None:
                 if signals.ready.is_set():
                     self.ready.set()
                 else:
                     self.ready.clear()
-                self.invalidate('*')
+                self.invalidate("*")
             else:
                 self.invalidate(payload)
+
         try:
             async with signals.subscribe(CHANNEL, changed):
                 await asyncio.Event().wait()
@@ -129,18 +150,32 @@ class RunStreamHub:
     async def subscribe(self, user_id, session_id, run_id):
         async with self.lifecycle_lock:
             if self.closed:
-                raise HTTPException(503, 'Run stream service is stopping.')
+                raise HTTPException(503, "Run stream service is stopping.")
             if self.subscribers >= self.settings.sse_max_connections:
-                raise HTTPException(503, 'Run stream capacity exceeded.', headers={'Retry-After':'5'})
+                raise HTTPException(
+                    503,
+                    "Run stream capacity exceeded.",
+                    headers={"Retry-After": "5"},
+                )
             key = (user_id, session_id, run_id)
-            entry = self.entries.setdefault(key, Subscription(key, reconcile_at=time.monotonic()+self.settings.sse_reconcile_interval_seconds))
+            entry = self.entries.setdefault(
+                key,
+                Subscription(
+                    key,
+                    reconcile_at=time.monotonic()
+                    + self.settings.sse_reconcile_interval_seconds,
+                ),
+            )
             entry.references += 1
             self.subscribers += 1
             if self.listener is None or self.listener.done():
-                self.listener = asyncio.create_task(self._listen(), name='run-stream-listener')
+                self.listener = asyncio.create_task(
+                    self._listen(), name="run-stream-listener"
+                )
         try:
             yield entry
         finally:
+
             async def release():
                 async with self.lifecycle_lock:
                     entry.references -= 1
@@ -149,15 +184,18 @@ class RunStreamHub:
                         self.entries.pop(key, None)
                         for cache_key in list(self.cache):
                             if cache_key[0] == key:
-                                self.cached_bytes -= self.cache.pop(cache_key).size
+                                self.cached_bytes -= self.cache.pop(
+                                    cache_key
+                                ).size
                     if not self.subscribers:
                         await self._stop_listener()
+
             await protected_cleanup(release())
 
     def begin_shutdown(self):
         # Called by the root SIGTERM hook before Uvicorn waits for HTTP drain.
         self.closed = True
-        self.invalidate('*')
+        self.invalidate("*")
 
     async def close(self):
         async with self.lifecycle_lock:
@@ -178,7 +216,11 @@ class RunStreamHub:
             # Coalesce token/status bursts to at most one changed-generation read
             # per legacy poll interval. Cursor pagination is never delayed.
             if generation != entry.last_read_generation:
-                delay = entry.last_read_at + self.settings.sse_poll_interval_seconds - time.monotonic()
+                delay = (
+                    entry.last_read_at
+                    + self.settings.sse_poll_interval_seconds
+                    - time.monotonic()
+                )
                 if delay > 0:
                     await asyncio.sleep(delay)
                 generation = entry.generation
@@ -190,30 +232,67 @@ class RunStreamHub:
             entry.last_read_generation = generation
             user_id, session_id, run_id = entry.key
             async with short_session(self.session_factory) as db:
-                access = await db.scalar(select(SessionModel.session_id).join(
-                    UserModel, UserModel.user_id == SessionModel.user_id).join(
-                    ProjectModel, ProjectModel.project_id == SessionModel.project_id).where(
-                    SessionModel.session_id == session_id, SessionModel.user_id == user_id,
-                    SessionModel.delete_yn == DeleteYN.N, UserModel.delete_yn == DeleteYN.N,
-                    ProjectModel.delete_yn == DeleteYN.N, ProjectModel.user_id == user_id))
+                access = await db.scalar(
+                    select(SessionModel.session_id)
+                    .join(UserModel, UserModel.user_id == SessionModel.user_id)
+                    .join(
+                        ProjectModel,
+                        ProjectModel.project_id == SessionModel.project_id,
+                    )
+                    .where(
+                        SessionModel.session_id == session_id,
+                        SessionModel.user_id == user_id,
+                        SessionModel.delete_yn == DeleteYN.N,
+                        UserModel.delete_yn == DeleteYN.N,
+                        ProjectModel.delete_yn == DeleteYN.N,
+                        ProjectModel.user_id == user_id,
+                    )
+                )
                 if access is None:
-                    raise HTTPException(404, 'Session not found.')
-                snapshot = (await PublicRunService.snapshots(db, [run_id])).get(run_id)
+                    raise HTTPException(404, "Session not found.")
+                snapshot = (
+                    await PublicRunService.snapshots(db, [run_id])
+                ).get(run_id)
                 if snapshot is None or snapshot[0].session_id != session_id:
-                    raise HTTPException(404, 'Run not found.')
+                    raise HTTPException(404, "Run not found.")
                 state = project(*snapshot)
-                events = await TaskEventService.list_after_public_run(db, run_id=run_id,
-                    sequence=sequence, limit=self.settings.sse_event_batch_size)
-                public_events = [(event.sequence, public_event_payload(event, session_id=session_id, run_id=run_id)) for event in events]
-                chunks = tuple((sequence,
-                    f'id: {sequence}\nevent: {payload["type"]}\ndata: ' +
-                    json.dumps(payload, ensure_ascii=False, separators=(',',':'))+'\n\n') for sequence, payload in public_events)
-                frame = Frame(chunks, state.model_dump_json(), state.status in TERMINAL)
+                events = await TaskEventService.list_after_public_run(
+                    db,
+                    run_id=run_id,
+                    sequence=sequence,
+                    limit=self.settings.sse_event_batch_size,
+                )
+                public_events = [
+                    (
+                        event.sequence,
+                        public_event_payload(
+                            event, session_id=session_id, run_id=run_id
+                        ),
+                    )
+                    for event in events
+                ]
+                chunks = tuple(
+                    (
+                        sequence,
+                        f"id: {sequence}\nevent: {payload['type']}\ndata: "
+                        + json.dumps(
+                            payload, ensure_ascii=False, separators=(",", ":")
+                        )
+                        + "\n\n",
+                    )
+                    for sequence, payload in public_events
+                )
+                frame = Frame(
+                    chunks, state.model_dump_json(), state.status in TERMINAL
+                )
             size = frame.size
             if generation == entry.generation and size <= self.CACHE_BYTES:
                 self.cache[key] = frame
                 self.cached_bytes += size
-                while len(self.cache) > self.CACHE_PAGES or self.cached_bytes > self.CACHE_BYTES:
+                while (
+                    len(self.cache) > self.CACHE_PAGES
+                    or self.cached_bytes > self.CACHE_BYTES
+                ):
                     _, expired = self.cache.popitem(last=False)
                     self.cached_bytes -= expired.size
             return frame, generation
@@ -224,10 +303,15 @@ class RunStreamHub:
         event = entry.changed
         remaining = max(0, entry.reconcile_at - time.monotonic())
         try:
-            await asyncio.wait_for(event.wait(), timeout=min(timeout, remaining))
+            await asyncio.wait_for(
+                event.wait(), timeout=min(timeout, remaining)
+            )
         except TimeoutError:
             if time.monotonic() >= entry.reconcile_at:
-                entry.reconcile_at = time.monotonic()+self.settings.sse_reconcile_interval_seconds
+                entry.reconcile_at = (
+                    time.monotonic()
+                    + self.settings.sse_reconcile_interval_seconds
+                )
                 self.invalidate(str(entry.key[2]))
 
     async def stream(self, request, entry, sequence):
@@ -242,47 +326,80 @@ class RunStreamHub:
                 full = len(frame.events) >= self.settings.sse_event_batch_size
                 if not full and frame.state != previous_state:
                     previous_state = frame.state
-                    snapshot = {'schema_version': 1, 'type': 'run.snapshot',
-                        'session_id': str(entry.key[1]), 'run_id': str(entry.key[2]), 'cursor': sequence,
-                        'data': json.loads(frame.state)}
-                    yield 'event: run.snapshot\ndata: ' + json.dumps(snapshot, ensure_ascii=False, separators=(',', ':')) + '\n\n'
+                    snapshot = {
+                        "schema_version": 1,
+                        "type": "run.snapshot",
+                        "session_id": str(entry.key[1]),
+                        "run_id": str(entry.key[2]),
+                        "cursor": sequence,
+                        "data": json.loads(frame.state),
+                    }
+                    yield (
+                        "event: run.snapshot\ndata: "
+                        + json.dumps(
+                            snapshot, ensure_ascii=False, separators=(",", ":")
+                        )
+                        + "\n\n"
+                    )
                 if frame.terminal and not frame.events:
                     return
                 if full or frame.terminal:
-                    generation = -1  # Drain durable backlog immediately, no poll delay.
+                    generation = (
+                        -1
+                    )  # Drain durable backlog immediately, no poll delay.
                     continue
             now = time.monotonic()
-            if now-last_heartbeat >= self.settings.sse_heartbeat_seconds:
-                yield ': heartbeat\n\n'
+            if now - last_heartbeat >= self.settings.sse_heartbeat_seconds:
+                yield ": heartbeat\n\n"
                 last_heartbeat = now
             # Disconnect/heartbeat checks do not perform SQL. Starlette also cancels
             # the iterator on disconnect; the short wake is for direct consumers.
-            await self.wait(entry, generation, min(self.settings.sse_poll_interval_seconds,
-                self.settings.sse_heartbeat_seconds))
+            await self.wait(
+                entry,
+                generation,
+                min(
+                    self.settings.sse_poll_interval_seconds,
+                    self.settings.sse_heartbeat_seconds,
+                ),
+            )
 
 
 class RunStreamResponse(StreamingResponse):
     """Reserve capacity before HTTP headers, release even on disconnect/send failure."""
+
     def __init__(self, hub, request, key, sequence):
-        super().__init__(iter(()), media_type='text/event-stream',
-            headers={'Cache-Control':'no-cache','X-Accel-Buffering':'no'})
-        self.hub, self.request, self.key, self.sequence = hub, request, key, sequence
+        super().__init__(
+            iter(()),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+        self.hub, self.request, self.key, self.sequence = (
+            hub,
+            request,
+            key,
+            sequence,
+        )
 
     async def __call__(self, scope, receive, send):
         owner = self.hub.subscribe(*self.key)
         try:
             entry = await owner.__aenter__()
         except HTTPException as exc:
-            return await JSONResponse({'detail':exc.detail}, status_code=exc.status_code,
-                headers=exc.headers)(scope, receive, send)
+            return await JSONResponse(
+                {"detail": exc.detail},
+                status_code=exc.status_code,
+                headers=exc.headers,
+            )(scope, receive, send)
         iterator = self.hub.stream(self.request, entry, self.sequence)
         self.body_iterator = iterator
         try:
             await super().__call__(scope, receive, send)
         finally:
+
             async def cleanup():
                 try:
                     await iterator.aclose()
                 finally:
                     await owner.__aexit__(None, None, None)
+
             await protected_cleanup(cleanup())

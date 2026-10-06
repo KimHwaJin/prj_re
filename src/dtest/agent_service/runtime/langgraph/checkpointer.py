@@ -11,7 +11,10 @@ from .pooled_saver import PooledAsyncPostgresSaver
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from dtest.settings.agent import load_agent_settings
-from dtest.infrastructure.observability.diagnostics import instrument_async_methods, observe_pool
+from dtest.infrastructure.observability.diagnostics import (
+    instrument_async_methods,
+    observe_pool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +30,24 @@ async def create_checkpointer(
 ) -> AsyncIterator[AsyncPostgresSaver]:
     settings = load_agent_settings()
     database_url = (
-        database_url if database_url is not None
+        database_url
+        if database_url is not None
         else settings.checkpoint_db_uri
     ).strip()
     if not database_url:
         raise RuntimeError("CHECKPOINT_DB_URI is required")
 
-    min_size = settings.checkpoint_pool_min_size if min_size is None else min_size
-    max_size = settings.checkpoint_pool_max_size if max_size is None else max_size
-    timeout = settings.checkpoint_pool_timeout_seconds if timeout is None else timeout
+    min_size = (
+        settings.checkpoint_pool_min_size if min_size is None else min_size
+    )
+    max_size = (
+        settings.checkpoint_pool_max_size if max_size is None else max_size
+    )
+    timeout = (
+        settings.checkpoint_pool_timeout_seconds
+        if timeout is None
+        else timeout
+    )
     if not 1 <= min_size <= max_size or not 0 < timeout < float("inf"):
         raise ValueError("Invalid checkpoint pool size or timeout")
     if setup_on_start is None:
@@ -48,14 +60,20 @@ async def create_checkpointer(
         timeout=timeout,
         open=False,
         check=AsyncConnectionPool.check_connection,
-        kwargs={"autocommit": True, "row_factory": dict_row, "connect_timeout": 10},
+        kwargs={
+            "autocommit": True,
+            "row_factory": dict_row,
+            "connect_timeout": 10,
+        },
     )
     observe_pool(pool, "checkpoint_pool")
     try:
         await pool.open(wait=True, timeout=timeout)
         logger.info("Checkpoint pool ready: %s", pool.get_stats())
         checkpointer = PooledAsyncPostgresSaver(pool)
-        instrument_async_methods(checkpointer, "checkpoint", ("aget_tuple", "aput", "aput_writes"))
+        instrument_async_methods(
+            checkpointer, "checkpoint", ("aget_tuple", "aput", "aput_writes")
+        )
         if setup_on_start:
             await checkpointer.setup()
         yield checkpointer

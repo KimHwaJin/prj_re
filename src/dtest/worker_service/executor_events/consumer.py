@@ -15,7 +15,9 @@ from uuid import uuid4
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
 
-from dtest.worker_service.executor_events.redis_streams import claim_pending_page
+from dtest.worker_service.executor_events.redis_streams import (
+    claim_pending_page,
+)
 
 from dtest.lifecycle import protected_cleanup
 
@@ -244,6 +246,7 @@ class RedisStreamConsumer:
                 if externally_cancelled or not self._stop_requested.is_set():
                     raise
         finally:
+
             async def cleanup():
                 tasks = tuple(self._slot_tasks)
                 for task in tasks:
@@ -255,6 +258,7 @@ class RedisStreamConsumer:
                 self._slot_health.clear()
                 self._running = False
                 self._stopped.set()
+
             await protected_cleanup(cleanup())
 
     def request_stop(self) -> None:
@@ -510,11 +514,15 @@ class RedisStreamConsumer:
                 raise error
             raise StreamLeaseLostError(message.message_id)
         finally:
+
             async def cleanup():
                 for task in (heartbeat, handler_task):
                     if not task.done() and not task.cancelling():
                         task.cancel()
-                await asyncio.gather(heartbeat, handler_task, return_exceptions=True)
+                await asyncio.gather(
+                    heartbeat, handler_task, return_exceptions=True
+                )
+
             await protected_cleanup(cleanup())
 
     async def _renew_lease(

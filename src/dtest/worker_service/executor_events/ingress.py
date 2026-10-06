@@ -75,7 +75,9 @@ class EventRouter:
                             gap if gap is not None else row["last_sequence"]
                         )
                         response = await self.http.get(
-                            ExecutorRoute.EVENTS.url(str(self.http.base_url), execution_id),
+                            ExecutorRoute.EVENTS.url(
+                                str(self.http.base_url), execution_id
+                            ),
                             params={
                                 "after_sequence": after,
                                 "limit": self.batch_size,

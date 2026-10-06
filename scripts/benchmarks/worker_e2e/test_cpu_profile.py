@@ -1,4 +1,5 @@
 """Validate diagnostic caller edges without collecting argument values."""
+
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -31,8 +32,12 @@ def test_caller_counts_and_privacy(profiler):
     profiler.start()
     recurse(3, "request-body-must-not-be-exported")
     result = profiler.finish()
-    recursive = next(row for row in result["main"] if row["function"] == "recurse")
-    edge = next(edge for edge in recursive["callers"] if edge["function"] == "recurse")
+    recursive = next(
+        row for row in result["main"] if row["function"] == "recurse"
+    )
+    edge = next(
+        edge for edge in recursive["callers"] if edge["function"] == "recurse"
+    )
     assert recursive["calls"] == 4
     assert recursive["primitive_calls"] == 1
     assert edge["calls"] == 3
@@ -50,7 +55,10 @@ def test_offload_profile_has_separate_cpu_clock(profiler):
     assert result["offload_jobs"] == 1
     assert any(row["function"] == "leaf" for row in result["offload"])
     assert result["offload_thread_cpu_seconds"] > 0
-    assert sum(row["self_cpu_seconds"] for row in result["offload"]) <= result["offload_thread_cpu_seconds"]
+    assert (
+        sum(row["self_cpu_seconds"] for row in result["offload"])
+        <= result["offload_thread_cpu_seconds"]
+    )
 
 
 def test_outside_measurement_does_not_collect(profiler):

@@ -39,6 +39,7 @@ def verify_employee(request) -> VerifiedEmployee | None:
     # 미인증만 None. 통신/SDK 장애는 예외.
     ...
 
+
 def build_login_url(request, return_url: str) -> str:
     # 공식 SDK의 로그인 URL/ORIGIN/복귀 주소 규격을 따른다.
     ...
@@ -165,8 +166,14 @@ service_auth 패키지에는 api_service/agent_service/애플리케이션 DB imp
 활성 여부·권한·소유권을 검사한다. 공통 쿠키 세션만으로 DB 권한 검사가 대체되지는 않는다.
 
 ```python
-auth = attach_sso(app, settings=sso_settings, users=service_user_directory,
-                  redis_url=service_redis_url, api_prefix='/api/v1', docs_path='/docs')
+auth = attach_sso(
+    app,
+    settings=sso_settings,
+    users=service_user_directory,
+    redis_url=service_redis_url,
+    api_prefix="/api/v1",
+    docs_path="/docs",
+)
 # 기존 lifespan 종료 시 await auth.close()
 # 업무 라우트는 Depends(get_login_session) 또는 이를 사용하는 자체 Actor Dependency로 보호.
 ```

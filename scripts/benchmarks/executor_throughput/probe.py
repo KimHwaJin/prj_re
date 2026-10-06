@@ -1,67 +1,137 @@
 """In-memory diagnostic hooks for actual Event Worker/pool/result integration."""
+
 import asyncio, time
 from contextvars import ContextVar
 
-pools=[]
+pools = []
 
-def install(metrics,enabled,kind):
+
+def install(metrics, enabled, kind):
     from psycopg_pool import AsyncConnectionPool
-    old_init=AsyncConnectionPool.__init__
-    def init(self,*a,**kw):
-        old_init(self,*a,**kw);pools.append(self)
-    AsyncConnectionPool.__init__=init
+
+    old_init = AsyncConnectionPool.__init__
+
+    def init(self, *a, **kw):
+        old_init(self, *a, **kw)
+        pools.append(self)
+
+    AsyncConnectionPool.__init__ = init
     from dtest.worker_service.executor_events import main as worker_main
-    if hasattr(worker_main,'DeferredHandler'):
-        owner=worker_main.DeferredHandler
-        hook='__call__'
+
+    if hasattr(worker_main, "DeferredHandler"):
+        owner = worker_main.DeferredHandler
+        hook = "__call__"
     else:
         from dtest.worker_service import command_worker as owner
-        hook='execute_event'
-    original=getattr(owner,hook)
+
+        hook = "execute_event"
+    original = getattr(owner, hook)
+
     async def handle(*args):
-        context=args[-1]
-        start=time.perf_counter();measured=enabled();token=kind.set('event_graph');error=None
+        context = args[-1]
+        start = time.perf_counter()
+        measured = enabled()
+        token = kind.set("event_graph")
+        error = None
         if measured:
-            metrics['current_event_worker']+=1
-            metrics['peak_event_worker']=max(metrics['peak_event_worker'],metrics['current_event_worker'])
-        try:return await original(*args)
-        except BaseException as exc:error=type(exc).__name__;raise
+            metrics["current_event_worker"] += 1
+            metrics["peak_event_worker"] = max(
+                metrics["peak_event_worker"], metrics["current_event_worker"]
+            )
+        try:
+            return await original(*args)
+        except BaseException as exc:
+            error = type(exc).__name__
+            raise
         finally:
             if measured:
-                metrics['event_handlers'].append({'command_id':str(context.command_id),'event_id':str(context.event.event_id),
-                    'execution_id':str(context.execution_id),'session_id':context.session_id,'event_type':context.event.event_type,
-                    'start':start,'end':time.perf_counter(),'error':error})
-                metrics['current_event_worker']-=1
+                metrics["event_handlers"].append(
+                    {
+                        "command_id": str(context.command_id),
+                        "event_id": str(context.event.event_id),
+                        "execution_id": str(context.execution_id),
+                        "session_id": context.session_id,
+                        "event_type": context.event.event_type,
+                        "start": start,
+                        "end": time.perf_counter(),
+                        "error": error,
+                    }
+                )
+                metrics["current_event_worker"] -= 1
             kind.reset(token)
-    setattr(owner,hook,handle)
+
+    setattr(owner, hook, handle)
     from dtest.infrastructure.database.event_store import Store
+
     def wrap(name):
-        prior=getattr(Store,name)
-        async def invoke(self,*args,**kw):
-            start=time.perf_counter()
-            try:return await prior(self,*args,**kw)
+        prior = getattr(Store, name)
+
+        async def invoke(self, *args, **kw):
+            start = time.perf_counter()
+            try:
+                return await prior(self, *args, **kw)
             finally:
                 if enabled():
-                    row={'method':name,'start':start,'end':time.perf_counter()}
-                    if name=='ingest':row.update(event_id=str(args[0].event_id),execution_id=str(args[0].execution_id),event_type=args[0].event_type)
-                    elif name=='advance':row['execution_id']=str(args[0])
-                    elif name=='set_state':row.update(command_id=str(args[0]),state=args[1])
-                    elif name=='finish_publications':row.update(command_ids=[str(c) for c in args[1]],sent=kw['sent'])
-                    metrics['event_stages'].append(row)
-        setattr(Store,name,invoke)
+                    row = {
+                        "method": name,
+                        "start": start,
+                        "end": time.perf_counter(),
+                    }
+                    if name == "ingest":
+                        row.update(
+                            event_id=str(args[0].event_id),
+                            execution_id=str(args[0].execution_id),
+                            event_type=args[0].event_type,
+                        )
+                    elif name == "advance":
+                        row["execution_id"] = str(args[0])
+                    elif name == "set_state":
+                        row.update(command_id=str(args[0]), state=args[1])
+                    elif name == "finish_publications":
+                        row.update(
+                            command_ids=[str(c) for c in args[1]],
+                            sent=kw["sent"],
+                        )
+                    metrics["event_stages"].append(row)
+
+        setattr(Store, name, invoke)
+
     # Historical baseline hooks are optional; current Store has only ingress/routing.
-    for name in ('ingest','advance','finish_publications','set_state'):
-        if hasattr(Store,name):wrap(name)
-    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    old_role=PlanningRuntime.execution_role
-    async def role(self,name,state,payload):
-        start=time.perf_counter()
-        try:return await old_role(self,name,state,payload)
+    for name in ("ingest", "advance", "finish_publications", "set_state"):
+        if hasattr(Store, name):
+            wrap(name)
+    from dtest.agent_service.agents.analysis.planning.runtime import (
+        PlanningRuntime,
+    )
+
+    old_role = PlanningRuntime.execution_role
+
+    async def role(self, name, state, payload):
+        start = time.perf_counter()
+        try:
+            return await old_role(self, name, state, payload)
         finally:
-            if enabled():metrics['roles'].append({'role':name,'run_id':state.get('agent_run_id'),
-                'execution_id':state.get('execution_id'),'start':start,'end':time.perf_counter()})
-    PlanningRuntime.execution_role=role
+            if enabled():
+                metrics["roles"].append(
+                    {
+                        "role": name,
+                        "run_id": state.get("agent_run_id"),
+                        "execution_id": state.get("execution_id"),
+                        "start": start,
+                        "end": time.perf_counter(),
+                    }
+                )
+
+    PlanningRuntime.execution_role = role
 
 
 def snapshot():
-    return [{'index':i,'max_size':pool.max_size,'closed':pool.closed,**pool.get_stats()} for i,pool in enumerate(pools)]
+    return [
+        {
+            "index": i,
+            "max_size": pool.max_size,
+            "closed": pool.closed,
+            **pool.get_stats(),
+        }
+        for i, pool in enumerate(pools)
+    ]

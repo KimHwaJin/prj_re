@@ -42,6 +42,7 @@ import operator
 from langgraph.channels.binop import BinaryOperatorAggregate
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+
 async def probe():
     saver = AsyncPostgresSaver(None)  # 직렬화만 호출; 연결/SQL 사용 없음
     for count in (1, 10, 50, 100):
@@ -52,11 +53,19 @@ async def probe():
             values = [*values, item]
             channel.update([[item]])
             version = {"observations": str(i)}
-            replace_rows = saver._dump_blobs("synthetic", "", {"observations": values}, version)
-            append_rows = saver._dump_blobs("synthetic", "", {"observations": channel.checkpoint()}, version)
+            replace_rows = saver._dump_blobs(
+                "synthetic", "", {"observations": values}, version
+            )
+            append_rows = saver._dump_blobs(
+                "synthetic",
+                "",
+                {"observations": channel.checkpoint()},
+                version,
+            )
             assert replace_rows == append_rows
             total += sum(len(row[-1]) for row in replace_rows)
         print(count, len(replace_rows[0][-1]), total)
+
 
 asyncio.run(probe())
 ```

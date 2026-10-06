@@ -1,10 +1,22 @@
 """Public Run status shared by detailed Run and lightweight session views."""
+
 from dtest.contracts.enums import AgentRunStatus, TaskStatus
 
-TERMINAL_TASKS = (TaskStatus.SUCCESS, TaskStatus.ERROR, TaskStatus.TIMEOUT, TaskStatus.CANCELED)
+TERMINAL_TASKS = (
+    TaskStatus.SUCCESS,
+    TaskStatus.ERROR,
+    TaskStatus.TIMEOUT,
+    TaskStatus.CANCELED,
+)
 
 
-def public_status(invocation_status, *, task_status=None, recovery_required=False, executor_wait=False):
+def public_status(
+    invocation_status,
+    *,
+    task_status=None,
+    recovery_required=False,
+    executor_wait=False,
+):
     if recovery_required:
         return "recovery_required"
     if task_status in TERMINAL_TASKS:

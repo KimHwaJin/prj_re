@@ -1,5 +1,6 @@
 """Temporary NCE transformation Tool backed by analysis-ready mock data."""
 
+
 def transform_nce(
     data: dict | None = None,
     transform_op: str = "pivot",
@@ -19,7 +20,10 @@ def transform_nce(
     import pandas as pd
 
     expected_columns = [
-        "alias_lot_id", "wf_id", "x", "y",
+        "alias_lot_id",
+        "wf_id",
+        "x",
+        "y",
         "BLC(CELL) OPEN MASK MACRO.max_val",
         "DNW MASK MACRO.max_val",
         "ISO(PERI) + CUT MASK MACRO.max_val",
@@ -46,8 +50,16 @@ def transform_nce(
             "applied": True,
             "transform_op": transform_op,
             "data_type": "nce",
-            "steps": ["load_mock_wide_nce"] if used_mock_fallback else ["validate_wide_nce"],
+            "steps": ["load_mock_wide_nce"]
+            if used_mock_fallback
+            else ["validate_wide_nce"],
             "mock": True,
-            "options": {"index": index, "columns": columns, "values": values, "aggfunc": aggfunc, **kwargs},
+            "options": {
+                "index": index,
+                "columns": columns,
+                "values": values,
+                "aggfunc": aggfunc,
+                **kwargs,
+            },
         },
     }

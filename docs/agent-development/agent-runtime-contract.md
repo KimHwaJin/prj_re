@@ -25,13 +25,19 @@ agent_service/
 from agent_service.factory import build_role_agent, json_output
 from agent_service.middleware import ProjectPromptMiddleware
 
+
 def build_agent(model, *, structured_output_mode="prompt_json", store=None):
     return build_role_agent(
-        model, name="my_role", system_prompt=load_prompt(__package__),
-        tools=[], middleware=[ProjectPromptMiddleware()],
-        output_type=MyOutput, decode=json_output(MyOutput),
+        model,
+        name="my_role",
+        system_prompt=load_prompt(__package__),
+        tools=[],
+        middleware=[ProjectPromptMiddleware()],
+        output_type=MyOutput,
+        decode=json_output(MyOutput),
         structured_output_mode=structured_output_mode,
-        max_validation_attempts=3, store=store,
+        max_validation_attempts=3,
+        store=store,
     )
 ```
 

@@ -28,12 +28,16 @@ def main(corpora, output):
         space = c.execute(
             "SELECT model_space FROM workflow_embeddings LIMIT 1"
         ).fetchone()[0]
-        predicate = "is_active AND status='ready' AND model_space=%s AND dimensions=768"
+        predicate = (
+            "is_active AND status='ready' AND model_space=%s AND "
+            "dimensions=768"
+        )
         out = {
             "case": meta["case"],
             "query": q,
             "index_options": c.execute(
-                "SELECT reloptions FROM pg_class WHERE relname LIKE 'ix_workflow_hnsw_%'"
+                "SELECT reloptions FROM pg_class WHERE relname LIKE "
+                "'ix_workflow_hnsw_%'"
             ).fetchall(),
             "max_scan_tuples": 1000000,
             "work_mem": "32MB",
@@ -62,15 +66,21 @@ def main(corpora, output):
                             ("work_mem", "32MB"),
                         ]:
                             c.execute(
-                                "SELECT set_config(%s,%s,true)", (name, str(value))
+                                "SELECT set_config(%s,%s,true)",
+                                (name, str(value)),
                             )
                         sql = f"SELECT workflow_id FROM workflow_embeddings WHERE {predicate} AND NOT(workflow_id=ANY(%s::uuid[])) ORDER BY vector_values::vector(768) <=> %s::vector(768) LIMIT 50000"
-                        params = (space, [UUID(int=43)] if exclude else [], vector)
+                        params = (
+                            space,
+                            [UUID(int=43)] if exclude else [],
+                            vector,
+                        )
                         start = time.perf_counter()
                         rows = c.execute(sql, params).fetchall()
                         elapsed = (time.perf_counter() - start) * 1000
                         plan = c.execute(
-                            "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) " + sql, params
+                            "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) " + sql,
+                            params,
                         ).fetchone()[0][0]
                         assert "ix_workflow_hnsw_" in json.dumps(plan)
                         out["observations"].append(
@@ -79,7 +89,9 @@ def main(corpora, output):
                                 "ef": ef,
                                 "exclude42": exclude,
                                 "rows": len(rows),
-                                "groups": sorted(set(w.int - 1 for (w,) in rows)),
+                                "groups": sorted(
+                                    set(w.int - 1 for (w,) in rows)
+                                ),
                                 "elapsed_ms": elapsed,
                                 "plan": plan,
                             }
@@ -89,7 +101,10 @@ def main(corpora, output):
     output.write_text(json.dumps(out, indent=2) + "\n")
     print(
         json.dumps(
-            [{k: v for k, v in x.items() if k != "plan"} for x in out["observations"]]
+            [
+                {k: v for k, v in x.items() if k != "plan"}
+                for x in out["observations"]
+            ]
         )
     )
 

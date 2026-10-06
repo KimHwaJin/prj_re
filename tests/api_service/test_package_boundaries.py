@@ -1,4 +1,5 @@
 """Prevent API/Agent import cycles and accidental runtime resource coupling."""
+
 import ast
 import os
 from pathlib import Path
@@ -18,27 +19,67 @@ def imports(path):
             yield from (alias.name for alias in node.names)
 
 
-@pytest.mark.parametrize('package,forbidden', [
-    ('dtest/agent_service', ('dtest.api_service', 'dtest.application', 'dtest.worker_service')),
-    ('dtest/infrastructure', ('dtest.api_service', 'dtest.application', 'dtest.worker_service', 'dtest.agent_service')),
-    ('dtest/contracts', ('dtest.api_service', 'dtest.application', 'dtest.worker_service', 'dtest.agent_service', 'dtest.infrastructure', 'fastapi', 'langgraph', 'langchain')),
-    ('dtest/application', ('dtest.api_service', 'dtest.worker_service', 'dtest.agent_service', 'fastapi', 'starlette', 'langgraph', 'langchain')),
-    ('dtest/api_service', ('dtest.agent_service', 'dtest.worker_service')),
-])
+@pytest.mark.parametrize(
+    "package,forbidden",
+    [
+        (
+            "dtest/agent_service",
+            ("dtest.api_service", "dtest.application", "dtest.worker_service"),
+        ),
+        (
+            "dtest/infrastructure",
+            (
+                "dtest.api_service",
+                "dtest.application",
+                "dtest.worker_service",
+                "dtest.agent_service",
+            ),
+        ),
+        (
+            "dtest/contracts",
+            (
+                "dtest.api_service",
+                "dtest.application",
+                "dtest.worker_service",
+                "dtest.agent_service",
+                "dtest.infrastructure",
+                "fastapi",
+                "langgraph",
+                "langchain",
+            ),
+        ),
+        (
+            "dtest/application",
+            (
+                "dtest.api_service",
+                "dtest.worker_service",
+                "dtest.agent_service",
+                "fastapi",
+                "starlette",
+                "langgraph",
+                "langchain",
+            ),
+        ),
+        ("dtest/api_service", ("dtest.agent_service", "dtest.worker_service")),
+    ],
+)
 def test_service_dependency_boundaries(package, forbidden):
-    sources = list((SRC / package).rglob('*.py'))
-    assert sources, f'Missing package {package}'
+    sources = list((SRC / package).rglob("*.py"))
+    assert sources, f"Missing package {package}"
     errors = []
     for path in sources:
         for name in imports(path):
-            if any(name == prefix or name.startswith(prefix + '.') for prefix in forbidden):
-                errors.append(f'{path.relative_to(SRC)}: {name}')
-    assert not errors, '\n'.join(errors)
+            if any(
+                name == prefix or name.startswith(prefix + ".")
+                for prefix in forbidden
+            ):
+                errors.append(f"{path.relative_to(SRC)}: {name}")
+    assert not errors, "\n".join(errors)
 
 
 def test_agent_graph_runs_with_api_imports_blocked(tmp_path):
     # A fresh interpreter detects indirect/dynamic imports, not only AST imports.
-    program = '''
+    program = """
 import asyncio, importlib.abc, sys
 class NoAPI(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
@@ -61,7 +102,13 @@ async def main():
     assert state['approved_snapshot']['steps'] and state['final_response']['status']=='plan_approved'
     assert not any(n == 'dtest.api_service' or n.startswith('dtest.api_service.') for n in sys.modules)
 asyncio.run(main())
-'''
-    result = subprocess.run([sys.executable, '-c', program], cwd=tmp_path,
-        env={**os.environ, 'PYTHONPATH':str(SRC)}, capture_output=True, text=True, timeout=30)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", program],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(SRC)},
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
     assert result.returncode == 0, result.stderr

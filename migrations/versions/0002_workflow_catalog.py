@@ -73,7 +73,10 @@ def upgrade() -> None:
             name="workflow_catalog_source_revision_key",
         ),
         sa.CheckConstraint(
-            "validation_status IN ('unverified', 'validated', 'failed', 'deprecated')",
+            (
+                "validation_status IN ('unverified', 'validated', "
+                "'failed', 'deprecated')"
+            ),
             name="workflow_catalog_validation_status_check",
         ),
         sa.CheckConstraint(
@@ -116,7 +119,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
-        sa.PrimaryKeyConstraint("execution_id", name="workflow_executions_pkey"),
+        sa.PrimaryKeyConstraint(
+            "execution_id", name="workflow_executions_pkey"
+        ),
         sa.ForeignKeyConstraint(
             ["catalog_id"],
             ["workflow_catalog.catalog_id"],
@@ -188,7 +193,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute("DROP VIEW IF EXISTS workflow_adaptive_history_view")
     op.drop_table("workflow_adaptive_history")
-    op.drop_index("workflow_executions_task_lookup", table_name="workflow_executions")
+    op.drop_index(
+        "workflow_executions_task_lookup", table_name="workflow_executions"
+    )
     op.drop_table("workflow_executions")
     op.drop_index(
         "workflow_catalog_recommendation_lookup", table_name="workflow_catalog"

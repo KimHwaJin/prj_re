@@ -1,4 +1,5 @@
 """Stable cursor pagination for collection queries."""
+
 import base64
 import json
 from datetime import datetime
@@ -9,18 +10,30 @@ from dtest.contracts.errors import ApplicationError
 from dtest.contracts.pagination import ListParams
 from dtest.contracts.resources.api_schema import PageInfo
 
+
 def _decode_cursor(cursor: str) -> tuple[datetime, UUID]:
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
         value = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
         return datetime.fromisoformat(value["created_at"]), UUID(value["id"])
-    except (KeyError, TypeError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ApplicationError(status_code=400, detail="Invalid cursor.") from exc
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ) as exc:
+        raise ApplicationError(
+            status_code=400, detail="Invalid cursor."
+        ) from exc
 
 
 def make_cursor(item, *, id_name: str) -> str:
     payload = json.dumps(
-        {"created_at": item.created_at.isoformat(), "id": str(getattr(item, id_name))},
+        {
+            "created_at": item.created_at.isoformat(),
+            "id": str(getattr(item, id_name)),
+        },
         separators=(",", ":"),
     ).encode("utf-8")
     return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
@@ -59,12 +72,19 @@ async def fetch_page(
                 )
             )
 
-    order = (created_at.desc(), resource_id.desc()) if descending else (created_at.asc(), resource_id.asc())
-    items = list((await db.scalars(stmt.order_by(*order).limit(params.limit + 1))).all())
+    order = (
+        (created_at.desc(), resource_id.desc())
+        if descending
+        else (created_at.asc(), resource_id.asc())
+    )
+    items = list(
+        (await db.scalars(stmt.order_by(*order).limit(params.limit + 1))).all()
+    )
     has_next = len(items) > params.limit
     items = items[: params.limit]
     return items, PageInfo(
         has_next=has_next,
-        next_cursor=make_cursor(items[-1], id_name=id_name) if has_next and items else None,
+        next_cursor=make_cursor(items[-1], id_name=id_name)
+        if has_next and items
+        else None,
     )
-

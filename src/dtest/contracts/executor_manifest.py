@@ -78,7 +78,9 @@ class StepResultManifest(StrictModel):
     def validate_terminal_state(self):
         if self.state == "ABORTED":
             if self.complete or not self.error_message:
-                raise ValueError("ABORTED manifest must be incomplete with an error")
+                raise ValueError(
+                    "ABORTED manifest must be incomplete with an error"
+                )
         else:
             if not self.complete:
                 raise ValueError("FINALIZED/FAILED manifest must be complete")

@@ -36,12 +36,14 @@ LangGraph는 입력만 접수한 상태도 checkpoint로 남길 수 있다. 따�
 from dtest.contracts.initial_request import InitialRequestState
 from agent_service.runtime.initial_request import record_initial_request
 
+
 class State(InitialRequestState, total=False):
     user_id: str
     project_id: str
     session_id: str
     user_request: str
     model_selection: dict
+
 
 @record_initial_request
 async def receive_request(state: State) -> dict:

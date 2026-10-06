@@ -1,4 +1,5 @@
 """Public model binding compatibility for the configured OpenAI-compatible gateway."""
+
 from langchain_openai import ChatOpenAI
 
 
@@ -10,6 +11,9 @@ class CompatibleChatOpenAI(ChatOpenAI):
         binding = super().bind_tools(tools, **kwargs)
         if tools:
             return binding
-        options = {key: value for key, value in binding.kwargs.items()
-                   if key not in {'tools', 'tool_choice', 'parallel_tool_calls'}}
+        options = {
+            key: value
+            for key, value in binding.kwargs.items()
+            if key not in {"tools", "tool_choice", "parallel_tool_calls"}
+        }
         return self.bind(**options)

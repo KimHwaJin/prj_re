@@ -1,4 +1,5 @@
 """Immutable values captured by the command claim transaction."""
+
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -23,7 +24,9 @@ class ClaimedRun:
 
     @property
     def owner(self):
-        return SessionExecution(self.session_id, self.claim.lock_token, self.command_id, "api_run")
+        return SessionExecution(
+            self.session_id, self.claim.lock_token, self.command_id, "api_run"
+        )
 
 
 @dataclass(frozen=True)

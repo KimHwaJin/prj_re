@@ -49,6 +49,8 @@ dev = [
     { include-group = "tool-validation" },
     "pytest>=8.4,<10.0",
     "pytest-asyncio>=1.4,<2.0",
+    "ruff==0.16.10",
+    "ty==0.0.84",
 ]
 
 # Only for validating sample Tool functions and generating benchmark plots.
@@ -79,3 +81,23 @@ exclude = ["dtest.agent_service.agents.*.tests*"]
 "dtest.agent_service.agents.analysis.planning" = ["fixtures/*.json"]
 
 "dtest.agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]
+
+[tool.ruff]
+line-length = 79
+target-version = "py311"
+# Evidence snapshots are historical artifacts, not maintained runtime code.
+extend-exclude = [
+    "docs/reports/**",
+    "docs/contracts/workflow-standard/original-1.0/**",
+]
+
+[tool.ruff.lint]
+# Ruff's default lint rules do not include the line-length check.
+extend-select = ["E501"]
+
+[tool.ty.src]
+# Historical evidence and the received standard are not runtime source.
+exclude = [
+    "docs/reports/**",
+    "docs/contracts/workflow-standard/original-1.0/**",
+]

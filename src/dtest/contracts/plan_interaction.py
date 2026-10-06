@@ -1,10 +1,12 @@
 """Typed public plan forms and resume commands, shared by API and Agent."""
+
 from typing import Any, Literal
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+
 class StrictModel(BaseModel):
-    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
 class ParameterChange(StrictModel):
@@ -14,51 +16,53 @@ class ParameterChange(StrictModel):
 
 
 class ExecutionOverrides(StrictModel):
-    mode: Literal['SINGLE', 'MULTI'] | None = None
+    mode: Literal["SINGLE", "MULTI"] | None = None
     repair_level: int | None = Field(default=None, ge=0, le=4)
     max_repair_attempts: int | None = Field(default=None, ge=0)
 
 
 class PlanAction(StrictModel):
-    action: Literal['edit_plan', 'approve_plan']
+    action: Literal["edit_plan", "approve_plan"]
     plan_id: str
     plan_revision: int = Field(ge=1, strict=True)
     input_values: dict[str, Any] = Field(default_factory=dict)
     step_changes: list[ParameterChange] = Field(default_factory=list)
     excluded_step_ids: list[str] = Field(default_factory=list)
-    execution_overrides: ExecutionOverrides = Field(default_factory=ExecutionOverrides)
+    execution_overrides: ExecutionOverrides = Field(
+        default_factory=ExecutionOverrides
+    )
 
 
 class ResumeCommand(StrictModel):
-    resume: 'PlanAction | DecisionAction | RepairAction | PlanRevisionAction'
+    resume: "PlanAction | DecisionAction | RepairAction | PlanRevisionAction"
 
 
 class DecisionAction(StrictModel):
-    action: Literal['approve_decisions']
+    action: Literal["approve_decisions"]
     interaction_id: UUID
-    revision: int = Field(ge=1,strict=True)
-    values: dict[str,Any]
+    revision: int = Field(ge=1, strict=True)
+    values: dict[str, Any]
 
 
 class RepairAction(StrictModel):
-    action: Literal['approve_repair', 'reject_repair']
+    action: Literal["approve_repair", "reject_repair"]
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    proposal_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    proposal_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     allow_policy_escalation: bool = Field(default=False, strict=True)
 
 
 class PlanRevisionAction(StrictModel):
-    action: Literal['replan', 'answer_clarification']
+    action: Literal["replan", "answer_clarification"]
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
     feedback: str = Field(min_length=1, max_length=4000)
 
-    @field_validator('feedback')
+    @field_validator("feedback")
     @classmethod
     def nonblank(cls, value):
         if not value.strip():
-            raise ValueError('Feedback must contain text')
+            raise ValueError("Feedback must contain text")
         return value.strip()
 
 
@@ -75,11 +79,11 @@ class InputView(StrictModel):
     name: str
     title: str
     description: str
-    kind: Literal['parameter', 'data_reference']
+    kind: Literal["parameter", "data_reference"]
     required: bool
     editable: bool
     value_schema: dict | bool
-    origin: Literal['agent', 'workflow_default', 'user', 'unresolved']
+    origin: Literal["agent", "workflow_default", "user", "unresolved"]
     has_value: bool
     value: Any = None
 
@@ -89,8 +93,16 @@ class ParameterView(StrictModel):
     title: str | None = None
     description: str | None = None
     has_value: bool = False
-    origin: Literal['agent', 'tool_default', 'user', 'unresolved'] = 'unresolved'
-    kind: Literal['workflow_input', 'literal', 'step_reference', 'deferred', 'system_context']
+    origin: Literal["agent", "tool_default", "user", "unresolved"] = (
+        "unresolved"
+    )
+    kind: Literal[
+        "workflow_input",
+        "literal",
+        "step_reference",
+        "deferred",
+        "system_context",
+    ]
     editable: bool
     value: Any = None
     value_schema: dict | bool | None = None
@@ -111,7 +123,7 @@ class StepView(StrictModel):
     depends_on: list[str]
     parameters: list[ParameterView]
     when: dict | None = None
-    status: Literal['planned', 'excluded']
+    status: Literal["planned", "excluded"]
 
 
 class DecisionView(StrictModel):
@@ -119,23 +131,23 @@ class DecisionView(StrictModel):
     evidence_steps: list[str]
     guidance: str
     value_schema: dict | bool
-    status: Literal['deferred'] = 'deferred'
+    status: Literal["deferred"] = "deferred"
 
 
 class OutputView(StrictModel):
     output_id: str
     kind: str
     description: str
-    status: Literal['planned', 'excluded_by_user']
+    status: Literal["planned", "excluded_by_user"]
 
 
 class PolicyView(StrictModel):
-    mode: Literal['SINGLE', 'MULTI']
+    mode: Literal["SINGLE", "MULTI"]
     repair_level: int
     max_repair_attempts: int
     review_mode: str
     review_interval_tools: int | None = None
-    allowed_modes: list[Literal['SINGLE', 'MULTI']]
+    allowed_modes: list[Literal["SINGLE", "MULTI"]]
     repair_level_limit: int
     max_repair_attempts_limit: int
 
@@ -159,9 +171,9 @@ class PlanView(StrictModel):
     plan_id: str
     plan_revision: int
     workflow_id: str
-    execution_kind: Literal['registered', 'free_code'] = 'registered'
+    execution_kind: Literal["registered", "free_code"] = "registered"
     workflow_eligible: bool = True
-    approval_mode: Literal['user', 'configuration'] = 'user'
+    approval_mode: Literal["user", "configuration"] = "user"
     definition_version: int
     name: str
     goal: str
@@ -189,8 +201,8 @@ class ReviewPayload(StrictModel):
 class InteractionData(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    kind: Literal['plan_review']
-    status: Literal['open']
+    kind: Literal["plan_review"]
+    status: Literal["open"]
     resume_token: UUID
     summary: str
     payload: ReviewPayload
@@ -198,7 +210,7 @@ class InteractionData(StrictModel):
 
 class InteractionEvent(StrictModel):
     schema_version: Literal[1] = 1
-    type: Literal['interaction.opened', 'interaction.updated']
+    type: Literal["interaction.opened", "interaction.updated"]
     sequence: int = Field(ge=1, strict=True)
     session_id: UUID
     run_id: UUID
@@ -214,15 +226,15 @@ class ResolutionPayload(StrictModel):
 class ResolutionData(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    kind: Literal['plan_review']
-    status: Literal['resolved']
-    resolution: Literal['approved', 'auto_approved']
+    kind: Literal["plan_review"]
+    status: Literal["resolved"]
+    resolution: Literal["approved", "auto_approved"]
     payload: ResolutionPayload
 
 
 class InteractionResolvedEvent(StrictModel):
     schema_version: Literal[1] = 1
-    type: Literal['interaction.resolved']
+    type: Literal["interaction.resolved"]
     sequence: int = Field(ge=1, strict=True)
     session_id: UUID
     run_id: UUID
@@ -246,8 +258,8 @@ class DecisionPayload(StrictModel):
 class DecisionInteractionData(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    kind: Literal['decision_review']
-    status: Literal['open']
+    kind: Literal["decision_review"]
+    status: Literal["open"]
     resume_token: UUID
     summary: str
     payload: DecisionPayload
@@ -255,7 +267,7 @@ class DecisionInteractionData(StrictModel):
 
 class DecisionInteractionEvent(StrictModel):
     schema_version: Literal[1] = 1
-    type: Literal['interaction.opened']
+    type: Literal["interaction.opened"]
     sequence: int = Field(ge=1, strict=True)
     session_id: UUID
     run_id: UUID
@@ -272,8 +284,8 @@ class ClarificationPayload(StrictModel):
 class ClarificationData(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    kind: Literal['planning_question']
-    status: Literal['open']
+    kind: Literal["planning_question"]
+    status: Literal["open"]
     resume_token: UUID
     summary: str
     payload: ClarificationPayload
@@ -281,7 +293,7 @@ class ClarificationData(StrictModel):
 
 class ClarificationEvent(StrictModel):
     schema_version: Literal[1] = 1
-    type: Literal['interaction.opened', 'interaction.updated']
+    type: Literal["interaction.opened", "interaction.updated"]
     sequence: int = Field(ge=1, strict=True)
     session_id: UUID
     run_id: UUID
@@ -291,13 +303,29 @@ class ClarificationEvent(StrictModel):
 
 def validate_plan_revision(interaction, raw, *, count, limit):
     action = PlanRevisionAction.model_validate(raw)
-    if str(action.interaction_id) != interaction.get('interaction_id') or action.revision != interaction.get('revision'):
-        raise ValueError('Stale planning interaction; refresh Run state')
-    expected = 'answer_clarification' if interaction.get('kind') == 'planning_question' else 'replan'
-    if interaction.get('status') != 'open' or interaction.get('kind') not in {'plan_review', 'planning_question'} or action.action != expected:
-        raise ValueError('This interaction does not accept that planning action')
+    if str(action.interaction_id) != interaction.get(
+        "interaction_id"
+    ) or action.revision != interaction.get("revision"):
+        raise ValueError("Stale planning interaction; refresh Run state")
+    expected = (
+        "answer_clarification"
+        if interaction.get("kind") == "planning_question"
+        else "replan"
+    )
+    if (
+        interaction.get("status") != "open"
+        or interaction.get("kind") not in {"plan_review", "planning_question"}
+        or action.action != expected
+    ):
+        raise ValueError(
+            "This interaction does not accept that planning action"
+        )
     if count >= limit:
-        raise ValueError('Planning revision limit reached; approve, cancel, or start a new Run')
+        raise ValueError(
+            "Planning revision limit reached; approve, cancel, or "
+            "start a new "
+            "Run"
+        )
     return action
 
 
@@ -308,15 +336,15 @@ class PlanningTransitionPayload(StrictModel):
 class PlanningTransitionData(StrictModel):
     interaction_id: UUID
     revision: int = Field(ge=1, strict=True)
-    kind: Literal['plan_review', 'planning_question']
-    status: Literal['resolved']
-    resolution: Literal['replanning', 'answered']
+    kind: Literal["plan_review", "planning_question"]
+    status: Literal["resolved"]
+    resolution: Literal["replanning", "answered"]
     payload: PlanningTransitionPayload
 
 
 class PlanningTransitionEvent(StrictModel):
     schema_version: Literal[1] = 1
-    type: Literal['interaction.resolved']
+    type: Literal["interaction.resolved"]
     sequence: int = Field(ge=1, strict=True)
     session_id: UUID
     run_id: UUID

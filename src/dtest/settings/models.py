@@ -1,4 +1,5 @@
 """Immutable runtime snapshot and safe startup/check-config diagnostics."""
+
 from dtest.settings.storage import StorageSettings
 from dtest.settings.database import DatabaseSettings
 from dtest.settings.worker import WorkerSettings as CommandSettings
@@ -11,6 +12,7 @@ from dtest.settings.agent import AgentSettings
 from dtest.settings.events import EventWorkerSettings
 from dtest.settings.auth import SsoSettings
 from dtest.settings.search import WorkflowSearchSettings
+
 
 @dataclass(frozen=True, repr=False)
 class ServiceSettings:
@@ -29,8 +31,12 @@ class ServiceSettings:
     diagnostics_dir: Path | None
     diagnostics_stall_seconds: float
     sources: Mapping[str, str]
-    inputs: Mapping[str, Any] = field(repr=False)  # Private file export only; never add to summary/API.
-    workflow_search: WorkflowSearchSettings = field(default_factory=WorkflowSearchSettings)
+    inputs: Mapping[str, Any] = field(
+        repr=False
+    )  # Private file export only; never add to summary/API.
+    workflow_search: WorkflowSearchSettings = field(
+        default_factory=WorkflowSearchSettings
+    )
     unused_config_keys: tuple[str, ...] = ()
 
     def summary(self) -> dict[str, Any]:
@@ -51,7 +57,8 @@ class ServiceSettings:
             # Configured maxima, not currently checked-out connections. Distinct
             # drivers/lifetimes require distinct pools, even with one endpoint.
             "connection_pool_limits": {
-                "crud": self.database.database_pool_size + self.database.database_max_overflow,
+                "crud": self.database.database_pool_size
+                + self.database.database_max_overflow,
                 "checkpoint": self.agent.checkpoint_pool_max_size,
                 "submission_bridge": self.worker.pool_size,
                 "event": self.worker.pool_size,

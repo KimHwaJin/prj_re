@@ -1,4 +1,6 @@
 """Execution ownership failure shared by adapters and service orchestration."""
+
+
 class InvocationNeedsRecovery(RuntimeError):
     """A stopped invocation needs session-local reconciliation."""
 

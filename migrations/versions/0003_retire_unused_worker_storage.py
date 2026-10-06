@@ -3,6 +3,7 @@
 The current API Workflow catalog/embeddings are separate active tables.
 Downgrade restores empty legacy tables only, never deleted catalog contents.
 """
+
 from alembic import op
 from sqlalchemy import text
 
@@ -18,22 +19,56 @@ def _admit_legacy_work(conn, namespace):
     All event namespaces are included. New user work is admitted only when no
     current invocation command exists. Old/new writers must be stopped first.
     """
-    if conn.scalar(text("SELECT EXISTS (SELECT 1 FROM agent_commands WHERE state IN ('RUNNING','RECOVERY'))")):
-        raise RuntimeError("Existing command ownership must be drained or recovered first")
-    if conn.scalar(text("SELECT EXISTS (SELECT 1 FROM session_executions WHERE token IS NOT NULL OR recovery_required)")):
-        raise RuntimeError("Stop/recover previous graph owners before command migration")
-    if conn.scalar(text("SELECT EXISTS (SELECT 1 FROM agent_runs WHERE status='running')")):
-        raise RuntimeError("Previous RUNNING invocations require confirmed termination and recovery")
-    if conn.scalar(text("SELECT EXISTS (SELECT 1 FROM ew_commands WHERE state='RUNNING')"), {"ns":namespace}):
-        raise RuntimeError("Previous RUNNING event commands require recovery before migration")
-    if conn.scalar(text("""SELECT EXISTS (SELECT 1 FROM ew_commands c
+    if conn.scalar(
+        text(
+            "SELECT EXISTS (SELECT 1 FROM agent_commands WHERE "
+            "state IN ('RUNNING','RECOVERY'))"
+        )
+    ):
+        raise RuntimeError(
+            "Existing command ownership must be drained or recovered first"
+        )
+    if conn.scalar(
+        text(
+            "SELECT EXISTS (SELECT 1 FROM session_executions WHERE "
+            "token IS NOT NULL OR "
+            "recovery_required)"
+        )
+    ):
+        raise RuntimeError(
+            "Stop/recover previous graph owners before command migration"
+        )
+    if conn.scalar(
+        text("SELECT EXISTS (SELECT 1 FROM agent_runs WHERE status='running')")
+    ):
+        raise RuntimeError(
+            "Previous RUNNING invocations require confirmed "
+            "termination and "
+            "recovery"
+        )
+    if conn.scalar(
+        text(
+            "SELECT EXISTS (SELECT 1 FROM ew_commands WHERE state='RUNNING')"
+        ),
+        {"ns": namespace},
+    ):
+        raise RuntimeError(
+            "Previous RUNNING event commands require recovery before migration"
+        )
+    if conn.scalar(
+        text("""SELECT EXISTS (SELECT 1 FROM ew_commands c
         LEFT JOIN ew_bindings b ON b.namespace=c.namespace AND b.execution_id=c.execution_id
         LEFT JOIN sessions s ON s.session_id::text=b.session_id
-        WHERE c.state IN ('READY','FAILED') AND (s.session_id IS NULL OR NOT EXISTS (SELECT 1 FROM ew_inbox i WHERE i.namespace=c.namespace AND i.event_id=c.event_id)))"""), {"ns":namespace}):
-        raise RuntimeError("Legacy event command has no API session in the common database")
+        WHERE c.state IN ('READY','FAILED') AND (s.session_id IS NULL OR NOT EXISTS (SELECT 1 FROM ew_inbox i WHERE i.namespace=c.namespace AND i.event_id=c.event_id)))"""),
+        {"ns": namespace},
+    ):
+        raise RuntimeError(
+            "Legacy event command has no API session in the common database"
+        )
     # Retrying a completed backfill is safe. Admitting missing old work
     # after new work in the same session would allocate a later ordinal.
-    if conn.scalar(text("""WITH missing AS (
+    if conn.scalar(
+        text("""WITH missing AS (
         SELECT r.session_id FROM agent_runs r WHERE r.status='pending'
         AND NOT EXISTS (SELECT 1 FROM agent_commands c
             WHERE c.invocation_id=r.run_id)
@@ -44,9 +79,16 @@ def _admit_legacy_work(conn, namespace):
         AND NOT EXISTS (SELECT 1 FROM agent_commands c
             WHERE c.namespace=e.namespace AND c.command_id=e.command_id)
     ) SELECT EXISTS (SELECT 1 FROM missing m JOIN agent_commands c USING(session_id)
-        WHERE c.state NOT IN ('DONE','IGNORED','FAILED'))"""), {"ns":namespace}):
-        raise RuntimeError("Mixed legacy/new session commands require ordered migration before serving")
-    result = conn.execute(text("""INSERT INTO agent_commands
+        WHERE c.state NOT IN ('DONE','IGNORED','FAILED'))"""),
+        {"ns": namespace},
+    ):
+        raise RuntimeError(
+            "Mixed legacy/new session commands require ordered "
+            "migration before "
+            "serving"
+        )
+    result = conn.execute(
+        text("""INSERT INTO agent_commands
         (namespace,command_id,session_id,kind,invocation_id,payload,state,available_at,created_at,failure_attempts,last_error)
         SELECT namespace,id,session_id,kind,invocation_id,payload,state,available_at,created_at,failure_attempts,last_error FROM (
             SELECT :ns AS namespace,r.run_id AS id,r.session_id,
@@ -64,15 +106,25 @@ def _admit_legacy_work(conn, namespace):
             JOIN sessions s ON s.session_id::text=b.session_id
             WHERE c.state IN ('READY','FAILED')
         ) legacy ORDER BY created_at,id
-        ON CONFLICT (namespace,command_id) DO NOTHING"""), {"ns":namespace})
+        ON CONFLICT (namespace,command_id) DO NOTHING"""),
+        {"ns": namespace},
+    )
     return result.rowcount
 
 
 def upgrade():
     from dtest.settings.loader import get_settings
+
     _admit_legacy_work(op.get_bind(), get_settings().worker.namespace)
     op.execute("DROP VIEW workflow_adaptive_history_view")
-    for name in ("ew_outbox", "ew_audit", "ew_commands", "workflow_adaptive_history", "workflow_executions", "workflow_catalog"):
+    for name in (
+        "ew_outbox",
+        "ew_audit",
+        "ew_commands",
+        "workflow_adaptive_history",
+        "workflow_executions",
+        "workflow_catalog",
+    ):
         op.drop_table(name)
 
 
@@ -102,7 +154,11 @@ def downgrade():
     CONSTRAINT workflow_catalog_execution_counts_check CHECK (success_count >= 0 AND failure_count >= 0)
     )
     """)
-    op.execute('CREATE INDEX workflow_catalog_recommendation_lookup ON workflow_catalog (intent, reusable, validation_status)')
+    op.execute(
+        "CREATE INDEX workflow_catalog_recommendation_lookup ON "
+        "workflow_catalog (intent, reusable, "
+        "validation_status)"
+    )
     op.execute("""
     CREATE TABLE workflow_executions (
     execution_id UUID NOT NULL,
@@ -121,7 +177,11 @@ def downgrade():
     CONSTRAINT workflow_executions_catalog_id_fkey FOREIGN KEY(catalog_id) REFERENCES workflow_catalog (catalog_id) ON DELETE SET NULL
     )
     """)
-    op.execute('CREATE INDEX workflow_executions_task_lookup ON workflow_executions (session_id, task_id)')
+    op.execute(
+        "CREATE INDEX workflow_executions_task_lookup ON "
+        "workflow_executions (session_id, "
+        "task_id)"
+    )
     op.execute("""
     CREATE TABLE workflow_adaptive_history (
     execution_id UUID NOT NULL,
@@ -209,5 +269,12 @@ def downgrade():
     PRIMARY KEY (id)
     )
     """)
-    op.execute("CREATE INDEX ew_commands_order ON ew_commands (namespace, execution_id, sequence) WHERE state NOT IN ('DONE', 'IGNORED')")
-    op.execute('CREATE INDEX ew_outbox_pending ON ew_outbox (namespace, state, claim_until)')
+    op.execute(
+        "CREATE INDEX ew_commands_order ON ew_commands (namespace, "
+        "execution_id, sequence) WHERE state NOT IN ('DONE', "
+        "'IGNORED')"
+    )
+    op.execute(
+        "CREATE INDEX ew_outbox_pending ON ew_outbox (namespace, "
+        "state, claim_until)"
+    )

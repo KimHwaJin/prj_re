@@ -15,7 +15,9 @@ import dtest.infrastructure.database.models  # noqa: F401,E402
 
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database.database_url.replace("%", "%%"))
+config.set_main_option(
+    "sqlalchemy.url", get_settings().database.database_url.replace("%", "%%")
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -41,14 +43,26 @@ def include_object(obj, name, type_, reflected, compare_to):
     # Active SDK/other-chain tables share the DB but are not ORM-owned.
     # Retired tables have no exemption. Explicit retirement DDL is unaffected.
     if type_ == "index" and name.startswith("ix_workflow_hnsw_"):
-        return False  # model-space indexes are managed by the provisioning tool
+        return (
+            False  # model-space indexes are managed by the provisioning tool
+        )
     active_external_tables = {
-        'store', 'store_migrations',
-        'checkpoints', 'checkpoint_blobs', 'checkpoint_writes', 'checkpoint_migrations',
-        'ew_bindings', 'ew_inbox', 'ew_alembic_version',
+        "store",
+        "store_migrations",
+        "checkpoints",
+        "checkpoint_blobs",
+        "checkpoint_writes",
+        "checkpoint_migrations",
+        "ew_bindings",
+        "ew_inbox",
+        "ew_alembic_version",
     }
-    return not (type_ == 'table' and name in active_external_tables
-                and reflected and compare_to is None)
+    return not (
+        type_ == "table"
+        and name in active_external_tables
+        and reflected
+        and compare_to is None
+    )
 
 
 def do_run_migrations(connection) -> None:

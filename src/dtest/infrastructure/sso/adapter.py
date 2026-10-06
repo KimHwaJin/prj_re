@@ -1,4 +1,5 @@
 """SDK interface only. Corporate implementation is supplied inside the closed network."""
+
 import importlib
 import inspect
 from collections.abc import Callable
@@ -23,8 +24,12 @@ class SyncSsoAdapter:
 
     This does not emulate Flask request/session globals or determine the corporate protocol.
     """
-    def __init__(self, verify: Callable[[Request], VerifiedEmployee | None],
-                 login_url: Callable[[Request, str], str]):
+
+    def __init__(
+        self,
+        verify: Callable[[Request], VerifiedEmployee | None],
+        login_url: Callable[[Request, str], str],
+    ):
         self._verify = verify
         self._login_url = login_url
 
@@ -41,10 +46,15 @@ def load_adapter(settings: SsoSettings) -> SsoAdapter:
     module, name = settings.adapter_factory.split(":", 1)
     try:
         adapter = getattr(importlib.import_module(module), name)(settings)
-        if not all(inspect.iscoroutinefunction(getattr(adapter, method, None))
-                   for method in ("verify", "login_url")):
+        if not all(
+            inspect.iscoroutinefunction(getattr(adapter, method, None))
+            for method in ("verify", "login_url")
+        ):
             raise TypeError()
         return adapter
     except Exception:
         # Import/constructor failures can expose corporate config; don't interpolate the exception.
-        raise ValueError("Cannot load SSO_ADAPTER_FACTORY; check the private adapter contract.") from None
+        raise ValueError(
+            "Cannot load SSO_ADAPTER_FACTORY; check the private "
+            "adapter contract."
+        ) from None

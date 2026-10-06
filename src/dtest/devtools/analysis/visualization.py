@@ -32,6 +32,7 @@ def export_graph_mermaid(
 
 class _TopologyOnlyExecutor:
     """Render execution nodes without an HTTP client or a callable Executor."""
+
     def __getattr__(self, name):
         raise RuntimeError("Topology-only Executor must not be invoked")
 
@@ -39,20 +40,28 @@ class _TopologyOnlyExecutor:
 def build_visualization_graph():
     """Show the complete current graph, including conditional MULTI/repair nodes."""
     from dtest.devtools.analysis.runtime import local_runtime
-    from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+    from dtest.agent_service.agents.analysis.planning.graph import (
+        build_planning_graph,
+    )
+
     runtime = local_runtime(executor=_TopologyOnlyExecutor())
     return build_planning_graph(runtime, checkpointer=None)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Print or save the current analysis LangGraph Mermaid diagram."
+        description=(
+            "Print or save the current analysis LangGraph Mermaid diagram."
+        )
     )
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
-        help="Optional .mmd or .mermaid output path. Without it, print to stdout.",
+        help=(
+            "Optional .mmd or .mermaid output path. Without it, print "
+            "to stdout."
+        ),
     )
     parser.add_argument(
         "--no-styles",
@@ -64,7 +73,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     graph = build_visualization_graph()
     with_styles = not args.no_styles
     if args.output:
-        print(export_graph_mermaid(graph, args.output, with_styles=with_styles))
+        print(
+            export_graph_mermaid(graph, args.output, with_styles=with_styles)
+        )
         return
     print(graph_to_mermaid(graph, with_styles=with_styles))
 

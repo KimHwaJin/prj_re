@@ -1,4 +1,5 @@
 """Load each role's independent, packaged prompt without normalizing its text."""
+
 from importlib.resources import files
 
 

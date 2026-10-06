@@ -7,6 +7,7 @@ from typing import Any
 @dataclass(frozen=True)
 class VerifiedEmployee:
     """Only construct after the corporate SDK validates the request, never from user input."""
+
     employee_id: str
     display_name: str
     valid_until_epoch: int | None = None

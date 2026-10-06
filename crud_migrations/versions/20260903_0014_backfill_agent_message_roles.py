@@ -38,4 +38,3 @@ def downgrade() -> None:
          WHERE message_type = 'agent'
         """
     )
-

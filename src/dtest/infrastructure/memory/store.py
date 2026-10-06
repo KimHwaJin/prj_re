@@ -4,6 +4,7 @@ Uses DATABASE_URL, not checkpoint or Executor-event DB settings. No startup DDL,
 embedding model, vector index or TTL. The asyncpg CRUD pool cannot be handed to
 psycopg; this bounded pool is included separately in the per-Pod DB budget.
 """
+
 import asyncio
 from contextlib import AsyncExitStack, asynccontextmanager
 from langgraph.store.postgres import AsyncPostgresStore
@@ -13,8 +14,10 @@ from sqlalchemy.engine import make_url
 from dtest.lifecycle import protected_cleanup
 from dtest.infrastructure.observability.diagnostics import observe_pool
 
+
 class MemoryStoreBusy(RuntimeError):
     pass
+
 
 class MemoryStoreRuntime:
     def __init__(self):
@@ -29,7 +32,7 @@ class MemoryStoreRuntime:
 
     def start(self):
         if self.stack is not None or self.active or self.lock.locked():
-            raise MemoryStoreBusy('Memory Store still owns resources')
+            raise MemoryStoreBusy("Memory Store still owns resources")
         self.closing = False
         self.loop = None
         self.lock = asyncio.Lock()
@@ -38,13 +41,29 @@ class MemoryStoreRuntime:
 
     async def initialize(self):
         from dtest.settings.loader import get_settings
+
         database = get_settings().database
-        uri = make_url(database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
-        pool = AsyncConnectionPool(uri, name='project-memory-store', min_size=0,
-            max_size=min(2, database.database_pool_size), timeout=database.database_pool_timeout_seconds,
-            open=False, check=AsyncConnectionPool.check_connection,
-            kwargs={'autocommit': True, 'row_factory': dict_row, 'connect_timeout': 10, 'prepare_threshold': 0})
-        observe_pool(pool, 'memory_store_pool')
+        uri = (
+            make_url(database.database_url)
+            .set(drivername="postgresql")
+            .render_as_string(hide_password=False)
+        )
+        pool = AsyncConnectionPool(
+            uri,
+            name="project-memory-store",
+            min_size=0,
+            max_size=min(2, database.database_pool_size),
+            timeout=database.database_pool_timeout_seconds,
+            open=False,
+            check=AsyncConnectionPool.check_connection,
+            kwargs={
+                "autocommit": True,
+                "row_factory": dict_row,
+                "connect_timeout": 10,
+                "prepare_threshold": 0,
+            },
+        )
+        observe_pool(pool, "memory_store_pool")
         stack = AsyncExitStack()
         stack.push_async_callback(pool.close)
         try:
@@ -60,11 +79,11 @@ class MemoryStoreRuntime:
     async def open_store(self):
         loop = asyncio.get_running_loop()
         if self.loop is not None and self.loop is not loop:
-            raise MemoryStoreBusy('Memory Store cannot cross event loops')
+            raise MemoryStoreBusy("Memory Store cannot cross event loops")
         self.loop = loop
         async with self.lock:
             if self.closing:
-                raise MemoryStoreBusy('Memory Store is shutting down')
+                raise MemoryStoreBusy("Memory Store is shutting down")
             if self.store is None:
                 await protected_cleanup(self.initialize())
             self.active += 1
@@ -78,15 +97,19 @@ class MemoryStoreRuntime:
 
     async def shutdown(self):
         from dtest.settings.loader import get_settings
+
         self.closing = True
         try:
-            async with asyncio.timeout(get_settings().shutdown_timeout_seconds):
+            async with asyncio.timeout(
+                get_settings().shutdown_timeout_seconds
+            ):
                 async with self.lock:
                     await self.drained.wait()
                     if self.stack is not None:
                         await protected_cleanup(self.stack.aclose())
                     self.stack = self.store = self.loop = None
         except TimeoutError as exc:
-            raise MemoryStoreBusy('Memory Store has active borrowers') from exc
+            raise MemoryStoreBusy("Memory Store has active borrowers") from exc
+
 
 runtime = MemoryStoreRuntime()

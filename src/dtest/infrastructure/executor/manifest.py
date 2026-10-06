@@ -9,7 +9,9 @@ from dtest.settings.agent import AgentSettings
 from dtest.contracts.executor_manifest import StepResultManifest
 
 
-def _safe_resolve(root: Path, relative_path: str, *, base: Path | None = None) -> Path:
+def _safe_resolve(
+    root: Path, relative_path: str, *, base: Path | None = None
+) -> Path:
     relative = PurePosixPath(relative_path)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
         raise ValueError(f"unsafe shared-PV relative path: {relative_path!r}")
@@ -111,13 +113,20 @@ def _read_outputs(
 def _operation_payload(state: dict[str, Any]) -> dict[str, Any]:
     execution_event = state.get("execution_event")
     if not isinstance(execution_event, dict):
-        raise RuntimeError("manifest result collection requires execution_event")
+        raise RuntimeError(
+            "manifest result collection requires execution_event"
+        )
     payload = execution_event.get("response")
     if not isinstance(payload, dict):
-        raise RuntimeError("Executor event does not contain an operation payload")
+        raise RuntimeError(
+            "Executor event does not contain an operation payload"
+        )
     operation = payload.get("operation")
     expected_number = int(state.get("executor_operation_number", 1))
-    if not isinstance(operation, dict) or int(operation.get("number", 0)) != expected_number:
+    if (
+        not isinstance(operation, dict)
+        or int(operation.get("number", 0)) != expected_number
+    ):
         raise RuntimeError(
             f"Executor event is missing operation {expected_number}"
         )
@@ -136,7 +145,9 @@ def read_current_operation_results_from_manifest(
     payload = _operation_payload(state)
     step_results = payload.get("step_results")
     if not isinstance(step_results, list):
-        raise RuntimeError("Executor operation event does not contain step_results")
+        raise RuntimeError(
+            "Executor operation event does not contain step_results"
+        )
 
     steps_by_sequence = {
         int(step["sequence"]): step
@@ -145,7 +156,9 @@ def read_current_operation_results_from_manifest(
     }
     root = settings.executor_shared_result_root
     results: list[dict[str, Any]] = []
-    for event_step in sorted(step_results, key=lambda item: int(item["sequence"])):
+    for event_step in sorted(
+        step_results, key=lambda item: int(item["sequence"])
+    ):
         sequence = int(event_step["sequence"])
         step = steps_by_sequence.get(sequence) or {}
         lineage = step.get("lineage") or {}
@@ -165,8 +178,12 @@ def read_current_operation_results_from_manifest(
         outputs: list[dict[str, Any]] = []
         if isinstance(result_ref, dict):
             if result_ref.get("storage") != "SHARED_PV":
-                raise ValueError("manifest result_ref.storage must be SHARED_PV")
-            manifest_path = _safe_resolve(root, str(result_ref["relative_path"]))
+                raise ValueError(
+                    "manifest result_ref.storage must be SHARED_PV"
+                )
+            manifest_path = _safe_resolve(
+                root, str(result_ref["relative_path"])
+            )
             manifest_bytes = _verified_bytes(
                 manifest_path,
                 expected_size=int(result_ref["size_bytes"]),
@@ -181,14 +198,19 @@ def read_current_operation_results_from_manifest(
             if identity.sequence != sequence:
                 raise ValueError("manifest sequence does not match event")
             attempt = event_step.get("attempt") or {}
-            if str(identity.execution_attempt_id) != str(attempt.get("id") or ""):
-                raise ValueError("manifest execution_attempt_id does not match event")
-            ref_fencing_token = result_ref.get("fencing_token")
-            if (
-                ref_fencing_token is not None
-                and identity.fencing_token != int(ref_fencing_token)
+            if str(identity.execution_attempt_id) != str(
+                attempt.get("id") or ""
             ):
-                raise ValueError("manifest fencing_token does not match result_ref")
+                raise ValueError(
+                    "manifest execution_attempt_id does not match event"
+                )
+            ref_fencing_token = result_ref.get("fencing_token")
+            if ref_fencing_token is not None and identity.fencing_token != int(
+                ref_fencing_token
+            ):
+                raise ValueError(
+                    "manifest fencing_token does not match result_ref"
+                )
             outputs = _read_outputs(root, manifest_path, manifest)
         elif status != "NOT_EXECUTED":
             raise RuntimeError(
@@ -202,14 +224,18 @@ def read_current_operation_results_from_manifest(
         results.append(
             {
                 "tool_id": tool_id,
-                "role": "workflow_outputs" if is_workflow_output else "tool_execution",
+                "role": "workflow_outputs"
+                if is_workflow_output
+                else "tool_execution",
                 "result": {
                     "status": status,
                     "executor_status": executor_status,
                     "step_id": inputs.get("step_id"),
                     "executor_step_id": event_step.get("step_id"),
                     "cell_index": sequence,
-                    "execution_count": manifest.execution_count if manifest else None,
+                    "execution_count": manifest.execution_count
+                    if manifest
+                    else None,
                     "error_message": (
                         manifest.error_message if manifest else None
                     ),
