@@ -62,6 +62,17 @@ def test_flat_template_keys_override_legacy_env_without_changing_platform_contra
     assert "private-test-value" not in json.dumps(settings.summary())
 
 
+@pytest.mark.parametrize("key", ["IS_SECURITY_SERVICE", "IS_SECURITY_SERVCE"])
+@pytest.mark.parametrize("value", [True, False])
+def test_platform_security_setting_is_accepted_without_enabling_service_auth(tmp_path, key, value):
+    (tmp_path / "config.yml").write_text(f"PORT: 8000\n{key}: {str(value).lower()}\n")
+    settings = load_settings(root=tmp_path, environ={})
+    baseline = load_settings(config={"PORT": 8000}, environ={})
+    assert key not in settings.inputs
+    assert settings.api == baseline.api
+    assert settings.api.server_port == 8000
+
+
 def test_flat_root_is_not_dropped_when_a_legacy_service_block_is_present():
     settings = load_settings(config={"PORT": 5010, "PRIVATE_LLM_MODEL_NAME": "root",
                             "service": {"agent": {"max_plan_candidates": 2}}}, environ={})
