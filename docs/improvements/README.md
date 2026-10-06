@@ -1,10 +1,13 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [104 Ruff·ty와 79자 포맷](104-python-format-quality.md).
-현재 Python 포맷·개발 도구 버전을 통일하고 API·Agent 회귀 1300개 및
-설치 wheel을 검증했다. 기존 lint·타입 진단은 별도로 기록했으며 포맷 통과와
-구분한다. 선행 구조·연동 정리는 [102](102-dtest-service-structure.md),
-[103](103-executor-api-route-contract.md)을 참고한다. 실제 배포는 별도다.
+최신 작업: [105 사내 SSO 요청 어댑터·직원 정보 계약](105-company-sso-adapter.md).
+FastAPI의 SDK 요청 변환·쿠키 검증·직원 5개 값·서버 ORIGIN 전달을 구현하고
+실제 PostgreSQL/Redis 및 쿠키 Run·resume·SSE 포함 71회귀와 wheel을 검증했다.
+실제 SDK import/생성은 폐쇄망에서 한 곳을 채워야 한다. 상세 직원 정보의 User DB
+영속화·users/me 노출은 변경하지 않았다. 전체 lint·타입 검사의 기존 진단은 남아 있다.
+베이스와 작업 브랜치에 병합·게시하며 실제 사내 로그인·배포 검증은 별도다.
+선행 Python 포맷 기준은 [104](104-python-format-quality.md), 구조·경로 정리는
+[102](102-dtest-service-structure.md)·[103](103-executor-api-route-contract.md)을 따른다.
 
 선행 작업: [101 API 패키지·폐기 DB 정리](101-api-service-cleanup.md). 책임별 디렉토리 이동·구 구현과 설정 삭제·테스트 분리·중복 EW 원장 제거 및 폐기 DB 9개 테이블 삭제 migration을 구현했다. API 909개 고유 항목·Agent/설계 432개·실제 삭제/이관 migration·설치 wheel을 검증했다. 기존 서비스 DB 적용·배포는 별도다.
 

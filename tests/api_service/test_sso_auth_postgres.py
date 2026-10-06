@@ -390,3 +390,43 @@ async def test_cookie_admin_user_list_and_deleted_detail(cookie_api):
             "/api/v1/users", headers={"Authorization": "Bearer 009999"}
         )
     ).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_company_sdk_registers_profile_through_real_user_directory(
+    cookie_api,
+):
+    from dtest.contracts.auth import VerifiedEmployee
+    from dtest.infrastructure.sso.company import create_adapter
+    from tests.api_service.test_company_sso import EMPLOYEE, SdkFactoryDouble
+
+    h = cookie_api
+    directory = h.app.state.sso.users
+    employees = []
+
+    class CaptureDirectory:
+        async def bind(self, employee: VerifiedEmployee) -> str:
+            employees.append(employee)
+            return await directory.bind(employee)
+
+    h.app.state.sso.users = CaptureDirectory()
+    factory = SdkFactoryDouble()
+    h.app.state.sso.adapter = create_adapter(
+        h.app.state.sso.settings, sdk_factory=factory
+    )
+    h.client.cookies.set("company", "valid")
+    user = await sign_in(h)
+    assert user["user_id"] == EMPLOYEE[0]
+    assert user["user_name"] == EMPLOYEE[1]
+    assert user["role"] == "user" and user["default_project_id"]
+    assert employees[0].english_name == EMPLOYEE[2]
+    assert employees[0].department == EMPLOYEE[3]
+    assert employees[0].email == EMPLOYEE[4]
+    assert "email" not in user and "department" not in user
+    async with h.factory() as db:
+        row = await db.scalar(
+            select(UserModel).where(UserModel.public_user_id == EMPLOYEE[0])
+        )
+        assert row.user_name == EMPLOYEE[1]
+    again = await sign_in(h)
+    assert again["default_project_id"] == user["default_project_id"]

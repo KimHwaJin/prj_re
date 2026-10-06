@@ -1,8 +1,9 @@
 # SSO 적용과 다른 서비스 재사용
 
-045 · 2026-10-01. 회사 라이브러리는 외부 제공이 불가능하다는 사용자 지시에 따라 소스와
-추측한 SDK 호출을 포함하지 않았다. **공통 로그인·Redis 세션·기존 API 인증·Swagger는
-구현했고, 실제 회사 SSO는 폐쇄망의 SDK 연결 함수 두 곳을 완성해야 사용할 수 있다.**
+105 · 2026-10-06. FastAPI 요청을 사내 SDK의 `args.to_dict()` 계약에 맞추고,
+쿠키 검증·직원 정보 조회·로그인 복귀 주소 연결을 구현했다. SDK 소스는 포함하지 않는다.
+**폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
+실제 회사 로그인 왕복은 폐쇄망 검증 대상이다.
 
 ## API와 신원 경계
 
@@ -26,59 +27,93 @@
 이 구현은 임의의 과거 UUID/public ID에서 직원 사번을 알아내거나 기존 관리자 계정을
 자동으로 새 직원에게 이전하지 않는다. 같은 사번의 기존 관리자는 기존 role을 유지한다.
 
-## 폐쇄망 SDK 연결: 여기 두 함수만 작성
+## 폐쇄망 SDK 연결: 생성 함수 한 곳
 
-`src/integrations/company_sso.py`:
+파일: `src/dtest/infrastructure/sso/company.py`의 `_create_sdk`.
+현재 이 함수는 명시적으로 NotImplementedError를 발생시킨다. 아래처럼 회사 SDK의
+실제 import와 생성으로 교체한다. **예시의 모듈 이름은 실제 패키지명으로 바꾼다.**
+SDK 소스나 회사 쿠키를 외부 저장소에 추가하지 않는다.
 
 ```python
-def verify_employee(request) -> VerifiedEmployee | None:
-    # 공식 사내 SDK로 요청의 원본 쿠키를 검증한다.
-    # SDK 검증 결과의 공식 getter에서 사번·이름을 추출한다.
-    # return VerifiedEmployee(employee_id=사번, display_name=이름,
-    #                         valid_until_epoch=만료시각_초단위_있을때)
-    # 미인증만 None. 통신/SDK 장애는 예외.
-    ...
+def _create_sdk(request: SsoRequest) -> CompanySdk:
+    from actual_company_package import SSO  # 폐쇄망의 실제 패키지명
 
-
-def build_login_url(request, return_url: str) -> str:
-    # 공식 SDK의 로그인 URL/ORIGIN/복귀 주소 규격을 따른다.
-    ...
+    return SSO(request)
 ```
 
-실제 배포 파일에는 `...`가 아니라 구현이 필요하다. 현재 연결 함수는 명시적으로
-NotImplementedError를 발생시킨다. 미설정 또는 미구현 SDK를 정상 로그인으로 취급하지 않는다.
-제공받은 Flask 예시의 SSO(request), check_day_cookie, redirect_url 외에는 SDK 규격을
-알 수 없다. FastAPI Request 호환성, 직원 getter, 별도 callback의 GET/POST, state/nonce,
-쿠키 만료·전역 로그아웃 규칙은 사내 가이드를 보고 **폐쇄망에서** 확인한다.
-callback은 필요 여부·규격을 알 수 없어 임의로 만들지 않았다.
+`SsoRequest`는 실제 FastAPI 요청의 headers와 쿼리 사본인 args를 제공한다.
+`request.args.to_dict()`를 지원하며 Flask의 request/session 전역을 만들지 않는다.
+이번에 확인한 SDK 인터페이스만 연결한다. SDK가 다른 Flask 전용 속성도 사용한다면
+폐쇄망에서 그 접근 지점을 추가로 확인해야 한다.
 
-동기 SDK는 SyncSsoAdapter가 thread pool에서 실행한다. 이는 Flask의 request/session 전역을
-자동 흉내 내는 기능이 아니다. SDK 생성·요청 변환은 공식 호환 방식으로 구현하고 SDK의
-자체 연결/읽기 타임아웃도 설정한다. 공통 async deadline만으로 실행 중인 thread를 종료할 수 없다.
+직원 확인은 원본 Cookie 헤더 → `check_day_cookie(cookie)` → 검증 성공 시에만
+`get_sso_info(cookie)` 순서다. 반환값은 Flask 예시의 대입 순서와 같은 다섯 값의
+tuple 또는 list로 받는다. 사번·이름은 비어 있지 않은 문자열이어야 한다.
+영문 이름·부서·메일은 문자열 또는 None이다. 다른 형식은 오류로 처리한다.
+사번을 숫자로 바꾸지 않으며 모든 값을 SDK 검증 후에만 사용한다.
+
+| SDK 결과 위치 / 이름 | VerifiedEmployee 필드 | 의미 |
+|---|---|---|
+| 0 / emp_no | employee_id | 직원 사번, 앞자리 0 보존 |
+| 1 / emp_name | display_name | 직원 이름 |
+| 2 / emp_name_en | english_name | 영문 이름 |
+| 3 / dept | department | SDK가 제공하는 부서 값 |
+| 4 / email | email | 회사 메일 주소 |
+| 별도 만료 정보 없음 | valid_until_epoch | 현재 None, 서비스 로그인 TTL 사용 |
+
+직원 정보는 UserDirectory.bind에 전부 전달한다. 현재 dtest의 DB 등록에는
+사번과 이름을 사용한다. **추가 세 필드는 직원 계약에 포함되지만 User DB·users/me
+응답에 저장/추가하지 않는다.** 기존 사용자 이름·role을 덮어쓰지 않고 최초 등록은
+일반 사용자·기본 프로젝트 생성 정책을 따른다. Redis는 내부 UUID·CSRF·만료만 저장한다.
+
+SDK 로그인 URL 생성 시 args의 `ORIGIN`은 서버가 정한 로그인 API 복귀 주소로
+덮어쓴다. 사용자가 query로 넘긴 임의 ORIGIN은 신뢰하지 않는다. 인증 확인용 요청에는
+사용자 ORIGIN을 제거한다. SDK의 `redirect_url`을 그대로 반환하고 URL 뒤에
+sub_path를 붙이거나 재인코딩하지 않는다. 공통 runtime이 이동 대상 origin을 검증한다.
+
+```text
+GET /api/v1/auth/login/sso?return_to=/demo
+  → 회사 Cookie 없거나 검증 false: SDK.redirect_url로 302
+    ORIGIN=https://api.example.internal/api/v1/auth/login/sso
+           ?return_to=%2Fdemo&target=app
+  → 회사 로그인 후 ORIGIN 복귀: 회사 Cookie 검증, 직원 5개 값 조회
+  → 사용자 연결/최초 등록, Redis 로그인 세션, HttpOnly 쿠키 발급
+  → 설정된 프론트 /demo로 302
+```
+
+미인증만 None이고 SDK 장애·잘못된 성공 응답은 공통 runtime에서 503으로 처리한다.
+예외 메시지·회사 쿠키·직원 값을 응답이나 로그에 기록하지 않는다.
+동기 SDK는 SyncSsoAdapter가 thread pool에서 실행한다. SDK 자체의 연결/읽기
+타임아웃도 공식 지원 방식으로 설정해야 한다. async deadline만으로 이미 실행 중인
+thread를 종료할 수 없다. 별도 callback/state/nonce 규칙, 회사 쿠키 만료·전역
+로그아웃 규칙은 사내 가이드대로 폐쇄망에서 확인한다.
 
 ## 중앙 설정
 
-`service.auth`를 config.dev.yml/config.stg.yml/config.prd.yml 또는 별도 선택 YAML에 넣는다.
-YAML > env > 기본값 순서를 유지한다. 아래 도메인은 예시이며 실제 등록된 주소로 바꾼다.
+로컬은 config.yml, 배포는 config.dev.yml/config.stg.yml/config.prd.yml에
+최상위 키로 설정한다. APP_ENV로 배포 환경을 선택하며 YAML > env > 기본값 순서다.
+아래 도메인은 예시이며 실제 등록된 주소로 바꾼다. Redis는 기존 REDIS_URL을 사용한다.
 
 ```yaml
-service:
-  auth:
-    sso_adapter_factory: integrations.company_sso:create_adapter
-    sso_public_api_origin: https://api.example.internal
-    sso_frontend_origin: https://ui.example.internal
-    sso_allowed_origins: [https://sso.example.internal]
-    sso_namespace: dtest-agent:prd:sso
-    sso_cookie_name: __Host-dtest_session
-    sso_cookie_secure: true
-    sso_cookie_samesite: lax
-    sso_session_ttl_seconds: 1800
-    sso_auto_register: true
-    sso_allowed_return_roots: ["/", "/projects"]
-    sso_redis_max_connections: 8
-    sso_redis_timeout_seconds: 3
-    sso_call_timeout_seconds: 10
+SSO_ADAPTER_FACTORY: dtest.infrastructure.sso.company:create_adapter
+SSO_PUBLIC_API_ORIGIN: https://api.example.internal
+SSO_FRONTEND_ORIGIN: https://ui.example.internal
+SSO_ALLOWED_ORIGINS: [https://sso.example.internal]
+SSO_NAMESPACE: dtest-agent:prd:sso
+SSO_COOKIE_NAME: __Host-dtest_session
+SSO_COOKIE_SECURE: true
+SSO_COOKIE_SAMESITE: lax
+SSO_SESSION_TTL_SECONDS: 1800
+SSO_AUTO_REGISTER: true
+SSO_ALLOWED_RETURN_ROOTS: ["/", "/demo", "/projects"]
+SSO_REDIS_MAX_CONNECTIONS: 8
+SSO_REDIS_TIMEOUT_SECONDS: 3
+SSO_CALL_TIMEOUT_SECONDS: 10
 ```
+
+SDK 생성 코드가 미구현이면 위 factory를 선택해도 실제 로그인은 503이다.
+환경변수는 새로 추가하지 않았다. 서비스 세션을 위해 Flask SECRET_KEY나
+Flask SessionMiddleware를 추가할 필요는 없다.
 
 환경변수는 같은 이름의 대문자다. 목록은 env에서 JSON 배열을 사용한다.
 namespace 미지정 시 `dtest-agent:{APP_ENV}:sso`로 정한다. 리다이렉트는 설정된 origin으로
@@ -98,7 +133,7 @@ origin은 scheme://host[:port]이고 경로를 넣지 않는다. 공개 API pref
 | SSO_REDIS_TIMEOUT_SECONDS | 3초. Redis 연결·명령 기한 |
 | SSO_CALL_TIMEOUT_SECONDS | 10초. SDK coroutine 기한; SDK 자체 네트워크 기한도 설정 |
 
-HTTP 로컬은 명시적으로 sso_cookie_secure=false를 쓰고 __Host- 이름을 사용하지 않는다.
+HTTP 로컬은 명시적으로 SSO_COOKIE_SECURE=false를 쓰고 __Host- 이름을 사용하지 않는다.
 SameSite=None은 Secure가 필수다. 다른 사이트의 프론트 배포는 쿠키·CORS 정책 확인이 필요하다.
 Swagger는 API와 같은 origin의 페이지를 사용한다. 앱은 여기에 CORS origin을 임의 추가하지 않는다.
 
@@ -125,7 +160,7 @@ namespace를 사용한다. 서버의 CPU/메모리/장애는 공유되므로 nam
 
 ## Swagger와 프론트 테스트 순서
 
-1. SDK 두 함수를 구현하고 같은 환경에 사내 라이브러리를 설치한다. SDK 소스/비밀값을 외부 Git에 올리지 않는다.
+1. `_create_sdk`의 import/생성을 채우고 같은 환경에 사내 라이브러리를 설치한다. SDK 소스/비밀값을 외부 Git에 올리지 않는다.
 2. 설정의 origin/SSO 허용 주소/SDK factory를 주입하고 기존 root app.py로 기동한다.
 3. 로컬 공통 app은 `/docs`, 플랫폼 생성 app에 attach할 때는 제공된 `/docs`를 건드리지 않고 `/service/docs`를 연다.
 4. **SSO 로그인** 링크로 브라우저 이동한다. 로그인 API의 Try it out으로 SSO 화면을 열지 않는다.
@@ -159,7 +194,9 @@ if (response.status === 401) {
 
 ## 다른 서비스 재사용
 
-service_auth 패키지에는 api_service/agent_service/애플리케이션 DB import가 없다.
+`dtest.contracts.auth`는 직원·어댑터·UserDirectory 계약이고,
+`dtest.infrastructure.sso`는 SDK 연결, `dtest.api_service.auth`는 로그인 HTTP 경계다.
+직원 매핑 정책은 `dtest.application.resources.sso_users`에 둔다.
 공통 attach_sso는 기존 FastAPI app에 auth 라우터와 runtime을 연결하는 조립 함수다.
 새 서버나 lifespan을 만들지 않는다. 각 서비스는 UserDirectory.bind에서 직원↔자체 User ID
 매핑/등록 정책을 구현하고 자신의 Actor Dependency에서 get_login_session 결과의 user_id로
@@ -184,13 +221,14 @@ API·Agent는 같은 Pod에 남고 DB UUID 전달과 Worker 동작은 바뀌지 
 
 ## 전환과 검증
 
-추가 DB schema migration은 없다. 기존 public ID·role revision을 유지한다. 첫 관리자는
-그 직원이 자동 일반 사용자로 등록되기 **전에** 기존 bootstrap_admin 명령으로 검증될 사번과
-같은 공개 ID를 사용해 준비한다. 이미 일반 사용자/다른 관리자가 존재하면 해당 명령이
-자동 승격하지 않으므로 기존 관리자 계정 연결·권한 조정을 먼저 정한다.
+추가 DB schema migration은 없다. 기존 public ID·role revision을 유지한다.
+첫 관리자는 그 직원이 자동 일반 사용자로 등록되기 **전에** 현재 관리자 초기화
+명령으로 검증될 사번과 같은 공개 ID를 준비한다. 일반 사용자 등록 후에는 기존
+관리자 API로 권한을 변경한다. bootstrap은 기존 일반 계정을 자동 승격하지 않는다.
 
 ```sh
-PYTHONPATH=src python -m bootstrap_admin --user-id 실제사번 --user-name 관리자
+PYTHONPATH=src python -m dtest.application.admin \
+  --user-id 실제사번 --user-name 관리자
 ```
 
 기존 X-User-Id/Bearer 부하테스트·HTTP 진단 scripts는 현재 API에 그대로 호환되지 않는다.
@@ -199,5 +237,6 @@ PYTHONPATH=src python -m bootstrap_admin --user-id 실제사번 --user-name 관�
 과거 업무 회귀는 test-only dependency override로 기존 테스트 신원을 재현하며 wheel에 포함되지 않는다.
 새 SSO 검증은 그 override를 제거하고 실제 쿠키 경계를 사용한다. 회사 SDK만 test double이다.
 
-테스트·결과·제한은 [045 작업 기록](improvements/045-sso-authentication.md)을 참고한다.
+최신 변경·검증은 [105 작업 기록](improvements/105-company-sso-adapter.md),
+기존 세션 정책은 [045 작업 기록](improvements/045-sso-authentication.md)을 참고한다.
 브라우저 회사 SSO 왕복·회사 쿠키 정책·실제 SDK의 직원 정보 검증은 폐쇄망에서 남아 있다.
