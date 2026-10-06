@@ -6,7 +6,7 @@ import httpx, uvicorn, yaml
 from service_settings import load_settings
 from service_bootstrap import create_app
 from cookie_auth import configure_cookie_auth, install_employee_fixture, sign_in, write_private_result
-from api_service.services.agent_graph_service import runtime
+from api_service.runs.runtime import runtime
 
 parser = __import__('argparse').ArgumentParser(description='Isolated local HTTP/Executor/Jupyter verification; no production DBs.')
 parser.add_argument('--settings-file', required=True, type=Path, help='Private flat JSON central settings mapping. Include local DB URLs and, for real mode, model/Phoenix settings.')
@@ -308,9 +308,9 @@ async def main():
                             await asyncio.sleep(.2)
                     assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
                     snapshot=(await client.get(memory_path,headers=headers)).json()
-                    from api_service.services.project_memory_policy import ProjectMemoryPolicy
-                    from api_service.core.database import short_session
-                    from api_service.models.common.project_model import ProjectModel
+                    from api_service.resources.project_memory import ProjectMemoryPolicy
+                    from api_service.infrastructure.database import short_session
+                    from api_service.models.project_model import ProjectModel
                     from sqlalchemy import select
                     async with short_session() as db:
                         owner_id=await db.scalar(select(ProjectModel.user_id).where(ProjectModel.project_id==UUID(project)))
@@ -363,7 +363,7 @@ async def main():
                 # invocation is covered with real DB and an explicit model double.
                 await client.post(path+'/'+r.json()['run_id']+'/cancel',headers=headers,json={})
         if real_mode:
-            import api_service.observability.phoenix as phoenix
+            import service_runtime.observability.phoenix as phoenix
             provider=phoenix._tracer_provider
             if provider:await asyncio.to_thread(provider.force_flush)
             async with httpx.AsyncClient(trust_env=False,timeout=15) as client:

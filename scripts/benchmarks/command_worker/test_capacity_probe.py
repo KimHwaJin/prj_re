@@ -24,16 +24,18 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 import service_settings
-from api_service import agent_run_worker as worker
+from api_service.workers import agent as worker
 from api_service.runs import execution
-from api_service.services.session_execution import run_event_owned
-from api_service.worker.runtime import ExecutorWorker
-from api_service.test.test_user_identity_postgres import database_url, harness, add_session
-from api_service.test.test_run_cleanup_postgres import runtime, enqueue
+from api_service.workers.executor_events.runtime import ExecutorWorker
+from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
+from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 from service_contracts.events import ExecutorEvent
 
 ROOT = Path(__file__).resolve().parents[3]
 CURRENT = (ROOT/'src/api_service/runs/commands/claim.py').exists()
+if not CURRENT:
+    # This import is used only when profiling the historical source snapshot.
+    from api_service.services.session_execution import run_event_owned
 REPEATS = int(os.getenv('DTEST_CAPACITY_REPEATS', '2'))
 DELAY = float(os.getenv('DTEST_CAPACITY_DELAY_SECONDS', '5'))
 CASES = {'user_only': (8, 0), 'event_only': (0, 8), 'balanced': (4, 4)}
@@ -58,12 +60,12 @@ async def test_capacity_probe(runtime, monkeypatch, tmp_path, scenario, repeat):
     raw_url = make_url(h.engine.url).set(drivername='postgresql').render_as_string(hide_password=False)
     migration = tmp_path/'event.yml'
     migration.write_text('database_url: '+raw_url+'\nAGENT_WORKER_ENABLED: false\nEVENT_WORKER_ENABLED: false\n')
-    result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.ini', 'upgrade', 'ew_0001'],
+    result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.ini', 'upgrade', 'head' if CURRENT else 'ew_0001'],
         cwd=ROOT, env={**os.environ, 'SERVICE_CONFIG_FILE':str(migration), 'PYTHONPATH':str(ROOT/'src')},
         capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     async with h.engine.begin() as db:
-        await db.execute(text('TRUNCATE ew_inbox,ew_bindings,ew_commands CASCADE'))
+        await db.execute(text('TRUNCATE ew_inbox,ew_bindings CASCADE' if CURRENT else 'TRUNCATE ew_inbox,ew_bindings,ew_commands CASCADE'))
     pooled = create_async_engine(h.engine.url, pool_size=8, max_overflow=0,
                                  pool_pre_ping=True, connect_args={'ssl':False})
     h.factory = async_sessionmaker(pooled, expire_on_commit=False, autoflush=False)
@@ -158,7 +160,7 @@ async def test_capacity_probe(runtime, monkeypatch, tmp_path, scenario, repeat):
                             raise AssertionError('Worker unexpectedly stopped')
                     async with h.factory() as db:
                         user_done = await db.scalar(text("SELECT count(*) FROM agent_runs WHERE status='success'"))
-                        event_done = await db.scalar(text("SELECT count(*) FROM ew_commands WHERE namespace=:ns AND state='DONE'"), {'ns':namespace})
+                        event_done = await db.scalar(text("SELECT count(*) FROM agent_commands WHERE namespace=:ns AND kind='executor_resume' AND state='DONE'" if CURRENT else "SELECT count(*) FROM ew_commands WHERE namespace=:ns AND state='DONE'"), {'ns':namespace})
                         pending = await db.scalar(text("SELECT count(*) FROM agent_commands WHERE namespace=:ns AND state<>'DONE'"), {'ns':namespace}) if CURRENT else 0
                     if user_done == user_count and event_done == event_count and pending == 0:
                         break

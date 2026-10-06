@@ -8,8 +8,8 @@ from sqlalchemy import bindparam, cast, func, select
 from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlalchemy.orm import Bundle, aliased
 
-from api_service.models.common.agent_run_model import AgentRunModel as Run
-from api_service.models.common.task_model import TaskModel as Task
+from api_service.models.agent_run_model import AgentRunModel as Run
+from api_service.models.task_model import TaskModel as Task
 
 
 def _build_projection(*, summary=False):

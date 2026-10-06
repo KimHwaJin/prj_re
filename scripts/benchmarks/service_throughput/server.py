@@ -10,10 +10,10 @@ cfg=json.loads(args.config.read_text())
 from service_settings import configure,load_settings
 configure(load_settings(config=cfg['settings'],environ={}))
 from service_bootstrap import create_app
-from api_service.core.database import get_engine
+from api_service.infrastructure.database import get_engine
 from sqlalchemy import event
 from service_runtime import diagnostics as diag
-from api_service import agent_run_worker as worker
+from api_service.workers import agent as worker
 from agent_service.agents.analysis.planning.testing import MockConversation
 from service_auth.sso.contracts import VerifiedEmployee
 

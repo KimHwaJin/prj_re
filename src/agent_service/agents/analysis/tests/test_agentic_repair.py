@@ -132,7 +132,7 @@ async def scenario(tmp_path,monkeypatch,**options):
         identity=resume_identity(str(uuid4()),boundary.id,command)
         return await graph.ainvoke(Command(resume={boundary.id:resume_envelope(identity,command)}),config,durability='sync')
     state=await resume({'resume':{'action':'approve_plan','plan_id':view['plan_id'],'plan_revision':1}})
-    import api_service.services.graph_crud_persistence as persistence
+    import api_service.runs.persistence.graph as persistence
     async def persist(*args,**kwargs):return args[0]
     monkeypatch.setattr(persistence,'persist_graph_state',persist)
     async def deliver(event):

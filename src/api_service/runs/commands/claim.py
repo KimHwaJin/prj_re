@@ -5,17 +5,17 @@ from uuid import UUID, uuid4
 from sqlalchemy import bindparam, or_, select
 from sqlalchemy.orm import aliased
 
-from api_service.core.enums import AgentRunStatus, TaskStatus
-from api_service.core.execution_claim import ExecutionClaim
-from api_service.models.common.agent_command_model import AgentCommandModel as Command
-from api_service.models.common.agent_run_model import AgentRunModel as Run
-from api_service.models.common.session_execution_model import SessionExecutionModel as Owner
-from api_service.models.common.task_model import TaskModel as Task
+from api_service.models.enums import AgentRunStatus, TaskStatus
+from api_service.runs.claim_context import ExecutionClaim
+from api_service.models.agent_command_model import AgentCommandModel as Command
+from api_service.models.agent_run_model import AgentRunModel as Run
+from api_service.models.session_execution_model import SessionExecutionModel as Owner
+from api_service.models.task_model import TaskModel as Task
 from api_service.runs.commands.types import ClaimedEvent, ClaimedRun
-from api_service.schemas.common.run_schema import RunCreate
-from api_service.services.helpers import utc_now
-from api_service.services.session_execution import SessionExecution, acquire
-from api_service.services.task_service import TaskService
+from api_service.schemas.run_schema import RunCreate
+from api_service.utils import utc_now
+from api_service.runs.ownership import SessionExecution, acquire
+from api_service.runs.tasks import TaskService
 from service_contracts.events import EventContext, ExecutorEvent
 
 

@@ -47,8 +47,8 @@ NOTIFY가 유실되고 다른 wake/작업 완료가 없다면 다음 정상 reco
 
 - `service_runtime/postgres_signals.py`: 재사용 가능한 공용 listener·callback 격리·참조/재연결 수명.
 - `api_service/runs/commands/wakeup.py`: namespace 힌트 필터·다음 retry 시각.
-- `api_service/agent_run_worker.py`: graph 슬롯·claim·신호/timer/완료/종료 대기 조립.
-- `api_service/services/run_stream_service.py`: 기존 SSE 읽기·cursor·cache는 유지하고 listener 수명만 공용 broker로 연결.
+- `api_service/workers/agent.py`: graph 슬롯·claim·신호/timer/완료/종료 대기 조립.
+- `api_service/runs/streaming.py`: 기존 SSE 읽기·cursor·cache는 유지하고 listener 수명만 공용 broker로 연결.
 - `crud_migrations/versions/20261003_0027_command_notifications.py`: trigger/function 추가. downgrade는 해당 trigger/function만 제거한다.
 
 배포 전에 API/명령 DB에서 `alembic -c alembic.crud.ini upgrade head`를 수행한다. `ew_0001`이나 checkpoint schema를 변경하는 작업은 아니다. 이 요청에서는 실제 서비스 DB migration, 기존 컨테이너 재기동과 베이스 merge/push를 수행하지 않았다. 기존060의 DB 이행/backfill·구 실행기 종료 조건은 별도로 지킨다.

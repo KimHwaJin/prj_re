@@ -1,6 +1,6 @@
 # 공통 Agent 명령 Worker: 개발·이행 안내
 
-060 기준, `feature/unified-agent-command-worker`. 구현·격리 검증 결과이며 운영 DB 이행·배포 완료를 뜻하지 않는다. [작업 기록](improvements/060-unified-agent-command-worker.md), [Run 실행 경계](run-execution-architecture.md)를 함께 읽는다.
+101 API 패키지·DB 정리 기준. 060의 공통 명령 실행 설계는 유지한다. 구현·격리 검증 결과이며 운영 DB 이행·배포 완료를 뜻하지 않는다. [작업 기록](improvements/060-unified-agent-command-worker.md), [Run 실행 경계](run-execution-architecture.md)를 함께 읽는다.
 
 ## 기동과 실행 흐름
 
@@ -23,7 +23,7 @@ flowchart LR
 
 - 사용자 접수는 Task·private invocation·queued 이벤트·내부 명령을 같은 SQLAlchemy transaction에서 기록한다. 원장 기록 실패 시 HTTP 접수도 실패하고 전부 롤백한다.
 - Executor 수신은 Inbox commit 후 원본 Redis 메시지를 ACK한다. graph 완료를 기다리지 않는다. Router는 연속된 sequence를 검증하고 Inbox 상태·binding 순번·명령을 같은 psycopg transaction에서 기록한다.
-- `ew_commands`는 이전 데이터 이행 및 이벤트 처리 감사 투영으로 남긴다. 현재 claim의 정본은 `agent_commands`다. Router가 새 `ew_outbox` 행을 만들거나 내부 Redis command stream에 발행하지 않는다.
+- 명령 원장은 `agent_commands` 하나다. 구 `ew_commands`·`ew_outbox`·`ew_audit`는 ew_0003에서 이관 후 삭제하며, runtime은 이 테이블을 읽거나 쓰지 않는다.
 - 공통 Worker는 빈 실행 자리가 있을 때만 한 명령씩 claim한다. 사용자와 Executor 결과가 동일 `AGENT_WORKER_CONCURRENCY`를 공유한다. 오래된 eligible 명령부터 선택하며, 종류별 가중치·자리 예약은 아직 적용하지 않는다.
 - graph·모델·HTTP를 기다리는 동안 claim/admission transaction을 유지하지 않는다. checkpoint/Store/observer가 자기 I/O용 연결을 잠깐 빌리는 것은 별개다.
 
@@ -31,15 +31,15 @@ flowchart LR
 
 | 위치 | 책임 |
 |---|---|
-| `models/common/agent_command_model.py` | 내부 원장 모델·제약·index |
+| `models/agent_command_model.py` | 내부 원장 모델·제약·index |
 | `runs/commands/admission.py` | 사용자 입력과 같은 transaction의 명령 기록 |
 | `runs/commands/claim.py` | 순서·준비 상태·소유권을 검사하고 원자적 claim |
 | `runs/commands/types.py` | 실행에 넘기는 immutable 사용자/이벤트 claim 값 |
 | `runs/commands/outcome.py` | token 대조 후 완료·유예·실패·복구 기록 |
-| `runs/commands/migrate.py` | 기존 pending 사용자/READY·FAILED 이벤트의 명시적 이행 |
-| `agent_run_worker.py` | 총한도·실행 task·종료 수명, 두 입력의 공통 실행 |
-| `agent_worker/worker_main.py`, `worker_hooks.py` | 이벤트 수신 bootstrap·허용 event 종류, graph callback 없음 |
-| `worker/runtime.py`, `ingress.py`, `store.py` | Redis ingress·Inbox·routing·binding·메트릭 |
+| `migrations/versions/0003_retire_unused_worker_storage.py` | 구 명령 일회 이관 후 폐기 테이블 삭제 |
+| `workers/agent.py` | 총한도·실행 task·종료 수명, 두 입력의 공통 실행 |
+| `workers/executor_events/main.py`, `event_types.py` | 이벤트 수신 bootstrap·허용 event 종류, graph callback 없음 |
+| `workers/executor_events/runtime.py`, `ingress.py`, `store.py` | Redis ingress·Inbox·routing·binding·메트릭 |
 | `crud_migrations/versions/20261003_0026_agent_commands.py` | 동결된 DDL, runtime namespace 자동 추론 없음 |
 
 `worker/dispatcher.py`, `guard.py`, `outbox.py`, 독립 graph_provider와 구 전용 테스트·Store 발행/재시도 메서드는 사용자 명시 승인 후 삭제했다. DB claim·소유권·취소/종료 검증과 Redis 원본 이벤트 consumer의 lease는 유지한다. 이전 버전의 실행기를 현재 원장과 동시에 띄우면 안 된다.
@@ -92,7 +92,7 @@ HITL/Executor 대기에서는 현재 명령이 DONE이고 자리를 반환한다
 | DATABASE_URL | API·명령 원장·Inbox/binding의 공통 DB 원천 |
 | EW_DATABASE_URL | 미지정 시 DATABASE_URL에서 psycopg 표기로 파생. 실행 활성 상태에서 다른 DB/접속 정본이면 기동 거절 |
 | CHECKPOINT_DB_URI | LangGraph checkpoint DB. 별도 DB·풀 유지 가능 |
-| WORKFLOW_DATABASE_URL | Workflow 저장소. 별도 설정 유지 |
+| Workflow 저장 | DATABASE_URL의 현재 workflows·workflow_embeddings. 별도 DB 설정 삭제 |
 | AGENT_WORKER_CONCURRENCY | 사용자 시작·승인·Executor 결과를 합친 프로세스별 graph 한도 |
 | AGENT_WORKER_POLL_INTERVAL_SECONDS | LISTEN 미연결/비활성 시 fallback. 기본0.25초, 최소0.05초 |
 | AGENT_WORKER_NOTIFY_ENABLED / AGENT_WORKER_RECONCILE_INTERVAL_SECONDS | 기본true/5초. 공용 LISTEN 힌트와 유실 시 느린 재확인 |
@@ -109,11 +109,10 @@ config > env > 기본값 우선순위와 공유 snapshot을 유지한다. 같은
 
 1. 새 사용자 접수를 차단하고 기존 API/Agent/Event graph 실행기를 drain·종료한다. 이전 standalone Event Worker도 남아 있지 않아야 한다. Executor 외부 실행 자체는 계속될 수 있으며 원본 Redis 전달 보존이 필요하다.
 2. 실제 DATABASE_URL/EW_DATABASE_URL/namespace와 binding·Inbox·미처리 명령·outbox 상태를 확인한다. 기존 event DB가 따로라면 키/FK/sequence를 보존해 공통 API DB로 이관하는 별도 작업이 먼저다. namespace·event group을 동시에 임의 변경하지 않는다.
-3. 공통 DB에 CRUD Alembic `20261003_0026`까지, Event Alembic head를 적용한다. checkpoint migration은 기존 대상에 적용한다. schema head만으로 기존 대기 작업이 자동 이행되지는 않는다.
-4. 공통 DB 대상과 namespace를 설정한 뒤 `PYTHONPATH=src python -m api_service.runs.commands.migrate`를 실행한다. 기존 pending Run과 READY/FAILED 이벤트를 원래 ID로 이행한다. 이벤트 업무 실패 횟수·마지막 오류도 보존한다. 반복 실행은 중복을 만들지 않는다.
-5. RUNNING/RECOVERY 명령·점유 owner·실행 중 invocation이 있으면 이행을 거절한다. 원장 일부만 있고 같은 세션의 누락된 구 명령이 있으면 새 ordinal로 뒤에 붙이지 않고 거절한다. 기존 writer 종료와 원래 순서를 확인한 후 해결한다. 임의로 token을 지우지 않는다.
-6. 새 `app.py`만 기동한다. readiness는 pending/running invocation과 READY 구 이벤트의 누락된 공통 명령을 확인한다. graph 명령 원장·순서·소유권, Inbox duplicate/sequence, API/SSE 결과를 확인한다.
-7. 기존 Redis 내부 dispatch group/Outbox 잔여 데이터는 자동 삭제하지 않는다. 새 입력 흐름·보존 필요성과 이전 실행기 부재를 확인한 별도 정리다. 공통 원장에 미종료 명령이 있으면 Alembic downgrade도 거절된다.
+3. 선택한 YAML로 `uv run python scripts/migrate.py`를 실행한다. CRUD head 다음 Event head가 기존 pending Run·READY/FAILED 이벤트를 원래 ID로 자동 이관하고 폐기 테이블을 삭제한다. checkpoint는 기존 대상에 setup한다.
+4. RUNNING/RECOVERY 명령·점유 owner·실행 중 invocation이 있으면 이행을 거절한다. 원장 일부만 있고 같은 세션의 누락된 구 명령이 있으면 새 ordinal로 뒤에 붙이지 않고 거절한다. 원래 순서와 기존 writer 종료를 확인한 후 해결하며 임의로 token을 지우지 않는다.
+5. 새 `app.py`를 기동한다. 공통 원장·순서·소유권, Inbox duplicate/sequence, API/SSE 결과를 확인한다. readiness는 현재 원장과 활성 자원 상태를 검사한다.
+6. 기존 Redis 내부 dispatch group의 잔여 데이터는 자동 삭제하지 않는다. 외부 원본 이벤트·SSO 세션과 별개인 이전 배포 전달 데이터이므로 다른 환경과 공유 여부를 확인해야 한다. PostgreSQL의 폐기 Outbox/Audit/구 명령은 이번 migration에서 삭제한다. 공통 원장에 미종료 명령이 있으면 기존 CRUD downgrade도 거절된다.
 
 로컬 `scripts/local.py up/update`는 기존 API와 legacy Event 컨테이너를 먼저 멈추고 migration/bootstrap에서 backfill을 실행한다. 생성된 .env.local에 기존 별도 EW DB가 남으면 자동으로 DB를 바꾸지 않는다. 먼저 위 데이터 이행과 공통 DB 설정을 완료해야 한다. 기존 .env를 직접 덮어쓰지 않는다.
 

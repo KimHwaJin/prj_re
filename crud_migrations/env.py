@@ -11,7 +11,7 @@ from config import settings
 from api_service.models.model_base import Base
 
 # Register every mapped table on Base.metadata before autogenerate runs.
-import api_service.models.common  # noqa: F401,E402
+import api_service.models  # noqa: F401,E402
 
 
 config = context.config
@@ -38,12 +38,16 @@ def run_migrations_offline() -> None:
 
 
 def include_object(obj, name, type_, reflected, compare_to):
-    # Store is SDK-owned; the retired Jupyter registry is preserved until an
-    # explicit data-retention migration. Neither belongs to active ORM metadata.
-    # Skip only reflected tables with no mapped counterpart, not future models.
+    # Active SDK/other-chain tables share the DB but are not ORM-owned.
+    # Retired tables have no exemption. Explicit retirement DDL is unaffected.
     if type_ == "index" and name.startswith("ix_workflow_hnsw_"):
         return False  # model-space indexes are managed by the provisioning tool
-    return not (type_ == 'table' and name in {'store', 'store_migrations', 'jupyter_servers'}
+    active_external_tables = {
+        'store', 'store_migrations',
+        'checkpoints', 'checkpoint_blobs', 'checkpoint_writes', 'checkpoint_migrations',
+        'ew_bindings', 'ew_inbox', 'ew_alembic_version',
+    }
+    return not (type_ == 'table' and name in active_external_tables
                 and reflected and compare_to is None)
 
 

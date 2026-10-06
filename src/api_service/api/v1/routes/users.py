@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import Actor, get_current_actor, require_admin
-from api_service.core.database import get_db
-from api_service.core.pagination import ListParams, list_params
-from api_service.core.enums import UserRole
-from api_service.schemas.common.api_schema import Page
-from api_service.schemas.common.user_schema import UserCreate, UserRead, UserMe, UserUpdate, UserSummary, UserListStatus
-from api_service.services.user_service import UserService
-from api_service.services.user_queries import list_user_summaries
+from api_service.api.dependencies import Actor, get_current_actor, require_admin
+from api_service.infrastructure.database import get_db
+from api_service.api.pagination import ListParams, list_params
+from api_service.models.enums import UserRole
+from api_service.schemas.api_schema import Page
+from api_service.schemas.user_schema import UserCreate, UserRead, UserMe, UserUpdate, UserSummary, UserListStatus
+from api_service.resources.users import UserService
+from api_service.resources.user_queries import list_user_summaries
 from service_auth.sso.dependencies import get_login_session
 from service_auth.sso.sessions import LoginSession
 

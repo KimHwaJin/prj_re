@@ -57,15 +57,15 @@ async def probes():
     from fastapi.security import HTTPAuthorizationCredentials
     from fastapi.testclient import TestClient
     from api_service.api.v1.routes import messages, users
-    from api_service.core.auth import get_current_user_id
-    from api_service.core.database import get_db
-    from api_service.core.enums import DeleteYN
+    from api_service.api.dependencies import get_current_user_id
+    from api_service.infrastructure.database import get_db
+    from api_service.models.enums import DeleteYN
     from api_service.repositories.session_repository import SessionRepository
     from api_service.repositories.user_repository import UserRepository
-    from api_service.schemas.common.message_schema import MessageCreate
-    from api_service.schemas.common.api_schema import SessionResource
-    from api_service.schemas.common.project_schema import ProjectResource
-    from api_service.services.session_service import SessionService
+    from api_service.schemas.message_schema import MessageCreate
+    from api_service.schemas.api_schema import SessionResource
+    from api_service.schemas.project_schema import ProjectResource
+    from api_service.resources.sessions import SessionService
 
     now, owner, project = datetime.now(timezone.utc), uuid4(), uuid4()
     results = []

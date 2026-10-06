@@ -316,10 +316,10 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 - 라우터: [runs.py](../src/api_service/api/v1/routes/runs.py)
 - 요청: [run_request.py](../src/service_contracts/run_request.py)
-- Run 응답: [run_schema.py](../src/api_service/schemas/common/run_schema.py)
-- 상태·재개 검증: [public_run_service.py](../src/api_service/services/public_run_service.py)
+- Run 응답: [run_schema.py](../src/api_service/schemas/run_schema.py)
+- 상태·재개 검증: [public_run_service.py](../src/api_service/runs/service.py)
 - 화면·액션: [plan_interaction.py](../src/service_contracts/plan_interaction.py), [execution_repair.py](../src/service_contracts/execution_repair.py)
-- SSE: [run_stream_service.py](../src/api_service/services/run_stream_service.py)
+- SSE: [run_stream_service.py](../src/api_service/runs/streaming.py)
 
 ## 프로젝트 메모리 갱신 결과 051
 

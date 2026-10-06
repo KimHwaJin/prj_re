@@ -5,14 +5,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.enums import TaskStatus
-from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.models.common.session_model import SessionModel
-from api_service.models.common.task_model import TaskModel
+from api_service.models.enums import TaskStatus
+from api_service.models.agent_run_model import AgentRunModel
+from api_service.models.session_model import SessionModel
+from api_service.models.task_model import TaskModel
 from api_service.runs.errors import RunConflict, RunNotFound
-from api_service.services.helpers import utc_now
-from api_service.services.task_event_service import TaskEventService
-from api_service.services.task_service import TaskService
+from api_service.utils import utc_now
+from api_service.runs.task_events import TaskEventService
+from api_service.runs.tasks import TaskService
 
 
 async def cancel_task(

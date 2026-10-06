@@ -4,16 +4,16 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import get_current_user_id
-from api_service.core.database import get_db
-from api_service.core.enums import DeleteYN
-from api_service.core.pagination import ListParams, fetch_page, list_params
+from api_service.api.dependencies import get_current_user_id
+from api_service.infrastructure.database import get_db
+from api_service.models.enums import DeleteYN
+from api_service.api.pagination import ListParams, fetch_page, list_params
 from api_service.models import MessageModel, SessionModel
 from api_service.repositories.project_repository import ProjectRepository
-from api_service.schemas.common.api_schema import MessageResource, Page
-from api_service.schemas.common.message_schema import MessageCreate, MessageCreateResult, MessageUpdate
-from api_service.services.message_service import MessageService
-from api_service.services.session_service import SessionService
+from api_service.schemas.api_schema import MessageResource, Page
+from api_service.schemas.message_schema import MessageCreate, MessageCreateResult, MessageUpdate
+from api_service.resources.messages import MessageService
+from api_service.resources.sessions import SessionService
 
 
 router = APIRouter(tags=["messages"])

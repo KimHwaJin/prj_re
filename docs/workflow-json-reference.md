@@ -392,5 +392,5 @@ python scripts/design/validate_workflow_draft.py docs/contracts/workflow/quality
 - [Workflow schema](../src/service_contracts/resources/workflow-definition.schema.json), [자산·의존성 검증](../src/service_contracts/workflow_validation.py)
 - [승인·편집](../src/service_contracts/plan_review.py), [공개 계획 projection](../src/service_contracts/plan_projection.py)
 - [계획 생성 Runtime](../src/agent_service/agents/analysis/planning/graph.py), [Executor compiler](../src/agent_service/agents/analysis/execution/compiler.py)
-- [기존 CRUD 모델](../src/service_contracts/workflow_definition.py), [기존 CRUD 서비스](../src/api_service/services/workflow_service.py)
+- [기존 CRUD 모델](../src/service_contracts/workflow_definition.py), [기존 CRUD 서비스](../src/api_service/workflows/service.py)
 - [설계 당시 기록](design/agentic-workflow-contract/README.md), [Dataset 등록·조회 초안](design/dataset-registry-contract/README.md)

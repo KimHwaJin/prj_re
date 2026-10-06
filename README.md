@@ -5,6 +5,8 @@ dtest 프로젝트 공유
 
 현재 리팩토링 작업 저장소는 [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re)이고, 기준 브랜치는 `feature/refactor-base`다. [저장소·브랜치 작업 안내](docs/repository-workflow.md)를 따라 베이스에서 파생 브랜치를 만들고 작업한다. 이전 단계별 브랜치는 이력 확인용으로 보존한다.
 
+API 구현 위치와 삭제·이동 내역은 [API 서비스 구조](docs/api-service-layout.md), DB 적용은 [마이그레이션 안내](docs/database_migrations.md)를 따른다.
+
 ## 리팩토링 브랜치의 현재 실행 계약
 
 분석 Agent는 `src/agent_service/agents/analysis/`와 역할별 `agent_builders/<role>/`에 있다. 공개 API는 계획 제안·HITL·실제 Executor 실행·결과 판단·MULTI 수정·실행 전 재작성·완료 분석 후속 답변을 지원한다. [Agent API 요청과 응답](docs/public-run-api.md), [Workflow JSON 작성 규격](docs/workflow-json-reference.md), [검증된 JSON 예제와 schema](docs/contracts/agent-api/README.md)를 현재 연계 계약으로 참고한다. 루트 app.py, 중앙 설정과 비동기 자원 수명을 유지한다. Workflow CRUD의 공개2.0·다중 쿼리 HNSW 추천은 [등록·검색 계약](docs/workflow-registration-and-search.md)으로 구현했다. 실제 임베딩 모델 검증, 동적 Dataset Registry, Gaia adapter는 후속이다. 프로젝트 메모리는 공식 LangGraph Store·설정 가능한 입력/저장 예산·선택적 auto_context 정책을 구현했다. [Agent 개발 안내](docs/agent-development/README.md)는 현재 다섯 역할과 실행 경로를 설명한다.
@@ -13,7 +15,7 @@ Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agen
 
 현재 사용자용 API는 SSO 확인 후 발급하는 쿠키 로그인 세션으로 호출자를 식별한다. `X-User-Id`만 보내는 요청은 인증되지 않는다. 최초 직원은 일반 사용자와 기본 프로젝트로 자동 등록하며 역할·소유권·내부 UUID는 DB에서 관리한다. 사내 SDK 소스는 포함하지 않았고 폐쇄망에서 연결 함수 두 곳을 구현해야 실제 SSO 로그인이 가능하다. [SSO 적용·Swagger 테스트 가이드](docs/sso-authentication.md), [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 참고한다.
 
-사용하지 않는 `/api/v1/jupyter-servers*`, `/api/v1/redis/ping` 관리 API는 제거했다. 실제 Jupyter 실행은 Executor를 통하며 SSO·Streams의 Redis 사용은 유지한다. [설정·기존 DB 보존 안내](docs/infrastructure-api-cleanup.md)를 따른다.
+사용하지 않는 `/api/v1/jupyter-servers*`, `/api/v1/redis/ping` 관리 API는 제거했다. 실제 Jupyter 실행은 Executor를 통하며 SSO·Streams의 Redis 사용은 유지한다. [현재 패키지·DB 정리 안내](docs/api-service-layout.md)를 따른다.
 
 새 기능 확인 화면은 [독립 HTML 테스트 콘솔](tools/test-console/README.md)이다. 파일을 직접 열어 샘플을 보거나 같은 origin 진단 도구로 현재 API·SSE·HITL·관리 기능을 테스트한다. 기존 demo를 재사용하지 않으며 실제 모델/사내 SSO 여부와 검증 경계는 해당 안내를 따른다.
 

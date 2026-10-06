@@ -2,9 +2,9 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from api_service.core.execution_claim import ExecutionClaim
-from api_service.schemas.common.run_schema import RunCreate
-from api_service.services.session_execution import SessionExecution
+from api_service.runs.claim_context import ExecutionClaim
+from api_service.schemas.run_schema import RunCreate
+from api_service.runs.ownership import SessionExecution
 from service_contracts.events import EventContext
 
 

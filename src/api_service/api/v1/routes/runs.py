@@ -7,12 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Bundle
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import get_current_user_id, get_stream_user_id
-from api_service.core.database import get_db
-from api_service.core.pagination import ListParams, fetch_page, list_params
+from api_service.api.dependencies import get_current_user_id, get_stream_user_id
+from api_service.infrastructure.database import get_db
+from api_service.api.pagination import ListParams, fetch_page, list_params
 from api_service.models import AgentRunModel
-from api_service.schemas.common.api_schema import Page
-from api_service.schemas.common.run_schema import (
+from api_service.schemas.api_schema import Page
+from api_service.schemas.run_schema import (
     AgentRunLogResource,
     RunCancel,
     RunStart,
@@ -21,10 +21,10 @@ from api_service.schemas.common.run_schema import (
     RunResume,
 )
 from service_contracts.run_request import RunRequest
-from api_service.services.public_run_service import PublicRunService
-from api_service.services.run_log_query import list_diagnostic_logs
+from api_service.runs.service import PublicRunService
+from api_service.runs.log_queries import list_diagnostic_logs
 from config import settings
-from api_service.core.database import get_session_factory
+from api_service.infrastructure.database import get_session_factory
 
 router = APIRouter(tags=["runs"])
 
@@ -72,7 +72,7 @@ async def create_run_stream(
     # Validate the cursor before enqueueing; a malformed HTTP request has no side effects.
     sequence = parse_sequence(last_event_id)
     run = await submit_request(db, user_id, session_id, payload, idempotency_key)
-    from api_service.services.run_stream_service import RunStreamResponse
+    from api_service.runs.streaming import RunStreamResponse
     response = RunStreamResponse(request.app.state.run_stream_hub, request,
         (user_id, session_id, run.run_id), sequence)
     response.headers['Location'] = f'/api/v1/sessions/{session_id}/runs/{run.run_id}'
@@ -156,7 +156,7 @@ async def stream_run(
     public = await PublicRunService.read(db, user_id, session_id, run_id)
     initial_sequence = parse_sequence(last_event_id)
 
-    from api_service.services.run_stream_service import RunStreamHub, RunStreamResponse
+    from api_service.runs.streaming import RunStreamHub, RunStreamResponse
     application = getattr(request, 'app', None)
     owned = application is None  # Direct adapter tests/development, outside ASGI.
     hub = RunStreamHub(settings, session_factory=lambda: get_session_factory()()) if owned else application.state.run_stream_hub

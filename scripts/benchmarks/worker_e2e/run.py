@@ -71,12 +71,15 @@ def evidence(session_ids):
   rows=[dict(row) for row in db.cursor(row_factory=psycopg.rows.dict_row).execute('SELECT run_id,public_run_id,status,created_at,started_at,completed_at,updated_at,attempt_count FROM agent_runs WHERE session_id=ANY(%s) ORDER BY created_at',([UUID(v) for v in session_ids],))]
   for row in rows:
    row['queue_ms']=(row['started_at']-row['created_at']).total_seconds()*1000 if row['started_at'] else None
-  command_rows=[dict(row) for row in db.cursor(row_factory=psycopg.rows.dict_row).execute(
-    'SELECT c.command_id,c.event_id,c.execution_id,c.sequence,c.state,c.failure_attempts,c.created_at,c.updated_at FROM ew_commands c JOIN ew_bindings b USING(namespace,execution_id) WHERE b.session_id=ANY(%s) ORDER BY c.created_at',(session_ids,))]
-  common=[]
   if CURRENT:
    common=[dict(row) for row in db.cursor(row_factory=psycopg.rows.dict_row).execute('SELECT command_id,session_id,kind,state,attempt,available_at,created_at,updated_at FROM agent_commands WHERE session_id=ANY(%s) ORDER BY ordinal',([UUID(v) for v in session_ids],))]
-  return {'common_commands':common,'commands':command_rows,'outbox_pending':db.execute("SELECT count(*) FROM ew_outbox WHERE state<>'SENT'").fetchone()[0],
+   command_rows=[dict(row) for row in db.cursor(row_factory=psycopg.rows.dict_row).execute("SELECT command_id,payload->'event'->>'event_id' AS event_id,payload->>'execution_id' AS execution_id,payload->'event'->>'event_sequence' AS sequence,state,failure_attempts,created_at,updated_at FROM agent_commands WHERE kind='executor_resume' AND session_id=ANY(%s) ORDER BY ordinal",([UUID(v) for v in session_ids],))]
+   outbox_pending=None
+  else:
+   common=[]
+   command_rows=[dict(row) for row in db.cursor(row_factory=psycopg.rows.dict_row).execute('SELECT c.command_id,c.event_id,c.execution_id,c.sequence,c.state,c.failure_attempts,c.created_at,c.updated_at FROM ew_commands c JOIN ew_bindings b USING(namespace,execution_id) WHERE b.session_id=ANY(%s) ORDER BY c.created_at',(session_ids,))]
+   outbox_pending=db.execute("SELECT count(*) FROM ew_outbox WHERE state<>'SENT'").fetchone()[0]
+  return {'common_commands':common,'commands':command_rows,'outbox_pending':outbox_pending,'outbox_retired':CURRENT,
     'inbox_pending':db.execute("SELECT count(*) FROM ew_inbox WHERE state='RECEIVED' AND execution_id IN (SELECT execution_id FROM ew_bindings)").fetchone()[0],
     'runs':rows,'session_owners':db.execute('SELECT count(*) FROM session_executions WHERE token IS NOT NULL').fetchone()[0],
     'recovery_tasks':db.execute('SELECT count(*) FROM tasks WHERE recovery_required').fetchone()[0],
@@ -90,7 +93,7 @@ async def trial(n,c,repeat):
  assert urlparse(executor_origin).hostname in ('localhost','127.0.0.1')
  event_stream='executor.events' if a.real_executor else namespace+':events'
  settings={'DATABASE_URL':crud.render_as_string(hide_password=False),'CHECKPOINT_DB_URI':CP,
-  'EW_DATABASE_URL':DSN,'WORKFLOW_DATABASE_URL':DSN,'EW_NAMESPACE':namespace,'REDIS_URL':a.redis_url,
+  'EW_DATABASE_URL':DSN,'EW_NAMESPACE':namespace,'REDIS_URL':a.redis_url,
   'DATABASE_POOL_SIZE':a.pool,'DATABASE_MAX_OVERFLOW':0,'DATABASE_POOL_TIMEOUT_SECONDS':10,
   'CHECKPOINT_POOL_MIN_SIZE':1,'CHECKPOINT_POOL_MAX_SIZE':a.checkpoint_pool,'CHECKPOINT_SETUP_ON_START':True,
   'EW_POOL_SIZE':a.event_pool,'EW_CONCURRENCY':4,'EW_INGRESS_CONCURRENCY':4,'EW_DISPATCH_CONCURRENCY':a.event_concurrency,'EW_POLL_SECONDS':a.event_poll,'EW_IDLE_POLL_SECONDS':a.event_idle,
@@ -104,7 +107,7 @@ async def trial(n,c,repeat):
       'NOTEBOOK':'/executions/{execution_id}/notebook','FINALIZE':'/executions/{execution_id}/finalize',
       'CANCEL':'/executions/{execution_id}/cancel','ARTIFACTS':'/executions/{execution_id}/artifacts'}.items()},
   'EXECUTOR_SHARED_RESULT_ROOT':private['EXECUTOR_SHARED_RESULT_ROOT'] if a.real_executor else str(shared),
-  'EXECUTOR_RUNTIME_PROFILE':'default','EXECUTOR_OPERATION_TIMEOUT_SECONDS':120,'EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS':120,'WORKFLOW_PERSISTENCE_ENABLED':False,
+  'EXECUTOR_RUNTIME_PROFILE':'default','EXECUTOR_OPERATION_TIMEOUT_SECONDS':120,'EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS':120,
   'RUN_DIAGNOSTICS_DIR':str(folder/'trace-disabled-by-probe'),'SHUTDOWN_DRAIN_SECONDS':5,'SHUTDOWN_TIMEOUT_SECONDS':15,
   'ANALYSIS_DATASETS':{'default-nce':{'title':'Fixed service test reference','runtime_path':'/workspace/pv/default_data/df_nce_long_format.parquet','scope':'GLOBAL'}},
   'SSO_PUBLIC_API_ORIGIN':origin,'SSO_FRONTEND_ORIGIN':origin,'SSO_COOKIE_SECURE':False,'SSO_NAMESPACE':namespace+':sso',
@@ -116,6 +119,7 @@ async def trial(n,c,repeat):
  settings.pop('EW_EXECUTOR_BASE_URL')
  if CURRENT:settings.pop('EW_DISPATCH_CONCURRENCY')
  else:
+  settings.update(WORKFLOW_DATABASE_URL=DSN,WORKFLOW_PERSISTENCE_ENABLED=False)
   settings.pop('AGENT_WORKER_NOTIFY_ENABLED');settings.pop('AGENT_WORKER_RECONCILE_INTERVAL_SECONDS')
  if a.cache_size is not None:settings['DATABASE_PREPARED_STATEMENT_CACHE_SIZE']=a.cache_size
  config=folder/'private-config.json';private_json(config,{'settings':settings,'port':api_port,'namespace':namespace,'executor_probe':True,'hold_owner_probe':a.hold_owners,'model_delay_ms':a.delay_ms,'observation_profile':a.observation_profile,'checkpoint_profile':a.checkpoint_profile,'checkpoint_lock_profile':a.checkpoint_lock_profile,'executor_trace':a.executor_trace,'cpu_profile':a.cpu_profile,'query_audit':a.query_audit})
@@ -308,7 +312,8 @@ async def trial(n,c,repeat):
    assert result['passed'],errors
    assert not mock_metrics.get('tasks_failed')
    assert all(x['state']=='DONE' and x['failure_attempts']==0 for x in database['commands'])
-   assert database['outbox_pending']==0 and database['inbox_pending']==0
+   assert database['inbox_pending']==0
+   assert database['outbox_pending']==0 or (database['outbox_pending'] is None and database.get('outbox_retired') is True)
    if not CURRENT:assert metrics['peak_event_worker']<=a.event_concurrency
    if a.scenario!='approval':
     assert len({h['event_id'] for h in metrics['event_handlers'] if not h['error']})==n*(SPEC.operations+1)

@@ -27,51 +27,6 @@ class Settings(BaseModel):
     # Agent 산출물 생성 중 개발 reloader가 Worker를 죽이지 않도록 기본은 단일 프로세스입니다.
     server_reload: bool = False
 
-    # Agent가 사용하는 기존 MODEL_* 환경변수를 FastAPI 설정과 같은 값으로 연결합니다.
-    llm_provider: str = Field(
-        default="openai_compatible",
-        validation_alias=AliasChoices("MODEL_PROVIDER", "LLM_PROVIDER"),
-    )
-    llm_model_name: str = Field(
-        # default="qwen38-27b-fp8",
-        default="qwen38-27b-nvfp4",
-        validation_alias=AliasChoices("MODEL_NAME", "PRIVATE_LLM_MODEL_NAME", "LLM_MODEL_NAME"),
-    )
-    llm_api_base_url: str = Field(
-        default="http://model.frodo.com/v1",
-        validation_alias=AliasChoices("API_BASE_URL", "PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"),
-    )
-    llm_api_key: str = Field(
-        default="dummy",
-        validation_alias=AliasChoices("MODEL_API_KEY", "PRIVATE_LLM_API_KEY", "LLM_API_KEY"),
-    )
-    llm_timeout_seconds: float = Field(
-        default=60.0,
-        validation_alias=AliasChoices("MODEL_TIMEOUT_SECONDS", "LLM_TIMEOUT_SECONDS"),
-    )
-    llm_temperature: float = Field(default=0.2, validation_alias=AliasChoices("MODEL_TEMPERATURE", "LLM_TEMPERATURE"))
-    llm_max_output_tokens: int = Field(
-        default=8192,
-        validation_alias=AliasChoices(
-            "MODEL_MAX_OUTPUT_TOKENS", "LLM_MAX_OUTPUT_TOKENS"
-        ),
-    )
-    llm_max_retries: int = Field(
-        default=0,
-        validation_alias=AliasChoices("MODEL_MAX_RETRIES", "LLM_MAX_RETRIES"),
-    )
-    # Qwen의 reasoning 출력과 구조화 응답 방식을 환경별로 조절합니다.
-    llm_enable_thinking: bool | None = Field(
-        default=None,
-        validation_alias=AliasChoices("MODEL_ENABLE_THINKING", "LLM_ENABLE_THINKING"),
-    )
-    llm_structured_output_mode: str = Field(
-        default="prompt_json",
-        validation_alias=AliasChoices(
-            "MODEL_STRUCTURED_OUTPUT_MODE", "LLM_STRUCTURED_OUTPUT_MODE"
-        ),
-    )
-    llm_retry_backoff_seconds: float = 0.5
     # E03: Worker가 heartbeat를 갱신하지 못했을 때 Run을 stale로 판단하는 lease 길이입니다.
     task_lease_seconds: int = 300
     task_reconcile_interval_seconds: int = 30
@@ -99,9 +54,7 @@ class Settings(BaseModel):
     # 정상 stop을 기다릴 시간 및 취소 후 종료를 관측할 시간을 각각 적용합니다.
     run_cleanup_timeout_seconds: float = 5.0
     run_monitor_timeout_seconds: float = 3.0
-    # LangGraph HITL state를 API 재시작 뒤에도 재개하기 위한 비동기 PostgreSQL checkpoint입니다.
     graph_checkpointer: str = "postgres"
-    checkpoint_db_uri: str = Field(default="postgresql://postgres:1234@127.0.0.1:5432/chat_app?sslmode=disable", validation_alias=AliasChoices("CHECKPOINT_DB_URI", "AGENT_CHECKPOINT_DATABASE_URL"))
     # E13: DB에는 이 root 기준 상대 경로만 저장해 서버 이동과 path traversal 방지를 돕습니다.
     workflow_storage_root: Path = Path("var/workflows")
     # SSE: fast disconnect checks, commit notifications, slow reconciliation.
@@ -117,13 +70,6 @@ class Settings(BaseModel):
     llm_token_buffer_max_items: int = Field(default=1024, ge=1)
     llm_token_enqueue_timeout_seconds: float = 5.0
     llm_token_write_timeout_seconds: float = 5.0
-    # 로컬에서는 외부 Jupyter/executor가 없으므로 제출 직전 성공 응답으로 대체합니다.
-    executor_submit_enabled: bool = False
-    # executor 비활성 상태에서도 생성 코드 파일은 쓰기 가능한 로컬 경로에 보존합니다.
-    executor_shared_input_root: Path = Field(
-        default=Path("/workspace/pv"),
-        validation_alias="EXECUTOR_SHARED_INPUT_ROOT",
-    )
     # SSO 로그인 세션과 Executor Streams의 공통 주소. 용도별 연결풀은 분리합니다.
     redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias=AliasChoices("REDIS_URL", "EW_REDIS_URL"))
     model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
@@ -139,15 +85,15 @@ class Settings(BaseModel):
         for name in (
             "database_pool_timeout_seconds", "task_lease_seconds", "task_reconcile_interval_seconds",
             "agent_worker_poll_interval_seconds", "agent_worker_reconcile_interval_seconds", "task_cancel_poll_interval_seconds",
-            "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds", "llm_timeout_seconds",
+            "sse_poll_interval_seconds", "sse_reconcile_interval_seconds", "sse_heartbeat_seconds",
             "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds",
             "llm_token_flush_interval_seconds", "llm_token_enqueue_timeout_seconds", "llm_token_write_timeout_seconds",
         ):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be finite and positive")
-        for name in ("agent_worker_max_retries", "llm_max_retries", "agent_worker_retry_backoff_seconds",
-                     "agent_worker_retry_max_backoff_seconds", "llm_retry_backoff_seconds"):
+        for name in ("agent_worker_max_retries", "agent_worker_retry_backoff_seconds",
+                     "agent_worker_retry_max_backoff_seconds"):
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
                 raise ValueError(f"{name} must be finite and non-negative")
@@ -159,10 +105,11 @@ class Settings(BaseModel):
 
 
 class _SettingsProxy:
-    """Compatibility for existing imports without reading files at import time."""
+    """Read the configured API snapshot lazily; imports create no resources."""
 
     def __getattr__(self, name):
         from service_settings import get_settings
         return getattr(get_settings().api, name)
+
 
 settings = _SettingsProxy()

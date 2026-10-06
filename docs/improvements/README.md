@@ -1,6 +1,8 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [100 설정 모델·소스 정리](100-settings-model-cleanup.md). 수동 키·그룹·플랫폼 허용 목록과 문자열 재파싱을 제거하고 모델 필드에 설정 정의를 모았다. 공유 YAML은 소비 설정만 선택하며 미사용 키는 이름만 진단한다. 관련 회귀772개·네 환경 launcher·설치 패키지 검증을 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
+최신 작업: [101 API 패키지·폐기 DB 정리](101-api-service-cleanup.md). 책임별 디렉토리 이동·구 구현과 설정 삭제·테스트 분리·중복 EW 원장 제거 및 폐기 DB 9개 테이블 삭제 migration을 구현했다. API 909개 고유 항목·Agent/설계 432개·실제 삭제/이관 migration·설치 wheel을 검증했다. 기존 서비스 DB 적용·배포는 별도다.
+
+선행 작업: [100 설정 모델·소스 정리](100-settings-model-cleanup.md). 수동 키·그룹·플랫폼 허용 목록과 문자열 재파싱을 제거하고 모델 필드에 설정 정의를 모았다. 공유 YAML은 소비 설정만 선택하며 미사용 키는 이름만 진단한다. 관련 회귀772개·네 환경 launcher·설치 패키지 검증을 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
 
 선행 작업: [099 플랫폼 보안 키 철자 호환](099-platform-security-setting-compat.md). `IS_SECURITY_SERVICE`와 기존 `IS_SECURITY_SERVCE`를 모두 허용하여 로컬 시작 오류를 수정했고 관련 회귀 81개를 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
 

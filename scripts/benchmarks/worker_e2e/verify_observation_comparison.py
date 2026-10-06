@@ -21,7 +21,8 @@ def derive(raw):
     assert raw['passed'] and raw['errors']==[] and len(raw['results'])==n
     assert raw['elapsed_seconds']>0 and cfg['delay_ms']==0 and cfg['checkpoint_pool']==4 and cfg['total_capacity']==20
     assert server['peak_shared']<=20 and server['current_shared']==server['crud_connections_checked_out']==0
-    assert database['session_owners']==database['recovery_tasks']==database['inbox_pending']==database['outbox_pending']==0
+    assert database['session_owners']==database['recovery_tasks']==database['inbox_pending']==0
+    assert database['outbox_pending']==0 or (database['outbox_pending'] is None and database.get('outbox_retired') is True)
     assert len(database['runs'])==3*n and len({r['run_id'] for r in database['runs']})==3*n
     assert Counter(r['status'] for r in database['runs'])=={'interrupted':n*2,'success':n}
     assert len(database['common_commands'])==n*(operations+4)

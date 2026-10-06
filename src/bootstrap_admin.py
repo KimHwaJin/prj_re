@@ -9,11 +9,11 @@ from service_settings import configure, load_settings
 
 
 async def bootstrap(user_id: str, user_name: str):
-    from api_service.core.database import close_database, get_session_factory
-    from api_service.core.enums import UserRole
-    from api_service.schemas.common.user_schema import UserCreate
-    from api_service.services.user_service import UserService
-    import api_service.models.common  # Register FK models before ORM use.
+    from api_service.infrastructure.database import close_database, get_session_factory
+    from api_service.models.enums import UserRole
+    from api_service.schemas.user_schema import UserCreate
+    from api_service.resources.users import UserService
+    import api_service.models  # Register FK models before ORM use.
     payload = UserCreate(user_id=user_id, user_name=user_name, role=UserRole.ADMIN)
     try:
         async with get_session_factory()() as db:

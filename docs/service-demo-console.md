@@ -32,6 +32,6 @@ Workflow 추천은 채팅 LLM과 별도로 embedding 모델·차원 및 HNSW ind
 
 ## 파일과 진단 도구
 
-화면 정본은 `src/api_service/static/demo.html`, 공용 렌더링은 `src/api_service/web_console.py`다. HTML은 wheel package-data와 Docker의 src 복사에 포함된다. 예전 demo와 별도 index.html 사본은 제거했다. 화면 변경 후 프로세스를 재시작한다.
+화면 정본은 `src/api_service/web/static/demo.html`, 공용 렌더링은 `src/api_service/web/console.py`다. HTML은 wheel package-data와 Docker의 src 복사에 포함된다. 예전 demo와 별도 index.html 사본은 제거했다. 화면 변경 후 프로세스를 재시작한다.
 
 `scripts/diagnostics/serve_test_console.py`는 같은 HTML로 `/test-console`을 제공한다. 임시 DB·테스트 로그인·고정 응답 등 격리 검증이 필요할 때만 사용하며 일반 서비스 실행에는 필요 없다. [별도 진단 도구](../tools/test-console/README.md)를 참고한다.

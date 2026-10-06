@@ -1,7 +1,7 @@
 """Shared retry eligibility and backoff policy for Run execution."""
 
 from api_service.runs.errors import RunError
-from api_service.services.task_service import TaskService
+from api_service.runs.tasks import TaskService
 
 
 def retry_delay_seconds(attempt_count: int) -> float:

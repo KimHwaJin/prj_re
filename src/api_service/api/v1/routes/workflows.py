@@ -8,20 +8,20 @@ from sqlalchemy import exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from api_service.core.auth import get_current_user_id
-from api_service.core.database import get_db
-from api_service.core.pagination import ListParams, fetch_page, list_params
-from api_service.models.common.workflow_model import WorkflowModel, WorkflowTagModel
-from api_service.schemas.common.api_schema import Page
-from api_service.schemas.common.workflow_schema import (
+from api_service.api.dependencies import get_current_user_id
+from api_service.infrastructure.database import get_db
+from api_service.api.pagination import ListParams, fetch_page, list_params
+from api_service.models.workflow_model import WorkflowModel, WorkflowTagModel
+from api_service.schemas.api_schema import Page
+from api_service.schemas.workflow_schema import (
     WorkflowCandidateCreate,
     WorkflowClone,
     WorkflowResource,
     WorkflowUpdate,
 )
-from api_service.services.workflow_file_store import WorkflowFileStore
-from api_service.services.workflow_service import WorkflowService
-from api_service.workflows.runtime import get_workflow_runtime
+from api_service.workflows.file_store import WorkflowFileStore
+from api_service.workflows.service import WorkflowService
+from api_service.workflows.search.runtime import get_workflow_runtime
 from service_contracts.workflow_retrieval import WorkflowSearchRequest, WorkflowSearchResult
 
 

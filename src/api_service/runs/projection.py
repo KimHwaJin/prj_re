@@ -5,19 +5,19 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.database import get_session_factory
-from api_service.core.enums import AgentRunStatus, DeleteYN, MessageStatus, MessageType, TaskStatus
-from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.models.common.message_model import MessageModel
-from api_service.models.common.session_model import SessionModel
-from api_service.models.common.task_model import TaskModel
+from api_service.infrastructure.database import get_session_factory
+from api_service.models.enums import AgentRunStatus, DeleteYN, MessageStatus, MessageType, TaskStatus
+from api_service.models.agent_run_model import AgentRunModel
+from api_service.models.message_model import MessageModel
+from api_service.models.session_model import SessionModel
+from api_service.models.task_model import TaskModel
 from api_service.runs.repository import lock_run_and_task
-from api_service.services.agent_graph_service import interrupt_payload, run_status_from_state
-from api_service.services.helpers import utc_now
-from api_service.services.task_event_service import TaskEventService
-from api_service.services.task_service import TaskService
-from api_service.services.workflow_service import WorkflowService
-from api_service.worker import DeferEvent, EventContext
+from api_service.runs.runtime import interrupt_payload, run_status_from_state
+from api_service.utils import utc_now
+from api_service.runs.task_events import TaskEventService
+from api_service.runs.tasks import TaskService
+from api_service.workflows.service import WorkflowService
+from service_contracts.events import DeferEvent, EventContext
 from service_contracts.execution import ExecutionNeedsRecovery
 from service_runtime.diagnostics import span
 
@@ -261,8 +261,8 @@ async def synchronize_executor_completion(context: EventContext, graph) -> None:
 
 async def synchronize_agentic_execution(context: EventContext, snapshot) -> None:
     """Project decision/Executor waits and terminal results from a durable receipt."""
-    from api_service.services.graph_crud_persistence import persist_graph_state
-    from api_service.services.graph_recovery import checkpoint_state, snapshot_interrupts
+    from api_service.runs.persistence.graph import persist_graph_state
+    from api_service.runs.persistence.recovery import checkpoint_state, snapshot_interrupts
 
     values = snapshot.values
     matches_delivery = (

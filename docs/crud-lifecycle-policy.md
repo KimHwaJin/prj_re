@@ -23,7 +23,7 @@
 
 ## 서버 개발 규칙
 
-- 새로운 접수/생성/삭제 경로는 `api_service.services.resource_lifecycle`의 경계에 참여한다. 단순 `SELECT status` 검사만 한 뒤 commit하는 방식은 경합에 안전하지 않다.
+- 새로운 접수/생성/삭제 경로는 `api_service.resources.lifecycle`의 경계에 참여한다. 단순 `SELECT status` 검사만 한 뒤 commit하는 방식은 경합에 안전하지 않다.
 - 잠금 순서는 user FOR SHARE → 정렬된 project advisory lock → session admission advisory lock → 필요한 Session row lock이다. 프로젝트 잠금은 보통 공유, 프로젝트 삭제만 배타적으로 취한다.
 - 잠금 대기 뒤 활성 여부/프로젝트 소속을 다시 읽는다. 다른 프로젝트로 바뀌었으면 잠금 순서를 깨며 추가 잠금을 취하지 않고 409로 끝낸다.
 - 삭제 전 `require_idle`을 검사하고 같은 transaction에서 변경·commit한다. 이름 변경에는 미종료 작업 검사를 적용하지 않는다. 검사는 Task·Run·LLM·session_executions를 한 SQL snapshot에서 읽는다.

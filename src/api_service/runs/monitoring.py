@@ -6,14 +6,14 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from api_service.core.database import get_session_factory
-from api_service.core.execution_lifecycle import (
+from api_service.infrastructure.database import get_session_factory
+from api_service.runs.lifecycle import (
     execution_health,
     finish_observer,
     observe_termination,
     wait_for_stop,
 )
-from api_service.models.common.agent_run_model import AgentRunModel
+from api_service.models.agent_run_model import AgentRunModel
 from api_service.runs.errors import CancellationRequested
 from config import settings
 from service_contracts.execution import ExecutionNeedsRecovery

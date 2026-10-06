@@ -129,7 +129,7 @@ def build(output):
     source={'id':source_id,'label':'2026년 10월 3–4일 전용 localhost Worker 전체 경로 대조',
         'path':'docs/reports/agent-worker-e2e-2026-10-03/results.json','query':{'engine':'SQLite / PostgreSQL evidence','language':'sql',
         'sql':(output/'aggregation.sql').read_text(),'description':'Executed identical-capacity rollup of validated local HTTP capture trials',
-        'tables_used':['trials','public.agent_runs','public.agent_commands','public.ew_commands','public.ew_inbox','public.session_executions'],
+        'tables_used':['trials','public.agent_runs','public.agent_commands','public.ew_inbox','public.session_executions'],
         'metric_definitions':['mean_seconds: User wall time with scenario-specific start/stop; registration and warmup excluded',
             'p95: Linear interpolation within each trial; repeat min/max kept separately','crud_sql: Measured asyncpg statements only, not all PostgreSQL SQL',
             'cpu: Measured API process only','event_wait: Original Redis XADD completion to successful handler start'],

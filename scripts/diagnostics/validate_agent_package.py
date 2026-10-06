@@ -33,10 +33,10 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/runtime/memory_selection.py' in names
     assert 'service_contracts/project_memory.py' in names
     assert 'service_contracts/session_settings.py' in names
-    assert 'api_service/services/project_memory_policy.py' in names
-    assert 'api_service/core/memory_store.py' in names
-    assert 'api_service/services/session_activity.py' in names
-    assert 'api_service/schemas/common/session_activity_schema.py' in names
+    assert 'api_service/resources/project_memory.py' in names
+    assert 'api_service/infrastructure/memory_store.py' in names
+    assert 'api_service/resources/session_activity.py' in names
+    assert 'api_service/schemas/session_activity_schema.py' in names
     assert 'api_service/runs/public_status.py' in names
     assert 'service_contracts/memory_store.py' in names
     assert 'api_service/services/project_memory_service.py' not in names
@@ -44,6 +44,16 @@ with ZipFile(wheel) as archive:
     assert 'agent_service/middleware/planning_contract.py' in names
     assert 'agent_service/agents/analysis/agent_builders/conversation/planning_prompt.md' in names
     assert 'agent_service/agents/analysis/workflow/tools/generate_tool_registry.py' in names
+    # Reject stale build/lib payloads even when the checkout no longer has them.
+    for prefix in ('api_service/core/', 'api_service/services/', 'api_service/worker/',
+                   'api_service/agent_worker/', 'api_service/observability/',
+                   'api_service/models/common/', 'api_service/schemas/common/',
+                   'api_service/static/', 'api_service/test/', 'tests/'):
+        assert not any(name.startswith(prefix) for name in names), prefix
+    for retired in ('api_service/runs/commands/migrate.py', 'api_service/models/llm_run_model.py',
+                    'service_contracts/workflow.py'):
+        assert retired not in names, retired
+    assert 'api_service/web/static/demo.html' in names
     archive.extractall(installed)
 sys.path.insert(0, str(installed))
 
@@ -135,7 +145,7 @@ for field in ('project_name', 'system_prompt'):
     assert 'default' not in schemas['ProjectUpdate']['properties'][field]
 
 assert 'ProjectDeleteResult' not in schemas
-assert 'api_service/services/project_queries.py' in names
+assert 'api_service/resources/project_queries.py' in names
 users = paths['/api/v1/users']['get']
 assert users['responses']['200']['content']['application/json']['schema']['$ref'].endswith('/Page_UserSummary_')
 assert {'q', 'role', 'status', 'limit', 'cursor', 'sort', 'created_at_from', 'created_at_to'} == {p['name'] for p in users['parameters'] if p['in'] == 'query'}
@@ -146,7 +156,7 @@ assert account_status['default'] == 'active' and set(account_status['enum']) == 
 assert set(schemas['UserSummary']['properties']) == {'user_id', 'user_name', 'role', 'is_active', 'created_at', 'updated_at', 'deleted_at'}
 assert schemas['UserSummary']['properties']['user_id']['type'] == 'string'
 assert 'public_user_id' not in schemas['UserRead']['properties']
-assert 'api_service/services/user_queries.py' in names
+assert 'api_service/resources/user_queries.py' in names
 assert '/api/v1/projects/{project_id}/memory' in paths
 assert '/api/v1/projects/{project_id}/memory/{section}/{key}' not in paths
 assert {'get', 'put', 'delete'} <= set(paths['/api/v1/projects/{project_id}/memory'])

@@ -32,9 +32,9 @@ def create_app():
     async def life(application):
         async with previous_life(application) as state:
             from sqlalchemy import text
-            from api_service.core.database import get_session_factory
-            from api_service.services.user_service import UserService
-            from api_service.schemas.common.user_schema import UserCreate
+            from api_service.infrastructure.database import get_session_factory
+            from api_service.resources.users import UserService
+            from api_service.schemas.user_schema import UserCreate
             async def warm():
                 async with get_session_factory()() as db:
                     await db.execute(text('SELECT pg_sleep(.01)'))

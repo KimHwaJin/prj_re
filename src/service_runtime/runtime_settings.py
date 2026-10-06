@@ -7,8 +7,6 @@ class RuntimeSettings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
     app_env: str = "local"
     event_worker_enabled: bool | None = None  # Omitted: follow AGENT_WORKER_ENABLED.
-    workflow_database_url: str | None = Field(default=None, repr=False)
-    workflow_persistence_enabled: bool = True
     mock_data_root: Path = Path("/workspace/pv")
     shutdown_timeout_seconds: float = Field(default=25, gt=0)
     shutdown_drain_seconds: float = Field(default=20, ge=0)

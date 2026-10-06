@@ -16,7 +16,6 @@ class ServiceSettings:
     sso: SsoSettings
     profile: str
     event_worker_enabled: bool
-    workflow_database_url: str | None = field(repr=False)
     mock_data_root: Path
     shutdown_timeout_seconds: float
     shutdown_drain_seconds: float

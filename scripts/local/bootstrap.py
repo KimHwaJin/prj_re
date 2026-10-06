@@ -18,7 +18,6 @@ def resolved_targets():
         "DATABASE_URL": settings.api.database_url,
         "CHECKPOINT_DB_URI": settings.agent.checkpoint_db_uri,
         "EW_DATABASE_URL": settings.worker.database_url,
-        "WORKFLOW_DATABASE_URL": settings.workflow_database_url,
     }
 
 
@@ -27,7 +26,6 @@ def validate_local_targets():
         "DATABASE_URL": "chat_app",
         "CHECKPOINT_DB_URI": "agent",
         "EW_DATABASE_URL": {"agent", "chat_app"},
-        "WORKFLOW_DATABASE_URL": {"agent", "chat_app"},
     }
     targets = resolved_targets()
     for name, database in expected.items():
@@ -67,5 +65,4 @@ if __name__ == "__main__":
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.crud.ini", "upgrade", "head"], check=True)
     subprocess.run([sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"], check=True)
     asyncio.run(setup_checkpoint())
-    subprocess.run([sys.executable, "-m", "api_service.runs.commands.migrate"], check=True)
-    print("Local migrations complete for selected CRUD, event/workflow and checkpoint targets", flush=True)
+    print("Local migrations complete for selected CRUD, event and checkpoint targets", flush=True)

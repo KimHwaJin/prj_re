@@ -112,7 +112,7 @@ async def test_free_plan_approval_setting_actual_compiler_execution_and_terminal
         assert any(e['envelope']['data'].get('resolution')=='auto_approved' for e in state['public_events'])
     assert len(executor.calls)==1 and runtime.catalog.sources==before
     assert state['approved_snapshot']['tool_sources']['custom.revised_transform']['code'].startswith('def revision_transform')
-    import api_service.services.graph_crud_persistence as persistence
+    import api_service.runs.persistence.graph as persistence
     async def persist(*args,**kwargs):return args[0]
     monkeypatch.setattr(persistence,'persist_graph_state',persist)
     async def deliver(event):

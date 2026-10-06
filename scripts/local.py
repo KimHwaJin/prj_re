@@ -41,7 +41,7 @@ def initialize(profile="local", config_path=None):
               read_env(ROOT / ".env.local.example").items() if key.startswith("LOCAL_")}
     values["LOCAL_POSTGRES_PASSWORD"] = previous.get("LOCAL_POSTGRES_PASSWORD") or secrets.token_hex(24)
     targets = {"DATABASE_URL": service.api.database_url, "CHECKPOINT_DB_URI": service.agent.checkpoint_db_uri,
-               "EW_DATABASE_URL": service.worker.database_url, "WORKFLOW_DATABASE_URL": service.workflow_database_url}
+               "EW_DATABASE_URL": service.worker.database_url}
     for key, value in targets.items():
         if value is None:
             continue

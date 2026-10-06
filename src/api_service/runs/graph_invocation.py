@@ -10,8 +10,8 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping
 from uuid import UUID
 
-from api_service.services import graph_crud_persistence as projection
-from api_service.services.agent_project_context import read_project_snapshot
+from api_service.runs.persistence import graph as projection
+from api_service.runs.project_context import read_project_snapshot
 from integrations.executor.client import current_submission_effects, submission_scope
 from service_runtime.diagnostics import span
 from service_runtime.model_selection import validate_checkpoint_selection

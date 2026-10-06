@@ -10,12 +10,12 @@ def install(metrics,enabled,kind):
     def init(self,*a,**kw):
         old_init(self,*a,**kw);pools.append(self)
     AsyncConnectionPool.__init__=init
-    from api_service.agent_worker import worker_main
+    from api_service.workers.executor_events import main as worker_main
     if hasattr(worker_main,'DeferredHandler'):
         owner=worker_main.DeferredHandler
         hook='__call__'
     else:
-        from api_service import agent_run_worker as owner
+        from api_service.workers import agent as owner
         hook='execute_event'
     original=getattr(owner,hook)
     async def handle(*args):
@@ -34,7 +34,7 @@ def install(metrics,enabled,kind):
                 metrics['current_event_worker']-=1
             kind.reset(token)
     setattr(owner,hook,handle)
-    from api_service.worker.store import Store
+    from api_service.workers.executor_events.store import Store
     def wrap(name):
         prior=getattr(Store,name)
         async def invoke(self,*args,**kw):

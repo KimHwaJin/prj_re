@@ -3,16 +3,16 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import get_current_user_id
-from api_service.core.database import get_db
-from api_service.core.pagination import ListParams, list_params
-from api_service.schemas.common.api_schema import Page
-from api_service.schemas.common.project_schema import ProjectCreate, ProjectUpdate, ProjectSummary, ProjectResource
-from api_service.services.project_queries import list_project_summaries
-from api_service.services.project_service import ProjectService
+from api_service.api.dependencies import get_current_user_id
+from api_service.infrastructure.database import get_db
+from api_service.api.pagination import ListParams, list_params
+from api_service.schemas.api_schema import Page
+from api_service.schemas.project_schema import ProjectCreate, ProjectUpdate, ProjectSummary, ProjectResource
+from api_service.resources.project_queries import list_project_summaries
+from api_service.resources.projects import ProjectService
 from service_contracts.project_memory import MemoryConflict, MemoryLimit
-from api_service.schemas.common.project_memory_schema import MemoryPut, MemoryResource
-from api_service.services.project_memory_policy import ProjectMemoryPolicy
+from api_service.schemas.project_memory_schema import MemoryPut, MemoryResource
+from api_service.resources.project_memory import ProjectMemoryPolicy
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])

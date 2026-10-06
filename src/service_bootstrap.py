@@ -32,7 +32,7 @@ class BackgroundRuntime:
 
     @property
     def ready(self) -> bool:
-        from api_service.core.execution_lifecycle import execution_health
+        from api_service.runs.lifecycle import execution_health
         return self.started and not self.draining and execution_health.healthy and all(not task.done() for task in self.tasks.values())
 
     def _observe(self, task: asyncio.Task) -> None:
@@ -102,7 +102,7 @@ class BackgroundRuntime:
                 raise RuntimeError(f"Background shutdown deadline exceeded: {names}")
         # Retrieve errors without replacing the original request/startup error.
         await asyncio.gather(*self.tasks.values(), return_exceptions=True)
-        from api_service.core.execution_lifecycle import execution_health
+        from api_service.runs.lifecycle import execution_health
         recorders = list(execution_health.recorders)
         if recorders:
             _, unfinished = await asyncio.wait(recorders, timeout=max(0, self._cleanup_deadline - asyncio.get_running_loop().time()))
@@ -115,24 +115,23 @@ class BackgroundRuntime:
 def _background_factories(settings: ServiceSettings, stop_event: asyncio.Event, *, on_event_worker=None) -> dict[str, Callable]:
     factories: dict[str, Callable] = {}
     if settings.api.task_reconciler_enabled:
-        from api_service.task_lock_reconciler import run_forever as reconcile
+        from api_service.workers.reconciler import run_forever as reconcile
         factories["task-lock-reconciler"] = lambda: reconcile(stop_event=stop_event)
     if settings.api.agent_worker_enabled or settings.event_worker_enabled:
-        from api_service.agent_run_worker import run_forever
+        from api_service.workers.agent import run_forever
         factories["agent-run-worker"] = lambda: run_forever(stop_event=stop_event)
     if settings.event_worker_enabled:
-        from api_service.agent_worker.worker_main import main
+        from api_service.workers.executor_events.main import main
         # The embedding app owns signals; the standalone entrypoint owns its own.
         factories["executor-event-worker"] = lambda: main(install_signals=False, stop_event=stop_event, on_worker=on_event_worker)
     return factories
 
 
 async def _close_resources() -> None:
-    from api_service.services.agent_graph_service import GraphResourcesBusy, runtime
-    from api_service.core.database import close_database
-    from api_service.workflows.runtime import close_workflow_runtime
-    from api_service.core.memory_store import runtime as memory_store_runtime
-    from api_service.agent_worker.api_bridge import close_api_worker_bridge
+    from api_service.runs.runtime import GraphResourcesBusy, runtime
+    from api_service.infrastructure.database import close_database
+    from api_service.workflows.search.runtime import close_workflow_runtime
+    from api_service.infrastructure.memory_store import runtime as memory_store_runtime
     # A live borrower still uses CRUD/bridge resources too. Preserve all of them
     # if draining failed; ordinary close errors still run remaining cleanups.
     try:
@@ -144,13 +143,11 @@ async def _close_resources() -> None:
             stack.push_async_callback(close_database)
             stack.push_async_callback(close_workflow_runtime)
             stack.push_async_callback(memory_store_runtime.shutdown)
-            stack.push_async_callback(close_api_worker_bridge)
         raise
     async with AsyncExitStack() as stack:
         stack.push_async_callback(close_database)
         stack.push_async_callback(close_workflow_runtime)
         stack.push_async_callback(memory_store_runtime.shutdown)
-        stack.push_async_callback(close_api_worker_bridge)
 
 
 def attach_service(
@@ -177,7 +174,7 @@ def attach_service(
     app.include_router(router, prefix=settings.api.api_v1_prefix)
     from service_auth.sso.runtime import attach_sso
     from service_auth.sso.swagger import attach_swagger
-    from api_service.services.sso_user_service import SsoUserDirectory
+    from api_service.resources.sso_users import SsoUserDirectory
     sso = attach_sso(app, settings=settings.sso,
         users=SsoUserDirectory(auto_register=settings.sso.auto_register),
         redis_url=settings.api.redis_url, api_prefix=settings.api.api_v1_prefix, docs_path=sso_docs_path)
@@ -194,7 +191,7 @@ def attach_service(
         drain_timeout=settings.shutdown_drain_seconds,
     )
 
-    from api_service.services.run_stream_service import RunStreamHub
+    from api_service.runs.streaming import RunStreamHub
     stream_hub = RunStreamHub(settings.api)
     app.state.run_stream_hub = stream_hub
 
@@ -202,13 +199,13 @@ def attach_service(
     async def combined_lifespan(application):
         # Lifespan state returned by the platform is preserved for requests.
         async with previous_lifespan(application) as state:
-            from api_service.services.agent_graph_service import runtime
+            from api_service.runs.runtime import runtime
             runtime.start()
-            from api_service.core.memory_store import runtime as memory_store_runtime
+            from api_service.infrastructure.memory_store import runtime as memory_store_runtime
             memory_store_runtime.start()
             try:
                 if manage_tracing:
-                    from api_service.observability.phoenix import setup_phoenix
+                    from service_runtime.observability.phoenix import setup_phoenix
                     await asyncio.to_thread(setup_phoenix, settings.agent)
                 await background.start()
                 log.info("service_started profile=%s", settings.profile)
@@ -224,7 +221,7 @@ def attach_service(
                         await background.stop()
                         await close_resources()
                         if manage_tracing:
-                            from api_service.observability.phoenix import shutdown_phoenix
+                            from service_runtime.observability.phoenix import shutdown_phoenix
                             await asyncio.to_thread(shutdown_phoenix)
                     finally:
                         await sso.close()
@@ -245,7 +242,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
     settings = settings or get_settings()
     configure(settings)
-    from api_service.core.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
+    from api_service.api.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
 
     app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0", docs_url=None)
     attach_service(app, settings, sso_docs_path="/docs" if platform_app is None else "/service/docs",
@@ -254,7 +251,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     from service_runtime.request_id import RequestIdMiddleware
     app.add_middleware(RequestIdMiddleware)
     from api_service.runs.errors import RunError
-    from api_service.core.problems import run_exception_handler
+    from api_service.api.problems import run_exception_handler
     app.add_exception_handler(RunError, run_exception_handler)
 
     if platform_app is None:
@@ -272,7 +269,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
         @app.get("/demo", include_in_schema=False)
         async def demo(request: Request):
-            from api_service.web_console import render_console
+            from api_service.web.console import render_console
             prefix = request.scope.get("root_path", "").rstrip("/")
             # Public labels and paths only. Never inject model/DB/SSO credentials.
             return await render_console({
@@ -298,7 +295,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
         if healthy and (settings.api.agent_worker_enabled or settings.event_worker_enabled or settings.api.task_reconciler_enabled):
             async def primary_database_ready():
                 # Legacy Event DB overrides do not prove API queue readiness.
-                from api_service.core.database import short_session
+                from api_service.infrastructure.database import short_session
                 from sqlalchemy import text
                 try:
                     async with asyncio.timeout(2):
@@ -334,7 +331,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
     @app.get("/service/live", tags=["health"])
     async def live():
-        from api_service.core.execution_lifecycle import execution_health
+        from api_service.runs.lifecycle import execution_health
         healthy = execution_health.healthy and all(
             not task.done() for task in app.state.service_runtime.tasks.values()
         )

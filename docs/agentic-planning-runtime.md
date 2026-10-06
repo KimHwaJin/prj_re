@@ -38,7 +38,7 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 | service_contracts/plan_interaction.py | 계획 화면 및 수정·승인 DTO |
 | service_contracts/plan_review.py, plan_projection.py | 순수 검증/화면 projection/승인 고정 |
 | service_contracts/resources/workflow-definition.schema.json | 2.0-draft Workflow 정의 계약 |
-| api_service/services/plan_event_persistence.py | DB 저장 경계 |
+| api_service/runs/persistence/plans.py | DB 저장 경계 |
 | api_service/api/v1/routes/runs.py | start/resume 접수, POST/GET stream |
 
 기존 `agents/analysis/workflow` 자산 패키지는 유지한다. 그 안의 tools/skills/workflows와 등록 YAML을 수정한 뒤 재배포한다. Tool registry의 availability는 ready(기본) 또는 test_only다. 기존 placeholder extract_data/transform_nce/transform_wt는 test_only로 지정해 이 Runtime의 모델에게 실행 후보로 주지 않는다. Registry 재생성은 이 수동 가용성 정책을 보존한다. 원래 레거시 Tool 파일과 이전 실행 코드는 제거하지 않았다.

@@ -4,9 +4,9 @@ import hashlib
 
 from sqlalchemy import func, select
 
-from api_service.core.database import short_session
-from api_service.models.common.agent_command_model import AgentCommandModel as Command
-from api_service.services.helpers import utc_now
+from api_service.infrastructure.database import short_session
+from api_service.models.agent_command_model import AgentCommandModel as Command
+from api_service.utils import utc_now
 from service_runtime.postgres_signals import COMMAND_CHANNEL, process_signals
 
 

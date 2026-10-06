@@ -6,7 +6,7 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 
 | 위치 | 책임 | 진입점 |
 |---|---|---|
-| `services/public_run_service.py` | 공개 Run 조회, 승인 토큰·interaction 검증, HTTP 요청 조정 | `PublicRunService.create/resume/cancel` |
+| `runs/service.py` | 공개 Run 조회, 승인 토큰·interaction 검증, HTTP 요청 조정 | `PublicRunService.create/resume/cancel` |
 | `runs/admission.py` | 세션 잠금, 멱등키 확인, Task·pending invocation·queued 이벤트 원자 기록 | `enqueue` |
 | `runs/commands/` | 내부 원장 접수·순서·claim·결과·기존 작업 이행 | [명령 Worker 안내](agent-command-worker.md) |
 | `runs/execution.py` | 점유 검증, 실행 준비, observer 소유, 결과·실패 기록 조정 | `execute_claimed` |
@@ -19,9 +19,9 @@ HTTP의 공개 Run ID는 전체 사용자 작업을 가리킨다. 내부 invocat
 | `runs/projection.py` | checkpoint 결과를 Run·Task·상태 이벤트로 반영 | `finalize_state`, `synchronize_executor_completion` |
 | `runs/repository.py` | Run → Task 행 잠금 순서, 세션 소유 확인, 관계 연결 | `lock_run_and_task`, `require_session` |
 | `runs/requests.py`, `runs/policy.py`, `runs/errors.py` | 요청 hash·모델 선택, 재시도 판정, application 오류 | 책임별 함수/예외 |
-| `services/agent_graph_service.py` | compiled graph/checkpointer/Store lifespan, 사용자 호출의 입력·config 조립 | `runtime.open_graph`, `ainvoke_user_turn/resume` |
+| `runs/runtime.py` | compiled graph/checkpointer/Store lifespan, 사용자 호출의 입력·config 조립 | `runtime.open_graph`, `ainvoke_user_turn/resume` |
 
-모듈은 호출 의미를 감추는 거대한 facade를 두지 않는다. API는 admission/cancellation을, Worker는 execution을 직접 사용한다. HTTP 예외 응답 변환은 `core/problems.py`와 앱 조립에서 담당한다. Agent 노드에는 API DB 의존을 추가하지 않는다.
+모듈은 호출 의미를 감추는 거대한 facade를 두지 않는다. API는 admission/cancellation을, Worker는 execution을 직접 사용한다. HTTP 예외 응답 변환은 `api/problems.py`와 앱 조립에서 담당한다. Agent 노드에는 API DB 의존을 추가하지 않는다.
 
 ## DB 수명
 

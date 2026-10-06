@@ -5,12 +5,12 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.enums import AgentRunStatus
-from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.models.common.task_model import TaskModel
+from api_service.models.enums import AgentRunStatus
+from api_service.models.agent_run_model import AgentRunModel
+from api_service.models.task_model import TaskModel
 from api_service.repositories.session_repository import SessionRepository
 from api_service.runs.errors import RunConflict, RunNotFound
-from api_service.services.task_service import TaskService
+from api_service.runs.tasks import TaskService
 from service_contracts.execution import ExecutionNeedsRecovery
 from service_runtime.diagnostics import timed
 

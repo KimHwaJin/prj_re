@@ -21,7 +21,7 @@ import tempfile
 import time
 from uuid import uuid4
 
-from api_service.web_console import render_console
+from api_service.web.console import render_console
 import uvicorn
 
 from cookie_auth import install_employee_fixture

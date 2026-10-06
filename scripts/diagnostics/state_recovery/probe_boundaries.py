@@ -27,23 +27,23 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
 import service_settings
-import api_service.agent_run_worker as worker
+import api_service.workers.agent as worker
 import api_service.runs.execution as runs
-import api_service.services.agent_graph_service as graphs
-import api_service.services.graph_crud_persistence as projection
-from api_service.core.execution_lifecycle import execution_health
-from api_service.core.enums import AgentRunStatus, TaskStatus
-from api_service.models.common.agent_run_log_model import AgentRunLogModel
-from api_service.models.common.task_event_model import TaskEventModel
-from api_service.models.common.session_execution_model import SessionExecutionModel
-from api_service.services.agent_run_log_service import AgentRunLogService
-from api_service.services.task_event_service import TaskEventService
-from api_service.services.task_service import TaskService
-from api_service.services.helpers import utc_now
+import api_service.runs.runtime as graphs
+import api_service.runs.persistence.graph as projection
+from api_service.runs.lifecycle import execution_health
+from api_service.models.enums import AgentRunStatus, TaskStatus
+from api_service.models.agent_run_log_model import AgentRunLogModel
+from api_service.models.task_event_model import TaskEventModel
+from api_service.models.session_execution_model import SessionExecutionModel
+from api_service.runs.logs import AgentRunLogService
+from api_service.runs.task_events import TaskEventService
+from api_service.runs.tasks import TaskService
+from api_service.utils import utc_now
 from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from api_service.test.test_user_identity_postgres import database_url, harness, headers
-from api_service.test.test_run_cleanup_postgres import runtime, enqueue, rows
-from api_service.test.test_public_run_postgres import state, resume, execute
+from tests.api_service.test_user_identity_postgres import database_url, harness, headers
+from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
+from tests.api_service.test_public_run_postgres import state, resume, execute
 
 pytestmark = pytest.mark.asyncio
 
@@ -184,13 +184,13 @@ import service_settings
 settings=json.loads(sys.stdin.read())
 service_settings.configure(service_settings.load_settings(config=settings,environ={}))
 async def main():
- import api_service.agent_run_worker as worker
+ import api_service.workers.agent as worker
  if os.environ['REVIEW_KIND']=='api_run':
   item=await worker.claim_one()
   assert item is not None
  else:
-  from api_service.core.database import get_session_factory
-  from api_service.services.session_execution import SessionExecution,acquire
+  from api_service.infrastructure.database import get_session_factory
+  from api_service.runs.ownership import SessionExecution,acquire
   async with get_session_factory()() as db:
    assert await acquire(db,SessionExecution(UUID(os.environ['REVIEW_SESSION']),uuid4(),uuid4(),'executor_event'))
    await db.commit()

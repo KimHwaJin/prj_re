@@ -165,7 +165,7 @@ LOADTEST_RUN_DIAGNOSTICS_DIR=/app/var/diagnostics/my-investigation \
   docker compose -f compose.loadtest.yaml up -d --no-deps --wait api
 ```
 
-`src/api_service/core/run_diagnostics.py`가 Run/Session ID와 PID, 구간별 횟수·합계·최대 시간을 프로세스별 JSONL에 기록한다. 연결 풀 준비/획득/반환/종료, Graph 생성, Graph 호출, chain callback, checkpoint 읽기/쓰기, 결과 영속화, 최종 commit, SQL verb별 실행 시간을 구분한다. SQL 원문·인자, Graph 입력/출력, 프레임 지역 변수는 기록하지 않는다. `RUN_DIAGNOSTICS_DIR`이 비어 있으면 callback·SQL listener·파일·감시 태스크를 생성하지 않는다.
+`src/service_runtime/diagnostics.py`가 Run/Session ID와 PID, 구간별 횟수·합계·최대 시간을 프로세스별 JSONL에 기록한다. 연결 풀 준비/획득/반환/종료, Graph 생성, Graph 호출, chain callback, checkpoint 읽기/쓰기, 결과 영속화, 최종 commit, SQL verb별 실행 시간을 구분한다. SQL 원문·인자, Graph 입력/출력, 프레임 지역 변수는 기록하지 않는다. `RUN_DIAGNOSTICS_DIR`이 비어 있으면 callback·SQL listener·파일·감시 태스크를 생성하지 않는다.
 
 실행이 5초를 넘으면 5초 간격으로 진행 중 span, pool 통계, 해당 프로세스의 관련 asyncio 작업 await 경로를 저장한다. 이 snapshot은 **느린 실행의 증거이며 자동으로 결함을 판정하지 않는다.** 취소·재시도·timeout 정책을 바꾸지 않는다. 이벤트 루프 지연은 100ms 간격의 감시 태스크로 관측하므로 100ms 미만의 Run에는 관측 기회가 없을 수 있다. 같은 이벤트 루프가 동기 호출로 완전히 멈추면 해제 전까지 snapshot을 남기지 못한다.
 

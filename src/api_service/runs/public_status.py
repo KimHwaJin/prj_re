@@ -1,5 +1,5 @@
 """Public Run status shared by detailed Run and lightweight session views."""
-from api_service.core.enums import AgentRunStatus, TaskStatus
+from api_service.models.enums import AgentRunStatus, TaskStatus
 
 TERMINAL_TASKS = (TaskStatus.SUCCESS, TaskStatus.ERROR, TaskStatus.TIMEOUT, TaskStatus.CANCELED)
 

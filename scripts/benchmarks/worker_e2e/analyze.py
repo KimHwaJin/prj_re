@@ -22,7 +22,8 @@ def analyze(raw):
     assert raw['passed'] and not raw['errors'] and len(results)==n
     assert len({r['session_id'] for r in results})==n
     assert all(r['passed'] for r in results)
-    assert db['session_owners']==db['recovery_tasks']==db['outbox_pending']==db['inbox_pending']==0
+    assert db['session_owners']==db['recovery_tasks']==db['inbox_pending']==0
+    assert db['outbox_pending']==0 or (db['outbox_pending'] is None and db.get('outbox_retired') is True)
     assert s['current_shared']==s['current_worker']==s['current_event_worker']==s['crud_connections_checked_out']==0
     assert s['peak_shared']<=cfg['total_capacity']
     if burst:

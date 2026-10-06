@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langgraph.types import Command
 
-from api_service.worker import DeferEvent, EventContext, IgnoreEvent, RejectEvent
+from service_contracts.events import DeferEvent, EventContext, IgnoreEvent, RejectEvent
 
 
 class ExecutorResumeProtocol:

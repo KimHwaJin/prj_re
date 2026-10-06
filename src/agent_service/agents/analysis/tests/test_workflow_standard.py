@@ -185,7 +185,7 @@ async def test_public_standard_through_graph_decision_operation_finalize_and_rep
     boundary=state['__interrupt__'][0];identity=resume_identity(str(uuid4()),boundary.id,command)
     state=await graph.ainvoke(Command(resume={boundary.id:resume_envelope(identity,command)}),cfg,durability='sync')
     assert len(executor.calls)==1
-    import api_service.services.graph_crud_persistence as persistence
+    import api_service.runs.persistence.graph as persistence
     async def persist(*args,**kwargs):return args[0]
     monkeypatch.setattr(persistence,'persist_graph_state',persist)
     async def deliver(event):

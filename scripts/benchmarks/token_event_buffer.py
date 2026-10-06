@@ -16,7 +16,7 @@ import time
 from uuid import uuid4
 
 import service_settings
-from api_service.services.llm_token_event_service import LLMTokenEventBuffer
+from api_service.runs.token_events import LLMTokenEventBuffer
 
 
 def configure(**values):
@@ -102,7 +102,7 @@ def main():
     parser.add_argument('--output',required=True,type=Path)
     args=parser.parse_args()
     root=Path(__file__).resolve().parents[2]
-    source=subprocess.check_output(['git','show',f'{args.baseline}:src/api_service/services/llm_token_event_service.py'],cwd=root)
+    source=subprocess.check_output(['git','show',f'{args.baseline}:src/api_service/runs/token_events.py'],cwd=root)
     with tempfile.TemporaryDirectory(prefix='token-buffer-before-') as folder:
         path=Path(folder)/'baseline.py';path.write_bytes(source)
         spec=importlib.util.spec_from_file_location('baseline_token_buffer',path)

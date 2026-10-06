@@ -6,17 +6,17 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.enums import AgentRunStatus, TaskStatus
-from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.models.common.message_model import MessageModel
-from api_service.models.common.task_model import TaskModel
+from api_service.models.enums import AgentRunStatus, TaskStatus
+from api_service.models.agent_run_model import AgentRunModel
+from api_service.models.message_model import MessageModel
+from api_service.models.task_model import TaskModel
 from api_service.runs.errors import InvalidRunRequest, RunConflict
 from api_service.runs.repository import interrupted_run
 from api_service.runs.requests import request_digest, select_model, validate_model, validate_replay
-from api_service.schemas.common.run_schema import RunCreate
-from api_service.services import resource_lifecycle as lifecycle
-from api_service.services.task_event_service import TaskEventService
-from api_service.services.task_service import TaskService
+from api_service.schemas.run_schema import RunCreate
+from api_service.resources import lifecycle
+from api_service.runs.task_events import TaskEventService
+from api_service.runs.tasks import TaskService
 
 
 async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunCreate, key: str) -> AgentRunModel:
@@ -31,7 +31,7 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
     owner = "queue:unclaimed"
     origin: AgentRunModel | None = None
     try:
-        from api_service.services.session_activity import require_input
+        from api_service.resources.session_activity import require_input
         if payload.command is None:
             await require_input(db, session_id)
             model_selection = select_model(payload.main_model_name)

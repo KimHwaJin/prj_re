@@ -121,7 +121,7 @@ async def setup(tmp_path,monkeypatch,*,single=False,missing=False,approval_chang
     view=state['plan_views'][0];command={'resume':{'action':'approve_plan','plan_id':view['plan_id'],'plan_revision':view['plan_revision'],**(approval_changes or {})}}
     boundary=state['__interrupt__'][0];identity=resume_identity(str(uuid4()),boundary.id,command)
     state=await graph.ainvoke(Command(resume={boundary.id:resume_envelope(identity,command)}),config,durability='sync')
-    import api_service.services.graph_crud_persistence as persistence
+    import api_service.runs.persistence.graph as persistence
     async def persist(*args,**kwargs):return args[0]
     monkeypatch.setattr(persistence,'persist_graph_state',persist)
     adapter=GraphInvocation(graph, model_validator=None)

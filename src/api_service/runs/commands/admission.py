@@ -1,7 +1,7 @@
 """Caller owns the transaction; ledger admission never commits independently."""
 from sqlalchemy import func, select
 
-from api_service.models.common.agent_command_model import AgentCommandModel
+from api_service.models.agent_command_model import AgentCommandModel
 from service_settings import get_settings
 
 

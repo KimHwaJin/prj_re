@@ -108,7 +108,7 @@ def load_settings(
             raise ConfigurationError("Deployment requires explicit " + ", ".join(sorted(missing)))
 
     api = api_binding.validate(api_binding.inputs(merged))
-    # Shared values have one default source: the API model. Agent receives native types.
+    # Each consumer owns its fields. Source aliases are shared, never duplicate settings.
     for key, value in api_binding.defaults(api).items():
         merged.setdefault(key, value)
         sources.setdefault(key, "default")
@@ -155,9 +155,6 @@ def load_settings(
     _postgres_url(agent.checkpoint_db_uri, "CHECKPOINT_DB_URI")
     if not worker.redis_url.startswith(("redis://", "rediss://")):
         raise ConfigurationError("Invalid Redis URL: REDIS_URL")
-    workflow_url = runtime.workflow_database_url if runtime.workflow_database_url is not None else worker.database_url
-    if runtime.workflow_persistence_enabled:
-        workflow_url = _postgres_url(workflow_url, "WORKFLOW_DATABASE_URL")
     search = search_binding.validate(search_binding.inputs(merged))
     for binding, instance in ((agent_binding, agent), (sso_binding, sso), (search_binding, search), (runtime_binding, runtime)):
         for key, value in binding.defaults(instance).items():
@@ -167,12 +164,11 @@ def load_settings(
             sources.setdefault(key, "default")
     # Worker derivations are explicit and never exported as per-process identities.
     for key, origin in {"EW_DATABASE_URL": "DATABASE_URL", "EW_REDIS_URL": "REDIS_URL",
-                        "EW_EXECUTOR_BASE_URL": "EXECUTOR_BASE_URL", "WORKFLOW_DATABASE_URL": "EW_DATABASE_URL"}.items():
+                        "EW_EXECUTOR_BASE_URL": "EXECUTOR_BASE_URL"}.items():
         sources.setdefault(key, "derived from " + origin)
     return ServiceSettings(
         api=api, agent=agent, worker=worker, sso=sso, profile=selected, workflow_search=search,
         event_worker_enabled=event_enabled,
-        workflow_database_url=workflow_url if runtime.workflow_persistence_enabled else None,
         mock_data_root=runtime.mock_data_root,
         shutdown_timeout_seconds=runtime.shutdown_timeout_seconds,
         shutdown_drain_seconds=runtime.shutdown_drain_seconds,

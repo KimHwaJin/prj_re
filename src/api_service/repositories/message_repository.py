@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.enums import DeleteYN
+from api_service.models.enums import DeleteYN
 from api_service.models import MessageModel, SessionModel
 
 
@@ -23,21 +23,6 @@ class MessageRepository:
                 MessageModel.delete_yn == DeleteYN.N,
                 SessionModel.user_id == user_id,
                 SessionModel.delete_yn == DeleteYN.N,
-            )
-        )
-
-    @staticmethod
-    async def get_in_session(
-        db: AsyncSession,
-        *,
-        session_id: UUID,
-        message_id: UUID,
-    ) -> MessageModel | None:
-        return await db.scalar(
-            select(MessageModel).where(
-                MessageModel.message_id == message_id,
-                MessageModel.session_id == session_id,
-                MessageModel.delete_yn == DeleteYN.N,
             )
         )
 

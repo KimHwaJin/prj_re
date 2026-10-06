@@ -3,9 +3,9 @@
 import hashlib
 import json
 
-from api_service.models.common.agent_run_model import AgentRunModel
+from api_service.models.agent_run_model import AgentRunModel
 from api_service.runs.errors import InvalidRunRequest, RunConflict
-from api_service.schemas.common.run_schema import RunCreate
+from api_service.schemas.run_schema import RunCreate
 
 
 def select_model(name):

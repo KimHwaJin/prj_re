@@ -1,17 +1,17 @@
 """Record outcomes only for the immutable owner that finished its graph call."""
 from datetime import timedelta
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from psycopg import Error as DatabaseError
 from psycopg_pool import PoolTimeout
 from redis.exceptions import RedisError
 
-from api_service.core.enums import AgentRunStatus
-from api_service.models.common.agent_command_model import AgentCommandModel as Command
-from api_service.models.common.agent_run_model import AgentRunModel as Run
+from api_service.models.enums import AgentRunStatus
+from api_service.models.agent_command_model import AgentCommandModel as Command
+from api_service.models.agent_run_model import AgentRunModel as Run
 from api_service.runs.commands.types import ClaimedEvent
-from api_service.services.helpers import utc_now
+from api_service.utils import utc_now
 from service_contracts.execution import ExecutionNeedsRecovery
 from service_contracts.events import DeferEvent, IgnoreEvent, RejectEvent
 
@@ -47,13 +47,6 @@ async def record(factory, item, *, error=None, max_failures=5, retry_seconds=.2)
             row.state, spent = event_outcome(error, row.failure_attempts, max_failures)
             row.failure_attempts += spent
             row.available_at = utc_now() + timedelta(seconds=retry_seconds)
-            # Legacy event record is an audit projection, never a second claim authority.
-            await db.execute(text("""UPDATE ew_commands SET state=:state,last_error=:error,
-                failure_attempts=:failures,updated_at=now(),updated_by='agent-worker'
-                WHERE namespace=:namespace AND command_id=:id"""),
-                {"state": "READY" if row.state == "READY" else "RUNNING" if row.state == "RECOVERY" else row.state,
-                 "error": row.last_error, "failures": row.failure_attempts,
-                 "namespace": item.namespace, "id": item.command_id})
         else:
             run = await db.get(Run, item.claim.run_id, populate_existing=True)
             if run is None or run.status == AgentRunStatus.RUNNING:

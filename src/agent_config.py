@@ -13,7 +13,6 @@ from typing import Any, Literal, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DEFAULT_EXECUTOR_SHARED_INPUT_ROOT = Path("/workspace/shared")
 DEFAULT_MOCK_DATA_ROOT = Path("/workspace/pv")
 MOCK_DATA_PATH_BY_TYPE = {
     "nce": "df_nce_wide_format.parquet",
@@ -77,13 +76,13 @@ def build_langgraph_thread_id(session_id: str) -> str:
 
 @dataclass(frozen=True, config=ConfigDict(populate_by_name=True, extra="forbid", allow_inf_nan=False))
 class AgentSettings:
-    """Typed Agent values. Sources and shared defaults are resolved by the service loader."""
+    """Typed Agent values; model, checkpoint and Executor settings have one owner."""
 
     environment: str = Field(default="local", validation_alias="APP_ENV")
-    model_provider: Literal["mock", "openai_compatible"] = "openai_compatible"
+    model_provider: Literal["mock", "openai_compatible"] = Field(default="openai_compatible", validation_alias=AliasChoices("MODEL_PROVIDER", "LLM_PROVIDER"))
     model_name: str = Field(default="qwen38-27b-nvfp4", validation_alias=AliasChoices("MODEL_NAME", "PRIVATE_LLM_MODEL_NAME", "LLM_MODEL_NAME"))
-    model_api_key: str | None = Field(default=None, validation_alias=AliasChoices("MODEL_API_KEY", "PRIVATE_LLM_API_KEY", "LLM_API_KEY"), repr=False)
-    api_base_url: str | None = Field(default=None, validation_alias=AliasChoices("API_BASE_URL", "PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"))
+    model_api_key: str | None = Field(default="dummy", validation_alias=AliasChoices("MODEL_API_KEY", "PRIVATE_LLM_API_KEY", "LLM_API_KEY"), repr=False)
+    api_base_url: str | None = Field(default="http://model.frodo.com/v1", validation_alias=AliasChoices("API_BASE_URL", "PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"))
     model_temperature: float = Field(default=0.2, validation_alias=AliasChoices("MODEL_TEMPERATURE", "LLM_TEMPERATURE"))
     model_timeout_seconds: float = Field(default=60, gt=0, validation_alias=AliasChoices("MODEL_TIMEOUT_SECONDS", "LLM_TIMEOUT_SECONDS"))
     model_max_retries: int = Field(default=0, ge=0, validation_alias=AliasChoices("MODEL_MAX_RETRIES", "LLM_MAX_RETRIES"))
@@ -113,7 +112,7 @@ class AgentSettings:
     executor_finalize_path: str = "/api/v1/executions/{execution_id}/finalize"
     executor_cancel_path: str = "/api/v1/executions/{execution_id}/cancel"
     executor_artifacts_path: str = "/api/v1/executions/{execution_id}/artifacts"
-    executor_shared_input_root: Path = DEFAULT_EXECUTOR_SHARED_INPUT_ROOT
+    executor_shared_input_root: Path = Path("/workspace/pv")
     executor_shared_result_root: Path = Path("/workspace/pv")
     executor_result_read_mode: Literal["API", "MANIFEST"] = "API"
     executor_source_type: Literal["PATH", "INLINE"] = "PATH"
@@ -280,7 +279,6 @@ def load_agent_settings(
 
 __all__ = [
     "AgentSettings",
-    "DEFAULT_EXECUTOR_SHARED_INPUT_ROOT",
     "MOCK_DATA_PATH_BY_TYPE",
     "PROJECT_ROOT",
     "TEST_DATA_SELECTION",

@@ -3,16 +3,16 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import get_current_user_id
-from api_service.core.database import get_db
-from api_service.core.enums import DeleteYN
-from api_service.core.pagination import ListParams, fetch_page, list_params
+from api_service.api.dependencies import get_current_user_id
+from api_service.infrastructure.database import get_db
+from api_service.models.enums import DeleteYN
+from api_service.api.pagination import ListParams, fetch_page, list_params
 from api_service.models import SessionModel
 from api_service.repositories.session_repository import SessionRepository
-from api_service.schemas.common.api_schema import Page, SessionResource
-from api_service.schemas.common.session_schema import SessionCreate, SessionUpdate
-from api_service.services.session_service import SessionService
-from api_service.services.session_activity import SESSION_QUERY, resource
+from api_service.schemas.api_schema import Page, SessionResource
+from api_service.schemas.session_schema import SessionCreate, SessionUpdate
+from api_service.resources.sessions import SessionService
+from api_service.resources.session_activity import SESSION_QUERY, resource
 
 
 router = APIRouter(tags=["sessions"])

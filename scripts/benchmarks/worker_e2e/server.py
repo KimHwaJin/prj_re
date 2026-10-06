@@ -10,10 +10,10 @@ cfg=json.loads(args.config.read_text())
 from service_settings import configure,load_settings
 configure(load_settings(config=cfg['settings'],environ={}))
 from service_bootstrap import create_app
-from api_service.core.database import get_engine
+from api_service.infrastructure.database import get_engine
 from sqlalchemy import event
 from service_runtime import diagnostics as diag
-from api_service import agent_run_worker as worker
+from api_service.workers import agent as worker
 from model_fixture import install_model_fixture
 from service_auth.sso.contracts import VerifiedEmployee
 
@@ -125,7 +125,7 @@ if cfg.get('executor_probe'):
     import probe
     probe.install(metrics,enabled,kind)
 # In the baseline the event dispatcher is outside execute_claimed.
-from api_service.agent_worker import worker_main
+from api_service.workers.executor_events import main as worker_main
 if hasattr(worker_main,'DeferredHandler'):
     previous_event=worker_main.DeferredHandler.__call__
     async def baseline_event(*args):

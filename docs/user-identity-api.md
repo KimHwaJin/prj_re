@@ -113,10 +113,10 @@ PYTHONPATH=src python -m bootstrap_admin --user-id admin-001 --user-name 관리�
 ## 검증 실행
 
 ```sh
-PYTHONPATH=src python -m pytest src/api_service/test/test_user_identity.py -q
+PYTHONPATH=src python -m pytest tests/api_service/test_user_identity.py -q
 # 전용 일회성 localhost DB identity_test에서만 실행. public 스키마를 초기화한다.
 DTEST_IDENTITY_TEST_DATABASE_URL=postgresql+asyncpg://tester:password@127.0.0.1:TEST_PORT/identity_test \
-  PYTHONPATH=src python -m pytest src/api_service/test/test_user_identity_postgres.py src/api_service/test/test_admin_user_reads_postgres.py src/api_service/test/test_sso_auth_postgres.py -q
+  PYTHONPATH=src python -m pytest tests/api_service/test_user_identity_postgres.py tests/api_service/test_admin_user_reads_postgres.py tests/api_service/test_sso_auth_postgres.py -q
 ```
 
 기존 역할/소유권 구현 이력은 [003 기록](improvements/003-user-identity.md), 현재 SSO 검증은 [045 기록](improvements/045-sso-authentication.md)을 참고한다. 기존 업무 테스트의 신원 double은 테스트 패키지에만 존재하며 production wheel에는 포함하지 않는다.

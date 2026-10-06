@@ -25,13 +25,11 @@ def main(argv=None):
     from alembic import command
     from alembic.config import Config
     from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-    from api_service.runs.commands.migrate import main as admit_commands
     for ini in ("alembic.crud.ini", "alembic.ini"):
         command.upgrade(Config(str(ROOT / ini)), "head")
     async def prepare():
         async with AsyncPostgresSaver.from_conn_string(settings.agent.checkpoint_db_uri) as saver:
             await saver.setup()
-        await admit_commands()
     asyncio.run(prepare())
     print("CRUD/event/checkpoint schemas prepared with the selected service YAML.")
 

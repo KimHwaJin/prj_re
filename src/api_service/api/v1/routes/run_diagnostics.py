@@ -4,12 +4,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.auth import Actor, get_current_user_id, require_admin
-from api_service.core.database import get_db
-from api_service.core.pagination import ListParams, list_params
-from api_service.schemas.common.api_schema import Page
-from api_service.schemas.common.run_diagnostics_schema import RunDiagnosticsResource, RunInvocationResource
-from api_service.services import run_diagnostics as diagnostics
+from api_service.api.dependencies import Actor, get_current_user_id, require_admin
+from api_service.infrastructure.database import get_db
+from api_service.api.pagination import ListParams, list_params
+from api_service.schemas.api_schema import Page
+from api_service.schemas.run_diagnostics_schema import RunDiagnosticsResource, RunInvocationResource
+from api_service.runs import diagnostics
 
 router = APIRouter(tags=["run-diagnostics"])
 admin_router = APIRouter(prefix="/admin", tags=["admin-run-diagnostics"])

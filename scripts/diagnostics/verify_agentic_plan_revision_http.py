@@ -26,7 +26,7 @@ import yaml
 
 from service_settings import load_settings
 from service_bootstrap import create_app
-from api_service.services.agent_graph_service import runtime as graph_runtime
+from api_service.runs.runtime import runtime as graph_runtime
 from agent_config import build_langgraph_thread_id
 from agent_service.agents.analysis.tests.test_agentic_repair import FixtureCatalog,document
 from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema

@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from datetime import timedelta
 from uuid import UUID, uuid4
 
-from api_service.core.database import get_session_factory, short_session
-from api_service.core.enums import AgentRunStatus, TaskStatus
-from api_service.core.execution_claim import ExecutionClaim, current_execution_claim
-from api_service.core.execution_lifecycle import execution_health
-from api_service.models.common.agent_run_model import AgentRunModel
+from api_service.infrastructure.database import get_session_factory, short_session
+from api_service.models.enums import AgentRunStatus, TaskStatus
+from api_service.runs.claim_context import ExecutionClaim, current_execution_claim
+from api_service.runs.lifecycle import execution_health
+from api_service.models.agent_run_model import AgentRunModel
 from api_service.runs.errors import (
     CancellationRequested,
     InvalidRunRequest,
@@ -29,17 +29,17 @@ from api_service.runs.projection import (
     require_invocation_recovery,
 )
 from api_service.runs.repository import lock_run_and_task, require_session
-from api_service.schemas.common.run_schema import RunCreate
-from api_service.services.agent_graph_service import (
+from api_service.schemas.run_schema import RunCreate
+from api_service.runs.runtime import (
     ainvoke_resume,
     ainvoke_user_turn,
     user_request_from_messages,
 )
-from api_service.services.graph_recovery import GraphProjectionError
-from api_service.services.helpers import utc_now
-from api_service.services.llm_token_event_service import LLMTokenEventBuffer
-from api_service.services.task_event_service import TaskEventService
-from api_service.services.task_service import TaskService
+from api_service.runs.persistence.recovery import GraphProjectionError
+from api_service.utils import utc_now
+from api_service.runs.token_events import LLMTokenEventBuffer
+from api_service.runs.task_events import TaskEventService
+from api_service.runs.tasks import TaskService
 from config import settings
 from service_contracts.execution import ExecutionNeedsRecovery, InvocationNeedsRecovery
 from service_runtime.diagnostics import span

@@ -18,7 +18,7 @@
 |---|---|---|
 | `DATABASE_URL` | API CRUD·Run 큐·프로젝트 메모리 Store | 이벤트 DB 미설정 시 이 주소의 psycopg DSN을 파생 |
 | `EW_DATABASE_URL` | 이벤트 Inbox·binding 및 제출 bridge | 실행 활성 상태에서 DATABASE_URL과 같은 DB 정본 필수. 실제 자료 이행은 별도 |
-| `WORKFLOW_DATABASE_URL` | Agent 추천 catalog | 미설정 시 이벤트 DB에서 파생. 기존 별도 DB는 명시 유지 |
+| Workflow 저장 | DATABASE_URL | 현재 Workflow JSON·query embedding 저장; 별도 Workflow DB 설정 삭제 |
 | `CHECKPOINT_DB_URI` | Run 및 내장 이벤트 그래프의 공용 checkpointer | `AGENT_CHECKPOINT_DATABASE_URL`은 같은 값만 허용하는 구 별칭 |
 | `REDIS_URL` | SSO 로그인 세션과 Executor Streams | 연결풀·key/group은 용도별로 분리. `EW_REDIS_URL`은 구 별칭 |
 | `EXECUTOR_BASE_URL` | 실행 제출·결과 조회·이벤트 이력 보충 | `EW_EXECUTOR_BASE_URL`은 구 별칭 |

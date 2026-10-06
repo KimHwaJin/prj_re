@@ -2,11 +2,11 @@
 
 from sqlalchemy import select
 
-from api_service.core.database import short_session
-from api_service.core.enums import AgentRunStatus
-from api_service.core.execution_claim import current_execution_claim
-from api_service.models.common.agent_run_model import AgentRunModel
-from api_service.services.graph_recovery import (
+from api_service.infrastructure.database import short_session
+from api_service.models.enums import AgentRunStatus
+from api_service.runs.claim_context import current_execution_claim
+from api_service.models.agent_run_model import AgentRunModel
+from api_service.runs.persistence.recovery import (
     GraphProjectionError,
     checkpoint_state,
     snapshot_interrupts,

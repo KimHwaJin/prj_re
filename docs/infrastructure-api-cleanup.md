@@ -33,13 +33,11 @@ SSO용 bounded Redis pool, 이벤트 consumer의 Redis pool·Stream/group/namesp
 
 Fernet 구현과 프로젝트의 직접 `cryptography` 의존성은 제거했다. `uv.lock`과 생성 `requirements.txt`에는 `langgraph-api`의 전이 의존성으로 cryptography가 남을 수 있다. 이를 프로젝트의 남은 Fernet 기능으로 해석하지 않는다. 폐쇄망 사내 SSO SDK가 요구하는 의존성은 그 SDK 설치 계약을 별도로 따른다.
 
-## 기존 DB 보존
+## DB 정리 (101에서 갱신)
 
-기존 `jupyter_servers` 테이블·행·암호화 token은 자동 삭제하거나 변환하지 않는다. 기존 Alembic 0008 revision도 이미 배포된 schema 이력을 위해 유지한다. 따라서 기존 DB뿐 아니라 이력을 처음부터 적용한 새 DB에도 이 레거시 테이블은 남을 수 있다. 현재 서비스에서는 읽거나 쓰지 않는다.
+`jupyter_servers`를 보존하던 이전 정책은 폐기했다. CRUD revision `20261006_0030`이 실제 테이블·행·index를 삭제하며 autogenerate 보존 예외도 제거했다. 공식 SDK Store 제외는 유지한다. 기존 revision은 DB를 현재 head로 올리는 실행 이력이므로 보존한다.
 
-ORM 모델 삭제로 인한 우발적 정리를 막기 위해 `crud_migrations/env.py`의 autogenerate `include_object`는 **DB에서 반영된 `jupyter_servers` 테이블에 대응 ORM 모델이 없을 때** 비교에서 제외한다. 공식 LangGraph Store 테이블 제외도 유지한다. 다른 테이블을 일괄 제외하지 않고, 미래에 대응 모델이 다시 등록되면 그 비교도 막지 않는다.
-
-이 필터는 explicit migration의 `DROP TABLE`, 수동 SQL, downgrade를 막지 않는다. 실제 테이블 제거가 필요하면 데이터 보존·복원 요구를 먼저 정한 별도 migration으로 수행한다. 이번 작업에 새 revision이나 실제 DB 변경은 없다.
+084는 당시 API 제거 기록이고, 현재 정본은 [API 정리 문서](api-service-layout.md)와 [DB migration 안내](database_migrations.md)다. 기존 실제 서비스 DB에 자동 적용하지는 않았으며 선택한 YAML 대상으로 migration을 수행해야 한다.
 
 ## 검증과 다음 범위
 

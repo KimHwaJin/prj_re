@@ -134,7 +134,7 @@ async def verify(args, config, namespace, report):
                     raise AssertionError((path, response.status_code, response.text[:2000]))
                 return response.json() if response.content else None
             async def snapshot(sid):
-                from api_service.services.agent_graph_service import runtime
+                from api_service.runs.runtime import runtime
                 from agent_config import build_langgraph_thread_id
                 async with runtime.open_graph() as graph:
                     return (await graph.aget_state({'configurable': {'thread_id': build_langgraph_thread_id(sid)}})).values

@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api_service.core.enums import DeleteYN
-from api_service.models.common.project_model import ProjectModel
+from api_service.models.enums import DeleteYN
+from api_service.models.project_model import ProjectModel
 
 
 class ProjectRepository:

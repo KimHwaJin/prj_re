@@ -10,9 +10,9 @@ cfg=json.loads(a.config.read_text());sys.path.insert(0,str(a.source/'src'));sys.
 from service_settings import configure, load_settings
 configure(load_settings(config=cfg['settings'],environ={}))
 from sqlalchemy import event,text
-from api_service.core.database import get_engine,get_session_factory
-from api_service.services import agent_graph_service as gs
-from api_service import agent_run_worker as worker
+from api_service.infrastructure.database import get_engine,get_session_factory
+from api_service.runs import runtime as gs
+from api_service.workers import agent as worker
 from psycopg_pool import AsyncConnectionPool
 
 kind=ContextVar('bench_kind',default='worker');run=ContextVar('bench_run',default=None)
@@ -127,8 +127,8 @@ except ModuleNotFoundError as exc:
     repository = None
     run_hooks = [(RunService, '_session', 'run.session'),
                  (RunService, '_lock_run_and_task', 'run.final_rows')]
-from api_service.services.llm_token_event_service import LLMTokenEventBuffer
-from api_service.services.task_event_service import TaskEventService
+from api_service.runs.token_events import LLMTokenEventBuffer
+from api_service.runs.task_events import TaskEventService
 for cls,name,label in run_hooks + [(LLMTokenEventBuffer,'_append','token.append'),(TaskEventService,'append','event.append')]:
     fn=getattr(cls,name)
     def time_call(fn,label):
@@ -197,7 +197,7 @@ async def metrics():
     now=time.perf_counter();extra=[]
     for t,k,r in starts.values():extra.append({'start':max(t,m['start']),'end':now,'kind':k,'run_id':r,'open_at_snapshot':True})
     healthy=None;faults={}
-    from api_service.core.execution_lifecycle import execution_health
+    from api_service.runs.lifecycle import execution_health
     healthy=execution_health.healthy;faults=dict(execution_health.faults)
     return JSONResponse({**m,'holds':m.get('holds',[])+extra,'cpu_seconds':time.process_time()-m.get('cpu_start',time.process_time()),'rss_peak_bytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,'healthy':healthy,'faults':faults,'current_stacks':stacks()})
 async def sampler():
@@ -217,8 +217,8 @@ async def main():
             async def warm():
                 async with get_session_factory()() as db:await db.execute(text('SELECT pg_sleep(.01)'))
             await asyncio.gather(*(warm() for _ in range(cfg['pool'])))
-            from api_service.services.user_service import UserService
-            from api_service.schemas.common.user_schema import UserCreate
+            from api_service.resources.users import UserService
+            from api_service.schemas.user_schema import UserCreate
             async with get_session_factory()() as db:await UserService.bootstrap_admin(db,UserCreate(user_id='admin',user_name='Benchmark admin',role='admin'))
             task=asyncio.create_task(sampler())
             try:yield state
