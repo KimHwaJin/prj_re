@@ -168,42 +168,6 @@ class ExecutorCancelRequestBody(StrictModel):
     actor: ExecutorActor
 
 
-class ExecutorArtifactInlineSource(StrictModel):
-    type: Literal["INLINE"] = "INLINE"
-    content: str = Field(min_length=1)
-
-
-class ExecutorArtifactPathSource(StrictModel):
-    type: Literal["PATH"] = "PATH"
-    path: str = Field(min_length=1)
-    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-
-    @model_validator(mode="after")
-    def validate_report_path(self) -> "ExecutorArtifactPathSource":
-        path = PurePosixPath(self.path)
-        if path.is_absolute() or ".." in path.parts:
-            raise ValueError(
-                "artifact source.path must be a safe shared-PV path"
-            )
-        if path.suffix.lower() != ".md":
-            raise ValueError(
-                "REPORT artifact source.path must point to Markdown"
-            )
-        return self
-
-
-class ExecutorArtifactRequestBody(StrictModel):
-    idempotency_key: str = Field(min_length=1)
-    type: Literal["REPORT"] = "REPORT"
-    source: ExecutorArtifactInlineSource | ExecutorArtifactPathSource
-    name: str = Field(min_length=1)
-    description: str = Field(min_length=1)
-    media_type: Literal["text/markdown"] = "text/markdown"
-    append_to_notebook: bool = True
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    actor: ExecutorActor
-
-
 class ExecutorResponseOperationStep(StrictModel):
     sequence: int = Field(ge=0)
     step_id: str = Field(min_length=1)

@@ -8,8 +8,11 @@
 [110](110-code-quality-structure-cleanup.md)에서 HTTP 의존성·application 제출 경계,
 미사용 manifest/호환 코드/옛 응답 DTO/검토 스크립트, 정적 브라우저 자산과 운영
 의존성을 정리했다. 전체 Ruff/ty 오류 해소는 미완료이며 Agent 상태·반환 타입과
-application 조회 타입 경계를 다음 정리 대상으로 둔다. Artifact/Workflow 외부
-계약은 유지하며 기존 후순위 기능 결정은 바꾸지 않는다.
+application 조회 타입 경계를 다음 정리 대상으로 둔다.
+[111](111-unused-contract-declarations.md)에서 추가 삭제 지시에 따라 미사용
+Artifact DTO3개·Workflow/Dataset Protocol2개를 제거했다. 실제 HTTP 제출·
+검색과 오프라인 Dataset 초안 검증은 유지하며 공개 OpenAPI는 동일하다.
+기존 후순위 기능 결정은 바꾸지 않는다.
 
 ## 2026-10-03 리뷰 반영 후 현재 실행 순서
 

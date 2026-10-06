@@ -1,6 +1,6 @@
-"""Transport-neutral retrieval result and Agent port; no service DB dependency."""
+"""Transport-neutral retrieval schemas; no service DB dependency."""
 
-from typing import Any, Literal, Protocol
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -52,7 +52,3 @@ class WorkflowSearchDiagnostics(BaseModel):
 class WorkflowSearchResult(BaseModel):
     items: list[WorkflowSearchCandidate] = Field(default_factory=list)
     diagnostics: WorkflowSearchDiagnostics
-
-
-class WorkflowRetriever(Protocol):
-    async def search(self, query: str) -> WorkflowSearchResult: ...

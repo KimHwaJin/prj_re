@@ -8,7 +8,7 @@ JSON Schema is exported for reuse without installing the Agent's dependencies.
 import unicodedata
 from enum import Enum
 from pathlib import PurePosixPath
-from typing import Literal, Protocol
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -477,38 +477,6 @@ def resolve_binding(
         expected_file_revision=expected.revision,
         revision_method=expected.revision_method,
     )
-
-
-class DatasetRegistry(Protocol):
-    """Future provider boundary; intentionally no implementation or startup hook."""
-
-    async def candidates(
-        self,
-        execution_id: UUID,
-        context: RequestContext,
-        *,
-        cursor: str | None,
-        limit: int,
-    ) -> list[DatasetCandidate]: ...
-    async def register(
-        self,
-        execution_id: UUID,
-        request: DatasetRegistration,
-        context: RequestContext,
-    ) -> DatasetRecord: ...
-    async def list(
-        self, context: RequestContext, *, cursor: str | None, limit: int
-    ) -> DatasetPage: ...
-    async def get(
-        self, reference: DatasetRef, context: RequestContext
-    ) -> DatasetRecord: ...
-    async def resolve(
-        self,
-        reference: DatasetRef,
-        context: RequestContext,
-        expected_file_revision: str,
-        storage_namespace: str,
-    ) -> RuntimeDatasetBinding: ...
 
 
 class ContractExamples(ContractModel):
