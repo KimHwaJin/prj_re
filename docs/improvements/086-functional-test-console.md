@@ -11,7 +11,7 @@
 
 ## 변경
 
-- tools/test-console/index.html: 외부 의존성 없는 단일 HTML. 파일을 직접 열면 서버 호출 없는 샘플, 실제 모드는 cookie/CSRF·현재 POST 접수/GET SSE/POST SSE를 사용한다. 샘플과 실제를 계속 구분하고 모델/SSO fixture 여부를 표시한다.
+- src/api_service/static/demo.html: 외부 의존성 없는 단일 HTML. 파일을 직접 열면 서버 호출 없는 샘플, 실제 모드는 cookie/CSRF·현재 POST 접수/GET SSE/POST SSE를 사용한다. 샘플과 실제를 계속 구분하고 모델/SSO fixture 여부를 표시한다.
 - 프로젝트/세션·지침·단일 메모리 문서, 네 HITL 종류·선언된 파라미터·도구 제외·승인 정책, 결과 Markdown·승인 계획·사용자 제외/실행 skip, diagnostics/invocations/logs, 실제 OpenAPI 기반45개 업무 operation 요청 도구를 제공한다. User·Workflow·Message 등의 관리 동작은 원래 API·권한을 사용한다.
 - 동일 요청 재전송은 정확한 key/body를 유지한다. SSE frame은 chunk/CRLF/multiline을 처리하고 sequence를 중복 제거한다. snapshot.cursor는 durable cursor로 쓰지 않는다. 선택 변경은 이전 연결을 끊고 늦은 응답을 구분한다. 새 입력/HITL 액션은 Session availability를 따른다. 상시 상태 폴링을 추가하지 않았다.
 - 메모리409에서 로컬 편집을 보존하고 최신 서버 문서를 별도로 보여준다. 로그인/페이지 복귀에는 project/session/run ID만 보관한다. 쿠키·CSRF·resume token은 저장/trace에 노출하지 않는다. 외부 데이터는 textContent/DOM으로 렌더링하고 임의 HTML/코드를 실행하지 않는다.

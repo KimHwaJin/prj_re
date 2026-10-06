@@ -4,6 +4,8 @@
 
 루트 `app.py`가 `src/service_bootstrap.py`를 호출한다. 설정은 `src/service_settings.py`에서 프로세스당 한 번 확정한다. 기존 `run.py`, `uvicorn main:app --app-dir src`도 같은 bootstrap을 사용한다. 025에서 API 패키지는 `src/api_service`로 이동했다. 루트 `app.py`는 그대로 진입점이며 기존 패키지 이름 충돌용 우회는 제거했다.
 
+서비스와 같은 설정으로 새 HTML을 `/demo`에서 제공한다. [클론 후 로컬 설정·schema·화면 실행](service-demo-console.md)을 참고한다.
+
 ## 실행
 
 ```sh

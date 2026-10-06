@@ -8,6 +8,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Callable, Awaitable, Any
+from starlette.requests import Request
 from service_settings import ServiceSettings, configure, get_settings, load_settings
 
 log = logging.getLogger(__name__)
@@ -237,7 +238,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     """Local factory or explicit attachment to an already assembled platform app."""
     from fastapi import FastAPI, HTTPException
     from fastapi.exceptions import RequestValidationError
-    from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
+    from fastapi.responses import RedirectResponse, JSONResponse
 
     settings = settings or get_settings()
     configure(settings)
@@ -262,12 +263,23 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
             return {"status": "ok"}
 
         @app.get("/", include_in_schema=False)
-        async def root():
-            return RedirectResponse(url="/demo")
+        async def root(request: Request):
+            return RedirectResponse(url=request.scope.get("root_path", "").rstrip("/") + "/demo")
 
         @app.get("/demo", include_in_schema=False)
-        async def demo():
-            return FileResponse(Path(__file__).parent / "api_service/static/demo.html")
+        async def demo(request: Request):
+            from api_service.web_console import render_console
+            prefix = request.scope.get("root_path", "").rstrip("/")
+            # Public labels and paths only. Never inject model/DB/SSO credentials.
+            return await render_console({
+                "apiBase": prefix + settings.api.api_v1_prefix,
+                "openapiUrl": prefix + app.openapi_url,
+                "returnTo": prefix + "/demo",
+                "auth": {"mode": "configured"},
+                "model": {"mode": "mock" if settings.agent.model_provider == "mock" else "real",
+                          "name": settings.agent.model_name},
+                "executor": {"mode": "real" if settings.agent.executor_submit_enabled else "off"},
+            })
 
     @app.get("/service/ready", tags=["health"])
     async def ready():

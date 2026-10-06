@@ -46,21 +46,15 @@ PostgreSQL 서버는 pgvector>=0.8.0이 필요합니다. 기존 PostgreSQL17 볼
 
 ## CRUD API와 테스트 화면
 
-LangGraph/노드 구현과 분리된 FastAPI 계층에서 사용자, 프로젝트, 세션, 메시지,
-실행 이력을 PostgreSQL에 저장합니다. CRUD 스키마는 기존 Worker migration과 별도로
-관리합니다.
+서비스의 `/demo`는 현재 API·SSE·HITL·관리 기능을 확인하는 새 HTML 콘솔이다. API·Agent Worker·Executor 이벤트 수신과 같은 `app.py` 프로세스·중앙 설정을 사용한다. 별도 프론트 빌드·HTML 서버·임시 DB는 필요 없다.
 
 ```bash
-uv sync
-alembic -c alembic.crud.ini upgrade head
-# embedding 설정 후 모델 공간의 HNSW index를 배포 DDL 권한으로 준비:
-uv run python tools/provision_workflow_index.py
-uv run dtest-agent-api
+uv sync --frozen
+# DB schema를 준비한 뒤 실행. 아래 가이드의 migration/설정 절차를 따른다.
+uv run python app.py --env dev --local-env-file .env
 ```
 
-브라우저에서 `http://127.0.0.1:8000/demo`를 열면 CRUD와 Agent 실행 흐름을 시험할 수
-있습니다. DB/Redis/checkpoint 연결은 `DATABASE_URL`, `REDIS_URL`,
-`CHECKPOINT_DB_URI` 및 기존 `EW_*` 환경변수로 덮어쓸 수 있습니다.
+기본 접속 주소는 `http://127.0.0.1:8000/demo`다. `.env`는 명시한 옵션으로 읽으며 선택 YAML이 우선한다. 사내 SSO adapter가 없는 일반 서비스는 로그인503이며 테스트 로그인으로 자동 전환하지 않는다. [클론 후 로컬 설정·schema·화면 실행](docs/service-demo-console.md), [격리 진단 실행 방법](tools/test-console/README.md)을 참고한다.
 
 ## 현재 Agent 개발 확인
 

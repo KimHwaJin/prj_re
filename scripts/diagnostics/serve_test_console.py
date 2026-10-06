@@ -21,7 +21,7 @@ import tempfile
 import time
 from uuid import uuid4
 
-from fastapi.responses import HTMLResponse
+from api_service.web_console import render_console
 import uvicorn
 
 from cookie_auth import install_employee_fixture
@@ -31,7 +31,6 @@ from service_bootstrap import create_app
 from model_connection import load_model_env, validate_real_model, model_host_alias
 
 ROOT = Path(__file__).resolve().parents[2]
-HTML = ROOT / 'tools/test-console/index.html'
 
 
 class ConsoleServer(uvicorn.Server):
@@ -89,6 +88,7 @@ def prepare_settings(args, config, namespace):
 
 def public_runtime(args, settings):
     return {'apiBase': f'http://127.0.0.1:{args.port}{settings.api.api_v1_prefix}',
+            'openapiUrl': '/openapi.json', 'returnTo': '/test-console',
             'auth': {'mode': 'fixture' if args.test_login else 'configured',
                      'role': ('admin' if args.fixture_admin else 'user') if args.test_login else None},
             'model': {'mode': args.model, 'name': settings.agent.model_name,
@@ -114,9 +114,7 @@ async def serve(args, config, namespace):
     # This runtime descriptor contains labels only, no credentials or endpoints.
     @app.get('/test-console', include_in_schema=False)
     async def console():
-        text = HTML.read_text().replace('<script id="console-app">',
-            '<script>window.TEST_CONSOLE_CONFIG='+json.dumps(runtime).replace('<','\\u003c')+';</script>\n<script id="console-app">')
-        return HTMLResponse(text, headers={'Cache-Control':'no-store'})
+        return await render_console(runtime)
     print(f'Console: http://127.0.0.1:{args.port}/test-console', flush=True)
     print(json.dumps({'auth':runtime['auth'], 'model':runtime['model'], 'executor':runtime['executor']}, ensure_ascii=False), flush=True)
     if args.model=='fixture':

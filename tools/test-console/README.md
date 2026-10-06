@@ -1,8 +1,20 @@
 # 기능 테스트 콘솔
 
-[index.html](index.html)은 외부 CSS·JavaScript·CDN·프론트 빌드가 필요 없는 독립 HTML이다. 파일을 브라우저에서 직접 열면 샘플로 모든 화면과 조작을 확인한다. 실제 서비스는 API 연결로 시험하며 SSO 쿠키·CSRF와 현재 Runs/SSE 계약을 사용한다. 기존 demo.html은 재사용하거나 수정하지 않았다.
+[demo.html](../../src/api_service/static/demo.html)은 외부 CSS·JavaScript·CDN·프론트 빌드가 필요 없는 독립 HTML이다. 파일을 브라우저에서 직접 열면 샘플로 모든 화면과 조작을 확인한다. 실제 서비스는 API 연결로 시험하며 SSO 쿠키·CSRF와 현재 Runs/SSE 계약을 사용한다. 기존 demo.html은 재사용하거나 수정하지 않았다.
 
-## 지금 로컬에서 열기
+## 일반 서비스에서 열기 — 현재 권장
+
+새 HTML은 `src/api_service/static/demo.html` 한 파일로 관리하고 서비스 패키지에 포함한다. `app.py`로 기존 API·Agent Worker·Executor 이벤트 수신을 시작한 뒤 `/demo`에 접속하면 같은 서버의 API에 자동 연결한다. 별도 HTML 서버·임시 DB·JSON 설정은 필요 없다.
+
+```sh
+uv sync --frozen
+uv run python app.py --env dev --local-env-file .env
+# 기본 주소: http://127.0.0.1:8000/demo
+```
+
+PostgreSQL·Redis·Executor·LLM과 Worker 설정은 기존 중앙 설정을 사용한다. [클론 후 로컬 실행 안내](../../docs/service-demo-console.md)를 따른다. 일반 서비스는 사내 SSO 연결을 그대로 사용하며 테스트 직원을 설치하거나 관리자로 로그인시키지 않는다. 사내 SDK adapter가 없으면 실제 로그인은503이다. 아래 별도 진단 도구는 고정 응답/직원 검증 대체 등 격리 실험이 필요할 때만 사용한다.
+
+## 이전 로컬 진단 인스턴스
 
 현재 실제 모델 콘솔: http://127.0.0.1:18102/test-console . **테스트 로그인 + 실제 qwen38-27b-nvfp4 + 실제 Executor** 조합이다. SSO 로그인 버튼은 직원 검증만 로컬 테스트 계정으로 대체한다. 로그인 쿠키·CSRF·사용자/기본 프로젝트 생성·API·PostgreSQL/checkpoint/Store·Agent/Event Worker·Redis·Executor/Jupyter는 실제 구현을 사용한다. 모델 응답은 고정하지 않는다. 화면 상단에서 로그인·모델·Executor 모드를 각각 확인할 수 있다.
 
@@ -58,7 +70,7 @@ CLI 기본 UI/API18100·DB53601이며 현재 실제 모델 인스턴스는 명�
 
 ## 실제 SSO와 모델 환경 연결
 
-기존 서버를 사용할 때 HTML의 API 연결에서 base URL을 지정할 수 있다. 쿠키/CORS 때문에 실제 API 시험에는 같은 origin으로 HTML을 호스팅하는 편이 편하다. file://의 샘플 보기에는 서버가 필요 없다.
+기존 서버를 사용할 때 HTML의 API 연결에서 base URL을 지정할 수 있다. 쿠키/CORS 때문에 실제 API 시험에는 서비스의 같은 origin `/demo`를 사용한다. file://의 샘플 보기에는 서버가 필요 없다.
 
 진단 앱 실행 도구에 --local-fixtures 없이 private flat JSON 중앙 설정을 넣으면 기존 create_app과 실제 SDK·모델 설정을 사용한다. API·Worker를 함께 실행하는 별도 앱 인스턴스이며 운영 서버의 라우터를 자동 추가하는 기능이 아니다. SSO_PUBLIC_API_ORIGIN/SSO_FRONTEND_ORIGIN·쿠키 정책은 제공한 설정을 유지하므로 호스팅 origin과 맞춰야 하고 SSO_ALLOWED_RETURN_ROOTS에 /test-console을 허용한다. 폐쇄망 SDK 연결 함수가 구현되지 않았다면 실제 로그인은503이다. reverse-proxy root_path와 플랫폼 원본 통합은 이번 시각 검증 범위가 아니다.
 
@@ -79,7 +91,7 @@ Chrome/네이티브 UI는 Mac 잠금·탭 timeout으로 완료하지 못했지�
 
 ## 수정과 회귀 실행
 
-index.html의 CSS·markup·console-app script가 화면 소스다. Core에는 SSE framing·typed value·계획 명령·redaction을 두고, 아래 컨트롤러는 인증/요청·Run stream·화면 렌더링·명시적 preview simulator로 나눴다. 생산 애플리케이션에서 이 파일/실행 도구를 import하지 않는다.
+`src/api_service/static/demo.html`의 CSS·markup·console-app script가 화면 소스다. Core에는 SSE framing·typed value·계획 명령·redaction을 두고, 아래 컨트롤러는 인증/요청·Run stream·화면 렌더링·명시적 preview simulator로 나눴다. 일반 서비스는 패키지 HTML과 공용 renderer를 사용한다. 진단 실행 도구와 개발용 DOM double은 생산 앱에서 import하지 않는다.
 
 ```sh
 node --test tools/test-console/tests/console.test.cjs

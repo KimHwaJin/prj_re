@@ -24,7 +24,7 @@ function harness(html,{base,fetch,storage=new Map(),runtime}={}){
  const document={getElementById:id=>ids.get(id),createElement:t=>new Element(t),createTextNode:text=>{const e=new Element('#text');e.textContent=text;return e;},querySelectorAll:s=>[...new Set(roots.flatMap(e=>[...(matches(e,s)?[e]:[]),...e.querySelectorAll(s)]))]};
  const timers=new Set();const location={protocol:base?'http:':'file:',origin:base?new URL(base).origin:'null',assign:url=>location.assigned=url};
  const window={location,addEventListener:()=>{}};
- if(base)window.TEST_CONSOLE_CONFIG=runtime||{apiBase:base,fixture:true,executor:true};
+ if(base)window.TEST_CONSOLE_CONFIG=runtime||{apiBase:base,returnTo:'/test-console',fixture:true,executor:true};
  const context={document,window,location,crypto:{randomUUID},URL,Blob,TextDecoder,AbortController,sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},confirm:()=>true,fetch:fetch||(()=>{throw Error('Preview must never call fetch');}),console,setTimeout:(fn,ms)=>{const t=setTimeout(()=>{timers.delete(t);fn();},ms);t.unref();timers.add(t);return t;},clearTimeout:t=>{clearTimeout(t);timers.delete(t);}};
  const script=/<script id="console-app">([\s\S]*?)<\/script>/.exec(html)[1];vm.runInNewContext(script,context,{filename:'test-console-inline.js'});
  const all=s=>document.querySelectorAll(s);const find=(root,label)=>root.querySelectorAll('button').find(b=>b.textContent===label);

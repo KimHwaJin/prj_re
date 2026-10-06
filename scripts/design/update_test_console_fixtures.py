@@ -30,7 +30,7 @@ def main():
                                      'AGENT_WORKER_ENABLED':False},environ={})
     fixtures['openapi'] = create_app(settings).openapi()
     payload = json.dumps(fixtures,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
-    file = ROOT/'tools/test-console/index.html'
+    file = ROOT/'src/api_service/static/demo.html'
     text,count = re.subn(r'(<script id="fixtures" type="application/json">)[\s\S]*?(</script>)',
                         lambda m:m[1]+payload+m[2],file.read_text())
     if count != 1:

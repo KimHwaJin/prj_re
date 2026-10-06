@@ -13,7 +13,7 @@ async function http(url,options={}){
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate,why,timeout=30000){const t=Date.now();while(!predicate()){if(Date.now()-t>timeout)throw Error('Timeout: '+why);await delay(50);}}
 const checks=[];function passed(name){checks.push(name);console.log('PASS '+name);}
-const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../../../src/api_service/static/demo.html'),'utf8');
 const storage=new Map();const app=harness(html,{base,fetch:http,storage});const id=name=>app.ids.get(name);
 (async()=>{try{
  await until(()=>calls.some(c=>c.url.endsWith('/users/me')&&c.status===401),'unauthenticated boot');

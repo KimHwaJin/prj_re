@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const {harness}=require('./dom-harness.cjs');
-const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
+const html=fs.readFileSync(path.join(__dirname,'../../../src/api_service/static/demo.html'),'utf8');
 const source=/<script id="console-app">([\s\S]*?)<\/script>/.exec(html)[1];
 const box={module:{exports:{}}};vm.runInNewContext(source,box);const C=box.module.exports;
 const plain=v=>JSON.parse(JSON.stringify(v));
@@ -65,4 +65,25 @@ test('real model and test login are labelled independently, other API never inhe
  const fixed=C.runtimeInfo({...cfg,model:{mode:'fixture',delay_ms:300},executor:{mode:'off'}},cfg.apiBase);
  assert.equal(fixed.badge,'모델 고정 응답');assert.match(fixed.description,/300ms/);assert.match(fixed.description,/비활성/);
  const legacy=C.runtimeInfo({apiBase:cfg.apiBase,fixture:true,executor:true},cfg.apiBase);assert.match(legacy.description,/고정 모델/);
+});
+
+
+test('service demo resolves relative API and OpenAPI, and returns login to its mounted path',async()=>{
+ const calls=[];
+ const app=harness(html,{base:'http://service.test/mounted/custom/v2',
+  runtime:{apiBase:'/mounted/custom/v2',openapiUrl:'/mounted/openapi.json',returnTo:'/mounted/demo',auth:{mode:'configured'},model:{mode:'mock'},executor:{mode:'off'}},
+  fetch:async(url)=>{calls.push(url);return {ok:false,status:401,text:async()=>JSON.stringify({title:'Login required'})};}});
+ try{
+  await new Promise(setImmediate);
+  assert.equal(app.ids.get('apiBase').value,'http://service.test/mounted/custom/v2');
+  assert.ok(calls.includes('http://service.test/mounted/custom/v2/users/me'));
+  assert.match(app.ids.get('modeBadge').textContent,/Mock/);
+  await app.ids.get('loginButton').click();
+  const login=new URL(app.window.location.assigned);
+  assert.equal(login.pathname,'/mounted/custom/v2/auth/login/sso');
+  assert.equal(login.searchParams.get('return_to'),'/mounted/demo');
+  app.context.fetch=async(url)=>{calls.push(url);return {ok:true,status:200,json:async()=>({paths:{}})};};
+  await app.ids.get('loadOpenapi').click();
+  assert.ok(calls.includes('http://service.test/mounted/openapi.json'));
+ }finally{app.close();}
 });

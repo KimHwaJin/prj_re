@@ -10,7 +10,7 @@ HTML에 인증·모델·Executor의 공개 모드 설명을 주입한다. key·�
 
 실제 브라우저에서 Run/Session 목록 상태 잔존과 POST SSE 접수 시 새 입력 잠금·종료 표시 문제를 확인했다. 상세/SSE의 현재 Run과 Session 조회를 해당 목록에 반영하고, 접수된 로컬 실행을 즉시 입력 잠금에 포함했다. POST SSE 접수 후 상태를 조회하고 terminal 종료를 표시한다. 상시 폴링은 추가하지 않는다.
 
-변경: scripts/diagnostics/model_connection.py·serve_test_console.py·verify_api_contract_flow.py·verify_real_model_parameters.py, tools/test-console/index.html·테스트·README. 진단/개발 화면만 변경하며 서비스 API·Agent graph·Tool·Executor 규격·DDL은 유지한다.
+변경: scripts/diagnostics/model_connection.py·serve_test_console.py·verify_api_contract_flow.py·verify_real_model_parameters.py, src/api_service/static/demo.html·테스트·README. 진단/개발 화면만 변경하며 서비스 API·Agent graph·Tool·Executor 규격·DDL은 유지한다.
 
 ## 검증과 결과
 

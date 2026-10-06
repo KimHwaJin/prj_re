@@ -105,8 +105,20 @@ async def test_real_mode_does_not_install_model_fixture(monkeypatch):
         pytest.fail('Real mode installed a model fixture')
     monkeypatch.setattr(flow,'install_model_fixture',forbidden)
     class Server:
-        def __init__(self,config):pass
-        async def serve(self):calls.append('serve')
+        def __init__(self,config): self.app=config.app
+        async def serve(self):
+            import httpx
+            import json
+            import re
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url='http://127.0.0.1:18100') as client:
+                response=await client.get('/test-console')
+                assert response.status_code==200
+                public=json.loads(re.search(r'window.TEST_CONSOLE_CONFIG=(.*?);</script>',response.text)[1])
+                assert public['returnTo']=='/test-console'
+                assert public['auth']['mode']=='fixture'
+                assert public['model']['mode']=='real'
+                assert 'private-test-value' not in response.text
+            calls.append('serve')
     monkeypatch.setattr(console,'ConsoleServer',Server)
     class Redis:
         @classmethod

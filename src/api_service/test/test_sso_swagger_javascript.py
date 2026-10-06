@@ -64,6 +64,6 @@ vm.createContext(context);for(const source of scripts)vm.runInContext(source,con
     assert result.returncode==0,result.stderr
     # Syntax-check the updated demo separately without making browser/API requests.
     demo_script=tmp_path/"demo.js"
-    demo_script.write_text("\n".join(re.findall(r"<script>\s*(.*?)\s*</script>",demo,re.S)))
+    demo_script.write_text("\n".join(re.findall(r'<script(?: id="console-app")?>\s*(.*?)\s*</script>',demo,re.S)))
     result=subprocess.run([node,"--check",str(demo_script)],text=True,capture_output=True,timeout=10)
     assert result.returncode==0,result.stderr
