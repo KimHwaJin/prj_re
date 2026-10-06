@@ -52,6 +52,49 @@ config.yml이 이미 있다면 init 없이 편집한다. 생성은 기존 파일
 
 이전 dotenv는 필요할 때 한 번 `uv run python scripts/configure.py import-env --env local --input .env --output /tmp/config.imported.yml`로 옮긴다. 원본은 변경하지 않는다. 로컬 환경에서는 --local-env-file도 명시적으로 사용할 수 있으며 프로세스 env보다 낮은 순위다. `AGENT_HISTORY_MESSAGE_LIMIT`은 폐기했으므로 먼저 SET_MAX_HISTORY(턴)로 판단해 바꾼다. 메시지 개수를 기계적으로 턴 값으로 복사하지 않는다.
 
+## 앱 시작 시 선택적 DB 초기화
+
+`DB_INIT_ON_START`는 기본 false다. true이면 앱 lifespan이 기존 플랫폼 lifespan과
+Worker를 시작하기 전에 **CRUD head → Event head → checkpoint setup**을 수행한다.
+프로젝트 메모리 Store는 CRUD revision으로 준비한다. 테이블이 이미 최신이면
+데이터를 초기화하지 않고 현재 revision을 유지한다. PostgreSQL 서버·DB 자체 생성과
+pgvector 설치는 하지 않는다. 수동 scripts/migrate.py도 같은 준비 코드를 사용한다.
+
+Windows PowerShell에서 환경변수로 켜기:
+
+```powershell
+$env:DB_INIT_ON_START = "true"
+uv run python app.py --env local
+```
+
+끄기:
+
+```powershell
+$env:DB_INIT_ON_START = "false"
+uv run python app.py --env local
+```
+
+macOS/Linux는 `DB_INIT_ON_START=true uv run python app.py --env local`처럼 실행한다.
+YAML로 제어하려면 선택 파일에 `DB_INIT_ON_START: true` 또는 false를 명시한다.
+**YAML 값이 있으면 환경변수보다 우선하므로 env 제어 시 해당 YAML 키를 생략한다.**
+예제는 이 키를 주석으로만 제공하며 `--check-config`에 실제 적용 bool과 출처를 표시한다.
+수동 scripts/migrate.py는 이 스위치와 무관하게 항상 초기화를 수행한다.
+
+초기화는 별도 thread에서 실행하고 메인 이벤트 루프를 막지 않는다. 공통 초기화
+코드의 프로세스 잠금과 주 DB의 session advisory lock으로 같은 주 DB를 쓰는
+이 서비스의 동시 시작을 직렬화한다. 별도 잠금 연결은 connect timeout10초,
+잠금 획득 SQL timeout60초이며 migrations 자체에는 이 timeout을 적용하지 않는다.
+같은 checkpoint DB를 공유하더라도 주 DB가 다른 별도 서비스나 다른 직접 DDL
+실행자는 이 잠금을 공유하지 않으므로 자동 조율 범위에 포함되지 않는다.
+초기화가 실패하면 Worker와 API 제공을 시작하지 않으며 DB 예외의 타입·단계만
+안전하게 로그에 남긴다. 상세 진단은 같은 설정의 수동 migrate.py로 확인한다.
+앱 로그 설정은 migration이 덮어쓰지 않는다. 준비 중 취소가 오면 소유한 초기화
+thread 정리를 기다리고 기동을 중단한다. 모든 단계가 하나의 DB transaction은
+아니므로 실패 후 재실행은 각 Alembic/SDK revision부터 이어서 준비한다.
+
+기존 배포의 큰 스키마 변경은 이전 writer 중단 후 수동 migrate.py로 적용한다.
+자동 초기화의 잠금은 실행 중인 구 버전 API/Worker의 쓰기를 중단하지 않는다.
+
 ## Windows 로컬 실행
 
 Python 3.11에서 루트 `app.py`로 실행하면 Windows에서는

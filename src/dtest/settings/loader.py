@@ -290,6 +290,7 @@ def load_settings(
         profile=selected,
         workflow_search=search,
         event_worker_enabled=event_enabled,
+        db_init_on_start=runtime.db_init_on_start,
         shutdown_timeout_seconds=runtime.shutdown_timeout_seconds,
         shutdown_drain_seconds=runtime.shutdown_drain_seconds,
         diagnostics_dir=runtime.run_diagnostics_dir,

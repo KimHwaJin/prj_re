@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [108 Windows DB 초기화 실행 경로](108-windows-schema-initialization.md).
+최신 작업: [109 선택적 앱 시작 DB 초기화](109-optional-startup-db-init.md).
+DB_INIT_ON_START(기본 false)로 lifespan 초기화를 제어한다. 수동 명령과 공통 경로를
+사용하고 동시 시작 잠금·실패 시 미기동·앱 로그 유지를 반영했다. 격리 PostgreSQL의
+동시 앱 시작·데이터 보존을 포함한 148회귀 및 추가 수동 초기화를 검증했다.
+기존 lint/type 오류는 남아 있으며 새 진단은 없다. 사용자 Windows/DB 검증은 별도다.
+
+선행 작업: [108 Windows DB 초기화 실행 경로](108-windows-schema-initialization.md).
 초기화 launcher와 두 Alembic chain에 Windows Selector를 적용하고 관련
 23회귀를 검증했다. 새 DB는 CRUD→Event→checkpoint 순서로 준비해야 하며 앱이
 자동 적용하지 않는다. 기존 연결 오류의 원인과 실제 Windows DB 적용은 미확정이다.

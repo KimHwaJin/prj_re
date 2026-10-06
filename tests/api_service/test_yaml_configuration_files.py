@@ -2,12 +2,13 @@
 
 import asyncio
 import json
-from pathlib import Path
 import runpy
 import shutil
 import subprocess
-from contextlib import asynccontextmanager
 import sys
+from contextlib import asynccontextmanager
+from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -15,8 +16,8 @@ import yaml
 import dtest.settings.loader as service_settings
 from dtest.settings.files import (
     initialize_profile,
-    yaml_document,
     write_private,
+    yaml_document,
 )
 from dtest.settings.loader import ConfigurationError, load_settings
 
@@ -231,6 +232,8 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
     from alembic import command
     from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
+    from dtest.infrastructure.database import schema
+
     initialize_profile("dev", root=profile_root)
     snapshot = load_settings(root=profile_root, environ={})
     target = profile_root / "resolved.yml"
@@ -262,6 +265,7 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
 
         yield type("Saver", (), {"setup": staticmethod(setup)})()
 
+    monkeypatch.setattr(schema.psycopg, "connect", MagicMock())
     monkeypatch.setattr(command, "upgrade", upgrade)
     monkeypatch.setattr(AsyncPostgresSaver, "from_conn_string", saver)
     module = runpy.run_path(str(ROOT / "scripts/migrate.py"))

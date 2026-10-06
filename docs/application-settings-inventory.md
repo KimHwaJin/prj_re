@@ -61,6 +61,7 @@
 | DATABASE_POOL_SIZE | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
 | DATABASE_POOL_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
 | DATABASE_PREPARED_STATEMENT_CACHE_SIZE | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
+| DB_INIT_ON_START | 서비스 추가(기본 false; 예제는 주석) | lifespan의 CRUD/Event/checkpoint 초기화; YAML 생략 시 env 제어 |
 | DATABASE_URL | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
 | DEFAULT_MODEL | 선택 입력/파생 | 기본/선택 모델·Agent builder |
 | EVENT_WORKER_ENABLED | 서비스 추가(예제 명시) | app.py·Worker·SSE·종료 |

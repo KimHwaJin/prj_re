@@ -57,6 +57,10 @@ APP_NAME: DTest Agent API
 API_V1_PREFIX: /api/v1
 # Worker 수명 때문에 reload 대신 프로세스를 재시작합니다.
 SERVER_RELOAD: false
+# Optional startup schema upgrade (CRUD/event/checkpoint); default false.
+# Leave commented to control it with the DB_INIT_ON_START environment variable.
+# Explicit YAML wins over environment. DBs/pgvector must already be available.
+# DB_INIT_ON_START: false
 AGENT_WORKER_ENABLED: true
 EVENT_WORKER_ENABLED: true
 TASK_RECONCILER_ENABLED: true
@@ -111,7 +115,7 @@ REDIS_URL: redis://:PASSWORD@REDIS_HOST:6379/0
 
 # checkpoint
 GRAPH_CHECKPOINTER: postgres
-# migration/SDK setup은 사전 schema 준비 명령으로 수행합니다.
+# 전체 schema는 수동 migrate.py 또는 DB_INIT_ON_START로 준비합니다.
 CHECKPOINT_SETUP_ON_START: false
 CHECKPOINT_POOL_MIN_SIZE: 1
 CHECKPOINT_POOL_MAX_SIZE: 4

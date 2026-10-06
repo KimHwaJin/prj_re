@@ -70,7 +70,8 @@ uv run python scripts/migrate.py
 uv run python scripts/migrate.py --env dev
 ```
 
-launcher는 **CRUD head → Event head → checkpoint setup** 순서로 적용한다. 공통 명령 테이블이 준비된 뒤 구 이벤트를 이관하므로 Event chain만 먼저 실행하면 안 된다. 버전 테이블은 CRUD의 `alembic_version`, Event의 `ew_alembic_version`, SDK 자체 migration 테이블로 구분된다. 앱 기동은 Alembic을 자동 실행하지 않는다.
+launcher는 **CRUD head → Event head → checkpoint setup** 순서로 적용한다. 공통 명령 테이블이 준비된 뒤 구 이벤트를 이관하므로 Event chain만 먼저 실행하면 안 된다. 버전 테이블은 CRUD의 `alembic_version`, Event의 `ew_alembic_version`, SDK 자체 migration 테이블로 구분된다. 앱은 기본적으로 Alembic을 자동 실행하지 않는다. DB_INIT_ON_START=true면
+Worker/API 시작 전에 같은 준비 코드를 실행한다. [앱 시작 설정](application-configuration.md)을 따른다.
 
 기존 배포에서는 입력을 차단하고 이전 API/Agent/Event writer를 종료한 후 적용한다. Executor 외부 작업은 장기 실행 중일 수 있으며, 원본 Redis 이벤트 보존이 필요하다. 기존 Event DB가 분리되어 있었다면 binding·Inbox·구 명령을 API DB로 옮기는 전환부터 수행한다. 새 마이그레이션이 다른 DB를 자동 탐색·복사하지는 않는다.
 

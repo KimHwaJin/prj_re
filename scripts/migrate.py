@@ -2,7 +2,6 @@
 """Prepare CRUD/event/checkpoint schemas with the exact same source selection as app.py."""
 
 import argparse
-import asyncio
 from pathlib import Path
 import sys
 
@@ -38,26 +37,9 @@ def main(argv=None):
 
         print(json.dumps(settings.summary(), ensure_ascii=False, indent=2))
         return
-    from alembic import command
-    from alembic.config import Config
-    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+    from dtest.infrastructure.database.schema import initialize_databases
 
-    for ini in ("alembic.crud.ini", "alembic.ini"):
-        command.upgrade(Config(str(ROOT / ini)), "head")
-
-    async def prepare():
-        async with AsyncPostgresSaver.from_conn_string(
-            settings.agent.checkpoint_db_uri
-        ) as saver:
-            await saver.setup()
-
-    # Psycopg async requires Selector on Windows, including Alembic's loops.
-    with asyncio.Runner(
-        loop_factory=asyncio.SelectorEventLoop
-        if sys.platform == "win32"
-        else None
-    ) as runner:
-        runner.run(prepare())
+    initialize_databases(settings)
     print(
         "CRUD/event/checkpoint schemas prepared with the selected "
         "service "
