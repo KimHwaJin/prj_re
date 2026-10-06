@@ -31,3 +31,7 @@
 - git diff --check 통과.
 
 초기 회귀 과정에서 로컬 이름을 dev로 기대하던 SSO 테스트와 개발자 YAML이 진단 테스트 env를 덮어쓰는 격리 문제를 수정했다. 이전 checkpoint 이력에 현재 Run ID를 연결하는 과정에서는 apply_review의 제한된 입력 스키마에 user_request를 명시해야 했으며, 740개 최종 검사에 수정 사항을 포함했다. 실제 사내 SDK·collector·배포 인프라는 외부에서 확인할 수 없으며 계약/모의 lifecycle 검증과 실제 배포 검증을 구분한다. 기존 컨테이너 재시작·실제 DB migration·외부 모델 요청은 수행하지 않는다.
+
+## 통합·게시
+
+2026-10-06 사용자 요청으로 구현 commit `ee7332e`를 `feature/refactor-base`에 fast-forward 병합했다. 최신 origin 베이스가 분기 기준 `07f8c9d`와 같음을 확인했고 충돌이나 추가 코드 변경은 없었다. 베이스와 `feature/platform-config-contract`를 `https://github.com/KimHwaJin/prj_re.git`의 origin에 atomic push했다. 파생 브랜치는 보존하며 게시 기록은 베이스의 후속 문서 커밋으로 남긴다. 실제 배포·컨테이너 재시작·DB migration은 수행하지 않았다.
