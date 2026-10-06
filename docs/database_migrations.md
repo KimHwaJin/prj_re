@@ -40,6 +40,29 @@ CRUD autogenerate는 현재 SDK Store/checkpoint와 다른 Event chain이 관리
 
 로컬은 config.yml, 배포는 config.dev/stg/prd.yml 하나를 선택한다. 선택·우선순위는 [앱 설정](application-configuration.md)을 따른다.
 
+새 DB에는 초기화가 필요하다. PostgreSQL 서버와 설정에 적힌 DB 자체를 먼저
+준비해야 하며 이 스크립트는 DB 생성·서버 설치를 하지 않는다. Workflow embedding
+migration을 위해 서버에 pgvector >=0.8.0 확장이 설치되어 있어야 한다.
+`DATABASE_URL`과 `CHECKPOINT_DB_URI`가 서로 다른 DB라면 두 대상이 모두
+존재하고 해당 계정으로 접속 가능해야 한다.
+
+```bash
+uv run python scripts/migrate.py --env local --check-config
+uv run python scripts/migrate.py --env local
+uv run python app.py --env local
+```
+
+`--check-config`는 설정 선택만 검증하며 DB 연결이나 테이블 존재를 검사하지 않는다.
+초기화는 해당 대상의 기존 Alembic revision을 head로 올리는 작업이므로 새 DB뿐
+아니라 기존 DB에도 변경이 적용된다. 테이블 미준비는 일반적으로
+`relation ... does not exist` 오류이며, ConnectionDoesNotExistError/연결 끊김과
+구분한다. 초기화 성공이 모든 앱 연결의 정상 동작을 보장하지 않는다.
+
+Windows에서는 초기화 launcher와 두 Alembic chain 모두 Selector Runner를
+명시한다. 전역 event loop policy를 따로 지정할 필요 없다. 앱 launcher만
+수정하는 것으로 Alembic의 별도 실행 루프가 변경되지는 않는다.
+[108 Windows 초기화 기록](improvements/108-windows-schema-initialization.md)을 따른다.
+
 ```bash
 uv run python scripts/migrate.py --check-config
 uv run python scripts/migrate.py

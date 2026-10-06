@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from logging.config import fileConfig
 
 from alembic import context
@@ -60,4 +61,10 @@ async def run_online() -> None:
 if context.is_offline_mode():
     run_offline()
 else:
-    asyncio.run(run_online())
+    # Psycopg async requires Selector on Windows, including Alembic's loops.
+    with asyncio.Runner(
+        loop_factory=asyncio.SelectorEventLoop
+        if sys.platform == "win32"
+        else None
+    ) as runner:
+        runner.run(run_online())

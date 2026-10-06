@@ -51,7 +51,13 @@ def main(argv=None):
         ) as saver:
             await saver.setup()
 
-    asyncio.run(prepare())
+    # Psycopg async requires Selector on Windows, including Alembic's loops.
+    with asyncio.Runner(
+        loop_factory=asyncio.SelectorEventLoop
+        if sys.platform == "win32"
+        else None
+    ) as runner:
+        runner.run(prepare())
     print(
         "CRUD/event/checkpoint schemas prepared with the selected "
         "service "

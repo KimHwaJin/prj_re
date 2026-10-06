@@ -1,5 +1,6 @@
 """Real files/source precedence/export/schema launcher; never contact external services."""
 
+import asyncio
 import json
 from pathlib import Path
 import runpy
@@ -223,8 +224,9 @@ def test_cicd_yaml_moves_mutable_values_and_preserves_platform_contract():
     assert settings.agent.executor_source_type == "PATH"
 
 
+@pytest.mark.parametrize("platform", ["linux", "win32"])
 def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
-    profile_root, monkeypatch
+    profile_root, monkeypatch, platform
 ):
     from alembic import command
     from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
@@ -234,6 +236,7 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
     target = profile_root / "resolved.yml"
     write_private(target, yaml.safe_dump(yaml_document(snapshot.inputs)))
     steps = []
+    loops = []
 
     def upgrade(config, revision):
         assert (
@@ -252,6 +255,9 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
         assert uri == snapshot.agent.checkpoint_db_uri
 
         async def setup():
+            loops.append(asyncio.get_running_loop())
+            if platform == "win32":
+                assert isinstance(loops[-1], asyncio.SelectorEventLoop)
             steps.append("checkpoint")
 
         yield type("Saver", (), {"setup": staticmethod(setup)})()
@@ -259,8 +265,11 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(
     monkeypatch.setattr(command, "upgrade", upgrade)
     monkeypatch.setattr(AsyncPostgresSaver, "from_conn_string", saver)
     module = runpy.run_path(str(ROOT / "scripts/migrate.py"))
-    module["main"](["--env", "dev", "--config", str(target)])
+    with monkeypatch.context() as runtime:
+        runtime.setattr(sys, "platform", platform)
+        module["main"](["--env", "dev", "--config", str(target)])
     assert steps == ["alembic.crud.ini", "alembic.ini", "checkpoint"]
+    assert loops[0].is_closed()
 
 
 def test_secret_mount_and_container_tools_have_the_same_profile_contract():
