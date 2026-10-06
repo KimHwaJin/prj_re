@@ -16,9 +16,9 @@
 | 데이터 경로 | Agent는 `user/.../project/.../data`, Executor workspace는 `users/.../projects/.../sessions/...` | 복수형 경로로 맞추는 제안. 이번에 실제 경로를 변경하지 않음 |
 | 재사용 | 승인 당시 설정 경로를 snapshot에 복사 | 정확한 Dataset 버전과 현재 파일 상태를 확인한 내부 binding 제안 |
 
-실제 구현 근거는 Agent의 `planning/runtime.py`, `planning/graph.py`, `service_contracts/plan_review.py`, Executor의 `infrastructure/workspace.py`, `infrastructure/_artifacts/{discovery,validation,persistence}.py`, `infrastructure/materialized_artifacts.py`다. Executor 소스는 읽기만 했으며 이번 브랜치에서 변경하지 않았다.
+실제 구현 근거는 Agent의 `planning/runtime.py`, `planning/graph.py`, `src/dtest/contracts/plan_review.py`, Executor의 `infrastructure/workspace.py`, `infrastructure/_artifacts/{discovery,validation,persistence}.py`, `infrastructure/materialized_artifacts.py`다. Executor 소스는 읽기만 했으며 이번 브랜치에서 변경하지 않았다.
 
-이번 산출물은 [DTO·규칙](/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/service_contracts/dataset_registry_draft.py), [JSON Schema](dataset-contract.schema.json), [합성 예시](examples/project-reuse.json), 오프라인 시험이다. 새 라우터, DB 테이블, 미들웨어, 파일 감시기, 운영 설정은 추가하지 않았다. 예시 JSON의 context/storage/registration/candidate 등 전체 묶음은 검증용이며 한 REST 요청 body가 아니다.
+이번 산출물은 [DTO·규칙](/Users/a10054/.codex/worktrees/refactor-bootstrap/dtest-agent/src/dtest/contracts/dataset_registry_draft.py), [JSON Schema](dataset-contract.schema.json), [합성 예시](examples/project-reuse.json), 오프라인 시험이다. 새 라우터, DB 테이블, 미들웨어, 파일 감시기, 운영 설정은 추가하지 않았다. 예시 JSON의 context/storage/registration/candidate 등 전체 묶음은 검증용이며 한 REST 요청 body가 아니다.
 
 ## 책임 분리
 
@@ -44,7 +44,7 @@
 | `GET /api/v1/datasets/{dataset_id}?version=N` | 명시적 양의 버전 | 내부 DatasetRecord. 다른 소유자의 존재를 노출하지 않음 |
 | `POST /api/v1/datasets/{dataset_id}/resolve` | version, expected_file_revision, storage_namespace | 현재 파일을 다시 검사한 RuntimeDatasetBinding. 경로는 내부 응답에만 포함 |
 
-인증·문맥 전달 header의 최종 이름은 아직 확정하지 않았다. Agent는 기존 `X-User-Id`로 식별된 사용자와 DB에 저장된 프로젝트/세션 소속에서 내부 UUID 문맥을 만든다. Executor는 신뢰하는 서비스 호출자만 이 문맥을 전달할 수 있도록 검사해야 한다. 단순히 외부 요청 body의 owner/project/session 값을 믿는 API로 구현하지 않는다. DatasetRegistry Protocol의 메서드 인자는 이 문맥을 명시적으로 요구한다.
+인증·문맥 전달 header의 최종 이름은 아직 확정하지 않았다. Agent는 SSO 로그인으로 확인된 사용자와 DB에 저장된 프로젝트/세션 소속에서 내부 UUID 문맥을 만든다. Executor는 신뢰하는 서비스 호출자만 이 문맥을 전달할 수 있도록 검사해야 한다. 단순히 외부 요청 body의 owner/project/session 값을 믿는 API로 구현하지 않는다. 실제 provider를 구현할 때 각 호출은 이 문맥을 명시적으로 전달해야 한다. 호출자가 없던 `DatasetRegistry` Protocol 선언은 제거했다. DTO·JSON Schema와 오프라인 소유권 검증은 유지한다.
 
 후보는 성공한 Step의 변경 파일 목록을 기준으로 수집한다. 목록 요청마다 PVC 전체를 재귀 순회하거나 모든 Parquet를 다시 읽는 방식은 피한다. 현재 artifacts 하위 감지만으로 프로젝트 datasets 디렉토리가 자동 발견된다고 가정하지 않는다.
 

@@ -73,6 +73,6 @@ ProjectMemoryMiddleware는 공식 Store의 프로젝트 배경·선호를 별도
 
 ## Workflow 추천 연결 — 094
 
-전체 E2E 계획 선택만 기존 planning 미들웨어가 검색한다. API 경계에서 WorkflowRetriever 포트를 주입하고 Agent는 DB/HTTP 구현을 직접 import하지 않는다. 추천은 이번 ToolMessage의 ID로 선택하며 서버가 고정된 정의·실행 정책과 출처를 해결한다. FAQ/부분 분석/열린 계획 변경에 검색을 추가하지 않는다. 검색+신규 계획 합계 상한과 후보 문맥 예산·원본 SHA/버전 보존은 [확정 계약](../workflow-registration-and-search.md)을 따른다. 실제 embedding 설정과 품질/동시 부하는 별도 검증이다.
+전체 E2E 계획 선택만 기존 planning 미들웨어가 검색한다. 서비스 조립 시 `PlanningRuntime.workflow_retriever`에 검색 callable을 주입하고 Agent는 DB/HTTP 구현을 직접 import하지 않는다. 선언만 있던 `WorkflowRetriever` Protocol은 삭제했다. 추천은 이번 ToolMessage의 ID로 선택하며 서버가 고정된 정의·실행 정책과 출처를 해결한다. FAQ/부분 분석/열린 계획 변경에 검색을 추가하지 않는다. 검색+신규 계획 합계 상한과 후보 문맥 예산·원본 SHA/버전 보존은 [확정 계약](../workflow-registration-and-search.md)을 따른다. 실제 embedding 설정과 품질/동시 부하는 별도 검증이다.
 
 API 통합 위치는 [API 서비스 구조](../api-service-layout.md)를 참고한다. Agent 구현은 API 패키지를 import하지 않고, 서비스의 `runs/runtime.py`가 Agent builder를 조립한다.

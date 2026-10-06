@@ -53,3 +53,15 @@ Ruff3,500→3,079, ty772→759이며 새 진단은 없다. 전체796파일 포�
 Artifact 제출/Workflow 검색 계약 삭제는 자동 승인 검토의 외부 계약 위험
 판정으로 유지했다. HNSW 추가 개선보다 코드 품질과 타입 경계 정리를 우선한다.
 운영 재배포나 사용자 DB migration은 수행하지 않았다.
+
+
+## 111 남은 미사용 선언 삭제
+
+`3cb1588`에서 `feature/unused-code-removal`로 작업했다. 사용자의 추가
+삭제 지시에 따라 110에서 보류한 Artifact DTO3개·Workflow 검색 Protocol과
+호출자가 없는 Dataset Registry Protocol을 삭제했다. 실제 Executor HTTP
+제출·검색 callable·Dataset 계약 초안은 유지한다. 전체 OpenAPI와 Dataset
+JSON Schema가 동일하며 관련 회귀177개가 통과했다. 새 Ruff/ty 진단은 없고
+전체 lint/type 해소는 여전히 미완료다.
+[111 기록](111-unused-contract-declarations.md)을 따른다.
+110의 자동 승인 거절 기록은 당시 이력이며 이번 작업으로 삭제 보류를 해소했다.
