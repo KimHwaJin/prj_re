@@ -1,5 +1,9 @@
 # 105. FastAPI 사내 SSO 요청 어댑터·직원 정보 계약
 
+이 문서는 105 당시 구현 이력이다. SDK 내부 요청 형식을 흉내 내던
+SsoArgs·SsoRequest는 사용자 피드백에 따라 [106](106-sso-sdk-boundary.md)에서
+삭제했다. 현재 SDK 연결 계약은 106과 최신 SSO 가이드를 따른다.
+
 ## 문제와 변경
 
 기존 company.py는 인증 확인·로그인 URL 생성 전체가 미구현이었다.

@@ -13,7 +13,7 @@ dtest 프로젝트 공유
 
 Workflow 작업 영역은 [src/dtest/agent_service/agents/analysis/workflow/](src/dtest/agent_service/agents/analysis/workflow/README.md)다. 기존 skills·tools·workflows 하위 구조와 생성 스크립트를 보존하면서 분석의 Workflow 처리 코드와 한 패키지로 합쳤다.
 
-현재 사용자용 API는 SSO 확인 후 발급하는 쿠키 로그인 세션으로 호출자를 식별한다. `X-User-Id`만 보내는 요청은 인증되지 않는다. 최초 직원은 일반 사용자와 기본 프로젝트로 자동 등록하며 역할·소유권·내부 UUID는 DB에서 관리한다. 사내 SDK 소스는 포함하지 않았고 폐쇄망에서 SDK 생성 함수 한 곳의 실제 import/생성을 채워야 실제 SSO 로그인이 가능하다. 직원 계약에는 사번·이름·영문 이름·부서·메일을 포함한다. [SSO 적용·Swagger 테스트 가이드](docs/sso-authentication.md), [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 참고한다.
+현재 사용자용 API는 SSO 확인 후 발급하는 쿠키 로그인 세션으로 호출자를 식별한다. `X-User-Id`만 보내는 요청은 인증되지 않는다. 최초 직원은 일반 사용자와 기본 프로젝트로 자동 등록하며 역할·소유권·내부 UUID는 DB에서 관리한다. 사내 SDK 소스는 포함하지 않았고 폐쇄망에서 SDK 연결 함수 한 곳에 공식 생성·복귀 주소 설정을 채워야 실제 SSO 로그인이 가능하다. 직원 계약에는 사번·이름·영문 이름·부서·메일을 포함한다. [SSO 적용·Swagger 테스트 가이드](docs/sso-authentication.md), [사용자 API·전환 가이드](docs/user-identity-api.md), [기동·설정 가이드](docs/configuration-bootstrap.md), [단계별 작업 기록](docs/improvements/README.md)을 참고한다.
 
 사용하지 않는 `/api/v1/jupyter-servers*`, `/api/v1/redis/ping` 관리 API는 제거했다. 실제 Jupyter 실행은 Executor를 통하며 SSO·Streams의 Redis 사용은 유지한다. [현재 패키지·DB 정리 안내](docs/api-service-layout.md)를 따른다.
 

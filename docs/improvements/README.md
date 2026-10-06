@@ -1,13 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [105 사내 SSO 요청 어댑터·직원 정보 계약](105-company-sso-adapter.md).
-FastAPI의 SDK 요청 변환·쿠키 검증·직원 5개 값·서버 ORIGIN 전달을 구현하고
-실제 PostgreSQL/Redis 및 쿠키 Run·resume·SSE 포함 71회귀와 wheel을 검증했다.
-실제 SDK import/생성은 폐쇄망에서 한 곳을 채워야 한다. 상세 직원 정보의 User DB
-영속화·users/me 노출은 변경하지 않았다. 전체 lint·타입 검사의 기존 진단은 남아 있다.
-베이스와 작업 브랜치에 병합·게시하며 실제 사내 로그인·배포 검증은 별도다.
-선행 Python 포맷 기준은 [104](104-python-format-quality.md), 구조·경로 정리는
-[102](102-dtest-service-structure.md)·[103](103-executor-api-route-contract.md)을 따른다.
+최신 작업: [106 사내 SDK 내부 요청 모방 제거](106-sso-sdk-boundary.md).
+SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 SDK 연결
+함수에 별도로 전달하도록 단순화했다. 관련 72회귀와 변경 Ruff·ty 검증을
+통과했다. 실제 사내 SDK 생성·복귀 주소 설정은 공식 사용법으로 연결한다.
+직원 5개 값·기존 로그인/등록 정책은 유지한다. 베이스에 병합·origin 게시하며
+실제 사내 로그인·배포 검증은 별도다. [105](105-company-sso-adapter.md)는
+직원 정보 계약 추가 이력으로 보존한다.
 
 선행 작업: [101 API 패키지·폐기 DB 정리](101-api-service-cleanup.md). 책임별 디렉토리 이동·구 구현과 설정 삭제·테스트 분리·중복 EW 원장 제거 및 폐기 DB 9개 테이블 삭제 migration을 구현했다. API 909개 고유 항목·Agent/설계 432개·실제 삭제/이관 migration·설치 wheel을 검증했다. 기존 서비스 DB 적용·배포는 별도다.
 

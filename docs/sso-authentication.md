@@ -1,7 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-105 · 2026-10-06. FastAPI 요청을 사내 SDK의 `args.to_dict()` 계약에 맞추고,
-쿠키 검증·직원 정보 조회·로그인 복귀 주소 연결을 구현했다. SDK 소스는 포함하지 않는다.
+106 · 2026-10-06. 사내 SDK 내부 요청 형태를 흉내 내던 코드를 제거했다.
+원본 FastAPI 요청·서버 복귀 URL 전달, 쿠키 검증·직원 정보 조회를 구현했다. SDK 소스는 포함하지 않는다.
 **폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
 실제 회사 로그인 왕복은 폐쇄망 검증 대상이다.
 
@@ -30,21 +30,29 @@
 ## 폐쇄망 SDK 연결: 생성 함수 한 곳
 
 파일: `src/dtest/infrastructure/sso/company.py`의 `_create_sdk`.
-현재 이 함수는 명시적으로 NotImplementedError를 발생시킨다. 아래처럼 회사 SDK의
-실제 import와 생성으로 교체한다. **예시의 모듈 이름은 실제 패키지명으로 바꾼다.**
-SDK 소스나 회사 쿠키를 외부 저장소에 추가하지 않는다.
+현재 이 함수는 명시적으로 NotImplementedError를 발생시킨다.
+폐쇄망에서 **공식 SDK의 사용법**에 맞춰 실제 import·생성과 복귀 URL 설정을
+채운다. SDK 소스나 회사 쿠키를 외부 저장소에 추가하지 않는다.
 
 ```python
-def _create_sdk(request: SsoRequest) -> CompanySdk:
-    from actual_company_package import SSO  # 폐쇄망의 실제 패키지명
-
-    return SSO(request)
+def _create_sdk(request: Request, return_url: str | None = None) -> CompanySdk:
+    # 공식 SDK 생성 방식으로 연결한다.
+    # return_url이 주어지면 SDK가 지원하는 복귀 주소 설정으로 반영한다.
+    # 사내 패키지 import 경로나 생성자 규격을 여기서 추측하지 않는다.
+    ...
 ```
 
-`SsoRequest`는 실제 FastAPI 요청의 headers와 쿼리 사본인 args를 제공한다.
-`request.args.to_dict()`를 지원하며 Flask의 request/session 전역을 만들지 않는다.
-이번에 확인한 SDK 인터페이스만 연결한다. SDK가 다른 Flask 전용 속성도 사용한다면
-폐쇄망에서 그 접근 지점을 추가로 확인해야 한다.
+| 입력 | 의미 |
+|---|---|
+| request | 원본 FastAPI Request. Cookie 헤더·query 등은 변경하지 않음 |
+| return_url=None | 직원 검증용 생성. 복귀 URL 생성 요청이 아님 |
+| return_url=서버 URL | 로그인 URL 생성용. common runtime이 만든 신뢰할 복귀 주소 |
+
+서비스는 SDK 내부의 args/to_dict/Flask 요청 형식을 재구현하지 않는다.
+SsoArgs·SsoRequest는 삭제했다. SDK가 FastAPI 요청을 직접 받는지, 생성·복귀
+주소 설정에 어떤 공식 API를 쓰는지는 폐쇄망의 실제 지원 방식으로 연결한다.
+**원본 Request를 전달한다고 SDK가 바로 지원한다는 뜻은 아니다.**
+SDK가 지원하지 않는다면 사내 공식 FastAPI 연동 방법이 필요하다.
 
 직원 확인은 원본 Cookie 헤더 → `check_day_cookie(cookie)` → 검증 성공 시에만
 `get_sso_info(cookie)` 순서다. 반환값은 Flask 예시의 대입 순서와 같은 다섯 값의
@@ -66,17 +74,18 @@ tuple 또는 list로 받는다. 사번·이름은 비어 있지 않은 문자열
 응답에 저장/추가하지 않는다.** 기존 사용자 이름·role을 덮어쓰지 않고 최초 등록은
 일반 사용자·기본 프로젝트 생성 정책을 따른다. Redis는 내부 UUID·CSRF·만료만 저장한다.
 
-SDK 로그인 URL 생성 시 args의 `ORIGIN`은 서버가 정한 로그인 API 복귀 주소로
-덮어쓴다. 사용자가 query로 넘긴 임의 ORIGIN은 신뢰하지 않는다. 인증 확인용 요청에는
-사용자 ORIGIN을 제거한다. SDK의 `redirect_url`을 그대로 반환하고 URL 뒤에
-sub_path를 붙이거나 재인코딩하지 않는다. 공통 runtime이 이동 대상 origin을 검증한다.
+로그인 URL 생성 시 서버가 만든 복귀 주소를 return_url로 별도 전달한다.
+원본 요청의 ORIGIN 등 query는 서비스가 가공하지 않는다. 폐쇄망 연결 함수는
+**return_url을 복귀 주소로 사용해야 하며 사용자 query로 대체하면 안 된다.**
+SDK의 redirect_url은 그대로 반환한다. common runtime이 이동 대상 origin을
+검증하고 프론트 복귀 경로도 검사한다.
 
 ```text
 GET /api/v1/auth/login/sso?return_to=/demo
   → 회사 Cookie 없거나 검증 false: SDK.redirect_url로 302
-    ORIGIN=https://api.example.internal/api/v1/auth/login/sso
+    서버 복귀 주소=https://api.example.internal/api/v1/auth/login/sso
            ?return_to=%2Fdemo&target=app
-  → 회사 로그인 후 ORIGIN 복귀: 회사 Cookie 검증, 직원 5개 값 조회
+  → 회사 로그인 후 서버 복귀 주소로 이동: 회사 Cookie 검증, 직원 5개 값 조회
   → 사용자 연결/최초 등록, Redis 로그인 세션, HttpOnly 쿠키 발급
   → 설정된 프론트 /demo로 302
 ```
@@ -237,6 +246,7 @@ PYTHONPATH=src python -m dtest.application.admin \
 과거 업무 회귀는 test-only dependency override로 기존 테스트 신원을 재현하며 wheel에 포함되지 않는다.
 새 SSO 검증은 그 override를 제거하고 실제 쿠키 경계를 사용한다. 회사 SDK만 test double이다.
 
-최신 변경·검증은 [105 작업 기록](improvements/105-company-sso-adapter.md),
+최신 변경·검증은 [106 작업 기록](improvements/106-sso-sdk-boundary.md),
+직원 필드 추가 이력은 [105](improvements/105-company-sso-adapter.md),
 기존 세션 정책은 [045 작업 기록](improvements/045-sso-authentication.md)을 참고한다.
 브라우저 회사 SSO 왕복·회사 쿠키 정책·실제 SDK의 직원 정보 검증은 폐쇄망에서 남아 있다.

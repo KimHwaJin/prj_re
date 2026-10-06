@@ -1,6 +1,6 @@
 """FastAPI 요청과 사내 SSO SDK 사이의 동기식 경계.
 
-사내에서는 `_create_sdk`의 생성 코드만 실제 SDK import/생성으로 교체한다.
+사내에서는 `_create_sdk`에 공식 SDK 생성·복귀 주소 설정을 연결한다.
 SDK 소스·회사 쿠키·직원 정보는 로그나 외부 저장소에 기록하지 않는다.
 """
 
@@ -15,25 +15,6 @@ from dtest.infrastructure.sso.adapter import SyncSsoAdapter
 from dtest.settings.auth import SsoSettings
 
 
-class SsoArgs(dict[str, str]):
-    """SDK가 사용하는 request.args.to_dict() 인터페이스."""
-
-    def to_dict(self) -> dict[str, str]:
-        return dict(self)
-
-
-class SsoRequest:
-    """요청별 원본 헤더와 쿼리 사본. Flask 전역 session은 사용하지 않는다."""
-
-    def __init__(self, request: Request, *, origin: str | None = None):
-        self.headers = request.headers
-        self.args = SsoArgs(request.query_params)
-        # 브라우저가 보낸 ORIGIN은 SDK 복귀 주소로 신뢰하지 않는다.
-        self.args.pop("ORIGIN", None)
-        if origin is not None:
-            self.args["ORIGIN"] = origin
-
-
 class CompanySdk(Protocol):
     """제공받은 사내 SDK의 호출 계약. 별도 인증 프로토콜을 추측하지 않는다."""
 
@@ -44,13 +25,14 @@ class CompanySdk(Protocol):
     def get_sso_info(self, cookie: str) -> object: ...
 
 
-SdkFactory = Callable[[SsoRequest], CompanySdk]
+SdkFactory = Callable[[Request, str | None], CompanySdk]
 
 
-def _create_sdk(request: SsoRequest) -> CompanySdk:
-    # 폐쇄망에서 이 함수만 채운다:
-    # from 실제_사내_패키지 import SSO
-    # return SSO(request)
+def _create_sdk(request: Request, return_url: str | None = None) -> CompanySdk:
+    # 폐쇄망에서 공식 SDK 사용법에 따라 생성한다.
+    # request는 원본 FastAPI 요청, return_url은 서버가 정한 복귀 주소다.
+    # 로그인 URL 생성 시 return_url을 SDK의 공식 방식으로 반영한다.
+    # SDK 내부 요청 형태를 여기서 추측해 재구현하지 않는다.
     # SDK 자체의 연결/읽기 타임아웃도 공식 지원 방식으로 설정한다.
     raise NotImplementedError("Configure the corporate SSO SDK constructor.")
 
@@ -86,7 +68,7 @@ def verify_employee(
     cookie = request.headers.get("cookie")
     if not cookie:
         return None
-    sdk = (sdk_factory or _create_sdk)(SsoRequest(request))
+    sdk = (sdk_factory or _create_sdk)(request, None)
     valid = sdk.check_day_cookie(cookie)
     if valid is False:
         return None
@@ -102,7 +84,7 @@ def build_login_url(
     *,
     sdk_factory: SdkFactory | None = None,
 ) -> str:
-    sdk = (sdk_factory or _create_sdk)(SsoRequest(request, origin=return_url))
+    sdk = (sdk_factory or _create_sdk)(request, return_url)
     # SDK가 만든 URL을 이어 붙이거나 재인코딩하지 않는다.
     # 이동 대상 origin 검사는 공통 SsoRuntime이 담당한다.
     return sdk.redirect_url
