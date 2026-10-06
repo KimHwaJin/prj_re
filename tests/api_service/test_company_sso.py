@@ -14,7 +14,6 @@ from dtest.infrastructure.redis.login_sessions import LoginSession
 from dtest.infrastructure.sso import company
 from dtest.infrastructure.sso.adapter import load_adapter
 from dtest.infrastructure.sso.company import (
-    SsoRequest,
     build_login_url,
     create_adapter,
     verify_employee,
@@ -32,15 +31,16 @@ EMPLOYEE = (
 
 
 class SdkDouble:
-    def __init__(self, request: SsoRequest):
+    def __init__(self, request: Request, return_url: str | None):
         self.request = request
+        self.return_url = return_url
         self.checked: list[str] = []
         self.info_calls: list[str] = []
         self.info: object = EMPLOYEE
         self.valid: bool = True
         self.error: Exception | None = None
         self.redirect_url = "https://sso.example.test/login?" + urlencode(
-            {"ORIGIN": request.args.to_dict().get("ORIGIN", "")}
+            {"callback": return_url or ""}
         )
 
     def check_day_cookie(self, cookie: str) -> bool:
@@ -60,8 +60,8 @@ class SdkFactoryDouble:
         self.info: object = EMPLOYEE
         self.error: Exception | None = None
 
-    def __call__(self, request: SsoRequest) -> SdkDouble:
-        sdk = SdkDouble(request)
+    def __call__(self, request: Request, return_url: str | None) -> SdkDouble:
+        sdk = SdkDouble(request, return_url)
         sdk.info, sdk.error = self.info, self.error
         self.instances.append(sdk)
         return sdk
@@ -83,16 +83,26 @@ def request(query: str = "", cookie: str | None = None) -> Request:
     )
 
 
-def test_sdk_request_uses_copy_and_server_owned_origin():
+def test_sdk_factory_receives_original_request_and_explicit_callback():
     original = request("ORIGIN=https%3A%2F%2Fevil.test&other=value")
-    facade = SsoRequest(original, origin="https://api.example.test/callback")
-    copied = facade.args.to_dict()
-    copied["ORIGIN"] = "https://changed.test"
-    assert facade.args["ORIGIN"] == "https://api.example.test/callback"
-    assert facade.args["other"] == "value"
+    factory = SdkFactoryDouble()
+    callback = "https://api.example.test/callback"
+    build_login_url(original, callback, sdk_factory=factory)
+    sdk = factory.instances[0]
+    assert sdk.request is original
+    assert sdk.return_url == callback
     assert original.query_params["ORIGIN"] == "https://evil.test"
-    assert "ORIGIN" not in SsoRequest(original).args
-    assert facade.headers is original.headers
+    assert original.query_params["other"] == "value"
+
+
+def test_employee_verification_passes_cookie_without_request_conversion():
+    original = request("other=value", cookie="company=valid")
+    factory = SdkFactoryDouble()
+    verify_employee(original, sdk_factory=factory)
+    sdk = factory.instances[0]
+    assert sdk.request is original
+    assert sdk.return_url is None
+    assert sdk.checked == sdk.info_calls == ["company=valid"]
 
 
 @pytest.mark.parametrize("cookie", [None, "", "company=invalid"])
@@ -167,7 +177,7 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
         sdk_factory=factory,
     )
     assert url == factory.instances[0].redirect_url
-    assert parse_qs(urlsplit(url).query)["ORIGIN"] == [callback]
+    assert parse_qs(urlsplit(url).query)["callback"] == [callback]
 
 
 @pytest.mark.asyncio
@@ -217,7 +227,7 @@ async def test_login_round_trip_uses_company_factory_and_keeps_profile_private(
         assert not response.headers.get("set-cookie")
         assert not users.employees
         callback = parse_qs(urlsplit(response.headers["location"]).query)[
-            "ORIGIN"
+            "callback"
         ][0]
         assert callback.startswith("https://api.example.test/")
         assert "evil.test" not in callback
