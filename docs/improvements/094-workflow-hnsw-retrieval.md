@@ -1,5 +1,7 @@
 # 094 다중 쿼리 Workflow 등록·HNSW 추천
 
+후속 통합: 2026-10-06 `feature/refactor-base`에 반영했다. 아래 미병합·미푸시 표기는 작업 당시 이력이다. [통합 기록](refactor-integration-2026-10-06.md)을 따른다.
+
 2026-10-05 / feature/workflow-hnsw-retrieval / 시작 commit a141c11. [확정 계약](../workflow-registration-and-search.md), [변경 추적](../review/workflow-standard-changes.md), [검증 근거](../reports/workflow-hnsw-2026-10-05/README.md).
 
 ## 문제와 변경

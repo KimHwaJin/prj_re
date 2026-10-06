@@ -1,14 +1,14 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [094 다중 쿼리 Workflow 등록·HNSW 추천](094-workflow-hnsw-retrieval.md). 등록·수정·쿼리별 native vector·버전 안전 게시·검색 예산·전체 E2E Agent 추천을 구현했다. 회귀800/관련PG27/HTML9·migration/wheel 검증 완료. 실제 embedding 품질·부하와 ANN 전역 누락은 후속, 베이스 미병합·미푸시·미배포. 이전 benchmark는 [093](093-workflow-retrieval-benchmark.md)을 따른다.
+최신 작업: [095 HNSW 추천 누락·검색 설정 품질 검증](095-workflow-hnsw-quality.md). 동일 벡터 집중과 768차원 경계 조건을 비교했으며 현재 검색 기본값을 유지한다. 다음 구현 후보는 완전히 동일한 벡터의 검색 대표화다. 094까지의 구현과 095 검증을 `feature/refactor-base`에 통합했다. [2026-10-06 통합 기록](refactor-integration-2026-10-06.md)을 따른다. 실제 임베딩 품질과 배포 검증은 후속이다.
 
-2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다(베이스 미병합·미배포). 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
+2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다. 당시 미병합이던 현재 브랜치의 선행 이력은 2026-10-06 베이스에 통합했으며 미배포 상태는 유지한다. 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
 고아 기준 브랜치: `feature/refactor-base`
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 브랜치를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.
 
-현재 개발 기준: `feature/refactor-base`. 057에서 Executor HTTP 제출부터 Redis 결과 재개·리포트/SSE 완료까지 service-only 처리량을 측정하고 local wake·짧은 세션 인계·호출별 중복 투영을 개선했다. 동일50명·한도32 평균23.622→22.686초, SQL13.8% 감소이며 0초 유예39회는 별도로 구분한다. [057 기록](057-executor-service-throughput.md), [상세 결과](../reports/executor-throughput-2026-10-03/README.md)를 따른다.
+이전 통합 기준(057): `feature/refactor-base`. 057에서 Executor HTTP 제출부터 Redis 결과 재개·리포트/SSE 완료까지 service-only 처리량을 측정하고 local wake·짧은 세션 인계·호출별 중복 투영을 개선했다. 동일50명·한도32 평균23.622→22.686초, SQL13.8% 감소이며 0초 유예39회는 별도로 구분한다. [057 기록](057-executor-service-throughput.md), [상세 결과](../reports/executor-throughput-2026-10-03/README.md)를 따른다.
 
 이전 단계: `feature/refactor-base`. 056에서 LLM을 제외한 현재 서비스 처리량을 분석하고 SQL 준비 캐시·이벤트 batch·로그인 pool·SSE frame 정리를 개선했다. 실행 한도16의 시간차이는 작으며 한도32의 설정효과와 분리한다. [056 기록](056-service-throughput-tuning.md), [보고서](../reports/service-throughput-2026-10-03/report.html), [설정 가이드](../service-throughput-settings.md)를 따른다. 실제 모델·Executor 흐름 검증은 [055](055-authenticated-executor-flow.md), memory 정책은 [053](053-project-memory-policy.md)이며 남은 범위는 [후속 목록](backlog.md)에 보존한다.
 

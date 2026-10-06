@@ -1,5 +1,7 @@
 # 095 HNSW 추천 누락·검색 설정 품질 검증
 
+후속 통합: 2026-10-06 `feature/refactor-base`에 반영했다. 아래 미병합·미푸시 표기는 작업 당시 이력이다. [통합 기록](refactor-integration-2026-10-06.md)을 따른다.
+
 2026-10-06 / feature/workflow-hnsw-quality / 시작 commit 6ac944a.
 [상세 근거](../reports/workflow-hnsw-quality-2026-10-06/README.md) · [재현 도구](../../scripts/benchmarks/workflow_retrieval/README.md)
 
