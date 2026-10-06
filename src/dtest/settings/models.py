@@ -38,11 +38,13 @@ class ServiceSettings:
         default_factory=WorkflowSearchSettings
     )
     unused_config_keys: tuple[str, ...] = ()
+    db_init_on_start: bool = False
 
     def summary(self) -> dict[str, Any]:
         """Safe for startup logs / --check-config; never dump values or DSNs."""
         return {
             "profile": self.profile,
+            "db_init_on_start": self.db_init_on_start,
             "server_host": self.api.server_host,
             "server_port": self.api.server_port,
             "server_processes": 1,

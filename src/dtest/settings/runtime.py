@@ -7,6 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class RuntimeSettings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
     app_env: str = "local"
+    # Upgrade CRUD/event/checkpoint schemas before API/Workers start.
+    db_init_on_start: bool = False
     event_worker_enabled: bool | None = (
         None  # Omitted: follow AGENT_WORKER_ENABLED.
     )

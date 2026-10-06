@@ -20,8 +20,8 @@ config.set_main_option(
     "sqlalchemy.url", get_settings().database.database_url.replace("%", "%%")
 )
 
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+if config.config_file_name and config.attributes.get("configure_logger", True):
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
@@ -84,9 +84,11 @@ async def run_async_migrations() -> None:
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
+    try:
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+    finally:
+        await connectable.dispose()
 
 
 if context.is_offline_mode():

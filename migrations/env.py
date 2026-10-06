@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from dtest.settings.loader import get_settings
 
 config = context.config
-if config.config_file_name:
+if config.config_file_name and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # Resolve the same target as running consumers. Loading settings performs no IO

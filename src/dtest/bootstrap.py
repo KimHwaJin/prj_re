@@ -299,6 +299,15 @@ def attach_service(
 
     @asynccontextmanager
     async def combined_lifespan(application):
+        if settings.db_init_on_start:
+            from dtest.infrastructure.database.schema import initialize_schema
+            from dtest.lifecycle import protected_cleanup
+
+            try:
+                await initialize_schema(settings)
+            except BaseException:
+                await protected_cleanup(sso.close())
+                raise
         # Lifespan state returned by the platform is preserved for requests.
         async with previous_lifespan(application) as state:
             from dtest.application.runs.runtime import runtime
