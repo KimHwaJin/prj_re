@@ -1,6 +1,11 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [107 Windows 실행 루프 호환성](107-windows-selector-startup.md).
+최신 작업: [108 Windows DB 초기화 실행 경로](108-windows-schema-initialization.md).
+초기화 launcher와 두 Alembic chain에 Windows Selector를 적용하고 관련
+23회귀를 검증했다. 새 DB는 CRUD→Event→checkpoint 순서로 준비해야 하며 앱이
+자동 적용하지 않는다. 기존 연결 오류의 원인과 실제 Windows DB 적용은 미확정이다.
+
+선행 작업: [107 Windows 실행 루프 호환성](107-windows-selector-startup.md).
 Windows 루트 launcher는 psycopg 비동기 풀에 맞춰 Selector 루프를 명시한다.
 macOS에서 Windows 분기·실제 HTTP·종료 처리 등 74회귀와 전체 포맷을 검증했다.
 기존 Ruff·ty 오류는 남아 있으며 새 진단은 없다. 실제 Windows와 사용자 DB의
