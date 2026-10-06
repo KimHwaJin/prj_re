@@ -52,11 +52,9 @@ def _annotation(node: ast.AST | None) -> str | None:
 
 def _parameters(function: ast.FunctionDef) -> dict[str, dict[str, Any]]:
     positional = [
-        (argument, "positional_only")
-        for argument in function.args.posonlyargs
+        (argument, "positional_only") for argument in function.args.posonlyargs
     ] + [
-        (argument, "positional_or_keyword")
-        for argument in function.args.args
+        (argument, "positional_or_keyword") for argument in function.args.args
     ]
     defaults = [MISSING] * (
         len(positional) - len(function.args.defaults)
@@ -133,7 +131,9 @@ class ReturnVisitor(BodyVisitor):
         if isinstance(node.value, ast.Dict):
             for target in node.targets:
                 if isinstance(target, ast.Name):
-                    self.assigned_dict_keys[target.id] = self.dict_keys(node.value)
+                    self.assigned_dict_keys[target.id] = self.dict_keys(
+                        node.value
+                    )
         for target in node.targets:
             if (
                 isinstance(target, ast.Subscript)
@@ -182,10 +182,7 @@ def _returns(function: ast.FunctionDef) -> dict[str, Any]:
     _visit_body(function, visitor)
     keys = visitor.keys()
     outputs = (
-        {
-            key: {"selector": f'["{key}"]'}
-            for key in keys
-        }
+        {key: {"selector": f'["{key}"]'} for key in keys}
         if keys
         else {"result": {"selector": "$"}}
     )
@@ -207,7 +204,9 @@ def _packages(function: ast.FunctionDef) -> list[str]:
     )
 
 
-def function_metadata(path: Path, root: Path, function: ast.FunctionDef) -> dict[str, Any]:
+def function_metadata(
+    path: Path, root: Path, function: ast.FunctionDef
+) -> dict[str, Any]:
     relative = path.relative_to(root)
     raw_docstring = ast.get_docstring(function, clean=False) or ""
     docstring = LiteralString(inspect.cleandoc(raw_docstring))
@@ -228,55 +227,96 @@ def function_metadata(path: Path, root: Path, function: ast.FunctionDef) -> dict
 
 def build_registry(root: Path) -> dict[str, Any]:
     # Maintainer policy cannot be inferred from Python names or docstrings.
-    previous_path = root / 'tool_registry.yaml'
-    previous = yaml.safe_load(previous_path.read_text(encoding='utf-8')) if previous_path.is_file() else {}
-    previous_tools = (previous or {}).get('tools', {})
+    previous_path = root / "tool_registry.yaml"
+    previous = (
+        yaml.safe_load(previous_path.read_text(encoding="utf-8"))
+        if previous_path.is_file()
+        else {}
+    )
+    previous_tools = (previous or {}).get("tools", {})
     identities = {}
     for key, item in previous_tools.items():
-        identity = (item['source'], item['function_name'])
+        identity = (item["source"], item["function_name"])
         if identity in identities:
-            raise ValueError('Duplicate registered source/function identity')
+            raise ValueError("Duplicate registered source/function identity")
         identities[identity] = key
     tools = {}
-    for path in sorted(root.rglob('*.py')):
+    for path in sorted(root.rglob("*.py")):
         relative = path.relative_to(root)
-        if path.name in EXCLUDED_FILES or any(p in relative.parts for p in ('past','tmp','__pycache__')):
+        if path.name in EXCLUDED_FILES or any(
+            p in relative.parts for p in ("past", "tmp", "__pycache__")
+        ):
             continue
-        tree = ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
-        public = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith('_')]
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        public = [
+            n
+            for n in tree.body
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and not n.name.startswith("_")
+        ]
         names = [n.name for n in public]
         if len(set(names)) != len(names):
-            raise ValueError(f'Duplicate function definition in {relative}')
+            raise ValueError(f"Duplicate function definition in {relative}")
         for function in public:
-            if not isinstance(function, ast.FunctionDef) or function.decorator_list or function.args.posonlyargs or function.args.vararg:
-                raise ValueError('Registered Tools must be ordinary keyword-callable functions without decorators')
-            key = identities.get((relative.as_posix(), function.name), function.name)
+            if (
+                not isinstance(function, ast.FunctionDef)
+                or function.decorator_list
+                or function.args.posonlyargs
+                or function.args.vararg
+            ):
+                raise ValueError(
+                    "Registered Tools must be ordinary "
+                    "keyword-callable functions without "
+                    "decorators"
+                )
+            key = identities.get(
+                (relative.as_posix(), function.name), function.name
+            )
             if key in tools:
-                raise ValueError(f'Duplicate Tool id: {key!r}; declare distinct registry IDs for source/function pairs')
+                raise ValueError(
+                    f"Duplicate Tool id: {key!r}; declare distinct registry IDs for source/function pairs"
+                )
             item = function_metadata(path, root, function)
             old = previous_tools.get(key, {})
-            if 'availability' in old:
-                if old['availability'] not in {'ready', 'test_only'}:
-                    raise ValueError('Invalid Tool availability')
-                item['availability'] = old['availability']
-            if 'parameter_controls' in old:
-                from dtest.agent_service.agents.analysis.planning.parameters import parameter_controls
-                parameter_controls(function, old['parameter_controls'])
-                item['parameter_controls'] = old['parameter_controls']
-            if 'outputs' in old:
+            if "availability" in old:
+                if old["availability"] not in {"ready", "test_only"}:
+                    raise ValueError("Invalid Tool availability")
+                item["availability"] = old["availability"]
+            if "parameter_controls" in old:
+                from dtest.agent_service.agents.analysis.planning.parameters import (
+                    parameter_controls,
+                )
+
+                parameter_controls(function, old["parameter_controls"])
+                item["parameter_controls"] = old["parameter_controls"]
+            if "outputs" in old:
                 from dtest.contracts.tool_outputs import output_bindings
-                item['outputs'] = output_bindings(old['outputs'])
-            if 'parameter_bindings' in old:
+
+                item["outputs"] = output_bindings(old["outputs"])
+            if "parameter_bindings" in old:
                 from dtest.contracts.tool_bindings import parameter_bindings
-                parameter_bindings(old['parameter_bindings'], item['inputs'], old.get('parameter_controls'))
-                item['parameter_bindings'] = old['parameter_bindings']
+
+                parameter_bindings(
+                    old["parameter_bindings"],
+                    item["inputs"],
+                    old.get("parameter_controls"),
+                )
+                item["parameter_bindings"] = old["parameter_bindings"]
             tools[key] = item
     return {
-        'schema_version': '2.0', 'registry_type': 'tool_registry',
-        'description': 'Python Tool 파일에서 AST로 추출한 함수 호출 정보다. Registry에 등록된 Tool은 모두 Workflow에서 사용할 수 있다.',
-        'generation': {'method': 'python_ast', 'llm_used': False,
-                      'source_root': 'dtest/agent_service/agents/analysis/workflow/tools'},
-        'tools': tools,
+        "schema_version": "2.0",
+        "registry_type": "tool_registry",
+        "description": (
+            "Python Tool 파일에서 AST로 추출한 함수 호출 정보다. "
+            "Registry에 등록된 Tool은 모두 Workflow에서 사용할 수 "
+            "있다."
+        ),
+        "generation": {
+            "method": "python_ast",
+            "llm_used": False,
+            "source_root": "dtest/agent_service/agents/analysis/workflow/tools",
+        },
+        "tools": tools,
     }
 
 
@@ -308,7 +348,9 @@ def main() -> None:
     arguments = parser.parse_args()
     registry = build_registry(arguments.tools_dir.resolve())
     write_registry(registry, arguments.output.resolve())
-    print(f"generated {len(registry['tools'])} tools: {arguments.output.resolve()}")
+    print(
+        f"generated {len(registry['tools'])} tools: {arguments.output.resolve()}"
+    )
 
 
 if __name__ == "__main__":

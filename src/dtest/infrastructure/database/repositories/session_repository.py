@@ -24,7 +24,9 @@ class SessionRepository:
             SessionModel.delete_yn == DeleteYN.N,
         )
         if for_update:
-            stmt = stmt.with_for_update().execution_options(populate_existing=True)
+            stmt = stmt.with_for_update().execution_options(
+                populate_existing=True
+            )
         return await db.scalar(stmt)
 
     @staticmethod
@@ -41,6 +43,7 @@ class SessionRepository:
             SessionModel.delete_yn == DeleteYN.N,
         )
         if for_update:
-            stmt = stmt.with_for_update().execution_options(populate_existing=True)
+            stmt = stmt.with_for_update().execution_options(
+                populate_existing=True
+            )
         return await db.scalar(stmt)
-

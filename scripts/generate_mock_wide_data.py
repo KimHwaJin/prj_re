@@ -36,15 +36,22 @@ def _make_keys(row_count: int) -> pd.DataFrame:
     return pd.DataFrame(
         {
             "alias_lot_id": ["TE2AM92"]
-            + [f"TE2AM{92 + (number // 2500):02d}" for number in row_number[1:]],
-            "wf_id": [f"{(position // 100) + 1:02d}" for position in wafer_position],
+            + [
+                f"TE2AM{92 + (number // 2500):02d}"
+                for number in row_number[1:]
+            ],
+            "wf_id": [
+                f"{(position // 100) + 1:02d}" for position in wafer_position
+            ],
             "x": die_position % 10 + 1,
             "y": die_position // 10 + 1,
         }
     )
 
 
-def generate_mock_wide_data(row_count: int = 10_000, seed: int = 20260904) -> None:
+def generate_mock_wide_data(
+    row_count: int = 10_000, seed: int = 20260904
+) -> None:
     """Write matching NCE/WT wide datasets with stable, analysis-ready schemas."""
     rng = np.random.default_rng(seed)
     keys = _make_keys(row_count)
@@ -53,7 +60,10 @@ def generate_mock_wide_data(row_count: int = 10_000, seed: int = 20260904) -> No
     latent_signal = rng.normal(0.0, 1.0, row_count)
     for index, column in enumerate(NCE_VALUE_COLUMNS):
         nce[column] = np.round(
-            2.0 + index * 0.12 + latent_signal * 0.08 + rng.normal(0, 0.12, row_count),
+            2.0
+            + index * 0.12
+            + latent_signal * 0.08
+            + rng.normal(0, 0.12, row_count),
             6,
         )
 
@@ -77,7 +87,11 @@ def generate_mock_wide_data(row_count: int = 10_000, seed: int = 20260904) -> No
     keys.loc[0, ["wf_id", "x", "y"]] = ["01", 11, 21]
     nce.loc[0, KEY_COLUMNS] = keys.loc[0, KEY_COLUMNS]
     wt.loc[0, KEY_COLUMNS] = keys.loc[0, KEY_COLUMNS]
-    wt.loc[0, WT_VALUE_COLUMNS] = ["EB", pd.Timestamp("2026-08-01 05:49:17"), 0]
+    wt.loc[0, WT_VALUE_COLUMNS] = [
+        "EB",
+        pd.Timestamp("2026-08-01 05:49:17"),
+        0,
+    ]
 
     MOCK_DATA_DIR.mkdir(parents=True, exist_ok=True)
     nce.to_parquet(NCE_OUTPUT, index=False)

@@ -116,7 +116,9 @@ def _content_text(content: Any, *, agent_name: str | None = None) -> str:
         for dataset in datasets:
             if not isinstance(dataset, dict):
                 continue
-            dataset_id = dataset.get("dataset_id") or dataset.get("name") or "데이터"
+            dataset_id = (
+                dataset.get("dataset_id") or dataset.get("name") or "데이터"
+            )
             role = str(dataset.get("role") or "").upper()
             labels.append(f"{dataset_id}{f'({role})' if role else ''}")
         count = content.get("data_count", len(datasets))
@@ -127,31 +129,69 @@ def _content_text(content: Any, *, agent_name: str | None = None) -> str:
         summary = ", ".join(
             f"{key}={_compact_value(value)}" for key, value in answers.items()
         )
-        return f"추가 정보를 입력했습니다: {summary}." if summary else "추가 정보를 입력했습니다."
+        return (
+            f"추가 정보를 입력했습니다: {summary}."
+            if summary
+            else "추가 정보를 입력했습니다."
+        )
     if "approved" in content:
         if content.get("approved"):
             return "Workflow를 승인했습니다."
         feedback = str(content.get("feedback") or "").strip()
-        return f"Workflow 수정을 요청했습니다: {feedback}" if feedback else "Workflow 승인을 거절했습니다."
+        return (
+            f"Workflow 수정을 요청했습니다: {feedback}"
+            if feedback
+            else "Workflow 승인을 거절했습니다."
+        )
 
     # 같은 status라도 Agent별 출력 스키마의 의미가 다르므로 전용 projection을 우선한다.
     status = content.get("status")
-    if agent_name == "workflow_recommender" and status == "candidate_search_complete":
-        result = content.get("result") if isinstance(content.get("result"), dict) else {}
+    if (
+        agent_name == "workflow_recommender"
+        and status == "candidate_search_complete"
+    ):
+        result = (
+            content.get("result")
+            if isinstance(content.get("result"), dict)
+            else {}
+        )
         if result.get("recommendation_available"):
-            recommendation = result.get("recommendation") if isinstance(result.get("recommendation"), dict) else {}
+            recommendation = (
+                result.get("recommendation")
+                if isinstance(result.get("recommendation"), dict)
+                else {}
+            )
             reason = str(recommendation.get("reason") or "").strip()
             score = recommendation.get("similarity_score")
-            suffix = f" (유사도 {score:.2f})" if isinstance(score, (int, float)) else ""
+            suffix = (
+                f" (유사도 {score:.2f})"
+                if isinstance(score, (int, float))
+                else ""
+            )
             return f"추천 가능한 기존 Workflow를 찾았습니다{suffix}.{f' {reason}' if reason else ''}"
         reason = str(result.get("no_match_reason") or "").strip()
-        return reason or "조건에 맞는 기존 Workflow가 없어 새 Workflow를 생성합니다."
-    if agent_name == "workflow_candidate_collector" and status == "candidate_added":
+        return (
+            reason
+            or "조건에 맞는 기존 Workflow가 없어 새 Workflow를 생성합니다."
+        )
+    if (
+        agent_name == "workflow_candidate_collector"
+        and status == "candidate_added"
+    ):
         candidate_id = str(content.get("candidate_id") or "새 후보")
-        origin = "새로 생성한" if content.get("origin") == "generated" else "추천된"
+        origin = (
+            "새로 생성한" if content.get("origin") == "generated" else "추천된"
+        )
         workflow_status = str(content.get("workflow_status") or "").strip()
-        status_labels = {"needs_input": "추가 정보 필요", "ready": "승인 준비 완료"}
-        suffix = f" 상태: {status_labels.get(workflow_status, workflow_status)}." if workflow_status else ""
+        status_labels = {
+            "needs_input": "추가 정보 필요",
+            "ready": "승인 준비 완료",
+        }
+        suffix = (
+            f" 상태: {status_labels.get(workflow_status, workflow_status)}."
+            if workflow_status
+            else ""
+        )
         return f"{origin} Workflow 후보 `{candidate_id}`를 목록에 추가했습니다.{suffix}"
 
     # 분류 Agent 결과는 코드값만 노출하지 않고 판단 이유를 함께 표시합니다.
@@ -271,7 +311,8 @@ def build_message_create_data(
         "content_text": _content_text(
             content,
             agent_name=str(message.get("name") or "").strip() or None,
-        ) or "표시할 메시지가 없습니다.",
+        )
+        or "표시할 메시지가 없습니다.",
         "content": _content_parts(content),
         "client_request_id": _client_request_id(
             state,
@@ -311,7 +352,9 @@ async def _require_existing_session_for_message(
     session_id: UUID,
     project_id: UUID | None,
 ) -> None:
-    from dtest.infrastructure.database.repositories.session_repository import SessionRepository
+    from dtest.infrastructure.database.repositories.session_repository import (
+        SessionRepository,
+    )
 
     session = await SessionRepository.get_active_by_user(
         db,
@@ -324,7 +367,9 @@ async def _require_existing_session_for_message(
             "the given user_id"
         )
     if project_id is not None and session.project_id != project_id:
-        raise ValueError("graph message project_id does not match session.project_id")
+        raise ValueError(
+            "graph message project_id does not match session.project_id"
+        )
 
 
 async def _call_message_create(
@@ -385,7 +430,9 @@ async def save_graph_message(
         **_message_create_payload_kwargs(MessageCreate, payload_data)
     )
     payload_session_id = getattr(payload, "session_id", None)
-    if payload_session_id is None and "session_id" in _model_fields(MessageCreate):
+    if payload_session_id is None and "session_id" in _model_fields(
+        MessageCreate
+    ):
         raise ValueError(
             "graph message persistence requires session_id; "
             f"state_session_id={state.get('session_id')!r}, "
@@ -485,4 +532,3 @@ __all__ = [
     "save_new_graph_messages",
     "save_agent_run_log",
 ]
-

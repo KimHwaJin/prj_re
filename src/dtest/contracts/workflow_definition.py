@@ -29,7 +29,6 @@ class ExecutionMode(StrEnum):
     CONDITIONAL = "conditional"
 
 
-
 class ArgumentSource(StrEnum):
     WORKFLOW_INPUT = "workflow_input"
     STEP_OUTPUT = "step_output"
@@ -46,12 +45,15 @@ class InputDefinition(StrictModel):
 
 
 class InputProvenance(StrictModel):
-    source: Literal[
-        "user_query",
-        "user_answer",
-        "confirmed_metadata",
-        "external_context",
-    ] | None
+    source: (
+        Literal[
+            "user_query",
+            "user_answer",
+            "confirmed_metadata",
+            "external_context",
+        ]
+        | None
+    )
     confirmed: bool
 
 
@@ -81,8 +83,12 @@ class OutputBinding(StrictModel):
 
     @model_validator(mode="after")
     def validate_variable(self) -> "OutputBinding":
-        if not self.variable.isidentifier() or keyword.iskeyword(self.variable):
-            raise ValueError(f"유효하지 않은 Python 변수명입니다: {self.variable!r}")
+        if not self.variable.isidentifier() or keyword.iskeyword(
+            self.variable
+        ):
+            raise ValueError(
+                f"유효하지 않은 Python 변수명입니다: {self.variable!r}"
+            )
         return self
 
 
@@ -101,7 +107,9 @@ class ToolReturns(StrictModel):
         if not self.result_variable.isidentifier() or keyword.iskeyword(
             self.result_variable
         ):
-            raise ValueError("result_variable은 유효한 Python 변수명이어야 합니다.")
+            raise ValueError(
+                "result_variable은 유효한 Python 변수명이어야 합니다."
+            )
         return self
 
 
@@ -124,7 +132,10 @@ class WorkflowTool(StrictModel):
             raise ValueError(
                 "arguments와 argument_sources의 key가 정확히 일치해야 합니다."
             )
-        if self.execution == ExecutionMode.ALWAYS and self.condition is not None:
+        if (
+            self.execution == ExecutionMode.ALWAYS
+            and self.condition is not None
+        ):
             raise ValueError("always Tool에는 condition을 지정할 수 없습니다.")
         return self
 
@@ -142,7 +153,10 @@ class WorkflowStep(StrictModel):
 
     @model_validator(mode="after")
     def validate_step(self) -> "WorkflowStep":
-        if self.execution == ExecutionMode.ALWAYS and self.condition is not None:
+        if (
+            self.execution == ExecutionMode.ALWAYS
+            and self.condition is not None
+        ):
             raise ValueError("always Step에는 condition을 지정할 수 없습니다.")
         tool_ids = [tool.id for tool in self.tools]
         if len(tool_ids) != len(set(tool_ids)):
@@ -215,7 +229,9 @@ class WorkflowDefinition(StrictModel):
 
         if self.status == WorkflowStatus.READY:
             if self.unresolved_inputs:
-                raise ValueError("ready Workflow에는 unresolved_inputs가 없어야 합니다.")
+                raise ValueError(
+                    "ready Workflow에는 unresolved_inputs가 없어야 합니다."
+                )
             for name, definition in self.input_schema.items():
                 if not definition.required:
                     continue
@@ -223,21 +239,35 @@ class WorkflowDefinition(StrictModel):
                     raise ValueError(f"필수 Workflow input이 없습니다: {name}")
                 provenance = self.input_provenance.get(name)
                 if provenance is None or not provenance.confirmed:
-                    raise ValueError(f"필수 Workflow input이 확정되지 않았습니다: {name}")
-        elif self.status == WorkflowStatus.NEEDS_INPUT and not self.unresolved_inputs:
-            raise ValueError("needs_input Workflow에는 unresolved_inputs가 필요합니다.")
+                    raise ValueError(
+                        f"필수 Workflow input이 확정되지 않았습니다: {name}"
+                    )
+        elif (
+            self.status == WorkflowStatus.NEEDS_INPUT
+            and not self.unresolved_inputs
+        ):
+            raise ValueError(
+                "needs_input Workflow에는 unresolved_inputs가 필요합니다."
+            )
 
         used_variables: set[str] = set()
         for tool in tools:
             result_variable = tool.returns.result_variable
             if result_variable in used_variables:
-                raise ValueError(f"Notebook 변수가 중복됩니다: {result_variable}")
+                raise ValueError(
+                    f"Notebook 변수가 중복됩니다: {result_variable}"
+                )
             used_variables.add(result_variable)
             for output in tool.returns.outputs.values():
-                if output.selector == "$" and output.variable == result_variable:
+                if (
+                    output.selector == "$"
+                    and output.variable == result_variable
+                ):
                     continue
                 if output.variable in used_variables:
-                    raise ValueError(f"Notebook 변수가 중복됩니다: {output.variable}")
+                    raise ValueError(
+                        f"Notebook 변수가 중복됩니다: {output.variable}"
+                    )
                 used_variables.add(output.variable)
         return self
 

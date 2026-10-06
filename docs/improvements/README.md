@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [101 API 패키지·폐기 DB 정리](101-api-service-cleanup.md). 책임별 디렉토리 이동·구 구현과 설정 삭제·테스트 분리·중복 EW 원장 제거 및 폐기 DB 9개 테이블 삭제 migration을 구현했다. API 909개 고유 항목·Agent/설계 432개·실제 삭제/이관 migration·설치 wheel을 검증했다. 기존 서비스 DB 적용·배포는 별도다.
+최신 작업: [104 Ruff·ty와 79자 포맷](104-python-format-quality.md).
+현재 Python 포맷·개발 도구 버전을 통일하고 API·Agent 회귀 1300개 및
+설치 wheel을 검증했다. 기존 lint·타입 진단은 별도로 기록했으며 포맷 통과와
+구분한다. 선행 구조·연동 정리는 [102](102-dtest-service-structure.md),
+[103](103-executor-api-route-contract.md)을 참고한다. 실제 배포는 별도다.
+
+선행 작업: [101 API 패키지·폐기 DB 정리](101-api-service-cleanup.md). 책임별 디렉토리 이동·구 구현과 설정 삭제·테스트 분리·중복 EW 원장 제거 및 폐기 DB 9개 테이블 삭제 migration을 구현했다. API 909개 고유 항목·Agent/설계 432개·실제 삭제/이관 migration·설치 wheel을 검증했다. 기존 서비스 DB 적용·배포는 별도다.
 
 선행 작업: [100 설정 모델·소스 정리](100-settings-model-cleanup.md). 수동 키·그룹·플랫폼 허용 목록과 문자열 재파싱을 제거하고 모델 필드에 설정 정의를 모았다. 공유 YAML은 소비 설정만 선택하며 미사용 키는 이름만 진단한다. 관련 회귀772개·네 환경 launcher·설치 패키지 검증을 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
 

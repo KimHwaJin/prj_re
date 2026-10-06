@@ -1,4 +1,5 @@
 """App lifecycle and optional service adapters, independent of source selection."""
+
 from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -6,7 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class RuntimeSettings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
     app_env: str = "local"
-    event_worker_enabled: bool | None = None  # Omitted: follow AGENT_WORKER_ENABLED.
+    event_worker_enabled: bool | None = (
+        None  # Omitted: follow AGENT_WORKER_ENABLED.
+    )
     shutdown_timeout_seconds: float = Field(default=25, gt=0)
     shutdown_drain_seconds: float = Field(default=20, ge=0)
     run_diagnostics_dir: Path | None = None

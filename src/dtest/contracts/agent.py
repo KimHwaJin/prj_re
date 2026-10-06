@@ -1,10 +1,14 @@
 """Agent command adapter installed by the composition root."""
+
 from typing import Callable
+
 _resume_factory: Callable | None = None
+
 
 def install_resume_factory(factory: Callable):
     global _resume_factory
     _resume_factory = factory
+
 
 def resume_command(**kwargs):
     if _resume_factory is None:

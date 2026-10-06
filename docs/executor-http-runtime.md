@@ -92,8 +92,11 @@ from agent_service.agents.analysis.graph import build_analysis_workflow_graph
 
 async with ExecutorClient(settings) as executor_client:
     graph = build_analysis_workflow_graph(
-        deps, settings, checkpointer=saver,
-        bindings=bindings, executor_client=executor_client,
+        deps,
+        settings,
+        checkpointer=saver,
+        bindings=bindings,
+        executor_client=executor_client,
     )
     await graph.ainvoke(input_state, config)
 ```

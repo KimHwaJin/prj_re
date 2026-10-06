@@ -4,13 +4,14 @@ Uses the installed SQLAlchemy connection-pool queue and the actual Run monitorin
 cleanup implementation. The DB query is replaced by queue acquisition; no
 database/network calls or application mutations are performed.
 """
+
 import asyncio
 import json
 from pathlib import Path
 import sys
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from dtest.application.runs import monitoring
 from dtest.application.runs.monitoring import run_cancellable
@@ -40,14 +41,20 @@ async def trial(extra_yield):
         if extra_yield:
             await asyncio.sleep(0)
         graph_completed.append(True)
-        return {'completed': True}
+        return {"completed": True}
 
-    with patch.object(monitoring, 'wait_for_cancellation', watcher):
-        run = asyncio.create_task(run_cancellable('offline-reproduction', graph()))
-        done, _ = await asyncio.wait([run], timeout=.05)
-        result = {'extra_yield': extra_yield, 'graph_completed': bool(graph_completed),
-                  'run_returned': bool(done), 'watcher_done': watcher_ref[0].done(),
-                  'watcher_cancellation_requests': watcher_ref[0].cancelling()}
+    with patch.object(monitoring, "wait_for_cancellation", watcher):
+        run = asyncio.create_task(
+            run_cancellable("offline-reproduction", graph())
+        )
+        done, _ = await asyncio.wait([run], timeout=0.05)
+        result = {
+            "extra_yield": extra_yield,
+            "graph_completed": bool(graph_completed),
+            "run_returned": bool(done),
+            "watcher_done": watcher_ref[0].done(),
+            "watcher_cancellation_requests": watcher_ref[0].cancelling(),
+        }
         if not done:
             # Stop this isolated reproduction; do not leave a background task.
             run.cancel()
@@ -62,15 +69,20 @@ async def trial(extra_yield):
 async def main():
     race = [await trial(False) for _ in range(20)]
     control = [await trial(True) for _ in range(20)]
-    result = {'race': race, 'control': control,
-              'summary': {'race_stalled': sum(not r['run_returned'] for r in race),
-                          'race_trials': len(race),
-                          'control_stalled': sum(not r['run_returned'] for r in control),
-                          'control_trials': len(control)}}
-    if len(sys.argv)>1:
+    result = {
+        "race": race,
+        "control": control,
+        "summary": {
+            "race_stalled": sum(not r["run_returned"] for r in race),
+            "race_trials": len(race),
+            "control_stalled": sum(not r["run_returned"] for r in control),
+            "control_trials": len(control),
+        },
+    }
+    if len(sys.argv) > 1:
         Path(sys.argv[1]).write_text(json.dumps(result, indent=2))
-    print(json.dumps(result['summary']))
+    print(json.dumps(result["summary"]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

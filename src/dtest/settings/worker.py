@@ -1,9 +1,13 @@
 import math
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+
 class WorkerSettings(BaseModel):
     """Worker settings owned once by the central snapshot."""
-    model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
+
+    model_config = ConfigDict(
+        populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False
+    )
     task_lease_seconds: int = 300
     task_reconcile_interval_seconds: int = 30
     task_reconciler_enabled: bool = True
@@ -21,14 +25,24 @@ class WorkerSettings(BaseModel):
 
     @model_validator(mode="after")
     def validate_limits(self):
-        for name in ("task_lease_seconds", "task_reconcile_interval_seconds", "agent_worker_poll_interval_seconds",
-                     "agent_worker_reconcile_interval_seconds", "task_cancel_poll_interval_seconds",
-                     "run_cleanup_timeout_seconds", "run_monitor_timeout_seconds"):
-            value=getattr(self,name)
+        for name in (
+            "task_lease_seconds",
+            "task_reconcile_interval_seconds",
+            "agent_worker_poll_interval_seconds",
+            "agent_worker_reconcile_interval_seconds",
+            "task_cancel_poll_interval_seconds",
+            "run_cleanup_timeout_seconds",
+            "run_monitor_timeout_seconds",
+        ):
+            value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be finite and positive")
-        for name in ("agent_worker_max_retries", "agent_worker_retry_backoff_seconds", "agent_worker_retry_max_backoff_seconds"):
-            value=getattr(self,name)
+        for name in (
+            "agent_worker_max_retries",
+            "agent_worker_retry_backoff_seconds",
+            "agent_worker_retry_max_backoff_seconds",
+        ):
+            value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
                 raise ValueError(f"{name} must be finite and non-negative")
         return self

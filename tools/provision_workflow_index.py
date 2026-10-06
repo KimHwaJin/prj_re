@@ -28,18 +28,27 @@ async def main():
     try:
         async with engine.connect() as conn:
             version = await conn.scalar(
-                text("SELECT extversion FROM pg_extension WHERE extname='vector'")
+                text(
+                    "SELECT extversion FROM pg_extension WHERE "
+                    "extname='vector'"
+                )
             )
             if not version or tuple(map(int, version.split(".")[:2])) < (0, 8):
                 raise SystemExit("pgvector >=0.8.0 is required")
             existing = await conn.scalar(
                 text(
-                    "SELECT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=current_schema() AND c.relname=:name"
+                    "SELECT i.indisvalid FROM pg_index i JOIN "
+                    "pg_class c ON c.oid=i.indexrelid JOIN "
+                    "pg_namespace n ON n.oid=c.relnamespace WHERE "
+                    "n.nspname=current_schema() AND "
+                    "c.relname=:name"
                 ),
                 {"name": search.index_name},
             )
             if existing is False:
-                await conn.execute(text("DROP INDEX CONCURRENTLY " + search.index_name))
+                await conn.execute(
+                    text("DROP INDEX CONCURRENTLY " + search.index_name)
+                )
             await conn.execute(
                 text(
                     search.index_sql().replace(

@@ -27,7 +27,9 @@ def upgrade() -> None:
     op.execute("ALTER TABLE agent_runs ADD COLUMN task_id UUID")
 
     # 기존 1:1 관계를 보존한 채 FK 방향을 AgentRun → Task로 뒤집습니다.
-    op.execute("UPDATE tasks SET root_run_id = run_id, checkpoint_run_id = run_id")
+    op.execute(
+        "UPDATE tasks SET root_run_id = run_id, checkpoint_run_id = run_id"
+    )
     op.execute(
         "UPDATE agent_runs ar SET task_id = t.task_id FROM tasks t WHERE t.run_id = ar.run_id"
     )
@@ -36,7 +38,9 @@ def upgrade() -> None:
         "ALTER TABLE tasks ALTER COLUMN status TYPE task_status "
         "USING (CASE WHEN status::text = 'interrupted' THEN 'waiting_input' ELSE status::text END)::task_status"
     )
-    op.execute("ALTER TABLE tasks ALTER COLUMN status SET DEFAULT 'running'::task_status")
+    op.execute(
+        "ALTER TABLE tasks ALTER COLUMN status SET DEFAULT 'running'::task_status"
+    )
 
     op.execute(
         "ALTER TABLE tasks ADD CONSTRAINT fk_tasks_root_run "
@@ -51,7 +55,9 @@ def upgrade() -> None:
         "FOREIGN KEY(task_id) REFERENCES tasks(task_id) ON DELETE SET NULL"
     )
     op.execute("CREATE INDEX ix_tasks_root_run_id ON tasks(root_run_id)")
-    op.execute("CREATE INDEX ix_tasks_checkpoint_run_id ON tasks(checkpoint_run_id)")
+    op.execute(
+        "CREATE INDEX ix_tasks_checkpoint_run_id ON tasks(checkpoint_run_id)"
+    )
     op.execute("CREATE INDEX ix_agent_runs_task_id ON agent_runs(task_id)")
 
     op.execute("ALTER TABLE tasks DROP CONSTRAINT tasks_run_id_key")
@@ -73,13 +79,17 @@ def downgrade() -> None:
         "ALTER TABLE tasks ADD CONSTRAINT tasks_run_id_fkey "
         "FOREIGN KEY(run_id) REFERENCES agent_runs(run_id) ON DELETE CASCADE"
     )
-    op.execute("ALTER TABLE tasks ADD CONSTRAINT tasks_run_id_key UNIQUE(run_id)")
+    op.execute(
+        "ALTER TABLE tasks ADD CONSTRAINT tasks_run_id_key UNIQUE(run_id)"
+    )
     op.execute("ALTER TABLE tasks ALTER COLUMN status DROP DEFAULT")
     op.execute(
         "ALTER TABLE tasks ALTER COLUMN status TYPE agent_run_status "
         "USING (CASE WHEN status::text = 'waiting_input' THEN 'interrupted' ELSE status::text END)::agent_run_status"
     )
-    op.execute("ALTER TABLE tasks ALTER COLUMN status SET DEFAULT 'running'::agent_run_status")
+    op.execute(
+        "ALTER TABLE tasks ALTER COLUMN status SET DEFAULT 'running'::agent_run_status"
+    )
     op.execute("ALTER TABLE agent_runs DROP CONSTRAINT fk_agent_runs_task")
     op.execute("ALTER TABLE tasks DROP CONSTRAINT fk_tasks_checkpoint_run")
     op.execute("ALTER TABLE tasks DROP CONSTRAINT fk_tasks_root_run")
@@ -94,4 +104,3 @@ def downgrade() -> None:
         "WHERE status IN ('pending','running')"
     )
     op.execute("DROP TYPE task_status")
-

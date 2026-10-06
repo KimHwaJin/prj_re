@@ -1,5 +1,6 @@
 """Temporary WT transformation Tool backed by analysis-ready mock data."""
 
+
 def transform_wt(
     data: dict | None = None,
     transform_op: str = "wt_fail_pivot",
@@ -20,8 +21,13 @@ def transform_wt(
     import pandas as pd
 
     expected_columns = [
-        "alias_lot_id", "wf_id", "x", "y",
-        "PT1H.symbol", "PT1H.end_tm", "PT1H.p_f",
+        "alias_lot_id",
+        "wf_id",
+        "x",
+        "y",
+        "PT1H.symbol",
+        "PT1H.end_tm",
+        "PT1H.p_f",
     ]
     frame = pd.DataFrame(data) if data else pd.DataFrame()
     used_mock_fallback = not set(expected_columns).issubset(frame.columns)
@@ -38,8 +44,17 @@ def transform_wt(
             "applied": True,
             "transform_op": transform_op,
             "data_type": "wt_symbol",
-            "steps": ["load_mock_wide_wt"] if used_mock_fallback else ["validate_wide_wt"],
+            "steps": ["load_mock_wide_wt"]
+            if used_mock_fallback
+            else ["validate_wide_wt"],
             "mock": True,
-            "options": {"keep_type": keep_type, "pivot": pivot, "index": index, "meta_cols": meta_cols, "aggfunc": aggfunc, **kwargs},
+            "options": {
+                "keep_type": keep_type,
+                "pivot": pivot,
+                "index": index,
+                "meta_cols": meta_cols,
+                "aggfunc": aggfunc,
+                **kwargs,
+            },
         },
     }

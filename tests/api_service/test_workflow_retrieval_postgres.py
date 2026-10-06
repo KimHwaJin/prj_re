@@ -22,6 +22,8 @@ from dtest.infrastructure.workflow_search.runtime import WorkflowRuntime
 from dtest.infrastructure.workflow_search.embedding import EmbeddingUnavailable
 from dtest.settings.search import WorkflowSearchSettings
 import dtest.settings.loader as service_settings
+
+
 class Embeddings:
     def __init__(self):
         self.calls = []
@@ -56,7 +58,9 @@ async def search_context(planning, tmp_path, monkeypatch):  # noqa: F811
 
     monkeypatch.setattr(service, "deployed_analysis_assets", lambda: catalog)
     monkeypatch.setattr(
-        WorkflowFileStore, "_root", staticmethod(lambda: tmp_path / "workflows")
+        WorkflowFileStore,
+        "_root",
+        staticmethod(lambda: tmp_path / "workflows"),
     )
     policy = WorkflowSearchSettings(
         base_url="http://embedding.invalid/v1",
@@ -129,14 +133,19 @@ async def test_distinct_workflows_repeat_exclusion_and_native_hnsw(
     ).json()
     expected = [a["workflow_id"], b["workflow_id"], c["workflow_id"]]
     returned = [i["workflow_id"] for i in result["items"]]
-    assert len(returned) == len(set(returned)) and set(returned) <= set(expected)
+    assert len(returned) == len(set(returned)) and set(returned) <= set(
+        expected
+    )
     assert returned
     # 095 factor probes can miss even the nearest Workflow under exact vector
     # concentration. ANN has no global-first guarantee; reranking promises an
     # ordered result only among the candidates actually found.
     similarities = [item["similarity"] for item in result["items"]]
     assert similarities == sorted(similarities, reverse=True)
-    assert result["diagnostics"]["reranked"] and result["diagnostics"]["approximate"]
+    assert (
+        result["diagnostics"]["reranked"]
+        and result["diagnostics"]["approximate"]
+    )
     assert result["diagnostics"]["rounds"] <= h.policy.max_rounds
     if result["diagnostics"]["termination"] == "candidate_limit":
         assert returned == expected
@@ -169,7 +178,9 @@ async def test_distinct_workflows_repeat_exclusion_and_native_hnsw(
     async with h.factory() as db:
         assert (
             await db.scalar(
-                text("SELECT count(*) FROM workflow_embeddings WHERE is_active")
+                text(
+                    "SELECT count(*) FROM workflow_embeddings WHERE is_active"
+                )
             )
             == 2 * aliases + 1
         )
@@ -202,16 +213,22 @@ async def test_query_only_edit_cas_and_delete_deactivate(search_context):
         )
     )
     assert sorted(r.status_code for r in responses) == [200, 409]
-    current = (await h.client.get(path, headers=headers(h.user["user_id"]))).json()
+    current = (
+        await h.client.get(path, headers=headers(h.user["user_id"]))
+    ).json()
     assert (
         current["content_sha256"] == row["content_sha256"]
         and current["search_revision"] == 2
     )
-    assert current["resource_revision"] == 2 and current["index_state"] == "ready"
+    assert (
+        current["resource_revision"] == 2 and current["index_state"] == "ready"
+    )
     async with h.factory() as db:
         active = (
             await db.scalars(
-                select(WorkflowEmbeddingModel).where(WorkflowEmbeddingModel.is_active)
+                select(WorkflowEmbeddingModel).where(
+                    WorkflowEmbeddingModel.is_active
+                )
             )
         ).all()
         assert len(active) == 1 and active[0].search_revision == 2
@@ -220,12 +237,15 @@ async def test_query_only_edit_cas_and_delete_deactivate(search_context):
     ).status_code == 204
     result = await h.search_runtime.search.search("search")
     assert (
-        not result.items and result.diagnostics.termination == "no_more_ann_candidates"
+        not result.items
+        and result.diagnostics.termination == "no_more_ann_candidates"
     )
 
 
 @pytest.mark.asyncio
-async def test_embedding_failure_preserves_registration_and_retry(search_context):
+async def test_embedding_failure_preserves_registration_and_retry(
+    search_context,
+):
     h = search_context
     h.embedding.fail = True
     row = await promote(h, ["alpha"])
@@ -239,7 +259,10 @@ async def test_embedding_failure_preserves_registration_and_retry(search_context
         "/api/v1/workflows/" + row["workflow_id"] + "/reindex",
         headers=headers(h.user["user_id"]),
     )
-    assert response.status_code == 200 and response.json()["index_state"] == "ready"
+    assert (
+        response.status_code == 200
+        and response.json()["index_state"] == "ready"
+    )
     result = await h.search_runtime.search.search("search")
     assert len(result.items) == 1
     other = await add_user(h, name="index-owner")
@@ -252,7 +275,9 @@ async def test_embedding_failure_preserves_registration_and_retry(search_context
 
 
 @pytest.mark.asyncio
-async def test_delayed_publish_cannot_restore_old_query_and_releases_db(search_context):
+async def test_delayed_publish_cannot_restore_old_query_and_releases_db(
+    search_context,
+):
     h = search_context
     row = await promote(h, ["alpha"])
     engine = create_async_engine(
@@ -277,7 +302,9 @@ async def test_delayed_publish_cannot_restore_old_query_and_releases_db(search_c
             db,
             UUID(row["created_by_user_id"]),
             UUID(row["workflow_id"]),
-            WorkflowUpdate(user_queries=["beta"], expected_resource_revision=1),
+            WorkflowUpdate(
+                user_queries=["beta"], expected_resource_revision=1
+            ),
         )
     task = asyncio.create_task(
         h.search_runtime.indexer.index(UUID(row["workflow_id"]), 2)
@@ -290,14 +317,19 @@ async def test_delayed_publish_cannot_restore_old_query_and_releases_db(search_c
                 db,
                 UUID(row["created_by_user_id"]),
                 UUID(row["workflow_id"]),
-                WorkflowUpdate(user_queries=["gamma"], expected_resource_revision=2),
+                WorkflowUpdate(
+                    user_queries=["gamma"], expected_resource_revision=2
+                ),
             )
         release.set()
         assert await asyncio.wait_for(task, 3) == "superseded"
         async with factory() as db:
             assert (
                 await db.scalar(
-                    text("SELECT count(*) FROM workflow_embeddings WHERE is_active")
+                    text(
+                        "SELECT count(*) FROM workflow_embeddings "
+                        "WHERE is_active"
+                    )
                 )
                 == 0
             )
@@ -317,12 +349,18 @@ async def test_missing_index_no_hidden_exact_fallback_and_bounded_rounds(
         update={"max_rounds": 1, "candidate_limit": 20}
     )
     result = await h.search_runtime.search.search("search")
-    assert len(result.items) == 1 and result.diagnostics.termination == "round_limit"
+    assert (
+        len(result.items) == 1
+        and result.diagnostics.termination == "round_limit"
+    )
     async with h.factory() as db:
         await db.execute(text("DROP INDEX " + h.policy.index_name))
         await db.commit()
     result = await h.search_runtime.search.search("search")
-    assert not result.items and result.diagnostics.termination == "index_unavailable"
+    assert (
+        not result.items
+        and result.diagnostics.termination == "index_unavailable"
+    )
 
 
 @pytest.mark.asyncio
@@ -358,13 +396,18 @@ async def test_failed_concurrent_reindex_preserves_success(search_context):
         current.source_workflow_id = None
         await db.commit()
     h.embedding.fail = True
-    assert await h.search_runtime.indexer.index(UUID(row["workflow_id"]), 1) == "ready"
+    assert (
+        await h.search_runtime.indexer.index(UUID(row["workflow_id"]), 1)
+        == "ready"
+    )
     async with h.factory() as db:
         current = await db.get(WorkflowModel, UUID(row["workflow_id"]))
         assert current.index_state == "ready"
         assert (
             await db.scalar(
-                text("SELECT count(*) FROM workflow_embeddings WHERE is_active")
+                text(
+                    "SELECT count(*) FROM workflow_embeddings WHERE is_active"
+                )
             )
             == 1
         )
@@ -398,17 +441,24 @@ async def test_model_space_switch_preserves_prior_vectors(search_context):
         update={"base_url": "http://second-" + uuid4().hex + ".invalid/v1"}
     )
     h.search_runtime.indexer.settings = changed
-    assert await h.search_runtime.indexer.index(UUID(row["workflow_id"]), 1) == "ready"
+    assert (
+        await h.search_runtime.indexer.index(UUID(row["workflow_id"]), 1)
+        == "ready"
+    )
     async with h.factory() as db:
         rows = (
             await db.scalars(
                 select(WorkflowEmbeddingModel).where(
-                    WorkflowEmbeddingModel.workflow_id == UUID(row["workflow_id"])
+                    WorkflowEmbeddingModel.workflow_id
+                    == UUID(row["workflow_id"])
                 )
             )
         ).all()
         assert len(rows) == 2 and sum(e.is_active for e in rows) == 1
-        assert next(e for e in rows if e.model_space == previous).status == "superseded"
+        assert (
+            next(e for e in rows if e.model_space == previous).status
+            == "superseded"
+        )
     h.search_runtime.search.settings = changed
     result = await h.search_runtime.search.search("search")
     assert result.diagnostics.termination == "index_unavailable"

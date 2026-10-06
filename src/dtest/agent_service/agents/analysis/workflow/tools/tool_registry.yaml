@@ -252,9 +252,13 @@ tools:
     function_name: compute_statistics
     source: eda/compute_statistics.py
     signature: 'compute_statistics(data: object=None, columns: list=None) -> dict[str, object]'
-    docstring: "데이터프레임의 각 컬럼에 대해 기본 통계량을 계산\nArgs: \n    data: pandas DataFrame 객체 또는 dict 컬럼-배열 형식\n\
-      \    columns: 통계량을 계산할 컬럼 목록. None이면 모든 수치형/범주형 컬럼.\nReturns:\n    {\"statistics\": dict} - 컬럼별\
-      \ 통계량 (수치형: describe, 범주형: count/unique/top/freq)"
+    docstring: |-
+      데이터프레임의 각 컬럼에 대해 기본 통계량을 계산
+      Args:
+          data: pandas DataFrame 객체 또는 dict 컬럼-배열 형식
+          columns: 통계량을 계산할 컬럼 목록. None이면 모든 수치형/범주형 컬럼.
+      Returns:
+          {"statistics": dict} - 컬럼별 통계량 (수치형: describe, 범주형: count/unique/top/freq)
     inputs:
       data:
         type: object

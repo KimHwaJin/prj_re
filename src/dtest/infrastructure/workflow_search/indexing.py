@@ -23,7 +23,9 @@ class WorkflowIndexer:
         # Snapshot and release DB before waiting for embedding admission/network.
         async with self.session_factory() as db:
             row = await db.scalar(
-                select(WorkflowModel).where(WorkflowModel.workflow_id == workflow_id)
+                select(WorkflowModel).where(
+                    WorkflowModel.workflow_id == workflow_id
+                )
             )
             if (
                 row is None
@@ -42,14 +44,16 @@ class WorkflowIndexer:
                 if row.source_workflow_id is not None:
                     sources = or_(
                         sources,
-                        WorkflowEmbeddingModel.workflow_id == row.source_workflow_id,
+                        WorkflowEmbeddingModel.workflow_id
+                        == row.source_workflow_id,
                     )
                 embeddings = (
                     await db.scalars(
                         select(WorkflowEmbeddingModel)
                         .where(
                             sources,
-                            WorkflowEmbeddingModel.model_space == self.settings.space,
+                            WorkflowEmbeddingModel.model_space
+                            == self.settings.space,
                             WorkflowEmbeddingModel.vector_values.is_not(None),
                             WorkflowEmbeddingModel.embedded_text.in_(queries),
                         )
@@ -63,7 +67,9 @@ class WorkflowIndexer:
                     )
                 ).all()
                 cached = {
-                    item.embedded_text: [float(value) for value in item.vector_values]
+                    item.embedded_text: [
+                        float(value) for value in item.vector_values
+                    ]
                     for item in embeddings
                 }
 
@@ -98,13 +104,19 @@ class WorkflowIndexer:
                 or row.search_revision != expected_revision
             ):
                 return "superseded"
-            if reason and row.index_state == "ready" and self.settings.configured:
+            if (
+                reason
+                and row.index_state == "ready"
+                and self.settings.configured
+            ):
                 ready = await db.scalar(
                     select(WorkflowEmbeddingModel.embedding_id)
                     .where(
                         WorkflowEmbeddingModel.workflow_id == workflow_id,
-                        WorkflowEmbeddingModel.search_revision == expected_revision,
-                        WorkflowEmbeddingModel.model_space == self.settings.space,
+                        WorkflowEmbeddingModel.search_revision
+                        == expected_revision,
+                        WorkflowEmbeddingModel.model_space
+                        == self.settings.space,
                         WorkflowEmbeddingModel.is_active.is_(True),
                         WorkflowEmbeddingModel.status == "ready",
                     )
@@ -130,7 +142,9 @@ class WorkflowIndexer:
                         workflow_id=workflow_id,
                         search_revision=expected_revision,
                         embedded_text=query,
-                        embedded_text_sha256=sha256(query.encode()).hexdigest(),
+                        embedded_text_sha256=sha256(
+                            query.encode()
+                        ).hexdigest(),
                         search_metadata={},
                         model_provider="openai_compatible",
                         model_name=self.settings.model,
@@ -139,7 +153,8 @@ class WorkflowIndexer:
                         dimensions=self.settings.dimensions,
                         vector_values=vector,
                         status="ready",
-                        is_active=row.lifecycle == "template" and row.is_recommendable,
+                        is_active=row.lifecycle == "template"
+                        and row.is_recommendable,
                         failure_reason=None,
                         embedded_at=utc_now(),
                     )

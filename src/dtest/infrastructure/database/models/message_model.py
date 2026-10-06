@@ -23,7 +23,10 @@ from dtest.contracts.enums import (
     MessageType,
     enum_values,
 )
-from dtest.infrastructure.database.models.model_base import Base, TimestampMixin
+from dtest.infrastructure.database.models.model_base import (
+    Base,
+    TimestampMixin,
+)
 
 
 class MessageModel(TimestampMixin, Base):
@@ -125,4 +128,3 @@ class MessageModel(TimestampMixin, Base):
         back_populates="messages",
         foreign_keys=[session_id],
     )
-

@@ -31,11 +31,16 @@
 공용 코드는 `dtest/contracts/user_resume.py`, `dtest/agent_service/runtime/user_resume.py`에 있다. Agent가 API/DB 구현을 import하지 않는다.
 
 ```python
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from agent_service.runtime.user_resume import (
+    record_user_resume,
+    user_interrupt,
+)
 from dtest.contracts.user_resume import UserResumeState
+
 
 class State(UserResumeState, total=False):
     answer: str
+
 
 @record_user_resume
 async def ask(state: State) -> dict:

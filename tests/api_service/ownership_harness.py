@@ -4,6 +4,7 @@ The real event admission/claim path is exercised by test_agent_commands_postgres
 and test_executor_event_recovery_postgres. This harness acquires a test owner to
 probe cancellation/resource guards without requiring a live Executor event.
 """
+
 import asyncio
 from collections.abc import Awaitable, Callable
 from uuid import UUID, uuid4
@@ -13,22 +14,31 @@ from dtest.infrastructure.database import runtime as database
 from dtest.contracts.enums import TaskStatus
 from dtest.infrastructure.database.models.task_model import TaskModel
 from dtest.infrastructure.database.models.session_model import SessionModel
-from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.infrastructure.database.models.session_execution_model import (
+    SessionExecutionModel as Owner,
+)
 from dtest.application.resources import lifecycle
 from dtest.application.runs.lifecycle import execution_health
 from dtest.application.runs import ownership
 from dtest.contracts.events import DeferEvent
 from dtest.lifecycle import protected_cleanup
 
+
 class _HandoffPending(DeferEvent):
     """An API invocation is still committing/releasing this session."""
 
 
-async def run_test_event(context, operation: Callable[[], Awaitable], *,
-                          handoff_timeout_seconds: float = 0):
+async def run_test_event(
+    context,
+    operation: Callable[[], Awaitable],
+    *,
+    handoff_timeout_seconds: float = 0,
+):
     if not execution_health.healthy:
-        raise DeferEvent('Process session execution is unhealthy')
-    owner = ownership.SessionExecution(UUID(context.session_id), uuid4(), context.command_id, 'executor_event')
+        raise DeferEvent("Process session execution is unhealthy")
+    owner = ownership.SessionExecution(
+        UUID(context.session_id), uuid4(), context.command_id, "executor_event"
+    )
     acquired = False
 
     async def acquire_owner():
@@ -37,26 +47,46 @@ async def run_test_event(context, operation: Callable[[], Awaitable], *,
             api_session = await db.get(SessionModel, owner.session_id)
             if api_session is not None:
                 try:
-                    await lifecycle.lock_session(db, api_session.user_id, owner.session_id)
+                    await lifecycle.lock_session(
+                        db, api_session.user_id, owner.session_id
+                    )
                 except ApplicationError as exc:
-                    raise DeferEvent("API resources are inactive or changed during event admission") from exc
+                    raise DeferEvent(
+                        "API resources are inactive or changed "
+                        "during event "
+                        "admission"
+                    ) from exc
             # Standalone graph sessions without API resources still participate
             # in the existing persistent session ownership protocol.
-            busy_task = await db.scalar(select(TaskModel.recovery_required).where(
-                TaskModel.session_id == owner.session_id,
-                or_(TaskModel.status.in_([TaskStatus.PENDING, TaskStatus.RUNNING]),
-                    TaskModel.recovery_required.is_(True)),
-            ).limit(1))
+            busy_task = await db.scalar(
+                select(TaskModel.recovery_required)
+                .where(
+                    TaskModel.session_id == owner.session_id,
+                    or_(
+                        TaskModel.status.in_(
+                            [TaskStatus.PENDING, TaskStatus.RUNNING]
+                        ),
+                        TaskModel.recovery_required.is_(True),
+                    ),
+                )
+                .limit(1)
+            )
             if busy_task is True:
-                raise DeferEvent('API task requires recovery')
+                raise DeferEvent("API task requires recovery")
             if busy_task is False:
-                raise _HandoffPending('API task is executing or queued')
+                raise _HandoffPending("API task is executing or queued")
             if not await ownership.acquire(db, owner):
                 current = await db.get(Owner, owner.session_id)
-                if (current is not None and current.owner_kind == 'api_run'
-                        and current.token is not None and not current.recovery_required):
-                    raise _HandoffPending('API invocation has not released its session')
-                raise DeferEvent('Session graph is owned or requires recovery')
+                if (
+                    current is not None
+                    and current.owner_kind == "api_run"
+                    and current.token is not None
+                    and not current.recovery_required
+                ):
+                    raise _HandoffPending(
+                        "API invocation has not released its session"
+                    )
+                raise DeferEvent("Session graph is owned or requires recovery")
             await db.commit()
             acquired = True
 
@@ -71,16 +101,22 @@ async def run_test_event(context, operation: Callable[[], Awaitable], *,
                     raise
                 # acquire_owner exited its DB context. Never sleep with an open
                 # transaction/connection, and never bypass or steal the owner.
-                await asyncio.sleep(min(.05, remaining))
+                await asyncio.sleep(min(0.05, remaining))
 
-    acquisition = asyncio.create_task(bounded_handoff(), name=f'executor-event-admission:{owner.session_id}')
+    acquisition = asyncio.create_task(
+        bounded_handoff(), name=f"executor-event-admission:{owner.session_id}"
+    )
     try:
         await asyncio.shield(acquisition)
     except asyncio.CancelledError:
+
         async def finish_handoff():
             await asyncio.gather(acquisition, return_exceptions=True)
             if acquired:
-                await ownership.quarantine(owner, 'event_cancelled_after_acquire')
+                await ownership.quarantine(
+                    owner, "event_cancelled_after_acquire"
+                )
+
         await protected_cleanup(finish_handoff())
         raise
     return await ownership.run_owned(owner, operation)

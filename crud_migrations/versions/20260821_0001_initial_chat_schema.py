@@ -4,6 +4,7 @@ Revision ID: 20260821_0001
 Revises:
 Create Date: 2026-08-21
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -18,11 +19,30 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     statements = (
         "CREATE TYPE delete_yn AS ENUM ('N', 'Y')",
-        "CREATE TYPE project_member_role AS ENUM ('owner', 'editor', 'viewer')",
-        "CREATE TYPE message_type AS ENUM ('system', 'user', 'assistant', 'tool')",
-        "CREATE TYPE message_status AS ENUM ('pending', 'streaming', 'completed', 'failed', 'cancelled')",
-        "CREATE TYPE llm_run_status AS ENUM ('queued', 'running', 'completed', 'failed', 'cancelled')",
-        "CREATE TYPE agent_run_status AS ENUM ('pending', 'running', 'interrupted', 'success', 'error', 'timeout', 'canceled')",
+        (
+            "CREATE TYPE project_member_role AS ENUM ('owner', "
+            "'editor', 'viewer')"
+        ),
+        (
+            "CREATE TYPE message_type AS ENUM ('system', 'user', "
+            "'assistant', "
+            "'tool')"
+        ),
+        (
+            "CREATE TYPE message_status AS ENUM ('pending', "
+            "'streaming', 'completed', 'failed', "
+            "'cancelled')"
+        ),
+        (
+            "CREATE TYPE llm_run_status AS ENUM ('queued', 'running', "
+            "'completed', 'failed', "
+            "'cancelled')"
+        ),
+        (
+            "CREATE TYPE agent_run_status AS ENUM ('pending', "
+            "'running', 'interrupted', 'success', 'error', 'timeout', "
+            "'canceled')"
+        ),
         """CREATE TABLE users (
             user_id UUID PRIMARY KEY, user_name VARCHAR(100) NOT NULL,
             delete_yn delete_yn NOT NULL DEFAULT 'N', created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -94,12 +114,25 @@ def upgrade() -> None:
         "CREATE INDEX ix_sessions_project_id ON sessions (project_id)",
         "CREATE INDEX ix_sessions_user_id ON sessions (user_id)",
         "CREATE INDEX ix_messages_session_id ON messages (session_id)",
-        "CREATE INDEX ix_messages_parent_message_id ON messages (parent_message_id)",
-        "CREATE UNIQUE INDEX uq_messages_client_request ON messages (session_id, client_request_id) WHERE client_request_id IS NOT NULL",
+        (
+            "CREATE INDEX ix_messages_parent_message_id ON messages "
+            "(parent_message_id)"
+        ),
+        (
+            "CREATE UNIQUE INDEX uq_messages_client_request ON messages "
+            "(session_id, client_request_id) WHERE client_request_id IS "
+            "NOT NULL"
+        ),
         "CREATE INDEX ix_llm_runs_session_id ON llm_runs (session_id)",
         "CREATE INDEX ix_agent_runs_session_id ON agent_runs (session_id)",
-        "CREATE INDEX ix_agent_runs_trigger_message_id ON agent_runs (trigger_message_id)",
-        "CREATE INDEX ix_agent_runs_workflow_stage ON agent_runs (workflow_stage)",
+        (
+            "CREATE INDEX ix_agent_runs_trigger_message_id ON "
+            "agent_runs (trigger_message_id)"
+        ),
+        (
+            "CREATE INDEX ix_agent_runs_workflow_stage ON agent_runs "
+            "(workflow_stage)"
+        ),
         "CREATE INDEX ix_agent_runs_redis_key ON agent_runs (redis_key)",
     )
     for statement in statements:
@@ -107,9 +140,26 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute("ALTER TABLE sessions DROP CONSTRAINT IF EXISTS fk_sessions_current_leaf")
-    for table in ("agent_runs", "llm_runs", "messages", "sessions", "project_members", "projects", "users"):
+    op.execute(
+        "ALTER TABLE sessions DROP CONSTRAINT IF EXISTS "
+        "fk_sessions_current_leaf"
+    )
+    for table in (
+        "agent_runs",
+        "llm_runs",
+        "messages",
+        "sessions",
+        "project_members",
+        "projects",
+        "users",
+    ):
         op.execute(f"DROP TABLE {table}")
-    for enum_name in ("agent_run_status", "llm_run_status", "message_status", "message_type", "project_member_role", "delete_yn"):
+    for enum_name in (
+        "agent_run_status",
+        "llm_run_status",
+        "message_status",
+        "message_type",
+        "project_member_role",
+        "delete_yn",
+    ):
         op.execute(f"DROP TYPE {enum_name}")
-

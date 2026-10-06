@@ -29,4 +29,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.execute("DROP INDEX uq_workflows_root_candidate_run")
-

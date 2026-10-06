@@ -6,15 +6,49 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
 class WorkflowSearchSettings(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, frozen=True, extra="forbid", allow_inf_nan=False)
-    base_url: str | None = Field(default=None, validation_alias="WORKFLOW_EMBEDDING_BASE_URL")
-    api_key: SecretStr = Field(default_factory=lambda: SecretStr(""), validation_alias="WORKFLOW_EMBEDDING_API_KEY")
-    model: str | None = Field(default=None, validation_alias="WORKFLOW_EMBEDDING_MODEL")
-    model_revision: str = Field(default="default", min_length=1, max_length=100, validation_alias="WORKFLOW_EMBEDDING_MODEL_REVISION")
-    dimensions: int | None = Field(default=None, ge=1, le=2000, validation_alias="WORKFLOW_EMBEDDING_DIMENSIONS")
-    embedding_timeout_seconds: float = Field(default=15, gt=0, le=120, validation_alias="WORKFLOW_EMBEDDING_TIMEOUT_SECONDS")
-    embedding_concurrency: int = Field(default=2, ge=1, le=32, validation_alias="WORKFLOW_EMBEDDING_CONCURRENCY")
-    embedding_batch_size: int = Field(default=32, ge=1, le=256, validation_alias="WORKFLOW_EMBEDDING_BATCH_SIZE")
+    model_config = ConfigDict(
+        populate_by_name=True, frozen=True, extra="forbid", allow_inf_nan=False
+    )
+    base_url: str | None = Field(
+        default=None, validation_alias="WORKFLOW_EMBEDDING_BASE_URL"
+    )
+    api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(""),
+        validation_alias="WORKFLOW_EMBEDDING_API_KEY",
+    )
+    model: str | None = Field(
+        default=None, validation_alias="WORKFLOW_EMBEDDING_MODEL"
+    )
+    model_revision: str = Field(
+        default="default",
+        min_length=1,
+        max_length=100,
+        validation_alias="WORKFLOW_EMBEDDING_MODEL_REVISION",
+    )
+    dimensions: int | None = Field(
+        default=None,
+        ge=1,
+        le=2000,
+        validation_alias="WORKFLOW_EMBEDDING_DIMENSIONS",
+    )
+    embedding_timeout_seconds: float = Field(
+        default=15,
+        gt=0,
+        le=120,
+        validation_alias="WORKFLOW_EMBEDDING_TIMEOUT_SECONDS",
+    )
+    embedding_concurrency: int = Field(
+        default=2,
+        ge=1,
+        le=32,
+        validation_alias="WORKFLOW_EMBEDDING_CONCURRENCY",
+    )
+    embedding_batch_size: int = Field(
+        default=32,
+        ge=1,
+        le=256,
+        validation_alias="WORKFLOW_EMBEDDING_BATCH_SIZE",
+    )
     context_max_chars: int = Field(default=64000, ge=1000, le=256000)
     candidate_limit: int = Field(default=20, ge=1, le=100)
     batch_size: int = Field(default=64, ge=1, le=2048)
@@ -33,7 +67,9 @@ class WorkflowSearchSettings(BaseModel):
         ]
         if any(supplied) and not all(supplied):
             raise ValueError(
-                "WORKFLOW_EMBEDDING_BASE_URL, MODEL and DIMENSIONS must be configured together"
+                "WORKFLOW_EMBEDDING_BASE_URL, MODEL and DIMENSIONS "
+                "must be configured "
+                "together"
             )
         if self.base_url is not None:
             from urllib.parse import urlsplit

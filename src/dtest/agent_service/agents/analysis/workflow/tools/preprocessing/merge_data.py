@@ -52,8 +52,12 @@ def merge_data(
     join_columns = list(dict.fromkeys(join_columns))
     if not join_columns:
         raise ValueError("join_columns에는 하나 이상의 컬럼명이 필요합니다.")
-    if any(not isinstance(column, str) or not column for column in join_columns):
-        raise TypeError("join_columns의 모든 값은 비어 있지 않은 문자열이어야 합니다.")
+    if any(
+        not isinstance(column, str) or not column for column in join_columns
+    ):
+        raise TypeError(
+            "join_columns의 모든 값은 비어 있지 않은 문자열이어야 합니다."
+        )
 
     missing_left_columns = [
         column for column in join_columns if column not in left_df.columns
@@ -73,10 +77,14 @@ def merge_data(
     how = str(how).lower()
     valid_how_values = {"inner", "left", "right", "outer"}
     if how not in valid_how_values:
-        raise ValueError(f"how는 {sorted(valid_how_values)} 중 하나여야 합니다.")
+        raise ValueError(
+            f"how는 {sorted(valid_how_values)} 중 하나여야 합니다."
+        )
 
     if not isinstance(suffixes, (tuple, list)) or len(suffixes) != 2:
-        raise TypeError("suffixes는 두 문자열로 구성된 tuple 또는 list여야 합니다.")
+        raise TypeError(
+            "suffixes는 두 문자열로 구성된 tuple 또는 list여야 합니다."
+        )
     suffixes = tuple(suffixes)
     if any(not isinstance(suffix, str) for suffix in suffixes):
         raise TypeError("suffixes의 모든 값은 문자열이어야 합니다.")
@@ -101,7 +109,10 @@ def merge_data(
     )
 
     indicator_column = "__merge_status__"
-    if indicator_column in left_df.columns or indicator_column in right_df.columns:
+    if (
+        indicator_column in left_df.columns
+        or indicator_column in right_df.columns
+    ):
         raise ValueError(
             f"입력 데이터에 예약 컬럼 '{indicator_column}'이 존재합니다."
         )
@@ -144,7 +155,9 @@ def merge_data(
         "right_duplicate_key_rows": int(
             right_df.duplicated(subset=join_columns, keep=False).sum()
         ),
-        "left_missing_key_rows": int(left_df[join_columns].isna().any(axis=1).sum()),
+        "left_missing_key_rows": int(
+            left_df[join_columns].isna().any(axis=1).sum()
+        ),
         "right_missing_key_rows": int(
             right_df[join_columns].isna().any(axis=1).sum()
         ),

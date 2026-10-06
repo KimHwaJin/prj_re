@@ -45,7 +45,9 @@ class Retriever:
                 )
             ],
             diagnostics=WorkflowSearchDiagnostics(
-                termination="candidate_limit", distinct_candidates=1, reranked=True
+                termination="candidate_limit",
+                distinct_candidates=1,
+                reranked=True,
             ),
         )
 
@@ -91,7 +93,9 @@ async def test_full_analysis_selects_pinned_template_without_mutation(
             }
         return response({"role": "assistant", "content": json.dumps(value)})
 
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handle)
+    ) as client:
         result = await build_agent(
             model(client),
             catalog,
@@ -107,12 +111,15 @@ async def test_full_analysis_selects_pinned_template_without_mutation(
     assert proposal.definition["execution"]["repair_level"] == 1
     assert proposal._catalog_reference["content_sha256"] == "a" * 64
     assert all(
-        t["function"]["name"] != "search_workflows" for t in calls[1].get("tools", [])
+        t["function"]["name"] != "search_workflows"
+        for t in calls[1].get("tools", [])
     )
 
 
 @pytest.mark.asyncio
-async def test_faq_and_incremental_do_not_search_and_sessions_are_isolated(tmp_path):
+async def test_faq_and_incremental_do_not_search_and_sessions_are_isolated(
+    tmp_path,
+):
     catalog, case = assets(tmp_path / "assets", "inventory")
     retriever = Retriever(public_document(case))
     calls = {}
@@ -129,7 +136,9 @@ async def test_faq_and_incremental_do_not_search_and_sessions_are_isolated(tmp_p
         elif calls[query] == 1:
             value = {
                 "kind": "planning",
-                "planning_scope": "incremental" if query == "partial" else "end_to_end",
+                "planning_scope": "incremental"
+                if query == "partial"
+                else "end_to_end",
                 "message": "계획",
                 "skill_ids": [case["skill"]],
                 "plans": [],
@@ -153,16 +162,24 @@ async def test_faq_and_incremental_do_not_search_and_sessions_are_isolated(tmp_p
             }
         return response({"role": "assistant", "content": json.dumps(value)})
 
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-        agent = build_agent(model(client), catalog, workflow_retriever=retriever)
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handle)
+    ) as client:
+        agent = build_agent(
+            model(client), catalog, workflow_retriever=retriever
+        )
         values = await asyncio.gather(
             *(
-                agent.ainvoke({"request": q}, context=AgentContext(session_id=q))
+                agent.ainvoke(
+                    {"request": q}, context=AgentContext(session_id=q)
+                )
                 for q in ["faq", "partial", "full-a", "full-b"]
             )
         )
     assert sorted(retriever.calls) == ["full-a", "full-b"]
-    assert [r.plans[0].definition["workflow_id"] for r in values if r.plans] == [
+    assert [
+        r.plans[0].definition["workflow_id"] for r in values if r.plans
+    ] == [
         "wf.catalog-full-a",
         "wf.catalog-full-b",
     ]
@@ -190,17 +207,25 @@ def test_combined_limit_and_definition_reference_exclusion(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_catalog_reference_survives_user_edit_and_frozen_approval(tmp_path):
+async def test_catalog_reference_survives_user_edit_and_frozen_approval(
+    tmp_path,
+):
     from uuid import uuid4
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.types import Command
     from dtest.settings.loader import load_settings
-    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+    from dtest.agent_service.agents.analysis.planning.runtime import (
+        PlanningRuntime,
+    )
+    from dtest.agent_service.agents.analysis.planning.graph import (
+        build_planning_graph,
+    )
     from dtest.contracts.plan_interaction import InteractionData
 
     catalog, case = assets(tmp_path / "assets", "billing")
-    settings = load_settings(config={"MODEL_PROVIDER": "mock"}, environ={}).agent
+    settings = load_settings(
+        config={"MODEL_PROVIDER": "mock"}, environ={}
+    ).agent
     retriever = Retriever(public_document(case))
     calls = []
 
@@ -228,9 +253,13 @@ async def test_catalog_reference_survives_user_edit_and_frozen_approval(tmp_path
         )
         return response({"role": "assistant", "content": json.dumps(value)})
 
-    runtime = PlanningRuntime(settings, catalog=catalog, workflow_retriever=retriever)
+    runtime = PlanningRuntime(
+        settings, catalog=catalog, workflow_retriever=retriever
+    )
     selected = runtime.models.select().model_dump()
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handle)
+    ) as client:
         runtime.agents[(selected["name"], selected["revision"])] = build_agent(
             model(client), catalog, workflow_retriever=retriever
         )
@@ -241,9 +270,12 @@ async def test_catalog_reference_survives_user_edit_and_frozen_approval(tmp_path
         }
         config = {"configurable": {"thread_id": values["session_id"]}}
         waiting = await graph.ainvoke(
-            {**values, "user_request": "current", "model_selection": selected}, config
+            {**values, "user_request": "current", "model_selection": selected},
+            config,
         )
-        interaction = InteractionData.model_validate(waiting["interaction_data"])
+        interaction = InteractionData.model_validate(
+            waiting["interaction_data"]
+        )
         plan = interaction.payload.plans[0]
         assert plan.catalog_reference.resource_revision == 3
         # User edits the parameter after search; it remains the pinned revision.
@@ -254,7 +286,9 @@ async def test_catalog_reference_survives_user_edit_and_frozen_approval(tmp_path
             "plan_revision": 1,
             "input_values": {"payload": "[6,8]"},
         }
-        completed = await graph.ainvoke(Command(resume={"resume": action}), config)
+        completed = await graph.ainvoke(
+            Command(resume={"resume": action}), config
+        )
         snapshot = completed["approved_snapshot"]
         assert snapshot["catalog_reference"]["resource_revision"] == 3
         assert snapshot["catalog_reference"]["content_sha256"] == "a" * 64
@@ -281,12 +315,16 @@ async def test_unavailable_search_generates_new_plan_and_unreturned_id_rejected(
         }
     )
     with pytest.raises(ValueError, match="returned by this invocation"):
-        resolve_recommendations(value, [], catalog, repair_limit=4, repair_attempts=3)
+        resolve_recommendations(
+            value, [], catalog, repair_limit=4, repair_attempts=3
+        )
 
     class Empty:
         async def search(self, query):
             return WorkflowSearchResult(
-                diagnostics=WorkflowSearchDiagnostics(termination="index_unavailable")
+                diagnostics=WorkflowSearchDiagnostics(
+                    termination="index_unavailable"
+                )
             )
 
     calls = []
@@ -309,16 +347,22 @@ async def test_unavailable_search_generates_new_plan_and_unreturned_id_rejected(
                 "kind": "plans",
                 "message": "새 계획",
                 "plans": [
-                    {"definition": definition, "input_values": {"payload": "[2,4]"}}
+                    {
+                        "definition": definition,
+                        "input_values": {"payload": "[2,4]"},
+                    }
                 ],
             }
         )
         return response({"role": "assistant", "content": json.dumps(value)})
 
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handle)
+    ) as client:
         reply = await build_agent(
             model(client), catalog, workflow_retriever=Empty()
         ).ainvoke({"request": "current"}, context=AgentContext())
     assert (
-        reply.plans[0].workflow_id is None and reply.plans[0]._catalog_reference is None
+        reply.plans[0].workflow_id is None
+        and reply.plans[0]._catalog_reference is None
     )

@@ -1,4 +1,5 @@
 """Execute the served Swagger scripts to verify request headers and origin boundaries."""
+
 import json
 from pathlib import Path
 import re
@@ -12,21 +13,30 @@ import dtest.settings.loader as service_settings
 from dtest.bootstrap import create_app
 
 
-def test_swagger_scripts_send_csrf_only_to_own_api(tmp_path,monkeypatch):
-    node=shutil.which("node")
+def test_swagger_scripts_send_csrf_only_to_own_api(tmp_path, monkeypatch):
+    node = shutil.which("node")
     if node is None:
         pytest.skip("Needs Node for executing Swagger JavaScript")
-    monkeypatch.setattr(service_settings,"_snapshot",None)
-    app=create_app(service_settings.load_settings(config={"MODEL_PROVIDER":"mock",
-        "AGENT_WORKER_ENABLED":False,"TASK_RECONCILER_ENABLED":False},environ={}))
+    monkeypatch.setattr(service_settings, "_snapshot", None)
+    app = create_app(
+        service_settings.load_settings(
+            config={
+                "MODEL_PROVIDER": "mock",
+                "AGENT_WORKER_ENABLED": False,
+                "TASK_RECONCILER_ENABLED": False,
+            },
+            environ={},
+        )
+    )
     with TestClient(app) as client:
-        html=client.get("/docs").text
-        demo=client.get("/demo").text
-    scripts=re.findall(r"<script>\s*(.*?)\s*</script>",html,re.S)
-    assert len(scripts)==2
-    data=tmp_path/"scripts.json"; data.write_text(json.dumps(scripts))
-    program=tmp_path/"swagger-test.cjs"
-    program.write_text(r'''
+        html = client.get("/docs").text
+        demo = client.get("/demo").text
+    scripts = re.findall(r"<script>\s*(.*?)\s*</script>", html, re.S)
+    assert len(scripts) == 2
+    data = tmp_path / "scripts.json"
+    data.write_text(json.dumps(scripts))
+    program = tmp_path / "swagger-test.cjs"
+    program.write_text(r"""
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const scripts=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const elements=new Map(),calls=[];let options=null,authenticated=true;
@@ -59,11 +69,29 @@ vm.createContext(context);for(const source of scripts)vm.runInContext(source,con
  assert.equal(elements.get('sso-status').textContent,'로그인이 필요합니다');
  console.log('Swagger JS: cookie credentials, CSRF, off-origin guard, expiry passed');
 })().catch(error=>{console.error(error);process.exit(1);});
-''')
-    result=subprocess.run([node,str(program),str(data)],text=True,capture_output=True,timeout=10)
-    assert result.returncode==0,result.stderr
+""")
+    result = subprocess.run(
+        [node, str(program), str(data)],
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
     # Syntax-check the updated demo separately without making browser/API requests.
-    demo_script=tmp_path/"demo.js"
-    demo_script.write_text("\n".join(re.findall(r'<script(?: id="console-app")?>\s*(.*?)\s*</script>',demo,re.S)))
-    result=subprocess.run([node,"--check",str(demo_script)],text=True,capture_output=True,timeout=10)
-    assert result.returncode==0,result.stderr
+    demo_script = tmp_path / "demo.js"
+    demo_script.write_text(
+        "\n".join(
+            re.findall(
+                r'<script(?: id="console-app")?>\s*(.*?)\s*</script>',
+                demo,
+                re.S,
+            )
+        )
+    )
+    result = subprocess.run(
+        [node, "--check", str(demo_script)],
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr

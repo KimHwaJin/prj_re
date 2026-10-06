@@ -12,7 +12,10 @@ from uuid import UUID
 
 from dtest.application.runs.persistence import graph as projection
 from dtest.application.runs.project_context import read_project_snapshot
-from dtest.infrastructure.executor.client import current_submission_effects, submission_scope
+from dtest.infrastructure.executor.client import (
+    current_submission_effects,
+    submission_scope,
+)
 from dtest.infrastructure.observability.diagnostics import span
 from dtest.contracts.model_selection import validate_checkpoint_selection
 
@@ -21,8 +24,15 @@ _UNSET = object()
 
 
 class GraphInvocation:
-    def __init__(self, graph: Any, *, session_factory=None, dispatcher=None,
-                 project_context_loader=None, model_validator=validate_checkpoint_selection):
+    def __init__(
+        self,
+        graph: Any,
+        *,
+        session_factory=None,
+        dispatcher=None,
+        project_context_loader=None,
+        model_validator=validate_checkpoint_selection,
+    ):
         self.graph = graph
         self.session_factory = session_factory
         self.dispatcher = dispatcher
@@ -38,27 +48,45 @@ class GraphInvocation:
 
     async def project_snapshot(self, *, user_id, session_id, project_id=None):
         return await read_project_snapshot(
-            user_id=user_id, session_id=session_id, project_id=project_id,
+            user_id=user_id,
+            session_id=session_id,
+            project_id=project_id,
             session_factory=self.session_factory,
         )
 
-    async def ensure_project_context(self, values, config, *, allow_default=False):
+    async def ensure_project_context(
+        self, values, config, *, allow_default=False
+    ):
         if not values or "project_system_prompt" in values:
             return
         if self.project_context_loader is not None:
             update = await self.project_context_loader(values)
-        elif allow_default and values.get("user_id") and values.get("session_id"):
+        elif (
+            allow_default
+            and values.get("user_id")
+            and values.get("session_id")
+        ):
             update = await self.project_snapshot(
-                user_id=values["user_id"], session_id=values["session_id"],
+                user_id=values["user_id"],
+                session_id=values["session_id"],
                 project_id=values.get("project_id"),
             )
         else:
             return  # Standalone legacy graphs may have no API project identity.
         await self.graph.aupdate_state(config, update)
 
-    async def invoke(self, value, config, *, values=None, user_id=None,
-                     agent_run_id=None, trigger_message_id=None,
-                     durability="sync", accept_state: Callable | None = None):
+    async def invoke(
+        self,
+        value,
+        config,
+        *,
+        values=None,
+        user_id=None,
+        agent_run_id=None,
+        trigger_message_id=None,
+        durability="sync",
+        accept_state: Callable | None = None,
+    ):
         """Run to the next wait/end; projection owns a short UoW per state.
 
         Initial input can echo an older invocation's state. Its receipt gate
@@ -68,52 +96,89 @@ class GraphInvocation:
         # Covers user starts/resumes AND Executor-event/recovery invocations.
         # Copy rather than modifying a reusable checkpoint/event config.
         from dtest.settings.loader import get_settings
-        config = {**config, "recursion_limit": get_settings().agent.recursion_limit}
+
+        config = {
+            **config,
+            "recursion_limit": get_settings().agent.recursion_limit,
+        }
         if values is not None:
             self.validate_model(values)
             await self.ensure_project_context(values, config)
         with submission_scope(current_submission_effects()):
             with span("graph.invoke"):
                 if getattr(self.graph, "name", None) != "agentic-planning-v1":
-                    return await self.graph.ainvoke(value, config=config, durability=durability)
+                    return await self.graph.ainvoke(
+                        value, config=config, durability=durability
+                    )
                 cursor = projection.InvocationProjection()
-                async for state in self.graph.astream(value, config=config, stream_mode="values", durability=durability):
+                async for state in self.graph.astream(
+                    value,
+                    config=config,
+                    stream_mode="values",
+                    durability=durability,
+                ):
                     if accept_state is not None and not accept_state(state):
                         continue
                     await cursor.persist(
-                        state, user_id=UUID(str(user_id or state["user_id"])),
+                        state,
+                        user_id=UUID(str(user_id or state["user_id"])),
                         agent_run_id=agent_run_id or state["agent_run_id"],
                         trigger_message_id=trigger_message_id,
-                        session_factory=self.session_factory, dispatcher=self.dispatcher,
+                        session_factory=self.session_factory,
+                        dispatcher=self.dispatcher,
                     )
 
-    async def project(self, state, *, user_id, agent_run_id=None, trigger_message_id=None):
+    async def project(
+        self, state, *, user_id, agent_run_id=None, trigger_message_id=None
+    ):
         return await projection.persist_graph_state(
-            state, user_id=user_id, agent_run_id=agent_run_id,
+            state,
+            user_id=user_id,
+            agent_run_id=agent_run_id,
             trigger_message_id=trigger_message_id,
-            session_factory=self.session_factory, dispatcher=self.dispatcher,
+            session_factory=self.session_factory,
+            dispatcher=self.dispatcher,
         )
 
     async def user_turn(self, config, graph_input, **kwargs):
         from dtest.application.runs.protocols.initial import start_and_project
+
         return await start_and_project(
-            self.graph, config, graph_input, invocation=self,
-            session_factory=self.session_factory, dispatcher=self.dispatcher, **kwargs,
+            self.graph,
+            config,
+            graph_input,
+            invocation=self,
+            session_factory=self.session_factory,
+            dispatcher=self.dispatcher,
+            **kwargs,
         )
 
     async def user_resume(self, config, **kwargs):
-        from dtest.application.runs.protocols.user_resume import resume_and_project
+        from dtest.application.runs.protocols.user_resume import (
+            resume_and_project,
+        )
+
         return await resume_and_project(
-            self.graph, config, invocation=self,
-            session_factory=self.session_factory, dispatcher=self.dispatcher, **kwargs,
+            self.graph,
+            config,
+            invocation=self,
+            session_factory=self.session_factory,
+            dispatcher=self.dispatcher,
+            **kwargs,
         )
 
     async def executor_resume(self, context):
-        from dtest.application.runs.protocols.executor import ExecutorResumeProtocol
+        from dtest.application.runs.protocols.executor import (
+            ExecutorResumeProtocol,
+        )
+
         return await ExecutorResumeProtocol(self)(context)
 
     async def executor_event(self, context):
         """Deliver the result, then repair public state from its durable receipt."""
-        from dtest.application.runs.projection import synchronize_executor_completion
+        from dtest.application.runs.projection import (
+            synchronize_executor_completion,
+        )
+
         await self.executor_resume(context)
         await synchronize_executor_completion(context, self.graph)

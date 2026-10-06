@@ -14,7 +14,10 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dtest.contracts.enums import DeleteYN, enum_values
-from dtest.infrastructure.database.models.model_base import Base, TimestampMixin
+from dtest.infrastructure.database.models.model_base import (
+    Base,
+    TimestampMixin,
+)
 
 
 class SessionModel(TimestampMixin, Base):
@@ -110,4 +113,3 @@ class SessionModel(TimestampMixin, Base):
         viewonly=True,
         uselist=False,
     )
-

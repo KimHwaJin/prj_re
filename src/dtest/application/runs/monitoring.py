@@ -23,9 +23,13 @@ from dtest.lifecycle import protected_cleanup
 
 async def wait_for_cancellation(run_id: UUID, stop: asyncio.Event) -> bool:
     """별도 DB session으로 취소 요청을 감시해 다른 API worker의 요청도 감지합니다."""
-    interval = max(0.05, get_settings().commands.task_cancel_poll_interval_seconds)
+    interval = max(
+        0.05, get_settings().commands.task_cancel_poll_interval_seconds
+    )
     while not stop.is_set():
-        async with asyncio.timeout(get_settings().commands.run_monitor_timeout_seconds):
+        async with asyncio.timeout(
+            get_settings().commands.run_monitor_timeout_seconds
+        ):
             async with get_session_factory()() as cancellation_db:
                 requested_at = await cancellation_db.scalar(
                     select(AgentRunModel.cancel_requested_at).where(
@@ -46,19 +50,30 @@ async def run_cancellable(
 ) -> dict[str, Any]:
     """Graph와 DB cancel watcher를 경쟁시켜 실제 coroutine을 cooperative cancel합니다."""
     stop = asyncio.Event()
-    from dtest.infrastructure.executor.client import submission_scope, SubmissionEffects, ExecutorOutcomeUnknown
+    from dtest.infrastructure.executor.client import (
+        submission_scope,
+        SubmissionEffects,
+        ExecutorOutcomeUnknown,
+    )
+
     effects = SubmissionEffects()
+
     async def invoke():
         with submission_scope(effects):
             return await graph_awaitable
+
     graph_task = asyncio.create_task(invoke(), name=f"graph:{run_id}")
-    cancel_task = asyncio.create_task(wait_for_cancellation(run_id, stop), name=f"cancel-watch:{run_id}")
+    cancel_task = asyncio.create_task(
+        wait_for_cancellation(run_id, stop), name=f"cancel-watch:{run_id}"
+    )
 
     async def cleanup():
         stop.set()
         errors = []
         try:
-            await observe_termination(graph_task, run_id=run_id, stage="graph_stop", cancel=True)
+            await observe_termination(
+                graph_task, run_id=run_id, stage="graph_stop", cancel=True
+            )
         except ExecutionNeedsRecovery as exc:
             errors.append(exc)
         finally:
@@ -66,12 +81,19 @@ async def run_cancellable(
             # won the race; the selected graph result is handled below.
             outcomes = await asyncio.gather(graph_task, return_exceptions=True)
             import inspect
-            if inspect.iscoroutine(graph_awaitable) and inspect.getcoroutinestate(graph_awaitable) == inspect.CORO_CREATED:
+
+            if (
+                inspect.iscoroutine(graph_awaitable)
+                and inspect.getcoroutinestate(graph_awaitable)
+                == inspect.CORO_CREATED
+            ):
                 graph_awaitable.close()
             if isinstance(outcomes[0], ExecutionNeedsRecovery):
                 errors.append(outcomes[0])
         try:
-            await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_stop")
+            await finish_observer(
+                cancel_task, run_id=run_id, stage="cancel_watch_stop"
+            )
         except ExecutionNeedsRecovery as exc:
             errors.append(exc)
         if errors:
@@ -84,14 +106,24 @@ async def run_cancellable(
         )
         for observer in observers:
             if observer in done:
-                execution_health.fail(run_id, f"observer_stopped:{observer.get_name()}")
+                execution_health.fail(
+                    run_id, f"observer_stopped:{observer.get_name()}"
+                )
                 # Heartbeat/token consumer may only finish after graph stop.
-                raise ExecutionNeedsRecovery("Execution observer stopped before the graph.")
+                raise ExecutionNeedsRecovery(
+                    "Execution observer stopped before the graph."
+                )
         if cancel_task in done:
-            requested = await finish_observer(cancel_task, run_id=run_id, stage="cancel_watch_failed")
+            requested = await finish_observer(
+                cancel_task, run_id=run_id, stage="cancel_watch_failed"
+            )
             if requested:
                 if effects.may_have_submitted:
-                    raise ExecutorOutcomeUnknown("Cancellation raced with Executor submission; reconcile before releasing the session")
+                    raise ExecutorOutcomeUnknown(
+                        "Cancellation raced with Executor "
+                        "submission; reconcile before releasing the "
+                        "session"
+                    )
                 raise CancellationRequested
         return await graph_task
     finally:

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from typing import Any
-from dtest.contracts.executor_boundary import ExecutorBoundaryState, ExecutionBindings
+from dtest.contracts.executor_boundary import (
+    ExecutorBoundaryState,
+    ExecutionBindings,
+)
 from uuid import UUID
 
 from langchain_core.runnables import RunnableConfig

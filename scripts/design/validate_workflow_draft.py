@@ -26,7 +26,11 @@ def read(path: Path):
 def bindings(value):
     if isinstance(value, dict):
         if isinstance(value.get("source"), str) and value["source"] in {
-            "workflow_input", "step_output", "agent_decision", "system_context", "literal"
+            "workflow_input",
+            "step_output",
+            "agent_decision",
+            "system_context",
+            "literal",
         }:
             yield value
             return  # Literal JSON is data; never traverse it as executable bindings.
@@ -49,7 +53,10 @@ def remote_references(value):
 
 def validate(document, catalog, *, repository_root: Path | None = None):
     schema = read(CONTRACT / "workflow-definition.schema.json")
-    errors = [str(error) for error in Draft202012Validator(schema).iter_errors(document)]
+    errors = [
+        str(error)
+        for error in Draft202012Validator(schema).iter_errors(document)
+    ]
     if errors:
         return errors
 
@@ -63,13 +70,17 @@ def validate(document, catalog, *, repository_root: Path | None = None):
     ]:
         if len(items) != len(index):
             errors.append(f"duplicate {name} id")
-    if len(steps) + len(decisions) + len(outputs) != len(set(steps) | set(decisions) | set(outputs)):
+    if len(steps) + len(decisions) + len(outputs) != len(
+        set(steps) | set(decisions) | set(outputs)
+    ):
         errors.append("step, decision and output ids must be distinct")
 
     parents = {id: set(item["depends_on"]) for id, item in steps.items()}
     for id, deps in parents.items():
         if deps - steps.keys():
-            errors.append(f"{id}: unknown dependency {sorted(deps - steps.keys())}")
+            errors.append(
+                f"{id}: unknown dependency {sorted(deps - steps.keys())}"
+            )
 
     def ancestors(id):
         result = set()
@@ -90,8 +101,12 @@ def validate(document, catalog, *, repository_root: Path | None = None):
         check_value_schema(item["value_schema"], f"input {id}", errors)
         if "default" in item and not remote_references(item["value_schema"]):
             try:
-                if not Draft202012Validator(item["value_schema"]).is_valid(item["default"]):
-                    errors.append(f"input {id}: default does not satisfy value_schema")
+                if not Draft202012Validator(item["value_schema"]).is_valid(
+                    item["default"]
+                ):
+                    errors.append(
+                        f"input {id}: default does not satisfy value_schema"
+                    )
             except (ValueError, TypeError):
                 pass
 
@@ -99,13 +114,20 @@ def validate(document, catalog, *, repository_root: Path | None = None):
         check_value_schema(item["output_schema"], f"decision {id}", errors)
         for evidence in item["after_steps"]:
             if evidence not in steps:
-                errors.append(f"decision {id}: unknown evidence step {evidence}")
+                errors.append(
+                    f"decision {id}: unknown evidence step {evidence}"
+                )
             elif "when" in steps[evidence]:
-                errors.append(f"decision {id}: conditional evidence requires an explicit branch contract; not supported in this draft")
+                errors.append(
+                    f"decision {id}: conditional evidence requires an explicit branch contract; not supported in this draft"
+                )
 
     def check_binding(binding, label, consumer=None):
         source = binding["source"]
-        if source == "workflow_input" and binding["name"] not in document["inputs"]:
+        if (
+            source == "workflow_input"
+            and binding["name"] not in document["inputs"]
+        ):
             errors.append(f"{label}: unknown input {binding['name']}")
         elif source == "step_output":
             producer = binding["step_id"]
@@ -113,11 +135,18 @@ def validate(document, catalog, *, repository_root: Path | None = None):
                 errors.append(f"{label}: unknown output step {producer}")
             elif consumer is not None:
                 if consumer in steps and producer not in upstream[consumer]:
-                    errors.append(f"{label}: output {producer} is not an upstream dependency")
+                    errors.append(
+                        f"{label}: output {producer} is not an upstream dependency"
+                    )
                 producer_guard = steps[producer].get("when")
                 consumer_guard = consumer_guard_for(consumer, steps, outputs)
-                if producer_guard is not None and producer_guard != consumer_guard:
-                    errors.append(f"{label}: conditional output {producer} needs the same explicit guard")
+                if (
+                    producer_guard is not None
+                    and producer_guard != consumer_guard
+                ):
+                    errors.append(
+                        f"{label}: conditional output {producer} needs the same explicit guard"
+                    )
         elif source == "agent_decision":
             id = binding["decision_id"]
             if id not in decisions:
@@ -125,7 +154,9 @@ def validate(document, catalog, *, repository_root: Path | None = None):
             elif consumer in steps:
                 needed = set(decisions[id]["after_steps"])
                 if not needed <= upstream[consumer]:
-                    errors.append(f"{label}: decision {id} is consumed before evidence steps complete")
+                    errors.append(
+                        f"{label}: decision {id} is consumed before evidence steps complete"
+                    )
 
     for id, item in steps.items():
         skill = catalog["skills"].get(item["skill_id"])
@@ -133,7 +164,9 @@ def validate(document, catalog, *, repository_root: Path | None = None):
         if skill is None:
             errors.append(f"{id}: unregistered skill {item['skill_id']}")
         elif item["tool_id"] not in skill["tools"]:
-            errors.append(f"{id}: tool is not part of skill {item['skill_id']}")
+            errors.append(
+                f"{id}: tool is not part of skill {item['skill_id']}"
+            )
         if tool is None:
             errors.append(f"{id}: unregistered tool {item['tool_id']}")
         else:
@@ -141,21 +174,40 @@ def validate(document, catalog, *, repository_root: Path | None = None):
             if not tool.get("allows_extra_arguments", False):
                 unknown = provided - set(tool["parameters"])
                 if unknown:
-                    errors.append(f"{id}: unknown tool arguments {sorted(unknown)}")
+                    errors.append(
+                        f"{id}: unknown tool arguments {sorted(unknown)}"
+                    )
             missing = set(tool["required_parameters"]) - provided
             if missing:
-                errors.append(f"{id}: missing tool arguments {sorted(missing)}")
+                errors.append(
+                    f"{id}: missing tool arguments {sorted(missing)}"
+                )
         for name, control in item.get("parameter_controls", {}).items():
-            check_value_schema(control["value_schema"], f"{id}.{name} control", errors)
+            check_value_schema(
+                control["value_schema"], f"{id}.{name} control", errors
+            )
             binding = item["arguments"].get(name)
             if binding is None:
-                errors.append(f"{id}: parameter control requires an explicit argument binding: {name}")
-            elif control["editable"] and binding["source"] not in {"literal", "agent_decision"}:
-                errors.append(f"{id}: object/input/system references cannot be edited as Tool parameter values")
-            elif binding["source"] == "literal" and not remote_references(control["value_schema"]):
+                errors.append(
+                    f"{id}: parameter control requires an explicit argument binding: {name}"
+                )
+            elif control["editable"] and binding["source"] not in {
+                "literal",
+                "agent_decision",
+            }:
+                errors.append(
+                    f"{id}: object/input/system references cannot be edited as Tool parameter values"
+                )
+            elif binding["source"] == "literal" and not remote_references(
+                control["value_schema"]
+            ):
                 try:
-                    if not Draft202012Validator(control["value_schema"]).is_valid(binding["value"]):
-                        errors.append(f"{id}: literal {name} violates its parameter control schema")
+                    if not Draft202012Validator(
+                        control["value_schema"]
+                    ).is_valid(binding["value"]):
+                        errors.append(
+                            f"{id}: literal {name} violates its parameter control schema"
+                        )
                 except (ValueError, TypeError):
                     pass
         for binding in bindings([item["arguments"], item.get("when")]):
@@ -164,11 +216,18 @@ def validate(document, catalog, *, repository_root: Path | None = None):
     for id, item in outputs.items():
         source = item["source"]
         if source["source"] == "agent_report":
-            if item["kind"] != "report" or item["format"] not in {"markdown", "html"}:
-                errors.append(f"output {id}: agent_report must be a report in markdown/html")
+            if item["kind"] != "report" or item["format"] not in {
+                "markdown",
+                "html",
+            }:
+                errors.append(
+                    f"output {id}: agent_report must be a report in markdown/html"
+                )
             unknown = set(source["evidence_steps"]) - steps.keys()
             if unknown:
-                errors.append(f"output {id}: unknown report evidence {sorted(unknown)}")
+                errors.append(
+                    f"output {id}: unknown report evidence {sorted(unknown)}"
+                )
         else:
             check_binding(source, f"output {id}", id)
         for binding in bindings(item.get("when")):
@@ -176,15 +235,26 @@ def validate(document, catalog, *, repository_root: Path | None = None):
 
     policy = document.get("execution", {})
     mode = policy.get("mode")
-    if mode == "SINGLE" and (decisions or any("when" in item for item in steps.values())):
-        errors.append("SINGLE cannot contain post-result decisions or conditional steps in this draft")
+    if mode == "SINGLE" and (
+        decisions or any("when" in item for item in steps.values())
+    ):
+        errors.append(
+            "SINGLE cannot contain post-result decisions or "
+            "conditional steps in this "
+            "draft"
+        )
     if policy.get("review_mode") == "every_n_tools":
         if "review_interval_tools" not in policy:
             errors.append("every_n_tools requires review_interval_tools")
     elif "review_interval_tools" in policy:
         errors.append("review_interval_tools is only valid with every_n_tools")
-    if mode == "SINGLE" and policy.get("review_mode") in {"every_tool", "every_n_tools"}:
-        errors.append("SINGLE cannot interleave Agent review with Tool execution")
+    if mode == "SINGLE" and policy.get("review_mode") in {
+        "every_tool",
+        "every_n_tools",
+    }:
+        errors.append(
+            "SINGLE cannot interleave Agent review with Tool execution"
+        )
 
     if repository_root is not None:
         verify_repository_catalog(catalog, repository_root, errors)
@@ -208,36 +278,76 @@ def check_value_schema(schema, label, errors):
 
 def verify_repository_catalog(catalog, repository_root, errors):
     if catalog.get("catalog_scope") != "repository_subset":
-        errors.append("illustration catalog cannot be verified as repository assets")
+        errors.append(
+            "illustration catalog cannot be verified as repository assets"
+        )
         return
     import yaml
 
-    asset_root = repository_root / "src/dtest.agent_service/agents/analysis/workflow"
-    registry = yaml.safe_load((asset_root / "tools/tool_registry.yaml").read_text())["tools"]
-    skills = yaml.safe_load((asset_root / "skills/skill_index.yaml").read_text())["skills"]
+    asset_root = (
+        repository_root / "src/dtest.agent_service/agents/analysis/workflow"
+    )
+    registry = yaml.safe_load(
+        (asset_root / "tools/tool_registry.yaml").read_text()
+    )["tools"]
+    skills = yaml.safe_load(
+        (asset_root / "skills/skill_index.yaml").read_text()
+    )["skills"]
     for id, item in catalog["tools"].items():
         actual = registry.get(id)
         if actual is None:
             errors.append(f"catalog: {id} missing from repository registry")
             continue
-        expected_file = str((asset_root / "tools" / actual["source"]).relative_to(repository_root))
-        if item.get("source_file") != expected_file or item.get("function_name") != actual["function_name"]:
+        expected_file = str(
+            (asset_root / "tools" / actual["source"]).relative_to(
+                repository_root
+            )
+        )
+        if (
+            item.get("source_file") != expected_file
+            or item.get("function_name") != actual["function_name"]
+        ):
             errors.append(f"catalog: {id} source does not match registry")
             continue
         module = ast.parse((repository_root / expected_file).read_text())
-        function = next((node for node in module.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == item["function_name"]), None)
+        function = next(
+            (
+                node
+                for node in module.body
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == item["function_name"]
+            ),
+            None,
+        )
         if function is None:
             errors.append(f"catalog: {id} function not found")
             continue
         positional = function.args.posonlyargs + function.args.args
-        parameters = [argument.arg for argument in positional + function.args.kwonlyargs]
+        parameters = [
+            argument.arg for argument in positional + function.args.kwonlyargs
+        ]
         count = len(positional) - len(function.args.defaults)
-        required = [arg.arg for arg in positional[:count]] + [arg.arg for arg, default in zip(function.args.kwonlyargs, function.args.kw_defaults) if default is None]
-        if parameters != item["parameters"] or required != item["required_parameters"] or (function.args.kwarg is not None) != item["allows_extra_arguments"]:
+        required = [arg.arg for arg in positional[:count]] + [
+            arg.arg
+            for arg, default in zip(
+                function.args.kwonlyargs, function.args.kw_defaults
+            )
+            if default is None
+        ]
+        if (
+            parameters != item["parameters"]
+            or required != item["required_parameters"]
+            or (function.args.kwarg is not None)
+            != item["allows_extra_arguments"]
+        ):
             errors.append(f"catalog: {id} signature does not match source")
     for id, item in catalog["skills"].items():
-        if id not in skills or item["tools"] != [tool["tool"] for tool in skills[id]["tools"]]:
-            errors.append(f"catalog: {id} skill membership does not match repository")
+        if id not in skills or item["tools"] != [
+            tool["tool"] for tool in skills[id]["tools"]
+        ]:
+            errors.append(
+                f"catalog: {id} skill membership does not match repository"
+            )
 
 
 def self_check(repository_root):
@@ -249,31 +359,92 @@ def self_check(repository_root):
 
     def check(name, document, assets, expected_valid, repo_root=None):
         errors = validate(document, assets, repository_root=repo_root)
-        results.append({"name": name, "expected_valid": expected_valid,
-                        "passed": (not errors) == expected_valid, "errors": errors})
+        results.append(
+            {
+                "name": name,
+                "expected_valid": expected_valid,
+                "passed": (not errors) == expected_valid,
+                "errors": errors,
+            }
+        )
 
     check("repository_example", repo, catalog, True, repository_root)
     check("full_analysis_illustration", full, fixture, True)
     check("illustration_rejected_by_real_catalog", full, catalog, False)
 
     mutations = {
-        "source_code_in_workflow": lambda value: value["steps"][0].update({"code": "print('unregistered')"}),
-        "ambiguous_parameter_binding": lambda value: value["steps"][0]["arguments"]["parquet_path"].update({"value": "/tmp/arbitrary"}),
-        "dependency_cycle": lambda value: value["steps"][0]["depends_on"].append("outliers"),
-        "unknown_input": lambda value: value["steps"][0]["arguments"]["parquet_path"].update({"name": "missing_input"}),
-        "unknown_tool_argument": lambda value: value["steps"][0]["arguments"].update({"unexpected": {"source": "literal", "value": 1}}),
-        "unknown_decision": lambda value: value["steps"][3]["arguments"]["method"].update({"decision_id": "unknown"}),
-        "decision_before_evidence": lambda value: value["steps"][3].update({"depends_on": ["load"]}),
-        "unguarded_conditional_output": lambda value: value["expected_outputs"][2].pop("when"),
-        "post_result_decision_in_single": lambda value: value["execution"].update({"mode": "SINGLE"}),
-        "duplicate_step_id": lambda value: value["steps"].append(deepcopy(value["steps"][0])),
-        "invalid_input_default": lambda value: value["inputs"]["dataset"].update({"default": 0}),
-        "missing_review_interval": lambda value: value["execution"].update({"review_mode": "every_n_tools"}),
-        "unknown_operator": lambda value: value["steps"][3]["when"].update({"op": "python_eval"}),
-        "invalid_decision_schema": lambda value: value["decisions"][0].update({"output_schema": {"type": "python"}}),
-        "external_schema_reference": lambda value: value["inputs"]["dataset"].update({"value_schema": {"$ref": "https://example.invalid/value-schema"}, "default": "file-001"}),
-        "editable_object_reference": lambda value: value["steps"][1].update({"parameter_controls": {"data": {"editable": True, "value_schema": {"type": "string"}}}}),
-        "control_without_argument": lambda value: value["steps"][1].update({"parameter_controls": {"missing": {"editable": True, "value_schema": {"type": "string"}}}}),
+        "source_code_in_workflow": lambda value: value["steps"][0].update(
+            {"code": "print('unregistered')"}
+        ),
+        "ambiguous_parameter_binding": lambda value: value["steps"][0][
+            "arguments"
+        ]["parquet_path"].update({"value": "/tmp/arbitrary"}),
+        "dependency_cycle": lambda value: value["steps"][0][
+            "depends_on"
+        ].append("outliers"),
+        "unknown_input": lambda value: value["steps"][0]["arguments"][
+            "parquet_path"
+        ].update({"name": "missing_input"}),
+        "unknown_tool_argument": lambda value: value["steps"][0][
+            "arguments"
+        ].update({"unexpected": {"source": "literal", "value": 1}}),
+        "unknown_decision": lambda value: value["steps"][3]["arguments"][
+            "method"
+        ].update({"decision_id": "unknown"}),
+        "decision_before_evidence": lambda value: value["steps"][3].update(
+            {"depends_on": ["load"]}
+        ),
+        "unguarded_conditional_output": lambda value: value[
+            "expected_outputs"
+        ][2].pop("when"),
+        "post_result_decision_in_single": lambda value: value[
+            "execution"
+        ].update({"mode": "SINGLE"}),
+        "duplicate_step_id": lambda value: value["steps"].append(
+            deepcopy(value["steps"][0])
+        ),
+        "invalid_input_default": lambda value: value["inputs"][
+            "dataset"
+        ].update({"default": 0}),
+        "missing_review_interval": lambda value: value["execution"].update(
+            {"review_mode": "every_n_tools"}
+        ),
+        "unknown_operator": lambda value: value["steps"][3]["when"].update(
+            {"op": "python_eval"}
+        ),
+        "invalid_decision_schema": lambda value: value["decisions"][0].update(
+            {"output_schema": {"type": "python"}}
+        ),
+        "external_schema_reference": lambda value: value["inputs"][
+            "dataset"
+        ].update(
+            {
+                "value_schema": {
+                    "$ref": "https://example.invalid/value-schema"
+                },
+                "default": "file-001",
+            }
+        ),
+        "editable_object_reference": lambda value: value["steps"][1].update(
+            {
+                "parameter_controls": {
+                    "data": {
+                        "editable": True,
+                        "value_schema": {"type": "string"},
+                    }
+                }
+            }
+        ),
+        "control_without_argument": lambda value: value["steps"][1].update(
+            {
+                "parameter_controls": {
+                    "missing": {
+                        "editable": True,
+                        "value_schema": {"type": "string"},
+                    }
+                }
+            }
+        ),
     }
     for name, mutate in mutations.items():
         document = deepcopy(repo)
@@ -288,7 +459,16 @@ def self_check(repository_root):
     fixed["execution"]["mode"] = "SINGLE"
     fixed["expected_outputs"] = fixed["expected_outputs"][:2]
     check("fixed_steps_single", fixed, catalog, True)
-    return {"schema_version": "2.0-draft", "scope": "offline schema and semantic validation only; no LLM, Tool, API, DB or Executor execution", "passed": all(item["passed"] for item in results), "checks": results}
+    return {
+        "schema_version": "2.0-draft",
+        "scope": (
+            "offline schema and semantic validation only; no LLM, Tool, "
+            "API, DB or Executor "
+            "execution"
+        ),
+        "passed": all(item["passed"] for item in results),
+        "checks": results,
+    }
 
 
 def main():
@@ -303,14 +483,35 @@ def main():
         result = self_check(arguments.repository_root)
     else:
         if arguments.document is None or arguments.catalog is None:
-            parser.error("document and --catalog are required unless --self-check is used")
+            parser.error(
+                "document and --catalog are required unless "
+                "--self-check is "
+                "used"
+            )
         catalog = read(arguments.catalog)
-        errors = validate(read(arguments.document), catalog, repository_root=arguments.repository_root)
-        result = {"passed": not errors, "catalog_scope": catalog.get("catalog_scope"), "errors": errors}
+        errors = validate(
+            read(arguments.document),
+            catalog,
+            repository_root=arguments.repository_root,
+        )
+        result = {
+            "passed": not errors,
+            "catalog_scope": catalog.get("catalog_scope"),
+            "errors": errors,
+        }
     rendered = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     if arguments.output:
         arguments.output.write_text(rendered, encoding="utf-8")
-    print(json.dumps({"passed": result["passed"], "check_count": len(result.get("checks", [])), "errors": result.get("errors", [])}, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "passed": result["passed"],
+                "check_count": len(result.get("checks", [])),
+                "errors": result.get("errors", []),
+            },
+            ensure_ascii=False,
+        )
+    )
     raise SystemExit(0 if result["passed"] else 1)
 
 

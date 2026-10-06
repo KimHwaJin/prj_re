@@ -1,4 +1,5 @@
 """Cookie login identity; keep service roles, admission locks and SSE DB scope."""
+
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -7,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtest.infrastructure.database.runtime import get_db
 from dtest.contracts.enums import UserRole
-from dtest.infrastructure.database.repositories.user_repository import UserRepository
+from dtest.infrastructure.database.repositories.user_repository import (
+    UserRepository,
+)
 from dtest.api_service.auth.dependencies import get_login_session
 from dtest.infrastructure.redis.login_sessions import LoginSession
 
@@ -15,12 +18,18 @@ from dtest.infrastructure.redis.login_sessions import LoginSession
 from dtest.contracts.actors import Actor
 
 
-async def _resolve_actor(session: LoginSession, db: AsyncSession, *, for_share=False) -> Actor:
+async def _resolve_actor(
+    session: LoginSession, db: AsyncSession, *, for_share=False
+) -> Actor:
     try:
         internal_id = UUID(session.user_id)
     except (ValueError, TypeError, AttributeError):
-        raise HTTPException(401, "A valid login session is required.") from None
-    user = await UserRepository.get_active(db, internal_id, for_share=for_share)
+        raise HTTPException(
+            401, "A valid login session is required."
+        ) from None
+    user = await UserRepository.get_active(
+        db, internal_id, for_share=for_share
+    )
     if user is None:
         raise HTTPException(401, "A registered, active user is required.")
     return Actor(user.user_id, user.public_user_id, user.role)

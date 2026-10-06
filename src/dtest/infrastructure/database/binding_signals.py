@@ -5,6 +5,7 @@ connection info and namespace so a late binding can wake a scan that previously
 saw no binding. Other Pods/restarts are covered by the unchanged periodic scan.
 No extra PostgreSQL/Redis connection or published business event is created.
 """
+
 from collections import defaultdict
 from contextlib import contextmanager
 from weakref import WeakSet

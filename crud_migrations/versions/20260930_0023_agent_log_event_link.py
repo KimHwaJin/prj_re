@@ -1,19 +1,33 @@
 """Link each Agent log to its durable event; preserve historical event sequences."""
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = '20260930_0023'
-down_revision = '20260929_0022'
+revision = "20260930_0023"
+down_revision = "20260929_0022"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.add_column('task_events', sa.Column('agent_run_log_id', postgresql.UUID(as_uuid=True), nullable=True))
-    op.create_foreign_key('fk_task_events_agent_run_log', 'task_events', 'agent_run_logs',
-                          ['agent_run_log_id'], ['log_id'], ondelete='CASCADE')
-    op.create_unique_constraint('uq_task_events_agent_run_log', 'task_events', ['agent_run_log_id'])
+    op.add_column(
+        "task_events",
+        sa.Column(
+            "agent_run_log_id", postgresql.UUID(as_uuid=True), nullable=True
+        ),
+    )
+    op.create_foreign_key(
+        "fk_task_events_agent_run_log",
+        "task_events",
+        "agent_run_logs",
+        ["agent_run_log_id"],
+        ["log_id"],
+        ondelete="CASCADE",
+    )
+    op.create_unique_constraint(
+        "uq_task_events_agent_run_log", "task_events", ["agent_run_log_id"]
+    )
     # Older agent.event payloads have no event_key/log_id. Pair identical-content
     # occurrences deterministically; do not collapse repeated equal payloads.
     # This establishes a correspondence, not proof of historical timing/identity.
@@ -43,6 +57,10 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_constraint('uq_task_events_agent_run_log', 'task_events', type_='unique')
-    op.drop_constraint('fk_task_events_agent_run_log', 'task_events', type_='foreignkey')
-    op.drop_column('task_events', 'agent_run_log_id')
+    op.drop_constraint(
+        "uq_task_events_agent_run_log", "task_events", type_="unique"
+    )
+    op.drop_constraint(
+        "fk_task_events_agent_run_log", "task_events", type_="foreignkey"
+    )
+    op.drop_column("task_events", "agent_run_log_id")

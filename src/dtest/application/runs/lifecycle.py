@@ -4,6 +4,7 @@ A Python task cannot be forcibly killed. If it ignores cancellation, keep its
 owner/context alive, report an unhealthy process and prohibit another claim.
 The deployment supervisor must terminate that process before manual recovery.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,20 +32,33 @@ class ExecutionHealth:
         if key in self.faults:
             return
         self.faults[key] = stage
-        logger.error("execution_requires_recovery run_id=%s stage=%s", key, stage)
-        task = asyncio.create_task(self._record(run_id, stage), name=f"record-run-recovery:{key}")
+        logger.error(
+            "execution_requires_recovery run_id=%s stage=%s", key, stage
+        )
+        task = asyncio.create_task(
+            self._record(run_id, stage), name=f"record-run-recovery:{key}"
+        )
         self.recorders.add(task)
         task.add_done_callback(self.recorders.discard)
 
     async def _record(self, run_id, stage):
         from dtest.infrastructure.database.runtime import get_session_factory
         from dtest.application.runs.tasks import TaskService
+
         try:
-            async with asyncio.timeout(get_settings().commands.run_cleanup_timeout_seconds):
+            async with asyncio.timeout(
+                get_settings().commands.run_cleanup_timeout_seconds
+            ):
                 async with get_session_factory()() as db:
-                    await TaskService.require_recovery(db, run_id=run_id, reason=stage)
+                    await TaskService.require_recovery(
+                        db, run_id=run_id, reason=stage
+                    )
         except Exception as exc:
-            logger.error("recovery_record_failed run_id=%s error_type=%s", run_id, type(exc).__name__)
+            logger.error(
+                "recovery_record_failed run_id=%s error_type=%s",
+                run_id,
+                type(exc).__name__,
+            )
 
 
 execution_health = ExecutionHealth()
@@ -59,7 +73,9 @@ async def wait_for_stop(stop: asyncio.Event, interval: float):
         pass
 
 
-async def observe_termination(task: asyncio.Task, *, run_id: UUID, stage: str, cancel=False):
+async def observe_termination(
+    task: asyncio.Task, *, run_id: UUID, stage: str, cancel=False
+):
     """Return only after task termination, or quarantine while retaining ownership.
 
     On timely termination the caller handles the original result/exception.
@@ -67,12 +83,16 @@ async def observe_termination(task: asyncio.Task, *, run_id: UUID, stage: str, c
     """
     if cancel and not task.done():
         task.cancel()
-    _, pending = await asyncio.wait({task}, timeout=get_settings().commands.run_cleanup_timeout_seconds)
+    _, pending = await asyncio.wait(
+        {task}, timeout=get_settings().commands.run_cleanup_timeout_seconds
+    )
     if not pending:
         return
     execution_health.fail(run_id, stage)
     task.cancel()
-    _, pending = await asyncio.wait({task}, timeout=get_settings().commands.run_cleanup_timeout_seconds)
+    _, pending = await asyncio.wait(
+        {task}, timeout=get_settings().commands.run_cleanup_timeout_seconds
+    )
     if not pending:
         # Graceful stop missed its deadline. Do not interpret canceled monitoring
         # or incomplete token flush as successful graph completion.

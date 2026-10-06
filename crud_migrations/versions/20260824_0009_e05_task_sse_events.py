@@ -17,7 +17,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("ALTER TABLE tasks ADD COLUMN last_event_sequence BIGINT NOT NULL DEFAULT 0")
+    op.execute(
+        "ALTER TABLE tasks ADD COLUMN last_event_sequence BIGINT "
+        "NOT NULL DEFAULT "
+        "0"
+    )
     op.execute(
         """
         CREATE TABLE task_events (
@@ -33,11 +37,16 @@ def upgrade() -> None:
         """
     )
     op.execute("CREATE INDEX ix_task_events_run_id ON task_events(run_id)")
-    op.execute("CREATE INDEX ix_task_events_event_type ON task_events(event_type)")
-    op.execute("CREATE INDEX ix_task_events_task_sequence ON task_events(task_id, sequence)")
+    op.execute(
+        "CREATE INDEX ix_task_events_event_type ON task_events(event_type)"
+    )
+    op.execute(
+        "CREATE INDEX ix_task_events_task_sequence ON "
+        "task_events(task_id, "
+        "sequence)"
+    )
 
 
 def downgrade() -> None:
     op.execute("DROP TABLE task_events")
     op.execute("ALTER TABLE tasks DROP COLUMN last_event_sequence")
-

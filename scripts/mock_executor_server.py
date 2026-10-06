@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Any
 
 
-def _json_response(handler: BaseHTTPRequestHandler, status_code: int, payload: dict[str, Any]) -> None:
+def _json_response(
+    handler: BaseHTTPRequestHandler, status_code: int, payload: dict[str, Any]
+) -> None:
     body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     handler.send_response(status_code)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
@@ -52,11 +54,14 @@ def _build_handler(output_dir: Path | None, print_body: bool):
                     "sequence": step.get("sequence", index),
                     "step_id": f"cell-{uuid4()}",
                 }
-                for index, step in enumerate(steps if isinstance(steps, list) else [])
+                for index, step in enumerate(
+                    steps if isinstance(steps, list) else []
+                )
             ]
             status = (
                 "WAITING_FOR_OPERATION"
-                if request_body.get("lifecycle", {}).get("operation_mode") == "MULTI"
+                if request_body.get("lifecycle", {}).get("operation_mode")
+                == "MULTI"
                 else "QUEUED"
             )
             if self.path.endswith("/cancel"):
@@ -96,7 +101,9 @@ def _build_handler(output_dir: Path | None, print_body: bool):
             )
             print(f"EXECUTION_ID: {execution_id}")
             print(f"OPERATION_ID: {operation_id}")
-            print(f"STEP_COUNT: {len(steps) if isinstance(steps, list) else 0}")
+            print(
+                f"STEP_COUNT: {len(steps) if isinstance(steps, list) else 0}"
+            )
             if print_body:
                 print(json.dumps(request_body, ensure_ascii=False, indent=2))
 
@@ -139,7 +146,10 @@ def main() -> None:
     parser.add_argument(
         "--print-body",
         action="store_true",
-        help="Print the full request body. By default only a summary is printed.",
+        help=(
+            "Print the full request body. By default only a summary is "
+            "printed."
+        ),
     )
     args = parser.parse_args()
 

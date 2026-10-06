@@ -19,13 +19,19 @@ from functools import lru_cache
 
 from dtest.settings.agent import build_langgraph_thread_id, load_agent_settings
 from dtest.settings.api import settings
-from dtest.infrastructure.observability.diagnostics import graph_callbacks, register_pool_trace, span
+from dtest.infrastructure.observability.diagnostics import (
+    graph_callbacks,
+    register_pool_trace,
+    span,
+)
 from dtest.lifecycle import protected_cleanup
 from dtest.contracts.enums import AgentRunStatus
 from dtest.application.runs.persistence.graph import (
     astream_with_crud_message_persistence,
 )
-from dtest.application.runs.persistence.events import GraphPersistenceDispatcher
+from dtest.application.runs.persistence.events import (
+    GraphPersistenceDispatcher,
+)
 from dtest.application.runs.project_context import read_project_snapshot
 
 
@@ -36,13 +42,17 @@ logger = logging.getLogger(__name__)
 _composition = None
 _assets_factory = None
 
+
 def install_composition(composition, assets_factory):
     global _composition, _assets_factory
     _composition, _assets_factory = composition, assets_factory
 
+
 def deployed_analysis_assets():
     if _assets_factory is None:
-        raise RuntimeError("Service container must be installed before accessing Agent assets")
+        raise RuntimeError(
+            "Service container must be installed before accessing Agent assets"
+        )
     return _assets_factory()
 
 
@@ -70,12 +80,14 @@ class AgentGraphRuntime:
 
     def override_graph(self, graph: Any | None) -> None:
         if self._stack is not None or self._active or self._closing:
-            raise RuntimeError("Shutdown and restart runtime before overriding the graph")
+            raise RuntimeError(
+                "Shutdown and restart runtime before overriding the graph"
+            )
         self._graph = graph
-
 
     def _worker_settings(self) -> Any:
         from dtest.settings.loader import get_settings
+
         return get_settings().worker
 
     def _load_graph_inputs(self):
@@ -93,7 +105,9 @@ class AgentGraphRuntime:
     def start(self) -> None:
         """Accept borrows for a new lifespan, without opening any connections."""
         if self._active or self._stack is not None or self._init_lock.locked():
-            raise GraphResourcesBusy("Graph runtime still owns resources from another lifespan")
+            raise GraphResourcesBusy(
+                "Graph runtime still owns resources from another lifespan"
+            )
         self._closing = False
         self._loop = None
         self._init_lock = asyncio.Lock()
@@ -103,7 +117,9 @@ class AgentGraphRuntime:
     def _check_loop(self):
         loop = asyncio.get_running_loop()
         if self._loop is not None and self._loop is not loop:
-            raise GraphResourcesBusy("Graph runtime cannot be shared across event loops")
+            raise GraphResourcesBusy(
+                "Graph runtime cannot be shared across event loops"
+            )
         self._loop = loop
 
     async def _initialize(self):
@@ -144,11 +160,16 @@ class AgentGraphRuntime:
 
     async def shutdown(self, *, timeout: float | None = None) -> None:
         from dtest.settings.loader import get_settings
+
         # A never-opened runtime is safe to stop from an API-only lifespan.
         if self._loop is not None:
             self._check_loop()
         self._closing = True
-        timeout = get_settings().shutdown_timeout_seconds if timeout is None else timeout
+        timeout = (
+            get_settings().shutdown_timeout_seconds
+            if timeout is None
+            else timeout
+        )
         try:
             async with asyncio.timeout(timeout):
                 async with self._init_lock:
@@ -162,7 +183,9 @@ class AgentGraphRuntime:
         except TimeoutError as exc:
             # Keep references and reject new borrows. A later shutdown can retry
             # after existing borrowers release; never close underneath them.
-            raise GraphResourcesBusy("Graph shutdown deadline exceeded") from exc
+            raise GraphResourcesBusy(
+                "Graph shutdown deadline exceeded"
+            ) from exc
 
 
 runtime = AgentGraphRuntime()
@@ -196,7 +219,9 @@ def user_request_from_messages(messages: list[dict[str, Any]]) -> str:
     )
 
 
-def interrupt_payload(state: Mapping[str, Any] | None) -> list[dict[str, Any]] | None:
+def interrupt_payload(
+    state: Mapping[str, Any] | None,
+) -> list[dict[str, Any]] | None:
     if not state:
         return None
     interrupts = state.get("__interrupt__") or []
@@ -215,7 +240,9 @@ def interrupt_payload(state: Mapping[str, Any] | None) -> list[dict[str, Any]] |
 def run_status_from_state(state: Mapping[str, Any] | None) -> AgentRunStatus:
     if interrupt_payload(state):
         return AgentRunStatus.INTERRUPTED
-    if (state or {}).get('agent_runtime')=='agentic-planning-v1' and (state.get('final_response') or {}).get('status')=='analysis_failed':
+    if (state or {}).get("agent_runtime") == "agentic-planning-v1" and (
+        state.get("final_response") or {}
+    ).get("status") == "analysis_failed":
         return AgentRunStatus.ERROR
     return AgentRunStatus.SUCCESS
 
@@ -232,6 +259,7 @@ def build_graph_input(
     model_selection: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     from dtest.contracts.model_selection import current_catalog
+
     if model_selection is None:
         model_selection = current_catalog().select().model_dump()
     current_catalog().resolve(model_selection)
@@ -260,9 +288,16 @@ def graph_config(
 ) -> dict[str, Any]:
     thread_id = build_langgraph_thread_id(str(session_id))
     from dtest.settings.loader import get_settings
-    config: dict[str, Any] = {"configurable": {"thread_id": thread_id},
-                              "recursion_limit": get_settings().agent.recursion_limit}
-    observed_callbacks = graph_callbacks(_composition.callbacks(callbacks or []) if _composition is not None else callbacks)
+
+    config: dict[str, Any] = {
+        "configurable": {"thread_id": thread_id},
+        "recursion_limit": get_settings().agent.recursion_limit,
+    }
+    observed_callbacks = graph_callbacks(
+        _composition.callbacks(callbacks or [])
+        if _composition is not None
+        else callbacks
+    )
     if observed_callbacks:
         config["callbacks"] = observed_callbacks
     return config
@@ -298,12 +333,20 @@ async def ainvoke_user_turn(
     from dtest.application.runs.graph_invocation import GraphInvocation
 
     async def invoke(compiled):
-        return await GraphInvocation(compiled, session_factory=session_factory, dispatcher=dispatcher).user_turn(
-            graph_config(session_id, run_id, callbacks), graph_input,
-            user_id=user_id, project_id=project_id, session_id=session_id, run_id=run_id,
-            protocol=initial_protocol, started=initial_started,
+        return await GraphInvocation(
+            compiled, session_factory=session_factory, dispatcher=dispatcher
+        ).user_turn(
+            graph_config(session_id, run_id, callbacks),
+            graph_input,
+            user_id=user_id,
+            project_id=project_id,
+            session_id=session_id,
+            run_id=run_id,
+            protocol=initial_protocol,
+            started=initial_started,
             trigger_message_id=trigger_message_id,
         )
+
     if graph is not None:
         return await invoke(graph)
     async with runtime.open_graph() as compiled:
@@ -328,12 +371,18 @@ async def ainvoke_resume(
     from dtest.application.runs.graph_invocation import GraphInvocation
 
     async def invoke(compiled):
-        return await GraphInvocation(compiled, session_factory=session_factory, dispatcher=dispatcher).user_resume(
+        return await GraphInvocation(
+            compiled, session_factory=session_factory, dispatcher=dispatcher
+        ).user_resume(
             graph_config(session_id, checkpoint_run_id, callbacks),
-            user_id=user_id, run_id=agent_run_id, command=command,
-            target=resume_target, started=resume_started,
+            user_id=user_id,
+            run_id=agent_run_id,
+            command=command,
+            target=resume_target,
+            started=resume_started,
             model_selection=model_selection,
         )
+
     if graph is not None:
         return await invoke(graph)
     async with runtime.open_graph() as compiled:
@@ -364,10 +413,14 @@ async def astream_user_turn(
         request_id=request_id,
         model_selection=model_selection,
     )
-    graph_input.update(await read_project_snapshot(
-        user_id=user_id, session_id=session_id, project_id=project_id,
-        session_factory=session_factory,
-    ))
+    graph_input.update(
+        await read_project_snapshot(
+            user_id=user_id,
+            session_id=session_id,
+            project_id=project_id,
+            session_factory=session_factory,
+        )
+    )
     if graph is None:
         async with runtime.open_graph() as compiled:
             async for state in astream_with_crud_message_persistence(

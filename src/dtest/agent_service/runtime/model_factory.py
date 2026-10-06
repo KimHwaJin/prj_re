@@ -1,4 +1,5 @@
 """Construct a configured model without importing analysis roles or graphs."""
+
 from typing import Any
 from dtest.settings.agent import AgentSettings
 
@@ -9,7 +10,9 @@ def create_chat_model(settings: AgentSettings) -> Any:
         from dtest.agent_service.model import CompatibleChatOpenAI
 
         if not settings.model_api_key or not settings.api_base_url:
-            raise ValueError("Internal deployment requires MODEL_API_KEY and API_BASE_URL")
+            raise ValueError(
+                "Internal deployment requires MODEL_API_KEY and API_BASE_URL"
+            )
         model_kwargs: dict[str, Any] = {}
         if settings.model_enable_thinking is not None:
             model_kwargs["extra_body"] = {
@@ -27,4 +30,6 @@ def create_chat_model(settings: AgentSettings) -> Any:
             **model_kwargs,
         )
 
-    raise ValueError(f"Unsupported MODEL_PROVIDER: {settings.model_provider!r}")
+    raise ValueError(
+        f"Unsupported MODEL_PROVIDER: {settings.model_provider!r}"
+    )

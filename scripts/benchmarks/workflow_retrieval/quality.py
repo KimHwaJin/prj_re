@@ -38,13 +38,19 @@ def norm(v):
 def make_corpus(kind, aliases, dimensions):
     if kind == "duplicate":
         # Match 094 precisely: two heavy groups + one isolated farther group.
-        vectors = np.array([[1, 0.01, 0], [1, 0.2, 0], [1, 0.4, 0]], dtype=np.float32)
+        vectors = np.array(
+            [[1, 0.01, 0], [1, 0.2, 0], [1, 0.4, 0]], dtype=np.float32
+        )
         owners = np.array(
             [w for w, n in enumerate([aliases, aliases, 1]) for _ in range(n)]
         )
         values = vectors[owners]
         queries = [
-            {"id": "concentrated-0", "kind": "concentrated", "vector": [1, 0, 0]}
+            {
+                "id": "concentrated-0",
+                "kind": "concentrated",
+                "vector": [1, 0, 0],
+            }
         ]
         return values, owners, queries, []
     count = 100
@@ -54,7 +60,9 @@ def make_corpus(kind, aliases, dimensions):
     directions = rng.normal(size=(count, dimensions))
     directions[:, 0] = 0
     directions = norm(directions)
-    angles = np.concatenate((np.arange(1, 9) * 0.02, rng.uniform(0.35, 1.2, count - 8)))
+    angles = np.concatenate(
+        (np.arange(1, 9) * 0.02, rng.uniform(0.35, 1.2, count - 8))
+    )
     centers = norm(
         np.cos(angles)[:, None] * anchor + np.sin(angles)[:, None] * directions
     )
@@ -62,7 +70,10 @@ def make_corpus(kind, aliases, dimensions):
     for w in range(count):
         local = np.random.default_rng(SEED + w * 1009)
         blocks.append(
-            norm(centers[w] + norm(local.normal(size=(aliases, dimensions))) * 0.005)
+            norm(
+                centers[w]
+                + norm(local.normal(size=(aliases, dimensions))) * 0.005
+            )
         )
     values = np.concatenate(blocks)
     owners = np.repeat(np.arange(count), aliases)
@@ -122,11 +133,16 @@ def write_json(path, value):
 
 def open_database(dsn):
     params = psycopg.conninfo.conninfo_to_dict(dsn)
-    if params.get("host") not in {"127.0.0.1", "localhost", "::1"} or params.get(
-        "hostaddr"
-    ) not in {None, "127.0.0.1", "::1"}:
+    if params.get("host") not in {
+        "127.0.0.1",
+        "localhost",
+        "::1",
+    } or params.get("hostaddr") not in {None, "127.0.0.1", "::1"}:
         raise ValueError("Explicit loopback only")
-    if params.get("dbname") != "workflow_quality" or params.get("port") != "53609":
+    if (
+        params.get("dbname") != "workflow_quality"
+        or params.get("port") != "53609"
+    ):
         raise ValueError("Requires isolated workflow_quality DB on port53609")
     c = psycopg.connect(dsn, autocommit=True)
     if c.info.dbname != "workflow_quality":
@@ -137,7 +153,16 @@ def open_database(dsn):
 
 
 def load_corpus(
-    c, policy, values, owners, inactive, build, files, *, collapse=False, index_m=16
+    c,
+    policy,
+    values,
+    owners,
+    inactive,
+    build,
+    files,
+    *,
+    collapse=False,
+    index_m=16,
 ):
     c.execute("DROP TABLE IF EXISTS workflow_embeddings")
     c.execute("DROP TABLE IF EXISTS workflows")
@@ -149,8 +174,14 @@ def load_corpus(
     c.execute("""CREATE TABLE workflow_embeddings(workflow_id uuid,vector_values vector,
         is_active boolean,status text,model_space text,dimensions int,embedded_text text,
         embedded_text_sha256 text)""")
-    c.execute("CREATE INDEX quality_workflow_owner ON workflow_embeddings(workflow_id)")
-    document = {"workflow_version": "2.0", "fixture": "retrieval-only; no execution"}
+    c.execute(
+        "CREATE INDEX quality_workflow_owner ON "
+        "workflow_embeddings(workflow_id)"
+    )
+    document = {
+        "workflow_version": "2.0",
+        "fixture": "retrieval-only; no execution",
+    }
     files.mkdir(parents=True, exist_ok=True)
     file = files / "immutable.json"
     write_json(file, document)
@@ -203,7 +234,9 @@ def load_corpus(
     c.execute("ANALYZE workflows")
     return {
         "load_and_build_ms": build_ms,
-        "rows": c.execute("SELECT count(*) FROM workflow_embeddings").fetchone()[0],
+        "rows": c.execute(
+            "SELECT count(*) FROM workflow_embeddings"
+        ).fetchone()[0],
         "table_bytes": c.execute(
             "SELECT pg_total_relation_size('workflow_embeddings')"
         ).fetchone()[0],
@@ -219,7 +252,9 @@ def reference(c, policy, queries, values, owners, inactive, topk):
         vec = np.array(q["vector"], dtype=np.float64)
         # Independent float64 cosine formula; pgvector uses float32 storage.
         v = values.astype(np.float64)
-        distances = 1 - (v @ vec) / (np.linalg.norm(v, axis=1) * np.linalg.norm(vec))
+        distances = 1 - (v @ vec) / (
+            np.linalg.norm(v, axis=1) * np.linalg.norm(vec)
+        )
         scores = {
             w: float(distances[owners == w].min())
             for w in sorted(set(owners.tolist()))
@@ -265,9 +300,9 @@ def plan_probe(c, policy, query, exclude=()):
                 policy.batch_size,
             ),
         ).fetchone()[0][0]
-        if policy.index_name not in json.dumps(plan) or "Index Scan" not in json.dumps(
+        if policy.index_name not in json.dumps(
             plan
-        ):
+        ) or "Index Scan" not in json.dumps(plan):
             raise AssertionError("Production ANN index was not used")
         return plan
 
@@ -280,7 +315,9 @@ async def measure(search, query, ref, label, repeat, case, topk):
         "round_limit",
         "no_more_ann_candidates",
     }:
-        raise AssertionError(("Invalid measurement", result.diagnostics.model_dump()))
+        raise AssertionError(
+            ("Invalid measurement", result.diagnostics.model_dump())
+        )
     elapsed = (time.perf_counter() - start) * 1000
     owners = [UUID(x.workflow_id).int - 1 for x in result.items]
     chosen = owners[:topk]
@@ -315,9 +352,13 @@ async def main(args):
     out = args.output
     if out.exists() and any(out.iterdir()):
         c.close()
-        raise ValueError("Use a new empty output directory; preserve prior evidence")
+        raise ValueError(
+            "Use a new empty output directory; preserve prior evidence"
+        )
     out.mkdir(parents=True, exist_ok=True)
-    WorkflowFileStore._root = staticmethod(lambda: (out / "fixtures").resolve())
+    WorkflowFileStore._root = staticmethod(
+        lambda: (out / "fixtures").resolve()
+    )
     url = URL.create(
         "postgresql+psycopg",
         username=params["user"],
@@ -341,7 +382,10 @@ async def main(args):
         "seed": SEED,
         "source_sha256": hashlib.sha256(
             Path(
-                __import__("dtest.infrastructure.workflow_search.retrieval", fromlist=["x"]).__file__
+                __import__(
+                    "dtest.infrastructure.workflow_search.retrieval",
+                    fromlist=["x"],
+                ).__file__
             ).read_bytes()
         ).hexdigest(),
         "numpy": np.__version__,
@@ -353,10 +397,25 @@ async def main(args):
         "ef_construction": 128,
         "profiles": profiles(),
         "limitations": [
-            "Synthetic vectors; no embedding HTTP, text accuracy, Agent, Executor or end-user latency.",
-            "Exact global retrieval is offline evaluation only; runtime remains HNSW.",
-            "Sequential warm samples; percentiles are descriptive, not production guarantees.",
-            "Index build randomization is server-controlled; vector corpus is deterministic.",
+            (
+                "Synthetic vectors; no embedding HTTP, text accuracy, "
+                "Agent, Executor or end-user "
+                "latency."
+            ),
+            (
+                "Exact global retrieval is offline evaluation only; "
+                "runtime remains "
+                "HNSW."
+            ),
+            (
+                "Sequential warm samples; percentiles are descriptive, "
+                "not production "
+                "guarantees."
+            ),
+            (
+                "Index build randomization is server-controlled; vector "
+                "corpus is deterministic."
+            ),
         ],
     }
     write_json(out / "environment.json", environment)
@@ -369,7 +428,9 @@ async def main(args):
             ("varied", [50, 500], 768, ["bulk"]),
         ]:
             for aliases in counts:
-                values, owners, queries, inactive = make_corpus(kind, aliases, dim)
+                values, owners, queries, inactive = make_corpus(
+                    kind, aliases, dim
+                )
                 topk = 3 if kind == "duplicate" else 5
                 policy = WorkflowSearchSettings(
                     base_url="http://quality.invalid/v1",
@@ -401,17 +462,23 @@ async def main(args):
                             dimensions=dim,
                             build=build,
                             rebuild=rebuild,
-                            vector_sha256=hashlib.sha256(values.tobytes()).hexdigest(),
+                            vector_sha256=hashlib.sha256(
+                                values.tobytes()
+                            ).hexdigest(),
                             inactive=inactive,
                             queries=queries,
-                            reference={k: v["target"] for k, v in refs.items()},
+                            reference={
+                                k: v["target"] for k, v in refs.items()
+                            },
                         )
                         cases.append(meta)
                         write_json(out / "corpora.json", cases)
                         embedding = FixedEmbedding(queries)
                         searches = {
                             label: WorkflowSearch(
-                                policy.model_copy(update=updates), embedding, factory
+                                policy.model_copy(update=updates),
+                                embedding,
+                                factory,
                             )
                             for label, updates in profiles().items()
                         }
@@ -439,12 +506,16 @@ async def main(args):
                             plans[case + "-" + label + "-first"] = plan_probe(
                                 c, searches[label].settings, q
                             )
-                            plans[case + "-" + label + "-exclude"] = plan_probe(
-                                c, searches[label].settings, q, [0]
+                            plans[case + "-" + label + "-exclude"] = (
+                                plan_probe(c, searches[label].settings, q, [0])
                             )
                         # Limited concurrency comparison isolates DB admission+
                         # search work; this is not a sustained-load capacity test.
-                        if kind == "varied" and aliases == 500 and rebuild == 0:
+                        if (
+                            kind == "varied"
+                            and aliases == 500
+                            and rebuild == 0
+                        ):
                             for label in ["current", "ef500", "budget_high"]:
                                 for level in [1, 4, 10]:
                                     gate = asyncio.Semaphore(level)
@@ -462,14 +533,25 @@ async def main(args):
                                                 topk,
                                             )
 
-                                    c.execute("SELECT pg_stat_statements_reset()")
+                                    c.execute(
+                                        "SELECT pg_stat_statements_reset()"
+                                    )
                                     began = time.perf_counter()
                                     observations = await asyncio.gather(
                                         *(request(i) for i in range(24))
                                     )
-                                    wall_ms = (time.perf_counter() - began) * 1000
+                                    wall_ms = (
+                                        time.perf_counter() - began
+                                    ) * 1000
                                     dbstats = c.execute(
-                                        "SELECT sum(total_exec_time),sum(shared_blks_hit),sum(shared_blks_read),sum(calls) FROM pg_stat_statements WHERE query LIKE '%workflow_embeddings%' AND query NOT LIKE '%pg_stat_statements%'"
+                                        "SELECT sum(total_exec_time)"
+                                        ",sum(shared_blks_hit),sum(s"
+                                        "hared_blks_read),sum(calls)"
+                                        " FROM pg_stat_statements "
+                                        "WHERE query LIKE "
+                                        "'%workflow_embeddings%' "
+                                        "AND query NOT LIKE "
+                                        "'%pg_stat_statements%'"
                                     ).fetchone()
                                     concurrent.append(
                                         {
@@ -478,10 +560,18 @@ async def main(args):
                                             "concurrency": level,
                                             "requests": 24,
                                             "wall_ms": wall_ms,
-                                            "db_execution_ms": float(dbstats[0] or 0),
-                                            "shared_hit_blocks": int(dbstats[1] or 0),
-                                            "shared_read_blocks": int(dbstats[2] or 0),
-                                            "db_search_sql_calls": int(dbstats[3] or 0),
+                                            "db_execution_ms": float(
+                                                dbstats[0] or 0
+                                            ),
+                                            "shared_hit_blocks": int(
+                                                dbstats[1] or 0
+                                            ),
+                                            "shared_read_blocks": int(
+                                                dbstats[2] or 0
+                                            ),
+                                            "db_search_sql_calls": int(
+                                                dbstats[3] or 0
+                                            ),
                                             "observations": observations,
                                         }
                                     )
@@ -501,7 +591,9 @@ async def main(args):
                         collapse=True,
                         index_m=args.index_m,
                     )
-                    refs = reference(c, policy, queries, values, owners, inactive, topk)
+                    refs = reference(
+                        c, policy, queries, values, owners, inactive, topk
+                    )
                     meta.update(
                         case=case,
                         kind=kind,
@@ -509,7 +601,9 @@ async def main(args):
                         dimensions=dim,
                         build="online",
                         rebuild=0,
-                        vector_sha256=hashlib.sha256(values.tobytes()).hexdigest(),
+                        vector_sha256=hashlib.sha256(
+                            values.tobytes()
+                        ).hexdigest(),
                         inactive=inactive,
                         queries=queries,
                         reference={k: v["target"] for k, v in refs.items()},
@@ -517,7 +611,9 @@ async def main(args):
                     )
                     cases.append(meta)
                     write_json(out / "corpora.json", cases)
-                    search = WorkflowSearch(policy, FixedEmbedding(queries), factory)
+                    search = WorkflowSearch(
+                        policy, FixedEmbedding(queries), factory
+                    )
                     for repeat in range(args.repeats):
                         row = await measure(
                             search,
@@ -564,10 +660,16 @@ async def main(args):
                 "profile": profile,
                 "samples": len(group),
                 "mean_recall": statistics.mean(r["recall"] for r in group),
-                "full_recall_rate": statistics.mean(r["recall"] == 1 for r in group),
-                "mean_results": statistics.mean(len(r["returned"]) for r in group),
+                "full_recall_rate": statistics.mean(
+                    r["recall"] == 1 for r in group
+                ),
+                "mean_results": statistics.mean(
+                    len(r["returned"]) for r in group
+                ),
                 "mean_ms": statistics.mean(r["elapsed_ms"] for r in group),
-                "p95_ms": float(np.percentile([r["elapsed_ms"] for r in group], 95)),
+                "p95_ms": float(
+                    np.percentile([r["elapsed_ms"] for r in group], 95)
+                ),
                 "mean_rounds": statistics.mean(
                     r["diagnostics"]["rounds"] for r in group
                 ),

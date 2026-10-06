@@ -40,7 +40,11 @@ async def test_batches_reorder_vectors_and_reject_bad_dimensions():
 
     provider._client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
     try:
-        assert await provider.embed(["one", "two", "three"]) == [[1, 1], [2, 1], [1, 1]]
+        assert await provider.embed(["one", "two", "three"]) == [
+            [1, 1],
+            [2, 1],
+            [1, 1],
+        ]
         assert [len(b["input"]) for b in calls] == [2, 1]
         assert all(
             "dimensions" not in body for body in calls
@@ -99,6 +103,8 @@ def test_central_configuration_and_model_space():
     assert first.workflow_search.max_rounds == 2
     assert (
         first.workflow_search.space
-        != first.workflow_search.model_copy(update={"model_revision": "next"}).space
+        != first.workflow_search.model_copy(
+            update={"model_revision": "next"}
+        ).space
     )
     assert "CREATE INDEX" in first.workflow_search.index_sql()

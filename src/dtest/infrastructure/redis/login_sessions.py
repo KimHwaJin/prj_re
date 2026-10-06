@@ -1,4 +1,5 @@
 """Opaque browser SID, hashed Redis key, fixed TTL. No roles, SSO cookies or employee PII."""
+
 import hashlib
 import json
 import re
@@ -36,14 +37,23 @@ class RedisSessions:
     async def create(self, user_id: str, ttl: int) -> tuple[str, LoginSession]:
         if ttl <= 0:
             raise ValueError("Session TTL must be positive")
-        session = LoginSession(user_id, secrets.token_urlsafe(32), int(time.time()) + ttl)
+        session = LoginSession(
+            user_id, secrets.token_urlsafe(32), int(time.time()) + ttl
+        )
         try:
             for _ in range(3):
                 sid = secrets.token_urlsafe(32)
-                if await self.redis.set(self._key(sid), json.dumps(asdict(session)), ex=ttl, nx=True):
+                if await self.redis.set(
+                    self._key(sid),
+                    json.dumps(asdict(session)),
+                    ex=ttl,
+                    nx=True,
+                ):
                     return sid, session
         except RedisError:
-            raise ApplicationError(503, "Login session storage is unavailable.") from None
+            raise ApplicationError(
+                503, "Login session storage is unavailable."
+            ) from None
         raise ApplicationError(503, "Cannot create login session.")
 
     async def read(self, sid: str) -> LoginSession | None:
@@ -53,21 +63,28 @@ class RedisSessions:
         try:
             raw = await self.redis.get(key)
         except RedisError:
-            raise ApplicationError(503, "Login session storage is unavailable.") from None
+            raise ApplicationError(
+                503, "Login session storage is unavailable."
+            ) from None
         if raw is None:
             return None
         try:
             if len(raw) > 2048:
                 raise ValueError()
             session = LoginSession(**json.loads(raw))
-            if (not isinstance(session.user_id, str) or not session.user_id
-                    or not isinstance(session.csrf_token, str)
-                    or not re.fullmatch(r"[A-Za-z0-9_-]{43}", session.csrf_token)
-                    or type(session.expires_at) is not int):
+            if (
+                not isinstance(session.user_id, str)
+                or not session.user_id
+                or not isinstance(session.csrf_token, str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]{43}", session.csrf_token)
+                or type(session.expires_at) is not int
+            ):
                 raise ValueError()
             return session if session.expires_at > time.time() else None
         except (ValueError, TypeError, UnicodeError):
-            raise ApplicationError(503, "Invalid login session record.") from None
+            raise ApplicationError(
+                503, "Invalid login session record."
+            ) from None
 
     async def revoke(self, sid: str) -> None:
         key = self._key(sid)
@@ -75,4 +92,6 @@ class RedisSessions:
             try:
                 await self.redis.delete(key)
             except RedisError:
-                raise ApplicationError(503, "Login session storage is unavailable.") from None
+                raise ApplicationError(
+                    503, "Login session storage is unavailable."
+                ) from None

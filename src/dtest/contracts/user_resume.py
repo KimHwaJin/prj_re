@@ -1,4 +1,5 @@
 """Private service-to-Agent resume identity; never supplied by the frontend."""
+
 from __future__ import annotations
 
 import hashlib
@@ -19,10 +20,17 @@ class UserResumeState(TypedDict, total=False):
     user_resume_receipt: dict[str, str]
 
 
-def resume_identity(command_id: str, interrupt_id: str, command: Any) -> dict[str, str]:
-    encoded = json.dumps(command, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return {"command_id": command_id, "interrupt_id": interrupt_id,
-            "digest": hashlib.sha256(encoded.encode()).hexdigest()}
+def resume_identity(
+    command_id: str, interrupt_id: str, command: Any
+) -> dict[str, str]:
+    encoded = json.dumps(
+        command, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    return {
+        "command_id": command_id,
+        "interrupt_id": interrupt_id,
+        "digest": hashlib.sha256(encoded.encode()).hexdigest(),
+    }
 
 
 def resume_envelope(identity: dict[str, str], command: Any) -> dict[str, Any]:

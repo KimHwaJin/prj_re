@@ -34,8 +34,14 @@ class _WakeAfterCommit:
     The wrapped consumer still owns ACK/retry/lease semantics. These in-memory
     hints carry no business data; periodic DB scans remain authoritative.
     """
-    def __init__(self, handler: StreamMessageHandler, wake: asyncio.Event, *,
-                 event_types: set[str] | None = None) -> None:
+
+    def __init__(
+        self,
+        handler: StreamMessageHandler,
+        wake: asyncio.Event,
+        *,
+        event_types: set[str] | None = None,
+    ) -> None:
         self.handler, self.wake, self.event_types = handler, wake, event_types
 
     def lock_key(self, message):
@@ -43,8 +49,10 @@ class _WakeAfterCommit:
 
     async def handle(self, message):
         result = await self.handler.handle(message)
-        if (result.decision == AckDecision.ACK and
-                (self.event_types is None or message.fields.get('event_type') in self.event_types)):
+        if result.decision == AckDecision.ACK and (
+            self.event_types is None
+            or message.fields.get("event_type") in self.event_types
+        ):
             self.wake.set()
         return result
 
@@ -92,7 +100,11 @@ class ExecutorWorker:
                 "ingress",
                 settings.executor_event_stream,
                 settings.event_group,
-                lambda _: _WakeAfterCommit(self.ingress, self._router_wake, event_types=self.event_types),
+                lambda _: _WakeAfterCommit(
+                    self.ingress,
+                    self._router_wake,
+                    event_types=self.event_types,
+                ),
                 settings.ingress_concurrency,
             ),
         ]
@@ -132,9 +144,13 @@ class ExecutorWorker:
             self._stack.push_async_callback(self.http.aclose)
             self._stack.push_async_callback(self.pool.close)
             await self.pool.open(wait=True)
-            self._stack.enter_context(binding_subscription(
-                self.pool.conninfo, self.settings.namespace, self._router_wake
-            ))
+            self._stack.enter_context(
+                binding_subscription(
+                    self.pool.conninfo,
+                    self.settings.namespace,
+                    self._router_wake,
+                )
+            )
         except BaseException:
             await self._stack.aclose()
             raise
@@ -173,10 +189,16 @@ class ExecutorWorker:
         server = None
         tasks: list[asyncio.Task] = []
         stopper = asyncio.create_task(self._stop.wait())
+
         async def relay_stop():
             await stop_event.wait()
             self.request_stop()
-        external_stop = asyncio.create_task(relay_stop()) if stop_event is not None else None
+
+        external_stop = (
+            asyncio.create_task(relay_stop())
+            if stop_event is not None
+            else None
+        )
         try:
             if self.settings.health_port:
                 server = await asyncio.start_server(
@@ -187,7 +209,9 @@ class ExecutorWorker:
                 )
             tasks = [asyncio.create_task(c.run()) for c in self.consumers]
             tasks += [
-                asyncio.create_task(self._loop(self.router.once, wake=self._router_wake)),
+                asyncio.create_task(
+                    self._loop(self.router.once, wake=self._router_wake)
+                ),
                 asyncio.create_task(self._loop(self._metrics, interval=10)),
             ]
             done, _ = await asyncio.wait(
@@ -201,10 +225,18 @@ class ExecutorWorker:
                         raise RuntimeError("Worker loop stopped unexpectedly")
             # Embedded mode shares the service's single drain deadline. Standalone
             # mode retains its existing EW_SHUTDOWN_SECONDS grace period.
-            await asyncio.gather(*(c.shutdown(
-                None if stop_event is not None else self.settings.shutdown_seconds
-            ) for c in self.consumers))
+            await asyncio.gather(
+                *(
+                    c.shutdown(
+                        None
+                        if stop_event is not None
+                        else self.settings.shutdown_seconds
+                    )
+                    for c in self.consumers
+                )
+            )
         finally:
+
             async def cleanup():
                 self.request_stop()
                 owned = [*tasks, stopper]
@@ -218,6 +250,7 @@ class ExecutorWorker:
                     server.close()
                     await server.wait_closed()
                 self._running = False
+
             await protected_cleanup(cleanup())
 
     async def _loop(
@@ -258,7 +291,10 @@ class ExecutorWorker:
                     # A short bounded window coalesces commit bursts. Waking for
                     # every ignored Step event would create unnecessary DB scans.
                     with suppress(TimeoutError):
-                        await asyncio.wait_for(self._stop.wait(), min(.02, self.settings.poll_seconds))
+                        await asyncio.wait_for(
+                            self._stop.wait(),
+                            min(0.02, self.settings.poll_seconds),
+                        )
 
     async def _metrics(self) -> int:
         counts = await self.store.counts()
@@ -283,8 +319,10 @@ class ExecutorWorker:
         return 0
 
     async def ready(self) -> bool:
-        if not self._running or self._stop.is_set() or not all(
-            c.is_healthy for c in self.consumers
+        if (
+            not self._running
+            or self._stop.is_set()
+            or not all(c.is_healthy for c in self.consumers)
         ):
             return False
         try:

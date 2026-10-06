@@ -14,4 +14,3 @@ def make_session_name(message_text: str, limit: int = 100) -> str:
     """첫 메시지에서 Session 제목을 생성합니다."""
     normalized = " ".join(message_text.strip().split())
     return normalized[:limit] or "새 대화"
-

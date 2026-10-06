@@ -24,4 +24,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     # PostgreSQL enum value 제거에는 타입 재생성이 필요하고 기존 데이터 손실 위험이 있어 유지한다.
     pass
-

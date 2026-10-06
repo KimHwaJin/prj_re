@@ -3,6 +3,7 @@
 Configure SSO_ADAPTER_FACTORY=dtest.infrastructure.sso.company:create_adapter AFTER implementing
 these two functions inside the corporate environment. No guessed SDK getters or Flask shim.
 """
+
 from fastapi import Request
 
 from dtest.settings.auth import SsoSettings
@@ -17,7 +18,9 @@ def verify_employee(request: Request) -> VerifiedEmployee | None:
     # 3. Obtain employee_id/display_name from the validated SDK result, not body/X-User-Id.
     # 4. Return None only for an unauthenticated/invalid credential; outages must raise.
     #    If available, supply the SDK authentication expiry as valid_until_epoch.
-    raise NotImplementedError("Implement corporate SDK verification in the closed network.")
+    raise NotImplementedError(
+        "Implement corporate SDK verification in the closed network."
+    )
 
 
 def build_login_url(request: Request, return_url: str) -> str:
@@ -25,7 +28,9 @@ def build_login_url(request: Request, return_url: str) -> str:
     # Apply the corporate protocol's state/nonce/replay checks here where required.
     # If a separate GET/POST callback is required, implement that documented contract;
     # this template intentionally does not invent OAuth/OIDC/SAML behavior.
-    raise NotImplementedError("Implement corporate SDK login URL in the closed network.")
+    raise NotImplementedError(
+        "Implement corporate SDK login URL in the closed network."
+    )
 
 
 def create_adapter(settings: SsoSettings) -> SyncSsoAdapter:

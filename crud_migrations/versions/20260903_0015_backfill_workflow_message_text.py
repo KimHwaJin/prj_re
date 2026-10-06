@@ -55,4 +55,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     # 화면용 projection은 손실 가능한 파생값이므로 과거의 모호한 문구로 되돌리지 않는다.
     pass
-

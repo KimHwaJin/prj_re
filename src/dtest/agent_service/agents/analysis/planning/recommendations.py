@@ -19,7 +19,9 @@ def workflow_search_tool(retriever, catalog, *, context_max_chars=64000):
         payload = json.loads(
             next(m.content for m in messages if isinstance(m, HumanMessage))
         )
-        result = (await retriever.search(payload["request"])).model_dump(mode="json")
+        result = (await retriever.search(payload["request"])).model_dump(
+            mode="json"
+        )
         candidates = []
         invalid = 0
         used = 0
@@ -58,7 +60,10 @@ def workflow_search_tool(retriever, catalog, *, context_max_chars=64000):
 def retrieved_candidates(messages):
     found = {}
     for message in messages:
-        if not isinstance(message, ToolMessage) or message.name != "search_workflows":
+        if (
+            not isinstance(message, ToolMessage)
+            or message.name != "search_workflows"
+        ):
             continue
         try:
             value = (
@@ -73,7 +78,9 @@ def retrieved_candidates(messages):
     return found
 
 
-def resolve_recommendations(reply, messages, catalog, *, repair_limit, repair_attempts):
+def resolve_recommendations(
+    reply, messages, catalog, *, repair_limit, repair_attempts
+):
     found = retrieved_candidates(messages)
     chosen = []
     for proposal in reply.plans:
@@ -81,7 +88,8 @@ def resolve_recommendations(reply, messages, catalog, *, repair_limit, repair_at
             continue
         if proposal.workflow_id not in found:
             raise ValueError(
-                "Recommended Workflow must be a candidate returned by this invocation"
+                "Recommended Workflow must be a candidate returned "
+                "by this invocation"
             )
         if proposal.workflow_id in chosen:
             raise ValueError("Recommended Workflow must be distinct")
@@ -109,7 +117,14 @@ def resolve_recommendations(reply, messages, catalog, *, repair_limit, repair_at
             "repair_level_limit": repair_limit,
             "max_repair_attempts_limit": repair_attempts,
         }
-        review = new_review(definition, proposal.input_values, catalog.metadata, policy)
-        if review["document"]["execution"]["max_repair_attempts"] > repair_attempts:
-            raise ValueError("Recommended Workflow exceeds the service repair limit")
+        review = new_review(
+            definition, proposal.input_values, catalog.metadata, policy
+        )
+        if (
+            review["document"]["execution"]["max_repair_attempts"]
+            > repair_attempts
+        ):
+            raise ValueError(
+                "Recommended Workflow exceeds the service repair limit"
+            )
     return reply

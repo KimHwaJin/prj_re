@@ -73,7 +73,9 @@ class DataSelectionResponse(StrictModel):
         if self.data_count != len(self.datasets):
             raise ValueError("data_count must equal the number of datasets")
         if {dataset.role for dataset in self.datasets} != {"x", "y"}:
-            raise ValueError("analysis requires at least one X and one Y dataset")
+            raise ValueError(
+                "analysis requires at least one X and one Y dataset"
+            )
         return self
 ```
 

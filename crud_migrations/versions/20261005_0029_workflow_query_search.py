@@ -20,7 +20,8 @@ def upgrade():
     )
     if tuple(map(int, version.split(".")[:2])) < (0, 8):
         raise RuntimeError(
-            "pgvector >=0.8.0 is required; upgrade the extension before migration"
+            "pgvector >=0.8.0 is required; upgrade the extension "
+            "before migration"
         )
     op.add_column(
         "workflows",
@@ -39,7 +40,10 @@ def upgrade():
     op.add_column(
         "workflows",
         sa.Column(
-            "index_state", sa.String(20), nullable=False, server_default="not_indexed"
+            "index_state",
+            sa.String(20),
+            nullable=False,
+            server_default="not_indexed",
         ),
     )
     op.add_column("workflows", sa.Column("index_error", sa.String(100)))
@@ -53,28 +57,47 @@ def upgrade():
         "workflows",
         "index_state IN ('not_indexed', 'pending', 'ready', 'failed')",
     )
-    op.execute("UPDATE workflow_embeddings SET is_active=false, status='superseded'")
+    op.execute(
+        "UPDATE workflow_embeddings SET is_active=false, status='superseded'"
+    )
     op.drop_constraint(
-        "ck_workflow_embeddings_ready_vector", "workflow_embeddings", type_="check"
+        "ck_workflow_embeddings_ready_vector",
+        "workflow_embeddings",
+        type_="check",
     )
     op.execute(
-        "ALTER TABLE workflow_embeddings ALTER COLUMN vector_values TYPE vector USING vector_values::vector"
+        "ALTER TABLE workflow_embeddings ALTER COLUMN vector_values "
+        "TYPE vector USING vector_values::vector"
     )
     op.add_column(
         "workflow_embeddings",
-        sa.Column("search_revision", sa.Integer(), nullable=False, server_default="1"),
+        sa.Column(
+            "search_revision", sa.Integer(), nullable=False, server_default="1"
+        ),
     )
-    op.add_column("workflow_embeddings", sa.Column("model_space", sa.String(64)))
+    op.add_column(
+        "workflow_embeddings", sa.Column("model_space", sa.String(64))
+    )
     op.create_check_constraint(
         "ck_workflow_embeddings_ready_vector",
         "workflow_embeddings",
-        "status <> 'ready' OR (vector_values IS NOT NULL AND vector_dims(vector_values)=dimensions)",
+        (
+            "status <> 'ready' OR (vector_values IS NOT NULL AND "
+            "vector_dims(vector_values)=dimensions)"
+        ),
     )
     op.drop_constraint(
-        "uq_workflow_embeddings_source_model", "workflow_embeddings", type_="unique"
+        "uq_workflow_embeddings_source_model",
+        "workflow_embeddings",
+        type_="unique",
     )
     op.drop_index("uq_workflow_embeddings_active_model", "workflow_embeddings")
-    keys = ["workflow_id", "search_revision", "model_space", "embedded_text_sha256"]
+    keys = [
+        "workflow_id",
+        "search_revision",
+        "model_space",
+        "embedded_text_sha256",
+    ]
     op.create_unique_constraint(
         "uq_workflow_embeddings_source_model", "workflow_embeddings", keys
     )
@@ -86,37 +109,58 @@ def downgrade():
     conn = op.get_bind()
     for (name,) in conn.execute(
         sa.text(
-            "SELECT indexname FROM pg_indexes WHERE schemaname=current_schema() AND tablename='workflow_embeddings' AND indexname LIKE 'ix_workflow_hnsw_%'"
+            "SELECT indexname FROM pg_indexes WHERE "
+            "schemaname=current_schema() AND "
+            "tablename='workflow_embeddings' AND indexname LIKE "
+            "'ix_workflow_hnsw_%'"
         )
     ):
         conn.execute(
-            sa.text("DROP INDEX " + conn.dialect.identifier_preparer.quote(name))
+            sa.text(
+                "DROP INDEX " + conn.dialect.identifier_preparer.quote(name)
+            )
         )
-    op.execute("UPDATE workflow_embeddings SET is_active=false, status='superseded'")
+    op.execute(
+        "UPDATE workflow_embeddings SET is_active=false, status='superseded'"
+    )
     op.drop_constraint(
-        "uq_workflow_embeddings_source_model", "workflow_embeddings", type_="unique"
+        "uq_workflow_embeddings_source_model",
+        "workflow_embeddings",
+        type_="unique",
     )
     # Historical identical text revisions collapse only the duplicate vector
     # rows when downgrading to the old unique key; refuse lossy downgrade.
     duplicates = conn.execute(
         sa.text(
-            "SELECT 1 FROM workflow_embeddings GROUP BY workflow_id,model_provider,model_name,model_revision,embedded_text_sha256 HAVING count(*)>1 LIMIT 1"
+            "SELECT 1 FROM workflow_embeddings GROUP BY "
+            "workflow_id,model_provider,model_name,model_revision,em"
+            "bedded_text_sha256 HAVING count(*)>1 LIMIT "
+            "1"
         )
     ).first()
     if duplicates:
         raise RuntimeError(
-            "Repeated query revisions exist; downgrade would lose embedding history"
+            "Repeated query revisions exist; downgrade would lose "
+            "embedding "
+            "history"
         )
     op.drop_constraint(
-        "ck_workflow_embeddings_ready_vector", "workflow_embeddings", type_="check"
+        "ck_workflow_embeddings_ready_vector",
+        "workflow_embeddings",
+        type_="check",
     )
     op.execute(
-        "ALTER TABLE workflow_embeddings ALTER COLUMN vector_values TYPE double precision[] USING vector_values::real[]"
+        "ALTER TABLE workflow_embeddings ALTER COLUMN vector_values "
+        "TYPE double precision[] USING "
+        "vector_values::real[]"
     )
     op.create_check_constraint(
         "ck_workflow_embeddings_ready_vector",
         "workflow_embeddings",
-        "status <> 'ready' OR (vector_values IS NOT NULL AND cardinality(vector_values)=dimensions)",
+        (
+            "status <> 'ready' OR (vector_values IS NOT NULL AND "
+            "cardinality(vector_values)=dimensions)"
+        ),
     )
     op.create_unique_constraint(
         "uq_workflow_embeddings_source_model",

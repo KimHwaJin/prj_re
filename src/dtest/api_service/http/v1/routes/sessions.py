@@ -1,4 +1,8 @@
-from dtest.application.resources.session_queries import require_owned_session, read_session_resource, list_sessions
+from dtest.application.resources.session_queries import (
+    require_owned_session,
+    read_session_resource,
+    list_sessions,
+)
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response, status
@@ -9,15 +13,14 @@ from dtest.infrastructure.database.runtime import get_db
 from dtest.contracts.pagination import ListParams
 from dtest.api_service.http.pagination import list_params
 from dtest.contracts.resources.api_schema import Page, SessionResource
-from dtest.contracts.resources.session_schema import SessionCreate, SessionUpdate
+from dtest.contracts.resources.session_schema import (
+    SessionCreate,
+    SessionUpdate,
+)
 from dtest.application.resources.sessions import SessionService
 
 
 router = APIRouter(tags=["sessions"])
-
-
-
-
 
 
 @router.post(
@@ -34,10 +37,14 @@ async def create_session(
 ):
     session = await SessionService.create(db, user_id, project_id, payload)
     response.headers["Location"] = f"/api/v1/sessions/{session.session_id}"
-    return await read_session_resource(db, user_id, session.session_id, after_mutation=True)
+    return await read_session_resource(
+        db, user_id, session.session_id, after_mutation=True
+    )
 
 
-@router.get("/projects/{project_id}/sessions", response_model=Page[SessionResource])
+@router.get(
+    "/projects/{project_id}/sessions", response_model=Page[SessionResource]
+)
 async def list_project_sessions(
     project_id: UUID,
     params: ListParams = Depends(list_params),
@@ -64,11 +71,17 @@ async def update_session(
     db: AsyncSession = Depends(get_db),
 ):
     session = await require_owned_session(db, user_id, session_id)
-    updated = await SessionService.update(db, user_id, session.project_id, session_id, payload)
-    return await read_session_resource(db, user_id, updated.session_id, after_mutation=True)
+    updated = await SessionService.update(
+        db, user_id, session.project_id, session_id, payload
+    )
+    return await read_session_resource(
+        db, user_id, updated.session_id, after_mutation=True
+    )
 
 
-@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_session(
     session_id: UUID,
     user_id: UUID = Depends(get_current_user_id),

@@ -2,6 +2,7 @@
 데이터 프로파일링 Tool - 기본 통계 및 품질 분석
 """
 
+
 def profile_data(
     data: object = None,
 ) -> dict[str, object]:

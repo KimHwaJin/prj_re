@@ -17,13 +17,22 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("ALTER TABLE sessions DROP COLUMN IF EXISTS default_model_provider")
+    op.execute(
+        "ALTER TABLE sessions DROP COLUMN IF EXISTS default_model_provider"
+    )
     op.execute("ALTER TABLE sessions DROP COLUMN IF EXISTS default_model_name")
-    op.execute("ALTER TABLE sessions ALTER COLUMN session_name SET DEFAULT '새 대화'")
+    op.execute(
+        "ALTER TABLE sessions ALTER COLUMN session_name SET DEFAULT '새 대화'"
+    )
 
 
 def downgrade() -> None:
-    op.execute("ALTER TABLE sessions ADD COLUMN default_model_provider VARCHAR(50)")
-    op.execute("ALTER TABLE sessions ADD COLUMN default_model_name VARCHAR(100)")
-    op.execute("ALTER TABLE sessions ALTER COLUMN session_name SET DEFAULT '새 대화'")
-
+    op.execute(
+        "ALTER TABLE sessions ADD COLUMN default_model_provider VARCHAR(50)"
+    )
+    op.execute(
+        "ALTER TABLE sessions ADD COLUMN default_model_name VARCHAR(100)"
+    )
+    op.execute(
+        "ALTER TABLE sessions ALTER COLUMN session_name SET DEFAULT '새 대화'"
+    )

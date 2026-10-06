@@ -20,7 +20,11 @@ from dtest.application.runs.persistence.recovery import (
     snapshot_interrupts,
 )
 from dtest.contracts.execution import ExecutionNeedsRecovery
-from dtest.contracts.user_resume import UserResumeNeedsRecovery, resume_envelope, resume_identity
+from dtest.contracts.user_resume import (
+    UserResumeNeedsRecovery,
+    resume_envelope,
+    resume_identity,
+)
 
 
 async def mark_started(*, run_id, identity, session_factory):
@@ -28,32 +32,61 @@ async def mark_started(*, run_id, identity, session_factory):
     if claim is None or claim.run_id != run_id:
         raise UserResumeNeedsRecovery("User resume requires its Worker claim")
     async with short_session(session_factory) as db:
-        run = await db.scalar(select(AgentRunModel).where(AgentRunModel.run_id == run_id).with_for_update())
-        if (run is None or run.status != AgentRunStatus.RUNNING
-                or run.attempt_count != claim.attempt
-                or (run.metadata_json or {}).get("_resume_target") != identity["interrupt_id"]
-                or (run.metadata_json or {}).get("_resume_started")):
-            raise UserResumeNeedsRecovery("User resume admission changed before execution")
+        run = await db.scalar(
+            select(AgentRunModel)
+            .where(AgentRunModel.run_id == run_id)
+            .with_for_update()
+        )
+        if (
+            run is None
+            or run.status != AgentRunStatus.RUNNING
+            or run.attempt_count != claim.attempt
+            or (run.metadata_json or {}).get("_resume_target")
+            != identity["interrupt_id"]
+            or (run.metadata_json or {}).get("_resume_started")
+        ):
+            raise UserResumeNeedsRecovery(
+                "User resume admission changed before execution"
+            )
         run.metadata_json = {**run.metadata_json, "_resume_started": True}
         await db.commit()
 
 
 def require_finished(snapshot, identity):
     if snapshot.values.get("user_resume_receipt") != identity:
-        raise UserResumeNeedsRecovery("User resume has no matching durable consumption receipt")
+        raise UserResumeNeedsRecovery(
+            "User resume has no matching durable consumption receipt"
+        )
     interrupts = snapshot_interrupts(snapshot)
-    if (any(task.error for task in snapshot.tasks)
-            or (snapshot.next and not interrupts)
-            or any(not task.interrupts for task in snapshot.tasks)
-            or any(item.id == identity["interrupt_id"] for item in interrupts)):
-        raise UserResumeNeedsRecovery("User answer was consumed but graph progress is incomplete")
+    if (
+        any(task.error for task in snapshot.tasks)
+        or (snapshot.next and not interrupts)
+        or any(not task.interrupts for task in snapshot.tasks)
+        or any(item.id == identity["interrupt_id"] for item in interrupts)
+    ):
+        raise UserResumeNeedsRecovery(
+            "User answer was consumed but graph progress is incomplete"
+        )
 
 
-async def resume_and_project(graph, config, *, user_id, run_id, command,
-                             target, started, model_selection, session_factory=None,
-                             dispatcher=None, invocation=None):
+async def resume_and_project(
+    graph,
+    config,
+    *,
+    user_id,
+    run_id,
+    command,
+    target,
+    started,
+    model_selection,
+    session_factory=None,
+    dispatcher=None,
+    invocation=None,
+):
     if not target or not run_id:
-        raise UserResumeNeedsRecovery("User resume target is missing; reconcile the legacy waiting Run")
+        raise UserResumeNeedsRecovery(
+            "User resume target is missing; reconcile the legacy waiting Run"
+        )
     identity = resume_identity(str(run_id), target, command)
     snapshot = await graph.aget_state(config)
     invocation.validate_model(snapshot.values, model_selection)
@@ -62,28 +95,51 @@ async def resume_and_project(graph, config, *, user_id, run_id, command,
         require_finished(snapshot, identity)
     else:
         if started:
-            raise UserResumeNeedsRecovery("User resume was dispatched without a durable receipt; do not resend")
+            raise UserResumeNeedsRecovery(
+                "User resume was dispatched without a durable "
+                "receipt; do not "
+                "resend"
+            )
         interrupts = snapshot_interrupts(snapshot)
         if len(interrupts) != 1 or interrupts[0].id != target:
-            raise UserResumeNeedsRecovery("User resume target no longer matches the checkpoint")
-        if isinstance(interrupts[0].value, dict) and interrupts[0].value.get("kind") == "EXECUTOR_EVENT":
-            raise UserResumeNeedsRecovery("User resume cannot answer an Executor interrupt")
-        await mark_started(run_id=run_id, identity=identity, session_factory=session_factory)
+            raise UserResumeNeedsRecovery(
+                "User resume target no longer matches the checkpoint"
+            )
+        if (
+            isinstance(interrupts[0].value, dict)
+            and interrupts[0].value.get("kind") == "EXECUTOR_EVENT"
+        ):
+            raise UserResumeNeedsRecovery(
+                "User resume cannot answer an Executor interrupt"
+            )
+        await mark_started(
+            run_id=run_id, identity=identity, session_factory=session_factory
+        )
         # If this raises, a queue retry may only inspect the receipt. It may not
         # dispatch this Command again. External submission uncertainty propagates
         # through the existing submission_scope/ExecutionNeedsRecovery guard.
-        await invocation.ensure_project_context(snapshot.values, config, allow_default=True)
+        await invocation.ensure_project_context(
+            snapshot.values, config, allow_default=True
+        )
         await invocation.invoke(
-            resume_command(resume={target: resume_envelope(identity, command)}), config,
-            user_id=user_id, agent_run_id=run_id,
+            resume_command(
+                resume={target: resume_envelope(identity, command)}
+            ),
+            config,
+            user_id=user_id,
+            agent_run_id=run_id,
         )
         snapshot = await graph.aget_state(config)
         require_finished(snapshot, identity)
     try:
         return await invocation.project(
-            checkpoint_state(snapshot), user_id=user_id, agent_run_id=run_id,
+            checkpoint_state(snapshot),
+            user_id=user_id,
+            agent_run_id=run_id,
         )
     except (ExecutionNeedsRecovery, UserResumeNeedsRecovery):
         raise
     except Exception as exc:
-        raise GraphProjectionError("Durable user resume needs service projection") from exc
+        raise GraphProjectionError(
+            "Durable user resume needs service projection"
+        ) from exc

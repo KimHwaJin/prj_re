@@ -60,14 +60,20 @@ class WorkflowSearch:
         # Model service wait must never hold a database connection.
         try:
             vector = validate_vectors(
-                await self.embedding.embed([query]), 1, self.settings.dimensions
+                await self.embedding.embed([query]),
+                1,
+                self.settings.dimensions,
             )[0]
         except EmbeddingUnavailable:
             reason = "embedding_unavailable"
             return result()
         s = self.settings
         vector_text = "[" + ",".join(str(x) for x in vector) + "]"
-        parameters = {"vector": vector_text, "excluded": [], "limit": s.batch_size}
+        parameters = {
+            "vector": vector_text,
+            "excluded": [],
+            "limit": s.batch_size,
+        }
         distance = f"(vector_values::vector({s.dimensions})) <=> CAST(:vector AS vector({s.dimensions}))"
         # Partial-index predicates are trusted settings literals so PostgreSQL's
         # prepared/generic plans can recognize the exact model-space index.
@@ -84,7 +90,12 @@ class WorkflowSearch:
                     )
                     valid = await db.scalar(
                         text(
-                            "SELECT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=current_schema() AND c.relname=:name"
+                            "SELECT i.indisvalid FROM pg_index i "
+                            "JOIN pg_class c ON c.oid=i.indexrelid "
+                            "JOIN pg_namespace n ON "
+                            "n.oid=c.relnamespace WHERE "
+                            "n.nspname=current_schema() AND "
+                            "c.relname=:name"
                         ),
                         {"name": s.index_name},
                     )
@@ -115,7 +126,11 @@ class WorkflowSearch:
                             break
                         rounds += 1
                         parameters["excluded"] = found
-                        batch = (await db.execute(ann, parameters)).mappings().all()
+                        batch = (
+                            (await db.execute(ann, parameters))
+                            .mappings()
+                            .all()
+                        )
                         ann_rows += len(batch)
                         for row in batch:
                             if row["workflow_id"] not in found:
@@ -130,7 +145,9 @@ class WorkflowSearch:
                             reason = "no_more_ann_candidates"
                             break
                     await db.execute(
-                        text("SELECT set_config('enable_seqscan',:value,true)"),
+                        text(
+                            "SELECT set_config('enable_seqscan',:value,true)"
+                        ),
                         {"value": previous_seqscan},
                     )
                     if found:
@@ -147,7 +164,8 @@ class WorkflowSearch:
                         rows = (
                             (
                                 await db.execute(
-                                    ranked, {"vector": vector_text, "ids": found}
+                                    ranked,
+                                    {"vector": vector_text, "ids": found},
                                 )
                             )
                             .mappings()

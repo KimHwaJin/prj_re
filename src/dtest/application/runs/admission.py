@@ -12,19 +12,33 @@ from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.task_model import TaskModel
 from dtest.application.runs.errors import InvalidRunRequest, RunConflict
 from dtest.application.runs.repository import interrupted_run
-from dtest.application.runs.requests import request_digest, select_model, validate_model, validate_replay
+from dtest.application.runs.requests import (
+    request_digest,
+    select_model,
+    validate_model,
+    validate_replay,
+)
 from dtest.contracts.resources.run_schema import RunCreate
 from dtest.application.resources import lifecycle
 from dtest.application.runs.task_events import TaskEventService
 from dtest.application.runs.tasks import TaskService
 
 
-async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: RunCreate, key: str) -> AgentRunModel:
+async def enqueue(
+    db: AsyncSession,
+    user_id: UUID,
+    session_id: UUID,
+    payload: RunCreate,
+    key: str,
+) -> AgentRunModel:
     """Commit a pending invocation and its session lock; never execute a graph."""
     await lifecycle.lock_session(db, user_id, session_id)
-    previous = await db.scalar(select(AgentRunModel).where(
-        AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
-    ))
+    previous = await db.scalar(
+        select(AgentRunModel).where(
+            AgentRunModel.session_id == session_id,
+            AgentRunModel.idempotency_key == key,
+        )
+    )
     if previous is not None:
         validate_replay(previous, payload)
         return previous
@@ -32,6 +46,7 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
     origin: AgentRunModel | None = None
     try:
         from dtest.application.resources.session_activity import require_input
+
         if payload.command is None:
             await require_input(db, session_id)
             model_selection = select_model(payload.main_model_name)
@@ -43,20 +58,41 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
             db.add(task)
             await db.flush()
         else:
-            resume_id = payload.metadata.get("resume_run_id") or payload.metadata.get("checkpoint_run_id")
+            resume_id = payload.metadata.get(
+                "resume_run_id"
+            ) or payload.metadata.get("checkpoint_run_id")
             origin = await interrupted_run(
                 db, session_id, UUID(str(resume_id)) if resume_id else None
             )
-            latest_id = await db.scalar(select(AgentRunModel.run_id).where(
-                AgentRunModel.public_run_id == origin.public_run_id
-            ).order_by(AgentRunModel.created_at.desc(), AgentRunModel.run_id.desc()).limit(1))
+            latest_id = await db.scalar(
+                select(AgentRunModel.run_id)
+                .where(AgentRunModel.public_run_id == origin.public_run_id)
+                .order_by(
+                    AgentRunModel.created_at.desc(),
+                    AgentRunModel.run_id.desc(),
+                )
+                .limit(1)
+            )
             if latest_id != origin.run_id:
-                raise RunConflict("Resume target is no longer the current interrupt.")
-            if any(item.get("kind") == "EXECUTOR_EVENT" for item in (origin.interrupt or []) if isinstance(item, dict)):
-                raise RunConflict("Session is waiting for Executor; user resume is not allowed.")
-            await require_input(db, session_id, resume_public_id=origin.public_run_id)
+                raise RunConflict(
+                    "Resume target is no longer the current interrupt."
+                )
+            if any(
+                item.get("kind") == "EXECUTOR_EVENT"
+                for item in (origin.interrupt or [])
+                if isinstance(item, dict)
+            ):
+                raise RunConflict(
+                    "Session is waiting for Executor; user resume "
+                    "is not allowed."
+                )
+            await require_input(
+                db, session_id, resume_public_id=origin.public_run_id
+            )
             root = await db.get(AgentRunModel, origin.public_run_id)
-            model_selection = (root.metadata_json or {}).get("_model_selection")
+            model_selection = (root.metadata_json or {}).get(
+                "_model_selection"
+            )
             validate_model(model_selection)
             if origin.task_id is None:
                 # FAQ 등 Task 없는 checkpoint 재개도 durable queue를 거칩니다.
@@ -64,12 +100,16 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
                     session_id=session_id, idempotency_key=key, owner=owner
                 )
                 task.status = TaskStatus.PENDING
-                task.checkpoint_run_id = origin.checkpoint_run_id or origin.run_id
+                task.checkpoint_run_id = (
+                    origin.checkpoint_run_id or origin.run_id
+                )
                 db.add(task)
                 await db.flush()
             else:
                 task = await db.scalar(
-                    select(TaskModel).where(TaskModel.task_id == origin.task_id).with_for_update()
+                    select(TaskModel)
+                    .where(TaskModel.task_id == origin.task_id)
+                    .with_for_update()
                 )
                 if task is None or task.status != TaskStatus.WAITING_INPUT:
                     raise RunConflict("Task is not waiting for input.")
@@ -83,24 +123,39 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
                 task.lease_expires_at = None
     except IntegrityError as exc:
         await db.rollback()
-        duplicate = await db.scalar(select(AgentRunModel).where(
-            AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
-        ))
+        duplicate = await db.scalar(
+            select(AgentRunModel).where(
+                AgentRunModel.session_id == session_id,
+                AgentRunModel.idempotency_key == key,
+            )
+        )
         if duplicate is not None:
             validate_replay(duplicate, payload)
             return duplicate
-        raise RunConflict("An active task already exists for this session.") from exc
+        raise RunConflict(
+            "An active task already exists for this session."
+        ) from exc
 
-    checkpoint_run_id = task.checkpoint_run_id or (origin.checkpoint_run_id if origin else None)
+    checkpoint_run_id = task.checkpoint_run_id or (
+        origin.checkpoint_run_id if origin else None
+    )
     metadata = dict(payload.metadata)
     # Internal recovery controls are never accepted from client metadata.
-    for field in ("_resume_target", "_resume_started", "_checkpoint_interrupt_id", "_initial_protocol", "_initial_started"):
+    for field in (
+        "_resume_target",
+        "_resume_started",
+        "_checkpoint_interrupt_id",
+        "_initial_protocol",
+        "_initial_started",
+    ):
         metadata.pop(field, None)
     if origin is None:
         metadata["_initial_protocol"] = 1
         metadata["_initial_started"] = False
     if origin is not None:
-        metadata["_resume_target"] = (origin.metadata_json or {}).get("_checkpoint_interrupt_id")
+        metadata["_resume_target"] = (origin.metadata_json or {}).get(
+            "_checkpoint_interrupt_id"
+        )
         metadata["_resume_started"] = False
     metadata["_model_selection"] = model_selection
     metadata["_request_digest"] = request_digest(payload)
@@ -111,12 +166,18 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
     run = AgentRunModel(
         run_id=invocation_id,
         public_run_id=origin.public_run_id if origin else invocation_id,
-        session_id=session_id, task_id=task.task_id,
+        session_id=session_id,
+        task_id=task.task_id,
         status=AgentRunStatus.PENDING,
-        input_json=payload.input.model_dump(mode="json") if payload.input else None,
-        command_json=payload.command, metadata_json=metadata,
-        idempotency_key=key, multitask_strategy=payload.multitask_strategy,
-        stream_mode=payload.stream_mode, stream_resumable=payload.stream_resumable,
+        input_json=payload.input.model_dump(mode="json")
+        if payload.input
+        else None,
+        command_json=payload.command,
+        metadata_json=metadata,
+        idempotency_key=key,
+        multitask_strategy=payload.multitask_strategy,
+        stream_mode=payload.stream_mode,
+        stream_resumable=payload.stream_resumable,
         on_disconnect=payload.on_disconnect,
     )
     db.add(run)
@@ -136,14 +197,19 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
             )
         )
         if trigger_message is None:
-            raise InvalidRunRequest("Trigger message does not belong to this session.")
+            raise InvalidRunRequest(
+                "Trigger message does not belong to this session."
+            )
         run.trigger_message_id = trigger_message_uuid
         task.trigger_message_id = trigger_message_uuid
     if task.root_run_id is None:
         task.root_run_id = run.public_run_id
     if task.checkpoint_run_id is None:
         task.checkpoint_run_id = run.run_id
-        run.metadata_json = {**(run.metadata_json or {}), "checkpoint_run_id": str(run.run_id)}
+        run.metadata_json = {
+            **(run.metadata_json or {}),
+            "checkpoint_run_id": str(run.run_id),
+        }
     # Worker가 pending Run을 보기 전에 queued event까지 같은 transaction에서 완성한다.
     # commit 뒤 이벤트를 추가하면 Worker의 Task lease UPDATE와 lock 순서가 엇갈려
     # PostgreSQL deadlock이 발생할 수 있다.
@@ -156,18 +222,24 @@ async def enqueue(db: AsyncSession, user_id: UUID, session_id: UUID, payload: Ru
         commit=False,
     )
     from dtest.application.runs.commands.admission import enqueue_user
+
     await enqueue_user(db, run)
     try:
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
-        duplicate = await db.scalar(select(AgentRunModel).where(
-            AgentRunModel.session_id == session_id, AgentRunModel.idempotency_key == key
-        ))
+        duplicate = await db.scalar(
+            select(AgentRunModel).where(
+                AgentRunModel.session_id == session_id,
+                AgentRunModel.idempotency_key == key,
+            )
+        )
         if duplicate is not None:
             validate_replay(duplicate, payload)
             return duplicate
-        raise RunConflict("An active task already exists for this session.") from exc
+        raise RunConflict(
+            "An active task already exists for this session."
+        ) from exc
     await db.refresh(run)
     await db.refresh(task)
     return run

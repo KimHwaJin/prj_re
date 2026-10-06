@@ -80,4 +80,3 @@ class MessageDeleteResult(BaseModel):
     deleted_message_count: int
     current_leaf_message_id: UUID | None
     detail: str
-

@@ -2,10 +2,11 @@
 이상치 탐지 Tool - IQR, Z-score, Isolation Forest
 """
 
+
 def detect_outliers(
-        data: object = None,
-        method: str = "iqr",
-        columns: list = None,
+    data: object = None,
+    method: str = "iqr",
+    columns: list = None,
 ) -> dict[str, object]:
     """
     다양한 방법으로 이상치를 탐지합니다.
@@ -33,7 +34,9 @@ def detect_outliers(
     method = str(method).lower()
     valid_methods = {"iqr", "zscore", "isolation_forest"}
     if method not in valid_methods:
-        raise ValueError(f"method는 {sorted(valid_methods)} 중 하나여야 합니다.")
+        raise ValueError(
+            f"method는 {sorted(valid_methods)} 중 하나여야 합니다."
+        )
 
     if columns is None:
         selected_columns = [
@@ -43,7 +46,9 @@ def detect_outliers(
         ]
     else:
         if not isinstance(columns, list):
-            raise TypeError("columns는 컬럼명으로 구성된 list이거나 None이어야 합니다.")
+            raise TypeError(
+                "columns는 컬럼명으로 구성된 list이거나 None이어야 합니다."
+            )
 
         selected_columns = list(dict.fromkeys(columns))
         missing_columns = [
@@ -150,7 +155,9 @@ def detect_outliers(
         "columns": selected_columns,
         "row_count": row_count,
         "outlier_count": outlier_count,
-        "outlier_rate": round(outlier_count / row_count, 4) if row_count else 0.0,
+        "outlier_rate": round(outlier_count / row_count, 4)
+        if row_count
+        else 0.0,
         "column_report": column_report,
     }
 

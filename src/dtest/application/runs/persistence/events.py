@@ -20,7 +20,10 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 from uuid import UUID
 
-from dtest.application.runs.persistence.messages import save_agent_run_log, save_graph_message
+from dtest.application.runs.persistence.messages import (
+    save_agent_run_log,
+    save_graph_message,
+)
 
 
 @dataclass(frozen=True)
@@ -56,7 +59,9 @@ class GraphPersistenceContext:
                 or state.get("trigger_message_id")
                 or state.get("message_id")
             ),
-            agent_run_id=_string_or_none(agent_run_id or state.get("agent_run_id")),
+            agent_run_id=_string_or_none(
+                agent_run_id or state.get("agent_run_id")
+            ),
             plan_id=_string_or_none(plan_id or state.get("plan_id")),
             thread_id=_string_or_none(state.get("thread_id")),
             request_id=_string_or_none(state.get("request_id")),
@@ -106,8 +111,7 @@ class GraphEventHandler(Protocol):
         db: Any,
         state: dict[str, Any],
         graph_event: GraphEvent,
-    ) -> Any:
-        ...
+    ) -> Any: ...
 
 
 def _string_or_none(value: Any) -> str | None:
@@ -168,7 +172,9 @@ def _crud_message_payload(message: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
-def _event_key(node: str, event: str, revision: int | str | None = None) -> str:
+def _event_key(
+    node: str, event: str, revision: int | str | None = None
+) -> str:
     return f"{node}:{event}:{revision if revision is not None else ''}"
 
 
@@ -264,7 +270,9 @@ def extract_graph_events(
                         target="agent_runs",
                         payload=message,
                         index=message_index,
-                        node=metadata.get("node", message.get("name") or default_node),
+                        node=metadata.get(
+                            "node", message.get("name") or default_node
+                        ),
                         event=metadata.get("event", default_event),
                         context=context,
                     )
@@ -275,7 +283,9 @@ def extract_graph_events(
                         target="messages",
                         payload=normalized_message,
                         index=message_index,
-                        node=metadata.get("node", message.get("name") or default_node),
+                        node=metadata.get(
+                            "node", message.get("name") or default_node
+                        ),
                         event=metadata.get("event", default_event),
                         context=context,
                         display_message=normalized_message,
@@ -291,7 +301,9 @@ def extract_graph_events(
                         target="agent_runs",
                         payload=message,
                         index=message_index,
-                        node=metadata.get("node", message.get("name") or default_node),
+                        node=metadata.get(
+                            "node", message.get("name") or default_node
+                        ),
                         event=metadata.get("event", default_event),
                         context=context,
                     )
@@ -337,7 +349,11 @@ def extract_graph_events(
     workflow_revision = int(state.get("workflow_revision") or 0)
     plan_revision = int(state.get("plan_revision") or workflow_revision or 0)
     workflow = state.get("workflow")
-    if isinstance(workflow, dict) and workflow and workflow_revision > cursor.workflow_revision:
+    if (
+        isinstance(workflow, dict)
+        and workflow
+        and workflow_revision > cursor.workflow_revision
+    ):
         _append_event_once(
             events,
             seen_keys,
@@ -375,7 +391,9 @@ def extract_graph_events(
         _append_event_once(
             events,
             seen_keys,
-            key=_event_key("workflow", "executor_submitted", context.agent_run_id),
+            key=_event_key(
+                "workflow", "executor_submitted", context.agent_run_id
+            ),
             kind="workflow_log",
             target="workflow_logs",
             payload={
@@ -383,7 +401,9 @@ def extract_graph_events(
                 "execution_mode": state.get("execution_mode"),
                 "executor_request_path": state.get("executor_request_path"),
                 "execution_steps": state.get("execution_steps", []),
-                "executor_submit_response": state.get("executor_submit_response"),
+                "executor_submit_response": state.get(
+                    "executor_submit_response"
+                ),
             },
             node="workflow",
             event="executor_submitted",
@@ -391,7 +411,11 @@ def extract_graph_events(
         )
 
     final_response = state.get("final_response")
-    if isinstance(final_response, dict) and final_response and not cursor.final_response_saved:
+    if (
+        isinstance(final_response, dict)
+        and final_response
+        and not cursor.final_response_saved
+    ):
         _append_event_once(
             events,
             seen_keys,
@@ -407,7 +431,8 @@ def extract_graph_events(
     next_cursor = replace(
         cursor,
         message_count=message_count,
-        agent_run_started=cursor.agent_run_started or bool(context.agent_run_id),
+        agent_run_started=cursor.agent_run_started
+        or bool(context.agent_run_id),
         plan_revision=max(cursor.plan_revision, plan_revision),
         workflow_revision=max(cursor.workflow_revision, workflow_revision),
         notebook_saved=cursor.notebook_saved or bool(state.get("notebook")),
@@ -433,7 +458,8 @@ class MessageGraphEventHandler:
         db: Any,
         state: dict[str, Any],
         graph_event: GraphEvent,
-        *, batch: Any | None = None,
+        *,
+        batch: Any | None = None,
     ) -> Any:
         message = graph_event.display_message or graph_event.payload
         result = await save_graph_message(
@@ -470,11 +496,20 @@ class AgentRunLogGraphEventHandler:
 
     target = "agent_runs"
 
-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
+    async def persist(
+        self,
+        db: Any,
+        state: dict[str, Any],
+        graph_event: GraphEvent,
+        *,
+        batch: Any | None = None,
+    ) -> Any:
         run_id = graph_event.context.agent_run_id
         if not run_id:
             raise ValueError("agent_run_id is required to persist agent logs")
-        event_key = f"{graph_event.node}:{graph_event.event}:{graph_event.index}"
+        event_key = (
+            f"{graph_event.node}:{graph_event.event}:{graph_event.index}"
+        )
         return await save_agent_run_log(
             db,
             run_id=run_id,
@@ -494,10 +529,19 @@ class StructuredRunLogGraphEventHandler:
     def __init__(self, target: str):
         self.target = target
 
-    async def persist(self, db: Any, state: dict[str, Any], graph_event: GraphEvent, *, batch: Any | None = None) -> Any:
+    async def persist(
+        self,
+        db: Any,
+        state: dict[str, Any],
+        graph_event: GraphEvent,
+        *,
+        batch: Any | None = None,
+    ) -> Any:
         run_id = graph_event.context.agent_run_id
         if not run_id:
-            raise ValueError("agent_run_id is required to persist structured logs")
+            raise ValueError(
+                "agent_run_id is required to persist structured logs"
+            )
         discriminator = (
             graph_event.payload.get("workflow_revision")
             or graph_event.payload.get("execution_plan_id")
@@ -551,10 +595,14 @@ class GraphPersistenceDispatcher:
         self._batch_results = False
 
     @classmethod
-    def default(cls, *, agent_message_type: str = "agent") -> "GraphPersistenceDispatcher":
+    def default(
+        cls, *, agent_message_type: str = "agent"
+    ) -> "GraphPersistenceDispatcher":
         dispatcher = cls(
             [
-                MessageGraphEventHandler(agent_message_type=agent_message_type),
+                MessageGraphEventHandler(
+                    agent_message_type=agent_message_type
+                ),
                 AgentRunLogGraphEventHandler(),
                 # 별도 management table 확정 전에도 UI와 감사 로그에서 JSON을
                 # 잃지 않도록 append-only agent_run_logs에 구조화 결과를 저장합니다.
@@ -573,10 +621,15 @@ class GraphPersistenceDispatcher:
         *,
         context: GraphPersistenceContext,
     ) -> GraphPersistenceResult:
-        if state.get('agent_runtime') == 'agentic-planning-v1':
-            from dtest.application.runs.persistence.plans import persist_plan_events
+        if state.get("agent_runtime") == "agentic-planning-v1":
+            from dtest.application.runs.persistence.plans import (
+                persist_plan_events,
+            )
+
             persisted = await persist_plan_events(db, state, context)
-            return GraphPersistenceResult(cursor=cursor, persisted=persisted, skipped=[])
+            return GraphPersistenceResult(
+                cursor=cursor, persisted=persisted, skipped=[]
+            )
         events, next_cursor = extract_graph_events(
             state,
             cursor,
@@ -589,14 +642,18 @@ class GraphPersistenceDispatcher:
 
         try:
             batch = await GraphResultBatch.prepare(db, state, context, events)
-            result = await self._persist_events(db, state, events, next_cursor, batch=batch)
+            result = await self._persist_events(
+                db, state, events, next_cursor, batch=batch
+            )
             await db.commit()
             return result
         except BaseException:
             await db.rollback()
             raise
 
-    async def _persist_events(self, db, state, events, next_cursor, *, batch=None):
+    async def _persist_events(
+        self, db, state, events, next_cursor, *, batch=None
+    ):
         persisted: list[dict[str, Any]] = []
         skipped: list[dict[str, Any]] = []
 
@@ -615,7 +672,9 @@ class GraphPersistenceDispatcher:
             if batch is None:
                 result = await handler.persist(db, state, graph_event)
             else:
-                result = await handler.persist(db, state, graph_event, batch=batch)
+                result = await handler.persist(
+                    db, state, graph_event, batch=batch
+                )
             persisted.append(
                 {
                     "target": graph_event.target,

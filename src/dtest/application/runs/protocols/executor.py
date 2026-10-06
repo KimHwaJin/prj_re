@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dtest.contracts.agent import resume_command
 
-from dtest.contracts.events import DeferEvent, EventContext, IgnoreEvent, RejectEvent
+from dtest.contracts.events import (
+    DeferEvent,
+    EventContext,
+    IgnoreEvent,
+    RejectEvent,
+)
 
 
 class ExecutorResumeProtocol:
@@ -65,7 +70,8 @@ class ExecutorResumeProtocol:
             and context.event.event_type == "execution.operation_completed"
         ):
             raise IgnoreEvent(
-                "Operation event is obsolete while awaiting execution completion"
+                "Operation event is obsolete while awaiting "
+                "execution completion"
             )
 
         action = {
@@ -94,9 +100,15 @@ class ExecutorResumeProtocol:
         elif len(interrupts) == 1:
             boundary = interrupts[0]
             value = boundary.value
-            terminal_closes_decision = (isinstance(value,dict) and value.get('kind') in {'decision_review','repair_review'}
-                                       and context.event.event_type=='execution.completed')
-            if not isinstance(value, dict) or (value.get("kind") != "EXECUTOR_EVENT" and not terminal_closes_decision):
+            terminal_closes_decision = (
+                isinstance(value, dict)
+                and value.get("kind") in {"decision_review", "repair_review"}
+                and context.event.event_type == "execution.completed"
+            )
+            if not isinstance(value, dict) or (
+                value.get("kind") != "EXECUTOR_EVENT"
+                and not terminal_closes_decision
+            ):
                 raise DeferEvent("Graph is waiting for non-Executor input")
             if (
                 value.get("task_id") != context.task_id
@@ -122,4 +134,6 @@ class ExecutorResumeProtocol:
             raise DeferEvent("Agent has not recorded the event receipt yet")
 
     async def _invoke(self, value, config, *, values, durability):
-        return await self.invocation.invoke(value, config, values=values, durability=durability)
+        return await self.invocation.invoke(
+            value, config, values=values, durability=durability
+        )

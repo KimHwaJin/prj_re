@@ -52,7 +52,10 @@ class Store:
 
         # Wake only after transaction commit and connection return. A very fast
         # Executor may have published all events before this binding existed.
-        from dtest.infrastructure.database.binding_signals import binding_committed
+        from dtest.infrastructure.database.binding_signals import (
+            binding_committed,
+        )
+
         binding_committed(self.pool.conninfo, self.namespace)
 
     async def ingest(
@@ -145,14 +148,19 @@ class Store:
         """
         async with self.pool.connection() as conn, conn.transaction():
             binding = await conn.execute(
-                "SELECT session_id FROM ew_bindings WHERE namespace=%s AND execution_id=%s",
+                (
+                    "SELECT session_id FROM ew_bindings WHERE "
+                    "namespace=%s AND execution_id=%s"
+                ),
                 (self.namespace, execution_id),
             )
             identity = await binding.fetchone()
             if identity is None:
                 return 0, None
-            await conn.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
-                               (f"agent-command-order:{UUID(identity[0])}",))
+            await conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))",
+                (f"agent-command-order:{UUID(identity[0])}",),
+            )
             cur = await conn.execute(
                 """SELECT last_sequence,session_id,task_id FROM ew_bindings
                 WHERE namespace=%s AND execution_id=%s FOR UPDATE""",
@@ -186,10 +194,18 @@ class Store:
                         """INSERT INTO agent_commands
                         (namespace,command_id,session_id,kind,payload)
                         VALUES (%s,%s,%s,'executor_resume',%s)""",
-                        (self.namespace, command_id, UUID(row[1]), Jsonb({
-                            "task_id": row[2], "execution_id": str(execution_id),
-                            "event": data,
-                        })),
+                        (
+                            self.namespace,
+                            command_id,
+                            UUID(row[1]),
+                            Jsonb(
+                                {
+                                    "task_id": row[2],
+                                    "execution_id": str(execution_id),
+                                    "event": data,
+                                }
+                            ),
+                        ),
                     )
                 await conn.execute(
                     """UPDATE ew_inbox SET state=%s,updated_at=now(),

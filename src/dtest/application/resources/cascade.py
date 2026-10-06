@@ -55,4 +55,3 @@ async def soft_delete_sessions(
         )
     )
     return len(ids)
-

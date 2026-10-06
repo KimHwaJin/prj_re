@@ -1,4 +1,5 @@
 """Shared template ownership, field-driven additions and typed source boundaries."""
+
 from pathlib import Path
 import json
 
@@ -13,16 +14,23 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.parametrize("profile", ["local", "dev", "stg", "prd"])
-def test_future_platform_keys_do_not_need_a_service_allowlist(tmp_path, profile):
+def test_future_platform_keys_do_not_need_a_service_allowlist(
+    tmp_path, profile
+):
     filename = "config.yml" if profile == "local" else f"config.{profile}.yml"
     (tmp_path / filename).write_text(
         "PORT: 8000\nDATABASE_URL: postgresql+asyncpg://user:password@db/chat_app\n"
         "CHECKPOINT_DB_URI: postgresql://user:password@db/agent\n"
         "IS_SECURITY_SERVICE: true\nS3_FILE_URL_EXPIRES_IN: 3600\n"
-        "FUTURE_PLATFORM_EXTENSION: {token: private-token, nested: [1, 2]}\n")
+        "FUTURE_PLATFORM_EXTENSION: {token: private-token, nested: [1, 2]}\n"
+    )
     settings = load_settings(root=tmp_path, profile=profile, environ={})
     assert settings.api.server_port == 8000
-    assert settings.unused_config_keys == ("FUTURE_PLATFORM_EXTENSION", "IS_SECURITY_SERVICE", "S3_FILE_URL_EXPIRES_IN")
+    assert settings.unused_config_keys == (
+        "FUTURE_PLATFORM_EXTENSION",
+        "IS_SECURITY_SERVICE",
+        "S3_FILE_URL_EXPIRES_IN",
+    )
     assert "private-token" not in json.dumps(settings.summary())
     assert "password" not in json.dumps(settings.summary())
     assert "FUTURE_PLATFORM_EXTENSION" not in settings.inputs
@@ -31,10 +39,17 @@ def test_future_platform_keys_do_not_need_a_service_allowlist(tmp_path, profile)
 def test_new_field_declares_its_own_key_default_alias_and_validation():
     class ExtensionSettings(BaseModel):
         model_config = ConfigDict(populate_by_name=True)
-        slots: int = Field(default=2, ge=1, validation_alias=AliasChoices("NEW_SLOTS", "OLD_SLOTS"))
+        slots: int = Field(
+            default=2,
+            ge=1,
+            validation_alias=AliasChoices("NEW_SLOTS", "OLD_SLOTS"),
+        )
+
     binding = ModelBinding("extension", ExtensionSettings)
     aliases = source_aliases((binding,))
-    selected, unused = select_values({"OLD_SLOTS": "4", "PLATFORM_EXTENSION": 1}, aliases)
+    selected, unused = select_values(
+        {"OLD_SLOTS": "4", "PLATFORM_EXTENSION": 1}, aliases
+    )
     assert binding.validate(binding.inputs(selected)).slots == 4
     assert binding.validate({}).slots == 2
     assert unused == ["PLATFORM_EXTENSION"]
@@ -46,12 +61,27 @@ def test_new_field_declares_its_own_key_default_alias_and_validation():
 
 def test_native_yaml_collections_and_json_environment_are_equivalent():
     from dtest.settings.agent import load_agent_settings
-    native = load_settings(config={"EXECUTOR_RUNTIME_PROFILE": "default",
-        "EXECUTOR_RUNTIME_PROFILES": ["default", "other"], "ACTIVE_MULTI_TURN": False,
-        "SET_MAX_HISTORY": 0, "SSO_ALLOWED_RETURN_ROOTS": ["/demo", "/docs"]}, environ={})
-    env = load_settings(config={}, environ={"EXECUTOR_RUNTIME_PROFILE": "default",
-        "EXECUTOR_RUNTIME_PROFILES": '["default", "other"]', "ACTIVE_MULTI_TURN": "false",
-        "SET_MAX_HISTORY": "0", "SSO_ALLOWED_RETURN_ROOTS": '["/demo", "/docs"]'})
+
+    native = load_settings(
+        config={
+            "EXECUTOR_RUNTIME_PROFILE": "default",
+            "EXECUTOR_RUNTIME_PROFILES": ["default", "other"],
+            "ACTIVE_MULTI_TURN": False,
+            "SET_MAX_HISTORY": 0,
+            "SSO_ALLOWED_RETURN_ROOTS": ["/demo", "/docs"],
+        },
+        environ={},
+    )
+    env = load_settings(
+        config={},
+        environ={
+            "EXECUTOR_RUNTIME_PROFILE": "default",
+            "EXECUTOR_RUNTIME_PROFILES": '["default", "other"]',
+            "ACTIVE_MULTI_TURN": "false",
+            "SET_MAX_HISTORY": "0",
+            "SSO_ALLOWED_RETURN_ROOTS": '["/demo", "/docs"]',
+        },
+    )
     assert native.agent == env.agent
     assert native.sso == env.sso
     assert isinstance(native.inputs["SET_MAX_HISTORY"], int)
@@ -60,18 +90,27 @@ def test_native_yaml_collections_and_json_environment_are_equivalent():
     assert load_agent_settings({"RECURSION_LIMIT": "73"}).recursion_limit == 73
 
 
-@pytest.mark.parametrize("values", [
-    {"EXECUTOR_RUNTIME_PROFILES": []}, {"EVENT_WORKER_ENABLED": None},
-    {"SHUTDOWN_TIMEOUT_SECONDS": True}, {"RECURSION_LIMIT": True},
-    {"ANALYSIS_DATASETS": "private-invalid-json"},
-])
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"EXECUTOR_RUNTIME_PROFILES": []},
+        {"EVENT_WORKER_ENABLED": None},
+        {"SHUTDOWN_TIMEOUT_SECONDS": True},
+        {"RECURSION_LIMIT": True},
+        {"ANALYSIS_DATASETS": "private-invalid-json"},
+    ],
+)
 def test_invalid_our_values_never_fall_back(values):
     with pytest.raises(ConfigurationError) as error:
-        load_settings(config=values, environ={"SHUTDOWN_TIMEOUT_SECONDS": "25"})
+        load_settings(
+            config=values, environ={"SHUTDOWN_TIMEOUT_SECONDS": "25"}
+        )
     assert "private-invalid-json" not in str(error.value)
 
 
-def test_initializer_preserves_unknown_platform_values_without_parsing_them(tmp_path):
+def test_initializer_preserves_unknown_platform_values_without_parsing_them(
+    tmp_path,
+):
     template = (ROOT / "config.example.yml").read_text()
     template += "NEW_PLATFORM_TOKEN: private-value\n"
     (tmp_path / "config.example.yml").write_text(template)

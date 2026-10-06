@@ -1,5 +1,7 @@
 """Cancellation-safe cleanup independent of API health and database state."""
+
 import asyncio
+
 
 async def protected_cleanup(awaitable):
     """Repeated owner cancellation must not strand its owned tasks/resources."""

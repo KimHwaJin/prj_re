@@ -51,4 +51,3 @@ class ProjectRepository:
                 ProjectModel.delete_yn == DeleteYN.N,
             )
         )
-

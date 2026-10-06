@@ -17,7 +17,10 @@ class MessageRepository:
     ) -> MessageModel | None:
         return await db.scalar(
             select(MessageModel)
-            .join(SessionModel, SessionModel.session_id == MessageModel.session_id)
+            .join(
+                SessionModel,
+                SessionModel.session_id == MessageModel.session_id,
+            )
             .where(
                 MessageModel.message_id == message_id,
                 MessageModel.delete_yn == DeleteYN.N,
@@ -25,4 +28,3 @@ class MessageRepository:
                 SessionModel.delete_yn == DeleteYN.N,
             )
         )
-

@@ -1,12 +1,17 @@
 """Durable read-schema changes must preserve existing waits and receipts."""
+
 from uuid import UUID, uuid4
 
 import pytest
 from langgraph.types import Command
 
 from dtest.agent_service.agents.analysis.state import PlanningState
-from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
-from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.agent_service.agents.analysis.planning.graph import (
+    build_planning_graph,
+)
+from dtest.agent_service.runtime.langgraph.checkpointer import (
+    create_checkpointer,
+)
 from dtest.contracts.events import EventContext, ExecutorEvent
 from dtest.contracts.user_resume import resume_identity, resume_envelope
 from dtest.application.runs.graph_invocation import GraphInvocation
@@ -23,78 +28,147 @@ def full_read_graph(runtime, *, checkpointer):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('wait', ['plan_review', 'executor', 'decision_review', 'repair_review'])
-async def test_full_read_checkpoint_resumes_with_narrow_inputs_after_pool_restart(harness, database_url, tmp_path, monkeypatch, wait):
+@pytest.mark.parametrize(
+    "wait", ["plan_review", "executor", "decision_review", "repair_review"]
+)
+async def test_full_read_checkpoint_resumes_with_narrow_inputs_after_pool_restart(
+    harness, database_url, tmp_path, monkeypatch, wait
+):
     from tests.agent_service import test_agentic_execution as execution
     from tests.agent_service import test_agentic_repair as repair
-    from tests.agent_service.test_planning_runtime import setup as planning_setup
+    from tests.agent_service.test_planning_runtime import (
+        setup as planning_setup,
+    )
+
     dsn = checkpoint_url(database_url)
-    async with create_checkpointer(dsn, setup_on_start=True, min_size=1, max_size=2) as saver:
-        monkeypatch.setattr(execution, 'InMemorySaver', lambda: saver)
-        monkeypatch.setattr(repair, 'InMemorySaver', lambda: saver)
-        monkeypatch.setattr(execution, 'build_planning_graph', full_read_graph)
-        monkeypatch.setattr(repair, 'build_planning_graph', full_read_graph)
-        if wait == 'plan_review':
+    async with create_checkpointer(
+        dsn, setup_on_start=True, min_size=1, max_size=2
+    ) as saver:
+        monkeypatch.setattr(execution, "InMemorySaver", lambda: saver)
+        monkeypatch.setattr(repair, "InMemorySaver", lambda: saver)
+        monkeypatch.setattr(execution, "build_planning_graph", full_read_graph)
+        monkeypatch.setattr(repair, "build_planning_graph", full_read_graph)
+        if wait == "plan_review":
             runtime, value, config = planning_setup()
             graph = full_read_graph(runtime, checkpointer=saver)
-            state = await graph.ainvoke(value, config, durability='sync')
+            state = await graph.ainvoke(value, config, durability="sync")
             original_calls = next(iter(runtime.agents.values())).calls
             executor = None
-        elif wait == 'repair_review':
-            runtime, executor, graph, config, state, calls, deliver, resume = await repair.scenario(tmp_path, monkeypatch, needs_input=True)
+        elif wait == "repair_review":
+            (
+                runtime,
+                executor,
+                graph,
+                config,
+                state,
+                calls,
+                deliver,
+                resume,
+            ) = await repair.scenario(tmp_path, monkeypatch, needs_input=True)
             _, state = await deliver(executor.events[0])
         else:
-            runtime, executor, graph, config, state, deliver = await execution.setup(tmp_path, monkeypatch)
-            if wait == 'decision_review':
+            (
+                runtime,
+                executor,
+                graph,
+                config,
+                state,
+                deliver,
+            ) = await execution.setup(tmp_path, monkeypatch)
+            if wait == "decision_review":
                 original_role = runtime.execution_role
+
                 async def role(name, *args):
                     result = await original_role(name, *args)
-                    if name == 'review':
+                    if name == "review":
                         result.needs_user_input = True
                     return result
-                monkeypatch.setattr(runtime, 'execution_role', role)
+
+                monkeypatch.setattr(runtime, "execution_role", role)
                 _, state = await deliver(executor.events[0])
         before = (await graph.aget_state(config)).values
         node_count = len(graph.nodes) - 1
-        assert all(len(spec.input_schema.__annotations__) == 77 for spec in graph.builder.nodes.values())
-    async with create_checkpointer(dsn, setup_on_start=False, min_size=1, max_size=2) as saver:
+        assert all(
+            len(spec.input_schema.__annotations__) == 77
+            for spec in graph.builder.nodes.values()
+        )
+    async with create_checkpointer(
+        dsn, setup_on_start=False, min_size=1, max_size=2
+    ) as saver:
         graph = build_planning_graph(runtime, checkpointer=saver)
         restored = await graph.aget_state(config)
         assert restored.values == before
         assert len(graph.nodes) - 1 == node_count
         boundary = restored.tasks[0].interrupts[0]
-        if wait == 'plan_review':
-            review = before['plan_views'][0]
-            command = {'resume': {'action': 'approve_plan', 'plan_id': review['plan_id'], 'plan_revision': review['plan_revision']}}
-        elif wait == 'repair_review':
-            command = repair.approve(before['repair_review'])
-        elif wait == 'decision_review':
-            review = before['decision_review']
-            command = {'resume': {'action': 'approve_decisions', 'interaction_id': review['interaction_id'], 'revision': review['revision'],
-                'values': {field['decision_id']: field['value'] for field in review['payload']['decisions']}}}
+        if wait == "plan_review":
+            review = before["plan_views"][0]
+            command = {
+                "resume": {
+                    "action": "approve_plan",
+                    "plan_id": review["plan_id"],
+                    "plan_revision": review["plan_revision"],
+                }
+            }
+        elif wait == "repair_review":
+            command = repair.approve(before["repair_review"])
+        elif wait == "decision_review":
+            review = before["decision_review"]
+            command = {
+                "resume": {
+                    "action": "approve_decisions",
+                    "interaction_id": review["interaction_id"],
+                    "revision": review["revision"],
+                    "values": {
+                        field["decision_id"]: field["value"]
+                        for field in review["payload"]["decisions"]
+                    },
+                }
+            }
         else:
             command = None
         if command is not None:
             identity = resume_identity(str(uuid4()), boundary.id, command)
-            state = await graph.ainvoke(Command(resume={boundary.id: resume_envelope(identity, command)}), config, durability='sync')
-            assert state['user_resume_receipt'] == identity
+            state = await graph.ainvoke(
+                Command(
+                    resume={boundary.id: resume_envelope(identity, command)}
+                ),
+                config,
+                durability="sync",
+            )
+            assert state["user_resume_receipt"] == identity
         else:
             event = executor.events[0]
-            context = EventContext(namespace='test', session_id=config['configurable']['thread_id'], task_id=before['task_id'],
-                execution_id=UUID(executor.id), command_id=uuid4(), event=ExecutorEvent.model_validate(event))
-            await GraphInvocation(graph, model_validator=None).executor_resume(context)
+            context = EventContext(
+                namespace="test",
+                session_id=config["configurable"]["thread_id"],
+                task_id=before["task_id"],
+                execution_id=UUID(executor.id),
+                command_id=uuid4(),
+                event=ExecutorEvent.model_validate(event),
+            )
+            await GraphInvocation(graph, model_validator=None).executor_resume(
+                context
+            )
             state = (await graph.aget_state(config)).values
-            assert state['ew_receipts'][str(context.command_id)] == event['event_id']
+            assert (
+                state["ew_receipts"][str(context.command_id)]
+                == event["event_id"]
+            )
             count = len(executor.calls)
-            await GraphInvocation(graph, model_validator=None).executor_resume(context)
+            await GraphInvocation(graph, model_validator=None).executor_resume(
+                context
+            )
             assert len(executor.calls) == count
         if executor:
-            assert state['execution_id'] == before['execution_id']
-            assert state['approved_snapshot'] == before['approved_snapshot']
-            if wait == 'repair_review':
-                assert executor.globals['repair_load_calls'] == 1
-                assert state['repair_attempts'] == 1
+            assert state["execution_id"] == before["execution_id"]
+            assert state["approved_snapshot"] == before["approved_snapshot"]
+            if wait == "repair_review":
+                assert executor.globals["repair_load_calls"] == 1
+                assert state["repair_attempts"] == 1
         else:
-            assert state['final_response']['status'] == 'plan_approved'
+            assert state["final_response"]["status"] == "plan_approved"
             assert next(iter(runtime.agents.values())).calls == original_calls
-        assert saver.conn.get_stats()['pool_available'] == saver.conn.get_stats()['pool_size']
+        assert (
+            saver.conn.get_stats()["pool_available"]
+            == saver.conn.get_stats()["pool_size"]
+        )
