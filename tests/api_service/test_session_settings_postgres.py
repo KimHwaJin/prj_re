@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Real HTTP/PG session defaults and immutable settings, using a disposable DB."""
 from dataclasses import replace
 from uuid import UUID
@@ -7,10 +8,10 @@ import pytest_asyncio
 from sqlalchemy import func, select
 from fastapi import HTTPException
 
-import service_settings
-from api_service.models.session_model import SessionModel
-from api_service.resources.sessions import SessionService
-from api_service.runs.project_context import load_project_snapshot
+import dtest.settings.loader as service_settings
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.application.resources.sessions import SessionService
+from dtest.application.runs.project_context import load_project_snapshot
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, initialize, add_user
 
 
@@ -96,9 +97,9 @@ async def test_message_coordinator_uses_same_resolved_session_default(sessions):
 async def test_internal_creator_cannot_bypass_validation_and_legacy_json_is_preserved(sessions):
     h = sessions
     async with h.factory() as db:
-        from api_service.models.project_model import ProjectModel
+        from dtest.infrastructure.database.models.project_model import ProjectModel
         project = await db.get(ProjectModel, UUID(h.user['default_project_id']))
-        with pytest.raises(HTTPException) as failed:
+        with pytest.raises((HTTPException, ApplicationError)) as failed:
             await SessionService.create_internal(db, user_id=project.user_id,
                 project_id=project.project_id, settings={'unknown': True})
         assert failed.value.status_code == 422

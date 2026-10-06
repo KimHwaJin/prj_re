@@ -13,15 +13,15 @@ from uuid import UUID
 import pytest
 from sqlalchemy import select, text, update
 
-import service_settings
-from api_service.workers import agent as worker
-from api_service.runs import execution
-from api_service.runs.commands.wakeup import namespace_signal, next_retry_delay, subscription
-from api_service.utils import utc_now
-from api_service.models.agent_command_model import AgentCommandModel as Command
-from api_service.models.agent_run_model import AgentRunModel as Run
-from service_contracts.events import DeferEvent
-from service_runtime.postgres_signals import PostgresSignals, COMMAND_CHANNEL, process_signals
+import dtest.settings.loader as service_settings
+from dtest.worker_service import command_worker as worker
+from dtest.application.runs import execution
+from dtest.application.runs.commands.wakeup import namespace_signal, next_retry_delay, subscription
+from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.models.agent_command_model import AgentCommandModel as Command
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.contracts.events import DeferEvent
+from dtest.infrastructure.database.signals import PostgresSignals, COMMAND_CHANNEL, process_signals
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 from tests.api_service.test_agent_commands_postgres import commands, admit_event
@@ -31,7 +31,7 @@ pytestmark=pytest.mark.asyncio
 
 def configure(monkeypatch, **values):
     current=service_settings.get_settings()
-    monkeypatch.setattr(service_settings,'_snapshot',replace(current,api=current.api.model_copy(update={
+    monkeypatch.setattr(service_settings,'_snapshot',replace(current,commands=current.commands.model_copy(update={
         'agent_worker_poll_interval_seconds':.05,'agent_worker_reconcile_interval_seconds':5,
         **values})))
 
@@ -68,7 +68,7 @@ async def completed(h, identities):
 
 async def test_commit_rollback_namespace_and_both_independent_listeners(commands):
     h=commands; cfg=service_settings.get_settings()
-    one=PostgresSignals(cfg.api.database_url); two=PostgresSignals(cfg.api.database_url)
+    one=PostgresSignals(cfg.database.database_url); two=PostgresSignals(cfg.database.database_url)
     a,b=asyncio.Event(),asyncio.Event()
     selected=namespace_signal(cfg.worker.namespace)
     def callback(wake,payload):
@@ -102,7 +102,7 @@ async def test_shared_sse_and_worker_connection_has_independent_lifetimes(comman
         user_id=await db.scalar(select(Run.metadata_json).where(Run.run_id==UUID(public['run_id'])))
     key=(UUID(user_id['requested_by_user_id']),UUID(h.session_id),UUID(public['run_id']))
     hub=h.app.state.run_stream_hub
-    async with subscription(cfg.api.database_url,cfg.worker.namespace,wake) as signals:
+    async with subscription(cfg.database.database_url,cfg.worker.namespace,wake) as signals:
         await asyncio.wait_for(signals.ready.wait(),3)
         connection=signals.connection
         async with hub.subscribe(*key):
@@ -121,7 +121,7 @@ async def test_shared_sse_and_worker_connection_has_independent_lifetimes(comman
 async def test_signal_loss_periodic_scan_and_listener_disconnect(commands,monkeypatch):
     h=commands;configure(monkeypatch,agent_worker_reconcile_interval_seconds=.2)
     monkeypatch.setattr(execution,'ainvoke_user_turn',AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
-    cfg=service_settings.get_settings();signals=process_signals(cfg.api.database_url)
+    cfg=service_settings.get_settings();signals=process_signals(cfg.database.database_url)
     calls=await count_claims(monkeypatch)
     stop_event=asyncio.Event();loop=asyncio.create_task(worker.run_forever(stop_event=stop_event))
     try:
@@ -176,7 +176,7 @@ async def test_two_workers_fanout_no_duplicate_and_no_claim_while_full(commands,
     cfg=service_settings.get_settings();brokers=[]
     @asynccontextmanager
     async def independent(_url,namespace,wake):
-        signals=PostgresSignals(cfg.api.database_url);brokers.append(signals)
+        signals=PostgresSignals(cfg.database.database_url);brokers.append(signals)
         def changed(payload):
             if payload is None or payload==namespace_signal(namespace):wake.set()
         async with signals.subscribe(COMMAND_CHANNEL,changed):yield signals
@@ -222,7 +222,7 @@ async def test_idle_query_cost_and_admission_latency_measurement(commands,monkey
             value=await original();calls.append((time.perf_counter(),value));return value
         monkeypatch.setattr(worker,'claim_one',claim)
         stop_event=asyncio.Event();loop=asyncio.create_task(worker.run_forever(stop_event=stop_event))
-        signals=process_signals(service_settings.get_settings().api.database_url)
+        signals=process_signals(service_settings.get_settings().database.database_url)
         try:
             if enabled:await healthy_idle(signals,calls)
             else:
@@ -260,7 +260,7 @@ async def test_two_os_processes_wake_and_complete_each_command_once(commands,tmp
     h=commands;cfg=service_settings.get_settings()
     sessions=[await add_session(h,h.user) for _ in range(6)]
     config_file=tmp_path/'private-settings.json'
-    config_file.write_text(json.dumps({'DATABASE_URL':cfg.api.database_url,
+    config_file.write_text(json.dumps({'DATABASE_URL':cfg.database.database_url,
         'EW_NAMESPACE':cfg.worker.namespace,'AGENT_WORKER_ENABLED':False,'EVENT_WORKER_ENABLED':False,
         'TASK_RECONCILER_ENABLED':False,'MODEL_PROVIDER':'mock','DATABASE_POOL_SIZE':4,
         'DATABASE_MAX_OVERFLOW':0,'AGENT_WORKER_CONCURRENCY':1,
@@ -269,12 +269,12 @@ async def test_two_os_processes_wake_and_complete_each_command_once(commands,tmp
     child=tmp_path/'worker.py'
     child.write_text('''import asyncio,json,sys
 from pathlib import Path
-import service_settings
+import dtest.settings.loader as service_settings
 service_settings.configure(service_settings.load_settings(config=json.loads(Path(sys.argv[1]).read_text()),environ={}))
-from api_service.workers import agent as worker
-from api_service.runs import execution
-from api_service.infrastructure.database import close_database
-from service_runtime.postgres_signals import process_signals
+from dtest.worker_service import command_worker as worker
+from dtest.application.runs import execution
+from dtest.infrastructure.database.runtime import close_database
+from dtest.infrastructure.database.signals import process_signals
 async def graph(**kwargs):
     await asyncio.sleep(.2)
     return {'routing_result':{'route':'analysis'}}
@@ -287,7 +287,7 @@ worker.execute_claimed=observed
 async def main():
     stop=asyncio.Event()
     task=asyncio.create_task(worker.run_forever(stop_event=stop))
-    signals=process_signals(service_settings.get_settings().api.database_url)
+    signals=process_signals(service_settings.get_settings().database.database_url)
     await asyncio.wait_for(signals.ready.wait(),10)
     Path(sys.argv[3]).touch()
     try:

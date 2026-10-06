@@ -11,20 +11,20 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SQLAlchemyError
 
 from langgraph.graph import StateGraph, START, END
-import service_settings
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
-from service_contracts.user_resume import UserResumeState
-from service_contracts.initial_request import InitialRequestState
-from agent_service.runtime.initial_request import record_initial_request
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-import api_service.runs.runtime as graphs
-import api_service.runs.persistence.graph as projection
-import api_service.workers.agent as worker
-from api_service.models.enums import AgentRunStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.runs.task_events import TaskEventService
+import dtest.settings.loader as service_settings
+from dtest.agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from dtest.contracts.user_resume import UserResumeState
+from dtest.contracts.initial_request import InitialRequestState
+from dtest.agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+import dtest.application.runs.runtime as graphs
+import dtest.application.runs.persistence.graph as projection
+import dtest.worker_service.command_worker as worker
+from dtest.contracts.enums import AgentRunStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.application.runs.task_events import TaskEventService
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_public_run_postgres import state, resume, execute
@@ -54,7 +54,7 @@ async def real_graph(runtime, monkeypatch):
     h = runtime
     settings = service_settings.get_settings()
     monkeypatch.setattr(service_settings, '_snapshot', replace(
-        settings, api=settings.api.model_copy(update={'agent_worker_max_retries': 1})))
+        settings, commands=settings.commands.model_copy(update={'agent_worker_max_retries': 1})))
     calls = {'one': 0, 'two': 0, 'reject': False}
 
     @record_initial_request
@@ -85,7 +85,7 @@ async def real_graph(runtime, monkeypatch):
             b.add_edge(left, right)
         return b.compile(checkpointer=saver)
 
-    dsn = make_url(settings.api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    dsn = make_url(settings.database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     @asynccontextmanager
     async def context():
         async with create_checkpointer(database_url=dsn, setup_on_start=True,
@@ -229,7 +229,7 @@ async def test_ambiguous_or_exhausted_recovery_never_becomes_success(real_graph,
     if mode == 'incomplete_graph':
         h.review_calls['fail_next'] = True
     elif mode == 'dispatch_commit_lost':
-        from api_service.runs.protocols import user_resume as boundary
+        from dtest.application.runs.protocols import user_resume as boundary
         original = boundary.mark_started
         async def lost(**kwargs):
             await original(**kwargs)
@@ -244,7 +244,7 @@ async def test_ambiguous_or_exhausted_recovery_never_becomes_success(real_graph,
     if mode == 'retry_exhausted':
         settings = service_settings.get_settings()
         monkeypatch.setattr(service_settings, '_snapshot', replace(settings,
-            api=settings.api.model_copy(update={'agent_worker_max_retries': 0})))
+            commands=settings.commands.model_copy(update={'agent_worker_max_retries': 0})))
     assert (await resume(h, current)).status_code == 202
     if mode == 'retry_exhausted':
         await execute()
@@ -267,7 +267,7 @@ async def test_ambiguous_or_exhausted_recovery_never_becomes_success(real_graph,
 
 async def test_quarantined_resume_does_not_stop_other_sessions(real_graph):
     from tests.api_service.test_user_identity_postgres import add_session
-    from api_service.models.session_execution_model import SessionExecutionModel
+    from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
     h = real_graph
     current = await waiting(h)
     h.review_calls['reject'] = True
@@ -290,9 +290,9 @@ async def test_quarantined_resume_does_not_stop_other_sessions(real_graph):
 @pytest.mark.parametrize('failure', ['write_failed', 'guard_rejected'])
 async def test_failed_quarantine_retains_process_and_owner_protection(real_graph, monkeypatch, failure):
     from unittest.mock import AsyncMock
-    from service_contracts.execution import ExecutionNeedsRecovery
-    from api_service.runs.tasks import TaskService
-    from api_service.models.session_execution_model import SessionExecutionModel
+    from dtest.contracts.execution import ExecutionNeedsRecovery
+    from dtest.application.runs.tasks import TaskService
+    from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
     h = real_graph
     current = await waiting(h)
     async with h.factory() as db:

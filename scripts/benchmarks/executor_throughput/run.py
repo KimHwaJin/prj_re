@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[3]
 # This runner/capture schema is the 057 two-dispatcher baseline. The common
 # scheduler needs shared-peak measurement and an equal-total-capacity control.
 # Refuse instead of publishing a comparison with misleading EW limits.
-if (ROOT/'src/api_service/runs/commands/claim.py').exists():
+if (ROOT/'src/dtest/application/runs/commands/claim.py').exists():
  raise SystemExit('057 benchmark runner targets the previous two-dispatcher architecture. Use the recorded baseline source; stage 5 will add the shared-capacity runner. Current command-worker functional tests are available in test_agent_commands_postgres.py.')
 p=argparse.ArgumentParser();p.add_argument('--settings-file',required=True,type=Path);p.add_argument('--output',required=True,type=Path)
 p.add_argument('--users',type=int,nargs='+',default=[1,10,30,50]);p.add_argument('--concurrency',type=int,nargs='+',default=[4,16,32])
@@ -76,7 +76,7 @@ async def trial(n,c,repeat):
   'DATABASE_POOL_SIZE':a.pool,'DATABASE_MAX_OVERFLOW':0,'DATABASE_POOL_TIMEOUT_SECONDS':10,
   'CHECKPOINT_POOL_MIN_SIZE':1,'CHECKPOINT_POOL_MAX_SIZE':a.checkpoint_pool,'CHECKPOINT_SETUP_ON_START':True,
   'EW_POOL_SIZE':a.event_pool,'EW_CONCURRENCY':4,'EW_INGRESS_CONCURRENCY':4,'EW_DISPATCH_CONCURRENCY':a.event_concurrency,'EW_POLL_SECONDS':a.event_poll,'EW_IDLE_POLL_SECONDS':a.event_idle,
-  'EW_HEALTH_PORT':0,'EW_EXECUTOR_EVENT_STREAM':event_stream,'EW_EXECUTOR_BASE_URL':executor_origin.rstrip('/')+'/api/v1','MODEL_PROVIDER':'mock','MODEL_MOCK_DELAY_MS':a.delay_ms,'PHOENIX_ENDPOINT':None,
+  'EW_HEALTH_PORT':0,'EW_EXECUTOR_EVENT_STREAM':event_stream,'MODEL_PROVIDER':'mock','MODEL_MOCK_DELAY_MS':a.delay_ms,'PHOENIX_ENDPOINT':None,
   'AGENT_WORKER_CONCURRENCY':c,'AGENT_WORKER_ENABLED':True,'EVENT_WORKER_ENABLED':True,'TASK_RECONCILER_ENABLED':False,
   'AGENT_WORKER_MAX_RETRIES':0,'AGENT_WORKER_POLL_INTERVAL_SECONDS':a.claim_seconds,'TASK_CANCEL_POLL_INTERVAL_SECONDS':a.cancel_seconds,
   'SSE_POLL_INTERVAL_SECONDS':a.sse_seconds,'EXECUTOR_SUBMIT_ENABLED':True,'EXECUTOR_BASE_URL':executor_origin,'EXECUTOR_SOURCE_TYPE':'INLINE',

@@ -109,14 +109,6 @@ AGENT_PROJECT_MEMORY_PROMPT_MAX_CHARS: 6000
 AGENT_PROJECT_MEMORY_PROMPT_MAX_TOKENS: 4096
 ANALYSIS_DATASETS: {}
 EXECUTOR_TLS_VERIFY: false
-EXECUTOR_EXECUTIONS_PATH: /api/v1/executions
-EXECUTOR_OPERATIONS_PATH: /api/v1/executions/{execution_id}/operations
-EXECUTOR_EXECUTION_PATH: /api/v1/executions/{execution_id}
-EXECUTOR_RESULT_PATH: /api/v1/executions/{execution_id}/result
-EXECUTOR_NOTEBOOK_PATH: /api/v1/executions/{execution_id}/notebook
-EXECUTOR_FINALIZE_PATH: /api/v1/executions/{execution_id}/finalize
-EXECUTOR_CANCEL_PATH: /api/v1/executions/{execution_id}/cancel
-EXECUTOR_ARTIFACTS_PATH: /api/v1/executions/{execution_id}/artifacts
 EXECUTOR_SOURCE_TYPE: PATH
 EXECUTOR_REPORT_SOURCE_TYPE: PATH
 EXECUTOR_RESULT_READ_MODE: MANIFEST

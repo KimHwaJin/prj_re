@@ -103,8 +103,8 @@ def export(capture, output, supplements=()):
     runtime = lambda d:{p:h for p,h in d.items() if '/tests/' not in p and '/test/' not in p}
     before,after = runtime(digests['baseline']),runtime(digests['candidate'])
     changed = {p for p in before.keys()|after.keys() if before.get(p)!=after.get(p)}
-    assert changed == {'src/agent_service/agents/analysis/state.py','src/agent_service/agents/analysis/planning/graph.py',
-        'src/agent_service/agents/analysis/execution/nodes.py','src/agent_service/agents/analysis/execution/observation_state.py'}
+    assert changed == {'src/dtest.agent_service/agents/analysis/state.py','src/dtest.agent_service/agents/analysis/planning/graph.py',
+        'src/dtest.agent_service/agents/analysis/execution/nodes.py','src/dtest.agent_service/agents/analysis/execution/observation_state.py'}
     fields = ['variant','profile','users','mean_seconds','p95_seconds','makespan_seconds','batch_users_per_second',
         'user_queue_mean_ms','event_queue_mean_ms','api_cpu_per_user_seconds','crud_sql_per_user',
         'saver_write_outer_ms_per_user','saver_read_ms_per_user','column_payload_mib_per_user','serialization_ms_per_user','logical_mib_per_user',

@@ -23,16 +23,16 @@ from sqlalchemy import event, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-import service_settings
-from api_service.workers import agent as worker
-from api_service.runs import execution
-from api_service.workers.executor_events.runtime import ExecutorWorker
+import dtest.settings.loader as service_settings
+from dtest.worker_service import command_worker as worker
+from dtest.application.runs import execution
+from dtest.worker_service.executor_events.runtime import ExecutorWorker
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
-from service_contracts.events import ExecutorEvent
+from dtest.contracts.events import ExecutorEvent
 
 ROOT = Path(__file__).resolve().parents[3]
-CURRENT = (ROOT/'src/api_service/runs/commands/claim.py').exists()
+CURRENT = (ROOT/'src/dtest/application/runs/commands/claim.py').exists()
 if not CURRENT:
     # This import is used only when profiling the historical source snapshot.
     from api_service.services.session_execution import run_event_owned

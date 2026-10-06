@@ -19,9 +19,9 @@ import uvicorn
 
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.enums import AgentRunStatus
-from api_service.api.v1.routes import runs as routes
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.contracts.enums import AgentRunStatus
+from dtest.api_service.http.v1.routes import runs as routes
 
 
 @pytest.mark.asyncio

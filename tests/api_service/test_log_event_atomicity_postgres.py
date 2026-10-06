@@ -7,12 +7,12 @@ from sqlalchemy import select, event as sql_event
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from unittest.mock import AsyncMock
 
-from api_service.models.agent_run_log_model import AgentRunLogModel
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.models.task_model import TaskModel
-from api_service.runs.logs import AgentRunLogService
-from api_service.runs.task_events import TaskEventService
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.application.runs.logs import AgentRunLogService
+from dtest.application.runs.task_events import TaskEventService
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 

@@ -10,7 +10,7 @@
 | workflow/tools의 Python 함수 | 실제 구현, 필요한 함수 내부 import, signature·기본값·docstring·반환 구조 설명 |
 | tool_registry.yaml | source/function_name과 AST 생성 메타데이터, 유지보수 담당자가 정하는 availability·입력 연결·사용자 편집 정책 |
 | planning/catalog.py | AST로 함수 정보 읽기, 메타데이터 탐색, docstring만 제거한 원문 고정. 함수 import·실행 없음 |
-| 공통 Agent·service_contracts | 등록 여부, 인자·참조·의존성·승인·정책 검증. 업무 의미는 Skill/docstring에서 읽음 |
+| 공통 Agent·dtest/contracts | 등록 여부, 인자·참조·의존성·승인·정책 검증. 업무 의미는 Skill/docstring에서 읽음 |
 | execution/compiler.py·Executor | 승인된 값과 참조 연결로 함수 코드 제출·실행, 관찰과 manifest 수집 |
 
 Tool은 LLM tool calling으로 실행하지 않는다. LLM이 사용하는 read_skill/search_tools는 메타데이터 조회다. 코드 수정 허용 단계에서의 실행별 함수도 기존 승인·수정 정책을 따른다.
@@ -82,16 +82,16 @@ Skill Markdown 파일명이나 폴더 깊이는 탐색 로직의 업무 분기 �
 생성기는 파일을 import하지 않으며 수동 parameter_controls/parameter_bindings/availability를 보존·검증한다. 새 자산은 registry/index를 생성·검토하고 재배포한다. 프로세스 내 자산 snapshot은 기동 시 읽으며 자동 hot reload하지 않는다.
 
 ```sh
-python src/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
-python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py
-PYTHONPATH=src python -m pytest src/agent_service/agents/analysis/tests/test_asset_independence.py -q
+python src/dtest/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
+python src/dtest/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py
+PYTHONPATH=src python -m pytest tests/agent_service/test_asset_independence.py -q
 ```
 
 source·Skill 문서뿐 아니라 전체 유효 메타데이터/소속/정책을 asset revision에 반영한다. 정책·소속만 바뀐 배포도 변경으로 감지한다. 이미 승인된 함수 코드는 snapshot에 유지한다. 실행 중 복구는 다른 asset revision을 섞지 않으므로 자산 변경 배포와 기존 Run 이행은 별도 검토해야 한다. 심볼릭 링크로 연결한 자산 루트도 동일하게 정규화한다.
 
 ## 범위와 남은 작업
 
-현재 2.0의 계획·승인·Executor 실행 경로를 대상으로 했다. 개발자 친숙성을 위해 유지한 workflow 패키지의 **기존 1.3 관리·컴파일 코드에는 특정 데이터 로드 구성 가정이 남아 있다.** 이번 완료를 레거시 Workflow 관리 전체의 자산 독립성 완료라고 표현하지 않는다. 그 부분은 Workflow CRUD/1.3→2.0 이행 검토와 함께 후속으로 정리한다.
+현재 2.0의 계획·승인·Executor 실행 경로를 대상으로 한다. 102에서 미사용 기존1.3 관리·컴파일 코드와 특정 데이터 로드 가정·중복 schema/catalog를 삭제했다. 등록 자산은 workflow 패키지에 유지하고 현재 catalog/compiler만 사용한다.
 
 공개 Run/HITL/SSE·Executor 제출 JSON, DB schema, 설정은 변경하지 않았다. MinIO 정책·미구현 Dataset Registry·Artifact 등록·Workflow 검색을 추가한 작업도 아니다. 실제 LLM의 계약 준수, 출력 의미의 정확성과 다양한 실무 자산의 조합 품질은 계속 평가해야 한다.
 

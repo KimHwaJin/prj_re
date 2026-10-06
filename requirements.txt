@@ -47,20 +47,14 @@ click==8.5.0
     #   uvicorn
 cloudpickle==3.1.2
     # via langgraph-api
-contourpy==1.3.3
-    # via matplotlib
 croniter==6.2.4
     # via langgraph-runtime-inmem
 cryptography==50.0.1
     # via langgraph-api
-cycler==0.12.1
-    # via matplotlib
 distro==1.9.0
     # via langsmith
 fastapi==0.141.1
     # via dtest-agent
-fonttools==4.63.0
-    # via matplotlib
 forbiddenfruit==0.1.4 ; implementation_name == 'cpython'
     # via blockbuster
 frozenlist==1.8.0
@@ -115,8 +109,6 @@ idna==3.19
     #   yarl
 jiter==0.16.0
     # via openai
-joblib==1.5.3
-    # via scikit-learn
 jsonpatch==1.33
     # via langchain-core
 jsonpointer==3.1.1
@@ -125,8 +117,6 @@ jsonschema-rs==0.44.1
     # via
     #   dtest-agent
     #   langgraph-api
-kiwisolver==1.5.1
-    # via matplotlib
 langchain==1.3.17
     # via dtest-agent
 langchain-core==1.6.1
@@ -183,28 +173,14 @@ mako==1.4.1
     # via alembic
 markupsafe==3.0.3
     # via mako
-matplotlib==3.11.1
-    # via
-    #   dtest-agent
-    #   seaborn
 multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
-narwhals==2.25.0
-    # via scikit-learn
 numpy==2.4.6
     # via
-    #   contourpy
     #   dtest-agent
-    #   matplotlib
-    #   pandas
-    #   scikit-learn
-    #   scipy
-    #   seaborn
-    #   xgboost
-nvidia-nccl-cu12==2.31.2 ; sys_platform == 'linux'
-    # via xgboost
+    #   pgvector
 openai==3.6.0
     # via langchain-openai
 openinference-instrumentation==0.1.59
@@ -292,16 +268,11 @@ packaging==26.3
     # via
     #   langchain-core
     #   langsmith
-    #   matplotlib
     #   opentelemetry-instrumentation
-pandas==3.0.5
-    # via
-    #   dtest-agent
-    #   seaborn
 pathspec==1.1.1
     # via langgraph-cli
-pillow==12.3.0
-    # via matplotlib
+pgvector==0.4.2
+    # via dtest-agent
 prometheus-client==0.26.0
     # via
     #   dtest-agent
@@ -328,8 +299,6 @@ psycopg-pool==3.3.1
     # via
     #   langgraph-checkpoint-postgres
     #   psycopg
-pyarrow==25.0.0
-    # via dtest-agent
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.13.4
@@ -350,13 +319,8 @@ pyjwt==2.13.0
     # via
     #   langgraph-api
     #   redis
-pyparsing==3.3.2
-    # via matplotlib
 python-dateutil==2.9.0.post0
-    # via
-    #   croniter
-    #   matplotlib
-    #   pandas
+    # via croniter
 python-dotenv==1.2.3
     # via
     #   dtest-agent
@@ -381,15 +345,6 @@ requests==2.34.2
     #   tiktoken
 requests-toolbelt==1.0.0
     # via langsmith
-scikit-learn==1.9.0
-    # via dtest-agent
-scipy==1.17.1
-    # via
-    #   dtest-agent
-    #   scikit-learn
-    #   xgboost
-seaborn==0.13.2
-    # via dtest-agent
 setuptools==84.0.0
     # via grpcio-tools
 six==1.17.0
@@ -420,8 +375,6 @@ tenacity==9.1.4
     # via
     #   langchain-core
     #   langgraph-api
-threadpoolctl==3.6.0
-    # via scikit-learn
 tiktoken==0.14.0
     # via langchain-openai
 truststore==0.10.4
@@ -461,10 +414,8 @@ typing-inspection==0.4.4
     #   fastapi
     #   pydantic
     #   pydantic-settings
-tzdata==2026.3 ; sys_platform == 'emscripten' or sys_platform == 'win32'
-    # via
-    #   pandas
-    #   psycopg
+tzdata==2026.3 ; sys_platform == 'win32'
+    # via psycopg
 urllib3==2.7.0
     # via requests
 uuid-utils==0.17.0
@@ -497,8 +448,6 @@ wrapt==2.4.0
     #   openinference-instrumentation-langchain
     #   openinference-instrumentation-openai
     #   opentelemetry-instrumentation
-xgboost==3.2.0
-    # via dtest-agent
 xxhash==4.0.1
     # via
     #   langgraph

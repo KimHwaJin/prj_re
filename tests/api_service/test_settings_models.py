@@ -5,9 +5,9 @@ import json
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 import pytest
 
-from service_settings import ConfigurationError, load_settings
-from service_runtime.settings_sources import ModelBinding, select_values, source_aliases
-from service_runtime.configuration_files import initialize_profile
+from dtest.settings.loader import ConfigurationError, load_settings
+from dtest.settings.sources import ModelBinding, select_values, source_aliases
+from dtest.settings.files import initialize_profile
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -45,7 +45,7 @@ def test_new_field_declares_its_own_key_default_alias_and_validation():
 
 
 def test_native_yaml_collections_and_json_environment_are_equivalent():
-    from agent_config import load_agent_settings
+    from dtest.settings.agent import load_agent_settings
     native = load_settings(config={"EXECUTOR_RUNTIME_PROFILE": "default",
         "EXECUTOR_RUNTIME_PROFILES": ["default", "other"], "ACTIVE_MULTI_TURN": False,
         "SET_MAX_HISTORY": 0, "SSO_ALLOWED_RETURN_ROOTS": ["/demo", "/docs"]}, environ={})
@@ -63,7 +63,6 @@ def test_native_yaml_collections_and_json_environment_are_equivalent():
 @pytest.mark.parametrize("values", [
     {"EXECUTOR_RUNTIME_PROFILES": []}, {"EVENT_WORKER_ENABLED": None},
     {"SHUTDOWN_TIMEOUT_SECONDS": True}, {"RECURSION_LIMIT": True},
-    {"MOCK_DATA_ROOT": " "},
     {"ANALYSIS_DATASETS": "private-invalid-json"},
 ])
 def test_invalid_our_values_never_fall_back(values):

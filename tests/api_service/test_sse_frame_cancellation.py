@@ -2,7 +2,7 @@
 import asyncio
 from types import SimpleNamespace
 import pytest
-from api_service.runs.streaming import RunStreamHub
+from dtest.api_service.streaming import RunStreamHub
 
 @pytest.mark.asyncio
 async def test_cancel_waits_for_owned_frame_to_finish_before_propagating(monkeypatch):

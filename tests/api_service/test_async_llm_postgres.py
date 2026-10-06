@@ -12,10 +12,10 @@ from langgraph.types import Command, interrupt
 from sqlalchemy.engine import make_url
 
 from tests.api_service.test_user_identity_postgres import database_url, harness
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from agent_service.factory import RoleAgent
-from devtools.analysis.runtime import local_runtime, local_input
-from agent_service.agents.analysis.planning.graph import build_planning_graph
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.agent_service.factory import RoleAgent
+from dtest.devtools.analysis.runtime import local_runtime, local_input
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
 
 
 def checkpoint_url(database_url):

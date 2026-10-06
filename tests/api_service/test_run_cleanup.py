@@ -1,6 +1,6 @@
 """Execution cleanup races, using real asyncio/SQLAlchemy queue scheduling."""
-from api_service.runs.errors import CancellationRequested
-from api_service.runs.monitoring import run_cancellable
+from dtest.application.runs.errors import CancellationRequested
+from dtest.application.runs.monitoring import run_cancellable
 import asyncio
 from contextlib import asynccontextmanager
 from uuid import uuid4
@@ -13,14 +13,14 @@ from fastapi import APIRouter, FastAPI
 from sqlalchemy.util.concurrency import greenlet_spawn
 from sqlalchemy.util.queue import AsyncAdaptedQueue
 
-import service_settings
-import service_bootstrap
-import api_service.runs.monitoring as runs
-import api_service.runs.tasks as tasks
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.runs.lifecycle import execution_health
-from api_service.runs.token_events import LLMTokenEventBuffer
-from api_service.runs.tasks import TaskService
+import dtest.settings.loader as service_settings
+import dtest.bootstrap as service_bootstrap
+import dtest.application.runs.monitoring as runs
+import dtest.application.runs.tasks as tasks
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.lifecycle import execution_health
+from dtest.application.runs.token_events import LLMTokenEventBuffer
+from dtest.application.runs.tasks import TaskService
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -165,7 +165,7 @@ async def test_uncooperative_graph_quarantines_without_abandoning_owner(monkeypa
         await asyncio.sleep(.14)
         assert not execution_health.healthy
         assert not owner.done(), 'must not reuse resources while graph is still alive'
-        from api_service.workers.agent import claim_one
+        from dtest.worker_service.command_worker import claim_one
         with pytest.raises(ExecutionNeedsRecovery):
             await claim_one()
     finally:

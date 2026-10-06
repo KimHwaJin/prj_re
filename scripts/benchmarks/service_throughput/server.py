@@ -7,15 +7,15 @@ from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--config',type=Path,required=True);args=p.parse_args()
 cfg=json.loads(args.config.read_text())
-from service_settings import configure,load_settings
+from dtest.settings.loader import configure,load_settings
 configure(load_settings(config=cfg['settings'],environ={}))
-from service_bootstrap import create_app
-from api_service.infrastructure.database import get_engine
+from dtest.bootstrap import create_app
+from dtest.infrastructure.database.runtime import get_engine
 from sqlalchemy import event
-from service_runtime import diagnostics as diag
-from api_service.workers import agent as worker
-from agent_service.agents.analysis.planning.testing import MockConversation
-from service_auth.sso.contracts import VerifiedEmployee
+from dtest.infrastructure.observability import diagnostics as diag
+from dtest.worker_service import command_worker as worker
+from dtest.agent_service.agents.analysis.planning.testing import MockConversation
+from dtest.contracts.auth import VerifiedEmployee
 
 metrics={};kind=ContextVar('bench_http_kind',default='worker');sql=defaultdict(lambda:[0,0.0,0.0])
 def reset():

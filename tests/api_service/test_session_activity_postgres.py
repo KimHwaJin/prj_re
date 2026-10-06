@@ -7,14 +7,14 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select, update
 
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.models.agent_command_model import AgentCommandModel as Command
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.models.task_model import TaskModel as Task
-from api_service.utils import utc_now
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.infrastructure.database.models.agent_command_model import AgentCommandModel as Command
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
+from dtest.contracts.values import utc_now
 from tests.api_service.test_crud_guards_postgres import database_url, harness, runtime, resources, seed, new_session
 from tests.api_service.test_read_queries_postgres import trace_reads
 from tests.api_service.test_run_cleanup_postgres import rows
@@ -252,7 +252,7 @@ async def test_historical_taskless_interrupt_no_longer_blocks_deletion(resources
 @pytest.mark.parametrize('operation', ['create', 'rename'])
 async def test_committed_mutation_then_delete_preserves_success_and_blocks_input(resources, monkeypatch, operation):
     import asyncio
-    from api_service.resources.sessions import SessionService
+    from dtest.application.resources.sessions import SessionService
     h = resources
     entered, release = asyncio.Event(), asyncio.Event()
     method = 'create' if operation == 'create' else 'update'

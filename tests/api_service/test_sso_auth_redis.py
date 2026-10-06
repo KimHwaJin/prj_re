@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Opt-in real LOCAL Redis tests; create/delete only a random test namespace, never flush."""
 import asyncio
 import os
@@ -8,7 +9,7 @@ import pytest
 import pytest_asyncio
 from redis.asyncio import Redis
 
-from service_auth.sso.sessions import RedisSessions
+from dtest.infrastructure.redis.login_sessions import RedisSessions
 
 
 @pytest_asyncio.fixture
@@ -71,8 +72,8 @@ async def test_blocking_stream_pool_does_not_occupy_login_pool(redis_pair):
 async def test_owned_login_pool_waits_with_bounded_capacity_and_timeout(redis_pair):
     """A burst waits for capacity; exhausted deadlines still fail closed."""
     from fastapi import FastAPI,HTTPException
-    from service_auth.sso.runtime import attach_sso
-    from service_auth.sso.settings import SsoSettings
+    from dtest.api_service.auth.runtime import attach_sso
+    from dtest.settings.auth import SsoSettings
     from redis.asyncio import BlockingConnectionPool
     login,streams,store,namespace,cleanup=redis_pair
     runtime=attach_sso(FastAPI(),settings=SsoSettings(namespace=namespace+':bounded',
@@ -90,7 +91,7 @@ async def test_owned_login_pool_waits_with_bounded_capacity_and_timeout(redis_pa
         assert await asyncio.wait_for(pending,1)==expected
         held=await pool.get_connection()
         try:
-            with pytest.raises(HTTPException) as rejected:
+            with pytest.raises((HTTPException, ApplicationError)) as rejected:
                 await asyncio.wait_for(runtime.sessions.read(sid),1)
             assert rejected.value.status_code==503
         finally:await pool.release(held)

@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
 
-import service_settings
-import api_service.workers.agent as worker
-from api_service.runs.lifecycle import execution_health
-from service_contracts.execution import ExecutionNeedsRecovery
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+from dtest.application.runs.lifecycle import execution_health
+from dtest.contracts.execution import ExecutionNeedsRecovery
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -147,8 +147,8 @@ def test_invalid_concurrency_rejected(value):
 
 
 def test_concurrency_configuration_precedence():
-    assert service_settings.load_settings(config={}, environ={}).api.agent_worker_concurrency == 1
-    assert service_settings.load_settings(config={}, environ={'AGENT_WORKER_CONCURRENCY':'4'}).api.agent_worker_concurrency == 4
+    assert service_settings.load_settings(config={}, environ={}).commands.agent_worker_concurrency == 1
+    assert service_settings.load_settings(config={}, environ={'AGENT_WORKER_CONCURRENCY':'4'}).commands.agent_worker_concurrency == 4
     s = service_settings.load_settings(config={'AGENT_WORKER_CONCURRENCY': 2}, environ={'AGENT_WORKER_CONCURRENCY':'4'})
-    assert s.api.agent_worker_concurrency == 2
+    assert s.commands.agent_worker_concurrency == 2
     assert s.summary()['agent_worker_concurrency'] == 2

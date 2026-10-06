@@ -14,14 +14,14 @@ import pytest
 from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from api_service.models.message_model import MessageModel
-from api_service.models.project_model import ProjectModel
-from api_service.models.session_model import SessionModel
-from api_service.models.task_model import TaskModel
-from api_service.schemas.message_schema import MessageCreate, MessageRead
-from api_service.resources.messages import MessageService
-from api_service.runs.logs import AgentRunLogService
-from api_service.runs.tasks import TaskService
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.contracts.resources.message_schema import MessageCreate, MessageRead
+from dtest.application.resources.messages import MessageService
+from dtest.application.runs.logs import AgentRunLogService
+from dtest.application.runs.tasks import TaskService
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 

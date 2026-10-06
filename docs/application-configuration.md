@@ -67,15 +67,29 @@ Embedding은 채팅 모델 설정을 재사용하지 않는다. WORKFLOW_EMBEDDI
 
 | 파일 | 책임 |
 |---|---|
-| src/service_settings.py | 환경 선택, 소스 우선순위, 공통 값 전달, 프로세스 snapshot 설치 |
-| src/service_runtime/settings_sources.py | YAML/env 읽기, 모델 필드에서 별칭 추출, 타입 검증과 비밀값 없는 오류 |
-| src/service_runtime/settings_snapshot.py | API·Agent·Worker·SSO·검색 설정 객체와 안전한 진단 요약 |
-| src/service_runtime/runtime_settings.py | 앱 수명·진단·모델 목록 등의 타입·기본값 |
-| src/config.py | API 설정 필드·별칭·기본값·검증 |
-| src/agent_config.py | Agent 설정 필드·별칭·기본값·검증; 입력은 native typed value |
-| src/event_worker_settings.py | Executor 이벤트 Worker 필드·검증 |
-| src/service_auth/sso/settings.py | SSO 필드·검증 |
-| src/service_runtime/workflow_search_settings.py | 임베딩·HNSW 검색 필드·검증 |
-| src/service_runtime/settings_migrations.py | 폐기한 우리 설정에 대한 이행 오류 안내 |
+| src/dtest/settings/loader.py | 환경 선택, 소스 우선순위, 공통 값 전달, 프로세스 snapshot 설치 |
+| src/dtest/settings/sources.py | YAML/env 읽기, 모델 필드에서 별칭 추출, 타입 검증과 비밀값 없는 오류 |
+| src/dtest/settings/models.py | API·Agent·Worker·SSO·검색 설정 객체와 안전한 진단 요약 |
+| src/dtest/settings/runtime.py | 앱 수명·진단·모델 목록 등의 타입·기본값 |
+| src/dtest/settings/api.py | HTTP·SSE·공개 token 출력 설정 |
+| src/dtest/settings/database.py, redis.py, storage.py | DB 풀·Redis 주소·Workflow 파일 root |
+| src/dtest/settings/worker.py | 공통 명령 실행 동시성·lease·재시도·취소 감시 |
+| src/dtest/settings/agent.py | Agent 설정 필드·별칭·기본값·검증; 입력은 native typed value |
+| src/dtest/settings/events.py | Executor 이벤트 Worker 필드·검증 |
+| src/dtest/settings/auth.py | SSO 필드·검증 |
+| src/dtest/settings/search.py | 임베딩·HNSW 검색 필드·검증 |
+| src/dtest/settings/retired.py | 폐기한 우리 설정에 대한 이행 오류 안내 |
 
 새 설정은 해당 모델에 필드를 선언하면 된다. `AGENT_KEYS`, `EXTRA_KEYS`, `GROUPS`, 플랫폼 허용 목록과 별도 별칭 테이블에 추가하는 과정은 없다. 기본 이름은 대문자 필드명이며 Worker·SSO·검색에는 해당 접두어를 붙인다. 특별한 키나 이전 이름은 그 필드의 `validation_alias`로 선언한다. 환경변수 컬렉션만 JSON으로 해석하고 YAML의 dict/list/bool/int는 문자열로 변환하지 않는다.
+
+## Executor 연결 설정
+
+Executor API 경로는 연동 규격이므로 `src/dtest/infrastructure/executor/routes.py`에 정의한다. YAML에는 환경별 서버 root인 `EXECUTOR_BASE_URL`과 timeout·TLS·pool·실행 profile 등을 설정한다.
+
+```yaml
+EXECUTOR_BASE_URL: http://127.0.0.1:8001
+EXECUTOR_TIMEOUT_SECONDS: 30
+EXECUTOR_HTTP_MAX_CONNECTIONS: 8
+```
+
+위 root에 `/api/v1/executions`와 각 하위 경로를 코드가 붙인다. reverse proxy를 사용하면 `https://gateway.example/executor`처럼 서비스 prefix를 포함할 수 있다. `/api/v1`은 base에 넣지 않는다. 이전 `EXECUTOR_*_PATH`와 `EXECUTOR_JOBS_PATH`, `EW_EXECUTOR_EVENTS_PATH` 키는 설정 파일·환경변수에서 삭제한다. 폐기 키는 자동 무시하지 않고 이행 오류를 반환한다. 기존 API-prefixed base는 서버 root로 바꾼다. 제출·취소·결과·Notebook·Artifact·이벤트 이력 조회 모두 이 규칙을 공유한다.

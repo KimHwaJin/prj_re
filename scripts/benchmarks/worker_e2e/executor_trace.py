@@ -40,7 +40,7 @@ def failed(metrics, exc):
 
 
 def install(metrics, enabled, *, patch=None):
-    from integrations.executor.client import ExecutorClient
+    from dtest.infrastructure.executor.client import ExecutorClient
     assign = patch if patch is not None else setattr
     enter, original = ExecutorClient.__aenter__, ExecutorClient.request
     async def entered(self):

@@ -22,7 +22,6 @@
 | `CHECKPOINT_DB_URI` | Run 및 내장 이벤트 그래프의 공용 checkpointer | `AGENT_CHECKPOINT_DATABASE_URL`은 같은 값만 허용하는 구 별칭 |
 | `REDIS_URL` | SSO 로그인 세션과 Executor Streams | 연결풀·key/group은 용도별로 분리. `EW_REDIS_URL`은 구 별칭 |
 | `EXECUTOR_BASE_URL` | 실행 제출·결과 조회·이벤트 이력 보충 | `EW_EXECUTOR_BASE_URL`은 구 별칭 |
-| `EXECUTOR_EVENTS_PATH` | 이벤트 이력 보충 경로 | 생략 시 `EXECUTOR_EXECUTION_PATH` + `/events`에서 유도. `EW_EXECUTOR_EVENTS_PATH`는 구 별칭 |
 | `PRIVATE_LLM_*` 및 모델 정책 키 | 모든 Agent 역할의 기본 모델 설정 | 역할별 Agent 선언/프롬프트 구조는 유지 |
 | `PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY` | 프로세스 공용 관측 설정 | 구 `PHOENIX_CONFIG_PATH` 자동 탐색 없음 |
 | `EW_NAMESPACE` | 이벤트 DB/Redis group 기본 이름 | stream/group은 namespace에서 파생, Executor 원본 stream은 별도 계약 |
@@ -108,9 +107,10 @@ requirements를 독립 수정하지 않는다. 기존 lock 버전은 유지했�
 
 이력 조회도 제출/결과 조회와 같은 `EXECUTOR_BASE_URL`을 사용한다. 기본 root 주소
 `http://executor:8080`에서는 `/api/v1/executions/{execution_id}/events`를 호출한다.
-base에 `/api/v1`을 포함한다면 제출/조회 PATH도 `/executions...`로 지정한다.
-Worker는 `EXECUTOR_EXECUTION_PATH` 뒤에 `/events`를 붙이며 프록시에서 이력 경로만
-다르면 `EXECUTOR_EVENTS_PATH`를 명시한다. prefix를 자동 추측하거나 두 번 붙이지 않는다.
+API 경로는 `src/dtest/infrastructure/executor/routes.py`의 ExecutorRoute가 정의한다.
+YAML에는 서버 root인 EXECUTOR_BASE_URL만 지정하며 /api/v1은 포함하지 않는다.
+프록시 root가 /gateway/executor이면 그 부분은 base에 포함할 수 있다. 제출·결과·이벤트 조회에
+동일하게 적용한다. 이전 개별 *_PATH 설정은 삭제하며 남겨두면 설정 이행 오류를 반환한다.
 
 066의 observations 증가분 쓰기는 새 reader가 기존 full list checkpoint와 pending write를
 읽을 수 있다. 반대 방향은 호환되지 않는다. 구버전 LastValue reader가 새 tagged pending

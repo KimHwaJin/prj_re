@@ -7,18 +7,18 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import func, select, update
 
-from api_service.models.enums import DeleteYN
-from api_service.models.project_model import ProjectModel
-from api_service.models.user_model import UserModel
-from api_service.schemas.user_schema import UserCreate
-from api_service.resources.sso_users import SsoUserDirectory
-from api_service.resources.users import UserService
+from dtest.contracts.enums import DeleteYN
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.infrastructure.database.models.user_model import UserModel
+from dtest.contracts.resources.user_schema import UserCreate
+from dtest.application.resources.sso_users import SsoUserDirectory
+from dtest.application.resources.users import UserService
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_planning_api_postgres import test_config, planning, execute
 from tests.api_service.test_sso_auth import CorporateDouble, MemoryRedis
-from service_auth.sso.dependencies import get_login_session
-from service_auth.sso.sessions import RedisSessions
-from service_auth.sso.settings import SsoSettings
+from dtest.api_service.auth.dependencies import get_login_session
+from dtest.infrastructure.redis.login_sessions import RedisSessions
+from dtest.settings.auth import SsoSettings
 
 
 def enable_cookie_boundary(h, employee_id="000123"):
@@ -30,7 +30,7 @@ def enable_cookie_boundary(h, employee_id="000123"):
     h.app.state.sso.sessions=RedisSessions(MemoryRedis(),"sso-postgres-test:dev")
     h.app.state.sso.users=SsoUserDirectory(auto_register=True,session_factory=h.factory)
     adapter=CorporateDouble()
-    from service_auth.sso.contracts import VerifiedEmployee
+    from dtest.contracts.auth import VerifiedEmployee
     adapter.employee=VerifiedEmployee(employee_id,"SSO Employee")
     h.app.state.sso.adapter=adapter
     return adapter
@@ -111,7 +111,7 @@ async def test_cookie_crud_ownership_csrf_and_role_enforcement(cookie_api):
     assert project.status_code==201,project.text
     assert (await h.client.post("/api/v1/users",headers=headers,
         json={"user_id":"promote","user_name":"Promote","role":"admin"})).status_code==403
-    from service_auth.sso.contracts import VerifiedEmployee
+    from dtest.contracts.auth import VerifiedEmployee
     h.app.state.sso.adapter.employee=VerifiedEmployee("000456","Other Employee")
     other=await sign_in(h)
     assert other["role"]=="user"
@@ -138,7 +138,7 @@ async def test_sdk_employee_errors_and_disabled_auto_provision_do_not_create_row
     h.app.state.sso.users=SsoUserDirectory(auto_register=False,session_factory=h.factory)
     assert (await h.client.get("/api/v1/auth/login/sso",follow_redirects=False)).status_code==403
     h.app.state.sso.users=SsoUserDirectory(auto_register=True,session_factory=h.factory)
-    from service_auth.sso.contracts import VerifiedEmployee
+    from dtest.contracts.auth import VerifiedEmployee
     h.app.state.sso.adapter.employee=VerifiedEmployee("bad/id","Employee")
     assert (await h.client.get("/api/v1/auth/login/sso",follow_redirects=False)).status_code==502
     h.app.state.sso.adapter.employee=VerifiedEmployee("000123","  ")
@@ -190,7 +190,7 @@ async def test_cookie_admin_user_list_and_deleted_detail(cookie_api):
     assert (await h.client.get('/api/v1/users',params={'status':'all'})).status_code==403
     async with h.factory() as db:
         await UserService.bootstrap_admin(db,UserCreate(user_id='009999',user_name='Admin',role='admin'))
-    from service_auth.sso.contracts import VerifiedEmployee
+    from dtest.contracts.auth import VerifiedEmployee
     h.app.state.sso.adapter.employee=VerifiedEmployee('009999','Employee Admin')
     admin=await sign_in(h)
     response=await h.client.get('/api/v1/users',params={'q':'000123'})

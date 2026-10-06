@@ -28,11 +28,11 @@
 
 ## Agent 개발 규칙
 
-공용 코드는 `service_contracts/user_resume.py`, `agent_service/runtime/user_resume.py`에 있다. Agent가 API/DB 구현을 import하지 않는다.
+공용 코드는 `dtest/contracts/user_resume.py`, `dtest/agent_service/runtime/user_resume.py`에 있다. Agent가 API/DB 구현을 import하지 않는다.
 
 ```python
 from agent_service.runtime.user_resume import record_user_resume, user_interrupt
-from service_contracts.user_resume import UserResumeState
+from dtest.contracts.user_resume import UserResumeState
 
 class State(UserResumeState, total=False):
     answer: str

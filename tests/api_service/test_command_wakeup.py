@@ -8,10 +8,10 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 
-import service_settings
-from api_service.workers import agent as worker
-from api_service.runs.lifecycle import execution_health
-from service_runtime.postgres_signals import PostgresSignals, RUN_CHANNEL, COMMAND_CHANNEL
+import dtest.settings.loader as service_settings
+from dtest.worker_service import command_worker as worker
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.signals import PostgresSignals, RUN_CHANNEL, COMMAND_CHANNEL
 
 
 @pytest_asyncio.fixture
@@ -137,8 +137,8 @@ def test_invalid_reconcile_interval_rejected(value):
 def test_signal_config_precedence_and_listener_budget():
     s=service_settings.load_settings(config={'AGENT_WORKER_RECONCILE_INTERVAL_SECONDS':8},
         environ={'AGENT_WORKER_RECONCILE_INTERVAL_SECONDS':'2','AGENT_WORKER_NOTIFY_ENABLED':'false'})
-    assert s.api.agent_worker_reconcile_interval_seconds==8
-    assert s.api.agent_worker_notify_enabled is False
+    assert s.commands.agent_worker_reconcile_interval_seconds==8
+    assert s.commands.agent_worker_notify_enabled is False
     assert s.summary()['connection_pool_limits']['notification_listener']==1
 
 

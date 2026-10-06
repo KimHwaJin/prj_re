@@ -1,1 +1,0 @@
-"""integrations shared service boundary."""

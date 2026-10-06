@@ -6,8 +6,8 @@ from dataclasses import replace
 import httpx
 import pytest
 
-from agent_config import load_agent_settings
-from integrations.executor.client import ExecutorClient, ExecutorOutcomeUnknown, submission_scope
+from dtest.settings.agent import load_agent_settings
+from dtest.infrastructure.executor.client import ExecutorClient, ExecutorOutcomeUnknown, submission_scope
 
 spec=importlib.util.spec_from_file_location('diagnostic_executor_trace',Path(__file__).with_name('executor_trace.py'))
 trace=importlib.util.module_from_spec(spec);spec.loader.exec_module(trace)

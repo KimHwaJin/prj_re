@@ -5,7 +5,7 @@ import httpx
 import pytest
 from sqlalchemy import text
 
-from api_service.workers.executor_events.ingress import EventRouter
+from dtest.worker_service.executor_events.ingress import EventRouter
 from tests.api_service.test_agent_commands_postgres import commands, event, rows
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime
@@ -33,7 +33,7 @@ async def test_reversed_duplicate_delivery_history_repair_and_two_routers(comman
         assert request.url.path==f'/api/v1/executions/{eid}/events'
         after=int(request.url.params['after_sequence'])
         return httpx.Response(200,json={'items':[e.model_dump(mode='json') for e in events if e.event_sequence>after], 'has_more':False,'next_cursor':None})
-    async with httpx.AsyncClient(base_url='http://executor/api/v1/',transport=httpx.MockTransport(history)) as http:
+    async with httpx.AsyncClient(base_url='http://executor/',transport=httpx.MockTransport(history)) as http:
         router=EventRouter(h.store,http,{'execution.completed'})
         await asyncio.gather(router.once(),router.once())
         for e in events:await h.store.ingest(e)
@@ -51,7 +51,7 @@ async def test_history_failure_preserves_gap_then_late_delivery_resumes(commands
         if failure=='404':return httpx.Response(404)
         data=[] if failure=='empty' else [event(uuid4()).model_dump(mode='json')] if failure=='mixed' else [{}]
         return httpx.Response(200,json={'items':data,'has_more':False})
-    async with httpx.AsyncClient(base_url='http://executor/api/v1/',transport=httpx.MockTransport(history)) as http:
+    async with httpx.AsyncClient(base_url='http://executor/',transport=httpx.MockTransport(history)) as http:
         router=EventRouter(h.store,http,{'execution.completed'})
         assert await router.once()==0
         sequence,error,deferred=await status(h,eid)
@@ -71,7 +71,7 @@ async def test_paginated_reclaim_catchup_does_not_skip_tail(commands):
         page=[e for e in events if e.event_sequence>after][:2]
         more=page[-1].event_sequence<5 if page else False
         return httpx.Response(200,json={'items':[e.model_dump(mode='json') for e in page], 'has_more':more,'next_cursor':'opaque' if more else None})
-    async with httpx.AsyncClient(base_url='http://executor/api/v1/',transport=httpx.MockTransport(history)) as http:
+    async with httpx.AsyncClient(base_url='http://executor/',transport=httpx.MockTransport(history)) as http:
         router=EventRouter(h.store,http,{'execution.completed'},batch_size=2)
         for _ in range(5):await router.once()
     assert [c.payload['event']['event_sequence'] for c in await rows(h)]==[1,2,3,4,5]
@@ -91,8 +91,8 @@ async def test_conflicting_sequence_is_rejected_without_overwriting_inbox(comman
 
 async def test_default_root_history_route_with_real_http_socket_and_inbox(commands):
     from tests.api_service.test_executor_async_http import local_server
-    from api_service.workers.executor_events.runtime import ExecutorWorker
-    from service_settings import load_settings
+    from dtest.worker_service.executor_events.runtime import ExecutorWorker
+    from dtest.settings.loader import load_settings
     h=commands;eid=uuid4();events=[event(eid,n) for n in (1,2,3)]
     await h.store.register(execution_id=eid,session_id=h.session_id,task_id=str(uuid4()))
     await h.store.ingest(events[2]);await h.store.ingest(events[0])

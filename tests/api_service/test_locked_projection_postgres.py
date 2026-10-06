@@ -7,16 +7,16 @@ import pytest
 from sqlalchemy import text, update
 from sqlalchemy.exc import DBAPIError
 
-from api_service.workers import agent as worker
-from api_service.runs import execution, projection
-from api_service.runs.persistence import graph as graph_crud_persistence
-from api_service.runs.task_events import TaskEventService
-from api_service.runs.claim_context import bind_execution_claim
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_model import TaskModel
-from service_contracts.events import DeferEvent
-from service_contracts.execution import ExecutionNeedsRecovery
+from dtest.worker_service import command_worker as worker
+from dtest.application.runs import execution, projection
+from dtest.application.runs.persistence import graph as graph_crud_persistence
+from dtest.application.runs.task_events import TaskEventService
+from dtest.application.runs.claim_context import bind_execution_claim
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.contracts.events import DeferEvent
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_projection_roundtrips_postgres import uid

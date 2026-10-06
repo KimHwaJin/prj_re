@@ -5,10 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from service_runtime.diagnostics import graph_callbacks, instrument_async_methods, run_trace, span
-import service_settings
-
-
+from dtest.infrastructure.observability.diagnostics import graph_callbacks, instrument_async_methods, run_trace, span
+import dtest.settings.loader as service_settings
 @pytest.fixture(autouse=True)
 def isolated_config(monkeypatch):
     # These tests exercise diagnostics settings, independent of developer YAML.

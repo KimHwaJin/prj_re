@@ -5,12 +5,12 @@ from uuid import uuid4
 
 import pytest
 
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.runs.lifecycle import execution_health
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from integrations.executor import client as api
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.lifecycle import execution_health
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.infrastructure.executor import client as api
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows, wait_until_recovery
 from tests.api_service.test_public_run_postgres import path, state
@@ -104,9 +104,9 @@ async def test_accepted_submission_yields_executor_wait_without_holding_owner(ru
 async def test_executor_event_post_ambiguity_keeps_session_owner_for_recovery(runtime,monkeypatch):
     from sqlalchemy import select
     from tests.api_service.ownership_harness import run_test_event as run_event_owned
-    from api_service.models.session_execution_model import SessionExecutionModel
-    from api_service.runs.graph_invocation import GraphInvocation
-    from service_contracts.events import EventContext, ExecutorEvent, DeferEvent
+    from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
+    from dtest.application.runs.graph_invocation import GraphInvocation
+    from dtest.contracts.events import EventContext, ExecutorEvent, DeferEvent
     from unittest.mock import AsyncMock
     from uuid import UUID
     h=runtime

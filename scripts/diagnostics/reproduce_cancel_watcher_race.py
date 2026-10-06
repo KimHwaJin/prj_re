@@ -12,8 +12,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from api_service.runs import monitoring
-from api_service.runs.monitoring import run_cancellable
+from dtest.application.runs import monitoring
+from dtest.application.runs.monitoring import run_cancellable
 
 from sqlalchemy.util.queue import AsyncAdaptedQueue
 from sqlalchemy.util.concurrency import greenlet_spawn

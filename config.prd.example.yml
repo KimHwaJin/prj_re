@@ -145,14 +145,6 @@ ANALYSIS_DATASETS: {}
 
 # executor
 EXECUTOR_TLS_VERIFY: true
-EXECUTOR_EXECUTIONS_PATH: /api/v1/executions
-EXECUTOR_OPERATIONS_PATH: /api/v1/executions/{execution_id}/operations
-EXECUTOR_EXECUTION_PATH: /api/v1/executions/{execution_id}
-EXECUTOR_RESULT_PATH: /api/v1/executions/{execution_id}/result
-EXECUTOR_NOTEBOOK_PATH: /api/v1/executions/{execution_id}/notebook
-EXECUTOR_FINALIZE_PATH: /api/v1/executions/{execution_id}/finalize
-EXECUTOR_CANCEL_PATH: /api/v1/executions/{execution_id}/cancel
-EXECUTOR_ARTIFACTS_PATH: /api/v1/executions/{execution_id}/artifacts
 EXECUTOR_SOURCE_TYPE: INLINE
 EXECUTOR_REPORT_SOURCE_TYPE: INLINE
 EXECUTOR_RESULT_READ_MODE: API
@@ -165,7 +157,6 @@ EXECUTOR_HTTP_MAX_RESPONSE_BYTES: 16777216
 EXECUTOR_TIMEOUT_SECONDS: 30
 EXECUTOR_OPERATION_TIMEOUT_SECONDS: 300
 EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS: 300
-DATA_MOCK: false
 EXECUTOR_BASE_URL: http://EXECUTOR_HOST:8080
 EXECUTOR_RUNTIME_PROFILE: default
 # 실제 Executor 허용 kernel 목록과 일치시킵니다.
@@ -221,16 +212,12 @@ SSO_NAMESPACE: dtest-agent:prd:sso
 
 # storage
 WORKFLOW_STORAGE_ROOT: var/workflows
-MOCK_DATA_ROOT: /workspace/pv
-DEMO_ARTIFACTS_ENABLED: false
-DEMO_ARTIFACTS_ROOT: demo_artifacts
 
 # workflow_search
 # 실제 embedding 미설정이면 후보 검색은 수행하지 않습니다.
 WORKFLOW_RECOMMENDATION_ENABLED: true
 # 실제 모델 corpus로 검증해야 하는 threshold입니다.
 WORKFLOW_SIMILARITY_SCORE: 0.93
-MAX_WORKFLOW_REVISIONS: 10
 WORKFLOW_EMBEDDING_MODEL_REVISION: default
 WORKFLOW_EMBEDDING_TIMEOUT_SECONDS: 15
 WORKFLOW_EMBEDDING_CONCURRENCY: 2

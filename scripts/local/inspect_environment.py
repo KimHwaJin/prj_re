@@ -8,13 +8,13 @@ from urllib.parse import urlsplit
 import psycopg
 from redis import Redis
 
-from service_settings import get_settings
+from dtest.settings.loader import get_settings
 
 
 service = get_settings()
 settings, agent = service.api, service.agent
 for role, url in [
-    ("crud", settings.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)),
+    ("crud", get_settings().database.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)),
     ("checkpoint", agent.checkpoint_db_uri),
     ("event", service.worker.database_url),
 ]:

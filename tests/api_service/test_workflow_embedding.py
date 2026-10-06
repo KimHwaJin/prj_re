@@ -2,14 +2,14 @@
 
 import httpx
 import pytest
-from api_service.workflows.search.embedding import (
+from dtest.infrastructure.workflow_search.embedding import (
     OpenAICompatibleEmbedding,
     EmbeddingUnavailable,
     validate_vectors,
 )
-from api_service.workflows.search.retrieval import WorkflowSearch
-from service_runtime.workflow_search_settings import WorkflowSearchSettings
-from service_settings import load_settings, ConfigurationError
+from dtest.infrastructure.workflow_search.retrieval import WorkflowSearch
+from dtest.settings.search import WorkflowSearchSettings
+from dtest.settings.loader import load_settings, ConfigurationError
 
 
 @pytest.mark.asyncio

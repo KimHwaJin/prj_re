@@ -5,16 +5,16 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select, text
 
-from api_service.models.enums import AgentRunStatus, DeleteYN, TaskStatus
-from api_service.api.pagination import ListParams
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.session_model import SessionModel as Session
-from api_service.models.task_model import TaskModel as Task
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, TaskStatus
+from dtest.api_service.http.pagination import ListParams
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.session_model import SessionModel as Session
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime
 from tests.api_service.test_crud_guards_postgres import resources, seed
 from tests.api_service.test_run_diagnostics_postgres import many_tasks
-from api_service.runs import diagnostics as run_diagnostics
+from dtest.application.runs import diagnostics as run_diagnostics
 
 
 def path(h, rid, suffix, *, admin=False):
@@ -133,7 +133,7 @@ async def test_owner_visibility_is_rechecked_between_identity_and_page(resources
 @pytest.mark.asyncio
 async def test_real_admission_and_worker_resumes_keep_run_task_and_history(runtime,monkeypatch):
     from unittest.mock import AsyncMock
-    import api_service.runs.execution as execution
+    import dtest.application.runs.execution as execution
     from tests.api_service.test_run_cleanup_postgres import enqueue
     from tests.api_service.test_public_run_postgres import execute, waiting, state, resume
     h = runtime

@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 import pytest
 import yaml
 
-import service_settings
-from service_settings import ConfigurationError, load_settings
-from service_runtime.settings_migrations import REMOVED_SETTINGS, REMOVED_INFRASTRUCTURE_SETTINGS
+import dtest.settings.loader as service_settings
+from dtest.settings.loader import ConfigurationError, load_settings
+from dtest.settings.retired import REMOVED_SETTINGS, REMOVED_INFRASTRUCTURE_SETTINGS, REMOVED_EXECUTOR_PATH_SETTINGS
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -26,7 +26,7 @@ def snapshot(monkeypatch):
 def test_one_endpoint_accepts_legacy_spelling_and_config_overrides_env(canonical, legacy, value):
     settings = load_settings(config={legacy: value}, environ={canonical: 'ignored'})
     if canonical == 'REDIS_URL':
-        assert settings.api.redis_url == settings.worker.redis_url == value
+        assert settings.redis.redis_url == settings.worker.redis_url == value
     else:
         assert settings.agent.executor_base_url == settings.worker.executor_base_url == value
     with pytest.raises(ConfigurationError, match=canonical):
@@ -36,13 +36,13 @@ def test_one_endpoint_accepts_legacy_spelling_and_config_overrides_env(canonical
 @pytest.mark.parametrize('profile', ['dev', 'stg', 'prd'])
 def test_private_yaml_profiles_define_ports_and_switches_without_dotenv(tmp_path, profile):
     import shutil
-    from service_runtime.configuration_files import initialize_profile
+    from dtest.settings.files import initialize_profile
     shutil.copy(ROOT/'config.example.yml', tmp_path/'config.yml')
     shutil.copy(ROOT/f'config.{profile}.example.yml', tmp_path/f'config.{profile}.example.yml')
     initialize_profile(profile, root=tmp_path)
     settings = load_settings(profile=profile, environ={}, root=tmp_path)
     assert settings.api.server_port == 5000
-    assert settings.api.agent_worker_enabled and settings.api.task_reconciler_enabled
+    assert settings.commands.agent_worker_enabled and settings.commands.task_reconciler_enabled
     assert settings.event_worker_enabled
     assert settings.agent.executor_submit_enabled == (profile != 'dev')
     assert settings.worker.health_port == 0
@@ -86,8 +86,8 @@ def test_deployment_starts_one_container_with_canonical_lifecycle(path):
             assert d['apiVersion'] == 'networking.k8s.io/v1'
 
 def test_integrated_readiness_waits_for_consumer_then_tracks_its_health(monkeypatch):
-    import service_bootstrap
-    from api_service.workers.executor_events.telemetry import Telemetry
+    import dtest.bootstrap as service_bootstrap
+    from dtest.worker_service.executor_events.telemetry import Telemetry
     worker = type('Worker', (), {'ready': AsyncMock(return_value=True), 'telemetry': Telemetry()})()
     holder = {}
     async def loop():
@@ -100,7 +100,7 @@ def test_integrated_readiness_waits_for_consumer_then_tracks_its_health(monkeypa
     @asynccontextmanager
     async def short_session():
         yield database
-    monkeypatch.setattr('api_service.infrastructure.database.short_session', short_session)
+    monkeypatch.setattr('dtest.infrastructure.database.runtime.short_session', short_session)
     settings = load_settings(config={'AGENT_WORKER_ENABLED': False, 'TASK_RECONCILER_ENABLED': False,
         'EVENT_WORKER_ENABLED': True, 'SHUTDOWN_DRAIN_SECONDS': 0}, environ={})
     app = service_bootstrap.create_app(settings)
@@ -149,10 +149,10 @@ def test_local_generation_has_one_private_yaml_and_infrastructure_only_env(tmp_p
     effective=load_settings(config_path=generated,environ={},profile=env["LOCAL_APP_ENV"])
     assert effective.profile == profile
     assert effective.agent.environment == profile
-    assert effective.api.database_url=='postgresql+asyncpg://u:pass@postgres:5432/chat_app'
+    assert effective.database.database_url=='postgresql+asyncpg://u:pass@postgres:5432/chat_app'
     assert effective.worker.database_url=='postgresql://u:pass@postgres:5432/chat_app'
     assert effective.agent.checkpoint_db_uri=='postgresql://u:pass@postgres:5432/agent'
-    assert effective.api.redis_url==values['REDIS_URL']
+    assert effective.redis.redis_url==values['REDIS_URL']
     assert effective.api.server_host=='0.0.0.0' and effective.api.server_port==8000
     assert effective.agent.executor_source_type=='INLINE'
     assert generated.stat().st_mode & 0o777 == 0o640
@@ -181,7 +181,7 @@ def test_local_upgrade_drains_only_legacy_worker_in_same_project(monkeypatch):
 def test_explicit_event_database_normalizes_driver_from_common_api_url():
     url = 'postgresql+asyncpg://user:pass@localhost/chat_app'
     settings = load_settings(config={'DATABASE_URL': url, 'EW_DATABASE_URL': url}, environ={})
-    assert settings.api.database_url == url
+    assert settings.database.database_url == url
     assert settings.worker.database_url == 'postgresql://user:pass@localhost/chat_app'
 
 
@@ -257,31 +257,51 @@ def test_ingress_has_one_limit_and_old_common_spelling_is_only_an_alias():
         load_settings(config={'EW_CONCURRENCY':3,'EW_INGRESS_CONCURRENCY':4},environ={})
 
 
-@pytest.mark.parametrize('config,expected', [
-    ({'EXECUTOR_BASE_URL':'http://executor:8080'}, '/api/v1/executions/test/events'),
-    ({'EXECUTOR_BASE_URL':'http://executor:8080/api/v1', 'EXECUTOR_EXECUTION_PATH':'/executions/{execution_id}'}, '/api/v1/executions/test/events'),
-    ({'EXECUTOR_BASE_URL':'http://executor:8080/gateway', 'EXECUTOR_EXECUTION_PATH':'/v2/jobs/{execution_id}'}, '/gateway/v2/jobs/test/events'),
-    ({'EXECUTOR_BASE_URL':'http://executor:8080/gateway', 'EXECUTOR_EVENTS_PATH':'/history/{execution_id}'}, '/gateway/history/test'),
-    ({'EXECUTOR_BASE_URL':'http://executor:8080', 'EW_EXECUTOR_EVENTS_PATH':'/custom/{execution_id}/events'}, '/custom/test/events'),
+@pytest.mark.parametrize("base,expected", [
+    ("http://executor:8080", "/api/v1/executions/test/events"),
+    ("http://executor:8080/", "/api/v1/executions/test/events"),
+    ("http://executor:8080/gateway", "/gateway/api/v1/executions/test/events"),
+    ("http://executor:8080/proxy/executor/", "/proxy/executor/api/v1/executions/test/events"),
 ])
 @pytest.mark.asyncio
-async def test_event_history_uses_same_base_and_execution_resource(config, expected):
-    from api_service.workers.executor_events.runtime import ExecutorWorker
-    settings = load_settings(config=config, environ={})
-    worker = ExecutorWorker(settings.worker, {'execution.completed'})
+async def test_event_history_uses_same_fixed_contract_as_submissions(base, expected):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+    import httpx
+    from dtest.worker_service.executor_events.runtime import ExecutorWorker
+    from dtest.infrastructure.executor.routes import ExecutorRoute
+    settings = load_settings(config={"EXECUTOR_BASE_URL": base}, environ={})
+    worker = ExecutorWorker(settings.worker, {"execution.completed"})
+    requests = []
+    async def history(request):
+        requests.append(request)
+        return httpx.Response(200, json={"items": [], "has_more": False})
+    store = SimpleNamespace(
+        scan_candidates=AsyncMock(return_value=[{"execution_id": "test", "catch_up_version": 1,
+            "caught_up_version": 0, "last_sequence": 0}]),
+        advance=AsyncMock(return_value=(0, None)),
+        finish_catch_up=AsyncMock(), scan_error=AsyncMock(),
+    )
     try:
-        request = worker.http.build_request('GET', worker.router.events_path.format(execution_id='test'))
-        assert request.url.path == expected
-        if 'EXECUTOR_EVENTS_PATH' not in config and 'EW_EXECUTOR_EVENTS_PATH' not in config:
-            assert str(request.url) == settings.agent.executor_execution_url.format(execution_id='test') + '/events'
+        async with httpx.AsyncClient(base_url=base, transport=httpx.MockTransport(history)) as http:
+            worker.router.http = http
+            worker.router.store = store
+            assert await worker.router.once() == 0
+        assert len(requests) == 1 and requests[0].url.path == expected
+        assert str(requests[0].url).split("?", 1)[0] == ExecutorRoute.EXECUTION.url(settings.agent.executor_base_url, "test") + "/events"
+        assert dict(requests[0].url.params) == {"after_sequence": "0", "limit": "100"}
+        store.finish_catch_up.assert_awaited_once_with("test", 1)
+        store.scan_error.assert_not_awaited()
     finally:
         await worker.http.aclose()
         await worker.redis.aclose()
         await worker.pool.close()
 
 
-@pytest.mark.parametrize('path', ['/events', 'https://other/{execution_id}', '//other/{execution_id}',
-                                  '/{wrong}/events', '/{execution_id}/events?x=1', '/{execution_id!r}/events'])
-def test_invalid_event_history_template_fails_at_configuration(path):
-    with pytest.raises(ConfigurationError):
-        load_settings(config={'EXECUTOR_EVENTS_PATH':path}, environ={})
+@pytest.mark.parametrize("name", sorted(REMOVED_EXECUTOR_PATH_SETTINGS))
+@pytest.mark.parametrize("source", ["config", "env"])
+def test_removed_executor_paths_require_root_base_configuration(name, source):
+    with pytest.raises(ConfigurationError, match="Removed Executor API path setting: " + name) as error:
+        load_settings(config={name: "private-route"} if source == "config" else {},
+            environ={name: "private-route"} if source == "env" else {})
+    assert "private-route" not in str(error.value)

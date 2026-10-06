@@ -21,15 +21,12 @@ dependencies = [
     "langgraph==1.2.11",
     "langgraph-checkpoint-postgres==3.1.2",
     "langgraph-cli[inmem]==0.4.31",
-    "matplotlib==3.11.1",
     "numpy==2.4.6",
     "openinference-instrumentation-langchain==0.1.70",
     "openinference-instrumentation-openai==0.1.54",
     "opentelemetry-exporter-otlp==1.42.1",
     "opentelemetry-instrumentation==0.63b1",
     "opentelemetry-sdk==1.42.1",
-    "pandas==3.0.5",
-    "pyarrow==25.0.0",
     "pgvector==0.4.2",
     "pydantic==2.13.4",
     "pydantic-settings>=2.7,<3.0",
@@ -39,38 +36,46 @@ dependencies = [
     "PyYAML==6.0.3",
     "redis>=5.3,<6.0",
     "requests>=2.32,<3.0",
-    "scikit-learn==1.9.0",
-    "scipy==1.17.1",
-    "seaborn==0.13.2",
     "sqlalchemy[asyncio]>=2.0,<3.0",
     "uvicorn[standard]>=0.30,<1.0",
-    "xgboost==3.2.0",
 ]
 
 [project.scripts]
-dtest-agent = "devtools.analysis.cli:main"
-dtest-agent-api = "service_bootstrap:main"
+dtest-agent = "dtest.devtools.analysis.cli:main"
+dtest-agent-api = "dtest.bootstrap:main"
 
 [dependency-groups]
 dev = [
+    { include-group = "tool-validation" },
     "pytest>=8.4,<10.0",
     "pytest-asyncio>=1.4,<2.0",
 ]
 
+# Only for validating sample Tool functions and generating benchmark plots.
+# Production Tool execution uses the Executor/Jupyter kernel environment.
+tool-validation = [
+    "matplotlib==3.11.1",
+    "pandas==3.0.5",
+    "pyarrow==25.0.0",
+    "scikit-learn==1.9.0",
+    "scipy==1.17.1",
+    "seaborn==0.13.2",
+    "xgboost==3.2.0",
+]
+
 [tool.setuptools]
 package-dir = { "" = "src" }
-py-modules = ["agent_config", "config", "service_settings", "event_worker_settings", "service_bootstrap", "bootstrap_admin", "main"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["api_service*", "agent_service*", "service_contracts*", "service_runtime*", "service_auth*", "integrations*", "devtools*"]
-exclude = ["agent_service.agents.*.tests*"]
+include = ["dtest*"]
+exclude = ["dtest.agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]
-api_service = ["**/*.md", "**/*.yaml", "web/static/*.html"]
-service_contracts = ["resources/*.json"]
-"agent_service.agents.analysis" = ["agent_builders/*/*.md", "schemas/**/*.md"]
-"agent_service.agents.analysis.planning" = ["fixtures/*.json"]
+"dtest.api_service" = ["**/*.md", "**/*.yaml", "web/static/*.html"]
+"dtest.contracts" = ["resources/*.json"]
+"dtest.agent_service.agents.analysis" = ["agent_builders/*/*.md"]
+"dtest.agent_service.agents.analysis.planning" = ["fixtures/*.json"]
 
-"agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]
+"dtest.agent_service.agents.analysis.workflow" = ["skills/**/*.md", "skills/skill_index.yaml", "tools/tool_registry.yaml", "workflows/*.md"]

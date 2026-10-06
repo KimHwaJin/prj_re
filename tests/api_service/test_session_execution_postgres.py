@@ -10,14 +10,14 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select, update
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.ownership as ownership
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.runs.lifecycle import execution_health
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.utils import utc_now
-from service_contracts.events import DeferEvent
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.ownership as ownership
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.contracts.values import utc_now
+from dtest.contracts.events import DeferEvent
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 
@@ -48,7 +48,7 @@ async def test_api_claim_excludes_fast_event_until_full_finalization(runtime, mo
         await original(value)
         finalized.set()
         await release.wait()
-    import api_service.runs.execution as runs
+    import dtest.application.runs.execution as runs
     monkeypatch.setattr(runs, 'ainvoke_user_turn', AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
     monkeypatch.setattr(worker, '_execute_claimed', execute)
     task = asyncio.create_task(worker.execute_claimed(item))
@@ -150,7 +150,7 @@ async def test_cancel_retains_owner_through_slow_cleanup_and_repeated_cancel(run
 async def test_ownership_loss_stops_graph_and_cannot_release_replacement(runtime, monkeypatch):
     h=runtime
     snap=service_settings.get_settings()
-    monkeypatch.setattr(service_settings,'_snapshot',replace(snap,api=snap.api.model_copy(update={'task_lease_seconds':.15})))
+    monkeypatch.setattr(service_settings,'_snapshot',replace(snap,commands=snap.commands.model_copy(update={'task_lease_seconds':.15})))
     entered, stopped=asyncio.Event(),asyncio.Event()
     async def graph():
         entered.set()
@@ -233,7 +233,7 @@ async def test_quarantined_session_rejects_new_api_input(runtime):
 async def test_monitor_database_failure_stops_graph_and_retains_token(runtime,monkeypatch):
     h=runtime
     snap=service_settings.get_settings()
-    monkeypatch.setattr(service_settings,'_snapshot',replace(snap,api=snap.api.model_copy(update={'task_lease_seconds':.15})))
+    monkeypatch.setattr(service_settings,'_snapshot',replace(snap,commands=snap.commands.model_copy(update={'task_lease_seconds':.15})))
     original=ownership._update
     count=0
     async def fail_heartbeat(owner,**values):
@@ -258,8 +258,8 @@ async def test_monitor_database_failure_stops_graph_and_retains_token(runtime,mo
 
 @pytest.mark.asyncio
 async def test_legacy_running_or_recovery_task_blocks_event_without_owner_row(runtime):
-    from api_service.models.task_model import TaskModel
-    from api_service.models.enums import TaskStatus
+    from dtest.infrastructure.database.models.task_model import TaskModel
+    from dtest.contracts.enums import TaskStatus
     h=runtime
     queued=await enqueue(h)
     call=AsyncMock()
@@ -277,10 +277,10 @@ async def test_legacy_running_or_recovery_task_blocks_event_without_owner_row(ru
 async def test_real_checkpoint_cannot_resume_before_owner_handoff(runtime):
     from sqlalchemy.engine import make_url
     from langgraph.types import Command
-    from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+    from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
     from tests.api_service.test_graph_runtime_postgres import checkpoint_graph
     h=runtime
-    url=make_url(service_settings.get_settings().api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    url=make_url(service_settings.get_settings().database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     owner=ownership.SessionExecution(UUID(h.session_id),uuid4(),uuid4(),'api_run')
     async with h.factory() as db:
         assert await ownership.acquire(db,owner)
@@ -315,7 +315,7 @@ async def test_fast_executor_waits_for_short_api_handoff_without_retaining_db_co
     finalized,release=asyncio.Event(),asyncio.Event()
     async def execute(value):
         await original(value);finalized.set();await release.wait()
-    import api_service.runs.execution as runs
+    import dtest.application.runs.execution as runs
     monkeypatch.setattr(runs,'ainvoke_user_turn',AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
     monkeypatch.setattr(worker,'_execute_claimed',execute)
     api=asyncio.create_task(worker.execute_claimed(item));call=AsyncMock()

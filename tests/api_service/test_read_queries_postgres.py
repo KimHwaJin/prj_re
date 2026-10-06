@@ -13,11 +13,11 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import event, insert, select, update
 
-from api_service.models.enums import AgentRunStatus, DeleteYN, MessageType
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.message_model import MessageModel as Message
-from api_service.models.project_model import ProjectModel as Project
-from api_service.models.session_model import SessionModel as Session
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, MessageType
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.message_model import MessageModel as Message
+from dtest.infrastructure.database.models.project_model import ProjectModel as Project
+from dtest.infrastructure.database.models.session_model import SessionModel as Session
 from tests.api_service.test_user_identity_postgres import database_url, harness, initialize, add_user, add_session, headers
 
 
@@ -178,7 +178,7 @@ async def test_read_ownership_missing_and_soft_deleted(harness):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('checkpoint', [None, '', False, 'explicit'])
 async def test_checkpoint_projection_and_no_orm_side_effects(harness, checkpoint):
-    from api_service.runs.service import PublicRunService
+    from dtest.application.runs.service import PublicRunService
     h = harness
     user, pid, sid, roots, latest_ids = await sample(h, 10)
     explicit = uuid4()

@@ -17,10 +17,10 @@ _ids = itertools.count(1)
 
 
 def install(engine, metrics, enabled):
-    from api_service.runs import execution, projection
-    from api_service.resources import lifecycle as resource_lifecycle
-    from api_service.runs.persistence import plans as plan_event_persistence
-    from api_service.resources.messages import MessageService
+    from dtest.application.runs import execution, projection
+    from dtest.application.resources import lifecycle as resource_lifecycle
+    from dtest.application.runs.persistence import plans as plan_event_persistence
+    from dtest.application.resources.messages import MessageService
 
     def wrap(original, name):
         @wraps(original)

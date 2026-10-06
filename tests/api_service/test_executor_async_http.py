@@ -1,7 +1,7 @@
 """Real local HTTP/1.1 sockets: pooling, deadlines, delivery uncertainty."""
-from api_service.runs import monitoring
-from api_service.runs.monitoring import run_cancellable
-from api_service.runs.policy import is_retryable
+from dtest.application.runs import monitoring
+from dtest.application.runs.monitoring import run_cancellable
+from dtest.application.runs.policy import is_retryable
 import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -12,9 +12,9 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from agent_config import load_agent_settings
-from integrations.executor import client as api
-from service_contracts.execution import ExecutionNeedsRecovery
+from dtest.settings.agent import load_agent_settings
+from dtest.infrastructure.executor import client as api
+from dtest.contracts.execution import ExecutionNeedsRecovery
 
 
 def settings(url="http://127.0.0.1:9", **changes):
@@ -68,10 +68,11 @@ async def local_server(handle):
 
 
 @pytest.mark.asyncio
-async def test_all_operations_use_one_connection_and_close_with_owner():
+@pytest.mark.parametrize("prefix", ["", "/proxy/executor/", "/gateway"])
+async def test_all_operations_use_one_connection_and_close_with_owner(prefix):
     async def handle(request): return 200,receipt()
     async with local_server(handle) as server:
-        cfg=settings(server.url)
+        cfg=settings(server.url + prefix)
         client=api.ExecutorClient(cfg)
         async with client:
             for method in [api.submit_execution_start,api.submit_execution_continue,api.submit_execution_finish,
@@ -82,6 +83,13 @@ async def test_all_operations_use_one_connection_and_close_with_owner():
                 await method(cfg,"execution-1",client=client)
             assert server.connections==1
             assert [r["method"] for r in server.requests]==["POST"]*5+["GET"]*3
+            expected = ["/api/v1/executions"] + [
+                "/api/v1/executions/execution-1" + suffix
+                for suffix in ("/operations", "/finalize", "/cancel", "/artifacts", "", "/result", "/notebook")
+            ]
+            assert [request["path"].split("?", 1)[0] for request in server.requests] == [
+                prefix.rstrip("/") + path for path in expected
+            ]
             assert "view=FULL" in server.requests[-1]["path"]
         assert client.http.is_closed
         with pytest.raises(RuntimeError,match="not open"):
@@ -250,7 +258,7 @@ async def test_response_size_is_bounded():
     ("EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS","nan"),("EXECUTOR_HTTP_MAX_RESPONSE_BYTES","-1"),
 ])
 def test_limits_reject_invalid_central_settings(key,value):
-    from service_settings import load_settings,ConfigurationError
+    from dtest.settings.loader import load_settings,ConfigurationError
     with pytest.raises(ConfigurationError): load_settings(config={key:value},environ={})
 
 
@@ -272,11 +280,11 @@ async def test_get_cancel_propagates_without_claiming_remote_mutation():
 
 @pytest.mark.asyncio
 async def test_planning_api_runtime_does_not_open_executor_client(monkeypatch):
-    from api_service.runs.runtime import AgentGraphRuntime
-    import agent_service.agents.analysis.planning.graph as module
+    from dtest.application.runs.runtime import AgentGraphRuntime
+    import dtest.agent_service.agents.analysis.planning.graph as module
     from unittest.mock import Mock
     runtime = AgentGraphRuntime()
-    from api_service.infrastructure.memory_store import runtime as store_runtime
+    from dtest.infrastructure.memory.store import runtime as store_runtime
     from langgraph.store.memory import InMemoryStore
     @asynccontextmanager
     async def open_store():
@@ -300,10 +308,10 @@ async def test_planning_api_runtime_does_not_open_executor_client(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_planning_api_runtime_build_failure_has_no_executor_resources(monkeypatch):
-    from api_service.runs.runtime import AgentGraphRuntime
-    import agent_service.agents.analysis.planning.graph as module
+    from dtest.application.runs.runtime import AgentGraphRuntime
+    import dtest.agent_service.agents.analysis.planning.graph as module
     runtime = AgentGraphRuntime()
-    from api_service.infrastructure.memory_store import runtime as store_runtime
+    from dtest.infrastructure.memory.store import runtime as store_runtime
     from langgraph.store.memory import InMemoryStore
     @asynccontextmanager
     async def open_store():
@@ -324,9 +332,9 @@ async def test_current_graph_uses_native_client_and_releases_at_executor_wait(tm
     from dataclasses import replace
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.types import Command
-    from devtools.analysis.runtime import local_runtime,local_input
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from agent_service.agents.analysis.planning.graph import build_planning_graph
+    from dtest.devtools.analysis.runtime import local_runtime,local_input
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
     execution=str(uuid4());registrations=[]
     class Bindings:
         async def register(self,**kwargs):registrations.append(kwargs)

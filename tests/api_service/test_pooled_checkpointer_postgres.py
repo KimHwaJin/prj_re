@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from psycopg_pool import AsyncConnectionPool
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_async_llm_postgres import checkpoint_url
 
@@ -56,12 +56,12 @@ async def test_cancelled_operation_releases_its_pool_connection(harness,database
 
 @pytest.mark.asyncio
 async def test_repair_candidate_survives_pool_restart_and_keeps_receipts(harness,database_url,tmp_path,monkeypatch):
-    from agent_service.agents.analysis.tests import test_agentic_repair as fixture
-    from agent_service.agents.analysis.planning.graph import build_planning_graph
-    from api_service.runs.graph_invocation import GraphInvocation
+    from tests.agent_service import test_agentic_repair as fixture
+    from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+    from dtest.application.runs.graph_invocation import GraphInvocation
     from langgraph.types import Command
-    from service_contracts.events import EventContext,ExecutorEvent
-    from service_contracts.user_resume import resume_identity,resume_envelope
+    from dtest.contracts.events import EventContext,ExecutorEvent
+    from dtest.contracts.user_resume import resume_identity,resume_envelope
     from uuid import UUID
     dsn=checkpoint_url(database_url)
     async with create_checkpointer(dsn,setup_on_start=True,min_size=1,max_size=2) as saver:

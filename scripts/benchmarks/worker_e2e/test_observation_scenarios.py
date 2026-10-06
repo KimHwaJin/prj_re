@@ -9,14 +9,14 @@ from uuid import uuid4
 from jsonschema_rs import Draft202012Validator
 import pytest
 from observation_scenarios import plan_document, scenario
-from service_contracts.workflow_validation import workflow_schema
-from integrations.executor.observations import read_operation_observations
+from dtest.contracts.workflow_validation import workflow_schema
+from dtest.infrastructure.executor.observations import read_operation_observations
 
 ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_expanded_plan_uses_registered_tools_and_valid_workflow_contract():
-    document = json.loads((ROOT/'src/agent_service/agents/analysis/planning/fixtures/quality-review.json').read_text())
+    document = json.loads((ROOT/'src/dtest.agent_service/agents/analysis/planning/fixtures/quality-review.json').read_text())
     original = deepcopy(document)
     for profile in ('standard', 'large20'):
         result = plan_document(document, profile)

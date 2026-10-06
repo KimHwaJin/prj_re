@@ -10,7 +10,7 @@ from psycopg.types.json import Jsonb
 import pytest
 from sqlalchemy.engine import make_url
 
-from api_service.runs.logs import AgentRunLogService
+from dtest.application.runs.logs import AgentRunLogService
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 from tests.api_service.test_log_event_atomicity_postgres import arguments

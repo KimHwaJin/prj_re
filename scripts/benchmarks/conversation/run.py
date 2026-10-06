@@ -16,19 +16,19 @@ import time
 
 from langchain_core.callbacks import AsyncCallbackHandler
 
-from service_settings import load_settings
-from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
+from dtest.settings.loader import load_settings
+from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
 # This comparison driver can replay explicitly archived pre-054 sources.
 # Only those historical snapshots still expose the old factory location.
 import importlib
 import importlib.util
-factory_module = ("agent_service.runtime.model_factory"
-    if importlib.util.find_spec("agent_service.runtime.model_factory") is not None
-    else "agent_service.agents.analysis.dependencies")
+factory_module = ("dtest.agent_service.runtime.model_factory"
+    if importlib.util.find_spec("dtest.agent_service.runtime.model_factory") is not None
+    else "dtest.agent_service.agents.analysis.dependencies")
 create_chat_model = importlib.import_module(factory_module).create_chat_model
-from agent_service.agents.analysis.execution.grounding import completed_context, grounded_message
-from agent_service.agents.analysis.planning.catalog import AssetCatalog
-from agent_service.context import AgentContext
+from dtest.agent_service.agents.analysis.execution.grounding import completed_context, grounded_message
+from dtest.agent_service.agents.analysis.planning.catalog import AssetCatalog
+from dtest.agent_service.context import AgentContext
 
 
 def write_private_json(path, value):

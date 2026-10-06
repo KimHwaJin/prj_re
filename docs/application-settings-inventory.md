@@ -62,10 +62,7 @@
 | DATABASE_POOL_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
 | DATABASE_PREPARED_STATEMENT_CACHE_SIZE | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
 | DATABASE_URL | 서비스 추가(예제 명시) | CRUD·명령·Store DB/공용 Redis 접속 |
-| DATA_MOCK | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | DEFAULT_MODEL | 선택 입력/파생 | 기본/선택 모델·Agent builder |
-| DEMO_ARTIFACTS_ENABLED | 서비스 추가(예제 명시) | Workflow 파일·테스트 데이터/아티팩트 |
-| DEMO_ARTIFACTS_ROOT | 서비스 추가(예제 명시) | Workflow 파일·테스트 데이터/아티팩트 |
 | EVENT_WORKER_ENABLED | 서비스 추가(예제 명시) | app.py·Worker·SSE·종료 |
 | EW_BATCH_SIZE | 서비스 추가(예제 명시) | Executor Streams·Inbox routing |
 | EW_CLAIM_IDLE_MILLISECONDS | 서비스 추가(예제 명시) | Executor Streams·Inbox routing |
@@ -84,24 +81,15 @@
 | EW_POOL_SIZE | 서비스 추가(예제 명시) | Executor Streams·Inbox routing |
 | EW_REQUEST_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor Streams·Inbox routing |
 | EW_SHUTDOWN_SECONDS | 서비스 추가(예제 명시) | Executor Streams·Inbox routing |
-| EXECUTOR_ARTIFACTS_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_BASE_URL | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_CANCEL_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_EVENTS_PATH | 선택 입력/파생 | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_EXECUTIONS_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_EXECUTION_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_FINALIZE_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_HTTP_MAX_CONNECTIONS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_HTTP_MAX_RESPONSE_BYTES | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_NOTEBOOK_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_OPERATIONS_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_OPERATION_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_REPORT_APPEND_TO_NOTEBOOK | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_REPORT_SOURCE_TYPE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_RESULT_PATH | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_RESULT_READ_MODE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_RUNTIME_PROFILE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_RUNTIME_PROFILES | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
@@ -121,8 +109,6 @@
 | LLM_TOKEN_FLUSH_INTERVAL_SECONDS | 서비스 추가(예제 명시) | 기본/선택 모델·Agent builder |
 | LLM_TOKEN_WRITE_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | 기본/선택 모델·Agent builder |
 | MAX_PLAN_CANDIDATES | 서비스 추가(예제 명시) | 계획·HITL·분석 맥락·프로젝트 메모리 |
-| MAX_WORKFLOW_REVISIONS | 서비스 추가(예제 명시) | Workflow embedding·HNSW 검색 |
-| MOCK_DATA_ROOT | 서비스 추가(예제 명시) | Workflow 파일·테스트 데이터/아티팩트 |
 | MODEL_CATALOG | 선택 입력/파생 | 기본/선택 모델·Agent builder |
 | MODEL_ENABLE_THINKING | 선택 입력/파생 | 기본/선택 모델·Agent builder |
 | MODEL_MAX_OUTPUT_TOKENS | 선택 입력/파생 | 기본/선택 모델·Agent builder |
@@ -188,7 +174,7 @@
 | WORKFLOW_SIMILARITY_SCORE | 서비스 추가(예제 명시) | Workflow embedding·HNSW 검색 |
 | WORKFLOW_STORAGE_ROOT | 서비스 추가(예제 명시) | Workflow 파일·테스트 데이터/아티팩트 |
 
-선택/파생의 EW_DATABASE_URL, WORKFLOW_DATABASE_URL, EXECUTOR_EVENTS_PATH, EW_EVENT_GROUP_NAME, EW_INSTANCE_ID는 일반적으로 생략한다. 기본 대상/경로/namespace에서 파생한다. EW_INSTANCE_ID를 지정해도 startup UUID를 붙여 process consumer 충돌을 막는다. DEFAULT_MODEL/MODEL_CATALOG는 다중 모델을 제공할 때 사용하며 PRIVATE_LLM_*는 기본 모델이다. WORKFLOW_PERSISTENCE_ENABLED=false는 legacy Workflow 저장 비활성 명시값이며 추천 embedding 설정과 별개다.
+선택/파생의 EW_DATABASE_URL, EW_EVENT_GROUP_NAME, EW_INSTANCE_ID는 일반적으로 생략한다. 기본 대상/namespace에서 파생한다. EW_INSTANCE_ID를 지정해도 startup UUID를 붙여 process consumer 충돌을 막는다. DEFAULT_MODEL/MODEL_CATALOG는 다중 모델을 제공할 때 사용하며 PRIVATE_LLM_*는 기본 모델이다. WORKFLOW_PERSISTENCE_ENABLED=false는 legacy Workflow 저장 비활성 명시값이며 추천 embedding 설정과 별개다.
 
 ## 플랫폼 소유 유지
 
@@ -212,3 +198,7 @@
 ## 100 설정 구조 정리 추적
 
 AGENT_KEYS·EXTRA_KEYS·GROUPS·PLATFORM_ONLY_KEYS·중앙 ALIASES·별도 검색 SETTING_FIELDS를 제거했다. 실제 모델 필드 선언으로 소비 키와 별칭을 유도한다. Agent의 수동 문자열 파서를 타입·기본값·검증이 있는 dataclass로 교체했으며 기존 dataclasses.replace 기반 모델 선택/테스트도 유지한다. 신규 플랫폼 키와 오타 철자를 위해 코드나 허용 목록을 수정할 필요가 없다. 공개 예제의 IS_SECURITY_SERVICE·S3_FILE_URL_EXPIRES_IN 철자를 정정했다. 폐기한 우리 설정의 이행 안내만 별도 작은 모듈에 유지한다.
+
+## Executor API 경로 설정 제거 (103)
+
+Executor v1 경로는 `src/dtest/infrastructure/executor/routes.py`에서 관리한다. 제출·상세·operation·result·notebook·finalize·cancel·artifact·events 경로를 YAML/env로 주입하지 않는다. `EXECUTOR_BASE_URL`에는 서버 root 또는 프록시 root만 넣고 `/api/v1`을 붙이지 않는다. 기존 `EXECUTOR_*_PATH`, `EXECUTOR_JOBS_PATH`, `EW_EXECUTOR_EVENTS_PATH`를 제거한다. 해당 폐기 키가 남아 있으면 값 노출 없이 삭제 안내 오류를 반환한다. 이 항목은 파일 제출 방식인 `EXECUTOR_SOURCE_TYPE=PATH`나 공유 PV root 설정과는 별개다.

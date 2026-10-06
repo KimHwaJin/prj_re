@@ -1,14 +1,14 @@
 # Agent 개발 안내
 
-054 기준으로 현재 API·Worker·로컬 개발 도구는 `analysis/planning/graph.py`의 같은 builder를 사용한다. 실제 역할은 conversation, plan_revision, execution_review, execution_report, execution_repair 다섯 개다. 이전 routing/intent_classifier/skill_selector/workflow_generator/conditional_decider/faq/report_writer와 설문형 그래프는 제거했다. [파일별 책임](../../src/agent_service/agents/analysis/README.md), [서비스 경계](../architecture/service-layout.md), [선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
+054 기준으로 현재 API·Worker·로컬 개발 도구는 `analysis/planning/graph.py`의 같은 builder를 사용한다. 실제 역할은 conversation, plan_revision, execution_review, execution_report, execution_repair 다섯 개다. 이전 routing/intent_classifier/skill_selector/workflow_generator/conditional_decider/faq/report_writer와 설문형 그래프는 제거했다. [파일별 책임](../../src/dtest/agent_service/agents/analysis/README.md), [서비스 경계](../architecture/service-layout.md), [선언·문맥·미들웨어](agent-runtime-contract.md)를 먼저 읽는다.
 
 ## 수정 위치
 
 1. 새 요청·HITL·계획 재작성은 `planning/graph.py`, 실행·관찰·판단·보고서는 `execution/nodes.py`, 오류 수정 연결은 `execution/repair_nodes.py`다. 외부 State는 `planning/graph.py`의 PlanningState다.
 2. 역할 선언은 `agent_builders/<role>/agent.py`, 독립 기본 지시문은 같은 폴더 `prompt.md`다. Conversation의 상세 계획 지시문은 `planning_prompt.md`다.
-3. 모델 선택·캐시·문맥 주입은 `planning/runtime.py`, 전송용 모델 생성은 공통 `agent_service/runtime/model_factory.py`다. 노드에서 전역 기본 모델을 다시 읽지 않는다.
+3. 모델 선택·캐시·문맥 주입은 `planning/runtime.py`, 전송용 모델 생성은 공통 `dtest/agent_service/runtime/model_factory.py`다. 노드에서 전역 기본 모델을 다시 읽지 않는다.
 4. 업무 자산은 계속 **`analysis/workflow/{skills,tools,workflows}/`**에서 관리한다. 새 Runtime이 Agent에 제공하는 조회 도구는 `planning/catalog.py`의 AssetCatalog다. `analysis/tools/catalog.py`와 `workflow/*.py`는 기존 1.3 Workflow 관리·컴파일 지원이다.
-5. 공개 API와 Workflow/Executor 계약은 `service_contracts`, HTTP/PV 어댑터는 `integrations/executor`, CRUD·Worker 점유·DB 조립은 `api_service`다. Agent에서 API 구현을 import하지 않는다.
+5. 공개 API와 Workflow/Executor 계약은 `dtest/contracts`, HTTP/PV 어댑터는 `dtest/infrastructure/executor`, 업무 정책은 `dtest/application`, Worker 점유는 `dtest/worker_service`, 조립은 `dtest/container.py`다. Agent에서 API 구현을 import하지 않는다.
 
 ## 역할을 추가·변경하는 방법
 
@@ -28,13 +28,13 @@ python cli.py --request "데이터의 품질과 이상치를 분석해줘"
 python cli.py --interactive
 
 # 현재 계획·MULTI·판단·수정 분기 전체를 .mmd로 출력 (외부 호출 없음)
-PYTHONPATH=src python -m devtools.analysis.visualization --output /tmp/analysis-current.mmd
+PYTHONPATH=src python -m dtest.devtools.analysis.visualization --output /tmp/analysis-current.mmd
 
 # 현재 builder의 offline mock Studio 진입점
 langgraph dev
 
 # 관련 회귀: 실제 DB 테스트는 별도의 전용 테스트 DB 설정 필요
-PYTHONPATH=src python -m pytest src/agent_service/agents/analysis/tests -q
+PYTHONPATH=src python -m pytest tests/agent_service -q
 ```
 
 CLI는 typed HITL action JSON을 받으며 현재 plan_id/plan_revision을 출력한다. `approve_plan` 등을 action object로 입력한다. 기본 mock에서는 최종 `plan_approved`까지이고 Executor·DB·Redis·로그인·project_memory 연계는 없다. Studio가 saver를 제공하며 `langgraph_dev.py`는 서비스 Worker/SSO/Redis 바인딩을 함께 띄우지 않는다. 운영 기동이나 장기 실행 검증에 이 도구를 사용하지 않는다.
@@ -46,11 +46,11 @@ CLI는 typed HITL action JSON을 받으며 현재 plan_id/plan_revision을 출�
 현재 예시 자산에 공통 Agent를 맞추지 않는다. [자산과 공통 실행 계약](skill-tool-contract.md)에 한 파일의 여러 Tool·연결 정책·등록 ID·변경 영향과 검증 방법을 정리했다.
 
 ```sh
-python src/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
-python src/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py
+python src/dtest/agent_service/agents/analysis/workflow/skills/generate_skill_index.py
+python src/dtest/agent_service/agents/analysis/workflow/tools/generate_tool_registry.py
 ```
 
-생성기는 `--output`으로 임시 파일에 비교할 수 있고 기동 시 자산을 다시 쓰지 않는다. tmp 자산·원래 docstring·import 포함 함수와 Skill Markdown을 보존한다. `availability=test_only` Tool은 현재 실제 계획 후보에서 제외된다. [Workflow 유지보수 안내](../../src/agent_service/agents/analysis/workflow/README.md)를 따른다.
+생성기는 `--output`으로 임시 파일에 비교할 수 있고 기동 시 자산을 다시 쓰지 않는다. 등록 자산의 원래 docstring·import 포함 함수와 Skill Markdown을 보존한다. 미등록 tmp 자산은 102에서 삭제했다. `availability=test_only` Tool은 현재 실제 계획 후보에서 제외된다. [Workflow 유지보수 안내](../../src/dtest/agent_service/agents/analysis/workflow/README.md)를 따른다.
 
 등록 함수는 docstring만 제거하고 필요한 import를 포함한 원문을 승인 snapshot에 고정한다. 사용자에게 보여주는 plan_view에는 함수 이름·설명·입력·Skill을 표시하고 코드는 제외한다. 이미 승인된 실행을 현재 배포 Tool로 재생성하지 않는다.
 

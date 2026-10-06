@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 import pytest
 import yaml
 
-import service_settings
-from service_settings import ConfigurationError, load_settings
-from service_runtime.configuration_files import initialize_profile, yaml_document
+import dtest.settings.loader as service_settings
+from dtest.settings.loader import ConfigurationError, load_settings
+from dtest.settings.files import initialize_profile, yaml_document
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -131,8 +131,8 @@ def test_copy_block_contains_only_service_owned_settings():
 
 @pytest.mark.parametrize("platform", [True, False])
 def test_phoenix_is_owned_by_exactly_one_lifecycle(monkeypatch, platform):
-    import service_runtime.observability.phoenix as tracing
-    from service_bootstrap import create_app
+    import dtest.infrastructure.observability.phoenix as tracing
+    from dtest.bootstrap import create_app
     setup, shutdown = Mock(), Mock()
     monkeypatch.setattr(tracing, "setup_phoenix", setup)
     monkeypatch.setattr(tracing, "shutdown_phoenix", shutdown)
@@ -145,7 +145,7 @@ def test_phoenix_is_owned_by_exactly_one_lifecycle(monkeypatch, platform):
 
 
 def test_active_trace_false_does_not_register_a_local_exporter(monkeypatch):
-    import service_runtime.observability.phoenix as tracing
+    import dtest.infrastructure.observability.phoenix as tracing
     register = Mock()
     monkeypatch.setattr(tracing, "register", register)
     settings = load_settings(config={"ACTIVE_TRACE": False, "PHOENIX_ENDPOINT": "http://phoenix/v1/traces"}, environ={})
@@ -155,8 +155,8 @@ def test_active_trace_false_does_not_register_a_local_exporter(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_user_and_executor_execution_configs_get_the_same_recursion_budget(monkeypatch):
-    from api_service.runs.runtime import graph_config
-    from api_service.runs.graph_invocation import GraphInvocation
+    from dtest.application.runs.runtime import graph_config
+    from dtest.application.runs.graph_invocation import GraphInvocation
     service_settings.configure(load_settings(config={"RECURSION_LIMIT": 73}, environ={}))
     assert graph_config("session", "run")["recursion_limit"] == 73
     class Graph:

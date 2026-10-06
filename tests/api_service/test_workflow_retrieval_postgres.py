@@ -9,21 +9,19 @@ from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from tests.api_service.test_planning_api_postgres import test_config, planning  # noqa: F401
 from tests.api_service.test_user_identity_postgres import headers, add_user
-from agent_service.agents.analysis.tests.asset_fixtures import assets
-from agent_service.agents.analysis.tests.test_workflow_standard import public_document
-from api_service.models.workflow_model import (
+from tests.agent_service.asset_fixtures import assets
+from tests.agent_service.test_workflow_standard import public_document
+from dtest.infrastructure.database.models.workflow_model import (
     WorkflowModel,
     WorkflowEmbeddingModel,
 )
-from api_service.workflows.service import WorkflowService
-from api_service.workflows.file_store import WorkflowFileStore
-from api_service.schemas.workflow_schema import WorkflowUpdate
-from api_service.workflows.search.runtime import WorkflowRuntime
-from api_service.workflows.search.embedding import EmbeddingUnavailable
-from service_runtime.workflow_search_settings import WorkflowSearchSettings
-import service_settings
-
-
+from dtest.application.workflows.service import WorkflowService
+from dtest.infrastructure.file_storage.workflows import WorkflowFileStore
+from dtest.contracts.resources.workflow_schema import WorkflowUpdate
+from dtest.infrastructure.workflow_search.runtime import WorkflowRuntime
+from dtest.infrastructure.workflow_search.embedding import EmbeddingUnavailable
+from dtest.settings.search import WorkflowSearchSettings
+import dtest.settings.loader as service_settings
 class Embeddings:
     def __init__(self):
         self.calls = []
@@ -53,8 +51,8 @@ class Embeddings:
 async def search_context(planning, tmp_path, monkeypatch):  # noqa: F811
     h = planning
     catalog, case = assets(tmp_path / "assets", "inventory")
-    import api_service.workflows.service as service
-    import api_service.api.v1.routes.workflows as routes
+    import dtest.application.workflows.service as service
+    import dtest.application.workflows.queries as queries
 
     monkeypatch.setattr(service, "deployed_analysis_assets", lambda: catalog)
     monkeypatch.setattr(
@@ -77,7 +75,7 @@ async def search_context(planning, tmp_path, monkeypatch):  # noqa: F811
     runtime.indexer.embedding = embedding
     runtime.search.embedding = embedding
     runtime.search.similarity_threshold = 0
-    monkeypatch.setattr(routes, "get_workflow_runtime", lambda: runtime)
+    monkeypatch.setattr(queries, "get_workflow_runtime", lambda: runtime)
     async with h.factory() as db:
         await db.execute(text(policy.index_sql()))
         await db.commit()

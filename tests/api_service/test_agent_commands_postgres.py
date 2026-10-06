@@ -17,22 +17,22 @@ from redis.asyncio import Redis
 from sqlalchemy import select, text, update
 from sqlalchemy.engine import make_url
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as execution
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.agent_command_model import AgentCommandModel as Command
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.models.task_model import TaskModel as Task
-from api_service.runs.commands.types import ClaimedEvent
-from api_service.utils import utc_now
-from api_service.workers.executor_events.consumer import AckDecision, StreamMessage
-from api_service.workers.executor_events.ingress import Ingress
-from api_service.workers.executor_events.runtime import ExecutorWorker
-from api_service.workers.executor_events.store import Store
-from service_contracts.events import DeferEvent, ExecutorEvent
-from service_contracts.execution import ExecutionNeedsRecovery
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as execution
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.agent_command_model import AgentCommandModel as Command
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
+from dtest.application.runs.commands.types import ClaimedEvent
+from dtest.contracts.values import utc_now
+from dtest.worker_service.executor_events.consumer import AckDecision, StreamMessage
+from dtest.worker_service.executor_events.ingress import Ingress
+from dtest.worker_service.executor_events.runtime import ExecutorWorker
+from dtest.infrastructure.database.event_store import Store
+from dtest.contracts.events import DeferEvent, ExecutorEvent
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 
@@ -113,10 +113,10 @@ async def test_api_admission_and_command_commit_together_and_replay_once(command
     assert len(pending)==1 and str(pending[0].invocation_id)==public['run_id']
     assert pending[0].state=='READY' and pending[0].kind=='user_start'
     async with h.factory() as db:
-        from api_service.models.agent_run_model import AgentRunModel
+        from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
         invocation=await db.get(AgentRunModel,pending[0].invocation_id)
-        from api_service.runs.admission import enqueue as admit
-        from api_service.schemas.run_schema import RunCreate
+        from dtest.application.runs.admission import enqueue as admit
+        from dtest.contracts.resources.run_schema import RunCreate
         replay=await admit(db,UUID(invocation.metadata_json['requested_by_user_id']),UUID(h.session_id),
             RunCreate(input=invocation.input_json),invocation.idempotency_key)
         assert replay.run_id==invocation.run_id
@@ -192,7 +192,7 @@ async def test_earlier_retry_blocks_same_session_but_other_session_advances(comm
 async def test_user_and_event_share_total_capacity_and_reuse_idle_slots(commands,monkeypatch):
     from dataclasses import replace
     h=commands; configured=service_settings.get_settings()
-    monkeypatch.setattr(service_settings,'_snapshot',replace(configured,api=configured.api.model_copy(update={'agent_worker_concurrency':2})))
+    monkeypatch.setattr(service_settings,'_snapshot',replace(configured,commands=configured.commands.model_copy(update={'agent_worker_concurrency':2})))
     starts=[]; active=0; peak=0; release=asyncio.Event()
     async def pause(label):
         nonlocal active,peak
@@ -267,11 +267,11 @@ async def test_ingress_acks_after_inbox_commit_before_graph_execution(commands):
 async def test_real_redis_to_persistent_graph_and_public_completion(commands,monkeypatch):
     """Real Streams/Inbox/ledger/claim/checkpoint/projection, fixture Executor result."""
     from langgraph.graph import StateGraph, START, END
-    from agent_service.runtime.initial_request import record_initial_request
-    from agent_service.runtime.executor_boundary import ExecutorBoundaryNodes
-    from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-    from api_service.runs import runtime as graphs
-    from api_service.runs import projection
+    from dtest.agent_service.runtime.initial_request import record_initial_request
+    from dtest.agent_service.runtime.executor_boundary import ExecutorBoundaryNodes
+    from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+    from dtest.application.runs import runtime as graphs
+    from dtest.application.runs import projection
     from tests.api_service.test_public_run_postgres import state
     h=commands; execution_id=uuid4(); graph_task=uuid4()
     boundary=ExecutorBoundaryNodes(h.store)
@@ -351,7 +351,7 @@ async def test_real_redis_to_persistent_graph_and_public_completion(commands,mon
 
 
 async def test_permanent_rejection_does_not_block_later_session_commands(commands,monkeypatch):
-    from service_contracts.events import RejectEvent
+    from dtest.contracts.events import RejectEvent
     h=commands
     await admit_event(h)
     await admit_event(h)
@@ -389,7 +389,7 @@ async def test_event_cancellation_records_recovery_after_confirmed_graph_stop(co
 
 
 async def test_outcome_rejects_changed_command_owner(commands):
-    from api_service.runs.commands.outcome import record
+    from dtest.application.runs.commands.outcome import record
     h=commands
     await admit_event(h)
     item=await worker.claim_one()
@@ -434,8 +434,8 @@ async def test_partial_migration_cannot_reorder_missing_old_session_command(comm
 
 
 async def test_failed_command_admission_rolls_back_user_invocation_and_task(commands,monkeypatch):
-    from api_service.runs.commands import admission
-    from api_service.models.agent_run_model import AgentRunModel
+    from dtest.application.runs.commands import admission
+    from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
     monkeypatch.setattr(admission,'enqueue_user',AsyncMock(side_effect=RuntimeError('ledger unavailable')))
     import httpx
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=commands.app,raise_app_exceptions=False),base_url='http://test') as client:
@@ -450,7 +450,7 @@ async def test_failed_command_admission_rolls_back_user_invocation_and_task(comm
 
 
 async def test_reused_claim_query_binds_namespace_and_fresh_deadline(commands, monkeypatch):
-    import api_service.runs.commands.claim as claim
+    import dtest.application.runs.commands.claim as claim
     h = commands
     await admit_event(h)
     pending = (await rows(h))[0]

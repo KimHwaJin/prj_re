@@ -12,14 +12,14 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select, update
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.projection as completion
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_model import TaskModel
-from service_contracts.events import EventContext, ExecutorEvent, DeferEvent
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.projection as completion
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.contracts.events import EventContext, ExecutorEvent, DeferEvent
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session, headers
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 
@@ -137,7 +137,7 @@ async def test_dispatcher_bounded_workload_comparison(runtime, monkeypatch):
     execute = worker.execute_claimed
     for slots in (1,2,4):
         snapshot = service_settings.get_settings()
-        monkeypatch.setattr(service_settings, '_snapshot', replace(snapshot, api=snapshot.api.model_copy(update={
+        monkeypatch.setattr(service_settings, '_snapshot', replace(snapshot, commands=snapshot.commands.model_copy(update={
             'agent_worker_concurrency':slots, 'agent_worker_poll_interval_seconds':.05,
         })))
         queued = [await enqueue(h, await add_session(h,h.user)) for _ in range(20)]

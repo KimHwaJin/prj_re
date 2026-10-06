@@ -8,8 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'src'))
-from service_settings import load_settings
-from service_bootstrap import create_app
+from dtest.settings.loader import load_settings
+from dtest.bootstrap import create_app
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
                                      'AGENT_WORKER_ENABLED':False},environ={})
     fixtures['openapi'] = create_app(settings).openapi()
     payload = json.dumps(fixtures,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')
-    file = ROOT/'src/api_service/web/static/demo.html'
+    file = ROOT/'src/dtest/api_service/web/static/demo.html'
     text,count = re.subn(r'(<script id="fixtures" type="application/json">)[\s\S]*?(</script>)',
                         lambda m:m[1]+payload+m[2],file.read_text())
     if count != 1:

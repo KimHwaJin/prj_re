@@ -1,6 +1,6 @@
 # 분석 Agent 상태 수명과 노드 입력 경계
 
-분석 그래프의 실행 상태는 `src/agent_service/agents/analysis/state.py`가 선언한다. 책임별 TypedDict를 조립하지만 체크포인트는 기존과 같은 **77개 평면 채널**이다. `planning/graph.py`는 그래프 조립, `planning/lifecycle.py`는 새 요청 초기화를 담당한다.
+분석 그래프의 실행 상태는 `src/dtest/agent_service/agents/analysis/state.py`가 선언한다. 책임별 TypedDict를 조립하지만 체크포인트는 기존과 같은 **77개 평면 채널**이다. `planning/graph.py`는 그래프 조립, `planning/lifecycle.py`는 새 요청 초기화를 담당한다.
 
 ## 무엇을 언제 보존하는가
 

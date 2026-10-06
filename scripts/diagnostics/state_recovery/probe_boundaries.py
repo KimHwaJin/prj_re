@@ -26,21 +26,21 @@ from sqlalchemy.exc import SQLAlchemyError
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.runtime as graphs
-import api_service.runs.persistence.graph as projection
-from api_service.runs.lifecycle import execution_health
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.models.agent_run_log_model import AgentRunLogModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.models.session_execution_model import SessionExecutionModel
-from api_service.runs.logs import AgentRunLogService
-from api_service.runs.task_events import TaskEventService
-from api_service.runs.tasks import TaskService
-from api_service.utils import utc_now
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.runtime as graphs
+import dtest.application.runs.persistence.graph as projection
+from dtest.application.runs.lifecycle import execution_health
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
+from dtest.application.runs.logs import AgentRunLogService
+from dtest.application.runs.task_events import TaskEventService
+from dtest.application.runs.tasks import TaskService
+from dtest.contracts.values import utc_now
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_public_run_postgres import state, resume, execute
@@ -86,7 +86,7 @@ async def two_interrupts(h, monkeypatch):
         for name,node in [('start',start),('one',one),('two',two)]: b.add_node(name,node)
         for left,right in [(START,'start'),('start','one'),('one','two'),('two',END)]: b.add_edge(left,right)
         return b.compile(checkpointer=saver)
-    dsn=make_url(service_settings.get_settings().api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    dsn=make_url(service_settings.get_settings().database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     @asynccontextmanager
     async def graph_context():
         async with create_checkpointer(database_url=dsn,setup_on_start=True,min_size=1,max_size=2,timeout=2) as saver:
@@ -180,17 +180,17 @@ async def test_final_projection_error_leaves_running_until_stale_reconciler(runt
 CHILD='''
 import asyncio,json,os,sys
 from uuid import UUID,uuid4
-import service_settings
+import dtest.settings.loader as service_settings
 settings=json.loads(sys.stdin.read())
 service_settings.configure(service_settings.load_settings(config=settings,environ={}))
 async def main():
- import api_service.workers.agent as worker
+ import dtest.worker_service.command_worker as worker
  if os.environ['REVIEW_KIND']=='api_run':
   item=await worker.claim_one()
   assert item is not None
  else:
-  from api_service.infrastructure.database import get_session_factory
-  from api_service.runs.ownership import SessionExecution,acquire
+  from dtest.infrastructure.database.runtime import get_session_factory
+  from dtest.application.runs.ownership import SessionExecution,acquire
   async with get_session_factory()() as db:
    assert await acquire(db,SessionExecution(UUID(os.environ['REVIEW_SESSION']),uuid4(),uuid4(),'executor_event'))
    await db.commit()
@@ -206,7 +206,7 @@ async def test_hard_process_exit_preserves_owner_without_automatic_requeue(runti
     if kind=='executor_event':
         monkeypatch.setattr(runs,'ainvoke_user_turn',AsyncMock(return_value={'routing_result':{'route':'analysis'},'__interrupt__':[SimpleNamespace(value={'kind':'EXECUTOR_EVENT'})]}))
         await execute()
-    settings={'DATABASE_URL':service_settings.get_settings().api.database_url,'MODEL_PROVIDER':'mock',
+    settings={'DATABASE_URL':service_settings.get_settings().database.database_url,'MODEL_PROVIDER':'mock',
               'EVENT_WORKER_ENABLED':False,'TASK_RECONCILER_ENABLED':False,'EXECUTOR_SUBMIT_ENABLED':False}
     env={k:v for k,v in os.environ.items() if k in ('PATH','HOME','TMPDIR','LANG')}
     env.update(PYTHONPATH=str(Path(__file__).resolve().parents[3]/'src'),REVIEW_KIND=kind,REVIEW_SESSION=h.session_id)

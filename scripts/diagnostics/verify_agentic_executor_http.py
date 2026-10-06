@@ -3,10 +3,10 @@ import asyncio, json, socket, time, subprocess, os, sys
 from pathlib import Path
 from uuid import uuid4, UUID
 import httpx, uvicorn, yaml
-from service_settings import load_settings
-from service_bootstrap import create_app
+from dtest.settings.loader import load_settings
+from dtest.bootstrap import create_app
 from cookie_auth import configure_cookie_auth, install_employee_fixture, sign_in, write_private_result
-from api_service.runs.runtime import runtime
+from dtest.application.runs.runtime import runtime
 
 parser = __import__('argparse').ArgumentParser(description='Isolated local HTTP/Executor/Jupyter verification; no production DBs.')
 parser.add_argument('--settings-file', required=True, type=Path, help='Private flat JSON central settings mapping. Include local DB URLs and, for real mode, model/Phoenix settings.')
@@ -42,8 +42,7 @@ config.update(MODEL_PROVIDER='openai_compatible' if real_mode else 'mock',
     PHOENIX_PROJECT_NAME=namespace, EXECUTOR_SUBMIT_ENABLED=True,
     EXECUTOR_BASE_URL=base, EXECUTOR_SOURCE_TYPE='INLINE', EXECUTOR_RUNTIME_PROFILE='default',
     EXECUTOR_OPERATION_TIMEOUT_SECONDS=120, EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS=120,
-    REDIS_URL='redis://127.0.0.1:6379/0', EW_NAMESPACE=namespace,
-    EW_EXECUTOR_BASE_URL=base.rstrip('/')+'/api/v1', EW_HEALTH_PORT=0,
+    REDIS_URL='redis://127.0.0.1:6379/0', EW_NAMESPACE=namespace, EW_HEALTH_PORT=0,
     EW_CONCURRENCY=2, EW_POOL_SIZE=4, EW_POLL_SECONDS=.1, EW_IDLE_POLL_SECONDS=.2,
     EVENT_WORKER_ENABLED=True, AGENT_WORKER_ENABLED=True, AGENT_WORKER_CONCURRENCY=2,
     AGENT_WORKER_POLL_INTERVAL_SECONDS=.1, TASK_RECONCILER_ENABLED=False,
@@ -65,12 +64,12 @@ app=create_app(settings)
 install_employee_fixture(app,namespace)
 summary={'corporate_sdk':'verified_employee_fixture','production_cookie_csrf':True,'login_redis':'actual_loopback','real_llm':real_mode,'initial_plan_fixture':args.fixture_plan,'namespace':namespace,'port':args.port,'passed':False}
 if args.fixture_plan:
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
     old_respond=PlanningRuntime.respond
     async def fixed_initial_plan(self,state,context,datasets):
         if state['user_request'].startswith('default-nce 데이터의 품질, 기본 통계, 이상치를 분석하고'):
-            document=json.loads((root/'src/agent_service/agents/analysis/planning/fixtures/quality-review.json').read_text())
+            document=json.loads((root/'src/dtest.agent_service/agents/analysis/planning/fixtures/quality-review.json').read_text())
             return reply_schema(self.catalog,1)(kind='plans',message='명시적인 등록 Tool 검증 계획입니다.',
                 plans=[{'definition':document,'input_values':{'dataset':'default-nce'}}])
         return await old_respond(self,state,context,datasets)
@@ -79,7 +78,7 @@ grounding_deliveries=[]
 context_deliveries=[]
 memory_deliveries=[]
 if args.memory_checks:
-    from agent_service.middleware.project_memory import ProjectMemoryMiddleware
+    from dtest.agent_service.middleware.project_memory import ProjectMemoryMiddleware
     original_memory_wrap=ProjectMemoryMiddleware.awrap_model_call
     async def observe_memory(self,request,handler):
         async def measured(actual):
@@ -94,8 +93,8 @@ if args.memory_checks:
     ProjectMemoryMiddleware.awrap_model_call=observe_memory
 
 if args.followup_checks:
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from agent_service.agents.analysis.execution.grounding import completed_context, fact_value, selected_facts
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.agents.analysis.execution.grounding import completed_context, fact_value, selected_facts
     before_grounding_respond=PlanningRuntime.respond
     async def observe_grounding(self,state,context,datasets):
         reply=await before_grounding_respond(self,state,context,datasets)
@@ -108,7 +107,7 @@ if args.followup_checks:
                 'selected_fact_ids':list(g.fact_ids)})
         return reply
     PlanningRuntime.respond=observe_grounding
-    from agent_service.middleware import SessionAnalysisMiddleware
+    from dtest.agent_service.middleware import SessionAnalysisMiddleware
     old_wrap=SessionAnalysisMiddleware.awrap_model_call
     async def observe_context(self,request,handler):
         async def measured(actual):
@@ -230,7 +229,7 @@ async def main():
             repeat=await client.post(path,headers={**headers,'Idempotency-Key':key},json=approval)
             assert repeat.status_code==202,repeat.text
             async with runtime.open_graph() as graph:
-                from agent_config import build_langgraph_thread_id
+                from dtest.settings.agent import build_langgraph_thread_id
                 snapshot=await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(sid)}})
                 summary.update(operation_count=snapshot.values.get('executor_operation_number'),terminal_event_seen=snapshot.values.get('terminal_event_seen'))
             stream=await client.get(path+'/'+rid+'/stream',headers=headers)
@@ -251,7 +250,7 @@ async def main():
                 summary['sse_replay']={'events':len(sequences),'cursor':cursor,'replayed_events':len(replay_sequences),'exact_suffix':True}
 
             if args.followup_checks:
-                from agent_config import build_langgraph_thread_id
+                from dtest.settings.agent import build_langgraph_thread_id
                 async with runtime.open_graph() as graph:
                     saved=(await graph.aget_state({'configurable':{'thread_id':build_langgraph_thread_id(sid)}})).values['last_analysis_context']
                 assert saved['payload']['execution_id']==final['execution_id']
@@ -308,9 +307,9 @@ async def main():
                             await asyncio.sleep(.2)
                     assert item['status']=='success' and item['result']['final_response']['status']=='answer',item
                     snapshot=(await client.get(memory_path,headers=headers)).json()
-                    from api_service.resources.project_memory import ProjectMemoryPolicy
-                    from api_service.infrastructure.database import short_session
-                    from api_service.models.project_model import ProjectModel
+                    from dtest.application.resources.project_memory import ProjectMemoryPolicy
+                    from dtest.infrastructure.database.runtime import short_session
+                    from dtest.infrastructure.database.models.project_model import ProjectModel
                     from sqlalchemy import select
                     async with short_session() as db:
                         owner_id=await db.scalar(select(ProjectModel.user_id).where(ProjectModel.project_id==UUID(project)))
@@ -334,7 +333,7 @@ async def main():
                     delivered=memory_deliveries[before:]
                     assert delivered and all(d['project_id']==project for d in delivered)
                     assert all(d['version']==snapshot['version'] for d in delivered)
-                    from service_contracts.project_memory import section_body
+                    from dtest.contracts.project_memory import section_body
                     for change in automatic['changes']:
                         expected_body=section_body(snapshot['content'],change['section'])
                         assert any(expected_body in d['content'] for d in delivered)
@@ -363,7 +362,7 @@ async def main():
                 # invocation is covered with real DB and an explicit model double.
                 await client.post(path+'/'+r.json()['run_id']+'/cancel',headers=headers,json={})
         if real_mode:
-            import service_runtime.observability.phoenix as phoenix
+            import dtest.infrastructure.observability.phoenix as phoenix
             provider=phoenix._tracer_provider
             if provider:await asyncio.to_thread(provider.force_flush)
             async with httpx.AsyncClient(trust_env=False,timeout=15) as client:

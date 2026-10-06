@@ -4,12 +4,12 @@ from uuid import UUID, uuid4
 import pytest
 from langgraph.types import Command
 
-from agent_service.agents.analysis.state import PlanningState
-from agent_service.agents.analysis.planning.graph import build_planning_graph
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from service_contracts.events import EventContext, ExecutorEvent
-from service_contracts.user_resume import resume_identity, resume_envelope
-from api_service.runs.graph_invocation import GraphInvocation
+from dtest.agent_service.agents.analysis.state import PlanningState
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.contracts.events import EventContext, ExecutorEvent
+from dtest.contracts.user_resume import resume_identity, resume_envelope
+from dtest.application.runs.graph_invocation import GraphInvocation
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_async_llm_postgres import checkpoint_url
 
@@ -25,9 +25,9 @@ def full_read_graph(runtime, *, checkpointer):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('wait', ['plan_review', 'executor', 'decision_review', 'repair_review'])
 async def test_full_read_checkpoint_resumes_with_narrow_inputs_after_pool_restart(harness, database_url, tmp_path, monkeypatch, wait):
-    from agent_service.agents.analysis.tests import test_agentic_execution as execution
-    from agent_service.agents.analysis.tests import test_agentic_repair as repair
-    from agent_service.agents.analysis.tests.test_planning_runtime import setup as planning_setup
+    from tests.agent_service import test_agentic_execution as execution
+    from tests.agent_service import test_agentic_repair as repair
+    from tests.agent_service.test_planning_runtime import setup as planning_setup
     dsn = checkpoint_url(database_url)
     async with create_checkpointer(dsn, setup_on_start=True, min_size=1, max_size=2) as saver:
         monkeypatch.setattr(execution, 'InMemorySaver', lambda: saver)

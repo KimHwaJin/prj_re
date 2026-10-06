@@ -24,9 +24,9 @@ import psycopg
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.engine import URL
 
-from api_service.workflows.search.retrieval import WorkflowSearch
-from api_service.workflows.file_store import WorkflowFileStore
-from service_runtime.workflow_search_settings import WorkflowSearchSettings
+from dtest.infrastructure.workflow_search.retrieval import WorkflowSearch
+from dtest.infrastructure.file_storage.workflows import WorkflowFileStore
+from dtest.settings.search import WorkflowSearchSettings
 
 SEED = 9506
 
@@ -341,7 +341,7 @@ async def main(args):
         "seed": SEED,
         "source_sha256": hashlib.sha256(
             Path(
-                __import__("api_service.workflows.search.retrieval", fromlist=["x"]).__file__
+                __import__("dtest.infrastructure.workflow_search.retrieval", fromlist=["x"]).__file__
             ).read_bytes()
         ).hexdigest(),
         "numpy": np.__version__,

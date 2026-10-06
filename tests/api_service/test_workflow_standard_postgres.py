@@ -5,15 +5,15 @@ from sqlalchemy import select
 
 from tests.api_service.test_planning_api_postgres import test_config, planning
 from tests.api_service.test_user_identity_postgres import headers, add_user
-from agent_service.agents.analysis.tests.asset_fixtures import assets
-from agent_service.agents.analysis.tests.test_workflow_standard import public_document
-from api_service.models.workflow_model import WorkflowEmbeddingModel
-from api_service.workflows.file_store import WorkflowFileStore
+from tests.agent_service.asset_fixtures import assets
+from tests.agent_service.test_workflow_standard import public_document
+from dtest.infrastructure.database.models.workflow_model import WorkflowEmbeddingModel
+from dtest.infrastructure.file_storage.workflows import WorkflowFileStore
 
 @pytest.mark.asyncio
 async def test_direct_author_update_conflict_clone_promote_visibility_and_delete(planning,tmp_path,monkeypatch):
     h=planning;catalog,case=assets(tmp_path/'assets','inventory')
-    import api_service.workflows.service as service
+    import dtest.application.workflows.service as service
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case,adaptive=True)
@@ -62,7 +62,7 @@ async def test_direct_author_update_conflict_clone_promote_visibility_and_delete
 @pytest.mark.asyncio
 async def test_invalid_original_and_invalid_catalog_reference_rejected(planning,tmp_path,monkeypatch):
     h=planning;catalog,case=assets(tmp_path/'assets','billing')
-    import api_service.workflows.service as service
+    import dtest.application.workflows.service as service
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     doc=public_document(case);doc['workflow']['steps'][0]['tools'][1]['arguments'][case['object_arg']]['output']='unknown'
@@ -78,7 +78,7 @@ async def test_invalid_original_and_invalid_catalog_reference_rejected(planning,
 async def test_concurrent_content_updates_accept_one_revision_only(planning,tmp_path,monkeypatch):
     import asyncio
     h=planning;catalog,case=assets(tmp_path/'assets','inventory')
-    import api_service.workflows.service as service
+    import dtest.application.workflows.service as service
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)
@@ -99,7 +99,7 @@ async def test_concurrent_content_updates_accept_one_revision_only(planning,tmp_
 async def test_failed_db_commit_preserves_previous_document(planning,tmp_path,monkeypatch):
     from sqlalchemy.ext.asyncio import AsyncSession
     h=planning;catalog,case=assets(tmp_path/'assets','billing')
-    import api_service.workflows.service as service
+    import dtest.application.workflows.service as service
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)
@@ -121,7 +121,7 @@ async def test_failed_db_commit_preserves_previous_document(planning,tmp_path,mo
 async def test_rollback_reusing_historical_revision_never_deletes_it(planning,tmp_path,monkeypatch):
     from sqlalchemy.ext.asyncio import AsyncSession
     h=planning;catalog,case=assets(tmp_path/'assets','inventory')
-    import api_service.workflows.service as service
+    import dtest.application.workflows.service as service
     monkeypatch.setattr(service,'deployed_analysis_assets',lambda:catalog)
     monkeypatch.setattr(WorkflowFileStore,'_root',staticmethod(lambda:tmp_path/'workflows'))
     auth=headers(h.user['user_id']);doc=public_document(case)

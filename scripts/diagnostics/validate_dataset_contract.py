@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID
 
 from jsonschema_rs import Draft202012Validator
-from service_contracts.dataset_registry_draft import (
+from dtest.contracts.dataset_registry_draft import (
     ContractExamples, DatasetCandidate, DatasetRef, DatasetRegistration,
     RequestContext, StoragePolicy, data_directory, owner_for,
     public_dataset, register_candidate, resolve_binding,

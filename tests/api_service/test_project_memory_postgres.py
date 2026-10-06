@@ -1,15 +1,16 @@
+from dtest.contracts.errors import ApplicationError
 """Real scratch-PG document CAS, migration, API, Worker and pool boundaries."""
 import asyncio
 from uuid import UUID,uuid4
 import pytest
 from sqlalchemy import select
 from tests.api_service.test_user_identity_postgres import database_url,harness,initialize,add_user,add_session,headers
-from api_service.resources.project_memory import ProjectMemoryPolicy
-from service_contracts.memory_store import receipt_namespace, memory_namespace, MEMORY_KEY, receipt_key
-from api_service.infrastructure.memory_store import runtime as store_runtime
+from dtest.application.resources.project_memory import ProjectMemoryPolicy
+from dtest.contracts.memory_store import receipt_namespace, memory_namespace, MEMORY_KEY, receipt_key
+from dtest.infrastructure.memory.store import runtime as store_runtime
 from langgraph.store.postgres import AsyncPostgresStore
 import pytest_asyncio
-from service_contracts.project_memory import MemoryConflict,MemoryLimit,MemoryLimits
+from dtest.contracts.project_memory import MemoryConflict,MemoryLimit,MemoryLimits
 
 @pytest_asyncio.fixture(autouse=True)
 async def store_lifecycle():
@@ -21,7 +22,7 @@ async def setup(h):
     await initialize(h)
     user=await add_user(h)
     async with h.factory() as db:
-        from api_service.models.user_model import UserModel
+        from dtest.infrastructure.database.models.user_model import UserModel
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==user['user_id']))
     return user,uid,UUID(user['default_project_id']),ProjectMemoryPolicy(session_factory=h.factory)
 
@@ -93,20 +94,20 @@ async def test_patch_batch_atomicity_content_bound_and_soft_delete(harness):
     with pytest.raises(MemoryLimit):await service.replace(uid,pid,'x'*16001,1,source_id='full')
     assert (await service.read(uid,pid))['version']==1
     async with h.factory() as db:
-        from api_service.models.project_model import ProjectModel
-        from api_service.models.enums import DeleteYN
+        from dtest.infrastructure.database.models.project_model import ProjectModel
+        from dtest.contracts.enums import DeleteYN
         project=await db.get(ProjectModel,pid);project.delete_yn=DeleteYN.Y;await db.commit()
     from fastapi import HTTPException
-    with pytest.raises(HTTPException) as exc:await service.read(uid,pid)
+    with pytest.raises((HTTPException, ApplicationError)) as exc:await service.read(uid,pid)
     assert exc.value.status_code==404
-    with pytest.raises(HTTPException):await service.replace(uid,pid,'forbidden',1,source_id='deleted')
+    with pytest.raises((HTTPException, ApplicationError)):await service.replace(uid,pid,'forbidden',1,source_id='deleted')
 
 @pytest.mark.asyncio
 async def test_bound_source_checks_and_same_project_cross_session_read(harness):
     h=harness;user,uid,pid,service=await setup(h)
     s1=await add_session(h,user);s2=await add_session(h,user)
-    from api_service.schemas.run_schema import RunStart
-    from api_service.runs.service import PublicRunService
+    from dtest.contracts.resources.run_schema import RunStart
+    from dtest.application.runs.service import PublicRunService
     async def run(sid,key):
         async with h.factory() as db:
             result=await PublicRunService.create(db,uid,UUID(sid),RunStart(input={'messages':[{'role':'user','content':'test'}]}),key)
@@ -150,13 +151,13 @@ async def test_worker_memory_write_next_session_read_and_public_events(planning,
     h=planning
     import copy,json,httpx
     from dataclasses import replace
-    import service_settings
+    import dtest.settings.loader as service_settings
     from langgraph.checkpoint.memory import InMemorySaver
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-    from agent_service.agents.analysis.planning.graph import build_planning_graph
-    from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
-    from agent_service.agents.analysis.tests.test_conversation_performance import model,response
-    from api_service.runs.runtime import runtime as graph_runtime
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+    from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
+    from tests.agent_service.test_conversation_performance import model,response
+    from dtest.application.runs.runtime import runtime as graph_runtime
     quote='보고서는 원인과 다음 행동 중심으로 간결하게 작성해줘'
     real_shape=service_settings.load_settings(config={'MODEL_PROVIDER':'openai_compatible','MODEL_NAME':'test','MODEL_API_KEY':'test',
         'API_BASE_URL':'http://llm.invalid/v1','AGENT_PROJECT_MEMORY_MODE':'auto_context'},environ={}).agent
@@ -217,12 +218,12 @@ async def test_memory_api_reuses_auth_session_with_one_connection(small_pool):
 async def test_memory_snapshot_releases_only_connection_before_model_wait(small_pool):
     h=small_pool
     import httpx,json
-    from agent_service.context import AgentContext
-    from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
-    from agent_service.agents.analysis.planning.catalog import AssetCatalog
-    from agent_service.agents.analysis.tests.test_conversation_performance import model,response
+    from dtest.agent_service.context import AgentContext
+    from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
+    from dtest.agent_service.agents.analysis.planning.catalog import AssetCatalog
+    from tests.agent_service.test_conversation_performance import model,response
     from tests.api_service.test_run_cleanup_postgres import enqueue
-    from api_service.models.user_model import UserModel
+    from dtest.infrastructure.database.models.user_model import UserModel
     queued=await enqueue(h)
     async with h.factory() as db:
         uid=await db.scalar(select(UserModel.user_id).where(UserModel.public_user_id==h.user['user_id']))
@@ -254,11 +255,11 @@ async def test_memory_snapshot_releases_only_connection_before_model_wait(small_
 async def test_stale_worker_claim_cannot_commit_memory(runtime):
     h=runtime
     from tests.api_service.test_run_cleanup_postgres import enqueue
-    from api_service.runs.claim_context import bind_execution_claim
-    from api_service.models.user_model import UserModel
-    from api_service.models.task_model import TaskModel
-    from service_contracts.execution import ExecutionNeedsRecovery
-    import api_service.workers.agent as worker
+    from dtest.application.runs.claim_context import bind_execution_claim
+    from dtest.infrastructure.database.models.user_model import UserModel
+    from dtest.infrastructure.database.models.task_model import TaskModel
+    from dtest.contracts.execution import ExecutionNeedsRecovery
+    import dtest.worker_service.command_worker as worker
     queued=await enqueue(h);item=await worker.claim_one()
     assert str(item.claim.run_id)==queued['run_id']
     async with h.factory() as db:
@@ -365,8 +366,8 @@ async def test_reset_blocks_stale_agent_but_new_request_can_start_new_memory(har
 async def test_normalized_section_keeps_exact_current_quote_as_provenance(harness):
     h=harness;user,uid,pid,service=await setup(h)
     sid=await add_session(h,user)
-    from api_service.schemas.run_schema import RunStart
-    from api_service.runs.service import PublicRunService
+    from dtest.contracts.resources.run_schema import RunStart
+    from dtest.application.runs.service import PublicRunService
     async with h.factory() as db:
         run=await PublicRunService.create(db,uid,UUID(sid),RunStart(input={'messages':[{'role':'user','content':'앞으로 보고서는 비전문가를 대상으로 작성해줘'}]}),'normalized')
         rid=str(run.run_id)

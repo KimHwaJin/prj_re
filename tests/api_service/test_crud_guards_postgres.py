@@ -9,23 +9,22 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
-from fastapi import HTTPException
 from sqlalchemy import select, text, update, func
 
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-from api_service.models.enums import AgentRunStatus, DeleteYN, MessageType, TaskStatus
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.message_model import MessageModel as Message
-from api_service.models.project_model import ProjectModel as Project
-from api_service.models.session_model import SessionModel as Session
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.models.task_model import TaskModel as Task
-from api_service.resources import lifecycle
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, MessageType, TaskStatus
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.message_model import MessageModel as Message
+from dtest.infrastructure.database.models.project_model import ProjectModel as Project
+from dtest.infrastructure.database.models.session_model import SessionModel as Session
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
+from dtest.application.resources import lifecycle
 from tests.api_service.ownership_harness import run_test_event as run_event_owned
-from api_service.resources.sessions import SessionService
-from api_service.runs.task_events import TaskEventService
-from service_contracts.events import DeferEvent
+from dtest.application.resources.sessions import SessionService
+from dtest.application.runs.task_events import TaskEventService
+from dtest.contracts.events import DeferEvent
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 
