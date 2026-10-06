@@ -13,3 +13,7 @@
 ## 검증
 
 두 철자·true/false에 대해 실제 YAML을 읽고 서비스 설정이 변경되지 않는 회귀 검사를 추가했다. 설정 bootstrap·YAML 파일·플랫폼 계약 회귀 81개가 3.65초에 모두 통과했다. `git diff --check`도 통과했다. 실제 서비스 재시작이나 배포는 수행하지 않았다.
+
+## 통합·게시
+
+2026-10-06 `0ac031e`는 후속 100의 `ea4f818`에 포함되어 베이스에 fast-forward 병합했다. `feature/platform-security-setting-compat`도 origin에 게시·보존했다. 현재 구현은 플랫폼 전용 허용 목록을 제거한 100을 따른다. [100 통합 기록](100-settings-model-cleanup.md)을 참고한다.

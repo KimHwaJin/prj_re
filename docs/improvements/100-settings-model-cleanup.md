@@ -29,3 +29,7 @@ AgentSettings, 수동 AGENT_KEYS, 환경변수용 수동 파서에 필드 정의
 - git diff --check 통과.
 
 초기 검사에서 명시한 빈 kernel 목록/빈 Workflow DB 주소를 기본값으로 바꾸지 않도록 수정했다. 일부 회귀의 개인 config.yml 의존과 소문자 오류 필드 표기도 정리하여 최종 검사에 포함했다. 설정 검증은 연결 성공을 의미하지 않는다. 실제 컨테이너 재시작·DB migration·외부 모델 요청은 수행하지 않았다. 선행 099의 두 철자 호환 수정은 포함되지만 이제 전용 허용 목록 자체가 없어졌다.
+
+## 통합·게시
+
+2026-10-06 사용자 요청으로 구현 `ea4f8186c5e836197ef8fbdbeacfde4d11fd0af3`를 `feature/refactor-base`에 fast-forward 병합했다. origin 최신 베이스가 분기 기준 `4d9b051`과 같음을 확인했고 충돌이나 추가 코드 변경은 없었다. 베이스와 `feature/settings-model-cleanup`, 선행 `feature/platform-security-setting-compat`를 `https://github.com/KimHwaJin/prj_re.git`의 origin에 atomic push했다. 선행 보안 키 수정 `0ac031e`도 포함된다. 관련 파생 브랜치는 보존하며 이 게시 기록은 베이스의 후속 문서 커밋으로 남긴다. 실제 서비스 배포·컨테이너 재시작·DB migration은 수행하지 않았다.

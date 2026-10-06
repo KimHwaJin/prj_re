@@ -1,8 +1,8 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [100 설정 모델·소스 정리](100-settings-model-cleanup.md). 수동 키·그룹·플랫폼 허용 목록과 문자열 재파싱을 제거하고 모델 필드에 설정 정의를 모았다. 공유 YAML은 소비 설정만 선택하며 미사용 키는 이름만 진단한다. 관련 회귀772개·네 환경 launcher·설치 패키지 검증을 통과했다. 현재 파생 브랜치이며 미병합·미게시다.
+최신 작업: [100 설정 모델·소스 정리](100-settings-model-cleanup.md). 수동 키·그룹·플랫폼 허용 목록과 문자열 재파싱을 제거하고 모델 필드에 설정 정의를 모았다. 공유 YAML은 소비 설정만 선택하며 미사용 키는 이름만 진단한다. 관련 회귀772개·네 환경 launcher·설치 패키지 검증을 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
 
-선행 작업: [099 플랫폼 보안 키 철자 호환](099-platform-security-setting-compat.md). `IS_SECURITY_SERVICE`와 기존 `IS_SECURITY_SERVCE`를 모두 허용하여 로컬 시작 오류를 수정했고 관련 회귀 81개를 통과했다. 현재 파생 브랜치이며 미병합·미게시다.
+선행 작업: [099 플랫폼 보안 키 철자 호환](099-platform-security-setting-compat.md). `IS_SECURITY_SERVICE`와 기존 `IS_SECURITY_SERVCE`를 모두 허용하여 로컬 시작 오류를 수정했고 관련 회귀 81개를 통과했다. 2026-10-06 베이스에 fast-forward 병합하고 origin에 게시했다. 실제 배포는 별도다.
 
 선행 작업: [098 플랫폼 템플릿 설정 통합](098-platform-flat-configuration.md). 로컬은 config.yml, 배포는 config.dev/stg/prd.yml 하나만 읽는다. 플랫폼 키 재사용·서비스 추가 설정 블록·턴 기준 이력·그래프 실행 한도·Phoenix 초기화 소유권을 정리하고 관련 회귀 740개를 검증했다. 구현 ee7332e를 베이스에 fast-forward 병합하고 베이스·파생 브랜치를 origin에 게시했다. 실제 배포는 별도다. [현재 설정 안내](../application-configuration.md)를 따른다. HNSW 대표화·실제 embedding 평가는 후속으로 유지한다.
 
@@ -57,8 +57,8 @@
 
 | ID | 항목 | 상태 | 완료일 | 기록 |
 |---|---|---|---|---|
-| 100 | 모델 기반 설정 정의·공유 YAML 소스 정리 | 구현·772개 회귀·패키지 검증 완료 / 미병합·미게시 | 2026-10-06 | [작업 기록](100-settings-model-cleanup.md) |
-| 099 | 플랫폼 보안 키 철자 호환 | 구현·81개 회귀 검증 완료 / 미병합·미게시 | 2026-10-06 | [작업 기록](099-platform-security-setting-compat.md) |
+| 100 | 모델 기반 설정 정의·공유 YAML 소스 정리 | 베이스 병합·origin 게시 완료 / 772개 회귀·패키지 검증·미배포 | 2026-10-06 | [작업 기록](100-settings-model-cleanup.md) |
+| 099 | 플랫폼 보안 키 철자 호환 | 100에 포함해 베이스 병합·origin 게시 완료 / 미배포 | 2026-10-06 | [작업 기록](099-platform-security-setting-compat.md) |
 | 098 | 플랫폼 템플릿·단일 YAML·턴 기준 이력 | 베이스 병합·origin 게시 완료 / 740개 회귀 검증·미배포 | 2026-10-06 | [작업 기록](098-platform-flat-configuration.md) |
 | 058 | 단일 프로젝트 배포·공통 설정 | 구현·격리 Docker 검증 완료 / 미병합·미배포 | 2026-10-03 | [작업 기록](058-deployment-config-unification.md) |
 | 057 | Executor 연계 서비스 처리량·세션 인계·중복 투영 | 베이스 병합·origin 게시 완료 / 미배포 | 2026-10-03 | [작업 기록](057-executor-service-throughput.md) |
