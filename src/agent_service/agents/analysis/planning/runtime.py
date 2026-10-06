@@ -1,5 +1,6 @@
 """Per-process immutable assets and lazy, pinned model/Agent instances."""
 from dataclasses import replace
+from agent_service.runtime.conversation_history import history_for_prompt
 from agent_service.agents.analysis.agent_builders.conversation.agent import build_agent
 from agent_service.runtime.model_factory import create_chat_model
 from agent_service.agents.analysis.planning.catalog import AssetCatalog
@@ -24,7 +25,7 @@ class PlanningRuntime:
 
     def bind_context(self, state, context):
         from service_contracts.project_memory import MemoryLimits
-        context = replace(context, project_memory_limits=MemoryLimits.from_settings(self.settings),
+        context = replace(context, recursion_limit=self.settings.recursion_limit, project_memory_limits=MemoryLimits.from_settings(self.settings),
                           project_memory_request=state.get('user_request',''))
         if self.memory_policy_factory is None or self.settings.agent_project_memory_mode == 'off':
             return context
@@ -91,7 +92,7 @@ class PlanningRuntime:
                                                structured_output_mode=spec.structured_output_mode, store=self.store,
                                                memory_limits=context.project_memory_limits)
         return await self.agents[key].ainvoke({
-            'request': state['user_request'], 'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
+            'request': state['user_request'], 'history': history_for_prompt(state, self.settings),
             'available_skills': self.catalog.public_skills(), 'dataset_catalog': dataset_catalog,
             'max_candidates': self.settings.max_plan_candidates,
             'execution_policy': {'repair_level_limit':self.settings.agent_repair_level_limit,
@@ -113,7 +114,7 @@ class PlanningRuntime:
             'response_shape_example': {'kind':'plans','message':'변경 내용 설명','plans':[{'definition':None,'base_plan_id':previous[0]['plan_id'],'patches':[],'input_values':{},'functions':[]}]} if previous else None,
             'original_request': state['user_request'], 'feedback_history': state.get('planning_feedback', []),
             'previous_plans': [plan_view(review) for review in previous],
-            'history': state.get('history', [])[-self.settings.agent_history_message_limit:],
+            'history': history_for_prompt(state, self.settings),
             'dataset_catalog': dataset_catalog, 'available_skills': self.catalog.public_skills(),
             'max_candidates': self.settings.max_plan_candidates, 'free_plan_enabled': self.settings.agent_free_plan_enabled,
             'planning_context': {**{k: state[k] for k in ('user_id','project_id','session_id','planning_revision_count')},

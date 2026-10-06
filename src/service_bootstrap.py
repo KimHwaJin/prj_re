@@ -161,6 +161,7 @@ def attach_service(
     background_factories: dict[str, Callable] | None = None,
     close_resources: Callable[[], Awaitable[None]] = _close_resources,
     sso_docs_path: str = "/service/docs",
+    manage_tracing: bool = False,
 ):
     """Attach once; preserve the app's existing and included-router lifespans.
 
@@ -206,8 +207,9 @@ def attach_service(
             from api_service.core.memory_store import runtime as memory_store_runtime
             memory_store_runtime.start()
             try:
-                from api_service.observability.phoenix import setup_phoenix
-                await asyncio.to_thread(setup_phoenix, settings.agent)
+                if manage_tracing:
+                    from api_service.observability.phoenix import setup_phoenix
+                    await asyncio.to_thread(setup_phoenix, settings.agent)
                 await background.start()
                 log.info("service_started profile=%s", settings.profile)
                 yield state
@@ -221,8 +223,9 @@ def attach_service(
                         await stream_hub.close()
                         await background.stop()
                         await close_resources()
-                        from api_service.observability.phoenix import shutdown_phoenix
-                        await asyncio.to_thread(shutdown_phoenix)
+                        if manage_tracing:
+                            from api_service.observability.phoenix import shutdown_phoenix
+                            await asyncio.to_thread(shutdown_phoenix)
                     finally:
                         await sso.close()
                 await protected_cleanup(shutdown())
@@ -245,7 +248,8 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     from api_service.core.problems import http_exception_handler, unhandled_exception_handler, validation_exception_handler
 
     app = platform_app if platform_app is not None else FastAPI(title=settings.api.app_name, version="1.0.0", docs_url=None)
-    attach_service(app, settings, sso_docs_path="/docs" if platform_app is None else "/service/docs")
+    attach_service(app, settings, sso_docs_path="/docs" if platform_app is None else "/service/docs",
+                   manage_tracing=platform_app is None)
     # Preserve a platform ID; avoid introducing stream cancellation scopes.
     from service_runtime.request_id import RequestIdMiddleware
     app.add_middleware(RequestIdMiddleware)
@@ -357,7 +361,7 @@ def build_server(app, settings: ServiceSettings):
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Start the DTest API and configured Workers")
-    parser.add_argument("--env", choices=("dev", "stg", "prd"))
+    parser.add_argument("--env", choices=("local", "dev", "stg", "prd"))
     parser.add_argument("--config", type=Path)
     parser.add_argument("--local-env-file", type=Path)
     parser.add_argument("--check-config", action="store_true")

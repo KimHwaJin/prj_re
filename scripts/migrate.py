@@ -12,7 +12,7 @@ from service_settings import configure, load_settings
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--env", choices=["dev", "stg", "prd"])
+    parser.add_argument("--env", choices=["local", "dev", "stg", "prd"])
     parser.add_argument("--config", type=Path)
     parser.add_argument("--local-env-file", type=Path, help="Legacy dev-only supplementary input")
     parser.add_argument("--check-config", action="store_true", help="Resolve targets without connecting or migrating")

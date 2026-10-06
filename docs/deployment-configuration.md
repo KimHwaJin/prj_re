@@ -4,15 +4,15 @@
 
 061에서 Worker와 SSE 알림을 DB 정본당 LISTEN 연결1개로 공유한다. 유휴 Worker가 유지하는 연결도 DB 예산에 포함하며 실효 summary는 `notification_listener`로 표시한다. config/수명/migration은 [알림 안내](agent-command-wakeup.md)를 따른다.
 
-## 097 YAML 중심 설정 이행
+## 098 내부 템플릿 단일 YAML 설정
 
-현재 파일 준비·이전 명령은 [앱 설정 안내](application-configuration.md)를 따른다. 공통 정책은 config.yml, 실제 연결/SSO는 Git·이미지에서 제외한 환경별 YAML에 두고 example에서 초기화한다. .env 없이 일반 서비스와 동일 설정 migration을 실행한다. 아래 구조 설명은 유지하며 로컬 Compose는 앱 env_file 대신 생성한 YAML을 마운트한다. 기존 dotenv 중심 설명·예제는 097이 대체한다.
+현재 파일 준비·이전 명령은 [앱 설정 안내](application-configuration.md)를 따른다. config.yml은 로컬 전용이며 각 환경의 정책·연결·SSO는 독립 YAML에 두고 example에서 초기화한다. .env 없이 일반 서비스와 동일 설정 migration을 실행한다. 아래 구조 설명은 유지하며 로컬 Compose는 앱 env_file 대신 생성한 YAML을 마운트한다. 기존 dotenv 및 common/profile 병합 설명은 098이 대체한다.
 
 ## 설정 원천과 공통 값
 
 `service_settings.load_settings()`가 한 번 읽어 불변 snapshot을 만든다. API·Agent·이벤트·SSO typed 설정은 이 snapshot의 소비용 view다.
 
-우선순위는 `config.{dev|stg|prd}.yml > config.yml > env > 기본값`이다. `--config`/`SERVICE_CONFIG_FILE`은 선택 파일 하나만 사용한다. 로컬 `--local-env-file`은 dev에서만 허용하며 프로세스 env보다 낮은 순위다. 명시한 YAML 값은 항상 env보다 우선한다. 환경변수로 조정할 값은 YAML에서 생략해야 한다.
+우선순위는 `선택한 YAML > env > 기본값`이다. `--config`/`SERVICE_CONFIG_FILE`은 선택 파일 하나만 사용한다. 로컬 `--local-env-file`은 local/dev에서만 허용하며 프로세스 env보다 낮은 순위다. 명시한 YAML 값은 항상 env보다 우선한다. 환경변수로 조정할 값은 YAML에서 생략해야 한다.
 
 | 공통 입력 | 사용하는 영역 | 예외 / 파생 규칙 |
 |---|---|---|
@@ -23,7 +23,7 @@
 | `REDIS_URL` | SSO 로그인 세션과 Executor Streams | 연결풀·key/group은 용도별로 분리. `EW_REDIS_URL`은 구 별칭 |
 | `EXECUTOR_BASE_URL` | 실행 제출·결과 조회·이벤트 이력 보충 | `EW_EXECUTOR_BASE_URL`은 구 별칭 |
 | `EXECUTOR_EVENTS_PATH` | 이벤트 이력 보충 경로 | 생략 시 `EXECUTOR_EXECUTION_PATH` + `/events`에서 유도. `EW_EXECUTOR_EVENTS_PATH`는 구 별칭 |
-| `MODEL_*`, `API_BASE_URL` | 모든 Agent 역할의 기본 모델 설정 | 역할별 Agent 선언/프롬프트 구조는 유지 |
+| `PRIVATE_LLM_*` 및 모델 정책 키 | 모든 Agent 역할의 기본 모델 설정 | 역할별 Agent 선언/프롬프트 구조는 유지 |
 | `PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY` | 프로세스 공용 관측 설정 | 구 `PHOENIX_CONFIG_PATH` 자동 탐색 없음 |
 | `EW_NAMESPACE` | 이벤트 DB/Redis group 기본 이름 | stream/group은 namespace에서 파생, Executor 원본 stream은 별도 계약 |
 
@@ -61,11 +61,11 @@ service:
 
 | 환경 | 기동 | 호스트 / 컨테이너 port |
 |---|---|---|
-| 기본 로컬 Compose | `uv run python scripts/local.py up --env dev` | 기본18000 / 8000 |
-| 외부 인프라 Compose | `APP_ENV=stg APP_CONFIG_GID=<파일그룹ID> docker compose -f compose.external.yaml up --build` | 8000 / 8000 |
+| 기본 로컬 Compose | `uv run python scripts/local.py up --env local` | 기본18000 / 8000 |
+| 외부 인프라 Compose | `APP_ENV=stg APP_CONFIG_GID=<파일그룹ID> docker compose -f compose.external.yaml up --build` | 5000 / 5000 |
 | 기존 부하테스트 Compose | `docker compose -f compose.loadtest.yaml up --build` | 기본18080 / 8000 |
-| 사내 CICD manifest | `python app.py`, `APP_ENV=dev`, `SERVER_PORT=5000` | Service5000 / 5000 |
-| 범용 Kubernetes 예제 | `python app.py`, `APP_ENV=prd`, `SERVER_PORT=8000` | Service8000 / 8000 |
+| 사내 CICD manifest | `python app.py`, `APP_ENV=dev`, `PORT: 5000` | Service5000 / 5000 |
+| 범용 Kubernetes 예제 | `python app.py`, `APP_ENV=prd`, `PORT: 8000` | Service8000 / 8000 |
 
 플랫폼이 공급하는 Gaia core는 수정하지 않는다. 플랫폼 앱을 쓰는 경우 원래 app/lifespan 조립 이후 서비스 lifespan을 결합해야 한다. 이번 검증은 저장소 app.py이며 사내 원본 Gaia core와의 실제 결합 검증은 아니다.
 

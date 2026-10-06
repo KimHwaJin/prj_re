@@ -141,12 +141,13 @@ def test_explicit_dotenv_does_not_mutate_environment(tmp_path, monkeypatch):
     assert "MODEL_API_KEY" not in os.environ
 
 
-def test_profile_selection_and_common_merge(tmp_path):
-    (tmp_path / "config.yml").write_text("service:\n  MODEL_NAME: common\n  MODEL_MAX_RETRIES: 0\n")
+def test_profile_selection_never_merges_local_file(tmp_path):
+    (tmp_path / "config.yml").write_text("service:\n  MODEL_NAME: common\n  MODEL_MAX_RETRIES: 7\n")
     (tmp_path / "config.dev.yml").write_text("service:\n  MODEL_NAME: development\n")
     settings = load_settings(environ={"APP_ENV": "dev", "MODEL_NAME": "env"}, root=tmp_path)
     assert settings.agent.model_name == "development"
     assert settings.agent.model_max_retries == 0
+    assert settings.sources["MODEL_MAX_RETRIES"] == "default"
     with pytest.raises(ConfigurationError, match="Missing selected"):
         load_settings(environ={"APP_ENV": "stg"}, root=tmp_path)
 
@@ -307,7 +308,7 @@ def test_root_entrypoint_with_src_already_on_pythonpath():
                             cwd=project_root, env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
                             text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["profile"] == "dev"
+    assert json.loads(result.stdout)["profile"] == "local"
 
 
 @pytest.mark.asyncio

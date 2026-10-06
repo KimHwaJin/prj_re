@@ -16,7 +16,7 @@ def setup_phoenix(settings: AgentSettings) -> Any | None:
     """Register Phoenix once when a collector endpoint is configured."""
     global _tracer_provider
 
-    if not settings.phoenix_endpoint:
+    if not settings.active_trace or not settings.phoenix_endpoint:
         return None
     if _tracer_provider is not None:
         return _tracer_provider

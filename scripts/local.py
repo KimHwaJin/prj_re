@@ -28,7 +28,7 @@ def read_env(path):
     return values
 
 
-def initialize(profile="dev", config_path=None):
+def initialize(profile="local", config_path=None):
     # Resolve once with exactly the same loader as app.py. No implicit .env read.
     sys.path.insert(0, str(ROOT / "src"))
     import yaml
@@ -78,8 +78,8 @@ def compose(*args):
     revision = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
                               capture_output=True, text=True)
     digest = hashlib.sha256()
-    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py", "app.py", "scripts/configure.py", "scripts/migrate.py", "config.cicd.dev.yml", "config.diagnostic.yml"]]
-    sources.append(ROOT / "config.yml")
+    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py", "app.py", "scripts/configure.py", "scripts/migrate.py", "config.diagnostic.yml", "cicd/basic/dev/config.dev.example.yml"]]
+    sources.append(ROOT / "config.example.yml")
     sources.extend(ROOT.glob("config.*.example.yml"))
     for directory in ["src", "migrations", "crud_migrations", "scripts/local"]:
         sources.extend(p for p in (ROOT / directory).rglob("*")
@@ -130,7 +130,7 @@ def smoke():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["init", "up", "update", "down", "status", "logs", "smoke"])
-    parser.add_argument("--env", choices=["dev", "stg", "prd"], default="dev")
+    parser.add_argument("--env", choices=["local", "dev", "stg", "prd"], default="local")
     parser.add_argument("--config", type=Path)
     args = parser.parse_args()
     initialize(args.env, args.config)

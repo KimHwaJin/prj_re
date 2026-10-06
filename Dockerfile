@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && \
 
 COPY --from=dependencies /app/.venv /app/.venv
 COPY pyproject.toml uv.lock README.md cli.py run.py app.py config*.yml ./
+COPY config.example.yml ./config.yml
 COPY src ./src
 COPY migrations ./migrations
 COPY crud_migrations ./crud_migrations

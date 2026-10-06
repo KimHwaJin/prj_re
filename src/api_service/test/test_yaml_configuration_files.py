@@ -24,7 +24,7 @@ def isolated_snapshot(monkeypatch):
 
 @pytest.fixture
 def profile_root(tmp_path):
-    shutil.copy(ROOT/'config.yml',tmp_path/'config.yml')
+    shutil.copy(ROOT/'config.example.yml',tmp_path/'config.yml')
     for env in ('dev','stg','prd'):
         shutil.copy(ROOT/f'config.{env}.example.yml',tmp_path/f'config.{env}.example.yml')
     return tmp_path
@@ -44,12 +44,12 @@ def test_profile_copy_is_private_and_same_db_targets_derive(profile_root,profile
     assert snapshot.agent.max_plan_candidates==5
     assert snapshot.agent.model_structured_output_mode=='prompt_json'
     assert snapshot.sources['DATABASE_URL']==f'config.{profile}.yml'
-    assert snapshot.sources['AGENT_WORKER_CONCURRENCY']=='config.yml'
+    assert snapshot.sources['AGENT_WORKER_CONCURRENCY']==f'config.{profile}.yml'
 
 
 def test_missing_selected_profile_does_not_silently_use_legacy_defaults(profile_root):
     with pytest.raises(ConfigurationError,match='initialize it from config.dev.example.yml'):
-        load_settings(root=profile_root,environ={})
+        load_settings(root=profile_root,profile="dev",environ={})
 
 
 def test_copy_never_overwrites_private_file_implicitly(profile_root):
@@ -69,7 +69,7 @@ def test_legacy_dotenv_import_canonicalizes_and_preserves_false_zero_sources(pro
         'PYTHONUTF8=1\n')
     before=source.read_bytes()
     target=initialize_profile('dev',root=profile_root,source_env=source)
-    snapshot=load_settings(root=profile_root,environ={'SERVER_PORT':'9999'})
+    snapshot=load_settings(root=profile_root,profile='dev',environ={'SERVER_PORT':'9999'})
     assert source.read_bytes()==before
     assert snapshot.api.server_port==18110
     assert snapshot.agent.model_name=='legacy-model'
@@ -133,9 +133,8 @@ def test_cicd_yaml_moves_mutable_values_and_preserves_platform_contract():
     assert container['image']=='[설정 값 변경 불가]'
     assert container['resources']['limits']['cpu']=='[설정 값 변경 불가]'
     assert len(pod['containers'])==1 and not pod.get('initContainers')
-    config=yaml.safe_load((ROOT/'config.cicd.dev.yml').read_text())
-    common=yaml.safe_load((ROOT/'config.yml').read_text())
-    flattened={**service_settings._flatten(common),**service_settings._flatten(config)}
+    config=yaml.safe_load((ROOT/'cicd/basic/dev/config.dev.example.yml').read_text())
+    flattened=service_settings._flatten(config)
     settings=load_settings(config=flattened,environ={
         'DATABASE_URL':'postgresql+asyncpg://host/chat_app','CHECKPOINT_DB_URI':'postgresql://host/agent',
         'REDIS_URL':'redis://host:6379/0','MODEL_API_KEY':'secret','EW_DATABASE_URL':'postgresql://host/chat_app'})
@@ -185,8 +184,7 @@ def test_secret_mount_and_container_tools_have_the_same_profile_contract():
     secret = yaml.safe_load((ROOT / 'deploy/secret.example.yaml').read_text())
     assert volume['secret']['secretName'] == secret['metadata']['name']
     profile = yaml.safe_load(secret['stringData']['config.prd.yml'])
-    config = {**service_settings._flatten(yaml.safe_load((ROOT/'config.yml').read_text())),
-              **service_settings._flatten(profile)}
+    config = profile
     resolved = load_settings(config=config, environ={}, profile='prd')
     assert resolved.api.server_host == '0.0.0.0' and resolved.api.server_port == 8000
     assert resolved.worker.database_url == resolved.api.database_url.replace('+asyncpg', '')

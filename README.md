@@ -23,15 +23,15 @@ Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agen
 
 ## 로컬 Docker 개발 환경
 
-API는 공통+환경별 YAML을 읽고 DB URL의 host만 로컬 PostgreSQL 컨테이너로 바꾼 설정을 마운트한다. `.env.local`은 인프라 포트·비밀번호용이다. 실제 config.dev.yml을 먼저 준비한다.
+API는 선택한 YAML 하나를 읽고 DB URL의 host만 로컬 PostgreSQL 컨테이너로 바꾼 설정을 마운트한다. `.env.local`은 인프라 포트·비밀번호용이다. 로컬 config.yml을 먼저 준비한다.
 
 ```bash
-uv run python scripts/local.py up --env dev
+uv run python scripts/local.py up --env local
 ```
 
 테스트 화면: `http://127.0.0.1:18000/demo`
 
-코드 수정 후 `uv run python scripts/local.py up --env devdate`로 다시 빌드·반영한다.
+코드 수정 후 `uv run python scripts/local.py update --env local`로 다시 빌드·반영한다.
 DB 데이터는 유지된다. 상세 설정과 로그 확인은 [로컬 Docker 가이드](docs/local-docker.md)를 참고한다.
 
 ## LLM 없는 서비스 부하테스트
@@ -49,13 +49,13 @@ PostgreSQL 서버는 pgvector>=0.8.0이 필요합니다. 기존 PostgreSQL17 볼
 
 ```bash
 uv sync --frozen
-uv run python scripts/configure.py init --env dev
-# 생성한 config.dev.yml의 실제 연결값을 수정하고 DB·계정을 준비
-uv run python scripts/migrate.py --env dev
-uv run python app.py --env dev
+uv run python scripts/configure.py init --env local
+# 생성한 config.yml의 실제 연결값을 수정하고 DB·계정을 준비
+uv run python scripts/migrate.py
+uv run python app.py
 ```
 
-기본 접속 주소는 `http://127.0.0.1:8000/demo`다. 실제 연결·SSO는 config.dev.yml, 공통 정책은 config.yml에서 설정하며 `.env`는 필요 없다. 사내 SSO adapter가 없는 일반 서비스는 로그인503이며 테스트 로그인으로 자동 전환하지 않는다. [클론 후 로컬 설정·schema·화면 실행](docs/service-demo-console.md), [격리 진단 실행 방법](tools/test-console/README.md)을 참고한다.
+기본 접속 주소는 `http://127.0.0.1:8000/demo`다. 로컬 연결·정책·SSO는 config.yml 하나에서 설정하며 `.env`는 필요 없다. 사내 SSO adapter가 없는 일반 서비스는 로그인503이며 테스트 로그인으로 자동 전환하지 않는다. [클론 후 로컬 설정·schema·화면 실행](docs/service-demo-console.md), [격리 진단 실행 방법](tools/test-console/README.md)을 참고한다.
 
 ## 현재 Agent 개발 확인
 

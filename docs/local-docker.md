@@ -1,20 +1,21 @@
 # 로컬 PostgreSQL과 단일 애플리케이션
 
-`uv run python scripts/local.py up --env dev` 또는 update로 API·Agent·Executor 이벤트 수신을 한 컨테이너의 app.py 한 프로세스에서 실행한다. 기본 화면은 http://127.0.0.1:18000/demo, Swagger는 /docs, 컨테이너 내부 port8000이다.
+> 098 설정 규칙: config.yml은 로컬 전용이며 환경별 YAML과 병합하지 않습니다. 현재 파일 선택·키·초기화는 docs/application-configuration.md를 따릅니다.
+`uv run python scripts/local.py up --env local` 또는 update로 API·Agent·Executor 이벤트 수신을 한 컨테이너의 app.py 한 프로세스에서 실행한다. 기본 화면은 http://127.0.0.1:18000/demo, Swagger는 /docs, 컨테이너 내부 port8000이다.
 
 ## 설정과 초기화
 
-[앱 설정 안내](application-configuration.md)의 config.yml+config.dev.yml이 원천이다. helper는 같은 loader로 읽고 PostgreSQL host/port만 postgres:5432로 바꿔 workspace/config.compose.yml에 저장한다. DB 이름·계정·옵션과 Redis·LLM·Executor 값은 유지한다. 원본 .env나 profile을 수정하지 않는다. `.env.local`에는 Compose 인프라 값만 남긴다. 이전 LOCAL_API_PORT/LOCAL_POSTGRES_PORT/LOCAL_POSTGRES_PASSWORD 등은 유지한다. 원본 profile과 .env.local은0600이고 Git·이미지에서 제외한다. 컨테이너에 마운트하는 생성 YAML만0640으로 저장하고 해당 파일 GID를 보조 그룹으로 전달하여 비루트 프로세스가 읽도록 한다.
+[앱 설정 안내](application-configuration.md)의 선택한 YAML 하나이 원천이다. helper는 같은 loader로 읽고 PostgreSQL host/port만 postgres:5432로 바꿔 workspace/config.compose.yml에 저장한다. DB 이름·계정·옵션과 Redis·LLM·Executor 값은 유지한다. 원본 .env나 profile을 수정하지 않는다. `.env.local`에는 Compose 인프라 값만 남긴다. 이전 LOCAL_API_PORT/LOCAL_POSTGRES_PORT/LOCAL_POSTGRES_PASSWORD 등은 유지한다. 원본 profile과 .env.local은0600이고 Git·이미지에서 제외한다. 컨테이너에 마운트하는 생성 YAML만0640으로 저장하고 해당 파일 GID를 보조 그룹으로 전달하여 비루트 프로세스가 읽도록 한다.
 
 ```sh
 uv sync --frozen
-uv run python scripts/configure.py init --env dev
-# 실제 config.dev.yml 수정. 기존 .env는 init 대신 import-env로 이전 가능
-uv run python scripts/local.py init --env dev
-uv run python scripts/local.py up --env dev
-uv run python scripts/local.py update --env dev
-uv run python scripts/local.py status --env dev
-uv run python scripts/local.py smoke --env dev
+uv run python scripts/configure.py init --env local
+# 실제 config.yml 수정. 기존 .env는 init 대신 import-env로 이전 가능
+uv run python scripts/local.py init --env local
+uv run python scripts/local.py up --env local
+uv run python scripts/local.py update --env local
+uv run python scripts/local.py status --env local
+uv run python scripts/local.py smoke --env local
 ```
 
 up/update는 이미지 빌드 후 기존 API와 같은 로컬 프로젝트의 구 event-worker를 drain/종료하고 migration 뒤 API를 재생성한다. named volume은 보존한다. DB 초기화는 chat_app·agent만 허용하고 선택한 역할을 로컬에 준비한다. DB 이름을 다른 이름으로 설정한 경우 자동 변경하지 않으며 bootstrap에서 거부한다. 실제 Executor 장기 대기 Run은 업데이트 후 재개 여부를 확인한다.
@@ -23,7 +24,7 @@ up/update는 이미지 빌드 후 기존 API와 같은 로컬 프로젝트의 �
 |---|---|---|
 | API / Swagger / demo | 127.0.0.1:18000 | api:8000 |
 | PostgreSQL | 127.0.0.1:15432 | postgres:5432 |
-| Redis | 선택 YAML의 redis_url | 선택 주소 그대로 |
+| Redis | 선택 YAML의 REDIS_URL | 선택 주소 그대로 |
 
 LOCAL_API_PORT/LOCAL_POSTGRES_PORT는 호스트 port다. 실제 Executor 공유 input/result root는 같은 절대 경로로 설정하고 존재하는 폴더를 마운트한다. 두 root가 다르면 별도 bind mount 설계가 필요하므로 helper가 거부한다. host에서만 유효한 127.0.0.1 Redis/Executor/모델 주소는 컨테이너에서 자기 자신을 의미하므로 실제 도달 가능한 주소로 바꾼다. Docker Desktop의 host 서비스는 host.docker.internal을 사용할 수 있다.
 

@@ -295,7 +295,9 @@ def graph_config(
     callbacks: list[Any] | None = None,
 ) -> dict[str, Any]:
     thread_id = build_langgraph_thread_id(str(session_id))
-    config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
+    from service_settings import get_settings
+    config: dict[str, Any] = {"configurable": {"thread_id": thread_id},
+                              "recursion_limit": get_settings().agent.recursion_limit}
     observed_callbacks = graph_callbacks(callbacks)
     if observed_callbacks:
         config["callbacks"] = observed_callbacks

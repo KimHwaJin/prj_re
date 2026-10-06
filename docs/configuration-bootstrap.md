@@ -1,6 +1,6 @@
 # 기동과 설정
 
-현재 YAML 초기화·이전·실행은 [097 앱 설정 안내](application-configuration.md), 배포 구조·포트·전환 절차는 [통합 배포 안내](deployment-configuration.md)를 따른다. 아래는 bootstrap의 설계 설명이며 갱신된 구현이 우선한다.
+현재 YAML 초기화·이전·실행은 [098 앱 설정 안내](application-configuration.md), 배포 구조·포트·전환 절차는 [통합 배포 안내](deployment-configuration.md)를 따른다. 아래는 bootstrap의 설계 설명이며 갱신된 구현이 우선한다.
 
 루트 `app.py`가 `src/service_bootstrap.py`를 호출한다. 설정은 `src/service_settings.py`에서 프로세스당 한 번 확정한다. 기존 `run.py`, `uvicorn main:app --app-dir src`도 같은 bootstrap을 사용한다. 025에서 API 패키지는 `src/api_service`로 이동했다. 루트 `app.py`는 그대로 진입점이며 기존 패키지 이름 충돌용 우회는 제거했다.
 
@@ -9,23 +9,23 @@
 ## 실행
 
 ```sh
-python scripts/configure.py init --env dev
-# config.dev.yml의 실제 연결값을 수정한 뒤 검증
-python app.py --env dev --check-config
-python app.py --env dev
+python scripts/configure.py init --env local
+# config.yml의 실제 연결값을 수정한 뒤 검증
+python app.py --check-config
+python app.py
 # 이전 dev dotenv 보조 입력은 필요할 때만 --local-env-file .env
 python app.py --config /mounted/config.yml
 ```
 
-`APP_ENV=dev|stg|prd` 또는 `--env`로 환경을 선택한다. `development/staging/production` 환경변수 값도 허용한다. 기본 포트는 8000이다. `--check-config`는 설정 출처와 Worker 활성 여부만 출력하고 서버나 외부 연결을 시작하지 않는다.
+`APP_ENV=local|dev|stg|prd` 또는 `--env`로 환경을 선택한다. `development/staging/production` 환경변수 값도 허용한다. 기본 포트는 8000이다. `--check-config`는 설정 출처와 Worker 활성 여부만 출력하고 서버나 외부 연결을 시작하지 않는다.
 
-공통 config.yml은 앱 정책을 명시하며 실제 profile은 example에서 초기화한다. 선택 profile이 없으면 시작 오류다. API와 Worker 활성값은 공통 YAML에 있고 dev 예제의 실제 Executor 제출은 꺼져 있다. DB schema는 사전 준비한다. API만 실행하려면 세 Worker flag를 false로 지정한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
+config.yml은 로컬 전용이며 각 환경 파일을 example에서 초기화한다. 공통 파일 병합은 없다. 선택 profile이 없으면 시작 오류다. API와 Worker 활성값은 선택한 YAML에 있고 dev 예제의 실제 Executor 제출은 꺼져 있다. DB schema는 사전 준비한다. API만 실행하려면 세 Worker flag를 false로 지정한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
 
 Docker 기본 CMD도 `python app.py`로 변경했다. 058에서 Compose·Kubernetes·CICD의 명시적 Uvicorn 명령과 별도 Worker 배포를 제거하고 app.py 한 프로세스로 통일했다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 013에서 프로세스별 제한된 Run 동시 실행을 구현했다. 최종 Pod의 프로세스 수와 배포 명령은 별도 적용·검증이 필요하다.
 
 ## 우선순위
 
-항목마다 `config.{환경}.yml > config.yml > 환경변수 > 기본값`이다. 로컬에서 명시적으로 `--local-env-file`을 제공하면 해당 파일은 환경변수보다 낮은 순위로 들어간다. `.env` 자동 탐색이나 전역 `os.environ` 변경은 하지 않는다. 로컬 dotenv는 dev에서만 허용하고 `${...}` 변수 확장을 하지 않는다.
+항목마다 `선택한 YAML > 환경변수 > 기본값`이다. 로컬에서 명시적으로 `--local-env-file`을 제공하면 해당 파일은 환경변수보다 낮은 순위로 들어간다. `.env` 자동 탐색이나 전역 `os.environ` 변경은 하지 않는다. 로컬 dotenv는 local/dev에서만 허용하고 `${...}` 변수 확장을 하지 않는다.
 
 `--config` 또는 `SERVICE_CONFIG_FILE`을 지정하면 그 파일 하나를 사용하며 공통/환경별 YAML 자동 병합은 하지 않는다. 테스트에서 `load_settings(config={}, environ={})`는 파일과 프로세스 환경에서 완전히 격리된다.
 
@@ -147,7 +147,7 @@ Executor HTTP는 런타임에서 생성·재사용한다. 연결 수·연결/풀
 
 ## 038 계획 Agent 설정
 
-`service.agent` 그룹에 `max_plan_candidates`, `agent_discovery_max_rounds`, `agent_history_message_limit`, `analysis_datasets`를 둘 수 있다. 대응 env는 MAX_PLAN_CANDIDATES, AGENT_DISCOVERY_MAX_ROUNDS, AGENT_HISTORY_MESSAGE_LIMIT, ANALYSIS_DATASETS다. YAML mapping은 중앙 설정에서 JSON으로 변환되므로 env에서는 JSON 문자열을 사용한다. 상세 기본값·제한·데이터 scope는 [계획 Runtime 안내](agentic-planning-runtime.md)를 참고한다. Phoenix도 중앙 PHOENIX_ENDPOINT/PROJECT_NAME/API_KEY를 사용하고 API lifespan에서 시작·종료한다.
+`service.agent` 그룹에 `max_plan_candidates`, `agent_discovery_max_rounds`, `set_max_history`, `analysis_datasets`를 둘 수 있다. 대응 env는 MAX_PLAN_CANDIDATES, AGENT_DISCOVERY_MAX_ROUNDS, SET_MAX_HISTORY, ANALYSIS_DATASETS다. YAML mapping은 중앙 설정에서 JSON으로 변환되므로 env에서는 JSON 문자열을 사용한다. 상세 기본값·제한·데이터 scope는 [계획 Runtime 안내](agentic-planning-runtime.md)를 참고한다. Phoenix는 standalone lifespan에서만 초기화·종료하며 플랫폼에 붙일 때는 템플릿 tracing을 사용한다.
 
 
 040의 AGENT_REPAIR_LEVEL(기본 0), AGENT_REPAIR_LEVEL_LIMIT(기본 4), AGENT_MAX_REPAIR_ATTEMPTS(기본 3)도 `service.agent`에서 중앙 주입한다. Workflow 명시 정책을 먼저 유지하고 없는 항목만 중앙 기본값으로 채운다. 의미·범위·승인 예시는 [오류 수정 설정](agentic-execution-repair.md#중앙-설정)을 따른다. 개별 Agent가 별도로 os.environ을 읽지 않는다.

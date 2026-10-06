@@ -18,6 +18,7 @@ class AgentContext:
     project_system_prompt: str = ""
     project_prompt_version: int | None = None
     model_name: str = ""
+    recursion_limit: int = 100
     model_selection: dict[str, str] | None = None
     # Bounded completed evidence for this exact user/project/session, never shared Agent state.
     session_analysis_context: dict | None = field(default=None, repr=False, compare=False)

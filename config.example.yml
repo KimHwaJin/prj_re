@@ -1,10 +1,10 @@
-# prd 독립 설정 예제. configure.py init --env prd로 실제 파일을 생성하세요.
+# 로컬 독립 설정 예제. configure.py init --env local로 config.yml을 생성합니다.
 # 파일 하나만 읽습니다. YAML > 환경변수 > 코드 기본값. ${...} 자동 확장은 없습니다.
 
 # ===== 내부 템플릿 기본 설정: 기존 파일에서는 이 영역을 유지하세요. =====
 SERVICE_ID: S030042
 # FastAPI 서버 포트. SSO origin 및 컨테이너 포트도 함께 맞춥니다.
-PORT: 5000
+PORT: 8000
 # 각 ainvoke/astream 호출의 최대 super-step 수. HITL/Executor 대기 시간과 전체 Run 수명은 제한하지 않습니다.
 RECURSION_LIMIT: 100
 # 이전 대화 턴을 모델에 전달. false여도 현재 Run의 승인/재개 상태와 프로젝트 메모리는 유지합니다.
@@ -82,7 +82,7 @@ SSE_RECONCILE_INTERVAL_SECONDS: 15
 SSE_MAX_CONNECTIONS: 1000
 SSE_HEARTBEAT_SECONDS: 15
 SSE_EVENT_BATCH_SIZE: 100
-SERVER_HOST: 0.0.0.0
+SERVER_HOST: 127.0.0.1
 
 # llm
 LLM_TOKEN_FLUSH_INTERVAL_SECONDS: 0.2
@@ -106,8 +106,8 @@ DATABASE_POOL_RECYCLE_SECONDS: 300
 # 기존 opt-in 성능 profile은 별도로 유지합니다.
 DATABASE_PREPARED_STATEMENT_CACHE_SIZE: 0
 SQL_ECHO: false
-DATABASE_URL: postgresql+asyncpg://USER:PASSWORD@POSTGRES_HOST:5432/chat_app
-REDIS_URL: redis://:PASSWORD@REDIS_HOST:6379/0
+DATABASE_URL: postgresql+asyncpg://USER:PASSWORD@127.0.0.1:5432/chat_app
+REDIS_URL: redis://127.0.0.1:6379/0
 
 # checkpoint
 GRAPH_CHECKPOINTER: postgres
@@ -117,7 +117,7 @@ CHECKPOINT_POOL_MIN_SIZE: 1
 CHECKPOINT_POOL_MAX_SIZE: 4
 CHECKPOINT_POOL_TIMEOUT_SECONDS: 10
 LANGGRAPH_STRICT_MSGPACK: true
-CHECKPOINT_DB_URI: postgresql://USER:PASSWORD@POSTGRES_HOST:5432/agent
+CHECKPOINT_DB_URI: postgresql://USER:PASSWORD@127.0.0.1:5432/agent
 
 # agent
 # 추천+신규 계획 합계.
@@ -166,13 +166,13 @@ EXECUTOR_TIMEOUT_SECONDS: 30
 EXECUTOR_OPERATION_TIMEOUT_SECONDS: 300
 EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS: 300
 DATA_MOCK: false
-EXECUTOR_BASE_URL: http://EXECUTOR_HOST:8080
+EXECUTOR_BASE_URL: http://127.0.0.1:8001
 EXECUTOR_RUNTIME_PROFILE: default
 # 실제 Executor 허용 kernel 목록과 일치시킵니다.
 EXECUTOR_RUNTIME_PROFILES:
 - default
 # true=실제 Executor 제출, false=실제 제출 제외.
-EXECUTOR_SUBMIT_ENABLED: true
+EXECUTOR_SUBMIT_ENABLED: false
 EXECUTOR_SHARED_INPUT_ROOT: /workspace/shared
 # 로컬은 실제 Executor 공유 폴더의 절대 경로로 수정합니다.
 EXECUTOR_SHARED_RESULT_ROOT: /workspace/shared
@@ -210,14 +210,14 @@ SSO_ALLOWED_RETURN_ROOTS:
 - /demo
 - /projects
 - /
-SSO_COOKIE_SECURE: true
-SSO_PUBLIC_API_ORIGIN: https://YOUR_API_HOST
-SSO_FRONTEND_ORIGIN: https://YOUR_FRONTEND_HOST
+SSO_COOKIE_SECURE: false
+SSO_PUBLIC_API_ORIGIN: http://127.0.0.1:8000
+SSO_FRONTEND_ORIGIN: http://127.0.0.1:8000
 # 사내 module:factory. 미설정 로그인503. SDK 코드는 사내에서 연결합니다.
 SSO_ADAPTER_FACTORY: ''
 # SDK/SSO에서 요구하는 origin을 등록합니다.
 SSO_ALLOWED_ORIGINS: []
-SSO_NAMESPACE: dtest-agent:prd:sso
+SSO_NAMESPACE: dtest-agent:local:sso
 
 # storage
 WORKFLOW_PERSISTENCE_ENABLED: true

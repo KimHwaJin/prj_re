@@ -1,40 +1,260 @@
-# stg 환경 연결 설정 예제. 실제 config.stg.yml은 Git/이미지에서 제외됩니다.
-# uv run python scripts/configure.py init --env stg 로 복사한 뒤 값을 수정하세요.
-# 이 파일의 service 값이 config.yml과 환경변수보다 우선합니다. ${...} 자동 확장은 없습니다.
-service:
-  runtime:
-    server_host: 0.0.0.0
-    server_port: 8000  # Executor가 같은 port면 Agent port를18110 등으로 변경합니다.
-  database:
-    database_url: postgresql+asyncpg://USER:PASSWORD@POSTGRES_HOST:5432/chat_app
-    redis_url: redis://:PASSWORD@REDIS_HOST:6379/0
-  checkpoint:
-    checkpoint_db_uri: postgresql://USER:PASSWORD@POSTGRES_HOST:5432/agent
-  llm:
-    model_name: YOUR_CHAT_MODEL
-    api_base_url: http://YOUR_MODEL_HOST/v1
-    model_api_key: YOUR_MODEL_KEY  # Secret env를 쓰려면 이 항목을 삭제하고 MODEL_API_KEY를 주입합니다.
-    # model_enable_thinking: false  # 지원하는 모델에서만 명시합니다.
-  executor:
-    executor_base_url: http://EXECUTOR_HOST:8080
-    executor_runtime_profile: default
-    executor_runtime_profiles: [default]  # 실제 Executor 허용 kernel 목록과 일치시킵니다.
-    executor_submit_enabled: true  # 배포 기본은 실제 제출. 제출 전 검증만 할 때 false로 바꾸세요.
-    executor_shared_input_root: /workspace/shared
-    executor_shared_result_root: /workspace/shared  # 로컬은 실제 Executor 공유 폴더의 절대 경로로 수정합니다.
-  auth:
-    sso_cookie_secure: true
-    sso_public_api_origin: https://YOUR_API_HOST
-    sso_frontend_origin: https://YOUR_FRONTEND_HOST
-    sso_adapter_factory: ''  # 사내 module:factory 연결. 미설정 로그인503, 인증 우회 없음.
-    sso_allowed_origins: []  # SDK/SSO에서 요구하는 origin을 등록합니다.
-    sso_namespace: dtest-agent:stg:sso
-  # workflow_search:
-  # 실제 embedding endpoint·모델·차원을 확인한 뒤 아래3개를 함께 지정합니다.
-  #   workflow_embedding_base_url: http://YOUR_EMBEDDING_HOST/v1
-  #   workflow_embedding_model: YOUR_EMBEDDING_MODEL
-  #   workflow_embedding_dimensions: 1024  # 예시 숫자입니다. 실제 모델 차원을 사용합니다.
-  #   workflow_embedding_api_key: YOUR_EMBEDDING_KEY
-  # diagnostics:
-  #   phoenix_endpoint: http://YOUR_PHOENIX_HOST:6006/v1/traces
-  #   phoenix_api_key: YOUR_PHOENIX_KEY
+# stg 독립 설정 예제. configure.py init --env stg로 실제 파일을 생성하세요.
+# 파일 하나만 읽습니다. YAML > 환경변수 > 코드 기본값. ${...} 자동 확장은 없습니다.
+
+# ===== 내부 템플릿 기본 설정: 기존 파일에서는 이 영역을 유지하세요. =====
+SERVICE_ID: S030042
+# FastAPI 서버 포트. SSO origin 및 컨테이너 포트도 함께 맞춥니다.
+PORT: 5000
+# 각 ainvoke/astream 호출의 최대 super-step 수. HITL/Executor 대기 시간과 전체 Run 수명은 제한하지 않습니다.
+RECURSION_LIMIT: 100
+# 이전 대화 턴을 모델에 전달. false여도 현재 Run의 승인/재개 상태와 프로젝트 메모리는 유지합니다.
+ACTIVE_MULTI_TURN: true
+# 이전 대화 최대 턴 수 + 현재 요청. HITL 승인/계획 수정은 같은 Run의 턴입니다. 0이면 이전 대화를 전달하지 않습니다.
+SET_MAX_HISTORY: 6
+# 로컬 Phoenix 활성 여부. 플랫폼 app에 붙일 때 Phoenix 초기화/종료는 플랫폼 소유입니다.
+ACTIVE_TRACE: true
+GAIA_OUTPUT_MARKDOWN: true
+GAIA_OUTPUT_STREAM: true
+CUBE_OUTPUT_MARKDOWN: false
+CUBE_OUTPUT_STREAM: false
+API_OUTPUT_MARKDOWN: true
+API_OUTPUT_STREAM: false
+GAIA_API_SESSION_NAME: ''
+CUBE_BOT_EMP_ID: ''
+CUBE_BOT_TOKEN_ID: ''
+IS_SECURITY_SERVCE: true
+PRIVATE_LLM_MODEL_NAME: YOUR_CHAT_MODEL
+# /v1까지 포함한 OpenAI 호환 base URL. /v1을 추가하지 않습니다.
+PRIVATE_LLM_ENDPOINT: http://YOUR_MODEL_HOST/v1
+# Secret env로 제공하려면 이 YAML 항목을 삭제하세요. 빈 값도 YAML 값으로 우선합니다.
+PRIVATE_LLM_API_KEY: YOUR_MODEL_KEY
+RERANKER_MODEL: ''
+RERANKER_API_KEY: ''
+API_TOKEN: ''
+SYSTEM_ADMIN: ''
+SECRET_KEY: ''
+DEFAULT_WORKFLOW: ''
+PHOENIX_ENDPOINT: ''
+PHOENIX_API_KEY: ''
+A2A_AGENT_URL: ''
+A2A_STREAMING_ENABLED: true
+S3_FILE_ROUTE_PATH: /file
+S3_FILE_URL_ENABLED: true
+S3_FILE_GATEWAY_URL: ''
+S3_FULE_URL_EXPIRES_IN: 3600
+S3_FILE_ROUTE_AUTH_REQUIRED: false
+GAIA_CUBE_ROUTER_CALL_BACK: ''
+S3_REGION_NAME: ''
+S3_AWS_ACCESS: ''
+S3_ENDPOINT_URL: ''
+S3_BUCKET_NAME: ''
+S3_AWS_SECRET_ACCESS_KEY: ''
+
+# ===== 우리 서비스 추가 설정: 기존 템플릿 파일에 아래 영역만 붙여넣으세요. =====
+
+# runtime
+APP_NAME: DTest Agent API
+API_V1_PREFIX: /api/v1
+# Worker 수명 때문에 reload 대신 프로세스를 재시작합니다.
+SERVER_RELOAD: false
+AGENT_WORKER_ENABLED: true
+EVENT_WORKER_ENABLED: true
+TASK_RECONCILER_ENABLED: true
+# 프로세스당 사용자/Executor 재개 그래프 실행 자리 합계. 측정 후 조정합니다.
+AGENT_WORKER_CONCURRENCY: 1
+AGENT_WORKER_NOTIFY_ENABLED: true
+# LISTEN 미연결 fallback 주기, 초.
+AGENT_WORKER_POLL_INTERVAL_SECONDS: 0.25
+# 알림 유실 보완, 초.
+AGENT_WORKER_RECONCILE_INTERVAL_SECONDS: 5
+AGENT_WORKER_MAX_RETRIES: 3
+AGENT_WORKER_RETRY_BACKOFF_SECONDS: 1
+AGENT_WORKER_RETRY_MAX_BACKOFF_SECONDS: 30
+TASK_LEASE_SECONDS: 300
+TASK_RECONCILE_INTERVAL_SECONDS: 30
+TASK_CANCEL_POLL_INTERVAL_SECONDS: 0.25
+RUN_CLEANUP_TIMEOUT_SECONDS: 5
+RUN_MONITOR_TIMEOUT_SECONDS: 3
+SHUTDOWN_DRAIN_SECONDS: 20
+SHUTDOWN_TIMEOUT_SECONDS: 25
+SSE_POLL_INTERVAL_SECONDS: 0.5
+SSE_RECONCILE_INTERVAL_SECONDS: 15
+SSE_MAX_CONNECTIONS: 1000
+SSE_HEARTBEAT_SECONDS: 15
+SSE_EVENT_BATCH_SIZE: 100
+SERVER_HOST: 0.0.0.0
+
+# llm
+LLM_TOKEN_FLUSH_INTERVAL_SECONDS: 0.2
+LLM_TOKEN_FLUSH_CHARACTERS: 256
+LLM_TOKEN_BUFFER_MAX_BYTES: 262144
+LLM_TOKEN_BUFFER_MAX_ITEMS: 1024
+LLM_TOKEN_ENQUEUE_TIMEOUT_SECONDS: 5
+LLM_TOKEN_WRITE_TIMEOUT_SECONDS: 5
+MODEL_PROVIDER: openai_compatible
+MODEL_TEMPERATURE: 0.2
+MODEL_TIMEOUT_SECONDS: 60
+MODEL_MAX_RETRIES: 0
+MODEL_STRUCTURED_OUTPUT_MODE: prompt_json
+
+# database
+DATABASE_POOL_SIZE: 10
+# CRUD pool 최대20. 다른 pool·replica 연결은 별도입니다.
+DATABASE_MAX_OVERFLOW: 10
+DATABASE_POOL_TIMEOUT_SECONDS: 30
+DATABASE_POOL_RECYCLE_SECONDS: 300
+# 기존 opt-in 성능 profile은 별도로 유지합니다.
+DATABASE_PREPARED_STATEMENT_CACHE_SIZE: 0
+SQL_ECHO: false
+DATABASE_URL: postgresql+asyncpg://USER:PASSWORD@POSTGRES_HOST:5432/chat_app
+REDIS_URL: redis://:PASSWORD@REDIS_HOST:6379/0
+
+# checkpoint
+GRAPH_CHECKPOINTER: postgres
+# migration/SDK setup은 사전 schema 준비 명령으로 수행합니다.
+CHECKPOINT_SETUP_ON_START: false
+CHECKPOINT_POOL_MIN_SIZE: 1
+CHECKPOINT_POOL_MAX_SIZE: 4
+CHECKPOINT_POOL_TIMEOUT_SECONDS: 10
+LANGGRAPH_STRICT_MSGPACK: true
+CHECKPOINT_DB_URI: postgresql://USER:PASSWORD@POSTGRES_HOST:5432/agent
+
+# agent
+# 추천+신규 계획 합계.
+MAX_PLAN_CANDIDATES: 5
+AGENT_DISCOVERY_MAX_ROUNDS: 4
+AGENT_OBSERVATION_MAX_CHARS: 16000
+AGENT_MAX_OPERATIONS: 64
+AGENT_SESSION_ANALYSIS_MAX_CHARS: 16000
+AGENT_FREE_PLAN_ENABLED: true
+AGENT_FREE_PLAN_REQUIRE_APPROVAL: true
+AGENT_MAX_PLAN_REVISIONS: 5
+# MULTI 기본 실패 전달. Workflow/승인 정책을 통해 선택합니다.
+AGENT_REPAIR_LEVEL: 0
+AGENT_REPAIR_LEVEL_LIMIT: 4
+AGENT_MAX_REPAIR_ATTEMPTS: 3
+AGENT_PROJECT_MEMORY_MODE: manual
+AGENT_PROJECT_MEMORY_MAX_CHARS: 16000
+AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS: 4000
+AGENT_PROJECT_MEMORY_MAX_UPDATES: 4
+AGENT_PROJECT_MEMORY_PROMPT_MAX_CHARS: 6000
+# UTF-8 byte 기반 보수적 추정. 두 한도 중0이면 읽기 중단.
+AGENT_PROJECT_MEMORY_PROMPT_MAX_TOKENS: 4096
+# 검증된 runtime 참조를 환경별로 등록. 예시 Tool에 맞춰 고정하지 않습니다.
+ANALYSIS_DATASETS: {}
+
+# executor
+EXECUTOR_TLS_VERIFY: true
+EXECUTOR_EXECUTIONS_PATH: /api/v1/executions
+EXECUTOR_OPERATIONS_PATH: /api/v1/executions/{execution_id}/operations
+EXECUTOR_EXECUTION_PATH: /api/v1/executions/{execution_id}
+EXECUTOR_RESULT_PATH: /api/v1/executions/{execution_id}/result
+EXECUTOR_NOTEBOOK_PATH: /api/v1/executions/{execution_id}/notebook
+EXECUTOR_FINALIZE_PATH: /api/v1/executions/{execution_id}/finalize
+EXECUTOR_CANCEL_PATH: /api/v1/executions/{execution_id}/cancel
+EXECUTOR_ARTIFACTS_PATH: /api/v1/executions/{execution_id}/artifacts
+EXECUTOR_SOURCE_TYPE: INLINE
+EXECUTOR_REPORT_SOURCE_TYPE: INLINE
+EXECUTOR_RESULT_READ_MODE: API
+EXECUTOR_REPORT_APPEND_TO_NOTEBOOK: true
+EXECUTOR_HTTP_MAX_CONNECTIONS: 8
+EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS: 5
+EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS: 5
+EXECUTOR_HTTP_MAX_RESPONSE_BYTES: 16777216
+# HTTP 응답 대기, 실제 실행 기한과 별개입니다.
+EXECUTOR_TIMEOUT_SECONDS: 30
+EXECUTOR_OPERATION_TIMEOUT_SECONDS: 300
+EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS: 300
+DATA_MOCK: false
+EXECUTOR_BASE_URL: http://EXECUTOR_HOST:8080
+EXECUTOR_RUNTIME_PROFILE: default
+# 실제 Executor 허용 kernel 목록과 일치시킵니다.
+EXECUTOR_RUNTIME_PROFILES:
+- default
+# true=실제 Executor 제출, false=실제 제출 제외.
+EXECUTOR_SUBMIT_ENABLED: true
+EXECUTOR_SHARED_INPUT_ROOT: /workspace/shared
+# 로컬은 실제 Executor 공유 폴더의 절대 경로로 수정합니다.
+EXECUTOR_SHARED_RESULT_ROOT: /workspace/shared
+
+# events
+EW_NAMESPACE: dtest-agent
+# Executor 발행 Stream과 일치해야 합니다.
+EW_EXECUTOR_EVENT_STREAM: executor.events
+# 수신/routing 병렬성. graph 자리는 runtime 한도입니다.
+EW_INGRESS_CONCURRENCY: 4
+EW_POOL_SIZE: 8
+EW_BATCH_SIZE: 100
+EW_POLL_SECONDS: 0.2
+EW_IDLE_POLL_SECONDS: 2
+EW_CLAIM_IDLE_MILLISECONDS: 30000
+EW_LEASE_TTL_SECONDS: 60
+EW_LEASE_RENEW_SECONDS: 1
+EW_MAX_HANDLER_ATTEMPTS: 5
+EW_SHUTDOWN_SECONDS: 25
+EW_REQUEST_TIMEOUT_SECONDS: 10
+# 내장 Worker는 공통 /service probe를 사용합니다.
+EW_HEALTH_PORT: 0
+
+# auth
+SSO_AUTO_REGISTER: true
+# 고정30분, 요청으로 연장되지 않습니다.
+SSO_SESSION_TTL_SECONDS: 1800
+SSO_COOKIE_NAME: dtest_session
+SSO_COOKIE_SAMESITE: lax
+SSO_REDIS_MAX_CONNECTIONS: 8
+SSO_REDIS_TIMEOUT_SECONDS: 3
+SSO_CALL_TIMEOUT_SECONDS: 10
+# 플랫폼 frontend 경로가 다르면 조정합니다.
+SSO_ALLOWED_RETURN_ROOTS:
+- /demo
+- /projects
+- /
+SSO_COOKIE_SECURE: true
+SSO_PUBLIC_API_ORIGIN: https://YOUR_API_HOST
+SSO_FRONTEND_ORIGIN: https://YOUR_FRONTEND_HOST
+# 사내 module:factory. 미설정 로그인503. SDK 코드는 사내에서 연결합니다.
+SSO_ADAPTER_FACTORY: ''
+# SDK/SSO에서 요구하는 origin을 등록합니다.
+SSO_ALLOWED_ORIGINS: []
+SSO_NAMESPACE: dtest-agent:stg:sso
+
+# storage
+WORKFLOW_PERSISTENCE_ENABLED: true
+WORKFLOW_STORAGE_ROOT: var/workflows
+MOCK_DATA_ROOT: /workspace/pv
+DEMO_ARTIFACTS_ENABLED: false
+DEMO_ARTIFACTS_ROOT: demo_artifacts
+
+# workflow_search
+# 실제 embedding 미설정이면 후보 검색은 수행하지 않습니다.
+WORKFLOW_RECOMMENDATION_ENABLED: true
+# 실제 모델 corpus로 검증해야 하는 threshold입니다.
+WORKFLOW_SIMILARITY_SCORE: 0.93
+MAX_WORKFLOW_REVISIONS: 10
+WORKFLOW_EMBEDDING_MODEL_REVISION: default
+WORKFLOW_EMBEDDING_TIMEOUT_SECONDS: 15
+WORKFLOW_EMBEDDING_CONCURRENCY: 2
+WORKFLOW_EMBEDDING_BATCH_SIZE: 32
+WORKFLOW_SEARCH_CONTEXT_MAX_CHARS: 64000
+WORKFLOW_SEARCH_CANDIDATE_LIMIT: 20
+WORKFLOW_SEARCH_BATCH_SIZE: 64
+WORKFLOW_SEARCH_MAX_ROUNDS: 8
+WORKFLOW_SEARCH_TIMEOUT_MS: 2000
+WORKFLOW_SEARCH_EF_SEARCH: 200
+WORKFLOW_SEARCH_MAX_SCAN_TUPLES: 20000
+WORKFLOW_SEARCH_SCAN_MEM_MULTIPLIER: 2
+
+# diagnostics
+PHOENIX_PROJECT_NAME: dtest
+RUN_DIAGNOSTICS_STALL_SECONDS: 5
+
+# 선택 항목: 필요할 때만 추가하며 embedding 3개 값은 함께 설정합니다.
+# WORKFLOW_EMBEDDING_BASE_URL: http://YOUR_EMBEDDING_HOST/v1
+# WORKFLOW_EMBEDDING_MODEL: YOUR_EMBEDDING_MODEL
+# WORKFLOW_EMBEDDING_DIMENSIONS: 1024  # 실제 모델 차원
+# WORKFLOW_EMBEDDING_API_KEY: YOUR_EMBEDDING_KEY
+# MODEL_ENABLE_THINKING: false  # 지원 모델에서만 사용
+# MODEL_CATALOG: {alias: {provider: openai_compatible, model_name: MODEL, api_base_url: http://HOST/v1, api_key: YOUR_KEY}}
+# DEFAULT_MODEL: alias
+# RUN_DIAGNOSTICS_DIR: var/diagnostics

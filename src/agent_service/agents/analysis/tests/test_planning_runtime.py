@@ -149,7 +149,7 @@ def test_request_xor_and_candidate_limit():
 
 def test_central_agent_group_and_placeholder_availability_survive_refresh():
     settings = load_settings(config={'service': {'agent': {'max_plan_candidates': 2,
-        'agent_discovery_max_rounds': 3, 'agent_history_message_limit': 10}}}, environ={'MAX_PLAN_CANDIDATES':'7'})
+        'agent_discovery_max_rounds': 3, 'set_max_history': 10}}}, environ={'MAX_PLAN_CANDIDATES':'7'})
     assert settings.agent.max_plan_candidates == 2
     assert settings.agent.agent_discovery_max_rounds == 3
     from agent_service.agents.analysis.planning.catalog import AssetCatalog

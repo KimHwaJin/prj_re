@@ -149,7 +149,7 @@ NODE_INPUTS = {
     'conversation': _input('ConversationInput', _EVENT + ' ' + _ROLE + ' history last_analysis_context public_events'),
     'publish_review': _input('PublishReviewInput', _EVENT + ' reviews interaction_id interaction_revision planning_question planning_revision_count review_error user_resume_receipt public_events'),
     'await_review': _input('AwaitReviewInput', 'interaction_data'),
-    'apply_review': _input('ApplyReviewInput', _EVENT + ' user_id project_id kernel_profile dataset_output_dir asset_revision reviews review_action interaction_data interaction_id interaction_revision planning_revision_count planning_feedback planning_previous_reviews history user_resume_receipt'),
+    'apply_review': _input('ApplyReviewInput', _EVENT + ' user_request user_id project_id kernel_profile dataset_output_dir asset_revision reviews review_action interaction_data interaction_id interaction_revision planning_revision_count planning_feedback planning_previous_reviews history user_resume_receipt'),
     'revise_plan': _input('RevisePlanInput', _EVENT + ' ' + _ROLE + ' kernel_profile dataset_output_dir history last_analysis_context reviews planning_previous_reviews planning_feedback planning_revision_count planning_activity_id interaction_id interaction_revision public_events'),
     'execution_select': _input('SelectInput', _SNAPSHOT + ' completed_steps skipped_steps execution_decisions observations execution_id executor_operation_number executor_version next_step_sequence repair_attempts task_id'),
     'execution_submit': _input('SubmitInput', _EVENT + ' execution_id execution_command submitted_steps executor_operation_number repair_history public_events'),

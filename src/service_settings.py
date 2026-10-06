@@ -21,9 +21,10 @@ from sqlalchemy.engine import make_url
 ROOT = Path(__file__).resolve().parent.parent
 ALIASES = {
     "MODEL_PROVIDER": ("LLM_PROVIDER",),
-    "MODEL_NAME": ("LLM_MODEL_NAME",),
-    "MODEL_API_KEY": ("LLM_API_KEY",),
-    "API_BASE_URL": ("LLM_API_BASE_URL",),
+    "MODEL_NAME": ("PRIVATE_LLM_MODEL_NAME", "LLM_MODEL_NAME"),
+    "MODEL_API_KEY": ("PRIVATE_LLM_API_KEY", "LLM_API_KEY"),
+    "API_BASE_URL": ("PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"),
+    "SERVER_PORT": ("PORT",),
     "MODEL_TEMPERATURE": ("LLM_TEMPERATURE",),
     "MODEL_TIMEOUT_SECONDS": ("LLM_TIMEOUT_SECONDS",),
     "MODEL_MAX_RETRIES": ("LLM_MAX_RETRIES",),
@@ -37,6 +38,20 @@ ALIASES = {
     "EW_INGRESS_CONCURRENCY": ("EW_CONCURRENCY",),
     "EXECUTOR_EXECUTIONS_PATH": ("EXECUTOR_JOBS_PATH",),
 }
+# Reserved corporate keys belong to the platform, not service authentication/output.
+PLATFORM_ONLY_KEYS = frozenset({
+    'A2A_AGENT_URL', 'A2A_STREAMING_ENABLED', 'API_OUTPUT_MARKDOWN',
+    'API_OUTPUT_STREAM', 'API_TOKEN', 'CUBE_BOT_EMP_ID',
+    'CUBE_BOT_TOKEN_ID', 'CUBE_OUTPUT_MARKDOWN', 'CUBE_OUTPUT_STREAM',
+    'DEFAULT_WORKFLOW', 'GAIA_API_SESSION_NAME', 'GAIA_CUBE_ROUTER_CALL_BACK',
+    'GAIA_OUTPUT_MARKDOWN', 'GAIA_OUTPUT_STREAM', 'IS_SECURITY_SERVCE',
+    'RERANKER_API_KEY', 'RERANKER_MODEL', 'S3_AWS_ACCESS',
+    'S3_AWS_SECRET_ACCESS_KEY', 'S3_BUCKET_NAME', 'S3_ENDPOINT_URL',
+    'S3_FILE_GATEWAY_URL', 'S3_FILE_ROUTE_AUTH_REQUIRED', 'S3_FILE_ROUTE_PATH',
+    'S3_FILE_URL_ENABLED', 'S3_FULE_URL_EXPIRES_IN', 'S3_REGION_NAME',
+    'SECRET_KEY', 'SERVICE_ID', 'SYSTEM_ADMIN',
+})
+
 # Removed Redis graph-dispatch controls must not silently look effective.
 REMOVED_SETTINGS = frozenset({
     "EW_COMMAND_STREAM_NAME", "EW_COMMAND_GROUP_NAME",
@@ -71,7 +86,8 @@ EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS EXECUTOR_SUBMIT_ENABLED
 DEMO_ARTIFACTS_ENABLED DEMO_ARTIFACTS_ROOT PHOENIX_ENDPOINT
 PHOENIX_PROJECT_NAME PHOENIX_API_KEY MAX_WORKFLOW_REVISIONS
 WORKFLOW_RECOMMENDATION_ENABLED WORKFLOW_SIMILARITY_SCORE
-    MAX_PLAN_CANDIDATES AGENT_HISTORY_MESSAGE_LIMIT ANALYSIS_DATASETS AGENT_DISCOVERY_MAX_ROUNDS
+    RECURSION_LIMIT ACTIVE_MULTI_TURN SET_MAX_HISTORY ACTIVE_TRACE
+    MAX_PLAN_CANDIDATES ANALYSIS_DATASETS AGENT_DISCOVERY_MAX_ROUNDS
     AGENT_OBSERVATION_MAX_CHARS AGENT_MAX_OPERATIONS
     AGENT_SESSION_ANALYSIS_MAX_CHARS AGENT_PROJECT_MEMORY_MODE
     AGENT_PROJECT_MEMORY_MAX_CHARS
@@ -105,11 +121,15 @@ def _api_key(name: str, info: Any) -> str:
 
 
 def _flatten(document: Mapping[str, Any]) -> dict[str, Any]:
-    # Platform YAML can contain unrelated logger/Gaia settings. Service-owned
-    # values live under `service`; without that key, this is a service mapping.
-    section = document.get("service", document)
-    if not isinstance(section, Mapping):
+    # Flat template format is canonical. The previous service/group shape is
+    # accepted for diagnostic fixtures, but root settings must never be dropped.
+    section = {name: value for name, value in document.items() if name != "service"}
+    legacy = document.get("service", {})
+    if not isinstance(legacy, Mapping):
         raise ConfigurationError("service must be a mapping")
+    if set(section) & set(legacy):
+        raise ConfigurationError("Duplicate root/service setting")
+    section.update(legacy)
     output: dict[str, Any] = {}
     for name, value in section.items():
         if not isinstance(name, str):
@@ -131,6 +151,10 @@ def _normalize(values: Mapping[str, Any], known: set[str], *, strict: bool) -> d
     result: dict[str, Any] = {}
     for raw, value in values.items():
         key = _key(raw)
+        if key in PLATFORM_ONLY_KEYS:
+            continue
+        if key == 'AGENT_HISTORY_MESSAGE_LIMIT':
+            raise ConfigurationError('Removed message-count history setting: AGENT_HISTORY_MESSAGE_LIMIT; use SET_MAX_HISTORY (turns).')
         if key in {'AGENT_PROJECT_MEMORY_MAX_TOPICS', 'AGENT_PROJECT_MEMORY_TOPIC_MAX_CHARS'}:
             raise ConfigurationError(f'Removed topic memory setting: {key}; use AGENT_PROJECT_MEMORY_MAX_CHARS and AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS for the single document.')
         if key in REMOVED_INFRASTRUCTURE_SETTINGS:
@@ -153,9 +177,25 @@ def _normalize(values: Mapping[str, Any], known: set[str], *, strict: bool) -> d
     return result
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """Duplicate YAML leaves must not silently override copied settings."""
+
+    def construct_mapping(self, node, deep=False):
+        self.flatten_mapping(node)
+        keys = set()
+        for key_node, _ in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            if not isinstance(key, str):
+                raise ConfigurationError("Configuration keys must be strings")
+            if key in keys:
+                raise ConfigurationError(f"Duplicate YAML setting: {key}")
+            keys.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
 def _read_yaml(path: Path) -> Mapping[str, Any]:
     try:
-        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        document = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
     except (OSError, yaml.YAMLError):
         raise ConfigurationError(f"Cannot read YAML configuration: {path.name}") from None
     if document is None:
@@ -240,6 +280,10 @@ class ServiceSettings:
             },
             "agent_worker_enabled": self.api.agent_worker_enabled,
             "agent_worker_concurrency": self.api.agent_worker_concurrency,
+            "recursion_limit": self.agent.recursion_limit,
+            "active_multi_turn": self.agent.active_multi_turn,
+            "history_previous_turns": self.agent.set_max_history,
+            "active_trace": self.agent.active_trace,
             "event_worker_enabled": self.event_worker_enabled,
             "shutdown_drain_seconds": self.shutdown_drain_seconds,
             "shutdown_timeout_seconds": self.shutdown_timeout_seconds,
@@ -269,10 +313,10 @@ def load_settings(
     from service_auth.sso.settings import SsoSettings
 
     env = dict(os.environ if environ is None else environ)
-    selected = profile or env.get("APP_ENV", "dev")
+    selected = profile or env.get("APP_ENV", "local")
     selected = {"development": "dev", "staging": "stg", "production": "prd"}.get(selected, selected)
-    if selected not in {"dev", "stg", "prd"}:
-        raise ConfigurationError("APP_ENV must select dev, stg or prd")
+    if selected not in {"local", "dev", "stg", "prd"}:
+        raise ConfigurationError("APP_ENV must select local, dev, stg or prd")
     api_fields = {name: _api_key(name, info) for name, info in APISettings.model_fields.items()}
     worker_keys = {_key("EW_" + name.upper()) for name in WorkerSettings.model_fields}
     sso_keys = {"SSO_" + name.upper() for name in SsoSettings.model_fields}
@@ -286,8 +330,8 @@ def load_settings(
         sources.update({key: source for key in normalized})
 
     if dotenv_path is not None:
-        if selected != "dev":
-            raise ConfigurationError("Local dotenv is allowed only in dev")
+        if selected not in {"local", "dev"}:
+            raise ConfigurationError("Local dotenv is allowed only in local/dev")
         overlay(read_local_env(dotenv_path), "local dotenv")
     overlay(env, "environment")
     if config is not None:
@@ -298,13 +342,12 @@ def load_settings(
         path = Path(config_path or env["SERVICE_CONFIG_FILE"])
         overlay(_flatten(_read_yaml(path)), "config file", True)
     else:
-        common, specific = root / "config.yml", root / f"config.{selected}.yml"
-        if common.is_file():
-            overlay(_flatten(_read_yaml(common)), "config.yml", True)
-        if specific.is_file():
-            overlay(_flatten(_read_yaml(specific)), f"config.{selected}.yml", True)
-        else:
-            raise ConfigurationError(f"Missing selected config.{selected}.yml; initialize it from config.{selected}.example.yml")
+        name = "config.yml" if selected == "local" else f"config.{selected}.yml"
+        specific = root / name
+        if not specific.is_file():
+            example = "config.example.yml" if selected == "local" else f"config.{selected}.example.yml"
+            raise ConfigurationError(f"Missing selected {name}; initialize it from {example}")
+        overlay(_flatten(_read_yaml(specific)), name, True)
     # Environment selection is bootstrap input, not a value overridden by YAML.
     merged["APP_ENV"] = selected
     if selected in {"stg", "prd"}:

@@ -36,11 +36,11 @@ def test_one_endpoint_accepts_legacy_spelling_and_config_overrides_env(canonical
 def test_private_yaml_profiles_define_ports_and_switches_without_dotenv(tmp_path, profile):
     import shutil
     from service_runtime.configuration_files import initialize_profile
-    shutil.copy(ROOT/'config.yml', tmp_path/'config.yml')
+    shutil.copy(ROOT/'config.example.yml', tmp_path/'config.yml')
     shutil.copy(ROOT/f'config.{profile}.example.yml', tmp_path/f'config.{profile}.example.yml')
     initialize_profile(profile, root=tmp_path)
     settings = load_settings(profile=profile, environ={}, root=tmp_path)
-    assert settings.api.server_port == 8000
+    assert settings.api.server_port == 5000
     assert settings.api.agent_worker_enabled and settings.api.task_reconciler_enabled
     assert settings.event_worker_enabled
     assert settings.agent.executor_submit_enabled == (profile != 'dev')
@@ -48,7 +48,7 @@ def test_private_yaml_profiles_define_ports_and_switches_without_dotenv(tmp_path
     # Selected YAML, including false/zero, wins over env.
     env = {'SERVER_PORT':'5000','EXECUTOR_SUBMIT_ENABLED':'true','MODEL_MAX_RETRIES':'8'}
     effective = load_settings(profile=profile, environ=env, root=tmp_path)
-    assert effective.api.server_port == 8000
+    assert effective.api.server_port == 5000
     assert effective.agent.executor_submit_enabled == settings.agent.executor_submit_enabled
     assert effective.agent.model_max_retries == 0
 
@@ -129,12 +129,13 @@ def test_local_generation_has_one_private_yaml_and_infrastructure_only_env(tmp_p
     for name,value in {'ROOT':tmp_path,'ENV_FILE':tmp_path/'.env.local','APP_CONFIG':generated}.items():
         monkeypatch.setitem(initialize.__globals__, name, value)
     source_file = tmp_path/f'config.{profile}.yml'
-    common = ROOT/'config.yml'
+    common = ROOT/'config.example.yml'
     shutil.copy(common, tmp_path/'config.yml')
     values = {'DATABASE_URL':'postgresql+asyncpg://u:pass@external:15432/chat_app',
         'CHECKPOINT_DB_URI':'postgresql://u:pass@external:15432/agent',
         'REDIS_URL':'redis://external:6379/0','EXECUTOR_BASE_URL':'http://executor',
-        'EXECUTOR_SHARED_INPUT_ROOT':'/workspace/shared','EXECUTOR_SHARED_RESULT_ROOT':'/workspace/shared'}
+        'EXECUTOR_SHARED_INPUT_ROOT':'/workspace/shared','EXECUTOR_SHARED_RESULT_ROOT':'/workspace/shared',
+        'EXECUTOR_SOURCE_TYPE':'INLINE'}
     source_file.write_text(yaml.safe_dump({'service':values}))
     before=source_file.read_bytes()
     (tmp_path/'.env').write_text('DATABASE_URL=do-not-read\n')

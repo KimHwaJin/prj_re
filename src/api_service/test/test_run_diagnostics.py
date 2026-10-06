@@ -11,7 +11,10 @@ import service_settings
 
 @pytest.fixture(autouse=True)
 def isolated_config(monkeypatch):
-    # Environment changes below are made before the first settings read.
+    # These tests exercise diagnostics settings, independent of developer YAML.
+    # Production YAML correctly takes precedence over the environment.
+    original = service_settings.load_settings
+    monkeypatch.setattr(service_settings, "load_settings", lambda **kwargs: original(config={}, **kwargs))
     monkeypatch.setattr(service_settings, "_snapshot", None)
 
 

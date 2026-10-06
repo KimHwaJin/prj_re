@@ -65,6 +65,10 @@ class GraphInvocation:
         prevents previous events being projected into the new invocation.
         Nested execution must share its cancellation owner's POST tracker.
         """
+        # Covers user starts/resumes AND Executor-event/recovery invocations.
+        # Copy rather than modifying a reusable checkpoint/event config.
+        from service_settings import get_settings
+        config = {**config, "recursion_limit": get_settings().agent.recursion_limit}
         if values is not None:
             self.validate_model(values)
             await self.ensure_project_context(values, config)

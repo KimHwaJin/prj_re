@@ -4,21 +4,21 @@
 
 ## 설정 파일과 DB schema
 
-[앱 설정 가이드](application-configuration.md)의 common+profile YAML을 사용한다. `.env` 없이 시작할 수 있다. 계정·주소는 생성한 private `config.dev.yml`에서 수정한다.
+[앱 설정 가이드](application-configuration.md)의 선택 환경의 독립 YAML을 사용한다. `.env` 없이 시작할 수 있다. 계정·주소는 로컬 `config.yml`에서 수정한다.
 
 ```sh
 uv sync --frozen
-uv run python scripts/configure.py init --env dev
-# config.dev.yml의 실제 연결값·SSO·공유 경로 수정
-uv run python app.py --env dev --check-config
-uv run python scripts/migrate.py --env dev --check-config
-uv run python scripts/migrate.py --env dev
-uv run python app.py --env dev
+uv run python scripts/configure.py init --env local
+# config.yml의 실제 연결값·SSO·공유 경로 수정
+uv run python app.py --env local --check-config
+uv run python scripts/migrate.py --env local --check-config
+uv run python scripts/migrate.py --env local
+uv run python app.py --env local
 ```
 
-기존 `.env`가 있다면 init 대신 `uv run python scripts/configure.py import-env --env dev --input .env`로 한 번 이전한다. 원본은 보존하고 실제 profile은 Git/이미지에서 제외한다. 운영 DB의 migration은 배포 사전 단계에서 수행하며 화면이 DB를 자동 생성·삭제하지 않는다. DB 두 개와 계정 권한, pgvector extension은 미리 준비한다.
+기존 `.env`가 있다면 init 대신 `uv run python scripts/configure.py import-env --env local --input .env`로 한 번 이전한다. 원본은 보존하고 실제 profile은 Git/이미지에서 제외한다. 운영 DB의 migration은 배포 사전 단계에서 수행하며 화면이 DB를 자동 생성·삭제하지 않는다. DB 두 개와 계정 권한, pgvector extension은 미리 준비한다.
 
-`config.dev.yml > config.yml > env > 기본값` 순이다. `--config`는 지정 파일 하나만 읽으므로 전체 설정 파일용이다. dev 예제의 actual Executor 제출은 꺼져 있으므로 필요할 때 `executor_submit_enabled: true`로 변경한다. API8000과 Executor8001은 예제이며 실제 포트를 맞춘다. 공유 결과 폴더와 Redis event Stream도 실제 Executor와 맞춘다.
+`선택한 YAML > env > 기본값` 순이다. `--config`는 지정 파일 하나만 읽으므로 전체 설정 파일용이다. 로컬 예제의 실제 Executor 제출은 꺼져 있으므로 필요할 때 `EXECUTOR_SUBMIT_ENABLED: true`로 변경한다. API8000과 Executor8001은 예제이며 실제 포트를 맞춘다. 공유 결과 폴더와 Redis event Stream도 실제 Executor와 맞춘다.
 
 Workflow 추천은 채팅 LLM과 별도로 embedding 모델·차원 및 HNSW index를 준비한다. [등록·검색 계약](workflow-registration-and-search.md)을 따른다.
 

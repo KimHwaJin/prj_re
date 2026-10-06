@@ -6,7 +6,7 @@ x-app: &app
   group_add:
     - "${LOCAL_CONFIG_GID:?Generate private YAML with scripts/local.py}"
   environment: &app-environment
-    APP_ENV: ${LOCAL_APP_ENV:-dev}
+    APP_ENV: ${LOCAL_APP_ENV:-local}
     SERVICE_CONFIG_FILE: /app/workspace/config.compose.yml
   volumes:
     - ./workspace/config.compose.yml:/app/workspace/config.compose.yml:ro

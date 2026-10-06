@@ -71,7 +71,9 @@ service:
 |---|---|---|
 | MAX_PLAN_CANDIDATES | 5, 1~20 | 추천+신규 후보의 표시 상한. 현재는 신규 후보만 생성 |
 | AGENT_DISCOVERY_MAX_ROUNDS | 4, 1~12 | metadata Tool 호출이 있는 모델 round 한도. 이후 합성·JSON 검증 수정 호출은 별도 |
-| AGENT_HISTORY_MESSAGE_LIMIT | 40, 2~200 | 같은 세션의 대화 메시지 개수 상한. token 기반 요약/project_memory는 후속 |
+| SET_MAX_HISTORY | 6, 0~100 | 이전 요청 턴 최대 N개 + 현재 Run. HITL 피드백은 같은 턴, 내부 tool 메시지는 제외 |
+| ACTIVE_MULTI_TURN | true | 이전 대화 모델 전달. false여도 현재 Run/HITL 상태는 보존 |
+| RECURSION_LIMIT | 100, 양의 정수 | 각 외부/내부 graph 호출의 super-step 한도 |
 | ANALYSIS_DATASETS | 빈 mapping, 최대 1000 | 검증용 서버 데이터 선언. 정식 PVC catalog API를 대체하는 운영 카탈로그가 아님 |
 
 GLOBAL은 공유 원천/test 데이터만 사용한다. 전처리 데이터는 USER/PROJECT/SESSION을 쓰고 owner_user_id(서비스 내부 UUID), project_id, session_id를 해당 scope에 맞게 지정한다. 서버 runtime_path는 Jupyter에서 접근할 절대 경로이며 프론트·LLM에는 공개 dataset_id/title/description/scope만 전달한다. Agent 서버가 그 Parquet를 직접 읽거나 MinIO에 metadata를 쓰지 않는다. 이 선언은 schema/행 내용을 실시간 확인한 결과가 아니며 실제 관찰은 039의 Executor 실행과 manifest 검증에서 얻는다.

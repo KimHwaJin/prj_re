@@ -14,6 +14,7 @@ from service_contracts.plan_interaction import validate_plan_revision
 from agent_service.agents.analysis.planning.proposals import validate_revision_reply
 from agent_service.middleware.prompt_json import StructuredResponseError
 from agent_service.runtime.session_analysis import analysis_for_owner
+from agent_service.runtime.conversation_history import append_history
 
 
 RUNTIME_VERSION = 'agentic-planning-v1'
@@ -29,7 +30,8 @@ def build_planning_graph(runtime, *, checkpointer):
     def receive(state):
         # Start each invocation with fresh plans/events; keep only bounded same-session conversation.
         current = {**state, 'public_run_id': state['run_id'], 'agent_run_id': state['run_id']}
-        history = [*state.get('history', []), {'role': 'user', 'content': state['user_request']}][-runtime.settings.agent_history_message_limit:]
+        history = append_history(state.get('history', []), role='user', content=state['user_request'],
+                                 turn_id=current['public_run_id'], settings=runtime.settings)
         events = [public_event(current, 'message.completed', {'role': 'user', 'channel': 'answer', 'content': [{'type': 'text', 'text': state['user_request']}]})]
         events.append(public_event(current, 'activity.started', {'activity_id': str(uuid4()), 'kind': 'planning', 'title': '요청에 맞는 답변 또는 분석 계획을 준비하고 있어요.'}))
         return {**new_request_defaults(),
@@ -81,7 +83,7 @@ def build_planning_graph(runtime, *, checkpointer):
             events.append(public_event(state,'activity.completed',{'activity_id':memory_activity_id,'kind':'project_memory',
                 'title':'프로젝트 공유 메모리를 갱신했습니다.' if memory_result['status']=='saved' else '프로젝트 메모리가 변경되거나 한도에 도달해 이번 자동 갱신은 저장하지 않았습니다.'}))
         return {'project_memory_result':memory_result, 'reviews': reviews, 'routing_result': {'route': 'analysis' if reviews else 'faq'}, 'public_events': events,
-                'history': [*state['history'], {'role': 'assistant', 'content': message}][-runtime.settings.agent_history_message_limit:],
+                'history': append_history(state['history'], role='assistant', content=message, turn_id=state['public_run_id'], settings=runtime.settings, initial_request=state['user_request']),
                 'final_response': None if reviews else {'status': 'answer', 'message': message, **({'project_memory':memory_result} if memory_result is not None else {})}}
 
     def publish_review(state):
@@ -126,7 +128,7 @@ def build_planning_graph(runtime, *, checkpointer):
                         'planning_feedback':[*state.get('planning_feedback',[]),feedback],
                         'planning_activity_id':activity_id,'review_error':None,
                         'planning_previous_reviews':state['reviews'] or state.get('planning_previous_reviews',[]),
-                        'history':[*state['history'],{'role':'user','content':request.feedback}][-runtime.settings.agent_history_message_limit:],
+                        'history':append_history(state['history'], role='user', content=request.feedback, turn_id=state['public_run_id'], settings=runtime.settings, initial_request=state['user_request']),
                         'interaction_revision':state['interaction_revision']+1,
                         'public_events':[public_event(current,'interaction.resolved',{
                             'interaction_id':state['interaction_id'],'revision':state['interaction_revision'],
@@ -169,7 +171,7 @@ def build_planning_graph(runtime, *, checkpointer):
         events = [*state['public_events'],public_event(state,'activity.completed',{'activity_id':state['planning_activity_id'],'kind':'planning','title':'피드백을 반영했습니다.'}),
             public_event(state,'message.completed',{'role':'assistant','channel':'commentary','content':[{'type':'text','text':reply.message}]})]
         result = {'planning_route':'review','reviews':reviews,'planning_question':reply.message if not reviews else None,
-            'history':[*state['history'],{'role':'assistant','content':reply.message}][-runtime.settings.agent_history_message_limit:],
+            'history':append_history(state['history'], role='assistant', content=reply.message, turn_id=state['public_run_id'], settings=runtime.settings, initial_request=state['user_request']),
             'public_events':events,'review_error':None,'planning_validation_error':None,'interaction_data':None,'approved_snapshot':None,'final_response':None}
         # Configuration permits only an unambiguous complete free-code proposal.
         if len(reviews)==1 and reviews[0]['execution_kind']=='free_code' and not runtime.settings.agent_free_plan_require_approval:

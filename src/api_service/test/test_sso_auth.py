@@ -318,7 +318,7 @@ def test_central_sso_config_priority_and_profile_namespace():
         environ={"SSO_SESSION_TTL_SECONDS":"1200","SSO_ALLOWED_ORIGINS":"[\"https://sso.test\"]"})
     assert settings.sso.session_ttl_seconds==600 and settings.sso.allowed_origins==("https://sso.test",)
     assert settings.sources["SSO_SESSION_TTL_SECONDS"]=="config mapping"
-    assert settings.sso.namespace=="dtest-agent:dev:sso"
+    assert settings.sso.namespace=="dtest-agent:local:sso"
     with pytest.raises(service_settings.ConfigurationError) as exc:
         service_settings.load_settings(config={"SSO_PUBLIC_API_ORIGIN":"https://private:secret@test"},environ={})
     assert "secret" not in str(exc.value)

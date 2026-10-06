@@ -13,6 +13,6 @@ RUN python -c "import sys; assert sys.version_info[:2] == (3, 11), 'Python 3.11 
     python -m pip install --no-cache-dir -r requirements.txt
 COPY . ./
 # Credentials are excluded from build context; install the public CICD profile only.
-COPY config.cicd.dev.yml ./config.dev.yml
+COPY cicd/basic/dev/config.dev.example.yml ./config.dev.yml
 EXPOSE 5000
 ENTRYPOINT ["python", "app.py"]

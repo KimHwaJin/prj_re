@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from service_settings import ROOT, _flatten, _read_yaml, load_settings, read_local_env
+from service_settings import ROOT, _read_yaml, load_settings, read_local_env
 
 
 def plain(value: Any) -> Any:
@@ -47,12 +47,9 @@ def setting_group(name: str) -> str:
 
 
 def yaml_document(values: Mapping[str, Any]) -> dict:
-    groups: dict[str, dict] = {}
-    for key, value in sorted(values.items()):
-        if key == "APP_ENV":
-            continue  # Environment selection is bootstrap input, never a YAML override.
-        groups.setdefault(setting_group(key), {})[key.lower()] = plain(value)
-    return {"service": groups}
+    preferred = {"SERVER_PORT": "PORT", "MODEL_NAME": "PRIVATE_LLM_MODEL_NAME",
+                 "API_BASE_URL": "PRIVATE_LLM_ENDPOINT", "MODEL_API_KEY": "PRIVATE_LLM_API_KEY"}
+    return {preferred.get(key, key): plain(value) for key, value in sorted(values.items()) if key != "APP_ENV"}
 
 
 def write_private(path: Path, content: str, *, overwrite: bool = False) -> None:
@@ -75,25 +72,25 @@ def write_private(path: Path, content: str, *, overwrite: bool = False) -> None:
 
 def initialize_profile(profile: str, *, root: Path = ROOT, source_env: Path | None = None,
                        output: Path | None = None, overwrite: bool = False) -> Path:
-    if profile not in {"dev", "stg", "prd"}:
-        raise ValueError("Choose dev, stg or prd")
-    target = output or root / f"config.{profile}.yml"
-    template = root / f"config.{profile}.example.yml"
+    if profile not in {"local", "dev", "stg", "prd"}:
+        raise ValueError("Choose local, dev, stg or prd")
+    target = output or root / ("config.yml" if profile == "local" else f"config.{profile}.yml")
+    template = root / ("config.example.yml" if profile == "local" else f"config.{profile}.example.yml")
     if source_env is None:
         # Preserve explanatory comments in the normal copy path.
         content = template.read_text(encoding="utf-8")
-        load_settings(config={**_flatten(_read_yaml(root / "config.yml")),
-                              **_flatten(_read_yaml(template))}, environ={}, profile=profile)
+        load_settings(config=_read_yaml(template), environ={}, profile=profile)
     else:
         # Legacy dotenv is imported once, explicitly; the source file is untouched.
         # Env spelling/aliases/types are canonicalized and checked by the same loader.
-        common = _flatten(_read_yaml(root / "config.yml"))
-        base = _flatten(_read_yaml(template))
+        base = _read_yaml(template)
         imported = load_settings(config={}, environ=read_local_env(source_env), profile=profile)
         # Only explicit recognized legacy input overrides the target profile/defaults.
         explicit = {key: value for key, value in imported.inputs.items()
                     if imported.sources.get(key) == "environment" and key != "APP_ENV"}
-        settings = load_settings(config={**common, **base, **explicit}, environ={}, profile=profile)
-        content = "# Private YAML imported from legacy dotenv; source unchanged. Do not commit.\n" + yaml.safe_dump(yaml_document(settings.inputs), allow_unicode=True, sort_keys=False)
+        # Normalize template aliases before applying imported canonical values.
+        baseline = load_settings(config=base, environ={}, profile=profile)
+        settings = load_settings(config={**baseline.inputs, **explicit}, environ={}, profile=profile)
+        content = "# Private YAML imported from legacy dotenv; source unchanged. Do not commit.\n" + yaml.safe_dump({**base, **yaml_document(settings.inputs)}, allow_unicode=True, sort_keys=False)
     write_private(target, content, overwrite=overwrite)
     return target

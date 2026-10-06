@@ -1,54 +1,5 @@
-# prd 독립 설정 예제. configure.py init --env prd로 실제 파일을 생성하세요.
+# 서비스 전용 추가 설정. 기존 내부 템플릿의 각 환경 파일에 붙여넣는 블록입니다.
 # 파일 하나만 읽습니다. YAML > 환경변수 > 코드 기본값. ${...} 자동 확장은 없습니다.
-
-# ===== 내부 템플릿 기본 설정: 기존 파일에서는 이 영역을 유지하세요. =====
-SERVICE_ID: S030042
-# FastAPI 서버 포트. SSO origin 및 컨테이너 포트도 함께 맞춥니다.
-PORT: 5000
-# 각 ainvoke/astream 호출의 최대 super-step 수. HITL/Executor 대기 시간과 전체 Run 수명은 제한하지 않습니다.
-RECURSION_LIMIT: 100
-# 이전 대화 턴을 모델에 전달. false여도 현재 Run의 승인/재개 상태와 프로젝트 메모리는 유지합니다.
-ACTIVE_MULTI_TURN: true
-# 이전 대화 최대 턴 수 + 현재 요청. HITL 승인/계획 수정은 같은 Run의 턴입니다. 0이면 이전 대화를 전달하지 않습니다.
-SET_MAX_HISTORY: 6
-# 로컬 Phoenix 활성 여부. 플랫폼 app에 붙일 때 Phoenix 초기화/종료는 플랫폼 소유입니다.
-ACTIVE_TRACE: true
-GAIA_OUTPUT_MARKDOWN: true
-GAIA_OUTPUT_STREAM: true
-CUBE_OUTPUT_MARKDOWN: false
-CUBE_OUTPUT_STREAM: false
-API_OUTPUT_MARKDOWN: true
-API_OUTPUT_STREAM: false
-GAIA_API_SESSION_NAME: ''
-CUBE_BOT_EMP_ID: ''
-CUBE_BOT_TOKEN_ID: ''
-IS_SECURITY_SERVCE: true
-PRIVATE_LLM_MODEL_NAME: YOUR_CHAT_MODEL
-# /v1까지 포함한 OpenAI 호환 base URL. /v1을 추가하지 않습니다.
-PRIVATE_LLM_ENDPOINT: http://YOUR_MODEL_HOST/v1
-# Secret env로 제공하려면 이 YAML 항목을 삭제하세요. 빈 값도 YAML 값으로 우선합니다.
-PRIVATE_LLM_API_KEY: YOUR_MODEL_KEY
-RERANKER_MODEL: ''
-RERANKER_API_KEY: ''
-API_TOKEN: ''
-SYSTEM_ADMIN: ''
-SECRET_KEY: ''
-DEFAULT_WORKFLOW: ''
-PHOENIX_ENDPOINT: ''
-PHOENIX_API_KEY: ''
-A2A_AGENT_URL: ''
-A2A_STREAMING_ENABLED: true
-S3_FILE_ROUTE_PATH: /file
-S3_FILE_URL_ENABLED: true
-S3_FILE_GATEWAY_URL: ''
-S3_FULE_URL_EXPIRES_IN: 3600
-S3_FILE_ROUTE_AUTH_REQUIRED: false
-GAIA_CUBE_ROUTER_CALL_BACK: ''
-S3_REGION_NAME: ''
-S3_AWS_ACCESS: ''
-S3_ENDPOINT_URL: ''
-S3_BUCKET_NAME: ''
-S3_AWS_SECRET_ACCESS_KEY: ''
 
 # ===== 우리 서비스 추가 설정: 기존 템플릿 파일에 아래 영역만 붙여넣으세요. =====
 
@@ -217,7 +168,7 @@ SSO_FRONTEND_ORIGIN: https://YOUR_FRONTEND_HOST
 SSO_ADAPTER_FACTORY: ''
 # SDK/SSO에서 요구하는 origin을 등록합니다.
 SSO_ALLOWED_ORIGINS: []
-SSO_NAMESPACE: dtest-agent:prd:sso
+SSO_NAMESPACE: dtest-agent:stg:sso
 
 # storage
 WORKFLOW_PERSISTENCE_ENABLED: true

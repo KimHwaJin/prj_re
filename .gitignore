@@ -244,3 +244,6 @@ workspace/
 /config.prd.yml
 /config.local.yml
 /config.active.yml
+
+# Local complete configuration now contains runtime credentials, not common policy.
+/config.yml

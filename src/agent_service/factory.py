@@ -51,7 +51,7 @@ class RoleAgent:
         try:
             result = await self.agent.ainvoke(
                 {"messages": [{"role": "user", "content": content}]},
-                config={'recursion_limit': 32},
+                config={'recursion_limit': (context or AgentContext()).recursion_limit},
                 context=replace(context or AgentContext(), model_name=self.model_name),
                 # LangGraph 1.2.11 otherwise inherits outer sync durability and
                 # accesses a missing checkpoint future in this stateless graph.

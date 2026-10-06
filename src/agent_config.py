@@ -164,8 +164,13 @@ class AgentSettings:
     max_plan_candidates: int = 5
     # Metadata tool rounds per conversation call; synthesis follows this limit.
     agent_discovery_max_rounds: int = 4
-    # Only same-session conversation is supplied; oldest messages are trimmed.
-    agent_history_message_limit: int = 40
+    # Each graph invocation has its own step budget; wait time does not consume it.
+    recursion_limit: int = 100
+    # Previous completed request turns + current Run. HITL feedback stays in its Run.
+    active_multi_turn: bool = True
+    set_max_history: int = 6
+    # Only standalone bootstrap owns Phoenix. Platform lifecycle owns its tracing.
+    active_trace: bool = True
     # Latest terminal analysis supplied to follow-up model calls, measured as serialized JSON chars.
     # 0 disables it; full reports/results remain in Run/Executor records, independent of this excerpt.
     agent_session_analysis_max_chars: int = 16000
@@ -298,8 +303,8 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     if not 0 < pool_timeout < float("inf"):
         raise ValueError("Checkpoint pool timeout must be finite and positive")
 
-    phoenix_endpoint = env.get("PHOENIX_ENDPOINT")
-    phoenix_api_key = env.get("PHOENIX_API_KEY")
+    phoenix_endpoint = env.get("PHOENIX_ENDPOINT") or None
+    phoenix_api_key = env.get("PHOENIX_API_KEY") or None
     provider = env.get("MODEL_PROVIDER") or "openai_compatible"
 
     demo_artifacts_root = Path(
@@ -353,7 +358,10 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     from service_contracts.datasets import DatasetDeclaration
     max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
     discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
-    history_limit = int(env.get('AGENT_HISTORY_MESSAGE_LIMIT', '40'))
+    history_limit = int(env.get('SET_MAX_HISTORY', '6'))
+    recursion_limit = int(env.get('RECURSION_LIMIT', '100'))
+    if not 0 <= history_limit <= 100 or recursion_limit < 1:
+        raise ValueError('SET_MAX_HISTORY must be 0..100 and RECURSION_LIMIT must be positive')
     session_analysis_limit = int(env.get('AGENT_SESSION_ANALYSIS_MAX_CHARS', '16000'))
     if session_analysis_limit != 0 and not 2048 <= session_analysis_limit <= 64000:
         raise ValueError('AGENT_SESSION_ANALYSIS_MAX_CHARS must be 0 or 2048..64000')
@@ -375,7 +383,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         raise ValueError('Invalid Agent repair level/attempt limits')
     if not 1024 <= observation_limit <= 64000 or not 1 <= max_operations <= 256:
         raise ValueError('Invalid Agent observation/operation limits')
-    if not 1 <= max_candidates <= 20 or not 2 <= history_limit <= 200 or not 1 <= discovery_rounds <= 12:
+    if not 1 <= max_candidates <= 20 or not 0 <= history_limit <= 100 or not 1 <= discovery_rounds <= 12:
         raise ValueError('Invalid planning candidate/history limits')
     datasets = json.loads(env.get('ANALYSIS_DATASETS', '{}'))
     if not isinstance(datasets, dict) or len(datasets) > 1000 or any(not isinstance(key, str) or not key.strip() for key in datasets):
@@ -383,7 +391,10 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
     datasets = {key: DatasetDeclaration.model_validate(value).model_dump(exclude_none=True)
                 for key, value in datasets.items()}
     return AgentSettings(
-        max_plan_candidates=max_candidates, agent_history_message_limit=history_limit,
+        max_plan_candidates=max_candidates, set_max_history=history_limit,
+        recursion_limit=recursion_limit,
+        active_multi_turn=_as_bool(env.get('ACTIVE_MULTI_TURN'), True),
+        active_trace=_as_bool(env.get('ACTIVE_TRACE'), True),
         agent_session_analysis_max_chars=session_analysis_limit, agent_project_memory_mode=memory_mode,
         **{'agent_project_memory_' + name: value for name, value in vars(memory_limits).items()},
         agent_discovery_max_rounds=discovery_rounds,
@@ -394,7 +405,7 @@ def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
         agent_free_plan_require_approval=_as_bool(env.get('AGENT_FREE_PLAN_REQUIRE_APPROVAL'),True),
         agent_max_plan_revisions=plan_revisions,
         model_mock_delay_ms=mock_delay_ms,
-        environment=env.get("APP_ENV", "development"),
+        environment=env.get("APP_ENV", "local"),
         model_provider=provider,
         model_name=env.get("MODEL_NAME"),
         model_api_key=env.get("MODEL_API_KEY"),

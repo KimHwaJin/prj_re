@@ -13,7 +13,7 @@ from service_settings import ConfigurationError
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["init", "import-env"])
-    parser.add_argument("--env", choices=["dev", "stg", "prd"], default="dev")
+    parser.add_argument("--env", choices=["local", "dev", "stg", "prd"], default="local")
     parser.add_argument("--input", type=Path, help="Required only for import-env")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--overwrite", action="store_true", help="Explicitly replace the target private YAML")
