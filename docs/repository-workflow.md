@@ -10,7 +10,7 @@ cd prj_re
 git fetch origin
 ```
 
-실제 `.env`, 개인 인증 정보, 가상 환경과 로컬 데이터는 Git에 포함되지 않는다. `.env.example`과 config 템플릿을 참고해 환경별 값을 별도로 준비한다. 실행·기동 설정은 [기동 가이드](configuration-bootstrap.md), Agent 개발 위치와 현재 이행 상태는 [Agent 개발 안내](agent-development/README.md)를 참고한다. 현재 [Agent API](public-run-api.md)와 [Workflow JSON](workflow-json-reference.md)을 먼저 확인한다. 092부터 [공개 Workflow2.0](workflow-standard.md)을 정규화하여 공통 승인·실행 계획으로 연결하고 직접 CRUD 등록·본문 수정을 지원한다. pgvector 추천 풀 자동 연계와 legacy 일괄 이행은 후속이다.
+실제 `.env`, 개인 인증 정보, 가상 환경과 로컬 데이터는 Git에 포함되지 않는다. `.env.example`과 config 템플릿을 참고해 환경별 값을 별도로 준비한다. 실행·기동 설정은 [기동 가이드](configuration-bootstrap.md), Agent 개발 위치와 현재 이행 상태는 [Agent 개발 안내](agent-development/README.md)를 참고한다. 현재 [Agent API](public-run-api.md)와 [Workflow JSON](workflow-json-reference.md)을 먼저 확인한다. 092부터 [공개 Workflow2.0](workflow-standard.md)을 정규화하여 공통 승인·실행 계획으로 연결하고 직접 CRUD 등록·본문 수정을 지원한다. 094에서 다중 쿼리·pgvector HNSW 추천을 연결했다. 실제 임베딩 모델 품질 평가와 legacy 일괄 이행은 후속이다.
 
 ## 이후 작업과 통합
 

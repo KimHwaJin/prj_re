@@ -1,37 +1,56 @@
 # 사용자 resume와 checkpoint 복구 계약
 
-030에서 도입한 내부 계약이다. 프론트는 기존 `POST /api/v1/sessions/{session_id}/runs/{run_id}/resume`에 `command`와 현재 `resume_token`을 보낸다. 명령 ID·interrupt ID·처리 기록을 직접 만들거나 전달하지 않는다.
+사용자 입력과 재개는 모두 `POST /api/v1/sessions/{session_id}/runs`로 접수한다.
+재개 body에는 공개 `run_id`, 최신 `resume_token`, `command.resume`을 넣는다.
+별도 `/runs/{run_id}/resume` endpoint는 없다. 인증은 SSO 쿠키와 변경 요청의
+CSRF다. 실제 body·응답·SSE는 [공개 Run API](../public-run-api.md)를 따른다.
 
-## 저장하는 정보
+## 식별자와 영속 기록
 
-- 내부 Run ID를 명령 ID로 사용한다. 별도 명령 큐나 테이블은 추가하지 않는다.
-- 이전 Run의 최종 상태 저장 시 실제 LangGraph interrupt ID를 `metadata._checkpoint_interrupt_id`로 보존한다. 공개 interrupt payload의 모양은 유지한다.
-- resume 접수 시 이 값을 새 내부 Run의 `metadata._resume_target`에 복사한다. 같은 명령의 재시도에서는 대상을 다시 선택하지 않는다.
-- 호출 직전에 별도 짧은 transaction으로 `metadata._resume_started=true`를 commit한다. 이 표시만으로 입력이 처리됐다고 판단하지 않는다.
-- 입력을 받은 노드가 정상 반환할 때 노드의 업무 결과와 `user_resume_receipt`를 함께 반환한다. receipt에는 command ID, interrupt ID, 입력 digest가 들어간다. 이 둘은 같은 LangGraph 노드 결과로 checkpoint에 저장된다.
-- session당 사용자 명령 하나만 진행할 수 있는 기존 잠금 규칙에 따라 최신 receipt 하나만 유지한다. 외부 이벤트용 `ew_receipts`는 별도 규약을 그대로 쓴다.
+공개 Run ID는 전체 업무에서 유지한다. 재개마다 private invocation을 기록하고
+공통 `agent_commands` 원장에 실행 명령을 접수한다. 명령 원장이 없다는 옛030
+설명은 현재 구조에 적용되지 않는다. [공통 Worker](../agent-command-worker.md)를
+함께 참고한다.
 
-`_resume_started`는 호출했을 가능성에 대한 보수적인 기록이고, receipt는 입력을 받은 노드가 결과를 저장했다는 증거다. receipt만으로 downstream Agent 흐름 전체 또는 외부 Executor 작업이 끝났다고 판단하지 않는다.
+- 대기 결과의 `metadata._checkpoint_interrupt_id`는 실제 interrupt 대상이다.
+- 재개 접수 시 `_resume_target`에 대상을 고정한다. 동일 명령의 재시도에서
+  최신 질문을 다시 골라 보내지 않는다.
+- 호출 직전 `_resume_started=true`를 짧은 transaction으로 저장한다. 이 값만으로
+  사용자 입력이 소비됐다고 판단하지 않는다.
+- 성공한 HITL 노드의 상태 변경과 `user_resume_receipt`가 같은 checkpoint에
+  저장된다. receipt는 private invocation ID, interrupt ID와 입력 digest다.
+- 프론트는 내부 command ID나 checkpoint interrupt ID를 직접 만들지 않는다.
+  서버가 내려준 공개 interaction/token을 사용한다.
 
-## 실행과 복구
+## 호출과 복구
 
-1. 세션 점유 아래 최신 checkpoint를 읽고 모델 선택을 검증한다.
-2. 같은 command ID의 receipt가 있으면 digest·대상 interrupt까지 일치하는지 검사한다. 그래프가 정상적인 다음 interrupt 또는 종료에 도달했는지도 확인한다.
-3. 이 조건을 만족하면 `graph.ainvoke()`를 호출하지 않고 checkpoint 상태로 서비스 DB 반영만 재실행한다.
-4. receipt가 없고 아직 호출하지 않은 명령이면, checkpoint의 유일한 interrupt가 고정된 대상인지 확인하고 시작 표시를 commit한다. `Command(resume={interrupt_id: envelope})`, `durability="sync"`로 호출한다.
-5. 호출 후 checkpoint를 다시 읽어 receipt와 다음 대기/종료 상태를 검증하고 서비스 DB에 반영한다.
-6. 이미 호출했지만 receipt가 없거나, receipt가 다르거나, 다음 노드가 실패한 상태면 자동 재실행하지 않는다. 중단이 확인된 호출은 `UserResumeNeedsRecovery`로 해당 Task만 복구 필요로 표시한다. Task 보호가 commit된 뒤 실행 점유를 반환하며, Task의 recovery flag가 API/이벤트 재진입을 계속 막는다. 다른 세션은 처리할 수 있다.
+현재 구현은 [user_resume protocol](../../src/dtest/application/runs/protocols/user_resume.py),
+[공통 projection 복구](../../src/dtest/application/runs/persistence/recovery.py)에 있다.
 
-서비스 반영 오류는 `RESUME_PROJECTION_FAILED`, `stage=state_projection`으로 기록하고 기존 큐/backoff 한도로 재시도한다. 최종 Run/Task/event transaction도 이 예외 처리 범위에 포함한다. 031에서 최초 호출에도 같은 경계를 적용했다. 최종 commit이 실제 성공하고 응답만 유실되었다면 상태를 재조회해 중복 최종 이벤트를 추가하지 않는다. 이때 이미 해제된 Task lease를 다시 요구하지 않고, 아직 보유한 공통 세션 점유 아래 완료 사실을 확인한다.
+1. 세션 실행 점유 아래 checkpoint·모델 선택을 검사한다.
+2. 동일 private invocation의 receipt가 있으면 대상·digest와 다음 대기/종료 상태를
+   확인하고 graph를 다시 호출하지 않고 서비스 DB projection만 재실행한다.
+3. 아직 호출하지 않은 명령은 유일한 interrupt가 고정 대상인지 확인하고
+   started 표시를 commit한 뒤 해당 interrupt로 resume한다.
+4. 호출 후 receipt와 진행 상태를 검사한다. 모델/Executor를 포함한 graph 전체
+   종료를 receipt 하나로 판단하지 않는다.
+5. 호출 표시가 있는데 receipt가 없거나, 대상이 다르거나, 진행이 불완전하면
+   자동 재제출하지 않고 `UserResumeNeedsRecovery`로 보호한다.
 
-재시도 소진 시 resume를 단순 ERROR로 끝내고 세션을 새 입력에 열지 않는다. 복구 필요로 남긴다. Task 보호 저장/확인에 실패하거나 실행 종료·외부 제출이 불확실하면 기존 `ExecutionNeedsRecovery` 경로로 프로세스 추가 claim과 세션 점유 해제를 막는다. DB 전체 장애로 복구 표시 자체가 불가능하거나 프로세스가 죽은 경우의 자동 점유 복구까지 제공하는 것은 아니다.
+checkpoint가 완료되어도 서비스 DB 반영은 별도로 실패할 수 있다. 이 경우
+`GraphProjectionError`로 projection을 재시도한다. graph 입력이 소비되었는지
+불확실한 실패와 구분한다. 재시도 소진·점유 불확실성 처리도 현재
+[명령 outcome](../../src/dtest/application/runs/commands/outcome.py)을 따른다.
+receipt는 외부 HTTP 부작용까지 포함한 exactly-once 보장이 아니다.
 
 ## Agent 개발 규칙
 
-공용 코드는 `dtest/contracts/user_resume.py`, `dtest/agent_service/runtime/user_resume.py`에 있다. Agent가 API/DB 구현을 import하지 않는다.
+[공용 계약](../../src/dtest/contracts/user_resume.py)과
+[HITL helper](../../src/dtest/agent_service/runtime/user_resume.py)를 사용한다.
+Agent가 API·DB 구현을 import하지 않는다.
 
 ```python
-from agent_service.runtime.user_resume import (
+from dtest.agent_service.runtime.user_resume import (
     record_user_resume,
     user_interrupt,
 )
@@ -48,22 +67,12 @@ async def ask(state: State) -> dict:
     return {"answer": answer}
 ```
 
-- 서비스에서 재개하는 사용자 HITL 노드는 `record_user_resume`로 감싸고 `user_interrupt`를 사용한다. 분석 Agent의 `request_human_input`은 이 공통 helper를 사용하도록 연결했다.
-- `def`/`async def` 양쪽을 지원한다. 현재 Workflow 후보 선택처럼 `run_sync` 안에서 실행되는 노드도 receipt를 노드 결과로 반환한다.
-- 노드 한 번에 사용자 응답 하나를 받고 dict 상태 변경을 반환하는 규약이다. 여러 사용자 interrupt를 한 노드 안에서 연속 처리하거나 동시 여러 사용자 interrupt를 받는 계약은 이번에 지원하지 않는다.
-- 입력을 받은 노드가 실패하거나 다시 interrupt하면 완료 receipt를 만들지 않는다. 다른 노드에서 나중에 receipt를 따로 기록하지 않는다.
-- resume envelope는 공용 helper가 벗겨준다. 도메인 검증/프롬프트/사용자 메시지는 기존 `command` 값만 받는다.
-- node는 state를 직접 수정하지 않고 변경 dict를 반환한다. `user_resume_receipt`를 업무 코드에서 덮어쓰거나 삭제하지 않는다.
-- 개발 도구의 직접 LangGraph 호출은 기존 raw resume를 사용할 수 있지만, 서비스의 자동 복구 계약을 제공하는 경로는 서버 envelope를 사용하는 위 규약이다.
+한 노드는 사용자 응답 하나를 소비하고 dict 상태 변경을 반환한다. 노드가 실패하거나
+다시 interrupt하면 완료 receipt를 만들지 않는다. state를 직접 바꾸거나
+user_resume_receipt를 업무 코드에서 덮어쓰지 않는다. 현재 분석 graph는
+`request_human_input` 노드에서 이 helper를 사용한다. 과거 데이터 선택 전용
+노드 목록을 현재 구현으로 나열하지 않는다.
 
-현재 분석 Agent의 데이터 선택, 분석 문맥, 추가 정보, Workflow 후보 선택, Workflow 승인, 다음 사용자 요청 노드에 적용했다. 노드 이름·edge·업무 순서·모델 호출 횟수는 변경하지 않았다.
-
-## 이전 버전과 배포 범위
-
-DB schema migration은 없다. 기존 JSON metadata와 additive checkpoint state 필드를 사용한다. 그러나 기존 저장된 사용자 대기 Run에 interrupt ID가 없으면 임의로 최신 질문과 연결하지 않고 복구 필요로 처리한다. 배포 전에 이전 사용자 대기를 종료하거나 검증된 운영 복구 절차가 필요하다. 이미 Executor를 기다리는 작업의 이벤트 receipt 계약은 변경하지 않았다.
-
-새 API와 새 Agent runtime을 함께 배포해야 한다. 구버전 Worker가 새 resume를 가져가면 새 보호 규약을 따르지 않으므로, **구·신 Worker 혼재 중 안전한 resume 처리는 이번에 보장하지 않는다.** 배포 시 실행 접수/Worker drain 및 버전 전환을 조율해야 한다. Kubernetes rollout 실증은 별도다.
-
-029의 R1과 사용자 resume에 해당하는 R2 경로를 수정했다. 최초 사용자 호출의 최종 반영 실패는 [031 최초 호출 복구 계약](initial-request-recovery.md)에서 처리했다. 로그/이벤트 개별 commit(R3), 프로세스 강제 종료 owner 정리(R4/R5), 관리자 복구 API는 후속 범위다. receipt는 외부 호출을 포함한 전체 시스템의 exactly-once 보장을 의미하지 않는다.
-
-031에서 snapshot 변환과 `GraphProjectionError`는 `api_service/services/graph_recovery.py`로 공통화했다. `UserResumeNeedsRecovery`는 공통 `InvocationNeedsRecovery`의 하위 예외이며, 세션 단위 보호와 프로세스 보호의 구분은 유지한다.
+직접 LangGraph를 사용하는 개발 도구는 raw resume도 가능하지만 서버 envelope를
+사용하는 서비스의 복구 보호 계약과 동일하다고 가정하지 않는다. 배포 시 구·신
+writer 혼재와 이미 진행 중인 작업은 별도 전환·종료·검증이 필요하다.

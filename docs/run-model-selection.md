@@ -25,26 +25,24 @@
 선택한다. 환경의 항목과 YAML의 항목을 부분 병합하지 않는다.
 
 ```yaml
-service:
-  llm:
-    DEFAULT_MODEL: reasoning-v1
-    MODEL_CATALOG:
-      reasoning-v1:
-        provider: openai_compatible
-        model_name: deployed-model-name
-        api_base_url: https://llm.internal.example/v1
-        api_key: replace-in-deployment-secret-config
-        temperature: 0
-        timeout_seconds: 60
-        max_retries: 2
-        enable_thinking: true
-        structured_output_mode: prompt_json
-      fast-v1:
-        provider: openai_compatible
-        model_name: another-deployed-model
-        api_base_url: https://llm.internal.example/v1
-        api_key: replace-in-deployment-secret-config
-        structured_output_mode: provider_json_schema
+DEFAULT_MODEL: reasoning-v1
+MODEL_CATALOG:
+  reasoning-v1:
+    provider: openai_compatible
+    model_name: deployed-model-name
+    api_base_url: https://llm.internal.example/v1
+    api_key: replace-in-deployment-secret-config
+    temperature: 0
+    timeout_seconds: 60
+    max_retries: 2
+    enable_thinking: true
+    structured_output_mode: prompt_json
+  fast-v1:
+    provider: openai_compatible
+    model_name: another-deployed-model
+    api_base_url: https://llm.internal.example/v1
+    api_key: replace-in-deployment-secret-config
+    structured_output_mode: provider_json_schema
 ```
 
 실제 키는 레포에 커밋하지 않는다. Secret으로 마운트한 선택 config 파일 또는

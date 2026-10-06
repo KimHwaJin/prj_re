@@ -1,6 +1,6 @@
 # PostgreSQL 스키마와 적용 순서
 
-2026-10-06 API 정리(101) 기준이다. [API 서비스 구조](api-service-layout.md), [공통 명령 Worker](agent-command-worker.md)를 함께 참고한다.
+2026-10-06 API 정리(101) 기준이다. [API 서비스 구조](architecture/service-layout.md), [공통 명령 Worker](agent-command-worker.md)를 함께 참고한다.
 
 ## 현재 저장소
 

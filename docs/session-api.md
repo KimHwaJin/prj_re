@@ -76,13 +76,11 @@ PATCH는 `{"session_name":"변경한 이름"}`으로 보낸다. settings나 프�
 ## 중앙 설정
 
 ```yaml
-service:
-  executor:
-    # 세션에서 profile을 생략했을 때 사용할 값. 실제 등록한 profile로 지정.
-    executor_runtime_profile: default
-    # 생성 요청에서 선택 가능한 profile. 기본 profile을 반드시 포함.
-    # Executor의 RUNTIME_ALLOWED_PROFILES 및 Target/Jupyter 지원과 맞춘다.
-    executor_runtime_profiles: [default, "3102311"]
+# 세션에서 profile을 생략했을 때 사용할 값. 실제 등록한 profile로 지정.
+EXECUTOR_RUNTIME_PROFILE: default
+# 생성 요청에서 선택 가능한 profile. 기본 profile을 반드시 포함.
+# Executor의 RUNTIME_ALLOWED_PROFILES 및 Target/Jupyter 지원과 맞춘다.
+EXECUTOR_RUNTIME_PROFILES: [default, "3102311"]
 ```
 
 config > env > 기본값 우선순위를 유지한다. env는 `EXECUTOR_RUNTIME_PROFILE`과 JSON 배열 문자열인 `EXECUTOR_RUNTIME_PROFILES='["default","3102311"]'`이다. 목록 미설정 시 기본 profile 하나만 허용한다. 빈 목록·중복·잘못된 형식·기본값 누락은 시작 시 설정 오류다. 기존 코드의 미설정 기본 profile `ml`은 이번 작업에서 바꾸지 않았다. 실제 Executor가 default/3102311만 제공한다면 위처럼 default를 명시해야 한다. 변경 후 프로세스를 재시작한다.

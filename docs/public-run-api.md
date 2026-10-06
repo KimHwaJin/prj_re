@@ -314,12 +314,12 @@ report는 보고서를 요청한 경우 format=markdown/content/evidence_steps/s
 
 ## 구현 근거
 
-- 라우터: [runs.py](../src/api_service/api/v1/routes/runs.py)
-- 요청: [run_request.py](../src/service_contracts/run_request.py)
-- Run 응답: [run_schema.py](../src/api_service/schemas/run_schema.py)
-- 상태·재개 검증: [public_run_service.py](../src/api_service/runs/service.py)
-- 화면·액션: [plan_interaction.py](../src/service_contracts/plan_interaction.py), [execution_repair.py](../src/service_contracts/execution_repair.py)
-- SSE: [run_stream_service.py](../src/api_service/runs/streaming.py)
+- 라우터: [runs.py](../src/dtest/api_service/http/v1/routes/runs.py)
+- 요청: [run_request.py](../src/dtest/contracts/run_request.py)
+- Run 응답: [run_schema.py](../src/dtest/contracts/resources/run_schema.py)
+- 상태·재개 검증: [public_run_service.py](../src/dtest/application/runs/service.py)
+- 화면·액션: [plan_interaction.py](../src/dtest/contracts/plan_interaction.py), [execution_repair.py](../src/dtest/contracts/execution_repair.py)
+- SSE: [run_stream_service.py](../src/dtest/api_service/streaming.py)
 
 ## 프로젝트 메모리 갱신 결과 051
 

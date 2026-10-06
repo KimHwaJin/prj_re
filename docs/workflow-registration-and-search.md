@@ -134,7 +134,7 @@ Agent에 넘기는 후보 정의는 완전한 후보 단위로 WORKFLOW_SEARCH_C
 3. 중앙 설정에 WORKFLOW_EMBEDDING_BASE_URL, MODEL, DIMENSIONS를 모두 제공한다. key는 secret으로, 가중치 버전은 MODEL_REVISION으로 주입. chat model 설정을 embedding 모델로 추정하지 않는다. 설정 우선순위는 config>env>기본값이며 별도 dotenv 로더를 두지 않는다.
 4. PYTHONPATH=src python tools/provision_workflow_index.py 실행. 배포 DDL 권한으로 CREATE INDEX CONCURRENTLY를 수행한다. 모델 공간별 차원 cast와 partial index를 생성하고 실패한 invalid index는 같은 이름으로 재생성한다. API 요청이 DDL을 실행하지 않는다.
 5. 기존 template 작성자는 user_queries PATCH/reindex 후 ready를 확인한다. 모델/차원/base URL/revision 변경 시 새 index 생성과 재색인이 필요하다. 다른 모델 설정의 Pod가 동시에 색인을 게시하는 롤아웃은 지원 계약으로 보장하지 않으므로 설정을 통일하고 재색인 구간을 분리한다. 과거 공간 벡터 이력은 삭제하지 않는다.
-6. 실제 임베딩 기반 검색 품질·동시 부하를 측정하고 threshold/ef_search/scan budget/context 후보 수를 조정한다. [중앙 설정 예시](../config.yml)의 각 주석을 따른다. HNSW vector expression index는 현재1~2000차원만 지원하며 더 큰 모델은 halfvec 등 별도 검토가 필요하다.
+6. 실제 임베딩 기반 검색 품질·동시 부하를 측정하고 threshold/ef_search/scan budget/context 후보 수를 조정한다. [중앙 설정 예시](../config.example.yml)의 각 주석을 따른다. HNSW vector expression index는 현재1~2000차원만 지원하며 더 큰 모델은 halfvec 등 별도 검토가 필요하다.
 
 현재 기본값: embedding 동시2·HTTP batch32·전체 embedding 대기15초, 검색 후보20·batch64·최대8회·DB/파일 전체2초, ef_search200·scan20000·메모리배수2·Agent 후보문맥64000문자다. embedding15초는 검색2초에 포함되지 않고 elapsed_ms에는 둘 다 포함된다. 검색 예산의75% 시점부터 새 반복을 시작하지 않아 후보 재정렬 여유를 둔다. 총 시간 상한에 걸리면 완료되지 않은 점수를 임의로 반환하지 않는다. max_scan_tuples는 pgvector의 근사 scan 예산이지 DB의 엄격한 row 처리 상한이 아니다. 모든 숫자는 운영 검증 전 초기값이다.
 

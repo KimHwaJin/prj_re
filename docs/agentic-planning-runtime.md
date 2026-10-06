@@ -54,17 +54,16 @@ LLM 대기 때 CRUD DB transaction을 닫는다. Graph/checkpointer/model instan
 서비스 YAML 우선, env 다음, 기본값 마지막의 중앙 설정을 따른다. 예:
 
 ```yaml
-service:
-  agent:
-    max_plan_candidates: 5
-    agent_discovery_max_rounds: 4
-    agent_history_message_limit: 40
-    analysis_datasets:
-      default-nce:
-        title: NCE 원천 예제
-        description: Jupyter에 준비한 Parquet 참조. 분석 결과는 아직 없음.
-        runtime_path: /workspace/pv/default_data/df_nce_long_format.parquet
-        scope: GLOBAL
+MAX_PLAN_CANDIDATES: 5
+AGENT_DISCOVERY_MAX_ROUNDS: 4
+ACTIVE_MULTI_TURN: true
+SET_MAX_HISTORY: 6
+ANALYSIS_DATASETS:
+  default-nce:
+    title: NCE 원천 예제
+    description: Jupyter에 준비한 Parquet 참조. 분석 결과는 아직 없음.
+    runtime_path: /workspace/pv/default_data/df_nce_long_format.parquet
+    scope: GLOBAL
 ```
 
 | 설정/env | 기본값·제한 | 의미 |

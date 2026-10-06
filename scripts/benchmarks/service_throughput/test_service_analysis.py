@@ -3,7 +3,7 @@
 import copy, json, os
 from pathlib import Path
 import pytest
-from analyze import analyze
+from scripts.benchmarks.service_throughput.analyze import analyze
 
 
 @pytest.fixture

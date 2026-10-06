@@ -6,7 +6,7 @@
 
 2026-10-01의 045까지 반영한 코드에서 확인했다. **현재 Agent 계획·승인·Executor compiler는 `2.0-draft` 정의를 사용하지만, 기존 `/api/v1/workflows` CRUD는 별도 1.3 모델을 사용한다.** 새 JSON을 기존 POST에 제출하여 추천 풀에 등록하는 이행은 아직 끝나지 않았다. 버전 문자열의 draft는 현재 유지된 계약 값이며 compiler 미구현을 뜻하지 않는다.
 
-[Agent 요청·응답](public-run-api.md), [원본 JSON Schema](../src/service_contracts/resources/workflow-definition.schema.json), [기본 예제](contracts/workflow/quality-basic.json) · [필드 주석](contracts/workflow/quality-basic.jsonc), [조건부 예제](contracts/workflow/quality-conditional.json) · [필드 주석](contracts/workflow/quality-conditional.jsonc)를 함께 참고한다. 036 설계 기록보다 이 문서를 현재 구현 안내로 우선한다.
+[Agent 요청·응답](public-run-api.md), [원본 JSON Schema](../src/dtest/contracts/resources/workflow-definition.schema.json), [기본 예제](contracts/workflow/quality-basic.json) · [필드 주석](contracts/workflow/quality-basic.jsonc), [조건부 예제](contracts/workflow/quality-conditional.json) · [필드 주석](contracts/workflow/quality-conditional.jsonc)를 함께 참고한다. 036 설계 기록보다 이 문서를 현재 구현 안내로 우선한다.
 
 087에서 [Tool 사용자 파라미터 정책](tool-parameter-policy.md)을 적용했다. 생략된 허용 선택 인자는 실제 함수 기본값으로 보충하고, Workflow 편집 규칙은 등록 정책을 좁힐 수 있다. 데이터·출력·문맥 참조는 직접 편집하지 않는다.
 
@@ -389,8 +389,8 @@ python scripts/design/validate_workflow_draft.py docs/contracts/workflow/quality
 
 신규 runtime validator는 service_contracts.workflow_validation.validate(document,catalog)이며 packaged schema를 읽는다. 설계 도구는 같은 구조의 docs schema와 AST를 함께 확인한다. 두 schema의 검증 부분을 동일하게 유지한다. 구조/schema 통과는 데이터 권한·실제 selector·Tool 정확성·모델 해석·파일 존재·라이브러리 호환·실행 성공을 보장하지 않는다.
 
-- [Workflow schema](../src/service_contracts/resources/workflow-definition.schema.json), [자산·의존성 검증](../src/service_contracts/workflow_validation.py)
-- [승인·편집](../src/service_contracts/plan_review.py), [공개 계획 projection](../src/service_contracts/plan_projection.py)
-- [계획 생성 Runtime](../src/agent_service/agents/analysis/planning/graph.py), [Executor compiler](../src/agent_service/agents/analysis/execution/compiler.py)
-- [기존 CRUD 모델](../src/service_contracts/workflow_definition.py), [기존 CRUD 서비스](../src/api_service/workflows/service.py)
+- [Workflow schema](../src/dtest/contracts/resources/workflow-definition.schema.json), [자산·의존성 검증](../src/dtest/contracts/workflow_validation.py)
+- [승인·편집](../src/dtest/contracts/plan_review.py), [공개 계획 projection](../src/dtest/contracts/plan_projection.py)
+- [계획 생성 Runtime](../src/dtest/agent_service/agents/analysis/planning/graph.py), [Executor compiler](../src/dtest/agent_service/agents/analysis/execution/compiler.py)
+- [기존 CRUD 모델](../src/dtest/contracts/workflow_definition.py), [기존 CRUD 서비스](../src/dtest/application/workflows/service.py)
 - [설계 당시 기록](design/agentic-workflow-contract/README.md), [Dataset 등록·조회 초안](design/dataset-registry-contract/README.md)

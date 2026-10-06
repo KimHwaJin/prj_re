@@ -109,22 +109,20 @@ Agent 내부 변경 제안:
 ## 통합 설정
 
 ```yaml
-service:
-  agent:
-    # off: Agent 읽기/자동 쓰기 중단. 관리 API는 유지.
-    # manual: 읽기와 명시적 관리 API만. 기본값.
-    # auto_context: 현재 요청의 지속적인 배경·선호를 부분 갱신.
-    agent_project_memory_mode: manual
-    # Markdown 본문 문자 수. 출처 JSON은 포함하지 않으며 자동 삭제/잘림 없음.
-    agent_project_memory_max_chars: 16000
-    # 자동 교체할 섹션 본문 및 원문 quote 각각의 문자 수. 수동 PUT에는 적용 안 함.
-    agent_project_memory_patch_max_chars: 4000
-    # 한 번에 변경할 서로 다른 섹션 수. 1~4, findings는 자동 갱신 제외.
-    agent_project_memory_max_updates: 4
-    # 모델에 주입하는 전체 참조 JSON의 문자 수.
-    agent_project_memory_prompt_max_chars: 6000
-    # UTF-8 byte 기반 보수적 추정. 정확한 모델 토큰 수가 아님.
-    agent_project_memory_prompt_max_tokens: 4096
+# off: Agent 읽기/자동 쓰기 중단. 관리 API는 유지.
+# manual: 읽기와 명시적 관리 API만. 기본값.
+# auto_context: 현재 요청의 지속적인 배경·선호를 부분 갱신.
+AGENT_PROJECT_MEMORY_MODE: manual
+# Markdown 본문 문자 수. 출처 JSON은 포함하지 않으며 자동 삭제/잘림 없음.
+AGENT_PROJECT_MEMORY_MAX_CHARS: 16000
+# 자동 교체할 섹션 본문 및 원문 quote 각각의 문자 수. 수동 PUT에는 적용 안 함.
+AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS: 4000
+# 한 번에 변경할 서로 다른 섹션 수. 1~4, findings는 자동 갱신 제외.
+AGENT_PROJECT_MEMORY_MAX_UPDATES: 4
+# 모델에 주입하는 전체 참조 JSON의 문자 수.
+AGENT_PROJECT_MEMORY_PROMPT_MAX_CHARS: 6000
+# UTF-8 byte 기반 보수적 추정. 정확한 모델 토큰 수가 아님.
+AGENT_PROJECT_MEMORY_PROMPT_MAX_TOKENS: 4096
 ```
 
 config 명시값 > env > 기본값. 환경변수는 위 키의 대문자다. prompt 한도 중 하나가 0이면 Agent 읽기/자동 쓰기를 모두 건너뛰며 관리 API는 유지한다. 저장 max_chars는 1024~1000000, patch_max_chars는 1~16000이면서 max_chars 이하, max_updates는 1~4다. prompt 두 한도는 0~1000000이다. 변경은 프로세스 재시작 후 반영한다.

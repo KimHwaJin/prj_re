@@ -155,7 +155,7 @@ DTO의 경로 검사는 문자열 규칙이다. 실제 symlink·마운트·실�
 
 ```bash
 PYTHONPATH=src python scripts/diagnostics/validate_dataset_contract.py
-PYTHONPATH=src python -m pytest src/agent_service/agents/analysis/tests/test_dataset_contract_draft.py -q
+PYTHONPATH=src python -m pytest src/dtest/agent_service/agents/analysis/tests/test_dataset_contract_draft.py -q
 ```
 
 스키마/예시를 모델에서 다시 생성할 때만 첫 명령에 `--write`를 붙인다. 예시는 합성 UUID와 존재하지 않는 파일을 사용한다. 범위 격리, 버전 변경, 작성 중/실패 파일 거절, 부모 참조, bounded metadata, 기존 문자열 승인 binding 호환 등 **50개 통과**했다. 실제 Executor 호출·실파일 읽기·쓰기·LLM 호출은 0회다. 이 결과는 운영 등록 API의 정확성이나 PVC 연계 성공을 입증하지 않는다.
