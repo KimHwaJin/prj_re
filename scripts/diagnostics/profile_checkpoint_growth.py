@@ -459,10 +459,10 @@ async def main_async(args, dsn):
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
     paths = [
-        "src/dtest.agent_service/agents/analysis/planning/graph.py",
-        "src/dtest.agent_service/agents/analysis/execution/nodes.py",
+        "src/dtest/agent_service/agents/analysis/planning/graph.py",
+        "src/dtest/agent_service/agents/analysis/execution/nodes.py",
         "src/dtest/infrastructure/executor/observations.py",
-        "src/dtest.agent_service/runtime/langgraph/pooled_saver.py",
+        "src/dtest/agent_service/runtime/langgraph/pooled_saver.py",
         "scripts/diagnostics/profile_checkpoint_growth.py",
     ]
     return {

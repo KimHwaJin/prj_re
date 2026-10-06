@@ -5,9 +5,9 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtest.contracts.enums import DeleteYN
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.session_model import SessionModel
-from dtest.contracts.values import utc_now
 
 
 async def soft_delete_messages_for_sessions(

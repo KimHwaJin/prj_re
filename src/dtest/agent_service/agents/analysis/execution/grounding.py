@@ -2,13 +2,15 @@
 
 import re
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+
 from dtest.agent_service.runtime.session_analysis import (
     analysis_for_owner,
     encoded,
 )
-from .report import cell, render_evidence_markdown
 
+from .report import cell, render_evidence_markdown
 
 # Upper bound for the transient model catalogue; stored evidence is not trimmed here.
 MAX_CATALOG_FACTS = 512

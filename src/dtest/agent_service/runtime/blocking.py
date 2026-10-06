@@ -6,9 +6,10 @@ Full resource budgets and ArtifactStore ownership are separate work.
 """
 
 import asyncio
+from collections.abc import Callable
 from contextvars import copy_context
 from functools import partial
-from typing import Callable, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -39,20 +40,3 @@ async def run_sync(
     if cancelled:
         raise asyncio.CancelledError
     return result
-
-
-async def call_io(function, *args, **kwargs):
-    """Invoke an async port or retain lifetime of a legacy sync adapter."""
-    import inspect
-
-    target = (
-        function
-        if inspect.isfunction(function)
-        else getattr(function, "__call__", function)
-    )
-    if inspect.iscoroutinefunction(function) or inspect.iscoroutinefunction(
-        target
-    ):
-        return await function(*args, **kwargs)
-    result = await run_sync(function, *args, **kwargs)
-    return await result if inspect.isawaitable(result) else result

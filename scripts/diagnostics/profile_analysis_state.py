@@ -33,11 +33,11 @@ def reference_sources(revision):
     for name, file in (
         (
             "dtest.agent_service.agents.analysis.execution.nodes",
-            "src/dtest.agent_service/agents/analysis/execution/nodes.py",
+            "src/dtest/agent_service/agents/analysis/execution/nodes.py",
         ),
         (
             "dtest.agent_service.agents.analysis.planning.graph",
-            "src/dtest.agent_service/agents/analysis/planning/graph.py",
+            "src/dtest/agent_service/agents/analysis/planning/graph.py",
         ),
     ):
         importlib.import_module(name.rsplit(".", 1)[0])
@@ -255,10 +255,10 @@ def main():
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip()
         paths = [
-            "src/dtest.agent_service/agents/analysis/planning/graph.py",
-            "src/dtest.agent_service/agents/analysis/execution/nodes.py",
-            "src/dtest.agent_service/agents/analysis/state.py",
-            "src/dtest.agent_service/agents/analysis/planning/lifecycle.py",
+            "src/dtest/agent_service/agents/analysis/planning/graph.py",
+            "src/dtest/agent_service/agents/analysis/execution/nodes.py",
+            "src/dtest/agent_service/agents/analysis/state.py",
+            "src/dtest/agent_service/agents/analysis/planning/lifecycle.py",
         ]
         digests = {
             p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest()

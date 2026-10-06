@@ -1,24 +1,24 @@
 """Own graph cancellation and observer termination before releasing execution."""
 
 import asyncio
-from typing import Any, Awaitable
+from collections.abc import Awaitable
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
 
-from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.application.runs.errors import CancellationRequested
 from dtest.application.runs.lifecycle import (
     execution_health,
     finish_observer,
     observe_termination,
     wait_for_stop,
 )
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
-from dtest.application.runs.errors import CancellationRequested
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
 from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.runtime import get_session_factory
 from dtest.lifecycle import protected_cleanup
+from dtest.settings.loader import get_settings
 
 
 async def wait_for_cancellation(run_id: UUID, stop: asyncio.Event) -> bool:
@@ -51,9 +51,9 @@ async def run_cancellable(
     """Graph와 DB cancel watcher를 경쟁시켜 실제 coroutine을 cooperative cancel합니다."""
     stop = asyncio.Event()
     from dtest.infrastructure.executor.client import (
-        submission_scope,
-        SubmissionEffects,
         ExecutorOutcomeUnknown,
+        SubmissionEffects,
+        submission_scope,
     )
 
     effects = SubmissionEffects()

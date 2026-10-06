@@ -1,7 +1,7 @@
 """One bounded completed analysis per session; not a project memory or file registry."""
 
-from copy import deepcopy
 import json
+from copy import deepcopy
 
 from .analysis_scope import execution_scope
 

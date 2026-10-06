@@ -3,9 +3,9 @@ from fastapi import APIRouter
 from dtest.api_service.http.v1.routes import (
     messages,
     projects,
+    run_diagnostics,
     runs,
     sessions,
-    run_diagnostics,
     users,
     workflows,
 )

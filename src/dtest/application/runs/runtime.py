@@ -8,32 +8,27 @@ separate short sessions. Never pass an open caller session into graph execution.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
-from contextlib import AsyncExitStack, asynccontextmanager
 import logging
-from typing import Any, Mapping
+from collections.abc import AsyncIterator, Mapping
+from contextlib import AsyncExitStack, asynccontextmanager
+from typing import Any
 from uuid import UUID, uuid4
 
-from dtest.contracts.errors import ApplicationError
-from functools import lru_cache
-
-from dtest.settings.agent import build_langgraph_thread_id, load_agent_settings
-from dtest.settings.api import settings
-from dtest.infrastructure.observability.diagnostics import (
-    graph_callbacks,
-    register_pool_trace,
-    span,
-)
-from dtest.lifecycle import protected_cleanup
-from dtest.contracts.enums import AgentRunStatus
-from dtest.application.runs.persistence.graph import (
-    astream_with_crud_message_persistence,
-)
 from dtest.application.runs.persistence.events import (
     GraphPersistenceDispatcher,
 )
+from dtest.application.runs.persistence.graph import (
+    astream_with_crud_message_persistence,
+)
 from dtest.application.runs.project_context import read_project_snapshot
-
+from dtest.contracts.enums import AgentRunStatus
+from dtest.contracts.errors import ApplicationError
+from dtest.infrastructure.observability.diagnostics import (
+    graph_callbacks,
+    register_pool_trace,
+)
+from dtest.lifecycle import protected_cleanup
+from dtest.settings.agent import build_langgraph_thread_id
 
 GRAPH_MESSAGE_SOURCE = "dtest-agent"
 logger = logging.getLogger(__name__)
@@ -189,10 +184,6 @@ class AgentGraphRuntime:
 
 
 runtime = AgentGraphRuntime()
-
-
-def is_graph_persisted_message(metadata: Mapping[str, Any] | None) -> bool:
-    return bool(metadata) and metadata.get("source") == GRAPH_MESSAGE_SOURCE
 
 
 def user_request_from_messages(messages: list[dict[str, Any]]) -> str:
@@ -457,7 +448,6 @@ __all__ = [
     "build_graph_input",
     "graph_config",
     "interrupt_payload",
-    "is_graph_persisted_message",
     "run_status_from_state",
     "runtime",
     "user_request_from_messages",

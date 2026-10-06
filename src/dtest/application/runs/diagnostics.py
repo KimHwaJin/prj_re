@@ -6,12 +6,22 @@ visibility. Admin scope is used only by the separately authorized admin routes.
 
 from uuid import UUID
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import bindparam, func, or_, select
 from sqlalchemy.orm import Bundle, aliased
 
+from dtest.application.resources.lifecycle import (
+    TERMINAL_TASKS,
+    unfinished_work_conditions,
+)
 from dtest.contracts.enums import DeleteYN
-from dtest.infrastructure.database.pagination import fetch_page
+from dtest.contracts.errors import ApplicationError
+from dtest.contracts.resources.run_diagnostics_schema import (
+    RunDiagnosticsResource,
+    RunInvocationResource,
+    SessionExecutionDiagnostics,
+    SessionWorkDiagnostics,
+    TaskDiagnostics,
+)
 from dtest.infrastructure.database.models.agent_run_model import (
     AgentRunModel as Run,
 )
@@ -26,17 +36,7 @@ from dtest.infrastructure.database.models.session_model import (
 )
 from dtest.infrastructure.database.models.task_model import TaskModel as Task
 from dtest.infrastructure.database.models.user_model import UserModel as User
-from dtest.contracts.resources.run_diagnostics_schema import (
-    RunDiagnosticsResource,
-    RunInvocationResource,
-    TaskDiagnostics,
-    SessionExecutionDiagnostics,
-    SessionWorkDiagnostics,
-)
-from dtest.application.resources.lifecycle import (
-    TERMINAL_TASKS,
-    unfinished_work_conditions,
-)
+from dtest.infrastructure.database.pagination import fetch_page
 
 TASK_FIELDS = (
     "task_id",

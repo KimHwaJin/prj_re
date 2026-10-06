@@ -1,30 +1,30 @@
 from uuid import UUID
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.resources import lifecycle
+from dtest.application.resources.cascade import (
+    soft_delete_messages_for_sessions,
+    soft_delete_sessions,
+)
 from dtest.contracts.enums import DeleteYN
+from dtest.contracts.errors import ApplicationError
+from dtest.contracts.resources.session_schema import (
+    SessionCreate,
+    SessionDeleteResult,
+    SessionUpdate,
+)
+from dtest.contracts.session_settings import (
+    SessionSettings,
+    resolve_session_settings,
+)
+from dtest.contracts.values import normalize_name
 from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.repositories.project_repository import (
     ProjectRepository,
 )
 from dtest.infrastructure.database.repositories.session_repository import (
     SessionRepository,
-)
-from dtest.contracts.resources.session_schema import (
-    SessionCreate,
-    SessionDeleteResult,
-    SessionUpdate,
-)
-from dtest.application.resources.cascade import (
-    soft_delete_messages_for_sessions,
-    soft_delete_sessions,
-)
-from dtest.contracts.values import normalize_name
-from dtest.application.resources import lifecycle
-from dtest.contracts.session_settings import (
-    SessionSettings,
-    resolve_session_settings,
 )
 
 

@@ -6,27 +6,27 @@ import asyncio
 import logging
 from contextlib import AsyncExitStack
 
-from dtest.settings.loader import get_settings
-from dtest.infrastructure.database.runtime import get_session_factory
-from dtest.contracts.execution import ExecutionNeedsRecovery
-from dtest.application.runs.lifecycle import execution_health
-from dtest.lifecycle import protected_cleanup
 from dtest.application.runs.claim_context import bind_execution_claim
-from dtest.contracts.enums import AgentRunStatus
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
-from dtest.application.runs.ownership import run_owned
 from dtest.application.runs.commands.claim import claim_one as claim_command
 from dtest.application.runs.commands.outcome import record as record_outcome
 from dtest.application.runs.commands.types import ClaimedCommand, ClaimedRun
 from dtest.application.runs.commands.wakeup import (
-    subscription,
     next_retry_delay,
+    subscription,
 )
 from dtest.application.runs.execution import (
     execute_claimed as execute_invocation,
 )
-from dtest.infrastructure.observability.diagnostics import run_trace, span
+from dtest.application.runs.lifecycle import execution_health
+from dtest.application.runs.ownership import run_owned
+from dtest.contracts.enums import AgentRunStatus
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.infrastructure.observability.diagnostics import run_trace, span
+from dtest.lifecycle import protected_cleanup
+from dtest.settings.loader import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -83,11 +83,11 @@ async def execute_claimed(item: ClaimedCommand) -> None:
 
 
 async def execute_event(context) -> None:
-    from dtest.application.runs.runtime import runtime
+    from dtest.application.runs.graph_invocation import GraphInvocation
     from dtest.application.runs.project_context import (
         load_event_project_snapshot,
     )
-    from dtest.application.runs.graph_invocation import GraphInvocation
+    from dtest.application.runs.runtime import runtime
 
     async with runtime.open_graph() as graph:
         await GraphInvocation(

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from dtest.settings.agent import AgentSettings
-
 from phoenix.otel import register
 
+from dtest.settings.agent import AgentSettings
 
 _tracer_provider: Any | None = None
 

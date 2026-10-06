@@ -7,15 +7,15 @@ import httpx
 from psycopg import Error as DatabaseError
 from psycopg_pool import PoolTimeout
 
+from dtest.contracts.events import ExecutorEvent
+from dtest.infrastructure.database.event_store import Store
+from dtest.infrastructure.executor.routes import ExecutorRoute
 from dtest.worker_service.executor_events.consumer import (
     AckDecision,
     HandlerResult,
     PermanentMessageError,
     StreamMessage,
 )
-from dtest.contracts.events import ExecutorEvent
-from dtest.infrastructure.database.event_store import Store
-from dtest.infrastructure.executor.routes import ExecutorRoute
 
 logger = logging.getLogger(__name__)
 

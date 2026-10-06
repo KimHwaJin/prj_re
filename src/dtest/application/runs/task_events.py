@@ -5,11 +5,11 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.task_event_model import (
     TaskEventModel,
 )
 from dtest.infrastructure.database.models.task_model import TaskModel
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 
 
 class TaskEventService:

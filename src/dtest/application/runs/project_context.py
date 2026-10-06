@@ -1,11 +1,13 @@
 """Resolve authorized project instructions once per user turn or legacy backfill."""
 
 from uuid import UUID
-from dtest.contracts.session_settings import KERNEL_PROFILE
-from dtest.infrastructure.database.runtime import short_session
+
 from sqlalchemy import select
+
+from dtest.contracts.session_settings import KERNEL_PROFILE
 from dtest.infrastructure.database.models.project_model import ProjectModel
 from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.runtime import short_session
 
 
 async def load_project_snapshot(db, *, user_id, session_id, project_id=None):

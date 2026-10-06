@@ -6,7 +6,6 @@ import hashlib
 import json
 from typing import Any, TypedDict
 
-
 from dtest.contracts.execution import InvocationNeedsRecovery
 
 

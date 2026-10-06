@@ -1,18 +1,12 @@
 from uuid import UUID
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.resources import lifecycle
+from dtest.application.resources.sessions import SessionService
 from dtest.contracts.enums import DeleteYN, MessageStatus, MessageType
-from dtest.infrastructure.database.models.message_model import MessageModel
-from dtest.infrastructure.database.models.session_model import SessionModel
-from dtest.infrastructure.database.repositories.message_repository import (
-    MessageRepository,
-)
-from dtest.infrastructure.database.repositories.session_repository import (
-    SessionRepository,
-)
+from dtest.contracts.errors import ApplicationError
 from dtest.contracts.resources.message_schema import (
     MessageCreate,
     MessageCreateResult,
@@ -21,7 +15,17 @@ from dtest.contracts.resources.message_schema import (
     MessageUpdate,
 )
 from dtest.contracts.values import make_session_name, utc_now
-from dtest.application.resources import lifecycle
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.repositories.message_repository import (
+    MessageRepository,
+)
+from dtest.infrastructure.database.repositories.project_repository import (
+    ProjectRepository,
+)
+from dtest.infrastructure.database.repositories.session_repository import (
+    SessionRepository,
+)
 
 
 class MessageService:
@@ -35,28 +39,30 @@ class MessageService:
         return [{"type": "text", "text": content_text}]
 
     @staticmethod
-    async def _resolve_session(
-        db: AsyncSession,
-        *,
-        user_id: UUID,
-        session_id: UUID | None,
-        project_id: UUID | None,
-    ) -> tuple[SessionModel, bool]:
-        if session_id is None:
-            raise ApplicationError(
-                status_code=422,
-                detail="MessageService requires an existing session_id.",
+    async def create_from_request(
+        db: AsyncSession, user_id: UUID, payload: MessageCreate
+    ) -> MessageCreateResult:
+        """Resolve an optional session before the ordinary message insert."""
+        session_created = payload.session_id is None
+        if session_created:
+            project_id = payload.project_id
+            if project_id is None:
+                project = await ProjectRepository.get_default(
+                    db, user_id=user_id
+                )
+                if project is None:
+                    raise ApplicationError(409, "default Project가 없습니다.")
+                project_id = project.project_id
+            session = await SessionService.create_internal(
+                db,
+                user_id=user_id,
+                project_id=project_id,
+                session_name="새 대화",
             )
-        # The lifecycle barrier rechecks ownership/project after acquiring the
-        # admission lock; return that row with the same final row lock we need.
-        session = await lifecycle.lock_session(
-            db,
-            user_id,
-            session_id,
-            expected_project_id=project_id,
-            for_update=True,
-        )
-        return session, False
+            payload.session_id = session.session_id
+        result = await MessageService.create(db, user_id, payload)
+        result.session_created = session_created
+        return result
 
     @staticmethod
     async def create(
@@ -64,11 +70,16 @@ class MessageService:
         user_id: UUID,
         payload: MessageCreate,
     ) -> MessageCreateResult:
-        session, _ = await MessageService._resolve_session(
+        if payload.session_id is None:
+            raise ApplicationError(
+                422, "MessageService requires an existing session_id."
+            )
+        session = await lifecycle.lock_session(
             db,
-            user_id=user_id,
-            session_id=payload.session_id,
-            project_id=payload.project_id,
+            user_id,
+            payload.session_id,
+            expected_project_id=payload.project_id,
+            for_update=True,
         )
 
         return await MessageService._create_locked(db, session, payload)
@@ -81,7 +92,10 @@ class MessageService:
         *,
         commit: bool = True,
     ) -> MessageCreateResult:
-        """Internal insert; caller holds lifecycle and Session locks until commit."""
+        """Insert while the caller holds lifecycle and Session locks.
+
+        The caller releases locks at transaction commit.
+        """
         if payload.client_request_id is not None:
             duplicate = await db.scalar(
                 select(MessageModel).where(
@@ -221,7 +235,7 @@ class MessageService:
         )
 
         if session.current_leaf_message_id == message_id:
-            # parent chain이 없으므로 현재 Session의 직전 활성 Message를 leaf로 선택합니다.
+            # parent chain이 없으므로 직전 활성 Message를 선택합니다.
             session.current_leaf_message_id = await db.scalar(
                 select(MessageModel.message_id)
                 .where(

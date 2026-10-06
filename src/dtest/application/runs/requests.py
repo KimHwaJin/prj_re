@@ -3,15 +3,15 @@
 import hashlib
 import json
 
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.application.runs.errors import InvalidRunRequest, RunConflict
 from dtest.contracts.resources.run_schema import RunCreate
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 
 
 def select_model(name):
     from dtest.contracts.model_selection import (
-        current_catalog,
         ModelSelectionError,
+        current_catalog,
     )
 
     try:
@@ -22,8 +22,8 @@ def select_model(name):
 
 def validate_model(reference):
     from dtest.contracts.model_selection import (
-        current_catalog,
         ModelSelectionError,
+        current_catalog,
     )
 
     try:

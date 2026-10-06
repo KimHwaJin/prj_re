@@ -1,15 +1,15 @@
 """Administrator list projection; no per-user project lookup or mutation."""
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Bundle
 
 from dtest.contracts.actors import Actor
 from dtest.contracts.enums import DeleteYN, UserRole
+from dtest.contracts.errors import ApplicationError
 from dtest.contracts.pagination import ListParams
-from dtest.infrastructure.database.pagination import fetch_page
-from dtest.infrastructure.database.models.user_model import UserModel as User
 from dtest.contracts.resources.user_schema import UserListStatus, UserSummary
+from dtest.infrastructure.database.models.user_model import UserModel as User
+from dtest.infrastructure.database.pagination import fetch_page
 
 # The internal UUID is used only for cursor tie-breaking. The response user_id
 # is the public string ID; no ORM objects or user rows are cached here.

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
 from dtest.contracts.session_settings import SessionSettings
 
 

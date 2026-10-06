@@ -1,16 +1,16 @@
 """Code-free views of checkpointed plans; no asset or database I/O."""
 
-from dtest.contracts.plan_interaction import (
-    InputView,
-    ParameterView,
-    StepView,
-    OutputView,
-    PlanView,
-    SkillView,
-    DecisionView,
-    PolicyView,
-)
 from dtest.contracts import workflow_validation as workflow_contract
+from dtest.contracts.plan_interaction import (
+    DecisionView,
+    InputView,
+    OutputView,
+    ParameterView,
+    PlanView,
+    PolicyView,
+    SkillView,
+    StepView,
+)
 
 
 def needed_decisions(state):

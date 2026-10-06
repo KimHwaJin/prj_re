@@ -1,9 +1,11 @@
 """Executor HTTP request/receipt schemas shared without importing an Agent."""
 
 from __future__ import annotations
+
 from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 

@@ -9,7 +9,6 @@ from typing import Any
 
 import yaml
 
-
 SECTION_NAMES = (
     "capabilities",
     "limitations",

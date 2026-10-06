@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from .pooled_saver import PooledAsyncPostgresSaver
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
-from dtest.settings.agent import load_agent_settings
+
 from dtest.infrastructure.observability.diagnostics import (
     instrument_async_methods,
     observe_pool,
 )
+from dtest.settings.agent import load_agent_settings
+
+from .pooled_saver import PooledAsyncPostgresSaver
 
 logger = logging.getLogger(__name__)
 

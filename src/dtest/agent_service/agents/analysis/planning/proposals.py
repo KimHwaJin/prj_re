@@ -4,16 +4,17 @@ from copy import deepcopy
 from typing import Literal
 
 from pydantic import Field, model_validator
+
+from dtest.agent_service.agents.analysis.execution.sources import source_info
 from dtest.contracts.plan_interaction import StrictModel
 from dtest.contracts.plan_review import (
+    canonical,
     new_review,
     patch_review,
     require,
-    canonical,
 )
-from dtest.contracts.workflow_validation import workflow_schema
 from dtest.contracts.tool_bindings import inherit_parameter_policy
-from dtest.agent_service.agents.analysis.execution.sources import source_info
+from dtest.contracts.workflow_validation import workflow_schema
 
 
 class CodeLine(StrictModel):

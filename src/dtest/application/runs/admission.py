@@ -6,10 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtest.contracts.enums import AgentRunStatus, TaskStatus
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
-from dtest.infrastructure.database.models.message_model import MessageModel
-from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.application.resources import lifecycle
 from dtest.application.runs.errors import InvalidRunRequest, RunConflict
 from dtest.application.runs.repository import interrupted_run
 from dtest.application.runs.requests import (
@@ -18,10 +15,13 @@ from dtest.application.runs.requests import (
     validate_model,
     validate_replay,
 )
-from dtest.contracts.resources.run_schema import RunCreate
-from dtest.application.resources import lifecycle
 from dtest.application.runs.task_events import TaskEventService
 from dtest.application.runs.tasks import TaskService
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.contracts.resources.run_schema import RunCreate
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.task_model import TaskModel
 
 
 async def enqueue(

@@ -17,7 +17,7 @@ class ContentPart(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    # session_id가 없으면 API 라우터가 Session을 먼저 생성합니다.
+    # session_id가 없으면 application 계층이 Session을 먼저 생성합니다.
     session_id: UUID | None = None
 
     # session_id가 없을 때 생성할 Session의 Project.

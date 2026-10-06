@@ -1,12 +1,13 @@
 """Public Workflow authoring → one existing execution plan. No IO or execution."""
 
+import json
 from copy import deepcopy
 from functools import lru_cache
-from importlib.resources import files
 from hashlib import sha256
-import json
+from importlib.resources import files
 
 from jsonschema_rs import Draft202012Validator
+
 from .workflow_validation import validate as validate_plan
 
 

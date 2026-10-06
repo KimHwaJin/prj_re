@@ -9,12 +9,11 @@ routes them to handlers:
 * plans: generated execution plans/notebook plans.
 * workflow_logs: workflow recommendation/generation/approval/executor history.
 
-Messages와 agent run logs는 실제 CRUD handler가 저장합니다. Plans와 workflow
-logs는 해당 테이블 계약이 확정될 때까지 deferred handler로 유지합니다.
+Messages and Agent logs use concrete handlers. Structured Plan and Workflow
+results are stored in append-only Run logs; no placeholder handler is used.
 """
 
 from __future__ import annotations
-from dtest.application.runs.repository import attach_trigger_message
 
 from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
@@ -24,6 +23,7 @@ from dtest.application.runs.persistence.messages import (
     save_agent_run_log,
     save_graph_message,
 )
+from dtest.application.runs.repository import attach_trigger_message
 
 
 @dataclass(frozen=True)
@@ -134,16 +134,6 @@ def _message_target(message: dict[str, Any]) -> str:
     if isinstance(content, dict) and content.get("llm_run_id"):
         return "agent_runs"
     return "agent_runs"
-
-
-def classify_graph_message(message: dict[str, Any]) -> str:
-    """Return the persistence target for one graph-emitted message.
-
-    This small public wrapper keeps routing rules testable while table schemas
-    for management data are still moving.
-    """
-
-    return _message_target(message)
 
 
 def _message_kind(target: str) -> str:
@@ -562,31 +552,6 @@ class StructuredRunLogGraphEventHandler:
         )
 
 
-class DeferredGraphEventHandler:
-    """Placeholder for management tables whose schemas are not final yet."""
-
-    def __init__(self, target: str):
-        self.target = target
-
-    async def persist(
-        self,
-        db: Any,
-        state: dict[str, Any],
-        graph_event: GraphEvent,
-    ) -> dict[str, Any]:
-        return {
-            "deferred": True,
-            "target": self.target,
-            "kind": graph_event.kind,
-            "node": graph_event.node,
-            "event": graph_event.event,
-            "session_id": graph_event.context.session_id,
-            "trigger_message_id": graph_event.context.trigger_message_id,
-            "agent_run_id": graph_event.context.agent_run_id,
-            "plan_id": graph_event.context.plan_id,
-        }
-
-
 class GraphPersistenceDispatcher:
     """Route extracted graph events to target-specific persistence handlers."""
 
@@ -692,7 +657,6 @@ class GraphPersistenceDispatcher:
 
 
 __all__ = [
-    "DeferredGraphEventHandler",
     "AgentRunLogGraphEventHandler",
     "GraphEvent",
     "GraphEventHandler",
@@ -701,6 +665,5 @@ __all__ = [
     "GraphPersistenceDispatcher",
     "GraphPersistenceResult",
     "MessageGraphEventHandler",
-    "classify_graph_message",
     "extract_graph_events",
 ]

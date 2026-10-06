@@ -15,11 +15,10 @@ from uuid import uuid4
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
 
+from dtest.lifecycle import protected_cleanup
 from dtest.worker_service.executor_events.redis_streams import (
     claim_pending_page,
 )
-
-from dtest.lifecycle import protected_cleanup
 
 logger = logging.getLogger(__name__)
 

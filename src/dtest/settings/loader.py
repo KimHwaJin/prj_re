@@ -6,31 +6,32 @@ from process environment and local files, which also makes tests deterministic.
 
 from __future__ import annotations
 
+import os
+from collections.abc import Mapping
 from dataclasses import replace
 from pathlib import Path
 from threading import RLock
 from types import MappingProxyType
-from typing import Any, Mapping
-import os
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.engine import make_url
 
+from dtest.settings.models import ServiceSettings
+from dtest.settings.retired import check_retired
+from dtest.settings.runtime import RuntimeSettings
+from dtest.settings.search import WorkflowSearchSettings
 from dtest.settings.sources import (
     ConfigurationError,
     ModelBinding,
     flat_values,
     read_local_env,
-    read_yaml as _read_yaml,
     select_values,
     source_aliases,
 )
-from dtest.settings.runtime import RuntimeSettings
-from dtest.settings.search import WorkflowSearchSettings
-
-from dtest.settings.retired import check_retired
-from dtest.settings.models import ServiceSettings
-
+from dtest.settings.sources import (
+    read_yaml as _read_yaml,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -62,15 +63,14 @@ def load_settings(
     Passing `config={}` disables all YAML discovery. Passing `environ={}`
     disables process environment. Neither source ever auto-loads .env.
     """
-    from dtest.settings.api import ApiSettings as APISettings
     from dtest.settings.agent import AgentSettings
-    from dtest.settings.events import EventWorkerSettings
+    from dtest.settings.api import ApiSettings as APISettings
     from dtest.settings.auth import SsoSettings
-
     from dtest.settings.database import DatabaseSettings
-    from dtest.settings.worker import WorkerSettings as CommandSettings
+    from dtest.settings.events import EventWorkerSettings
     from dtest.settings.redis import RedisSettings
     from dtest.settings.storage import StorageSettings
+    from dtest.settings.worker import WorkerSettings as CommandSettings
 
     storage_binding = ModelBinding("storage", StorageSettings)
     database_binding = ModelBinding("database", DatabaseSettings)
@@ -189,8 +189,8 @@ def load_settings(
     ):
         raise ConfigurationError("DEFAULT_MODEL must be an alias")
     from dtest.contracts.model_selection import (
-        build_catalog,
         ModelSelectionError,
+        build_catalog,
     )
 
     try:

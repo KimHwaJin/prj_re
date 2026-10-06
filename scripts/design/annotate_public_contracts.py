@@ -1634,7 +1634,7 @@ def main():
         if "workflow-standard" not in p.parts
     )
     workflow_schema = (
-        ROOT / "src/dtest.contracts/resources/workflow-definition.schema.json"
+        ROOT / "src/dtest/contracts/resources/workflow-definition.schema.json"
     )
     schema_copy = ROOT / (
         "docs/design/agentic-workflow-contract/workflow-definition.schema.json"

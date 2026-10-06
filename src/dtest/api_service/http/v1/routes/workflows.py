@@ -1,15 +1,17 @@
 from __future__ import annotations
-from dtest.application.workflows import queries
 
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query, Response, status
 
-from dtest.api_service.http.dependencies import get_current_user_id
-from dtest.infrastructure.database.runtime import get_db
-from dtest.contracts.pagination import ListParams
-from dtest.api_service.http.pagination import list_params
+from dtest.api_service.http.dependencies import (
+    CurrentUserId,
+    DBSession,
+)
+from dtest.api_service.http.pagination import ListQuery
+from dtest.application.workflows import queries
+from dtest.application.workflows.service import WorkflowService
 from dtest.contracts.resources.api_schema import Page
 from dtest.contracts.resources.workflow_schema import (
     WorkflowCandidateCreate,
@@ -17,12 +19,10 @@ from dtest.contracts.resources.workflow_schema import (
     WorkflowResource,
     WorkflowUpdate,
 )
-from dtest.application.workflows.service import WorkflowService
 from dtest.contracts.workflow_retrieval import (
     WorkflowSearchRequest,
     WorkflowSearchResult,
 )
-
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
@@ -32,8 +32,8 @@ router = APIRouter(prefix="/workflows", tags=["workflows"])
 )
 async def create_candidate(
     payload: WorkflowCandidateCreate,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.indexed_resource(
         db,
@@ -44,14 +44,15 @@ async def create_candidate(
 
 @router.get("", response_model=Page[WorkflowResource])
 async def list_workflows(
-    q: str | None = Query(default=None, max_length=200),
-    lifecycle: str | None = Query(
-        default=None, pattern="^(candidate|template)$"
-    ),
-    tag: str | None = Query(default=None, max_length=50),
-    params: ListParams = Depends(list_params),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    lifecycle: Annotated[
+        str | None, Query(pattern="^(candidate|template)$")
+    ] = None,
+    tag: Annotated[str | None, Query(max_length=50)] = None,
+    *,
+    params: ListQuery,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.list_workflows(db, user_id, params, q, lifecycle, tag)
 
@@ -59,18 +60,16 @@ async def list_workflows(
 @router.post("/search", response_model=WorkflowSearchResult)
 async def search_workflows(
     payload: WorkflowSearchRequest,
-    user_id: UUID = Depends(get_current_user_id),
+    user_id: CurrentUserId,
 ):
-    # Authenticated global templates only. Candidate ownership is not a filter:
-    # unpublished candidates never enter the active search projection.
     return await queries.search_workflows(payload.query)
 
 
 @router.post("/{workflow_id}/reindex", response_model=WorkflowResource)
 async def reindex_workflow(
     workflow_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.reindex_workflow(db, user_id, workflow_id)
 
@@ -78,8 +77,8 @@ async def reindex_workflow(
 @router.get("/{workflow_id}", response_model=WorkflowResource)
 async def read_workflow(
     workflow_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.resource(
         await WorkflowService.get(db, user_id, workflow_id),
@@ -91,8 +90,8 @@ async def read_workflow(
 async def update_workflow(
     workflow_id: UUID,
     payload: WorkflowUpdate,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.indexed_resource(
         db,
@@ -108,8 +107,8 @@ async def update_workflow(
 )
 async def promote_workflow(
     workflow_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.indexed_resource(
         db, user_id, await WorkflowService.promote(db, user_id, workflow_id)
@@ -124,8 +123,8 @@ async def promote_workflow(
 async def clone_workflow(
     workflow_id: UUID,
     payload: WorkflowClone,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await queries.indexed_resource(
         db,
@@ -137,8 +136,8 @@ async def clone_workflow(
 @router.delete("/{workflow_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_workflow(
     workflow_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     await WorkflowService.delete(db, user_id, workflow_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

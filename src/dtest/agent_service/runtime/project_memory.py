@@ -2,11 +2,13 @@
 
 import json
 import re
+
 from langchain_core.messages import HumanMessage
+
 from dtest.contracts.project_memory import (
     MemoryProposal,
-    section_body,
     replace_section,
+    section_body,
 )
 
 AUTO_SECTIONS = {"background", "analysis_preferences", "report_preferences"}

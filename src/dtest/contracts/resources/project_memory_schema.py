@@ -1,7 +1,9 @@
 """One project-owned Markdown resource; no topic IDs or keys in public API."""
 
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
+
 from dtest.contracts.project_memory import MAX_STORAGE_CHARS
 
 

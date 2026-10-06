@@ -11,19 +11,19 @@ from prometheus_client import generate_latest
 from psycopg_pool import AsyncConnectionPool
 from redis.asyncio import Redis
 
+from dtest.infrastructure.database.binding_signals import binding_subscription
+from dtest.infrastructure.database.event_store import Store
 from dtest.lifecycle import protected_cleanup
 from dtest.settings.events import EventWorkerSettings
 from dtest.worker_service.executor_events.consumer import (
+    AckDecision,
     RedisStreamConsumer,
     RedisStreamConsumerConfig,
-    AckDecision,
     StreamMessageHandler,
 )
 from dtest.worker_service.executor_events.ingress import EventRouter, Ingress
 from dtest.worker_service.executor_events.redis_streams import group_progress
-from dtest.infrastructure.database.event_store import Store
 from dtest.worker_service.executor_events.telemetry import Telemetry
-from dtest.infrastructure.database.binding_signals import binding_subscription
 
 logger = logging.getLogger(__name__)
 

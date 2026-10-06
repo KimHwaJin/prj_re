@@ -1,12 +1,15 @@
+"""Explicit composition of Agent, checkpoint, Store and Executor resources."""
+
 from __future__ import annotations
 
-"""Explicit composition of Agent, checkpoint, Store and Executor resources."""
+import asyncio
+from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import lru_cache
-import asyncio
-from typing import Any, AsyncIterator
-from dtest.settings.agent import load_agent_settings
+from typing import Any
+
 from dtest.infrastructure.observability.diagnostics import span
+from dtest.settings.agent import load_agent_settings
 
 
 @lru_cache(maxsize=1)
@@ -25,8 +28,8 @@ def deployed_analysis_assets():
 
 class ServiceContainer:
     def callbacks(self, callbacks):
-        from dtest.application.runs.token_events import LLMTokenEventBuffer
         from dtest.agent_service.runtime.callbacks import TokenCallbacks
+        from dtest.application.runs.token_events import LLMTokenEventBuffer
 
         return [
             TokenCallbacks(item)
@@ -64,13 +67,14 @@ class ServiceContainer:
             planning, agent_settings, kind = await asyncio.to_thread(
                 owner._load_graph_inputs
             )
+        from langgraph.checkpoint.memory import InMemorySaver
+
         from dtest.agent_service.agents.analysis.planning.graph import (
             build_planning_graph,
         )
         from dtest.agent_service.runtime.langgraph.checkpointer import (
             create_checkpointer,
         )
-        from langgraph.checkpoint.memory import InMemorySaver
         from dtest.infrastructure.memory.store import runtime as store_runtime
 
         async with AsyncExitStack() as stack:
@@ -97,11 +101,11 @@ class ServiceContainer:
                 )
                 pools = [(saver.conn, "checkpoint_pool")]
                 if agent_settings.executor_submit_enabled:
-                    from dtest.infrastructure.executor.client import (
-                        ExecutorClient,
-                    )
                     from dtest.infrastructure.database.executor_bindings import (
                         ApiWorkerBridge,
+                    )
+                    from dtest.infrastructure.executor.client import (
+                        ExecutorClient,
                     )
 
                     planning.executor = await stack.enter_async_context(
@@ -132,8 +136,9 @@ def install_container():
     from dtest.application.runs import runtime
 
     runtime.install_composition(container, deployed_analysis_assets)
-    from dtest.contracts.agent import install_resume_factory
     from langgraph.types import Command
+
+    from dtest.contracts.agent import install_resume_factory
 
     install_resume_factory(Command)
     return container

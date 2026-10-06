@@ -4,13 +4,13 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.runs.task_events import TaskEventService
 from dtest.infrastructure.database.models.agent_run_log_model import (
     AgentRunLogModel,
 )
 from dtest.infrastructure.database.models.task_event_model import (
     TaskEventModel,
 )
-from dtest.application.runs.task_events import TaskEventService
 
 
 class AgentRunLogService:

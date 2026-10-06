@@ -7,14 +7,15 @@ Durations overlap (nodes/checkpoint/SQL are children of graph.invoke).
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager, contextmanager, suppress
-from contextvars import ContextVar
-from datetime import datetime, timezone
-from functools import wraps
 import json
 import logging
 import os
 import time
+from contextlib import asynccontextmanager, contextmanager, suppress
+from contextvars import ContextVar
+from datetime import datetime, timezone
+from functools import wraps
+
 from dtest.settings.loader import get_settings
 
 log = logging.getLogger(__name__)

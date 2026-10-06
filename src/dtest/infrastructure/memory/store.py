@@ -7,12 +7,14 @@ psycopg; this bounded pool is included separately in the per-Pod DB budget.
 
 import asyncio
 from contextlib import AsyncExitStack, asynccontextmanager
+
 from langgraph.store.postgres import AsyncPostgresStore
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from sqlalchemy.engine import make_url
-from dtest.lifecycle import protected_cleanup
+
 from dtest.infrastructure.observability.diagnostics import observe_pool
+from dtest.lifecycle import protected_cleanup
 
 
 class MemoryStoreBusy(RuntimeError):

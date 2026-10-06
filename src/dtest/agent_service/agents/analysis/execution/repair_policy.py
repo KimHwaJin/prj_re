@@ -8,11 +8,12 @@ from copy import deepcopy
 from hashlib import sha256
 
 from dtest.contracts.execution_repair import RepairResponse
-from dtest.contracts.plan_review import canonical, require
-from dtest.contracts.workflow_validation import validate, bindings
-from dtest.contracts.tool_bindings import inherit_parameter_policy
 from dtest.contracts.plan_projection import plan_view
-from .compiler import verify_snapshot, ready_batch
+from dtest.contracts.plan_review import canonical, require
+from dtest.contracts.tool_bindings import inherit_parameter_policy
+from dtest.contracts.workflow_validation import bindings, validate
+
+from .compiler import ready_batch, verify_snapshot
 from .sources import source_info
 
 LEVELS = {

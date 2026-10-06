@@ -1,6 +1,7 @@
 """App lifecycle and optional service adapters, independent of source selection."""
 
 from pathlib import Path
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 

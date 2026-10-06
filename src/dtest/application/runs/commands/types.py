@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from dtest.application.runs.claim_context import ExecutionClaim
-from dtest.contracts.resources.run_schema import RunCreate
 from dtest.application.runs.ownership import SessionExecution
 from dtest.contracts.events import EventContext
+from dtest.contracts.resources.run_schema import RunCreate
 
 
 @dataclass(frozen=True)

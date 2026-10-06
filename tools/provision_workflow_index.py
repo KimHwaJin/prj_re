@@ -10,8 +10,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
 from dtest.settings.loader import get_settings
 
 
@@ -23,7 +24,7 @@ async def main():
             "Configure WORKFLOW_EMBEDDING_BASE_URL, MODEL and DIMENSIONS first"
         )
     engine = create_async_engine(
-        settings.api.database_url, isolation_level="AUTOCOMMIT"
+        settings.database.database_url, isolation_level="AUTOCOMMIT"
     )
     try:
         async with engine.connect() as conn:

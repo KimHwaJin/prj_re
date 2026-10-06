@@ -8,9 +8,9 @@ on delivery; reconnect emits an invalidation and callers reconcile their tables.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from contextlib import asynccontextmanager
-import logging
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 import asyncpg

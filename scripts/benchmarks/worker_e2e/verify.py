@@ -121,12 +121,12 @@ def main(output):
     agent_files = {
         name
         for name in sources["split"]
-        if name.startswith("src/dtest.agent_service/")
+        if name.startswith("src/dtest/agent_service/")
     }
     assert agent_files == {
         name
         for name in sources["common"]
-        if name.startswith("src/dtest.agent_service/")
+        if name.startswith("src/dtest/agent_service/")
     }
     assert all(
         sources["split"][name] == sources["common"][name]

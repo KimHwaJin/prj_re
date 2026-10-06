@@ -66,6 +66,8 @@ python cli.py --request "데이터 품질 분석 계획을 제안해줘"
 PYTHONPATH=src python -m dtest.devtools.analysis.visualization --output /tmp/analysis-current.mmd
 ```
 
+`langgraph dev`의 CLI/inmem 패키지는 dev 그룹에 있다. 운영 설치(`uv sync --locked --no-dev`)에는 필요 없다.
+
 CLI와 `langgraph dev`는 같은 현재 builder의 offline mock 계획·승인 확인이다. `.env`·실제 LLM·Executor·서비스 DB·Redis·SSO를 사용하지 않는다. 실제 Runs/Redis 완료 연계는 `python app.py`로 실행하는 서비스와 [API 계약](docs/public-run-api.md)을 따른다. `langgraph dev`와 이벤트 Worker를 함께 띄운다고 서비스 연계가 되는 구조로 안내하지 않는다.
 
 현재 패키지 경계와 Agent 개발 위치는 [서비스 구조](docs/architecture/service-layout.md), Run 접수·실행·취소와 DB 수명은 [실행 인수인계](docs/run-execution-architecture.md)를 참고한다.

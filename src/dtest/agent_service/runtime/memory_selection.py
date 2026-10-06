@@ -2,12 +2,13 @@
 
 import json
 import re
+
 from dtest.contracts.project_memory import (
-    MemoryLimits,
     MAX_STORAGE_CHARS,
     SECTION_TITLES,
-    markdown_parts,
+    MemoryLimits,
     has_open_fence,
+    markdown_parts,
 )
 
 ROLE_SECTIONS = {

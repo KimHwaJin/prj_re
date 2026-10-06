@@ -2,10 +2,11 @@
 
 from sqlalchemy import select
 from sqlalchemy.orm import Bundle
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
-from dtest.infrastructure.database.pagination import fetch_page
+
 from dtest.application.runs.repository import require_session
 from dtest.application.runs.service import PublicRunService
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.pagination import fetch_page
 
 
 async def list_runs(db, user_id, session_id, params):

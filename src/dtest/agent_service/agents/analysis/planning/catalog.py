@@ -3,21 +3,22 @@
 from __future__ import annotations
 
 import ast
+import json
 from copy import deepcopy
 from hashlib import sha256
-import json
 from pathlib import Path
 
-from langchain.tools import tool
 import yaml
+from langchain.tools import tool
 
 from dtest.agent_service.agents.analysis.workflow.paths import WORKFLOW_ROOT
-from .parameters import parameter_controls
-from dtest.contracts.tool_bindings import parameter_bindings
-from dtest.contracts.tool_outputs import output_bindings, derived_outputs
 from dtest.agent_service.agents.analysis.workflow.tools.generate_tool_registry import (
     function_metadata,
 )
+from dtest.contracts.tool_bindings import parameter_bindings
+from dtest.contracts.tool_outputs import derived_outputs, output_bindings
+
+from .parameters import parameter_controls
 
 
 class AssetCatalog:

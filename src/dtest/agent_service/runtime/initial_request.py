@@ -1,7 +1,7 @@
 """Entry-node receipt; an input checkpoint alone does not prove processing."""
 
-from functools import wraps
 import inspect
+from functools import wraps
 
 from dtest.contracts.execution import InvocationNeedsRecovery
 from dtest.contracts.initial_request import initial_identity

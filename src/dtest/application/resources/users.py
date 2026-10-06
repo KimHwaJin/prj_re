@@ -1,13 +1,20 @@
 """User lifecycle with atomic default project creation and serialized role changes."""
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.resources import lifecycle
 from dtest.contracts.actors import Actor
 from dtest.contracts.enums import DeleteYN, UserRole
+from dtest.contracts.errors import ApplicationError
 from dtest.contracts.identity import normalize_user_id
+from dtest.contracts.resources.user_schema import (
+    UserCreate,
+    UserRead,
+    UserUpdate,
+)
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.project_model import ProjectModel
 from dtest.infrastructure.database.models.session_model import SessionModel
@@ -18,13 +25,6 @@ from dtest.infrastructure.database.repositories.project_repository import (
 from dtest.infrastructure.database.repositories.user_repository import (
     UserRepository,
 )
-from dtest.contracts.resources.user_schema import (
-    UserCreate,
-    UserRead,
-    UserUpdate,
-)
-from dtest.contracts.values import utc_now
-from dtest.application.resources import lifecycle
 
 # User management is infrequent. Serialize it across processes, including initial
 # bootstrap, to make last-admin checks safe under concurrent transactions.

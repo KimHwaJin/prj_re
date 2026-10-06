@@ -1,12 +1,15 @@
 """Evidence-grounded Markdown reports, generated through create_agent middleware."""
 
-from pydantic import BaseModel, ConfigDict, Field
 import json
+
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, ConfigDict, Field
+
 from dtest.agent_service.factory import build_role_agent, json_output
 from dtest.agent_service.middleware import ProjectPromptMiddleware
-from .._prompts import load_prompt
+
 from ...execution.grounding import validate_interpretation
+from .._prompts import load_prompt
 
 
 class ReportResponse(BaseModel):

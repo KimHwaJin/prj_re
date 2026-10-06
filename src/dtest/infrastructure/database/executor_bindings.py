@@ -7,9 +7,9 @@ from typing import Self
 
 from psycopg_pool import AsyncConnectionPool
 
-from dtest.settings.events import EventWorkerSettings
 from dtest.infrastructure.database.event_store import Store
 from dtest.infrastructure.observability.diagnostics import observe_pool
+from dtest.settings.events import EventWorkerSettings
 
 
 class ApiWorkerBridge:

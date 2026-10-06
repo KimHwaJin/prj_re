@@ -13,8 +13,8 @@ def is_retryable(exc: Exception) -> bool:
     """사용자 입력/상태 충돌인 4xx는 반복해도 같으므로 자동 재시도하지 않습니다."""
     from dtest.contracts.model_selection import ModelSelectionError
     from dtest.infrastructure.executor.client import (
-        ExecutorSubmitError,
         ExecutorOutcomeUnknown,
+        ExecutorSubmitError,
     )
 
     if isinstance(exc, ExecutorOutcomeUnknown):

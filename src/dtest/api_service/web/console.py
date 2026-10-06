@@ -1,10 +1,10 @@
-"""Serve the packaged functional console on the existing service application."""
+"Serve the packaged functional console on the existing service application."
 
 from __future__ import annotations
 
 import asyncio
-from functools import lru_cache
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ def _template() -> str:
 
 
 async def render_console(public_runtime: dict[str, Any]) -> HTMLResponse:
-    """Paths and public mode labels only; authentication stays on normal APIs."""
+    "Paths and public mode labels only; authentication stays on normal APIs."
     template = await asyncio.to_thread(_template)
     runtime = json.dumps(public_runtime, ensure_ascii=True).replace(
         "<", "\\u003c"

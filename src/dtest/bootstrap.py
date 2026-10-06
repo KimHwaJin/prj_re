@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from contextlib import AsyncExitStack, asynccontextmanager
 import json
 import logging
+from collections.abc import Awaitable, Callable
+from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
-from typing import Callable, Awaitable, Any
+from typing import Any
+
 from starlette.requests import Request
+
 from dtest.settings.loader import (
     ServiceSettings,
     configure,
@@ -210,11 +213,11 @@ def _background_factories(
 async def _close_resources() -> None:
     from dtest.application.runs.runtime import GraphResourcesBusy, runtime
     from dtest.infrastructure.database.runtime import close_database
-    from dtest.infrastructure.workflow_search.runtime import (
-        close_workflow_runtime,
-    )
     from dtest.infrastructure.memory.store import (
         runtime as memory_store_runtime,
+    )
+    from dtest.infrastructure.workflow_search.runtime import (
+        close_workflow_runtime,
     )
 
     # A live borrower still uses CRUD/bridge resources too. Preserve all of them
@@ -361,7 +364,7 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     """Local factory or explicit attachment to an already assembled platform app."""
     from fastapi import FastAPI, HTTPException
     from fastapi.exceptions import RequestValidationError
-    from fastapi.responses import RedirectResponse, JSONResponse
+    from fastapi.responses import JSONResponse, RedirectResponse
 
     settings = settings or get_settings()
     configure(settings)
@@ -391,12 +394,12 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
     from dtest.api_service.middleware.request_id import RequestIdMiddleware
 
     app.add_middleware(RequestIdMiddleware)
-    from dtest.application.runs.errors import RunError
     from dtest.api_service.http.problems import run_exception_handler
+    from dtest.application.runs.errors import RunError
 
     app.add_exception_handler(RunError, run_exception_handler)
-    from dtest.contracts.errors import ApplicationError
     from dtest.api_service.http.problems import application_exception_handler
+    from dtest.contracts.errors import ApplicationError
 
     app.add_exception_handler(ApplicationError, application_exception_handler)
 
@@ -461,8 +464,9 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
             async def primary_database_ready():
                 # Legacy Event DB overrides do not prove API queue readiness.
-                from dtest.infrastructure.database.runtime import short_session
                 from sqlalchemy import text
+
+                from dtest.infrastructure.database.runtime import short_session
 
                 try:
                     async with asyncio.timeout(2):

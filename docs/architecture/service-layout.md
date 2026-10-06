@@ -86,3 +86,22 @@ config.{dev,stg,prd}.yml            플랫폼 프로파일 설정
 분석/학습 라이브러리 7개(pandas, pyarrow, scikit-learn, xgboost, scipy, matplotlib, seaborn)는 서버 필수 의존성에서 `tool-validation` 개발 그룹으로 옮겼다. `uv sync --locked --no-dev`로 설치하는 서비스는 이 그룹을 요구하지 않는다. 로컬 회귀/Tool 실행 검증을 위한 기본 dev 그룹에는 포함한다. 실제 Tool의 라이브러리는 Executor/Jupyter 커널에서 제공한다. HNSW 임베딩 처리에 쓰는 numpy는 서버 의존성에 남긴다. 버전 변경 없이 uv.lock을 함께 갱신했다.
 
 Executor API 경로는 infrastructure/executor/routes.py에서 고정 규격으로 관리한다. settings/YAML은 EXECUTOR_BASE_URL과 연결·실행 옵션을 제공하며 개별 API PATH 설정은 제거했다.
+
+
+## 110 — HTTP 의존성과 제출 경계 정리
+
+라우터는 `http/dependencies.py`의 사용자·관리자·DB 별칭과
+`http/pagination.py`의 목록 별칭을 사용한다. 일반 요청의 DB 수명과 SSE의
+`scope="function"` 수명은 별개 별칭으로 유지한다.
+통합 Run start/resume 접수는 `application/runs/submission.py`, 선택적 세션 생성은
+`application/resources/messages.py`에 있다. 라우터는 ORM/repository를 직접
+import하지 않는다.
+
+공유 파일 경로·크기·SHA256 검증은 `infrastructure/file_storage/integrity.py`다.
+Executor의 결과 관찰은 `infrastructure/executor/observations.py`가 담당하며
+미사용 옛 manifest 결과 해석기는 제거했다. Swagger의 브라우저 controller는
+`api_service/web/static/swagger-auth.js`에 두고 패키지 자산으로 설치한다.
+
+LangGraph CLI/inmem 서버는 dev 그룹이다. `uv sync --locked --no-dev`의 서비스
+설치에 필요 없다. 현재 작업의 삭제 근거와 품질 검사 잔여 사항은
+[110 개선 기록](../improvements/110-code-quality-structure-cleanup.md)을 따른다.

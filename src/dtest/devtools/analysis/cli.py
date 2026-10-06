@@ -1,15 +1,18 @@
 """Offline mock graph console. Actual service integration uses the Runs API."""
 
 from __future__ import annotations
+
 import argparse
 import asyncio
 import json
-from typing import Sequence
+from collections.abc import Sequence
+
 from langgraph.types import Command
+
 from dtest.devtools.analysis.runtime import (
-    local_runtime,
-    local_input,
     compiled_in_memory_graph,
+    local_input,
+    local_runtime,
 )
 
 
@@ -45,11 +48,12 @@ async def run(request, *, interactive=False):
             print(str(exc))
             continue
         command = {"resume": action}
-        from dtest.contracts.user_resume import (
-            resume_identity,
-            resume_envelope,
-        )
         from uuid import uuid4
+
+        from dtest.contracts.user_resume import (
+            resume_envelope,
+            resume_identity,
+        )
 
         target = state["__interrupt__"][0].id
         identity = resume_identity(str(uuid4()), target, command)

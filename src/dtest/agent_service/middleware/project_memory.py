@@ -1,11 +1,13 @@
 """Per-invocation project knowledge; never a cache on the shared Agent object."""
 
 import json
-from typing_extensions import NotRequired
+from typing import NotRequired
+
 from langchain.agents.middleware import AgentMiddleware, AgentState
 from langchain_core.messages import HumanMessage
+
+from dtest.agent_service.runtime.memory_selection import dumps, select_memory
 from dtest.contracts.project_memory import MemoryConflict, MemoryLimit
-from dtest.agent_service.runtime.memory_selection import select_memory, dumps
 
 
 class ProjectMemoryState(AgentState):

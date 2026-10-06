@@ -1,8 +1,8 @@
 """Named Tool outputs map to kernel-object selectors, never Python expressions."""
 
 import ast
-from copy import deepcopy
 import re
+from copy import deepcopy
 
 ID = re.compile(r"^[a-z][a-z0-9_.-]{0,149}$")
 

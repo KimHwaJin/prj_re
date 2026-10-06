@@ -2,20 +2,20 @@
 
 from sqlalchemy import select
 
-from dtest.infrastructure.database.runtime import short_session
-from dtest.contracts.enums import AgentRunStatus
 from dtest.application.runs.claim_context import current_execution_claim
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.application.runs.persistence.recovery import (
     GraphProjectionError,
     checkpoint_state,
     snapshot_interrupts,
 )
+from dtest.contracts.enums import AgentRunStatus
 from dtest.contracts.execution import (
     ExecutionNeedsRecovery,
     InvocationNeedsRecovery,
 )
 from dtest.contracts.initial_request import initial_identity
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.runtime import short_session
 
 
 async def mark_started(*, run_id, session_factory):

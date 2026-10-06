@@ -1,41 +1,43 @@
-"""Process-owned SSE wakeups and bounded shared reads; PostgreSQL is authoritative.
+"""Process-owned SSE wakeups and bounded shared reads; PostgreSQL is
+authoritative.
 
-NOTIFY is an invalidation hint, never the event payload. Worker and live SSE
-subscriptions share one LISTEN connection with independent lifespans. Missed
-notifications are reconciled by slow reads. HTTP clients retain their own cursor.
+NOTIFY is an invalidation hint, never the event payload. Worker and
+live SSE subscriptions share one LISTEN connection with independent
+lifespans. Missed notifications are reconciled by slow reads. HTTP
+clients retain their own cursor.
 """
 
 from __future__ import annotations
-from dtest.settings.loader import get_settings
 
 import asyncio
+import json
+import time
 from collections import OrderedDict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-import json
-import time
 from uuid import UUID
 
 import asyncpg
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import select
 
-from dtest.infrastructure.database import runtime as database
-from dtest.infrastructure.database.runtime import short_session
-from dtest.contracts.enums import DeleteYN
-from dtest.infrastructure.database.models.user_model import UserModel
-from dtest.infrastructure.database.models.session_model import SessionModel
-from dtest.infrastructure.database.models.project_model import ProjectModel
-from dtest.application.runs.service import PublicRunService, project, TERMINAL
+from dtest.application.runs.service import TERMINAL, PublicRunService, project
 from dtest.application.runs.task_events import TaskEventService
+from dtest.contracts.enums import DeleteYN
+from dtest.contracts.run_events import public_event_payload
+from dtest.infrastructure.database import runtime as database
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.user_model import UserModel
+from dtest.infrastructure.database.runtime import short_session
 from dtest.infrastructure.database.signals import (
     RUN_CHANNEL,
     PostgresSignals,
     process_signals,
 )
 from dtest.lifecycle import protected_cleanup
-from dtest.contracts.run_events import public_event_payload
+from dtest.settings.loader import get_settings
 
 CHANNEL = RUN_CHANNEL
 
@@ -213,7 +215,8 @@ class RunStreamHub:
         # Serialize reads for this authorized Run, including simultaneous tabs.
         async with entry.lock:
             generation = entry.generation
-            # Coalesce token/status bursts to at most one changed-generation read
+            # Coalesce token/status bursts to at most one changed-generation
+            # read
             # per legacy poll interval. Cursor pagination is never delayed.
             if generation != entry.last_read_generation:
                 delay = (
@@ -315,13 +318,15 @@ class RunStreamHub:
                 self.invalidate(str(entry.key[2]))
 
     async def stream(self, request, entry, sequence):
+        cursor = sequence
         previous_state = None
         last_heartbeat = time.monotonic()
         generation = -1
         while not self.closed and not await request.is_disconnected():
             if generation != entry.generation:
-                frame, generation = await self.read(entry, sequence)
-                for sequence, text in frame.events:
+                frame, generation = await self.read(entry, cursor)
+                for event_sequence, text in frame.events:
+                    cursor = event_sequence
                     yield text
                 full = len(frame.events) >= self.settings.sse_event_batch_size
                 if not full and frame.state != previous_state:
@@ -331,7 +336,7 @@ class RunStreamHub:
                         "type": "run.snapshot",
                         "session_id": str(entry.key[1]),
                         "run_id": str(entry.key[2]),
-                        "cursor": sequence,
+                        "cursor": cursor,
                         "data": json.loads(frame.state),
                     }
                     yield (
@@ -352,8 +357,10 @@ class RunStreamHub:
             if now - last_heartbeat >= self.settings.sse_heartbeat_seconds:
                 yield ": heartbeat\n\n"
                 last_heartbeat = now
-            # Disconnect/heartbeat checks do not perform SQL. Starlette also cancels
-            # the iterator on disconnect; the short wake is for direct consumers.
+            # Disconnect/heartbeat checks do not perform SQL. Starlette also
+            # cancels
+            # the iterator on disconnect; the short wake is for direct
+            # consumers.
             await self.wait(
                 entry,
                 generation,
@@ -365,7 +372,9 @@ class RunStreamHub:
 
 
 class RunStreamResponse(StreamingResponse):
-    """Reserve capacity before HTTP headers, release even on disconnect/send failure."""
+    """Reserve capacity before HTTP headers, release even on
+    disconnect/send failure.
+    """
 
     def __init__(self, hub, request, key, sequence):
         super().__init__(

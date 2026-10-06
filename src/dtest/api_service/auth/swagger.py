@@ -1,14 +1,26 @@
-"""Same-origin Swagger login and CSRF injection, with explicit cookie security metadata."""
+"""Same-origin Swagger login and CSRF injection, with explicit cookie
+security metadata.
+"""
 
 import json
+from functools import lru_cache
+from importlib.resources import files
 
-from fastapi import Request
+from fastapi import Request, routing
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
-from fastapi import routing
 from fastapi.routing import APIRoute
 
 from .dependencies import get_login_session
+
+
+@lru_cache(maxsize=1)
+def _login_script() -> str:
+    return (
+        files("dtest.api_service")
+        .joinpath("web/static/swagger-auth.js")
+        .read_text(encoding="utf-8")
+    )
 
 
 def _requires_login(dependant):
@@ -35,7 +47,8 @@ def attach_swagger(app, runtime, *, docs_path: str):
                 "Authorize."
             ),
         }
-        # New FastAPI versions retain included routers rather than flattening app.routes.
+        # New FastAPI versions retain included routers rather than flattening
+        # app.routes.
         contexts = getattr(
             routing, "iter_route_contexts", lambda routes: routes
         )(app.routes)
@@ -60,41 +73,13 @@ def attach_swagger(app, runtime, *, docs_path: str):
     app.openapi = openapi
     # JSON escaping prevents config strings from breaking an inline script tag.
     prefix = json.dumps(runtime.api_prefix).replace("<", "\\u003c")
-    script = """
-const apiPrefix = PREFIX;
-let csrfToken = null;
-const status = () => document.getElementById('sso-status');
-async function refreshIdentity() {
-  csrfToken = null;
-  try {
-    const response = await fetch(apiPrefix + '/users/me', {credentials:'same-origin', cache:'no-store'});
-    if (!response.ok) {
-      status().textContent = response.status === 401 ? '로그인이 필요합니다' : '로그인 상태 조회 실패';
-      return false;
-    }
-    const user = await response.json();
-    csrfToken = user.csrf_token;
-    status().textContent = user.user_name + ' · ' + user.role;
-    return true;
-  } catch (_) { status().textContent = '로그인 상태 조회 실패'; return false; }
-}
-async function ssoRequestInterceptor(request) {
-  const url = new URL(request.url, window.location.href);
-  // Never send the CSRF secret to a remote specification or another API origin.
-  if (url.origin !== window.location.origin || !url.pathname.startsWith(apiPrefix + '/')) return request;
-  request.credentials = 'same-origin';
-  if (!['GET','HEAD','OPTIONS'].includes((request.method || 'GET').toUpperCase())) {
-    if (!csrfToken && !(await refreshIdentity())) throw new Error('SSO 로그인 후 로그인 상태 확인 버튼을 누르세요.');
-    request.headers = request.headers || {};
-    request.headers['X-CSRF-Token'] = csrfToken;
-  }
-  return request;
-}
-""".replace("PREFIX", prefix)
+    script = _login_script().replace("PREFIX", prefix)
 
     async def docs(request: Request):
-        # Existing Swagger assets are retained; a closed-network deployment can pass local assets
-        # through its supplied Swagger assembly instead of this service-owned page.
+        # Existing Swagger assets are retained; a closed-network deployment can
+        # pass local assets
+        # through its supplied Swagger assembly instead of this service-owned
+        # page.
         response = get_swagger_ui_html(
             openapi_url=app.openapi_url,
             title="SSO API 테스트",
@@ -104,7 +89,7 @@ async function ssoRequestInterceptor(request) {
                 "validatorUrl": None,
             },
         )
-        html = response.body.decode()
+        html = bytes(response.body).decode("utf-8")
         marker = "const ui = SwaggerUIBundle({"
         if marker not in html:
             raise RuntimeError("Unsupported Swagger HTML template")
@@ -126,8 +111,10 @@ async function ssoRequestInterceptor(request) {
             '<div id="swagger-ui">', toolbar + '<div id="swagger-ui">', 1
         )
         tail = """
-document.getElementById('sso-login').href = apiPrefix + '/auth/login/sso?target=docs';
-document.getElementById('sso-refresh').addEventListener('click', refreshIdentity);
+document.getElementById('sso-login').href =
+  apiPrefix + '/auth/login/sso?target=docs';
+document.getElementById('sso-refresh')
+  .addEventListener('click', refreshIdentity);
 refreshIdentity();
 """
         html = html.replace("</body>", "<script>" + tail + "</script></body>")

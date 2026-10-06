@@ -1,20 +1,22 @@
 """Atomic official Store document/receipt writes under an application-owned lock."""
 
 from datetime import datetime, timezone
+
 from langgraph.store.base import GetOp, PutOp
 from langgraph.store.postgres import AsyncPostgresStore
 from psycopg_pool import AsyncConnectionPool
+
 from dtest.contracts.memory_store import (
     MEMORY_KEY,
-    memory_namespace,
-    receipt_namespace,
-    receipt_key,
     memory_document,
+    memory_namespace,
+    receipt_key,
+    receipt_namespace,
 )
 from dtest.contracts.project_memory import (
+    MAX_STORAGE_CHARS,
     MemoryConflict,
     MemoryLimit,
-    MAX_STORAGE_CHARS,
     replace_section,
 )
 

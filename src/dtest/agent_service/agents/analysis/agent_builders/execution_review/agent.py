@@ -1,13 +1,15 @@
 """Decide approved deferred parameters from actual text observations."""
 
-from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
 import json
+from typing import Any
+
 from jsonschema_rs import Draft202012Validator
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel, ConfigDict, Field
 
 from dtest.agent_service.factory import build_role_agent, json_output
 from dtest.agent_service.middleware import ProjectPromptMiddleware
+
 from .._prompts import load_prompt
 
 

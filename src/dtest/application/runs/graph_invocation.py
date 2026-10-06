@@ -7,18 +7,18 @@ It accepts plain values, never an open caller database session.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 from uuid import UUID
 
 from dtest.application.runs.persistence import graph as projection
 from dtest.application.runs.project_context import read_project_snapshot
+from dtest.contracts.model_selection import validate_checkpoint_selection
 from dtest.infrastructure.executor.client import (
     current_submission_effects,
     submission_scope,
 )
 from dtest.infrastructure.observability.diagnostics import span
-from dtest.contracts.model_selection import validate_checkpoint_selection
-
 
 _UNSET = object()
 

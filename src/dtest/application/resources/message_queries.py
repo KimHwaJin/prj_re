@@ -1,10 +1,11 @@
 """Messages visible to the owning user/session."""
 
 from sqlalchemy import select
+
 from dtest.contracts.enums import DeleteYN
+from dtest.contracts.resources.api_schema import MessageResource
 from dtest.infrastructure.database.models import MessageModel, SessionModel
 from dtest.infrastructure.database.pagination import fetch_page
-from dtest.contracts.resources.api_schema import MessageResource
 
 
 async def list_messages(db, user_id, session_id, params):

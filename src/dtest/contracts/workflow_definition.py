@@ -272,11 +272,6 @@ class WorkflowDefinition(StrictModel):
         return self
 
 
-class WorkflowGeneratorOutput(StrictModel):
-    schema_version: Literal["1.3"]
-    workflow: WorkflowDefinition
-
-
 __all__ = [
     "ArgumentSource",
     "ExecutionMode",
@@ -288,7 +283,6 @@ __all__ = [
     "UnresolvedInput",
     "WorkflowDefinition",
     "WorkflowExecutionMode",
-    "WorkflowGeneratorOutput",
     "WorkflowStatus",
     "WorkflowStep",
     "WorkflowTool",

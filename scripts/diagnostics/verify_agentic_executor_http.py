@@ -207,7 +207,7 @@ if args.fixture_plan:
                 (
                     root
                     / (
-                        "src/dtest.agent_service/agents/analysis/plannin"
+                        "src/dtest/agent_service/agents/analysis/plannin"
                         "g/fixtures/quality-review.json"
                     )
                 ).read_text()

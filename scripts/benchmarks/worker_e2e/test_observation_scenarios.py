@@ -23,7 +23,7 @@ def test_expanded_plan_uses_registered_tools_and_valid_workflow_contract():
         (
             ROOT
             / (
-                "src/dtest.agent_service/agents/analysis/planning/fixtur"
+                "src/dtest/agent_service/agents/analysis/planning/fixtur"
                 "es/quality-review.json"
             )
         ).read_text()

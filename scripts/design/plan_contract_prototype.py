@@ -756,7 +756,7 @@ def freeze(state, catalog, repository_root):
     import yaml
 
     assets = (
-        repository_root / "src/dtest.agent_service/agents/analysis/workflow"
+        repository_root / "src/dtest/agent_service/agents/analysis/workflow"
     )
     skill_index = yaml.safe_load(
         (assets / "skills/skill_index.yaml").read_text()
@@ -1112,7 +1112,7 @@ def generate(repository_root, destination):
         (
             repository_root
             / (
-                "src/dtest.agent_service/agents/analysis/workflow/skills"
+                "src/dtest/agent_service/agents/analysis/workflow/skills"
                 "/skill_index.yaml"
             )
         ).read_text()

@@ -1,8 +1,9 @@
 """One bounded project reference document, independent of instructions/history."""
 
+import re
 from dataclasses import dataclass
 from typing import Literal
-import re
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 MemorySection = Literal[

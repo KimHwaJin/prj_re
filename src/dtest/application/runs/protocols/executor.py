@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dtest.contracts.agent import resume_command
-
 from dtest.contracts.events import (
     DeferEvent,
     EventContext,
