@@ -52,6 +52,34 @@ config.yml이 이미 있다면 init 없이 편집한다. 생성은 기존 파일
 
 이전 dotenv는 필요할 때 한 번 `uv run python scripts/configure.py import-env --env local --input .env --output /tmp/config.imported.yml`로 옮긴다. 원본은 변경하지 않는다. 로컬 환경에서는 --local-env-file도 명시적으로 사용할 수 있으며 프로세스 env보다 낮은 순위다. `AGENT_HISTORY_MESSAGE_LIMIT`은 폐기했으므로 먼저 SET_MAX_HISTORY(턴)로 판단해 바꾼다. 메시지 개수를 기계적으로 턴 값으로 복사하지 않는다.
 
+## Windows 로컬 실행
+
+Python 3.11에서 루트 `app.py`로 실행하면 Windows에서는
+`asyncio.Runner(loop_factory=asyncio.SelectorEventLoop)`를 사용한다.
+LangGraph checkpoint와 프로젝트 Store의 psycopg 비동기 풀이 Windows의
+Proactor 루프를 지원하지 않기 때문이다. 최근 Uvicorn은 자체 루프 factory를
+선택하므로 전역 `WindowsSelectorEventLoopPolicy` 설정만으로 보장하지 않는다.
+[psycopg 공식 비동기 안내](https://www.psycopg.org/psycopg3/docs/advanced/async.html)를 따른다.
+별도 YAML 키나 전역 event loop policy 변경은 필요 없다.
+
+```sh
+uv run python app.py --env local
+```
+
+시작 로그의 `service_event_loop platform=win32
+implementation=_WindowsSelectorEventLoop`로 선택을 확인한다. 실제 로그는
+한 줄이다. HTTP 앱·Worker·DB 풀이 같은 실행 루프를 사용하며 종료 시 Runner가
+남은 작업과 루프를 정리한다. Linux/macOS는 Uvicorn의 기존 실행 경로를 사용한다.
+외부 플랫폼 launcher가 이미 만든 루프에 `attach_service()`를 붙이는 경우에는
+그 launcher가 호환 루프를 선택해야 하며 이 루트 실행기의 선택이 적용되지 않는다.
+
+이 변경은 Windows 루프 호환성에 대한 것이다. asyncpg의
+`ConnectionDoesNotExistError`나 Windows의 “지정된 네트워크 이름을 더 이상
+사용할 수 없습니다” 오류까지 같은 원인이라고 확정하지 않는다. 계속 발생하면
+DATABASE_URL과 CHECKPOINT_DB_URI가 가리키는 실제 host/port, 해당 PostgreSQL
+연결·로그를 별도로 확인한다. macOS에서 Windows 분기·실제 HTTP·종료 회귀를
+검증했으며 실제 Windows 및 사용자 DB 재검증은 필요하다.
+
 ## 배포와 연결 역할
 
 - 로컬 Compose는 scripts/local.py가 **선택한 파일 하나**를 읽고 DB host를 postgres로 바꿔 private workspace/config.compose.yml을 만든다. .env.local은 Compose 인프라 전용이다. APP_ENV 기본은 local이다.

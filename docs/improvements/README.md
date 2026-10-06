@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [106 사내 SDK 내부 요청 모방 제거](106-sso-sdk-boundary.md).
+최신 작업: [107 Windows 실행 루프 호환성](107-windows-selector-startup.md).
+Windows 루트 launcher는 psycopg 비동기 풀에 맞춰 Selector 루프를 명시한다.
+macOS에서 Windows 분기·실제 HTTP·종료 처리 등 74회귀와 전체 포맷을 검증했다.
+기존 Ruff·ty 오류는 남아 있으며 새 진단은 없다. 실제 Windows와 사용자 DB의
+연결 오류 해소 여부는 재확인해야 한다.
+
+선행 작업: [106 사내 SDK 내부 요청 모방 제거](106-sso-sdk-boundary.md).
 SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 SDK 연결
 함수에 별도로 전달하도록 단순화했다. 관련 72회귀와 변경 Ruff·ty 검증을
 통과했다. 실제 사내 SDK 생성·복귀 주소 설정은 공식 사용법으로 연결한다.

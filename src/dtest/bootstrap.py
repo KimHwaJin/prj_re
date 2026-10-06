@@ -514,9 +514,29 @@ def create_app(settings: ServiceSettings | None = None, *, platform_app=None):
 
 def build_server(app, settings: ServiceSettings):
     """Root launcher: notify Workers at SIGTERM, before HTTP connection drain."""
+    import socket
+    import sys
+
     import uvicorn
 
     class DrainServer(uvicorn.Server):
+        def run(self, sockets: list[socket.socket] | None = None) -> None:
+            if sys.platform != "win32":
+                super().run(sockets=sockets)
+                return
+
+            # Psycopg async pools require Selector on Windows. Uvicorn may
+            # supply its own Proactor factory, ignoring a global loop policy.
+            # Own the loop here; Runner also closes tasks and async generators.
+            with asyncio.Runner(
+                loop_factory=asyncio.SelectorEventLoop
+            ) as runner:
+                log.info(
+                    "service_event_loop platform=win32 implementation=%s",
+                    type(runner.get_loop()).__name__,
+                )
+                runner.run(self.serve(sockets=sockets))
+
         def handle_exit(self, sig, frame):
             app.state.run_stream_hub.begin_shutdown()
             app.state.service_runtime.request_stop()
