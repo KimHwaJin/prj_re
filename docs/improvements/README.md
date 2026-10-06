@@ -4,6 +4,8 @@
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다. 당시 미병합이던 현재 브랜치의 선행 이력은 2026-10-06 베이스에 통합했으며 미배포 상태는 유지한다. 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
+096·097 통합 이력: 2026-10-06에 `/demo` 통합과 YAML 설정 이전 구현 `5fc444b0e3d5032637d0ec732f220e8ffc0e04c6`까지 베이스에 fast-forward 병합했다. 파생 브랜치는 보존하고 실제 서비스 배포는 별도다. [097 통합 기록](097-yaml-application-settings.md)을 따른다.
+
 고아 기준 브랜치: `feature/refactor-base`
 
 작업 원격 저장소: [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re). 기본 브랜치는 `feature/refactor-base`이며 베이스와 관련 파생 브랜치를 보존한다. [저장소·브랜치 작업 안내](../repository-workflow.md)를 따른다.

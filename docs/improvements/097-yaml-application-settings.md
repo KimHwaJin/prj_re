@@ -59,4 +59,4 @@ APP_ENV=stg APP_CONFIG_GID=20 \
 
 실제 개인 연결값·SSO SDK adapter·embedding endpoint/모델/차원은 환경 담당자가 채워야 한다. 기존 .env·사용자 checkout·실행 중 Docker는 이번 작업에서 변경하지 않았다. 실제 migration·앱 재기동·CICD/Kubernetes 배포·SSO 왕복·LLM/Executor E2E는 수행하지 않았다. ML 의존성 분리·검색 완전 중복 대표화와 기존 후속 범위는 유지한다.
 
-작업 브랜치에 커밋·게시하고 베이스 통합·실제 배포는 별도로 진행한다. 선행096의 /demo 작업을 포함한다.
+2026-10-06 사용자 요청으로 구현 commit `5fc444b0e3d5032637d0ec732f220e8ffc0e04c6`를 `feature/refactor-base`에 fast-forward 병합했다. 선행096의 `/demo` commit `110911246dad271afac4942a9b6fab18b1bdbfd7`도 함께 포함한다. origin에 베이스를 게시하며 기존 파생 브랜치는 보존한다. 병합으로 구현 변경은 추가되지 않아 기존 Python199·Node10·Compose·wheel 검증 결과를 유지한다. 실제 재기동·migration·배포는 수행하지 않는다.

@@ -239,4 +239,4 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 
 ## 097 YAML 중심 설정 정리
 
-공통 정책과 환경별 연결값 식별·이전, profile init/legacy dotenv import, 동일 snapshot migration, Compose/Secret 마운트·CICD 수정값 이전을 구현했다. [현재 설정 안내](../application-configuration.md)를 따른다. 실제 개인 profile 작성과 기존 DB schema/데이터 이행·비루트 mount 권한·사내 배포·SSO adapter·실제 embedding/Executor 검증은 후속이며 자동 적용하지 않는다. feature/yaml-application-settings는 선행096 /demo를 포함한다. 베이스 통합은 별도다. 기존 ML 의존성 분리·HNSW 대표화·Agent 모델 호출 수·Dataset/Artifact 보류는 유지한다.
+공통 정책과 환경별 연결값 식별·이전, profile init/legacy dotenv import, 동일 snapshot migration, Compose/Secret 마운트·CICD 수정값 이전을 구현했다. [현재 설정 안내](../application-configuration.md)를 따른다. 실제 개인 profile 작성과 기존 DB schema/데이터 이행·비루트 mount 권한·사내 배포·SSO adapter·실제 embedding/Executor 검증은 후속이며 자동 적용하지 않는다. feature/yaml-application-settings는 선행096 /demo를 포함한다. 2026-10-06에 구현5fc444b까지 feature/refactor-base에 통합했으며 실제 배포는 별도다. 기존 ML 의존성 분리·HNSW 대표화·Agent 모델 호출 수·Dataset/Artifact 보류는 유지한다.
