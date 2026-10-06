@@ -102,3 +102,7 @@ exclude = [
     "docs/reports/**",
     "docs/contracts/workflow-standard/original-1.0/**",
 ]
+
+[tool.pytest.ini_options]
+# Routine regressions only; benchmark workloads require explicit selection.
+testpaths = ["tests", "scripts/diagnostics/tests"]

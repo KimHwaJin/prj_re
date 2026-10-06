@@ -65,3 +65,13 @@ JSON Schema가 동일하며 관련 회귀177개가 통과했다. 새 Ruff/ty 진
 전체 lint/type 해소는 여전히 미완료다.
 [111 기록](111-unused-contract-declarations.md)을 따른다.
 110의 자동 승인 거절 기록은 당시 이력이며 이번 작업으로 삭제 보류를 해소했다.
+
+
+## 112 문서·예전 테스트 정리 — 2026-10-07
+
+`dbdadbc`에서 `feature/docs-test-cleanup`으로 작업했다. 폐기 안내5개·복제
+probe3개를 삭제하고 replay 불변성 단언을 현재 PostgreSQL 회귀로 통합했다.
+현재 정본·YAML 예시·source 링크와 pytest 수집을 정리했다. 기본1,364개와
+벤치마크69개가 오류 없이 수집되며 실제 PG 회귀 및 관련 unit/진단 검증은
+[112 기록](112-docs-test-cleanup.md)에 있다. 과거 측정 원본·원본 Workflow
+초안·변경 추적은 보존하며 현재 lint/type 전체 통과를 주장하지 않는다.

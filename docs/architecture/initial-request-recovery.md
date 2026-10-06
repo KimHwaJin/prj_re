@@ -34,7 +34,7 @@ LangGraph는 입력만 접수한 상태도 checkpoint로 남길 수 있다. 따�
 
 ```python
 from dtest.contracts.initial_request import InitialRequestState
-from agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.initial_request import record_initial_request
 
 
 class State(InitialRequestState, total=False):

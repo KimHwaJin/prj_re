@@ -5,7 +5,7 @@
 ## 파일과 선언
 
 ```text
-agent_service/
+src/dtest/agent_service/
   context.py                  요청별 AgentContext
   factory.py                  공통 create_agent·응답 변환
   runtime/model_factory.py    설정된 OpenAI 호환 모델 생성
@@ -22,8 +22,8 @@ agent_service/
 ```
 
 ```python
-from agent_service.factory import build_role_agent, json_output
-from agent_service.middleware import ProjectPromptMiddleware
+from dtest.agent_service.factory import build_role_agent, json_output
+from dtest.agent_service.middleware import ProjectPromptMiddleware
 
 
 def build_agent(model, *, structured_output_mode="prompt_json", store=None):

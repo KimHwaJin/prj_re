@@ -50,7 +50,7 @@ uv run python app.py
 
 config.yml이 이미 있다면 init 없이 편집한다. 생성은 기존 파일을 덮어쓰지 않는다. --overwrite는 명시적인 전체 교체다. --check-config는 설정만 검증하며 연결 성공이나 migration 완료를 보장하지 않는다. 실제 로컬·환경 파일은 Git/일반 Docker build context에서 제외하고 예제만 공유한다. /demo와 /docs는 같은 앱에서 제공한다. 로컬 예제 PORT는8000, 배포 예제는 템플릿과 같은5000이다. SSO origin·프록시·컨테이너 port도 함께 맞춘다.
 
-이전 dotenv는 필요할 때 한 번 `uv run python scripts/configure.py import-env --env local --input .env --output /tmp/config.imported.yml`로 옮긴다. 원본은 변경하지 않는다. 로컬 환경에서는 --local-env-file도 명시적으로 사용할 수 있으며 프로세스 env보다 낮은 순위다. `AGENT_HISTORY_MESSAGE_LIMIT`은 폐기했으므로 먼저 SET_MAX_HISTORY(턴)로 판단해 바꾼다. 메시지 개수를 기계적으로 턴 값으로 복사하지 않는다.
+이전 dotenv는 필요할 때 한 번 `uv run python scripts/configure.py import-env --env local --input .env --output /tmp/config.imported.yml`로 옮긴다. 원본은 변경하지 않는다. 로컬 환경에서는 --local-env-file도 명시적으로 사용할 수 있으며 프로세스 env보다 낮은 순위다. `SET_MAX_HISTORY`은 폐기했으므로 먼저 SET_MAX_HISTORY(턴)로 판단해 바꾼다. 메시지 개수를 기계적으로 턴 값으로 복사하지 않는다.
 
 ## 앱 시작 시 선택적 DB 초기화
 

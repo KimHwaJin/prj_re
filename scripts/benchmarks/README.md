@@ -1,3 +1,10 @@
+# 선택 실행 성능 도구
+
+기본 pytest는 이 디렉토리를 수집하지 않는다. 각 도구 README의 경로와 격리·capture
+조건을 확인하고 테스트 경로를 명시한다. 같은 이름의 test_analysis.py는
+executor/service/scaling별 고유 이름으로 변경했다. 이전 보고서의 파일명은
+그 당시 Git 이력을 기준으로 읽는다.
+
 # 성능 비교 도구의 적용 범위
 
 054 이후 현재 그래프의 모델 답변/근거 비교는 `conversation/run.py`와 [현재 Agent 개발 가이드](../../docs/agent-development/README.md)를 따른다. 이 문서 아래 DB scope·total_refactor·runtime_profile·process_scaling 도구는 017~035의 **고정 과거 commit**을 재현하는 이력 도구다. 원본 결과와 집계 방법을 보존하기 위해 과거 그래프의 단계·호출 횟수를 현재 Agent로 바꾸지 않는다.

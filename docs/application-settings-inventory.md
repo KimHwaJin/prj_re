@@ -1,6 +1,6 @@
 # 템플릿 설정 재사용·서비스 추가·제거 목록
 
-2026-10-06 / 100. 중앙 loader의 별칭을 제외한 소비 설정은 174개다. 기존40 메시지 제한은 제거하고 템플릿의 턴 정책으로 대체했다. 모든 실행에서 환경 파일 하나를 읽는다. 아래 그룹은 설명용이며 YAML 계층이 아니다.
+2026-10-06 / 100. 아래 목록은100 당시 설정 식별 기록이다. 현재 키와 기본값은 `src/dtest/settings`와 선택 환경의 example YAML을 우선한다. 기존40 메시지 제한은 제거하고 템플릿의 턴 정책으로 대체했다. 모든 실행에서 환경 파일 하나를 읽는다. 아래 그룹은 설명용이며 YAML 계층이 아니다.
 
 ## 템플릿에서 재사용: 10개
 
@@ -19,7 +19,7 @@
 
 ## 서비스 전용 추가 설정
 
-[config.service.example.yml](../config.service.example.yml)의 **147개 명시 항목**만 기존 템플릿 환경 파일에 추가하면 예제의 정책·연결 설정을 모두 포함한다. 모두 필수라는 뜻은 아니며 pool·대기·검색 예산 등은 코드 기본값이 있다. DB/Redis/Executor, 기본 kernel/공유 경로, SSO origin·adapter를 실제 환경에 맞춘다. 임베딩 주소·모델·차원은 추천 사용 시 별도 추가한다. 실제 비밀값은 이 문서에 기록하지 않는다.
+[config.service.example.yml](../config.service.example.yml)의 추가 설정을 기존 템플릿 환경 파일에 복사하면 예제의 정책·연결 설정을 모두 포함한다. 모두 필수라는 뜻은 아니며 pool·대기·검색 예산 등은 코드 기본값이 있다. DB/Redis/Executor, 기본 kernel/공유 경로, SSO origin·adapter를 실제 환경에 맞춘다. 임베딩 주소·모델·차원은 추천 사용 시 별도 추가한다. 실제 비밀값은 이 문서에 기록하지 않는다.
 
 | 설정 | 분류 | 소비 영역 |
 |---|---|---|
@@ -89,9 +89,9 @@
 | EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_OPERATION_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_REPORT_APPEND_TO_NOTEBOOK | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_REPORT_SOURCE_TYPE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
-| EXECUTOR_RESULT_READ_MODE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
+| EXECUTOR_REPORT_APPEND_TO_NOTEBOOK | 서비스 추가(예제 명시) | 선언만 남음. 현재 실행 코드에서 소비하지 않으며 기능 지원을 보장하지 않음 |
+| EXECUTOR_REPORT_SOURCE_TYPE | 서비스 추가(예제 명시) | 선언만 남음. 현재 실행 코드에서 소비하지 않으며 기능 지원을 보장하지 않음 |
+| EXECUTOR_RESULT_READ_MODE | 서비스 추가(예제 명시) | 선언만 남음. 현재 실행 코드에서 소비하지 않으며 기능 지원을 보장하지 않음 |
 | EXECUTOR_RUNTIME_PROFILE | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_RUNTIME_PROFILES | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
 | EXECUTOR_SHARED_INPUT_ROOT | 서비스 추가(예제 명시) | Executor HTTP·제출·결과/보고서 |
@@ -187,14 +187,14 @@
 
 | 항목 | 조치 | 이유 |
 |---|---|---|
-| AGENT_HISTORY_MESSAGE_LIMIT | 제거; 남아 있으면 시작 오류 | 메시지 수 대신 SET_MAX_HISTORY 턴 수 사용 |
+| SET_MAX_HISTORY | 제거; 남아 있으면 시작 오류 | 메시지 수 대신 SET_MAX_HISTORY 턴 수 사용 |
 | config.cicd.dev.yml | 제거 | 같은 환경을 별도 이름의 profile로 관리하지 않음; CICD 환경 파일 예제는 cicd/basic/dev/config.dev.example.yml |
 | config.yml + 환경별 YAML 병합 | 제거 | config.yml은 로컬 전용, 환경별 파일은 독립 |
 | 신규 service/runtime/llm 등 YAML 계층 | 파서·진단 도구에서 제거 | 내부 템플릿과 동일한 최상위 대문자 포맷만 사용 |
 | SERVER_PORT/MODEL_NAME/API_BASE_URL/MODEL_API_KEY 추가 블록 | 중복 선언 제거 | 템플릿 PORT/PRIVATE_LLM_* 재사용; 기존 env는 호환 |
 | 플랫폼 app의 우리 Phoenix register/shutdown | 제거 | 플랫폼 lifecycle 소유권 보존 |
 
-기존 Redis graph dispatch·Jupyter 직접 접속·topic memory 제거 설정도 계속 오류다. 상세 목록은 src/service_runtime/settings_migrations.py의 폐기 설정 이행 검사를 따른다. DB/Redis/Executor API·메모리 저장 schema·Run/SSE 공개 명세는 이번 설정 변경으로 바뀌지 않는다.
+기존 Redis graph dispatch·Jupyter 직접 접속·topic memory 제거 설정도 계속 오류다. 상세 목록은 src/dtest/settings/retired.py의 폐기 설정 이행 검사를 따른다. DB/Redis/Executor API·메모리 저장 schema·Run/SSE 공개 명세는 이번 설정 변경으로 바뀌지 않는다.
 
 ## 100 설정 구조 정리 추적
 

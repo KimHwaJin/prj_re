@@ -91,11 +91,9 @@ Workflow 명시 값 → 중앙 config/env에서 해석한 기본값 → 기본 �
 | AGENT_MAX_REPAIR_ATTEMPTS | 3 / 0~10 | 서비스 시도 ceiling. 권한이 양수이고 Workflow에 시도 값이 없으면 기본 시도 값으로도 사용 |
 
 ```yaml
-service:
-  agent:
-    agent_repair_level: 1
-    agent_repair_level_limit: 2
-    agent_max_repair_attempts: 2
+AGENT_REPAIR_LEVEL: 1
+AGENT_REPAIR_LEVEL_LIMIT: 2
+AGENT_MAX_REPAIR_ATTEMPTS: 2
 ```
 
 Workflow에 repair_level=0/max_repair_attempts=0이 명시되면 위 config를 넣어도 자동으로 권한을 올리지 않는다. 계획 화면에서 적법하게 수정·승인해야 한다. SINGLE은 수준·시도 모두 0으로 제한한다. Operation timeout/대기 timeout은 기존 설정을 따르며 1주 이상 실제 실행 검증을 새로 수행하지 않았다.

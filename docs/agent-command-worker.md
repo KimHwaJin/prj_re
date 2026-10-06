@@ -4,7 +4,7 @@
 
 ## 기동과 실행 흐름
 
-`app.py → service_bootstrap`가 같은 프로세스에서 API, 공통 Agent Worker, Executor 이벤트 수신·routing을 조립한다. 이벤트 수신부도 background task이지만 그래프를 실행하는 Worker는 하나다. Task 정리·메트릭 같은 별도 background 작업은 계속 존재한다.
+`app.py → dtest.bootstrap`가 같은 프로세스에서 API, 공통 Agent Worker, Executor 이벤트 수신·routing을 조립한다. 이벤트 수신부도 background task이지만 그래프를 실행하는 Worker는 하나다. Task 정리·메트릭 같은 별도 background 작업은 계속 존재한다.
 
 ```mermaid
 flowchart LR
@@ -31,15 +31,15 @@ flowchart LR
 
 | 위치 | 책임 |
 |---|---|
-| `models/agent_command_model.py` | 내부 원장 모델·제약·index |
-| `runs/commands/admission.py` | 사용자 입력과 같은 transaction의 명령 기록 |
-| `runs/commands/claim.py` | 순서·준비 상태·소유권을 검사하고 원자적 claim |
-| `runs/commands/types.py` | 실행에 넘기는 immutable 사용자/이벤트 claim 값 |
-| `runs/commands/outcome.py` | token 대조 후 완료·유예·실패·복구 기록 |
+| `src/dtest/infrastructure/database/models/agent_command_model.py` | 내부 원장 모델·제약·index |
+| `src/dtest/application/runs/commands/admission.py` | 사용자 입력과 같은 transaction의 명령 기록 |
+| `src/dtest/application/runs/commands/claim.py` | 순서·준비 상태·소유권을 검사하고 원자적 claim |
+| `src/dtest/application/runs/commands/types.py` | 실행에 넘기는 immutable 사용자/이벤트 claim 값 |
+| `src/dtest/application/runs/commands/outcome.py` | token 대조 후 완료·유예·실패·복구 기록 |
 | `migrations/versions/0003_retire_unused_worker_storage.py` | 구 명령 일회 이관 후 폐기 테이블 삭제 |
-| `workers/agent.py` | 총한도·실행 task·종료 수명, 두 입력의 공통 실행 |
-| `workers/executor_events/main.py`, `event_types.py` | 이벤트 수신 bootstrap·허용 event 종류, graph callback 없음 |
-| `workers/executor_events/runtime.py`, `ingress.py`, `store.py` | Redis ingress·Inbox·routing·binding·메트릭 |
+| `src/dtest/worker_service/command_worker.py` | 총한도·실행 task·종료 수명, 두 입력의 공통 실행 |
+| `src/dtest/worker_service/executor_events/main.py`, `src/dtest/worker_service/executor_events/event_types.py` | 이벤트 수신 bootstrap·허용 event 종류, graph callback 없음 |
+| `src/dtest/worker_service/executor_events/runtime.py`, `src/dtest/worker_service/executor_events/ingress.py`, `src/dtest/infrastructure/database/event_store.py` | Redis ingress·Inbox·routing·binding·메트릭 |
 | `crud_migrations/versions/20261003_0026_agent_commands.py` | 동결된 DDL, runtime namespace 자동 추론 없음 |
 
 `worker/dispatcher.py`, `guard.py`, `outbox.py`, 독립 graph_provider와 구 전용 테스트·Store 발행/재시도 메서드는 사용자 명시 승인 후 삭제했다. DB claim·소유권·취소/종료 검증과 Redis 원본 이벤트 consumer의 lease는 유지한다. 이전 버전의 실행기를 현재 원장과 동시에 띄우면 안 된다.

@@ -32,13 +32,11 @@ API 그래프의 모든 borrow가 반환된 뒤 클라이언트를 닫는다. �
 | EXECUTOR_HTTP_MAX_RESPONSE_BYTES | 16 MiB | 압축 해제 후 읽어들이는 응답의 최대 크기 |
 
 ```yaml
-service:
-  executor:
-    EXECUTOR_HTTP_MAX_CONNECTIONS: 8
-    EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS: 5
-    EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS: 5
-    EXECUTOR_TIMEOUT_SECONDS: 30
-    EXECUTOR_HTTP_MAX_RESPONSE_BYTES: 16777216
+EXECUTOR_HTTP_MAX_CONNECTIONS: 8
+EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS: 5
+EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS: 5
+EXECUTOR_TIMEOUT_SECONDS: 30
+EXECUTOR_HTTP_MAX_RESPONSE_BYTES: 16777216
 ```
 
 유효한 양수만 허용한다. 응답이 큰 notebook/result 사용 환경에서는 응답 크기를
@@ -87,20 +85,23 @@ API Run은 기존 `recovery_required`와 실행 소유권을 유지하고, 같�
 소유자가 수명을 관리한다.
 
 ```python
-from integrations.executor.client import ExecutorClient
-from agent_service.agents.analysis.graph import build_analysis_workflow_graph
+from dtest.agent_service.agents.analysis.planning.graph import (
+    build_planning_graph,
+)
+from dtest.agent_service.agents.analysis.planning.runtime import (
+    PlanningRuntime,
+)
+from dtest.infrastructure.executor.client import ExecutorClient
 
 async with ExecutorClient(settings) as executor_client:
-    graph = build_analysis_workflow_graph(
-        deps,
-        settings,
-        checkpointer=saver,
-        bindings=bindings,
-        executor_client=executor_client,
+    runtime = PlanningRuntime(
+        settings, executor=executor_client, bindings=bindings
     )
+    graph = build_planning_graph(runtime, checkpointer=saver)
     await graph.ainvoke(input_state, config)
 ```
 
+settings는 AgentSettings, bindings는 해당 실행의 실제 binding 저장소다.
 이 저수준 예시는 HTTP 자원 수명만 보여준다. 서비스 수준의 session 소유권,
 submission_scope, API 상태 반영이 필요하면 기존 Run/이벤트 진입점으로 실행한다.
 클라이언트를 state/checkpoint에 저장하지 않는다. 노드의 외부 HTTP는 await하고,

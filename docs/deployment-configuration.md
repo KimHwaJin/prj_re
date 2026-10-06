@@ -10,7 +10,7 @@
 
 ## 설정 원천과 공통 값
 
-`service_settings.load_settings()`가 한 번 읽어 불변 snapshot을 만든다. API·Agent·이벤트·SSO typed 설정은 이 snapshot의 소비용 view다.
+`dtest.settings.loader.load_settings()`가 한 번 읽어 불변 snapshot을 만든다. API·Agent·이벤트·SSO typed 설정은 이 snapshot의 소비용 view다.
 
 우선순위는 `선택한 YAML > env > 기본값`이다. `--config`/`SERVICE_CONFIG_FILE`은 선택 파일 하나만 사용한다. 로컬 `--local-env-file`은 local/dev에서만 허용하며 프로세스 env보다 낮은 순위다. 명시한 YAML 값은 항상 env보다 우선한다. 환경변수로 조정할 값은 YAML에서 생략해야 한다.
 
@@ -39,15 +39,12 @@
 환경 파일 예제는 Worker 활성/비활성을 가리지 않는다. 기본적으로 Run Worker가 켜져 있고, `EVENT_WORKER_ENABLED`가 없으면 Run Worker 활성 여부를 따른다. 명시한 `EVENT_WORKER_ENABLED`는 독립 적용된다. API만 필요하면 세 Worker flag를 모두 false로 지정한다. 실제 Executor 제출은 별도 `EXECUTOR_SUBMIT_ENABLED`이며 기본 false다. 모델 mock 여부로 제출이 자동 활성화되지 않는다.
 
 ```yaml
-service:
-  runtime:
-    agent_worker_enabled: true
-    task_reconciler_enabled: true
-    event_worker_enabled: true
-    agent_worker_concurrency: 4
-  events:
-    ew_ingress_concurrency: 4
-    ew_pool_size: 4
+AGENT_WORKER_ENABLED: true
+TASK_RECONCILER_ENABLED: true
+EVENT_WORKER_ENABLED: true
+AGENT_WORKER_CONCURRENCY: 4
+EW_INGRESS_CONCURRENCY: 4
+EW_POOL_SIZE: 4
 ```
 
 위 설정의 graph 총한도는 **사용자 요청·승인·Executor 결과를 합쳐 최대4**다. ingress4는 원본 이벤트 수신/routing 병렬성으로 graph 실행 자리가 아니다. 기본 graph 한도는1이고 측정 profile은32다. 이전32+Event4의 측정치는 현재32와 총용량이 다르므로 재측정이 필요하다. 프로세스/Pod가 늘면 pool과 실행 한도도 복제된다.
@@ -62,7 +59,7 @@ service:
 |---|---|---|
 | 기본 로컬 Compose | `uv run python scripts/local.py up --env local` | 기본18000 / 8000 |
 | 외부 인프라 Compose | `APP_ENV=stg APP_CONFIG_GID=<파일그룹ID> docker compose -f compose.external.yaml up --build` | 5000 / 5000 |
-| 기존 부하테스트 Compose | `docker compose -f compose.loadtest.yaml up --build` | 기본18080 / 8000 |
+| 이전 부하테스트 Compose | 현재 SSO·제출 시나리오 이행 미완료. [지원 범위](service-loadtest.md) 확인 | 이전 기본18080 / 8000 |
 | 사내 CICD manifest | `python app.py`, `APP_ENV=dev`, `PORT: 5000` | Service5000 / 5000 |
 | 범용 Kubernetes 예제 | `python app.py`, `APP_ENV=prd`, `PORT: 8000` | Service8000 / 8000 |
 

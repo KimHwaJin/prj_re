@@ -37,11 +37,9 @@ record는 schema_version=1, owner(user_id/project_id/session_id), payload를 갖
 중앙 설정 하나로 모델에 전달할 분석 payload 크기를 조절한다. YAML → env → 기본값 순서는 기존대로다.
 
 ```yaml
-service:
-  agent:
-    # 최근 완료 분석의 JSON payload 문자 수 상한. 전체 LLM prompt/token 상한은 아님.
-    # 0이면 전달을 끔. 원본 보고서·Executor 결과는 삭제하지 않음.
-    agent_session_analysis_max_chars: 16000
+# 최근 완료 분석의 JSON payload 문자 수 상한. 전체 LLM prompt/token 상한은 아님.
+# 0이면 전달을 끔. 원본 보고서·Executor 결과는 삭제하지 않음.
+AGENT_SESSION_ANALYSIS_MAX_CHARS: 16000
 ```
 
 env 이름은 `AGENT_SESSION_ANALYSIS_MAX_CHARS`. 허용값은 **0 또는 2048~64000**, 기본 16000이다. `agent_history_message_limit`은 대화 메시지 수, `agent_observation_max_chars`는 Step 출력 관찰 크기이며 목적이 다르다. 운영 YAML/env 파일에 필수로 새 값을 추가할 필요는 없다.

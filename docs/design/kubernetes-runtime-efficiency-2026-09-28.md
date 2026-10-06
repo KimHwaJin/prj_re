@@ -1,6 +1,8 @@
 # Kubernetes 단일 컨테이너 Pod·최소 자원 운영 설계
 
-작성일: 2026-09-28. 현재 브랜치와 배포 YAML을 읽어 작성한 설계이며 Kubernetes 접속, 부하 시험, 코드 변경, 배포를 수행한 결과가 아니다. [기본 실행 구조 설계](/Users/a10054/SKAX_PROJECT/dtest-agent/docs/design/agent-runtime-target-architecture-2026-09-28.md)를 보완한다. 물리 배치·확장 정책은 이 문서를 우선한다.
+> 과거 설계 기록입니다. 아래 소스 위치·문제점은 작성 당시 기준이며 현재 구현 안내가 아닙니다. 현재 구조는 [서비스 구조](../architecture/service-layout.md), 배포는 [배포 안내](../deployment-configuration.md)를 따릅니다.
+
+작성일: 2026-09-28. 현재 브랜치와 배포 YAML을 읽어 작성한 설계이며 Kubernetes 접속, 부하 시험, 코드 변경, 배포를 수행한 결과가 아니다. 기본 실행 구조 설계（당시 위치: `docs/design/agent-runtime-target-architecture-2026-09-28.md`）를 보완한다. 물리 배치·확장 정책은 이 문서를 우선한다.
 
 **현재 플랫폼에 맞춘 결정: 하나의 Deployment, Pod당 컨테이너 하나, 기본 애플리케이션 프로세스 하나 안에서 API와 제한된 Run 실행 슬롯, 경량 이벤트·전달·복구 loop를 함께 운영한다. 코드의 책임과 용량 한도는 분리한다. Pod 내부의 안전한 동시성을 먼저 확보하고, 자원 기반 자동 확장은 CPU 처리 용량 보강에 사용한다. LLM 대기로만 생기는 큐를 자원 기반 scaler가 알아서 해소한다고 기대하지 않는다.**
 
@@ -57,7 +59,7 @@
 
 위 파일 문제는 실제 운영 장애를 재현했다는 뜻이 아니다. 현재 YAML과 기본 설정을 그대로 사용할 때 생기는 위험이다. Secret이나 플랫폼 설정의 덮어쓰기 값은 확인하지 않았다.
 
-근거: [배포 정의](/Users/a10054/SKAX_PROJECT/dtest-agent/deploy/dtest-agent.yaml:46), [API 내부 실행기](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/api/v1/router.py:33), [고정 health 응답](/Users/a10054/SKAX_PROJECT/dtest-agent/src/main.py:47), [Workflow 파일 저장](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/workflow_file_store.py:14).
+근거: 배포 정의（당시 위치: `deploy/dtest-agent.yaml:46`）, API 내부 실행기（당시 위치: `src/app/api/v1/router.py:33`）, 고정 health 응답（당시 위치: `src/main.py:47`）, Workflow 파일 저장（당시 위치: `src/app/services/workflow_file_store.py:14`）.
 
 **2. 향후 역할별 배포가 가능할 때의 비교안: 두 Deployment**
 

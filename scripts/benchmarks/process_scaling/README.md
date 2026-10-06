@@ -71,7 +71,7 @@ Focused analyzer checks use an actual successful smoke capture:
 
 ```sh
 DTEST_SCALING_CAPTURE=/tmp/scaling-smoke/flow-10-p2-c4-r1/raw.json \
-  python -m pytest scripts/benchmarks/process_scaling/test_analysis.py -q
+  python -m pytest scripts/benchmarks/process_scaling/test_scaling_analysis.py -q
 ```
 
 The durable report generator requires the complete 18-condition matrix, retains

@@ -37,7 +37,7 @@ Fernet 구현과 프로젝트의 직접 `cryptography` 의존성은 제거했다
 
 `jupyter_servers`를 보존하던 이전 정책은 폐기했다. CRUD revision `20261006_0030`이 실제 테이블·행·index를 삭제하며 autogenerate 보존 예외도 제거했다. 공식 SDK Store 제외는 유지한다. 기존 revision은 DB를 현재 head로 올리는 실행 이력이므로 보존한다.
 
-084는 당시 API 제거 기록이고, 현재 정본은 [API 정리 문서](api-service-layout.md)와 [DB migration 안내](database_migrations.md)다. 기존 실제 서비스 DB에 자동 적용하지는 않았으며 선택한 YAML 대상으로 migration을 수행해야 한다.
+084는 당시 API 제거 기록이고, 현재 정본은 [API 정리 문서](architecture/service-layout.md)와 [DB migration 안내](database_migrations.md)다. 기존 실제 서비스 DB에 자동 적용하지는 않았으며 선택한 YAML 대상으로 migration을 수행해야 한다.
 
 ## 검증과 다음 범위
 

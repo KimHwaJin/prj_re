@@ -68,11 +68,9 @@ config → env → 기본값 우선순위를 유지한다. 노드가 환경변�
 | AGENT_MAX_PLAN_REVISIONS | 5 / 1~20 | Run 전체의 사용자 재작성·추가 질문 답변 횟수. JSON 보정/실행 실패 수정 시도와 별개 |
 
 ```yaml
-service:
-  agent:
-    agent_free_plan_enabled: true
-    agent_free_plan_require_approval: true
-    agent_max_plan_revisions: 5
+AGENT_FREE_PLAN_ENABLED: true
+AGENT_FREE_PLAN_REQUIRE_APPROVAL: true
+AGENT_MAX_PLAN_REVISIONS: 5
 ```
 
 승인 설정을 false로 해도 등록 자산 계획은 기존 승인 화면을 사용한다. 후보 여러 개, 필수 입력 미확정, 추가 질문은 자동으로 선택/추측하지 않는다. 완전한 자유 코드 후보가 하나일 때만 설정에 따른 승인을 기록하고 실행한다. 단순 실행별 코드 작성 허용은 실패 후 repair_level을 올리지 않는다. 자유 코드 계획이라도 SINGLE/MULTI 및 시도 정책을 별도로 확인한다.

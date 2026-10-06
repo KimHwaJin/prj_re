@@ -6,7 +6,7 @@
 
 091의 [Skill·Tool 계약](agent-development/skill-tool-contract.md)은 인자 출처 제한을 parameter_bindings로 별도 선언한다. 사용자 편집 정책과 연결 정책은 함께 검증되며 함수명에 의존하지 않는다. 생성기는 두 수동 정책을 보존한다.
 
-`src/agent_service/agents/analysis/workflow/tools/tool_registry.yaml`의 Tool 항목에 `parameter_controls`를 작성한다. 함수의 signature/docstring·기본값은 AST로 읽고 실행하거나 import하지 않는다. 표시 제목·설명·편집 허용·JSON Schema는 개발자가 선언한다. 생성기는 이 수동 정책과 availability를 보존하며 잘못된 정책을 거절한다.
+`src/dtest/agent_service/agents/analysis/workflow/tools/tool_registry.yaml`의 Tool 항목에 `parameter_controls`를 작성한다. 함수의 signature/docstring·기본값은 AST로 읽고 실행하거나 import하지 않는다. 표시 제목·설명·편집 허용·JSON Schema는 개발자가 선언한다. 생성기는 이 수동 정책과 availability를 보존하며 잘못된 정책을 거절한다.
 
 ```yaml
 compute_statistics:

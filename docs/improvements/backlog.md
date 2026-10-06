@@ -14,6 +14,11 @@ Artifact DTO3개·Workflow/Dataset Protocol2개를 제거했다. 실제 HTTP 제
 검색과 오프라인 Dataset 초안 검증은 유지하며 공개 OpenAPI는 동일하다.
 기존 후순위 기능 결정은 바꾸지 않는다.
 
+[112](112-docs-test-cleanup.md)에서 폐기 안내5개·복제 probe3개를 삭제하고,
+현재 API/설정/문서 정본과 기본 pytest 수집을 정리했다. 기본1,364개 및 선택
+벤치마크69개 수집 오류가 없다. 옛 Locust의 현재 SSO·제출 시나리오 이행은
+후속이며 지원되는 실행 안내로 제공하지 않는다.
+
 ## 2026-10-03 리뷰 반영 후 현재 실행 순서
 
 상태: 058·059·060·061에서 1~4단계 구현·로컬 검증, 062에서 5단계 동일 총한도 HTTP fixture 검증 완료(베이스 미병합·미배포). [구현 계획](../design/review-implementation-plan-2026-10-03.md)과 [D-01~D-12 및 C-01~C-04](../reviews/2026-10-03-decisions.md)를 따른다.

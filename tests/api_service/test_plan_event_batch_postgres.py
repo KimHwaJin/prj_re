@@ -120,6 +120,28 @@ async def test_public_event_batch_barrier_replay_and_partial_failure(
     async with h.factory() as db:
         await persist_plan_events(db, deepcopy(state), context)
     assert await snapshot() == before
+    # A replay must not replace the original published payload, even if its
+    # caller changes the body while reusing the event ID.
+    changed_events = deepcopy(events)
+    for item in changed_events:
+        item["envelope"]["data"]["title"] = "Changed retry"
+    async with h.factory() as db:
+        await persist_plan_events(
+            db, {**state, "public_events": changed_events}, context
+        )
+    assert await snapshot() == before
+    async with h.factory() as db:
+        logs = list(
+            await db.scalars(
+                select(AgentRunLogModel).where(
+                    AgentRunLogModel.event_key.in_(keys)
+                )
+            )
+        )
+        assert len(logs) == 3
+        assert all(
+            log.payload["data"]["title"] == "Projection probe" for log in logs
+        )
     failed = make_events()
     original = AgentRunLogService.create
     calls = 0

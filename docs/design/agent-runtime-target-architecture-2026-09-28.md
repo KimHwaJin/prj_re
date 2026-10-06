@@ -1,8 +1,10 @@
 # Agent 실행 구조 개선 설계안
 
+> 과거 설계 기록입니다. 아래 소스 위치·문제점은 작성 당시 기준이며 현재 구현 안내가 아닙니다. 현재 구조는 [서비스 구조](../architecture/service-layout.md), 배포는 [배포 안내](../deployment-configuration.md)를 따릅니다.
+
 작성일: 2026-09-28. 대상: 현재 브랜치의 API → Run → LangGraph → HITL → Executor 연계. **설계 문서이며 구현·배포 완료를 의미하지 않는다. 이번 작업에서 서버 코드와 실행 환경은 변경하지 않는다.**
 
-배포 조건 보완: 최종 환경은 Kubernetes의 단일 컨테이너 Pod이며, CI/CD는 매번 다른 이미지 태그를 배포하고 자동 확장은 자원 사용량 기반이다. [Kubernetes 배치·효율·자동 확장 설계](/Users/a10054/SKAX_PROJECT/dtest-agent/docs/design/kubernetes-runtime-efficiency-2026-09-28.md)에 **단일 Deployment의 통합 Pod + 제한된 내부 동시성**을 현재 기본안으로 반영했다. 아래 API/실행 분리는 우선 코드의 책임·예산 분리로 적용하고 별도 프로세스/Deployment 분리는 향후 조건부 선택으로 바꾼다. 물리 배치·최소 replica·확장 정책은 보완 문서를 우선한다.
+배포 조건 보완: 최종 환경은 Kubernetes의 단일 컨테이너 Pod이며, CI/CD는 매번 다른 이미지 태그를 배포하고 자동 확장은 자원 사용량 기반이다. Kubernetes 배치·효율·자동 확장 설계（당시 위치: `docs/design/kubernetes-runtime-efficiency-2026-09-28.md`）에 **단일 Deployment의 통합 Pod + 제한된 내부 동시성**을 현재 기본안으로 반영했다. 아래 API/실행 분리는 우선 코드의 책임·예산 분리로 적용하고 별도 프로세스/Deployment 분리는 향후 조건부 선택으로 바꾼다. 물리 배치·최소 replica·확장 정책은 보완 문서를 우선한다.
 
 **결정: LangGraph와 PostgreSQL 기반 작업 접수는 유지한다. API와 그래프 실행을 분리하고, 모든 실행·재개 요청을 하나의 실행 제어 경로로 모은다. 실행 프로세스마다 제한된 수의 Run을 동시에 처리하되, 동일 세션의 checkpoint를 쓰는 실행은 하나만 허용한다. 그래프·연결 풀을 재사용하고, 취소·복구·외부 제출의 중복 방지를 먼저 보장한 뒤 동시성을 확대한다.**
 
@@ -32,7 +34,7 @@
 | 1초 | 3.63초 | 155ms | 17.36초 | 49ms | 46ms |
 | 2초 | 3.71초 | 175ms | 19.98초 | 52ms | 55ms |
 
-이 표는 처리 여유와 조회 비용 문제의 근거다. Graph 재사용으로 49ms가 그대로 사라진다거나 동시성을 5배 늘리면 처리량도 5배 된다는 보장은 아니다. LLM 0ms 조건에서는 CPU·DB가 한계일 수 있고, 긴 LLM 대기 조건은 별도 검증해야 한다. [실험 보고서](/Users/a10054/SKAX_PROJECT/dtest-agent/docs/reports/polling-delay-diagnosis-2026-09-28.md)
+이 표는 처리 여유와 조회 비용 문제의 근거다. Graph 재사용으로 49ms가 그대로 사라진다거나 동시성을 5배 늘리면 처리량도 5배 된다는 보장은 아니다. LLM 0ms 조건에서는 CPU·DB가 한계일 수 있고, 긴 LLM 대기 조건은 별도 검증해야 한다. 실험 보고서（당시 위치: `docs/reports/polling-delay-diagnosis-2026-09-28.md`）
 
 **2. 목표 구조**
 
@@ -300,9 +302,9 @@ lease 만료 시 취소 요청이 있으면 정상 실행 재시도보다 취소
 | 외부 실행 업무 deadline | Executor 장기 작업 생애주기 | 별도 정책. 침묵이나 짧은 worker lease로 실패 처리하지 않음 |
 | checkpoint·binding·receipt·artifact 보존 | 재개·중복 제거·결과 확인 | 활성 작업은 보호하고 종료 후 지연 이벤트·복구 기간까지 보존 |
 
-현재 코드의 `EXECUTOR_OPERATION_TIMEOUT_SECONDS`, `EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS` 기본값은 각각 600초이고 `.env.example`은 각각 300초다. 전자는 요청의 `operation.operation_timeout_seconds`, 후자는 MULTI의 `lifecycle.operation_wait_timeout_seconds`로 전달된다. 실제 배포 override 및 Executor의 상한·해석은 미확인이다. 전체 여정이 1주인 것과 operation 하나가 1주인 것은 다르므로 모든 timeout을 일괄 1주로 늘리지 않는다. 관련 코드: [설정 기본값](/Users/a10054/SKAX_PROJECT/dtest-agent/src/agent_config.py:340), [Executor payload](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/graphs/nodes/executor_request.py:177).
+현재 코드의 `EXECUTOR_OPERATION_TIMEOUT_SECONDS`, `EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS` 기본값은 각각 600초이고 `.env.example`은 각각 300초다. 전자는 요청의 `operation.operation_timeout_seconds`, 후자는 MULTI의 `lifecycle.operation_wait_timeout_seconds`로 전달된다. 실제 배포 override 및 Executor의 상한·해석은 미확인이다. 전체 여정이 1주인 것과 operation 하나가 1주인 것은 다르므로 모든 timeout을 일괄 1주로 늘리지 않는다. 관련 코드: 설정 기본값（당시 위치: `src/agent_config.py:340`）, Executor payload（당시 위치: `src/app/graphs/nodes/executor_request.py:177`）.
 
-현재 analysis interrupt는 Task를 `WAITING_INPUT`으로 저장한다. [Run 상태 반영](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/run_service.py:520). 사용자 입력 대기와 외부 실행 대기를 구분해야 한다. 실행 lease를 풀어도 해당 세션의 일반 입력 잠금은 업무 상태로 유지한다. 같은 사용자의 다른 세션은 실행할 수 있다. [현재 취소 경로](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/run_service.py:644)는 WAITING_INPUT을 즉시 canceled로 전환하므로, 외부 실행 중에는 `cancel_requested → Executor 취소 접수 → 실제 종료 확인`과 완료 이벤트 경쟁 처리를 별도로 검증해야 한다. 로컬 상태 canceled를 외부 작업 중단 확인으로 간주하지 않는다.
+현재 analysis interrupt는 Task를 `WAITING_INPUT`으로 저장한다. Run 상태 반영（당시 위치: `src/app/services/run_service.py:520`）. 사용자 입력 대기와 외부 실행 대기를 구분해야 한다. 실행 lease를 풀어도 해당 세션의 일반 입력 잠금은 업무 상태로 유지한다. 같은 사용자의 다른 세션은 실행할 수 있다. 현재 취소 경로（당시 위치: `src/app/services/run_service.py:644`）는 WAITING_INPUT을 즉시 canceled로 전환하므로, 외부 실행 중에는 `cancel_requested → Executor 취소 접수 → 실제 종료 확인`과 완료 이벤트 경쟁 처리를 별도로 검증해야 한다. 로컬 상태 canceled를 외부 작업 중단 확인으로 간주하지 않는다.
 
 추가 필수 조건:
 
@@ -526,15 +528,15 @@ Run 유입 고정 실험은 독립 세션의 실행 가능한 명령을 일정�
 
 **코드 및 근거**
 
-- [API 안의 Run 워커 기동](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/api/v1/router.py:33), [현재 claim/순차 실행](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/agent_run_worker.py:23)
-- [Run 취소 감시와 정리](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/run_service.py:64), [Task heartbeat·복구](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/task_service.py:115)
-- [Graph 수명](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/agent_graph_service.py:142), [실제 thread 선택](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/agent_graph_service.py:265)
-- [세션 활성 Task 인덱스](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/models/common/task_model.py:72), [resume origin 조회](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/run_service.py:147)
-- [이벤트 워커의 별도 Graph 생성](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/agent_worker/worker_main.py:93), [직접 이벤트 재개·receipt](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/agent_worker/langgraph_adapter.py:18)
-- [checkpoint pool 생성](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/graphs/checkpointer_factory.py:20), [bridge 수명](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/agent_worker/api_bridge.py:20)
-- [설치된 Saver 내부 lock](/Users/a10054/SKAX_PROJECT/dtest-agent/.venv/lib/python3.11/site-packages/langgraph/checkpoint/postgres/aio.py:374). 로컬 확인 버전: LangGraph 1.2.11, checkpoint-postgres 3.1.2, psycopg 3.3.4, psycopg-pool 3.3.1, SQLAlchemy 2.0.52. 컨테이너 구현 시 이미지 lockfile/실제 설치본도 다시 대조한다.
-- [현재 SSE DB polling](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/api/v1/routes/runs.py:122), [token buffer](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/llm_token_event_service.py:16)
-- [Executor HTTP 호출](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/services/executor_client.py:26), [제출 payload 구성](/Users/a10054/SKAX_PROJECT/dtest-agent/src/app/graphs/nodes/executor_request.py:157)
+- API 안의 Run 워커 기동（당시 위치: `src/app/api/v1/router.py:33`）, 현재 claim/순차 실행（당시 위치: `src/app/agent_run_worker.py:23`）
+- Run 취소 감시와 정리（당시 위치: `src/app/services/run_service.py:64`）, Task heartbeat·복구（당시 위치: `src/app/services/task_service.py:115`）
+- Graph 수명（당시 위치: `src/app/services/agent_graph_service.py:142`）, 실제 thread 선택（당시 위치: `src/app/services/agent_graph_service.py:265`）
+- 세션 활성 Task 인덱스（당시 위치: `src/app/models/common/task_model.py:72`）, resume origin 조회（당시 위치: `src/app/services/run_service.py:147`）
+- 이벤트 워커의 별도 Graph 생성（당시 위치: `src/app/agent_worker/worker_main.py:93`）, 직접 이벤트 재개·receipt（당시 위치: `src/app/agent_worker/langgraph_adapter.py:18`）
+- checkpoint pool 생성（당시 위치: `src/app/graphs/checkpointer_factory.py:20`）, bridge 수명（당시 위치: `src/app/agent_worker/api_bridge.py:20`）
+- 설치된 Saver 내부 lock（당시 위치: `.venv/lib/python3.11/site-packages/langgraph/checkpoint/postgres/aio.py:374`）. 로컬 확인 버전: LangGraph 1.2.11, checkpoint-postgres 3.1.2, psycopg 3.3.4, psycopg-pool 3.3.1, SQLAlchemy 2.0.52. 컨테이너 구현 시 이미지 lockfile/실제 설치본도 다시 대조한다.
+- 현재 SSE DB polling（당시 위치: `src/app/api/v1/routes/runs.py:122`）, token buffer（당시 위치: `src/app/services/llm_token_event_service.py:16`）
+- Executor HTTP 호출（당시 위치: `src/app/services/executor_client.py:26`）, 제출 payload 구성（당시 위치: `src/app/graphs/nodes/executor_request.py:157`）
 - [큐 기반 부하 제어 원칙](https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling), [경쟁 소비자 패턴](https://learn.microsoft.com/en-us/azure/architecture/patterns/competing-consumers), [Python 동시성 상한 제어](https://docs.python.org/3/library/asyncio-sync.html#semaphore)
 
 공식 문서는 설계 원칙의 참고이며, 최신 문서 예제가 현재 설치 버전에 그대로 적용된다는 보장은 없다. 프레임워크 업그레이드는 이 설계의 선행 조건으로 두지 않고 현재 버전에서 필요한 기능과 장애 복구를 검증한다.

@@ -40,8 +40,8 @@
 
 ## 확인 가능한 검증 위치
 
-- [표준 계약·실행 회귀](../../src/agent_service/agents/analysis/tests/test_workflow_standard.py)
-- [PostgreSQL API 회귀](../../src/api_service/test/test_workflow_standard_postgres.py)
+- [표준 계약·실행 회귀](../../tests/agent_service/test_workflow_standard.py)
+- [PostgreSQL API 회귀](../../tests/api_service/test_workflow_standard_postgres.py)
 - [작업 완료·검증 기록](../improvements/092-workflow-standard-contract.md)
 
 변경 전 정의는 이 파일이 아니라 보존 원본이다. 변경 후 작성/개발 기준은 확정 문서다. 추적표는 확정 규격을 대신하지 않는다.
