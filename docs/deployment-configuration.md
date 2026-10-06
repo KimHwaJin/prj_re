@@ -4,6 +4,10 @@
 
 061에서 Worker와 SSE 알림을 DB 정본당 LISTEN 연결1개로 공유한다. 유휴 Worker가 유지하는 연결도 DB 예산에 포함하며 실효 summary는 `notification_listener`로 표시한다. config/수명/migration은 [알림 안내](agent-command-wakeup.md)를 따른다.
 
+## 097 YAML 중심 설정 이행
+
+현재 파일 준비·이전 명령은 [앱 설정 안내](application-configuration.md)를 따른다. 공통 정책은 config.yml, 실제 연결/SSO는 Git·이미지에서 제외한 환경별 YAML에 두고 example에서 초기화한다. .env 없이 일반 서비스와 동일 설정 migration을 실행한다. 아래 구조 설명은 유지하며 로컬 Compose는 앱 env_file 대신 생성한 YAML을 마운트한다. 기존 dotenv 중심 설명·예제는 097이 대체한다.
+
 ## 설정 원천과 공통 값
 
 `service_settings.load_settings()`가 한 번 읽어 불변 snapshot을 만든다. API·Agent·이벤트·SSO typed 설정은 이 snapshot의 소비용 view다.
@@ -57,8 +61,8 @@ service:
 
 | 환경 | 기동 | 호스트 / 컨테이너 port |
 |---|---|---|
-| 기본 로컬 Compose | `python3 scripts/local.py up` | 기본18000 / 8000 |
-| 외부 인프라 Compose | `docker compose -f compose.external.yaml up --build` | 8000 / 8000 |
+| 기본 로컬 Compose | `uv run python scripts/local.py up --env dev` | 기본18000 / 8000 |
+| 외부 인프라 Compose | `APP_ENV=stg APP_CONFIG_GID=<파일그룹ID> docker compose -f compose.external.yaml up --build` | 8000 / 8000 |
 | 기존 부하테스트 Compose | `docker compose -f compose.loadtest.yaml up --build` | 기본18080 / 8000 |
 | 사내 CICD manifest | `python app.py`, `APP_ENV=dev`, `SERVER_PORT=5000` | Service5000 / 5000 |
 | 범용 Kubernetes 예제 | `python app.py`, `APP_ENV=prd`, `SERVER_PORT=8000` | Service8000 / 8000 |
@@ -77,27 +81,14 @@ SIGTERM을 받은 app.py가 먼저 신규 claim·SSE를 중지하고 drain을 �
 
 실행 전에, 서버와 **동일한 환경변수/선택 YAML**로 아래 schema를 준비한다. 애플리케이션 시작마다 reset하거나 migration하지 않는다. 일반 배포에서는 schema 준비를 직렬화한 사전 배포 단계에서 실행해야 한다. 이번 작업은 사내 CI stage를 추가하거나 자동 DB 이전을 하지 않았다.
 
-```bash
-PYTHONPATH=src python -m alembic -c alembic.crud.ini upgrade head
-PYTHONPATH=src python -m alembic -c alembic.ini upgrade head
+```sh
+uv run python scripts/migrate.py --env prd --check-config
+uv run python scripts/migrate.py --env prd
 ```
 
-CRUD migration은 프로젝트 메모리 Store schema도 관리한다. checkpoint 초기화는 중앙 설정을 사용한다.
+같은 중앙 YAML을 선택해 CRUD(프로젝트 메모리 Store 포함)·이벤트 Alembic, checkpoint SDK setup, command backfill을 수행한다. 실제 DB/계정·pgvector extension은 먼저 준비한다.
 
-```python
-# 저장소 루트, 서버와 같은 APP_ENV/SERVICE_CONFIG_FILE/env에서 1회 실행.
-import asyncio
-from service_settings import get_settings
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-
-async def prepare():
-    async with AsyncPostgresSaver.from_conn_string(get_settings().agent.checkpoint_db_uri) as saver:
-        await saver.setup()
-
-asyncio.run(prepare())
-```
-
-로컬 helper는 `postgres` 호스트의 허용 DB만 대상으로 migration한다. `.env`는 수정하지 않고, 구 별칭을 정본으로 합친 `.env.local` 하나에 인프라 값·DB host override를 생성한다. 같은 파일을 Compose interpolation과 env_file로 사용한다. 직접 편집할 서비스 원천은 `.env`이며 로컬 port/관리 계정은 `.env.local`에서 보존한다. 원래 `.env`의 역할별 DB 이름·계정·URL 옵션은 유지한다.
+로컬 helper는 postgres host의 허용 DB만 migration한다. 선택 YAML에서 workspace/config.compose.yml을 생성하고 DB host/port만 postgres:5432로 변경한다. .env.local은 인프라 port·관리 계정·공유 경로·마운트 그룹용이며 앱 env_file로 쓰지 않는다. 생성본은0640+동일 보조 GID로 비루트 읽기를 허용하고 원본 profile/.env.local은0600으로 유지한다. [마운트·설정 안내](application-configuration.md)를 따른다.
 
 기존 별도 Worker가 있는 환경에서는 **이전 Worker를 먼저 drain/종료**한 뒤 migration·단일 API 기동을 해야 한다. 로컬 helper는 자기 Compose 프로젝트의 `event-worker` label만 찾아70초 stop 후 제거한다. 다른 프로젝트의 Executor·DB·Redis는 대상이 아니다. 로컬 PostgreSQL named volume은 유지한다. Kubernetes도 구 Worker Deployment를 계속 띄운 채 새 내장 Worker를 롤아웃하는 방식으로 전환하지 않는다.
 

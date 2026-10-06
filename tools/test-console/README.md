@@ -8,7 +8,9 @@
 
 ```sh
 uv sync --frozen
-uv run python app.py --env dev --local-env-file .env
+uv run python scripts/configure.py init --env dev
+# 실제 config.dev.yml 수정·DB schema 준비 후
+uv run python app.py --env dev
 # 기본 주소: http://127.0.0.1:8000/demo
 ```
 
@@ -51,6 +53,8 @@ PYTHONPATH=src /Users/a10054/SKAX_PROJECT/dtest-agent/.venv/bin/python \
   --executor-shared-root /Users/a10054/SKAX_PROJECT/executor/shared_dir \
   --port 18102 --db-port 53603
 ```
+
+아래 진단의 `--model-env`는 기존 private model dotenv를 명시적으로 가져오는 호환 옵션이며 일반 앱 설정 방식이 아니다. 새 .env.example은 모델 전체 예제가 아니므로 진단용 실제 모델 값은 따로 제공한다.
 
 `--model-env`는 MODEL_NAME/API_BASE_URL/MODEL_API_KEY와 모델 timeout/retry/temperature/thinking/structured-output 키만 읽는다. 기존 .env의 DB·Redis·SSO·Executor 설정은 가져오지 않는다. model.frodo.com의 사용자 지정 alias(10.250.110.99)는 진단 Python 프로세스의 연결 해석에만 적용하며 /etc/hosts를 바꾸지 않는다. 인증정보·모델 endpoint는 HTML에 주입하지 않는다.
 

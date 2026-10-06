@@ -3,20 +3,13 @@ name: dtest-agent-local
 
 x-app: &app
   image: dtest-agent:local-dev
-  env_file:
-    - .env.local
+  group_add:
+    - "${LOCAL_CONFIG_GID:?Generate private YAML with scripts/local.py}"
   environment: &app-environment
-    APP_ENV: dev
-    SERVER_PORT: "8000"
-    AGENT_WORKER_ENABLED: "true"
-    TASK_RECONCILER_ENABLED: "true"
-    EVENT_WORKER_ENABLED: "true"
-    EW_HEALTH_PORT: "0"
-    DATABASE_URL: ${LOCAL_DATABASE_URL:?Run python3 scripts/local.py init}
-    CHECKPOINT_DB_URI: ${LOCAL_CHECKPOINT_DB_URI:?Run python3 scripts/local.py init}
-    EW_DATABASE_URL: ${LOCAL_EW_DATABASE_URL:?Run python3 scripts/local.py init}
-    WORKFLOW_DATABASE_URL: ${LOCAL_WORKFLOW_DATABASE_URL:?Run python3 scripts/local.py init}
+    APP_ENV: ${LOCAL_APP_ENV:-dev}
+    SERVICE_CONFIG_FILE: /app/workspace/config.compose.yml
   volumes:
+    - ./workspace/config.compose.yml:/app/workspace/config.compose.yml:ro
     - artifacts:/app/var
     - executor-inputs:/workspace/pv
     - demo-artifacts:/app/demo_artifacts

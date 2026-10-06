@@ -1,33 +1,36 @@
 # 로컬 PostgreSQL과 단일 애플리케이션
 
-`python3 scripts/local.py up` 또는 `update`로 API·Agent·Executor 이벤트 Worker를 **한 API 컨테이너의 app.py 한 프로세스**에서 실행한다. 기본 주소는 `http://127.0.0.1:18000`, 내부 port8000이다. 이제 별도 이벤트 Worker port18011은 배포 정본에서 사용하지 않는다.
+`uv run python scripts/local.py up --env dev` 또는 update로 API·Agent·Executor 이벤트 수신을 한 컨테이너의 app.py 한 프로세스에서 실행한다. 기본 화면은 http://127.0.0.1:18000/demo, Swagger는 /docs, 컨테이너 내부 port8000이다.
 
-서비스 설정의 원천은 `.env`다. helper가 구 별칭을 공통 이름으로 합치고 PostgreSQL host만 `postgres`로 바꿔 `.env.local` 하나에 생성한다. DB 이름·계정·옵션, Redis·모델·Executor 주소는 유지한다. `.env`는 수정하지 않는다. `.env.local`은 비공개 생성 파일이며 Compose interpolation과 애플리케이션 env_file 양쪽에 사용된다. 직접 편집한 LOCAL_API_PORT/LOCAL_POSTGRES_PORT/LOCAL_POSTGRES_PASSWORD는 보존된다.
+## 설정과 초기화
 
-```bash
-python3 scripts/local.py init
-python3 scripts/local.py up
-python3 scripts/local.py update
-python3 scripts/local.py status
-python3 scripts/local.py smoke
+[앱 설정 안내](application-configuration.md)의 config.yml+config.dev.yml이 원천이다. helper는 같은 loader로 읽고 PostgreSQL host/port만 postgres:5432로 바꿔 workspace/config.compose.yml에 저장한다. DB 이름·계정·옵션과 Redis·LLM·Executor 값은 유지한다. 원본 .env나 profile을 수정하지 않는다. `.env.local`에는 Compose 인프라 값만 남긴다. 이전 LOCAL_API_PORT/LOCAL_POSTGRES_PORT/LOCAL_POSTGRES_PASSWORD 등은 유지한다. 원본 profile과 .env.local은0600이고 Git·이미지에서 제외한다. 컨테이너에 마운트하는 생성 YAML만0640으로 저장하고 해당 파일 GID를 보조 그룹으로 전달하여 비루트 프로세스가 읽도록 한다.
+
+```sh
+uv sync --frozen
+uv run python scripts/configure.py init --env dev
+# 실제 config.dev.yml 수정. 기존 .env는 init 대신 import-env로 이전 가능
+uv run python scripts/local.py init --env dev
+uv run python scripts/local.py up --env dev
+uv run python scripts/local.py update --env dev
+uv run python scripts/local.py status --env dev
+uv run python scripts/local.py smoke --env dev
 ```
 
-up/update는 이미지 빌드 후 기존 API와 같은 로컬 Compose 프로젝트의 구 event-worker만 drain/종료하고, migration 뒤 API 하나를 재생성한다. PostgreSQL named volume은 보존한다. 기존 Worker를 정리하지 않은 단순 `docker compose up` 전환은 중복 이벤트 소비를 남길 수 있으므로 helper를 사용한다. 실제 Executor 실행 중에는 업데이트가 끝난 뒤 기존 대기 Run을 이어가는지 별도로 확인한다.
+up/update는 이미지 빌드 후 기존 API와 같은 로컬 프로젝트의 구 event-worker를 drain/종료하고 migration 뒤 API를 재생성한다. named volume은 보존한다. DB 초기화는 chat_app·agent만 허용하고 선택한 역할을 로컬에 준비한다. DB 이름을 다른 이름으로 설정한 경우 자동 변경하지 않으며 bootstrap에서 거부한다. 실제 Executor 장기 대기 Run은 업데이트 후 재개 여부를 확인한다.
 
-기본 연결:
-
-| 대상 | 호스트 주소 | 컨테이너 내부 |
+| 대상 | 호스트 | 컨테이너 내부 |
 |---|---|---|
-| API·Swagger·demo | 127.0.0.1:18000 | api:8000 |
+| API / Swagger / demo | 127.0.0.1:18000 | api:8000 |
 | PostgreSQL | 127.0.0.1:15432 | postgres:5432 |
-| Redis | `.env`의 REDIS_URL | 같은 공용 REDIS_URL |
+| Redis | 선택 YAML의 redis_url | 선택 주소 그대로 |
 
-Redis 컨테이너는 `local-redis` 선택 profile이다. `.env`에서 `redis://redis:6379/0`을 선택하면 helper가 이 profile로 Redis도 기동한다. 외부 Redis 주소를 선택하면 그대로 연결하고 로컬 Redis는 띄우지 않는다. 실제 Executor 이벤트는 Executor가 발행하는 Redis·stream과 서비스 수신 설정이 일치해야 한다.
+LOCAL_API_PORT/LOCAL_POSTGRES_PORT는 호스트 port다. 실제 Executor 공유 input/result root는 같은 절대 경로로 설정하고 존재하는 폴더를 마운트한다. 두 root가 다르면 별도 bind mount 설계가 필요하므로 helper가 거부한다. host에서만 유효한 127.0.0.1 Redis/Executor/모델 주소는 컨테이너에서 자기 자신을 의미하므로 실제 도달 가능한 주소로 바꾼다. Docker Desktop의 host 서비스는 host.docker.internal을 사용할 수 있다.
 
-CRUD/Store는 `.env`의 DATABASE_URL DB, checkpoint는 CHECKPOINT_DB_URI DB다. 이벤트 DB override가 없으면 DATABASE_URL에서 파생되고, Workflow override가 없으면 이벤트 DB에서 파생된다. 기존 .env에서 EW_DATABASE_URL=agent를 사용하면 계속 agent DB를 본다. SQL 초기화 파일은 신규 볼륨에 agent DB를 만들며 기존 자료를 이전하지 않는다.
+Redis는 local-redis 선택 profile이다. YAML에 redis://redis:6379/0을 넣으면 helper가 해당 profile로 기동한다. 외부 주소면 외부 Redis를 사용한다. Executor와 Redis·event Stream·consumer namespace를 맞춘다. 외부 환경과 같은 consumer group을 쓰는 경우 외부 이벤트도 소비할 수 있으므로 연계 대상에 맞춰 선택한다.
 
-LOCAL_API_WORKERS와 LOCAL_EVENT_WORKER_PORT는 더 이상 설정하지 않는다. 동시 처리는 AGENT_WORKER_CONCURRENCY/EW_DISPATCH_CONCURRENCY로 정한다. 기존4프로세스×Run C에서 총한도를 유지하려면1프로세스의 Run 한도를4C로 명시해 검증해야 한다. 자동으로 값을 곱하지 않는다. 한 session 잠금과 다른 session 독립 실행은 유지된다. 두 실행 한도를 하나로 통합하는 작업은 다음 단계다.
+CRUD·Store·명령 원장·이벤트 Inbox는 DATABASE_URL DB를 공유한다. checkpoint는 CHECKPOINT_DB_URI DB다. 과거 EW_DATABASE_URL=agent로 분리했다면 새 실행에서는 같은 API DB 규칙을 만족해야 하며 기존 데이터는 자동 이전하지 않는다.
 
-smoke는 health/OpenAPI/통합 readiness와 실제 DB identity·Redis를 확인한다. 테스트 사용자를 우회 등록하지 않는다. 현재 API는 SSO 로그인 cookie/CSRF를 따르므로 Swagger/demo의 실제 사용자 호출에는 사내 adapter 설정이 필요하다.
+graph 동시성은 AGENT_WORKER_CONCURRENCY 하나로 설정한다. EW_INGRESS_CONCURRENCY는 이벤트 수신/routing 병렬성이다. 폐기된 LOCAL_API_WORKERS, LOCAL_EVENT_WORKER_PORT, EW_DISPATCH_CONCURRENCY는 사용하지 않는다. 한 세션 잠금은 유지한다.
 
-[전체 설정과 배포 안내](deployment-configuration.md)를 따른다. 기존 볼륨의 비밀번호를 모르면 새로 덮어쓰지 말고 현재 LOCAL_POSTGRES_PASSWORD를 유지한다.
+smoke는 health/OpenAPI/readiness·DB identity·Redis를 확인한다. 실제 사용자 호출은 일반 SSO cookie/CSRF를 사용한다. SDK adapter 미설정이면 로그인503이며 test 계정 우회가 없다. 기존 PostgreSQL volume의 비밀번호를 모르거나 이전 .env.local이 있다면 LOCAL_POSTGRES_PASSWORD를 임의 교체하지 않는다. 실제 컨테이너 업데이트는 명시적으로 up/update를 실행할 때만 수행한다.

@@ -237,3 +237,10 @@ workspace/
 .DS_Store
 .langgraph_api/
 *.ipynb
+
+# Private profile configurations (copy the tracked *.example.yml files)
+/config.dev.yml
+/config.stg.yml
+/config.prd.yml
+/config.local.yml
+/config.active.yml

@@ -14,6 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 ENV_FILE = ROOT / ".env.local"
+APP_CONFIG = ROOT / "workspace/config.compose.yml"
 
 
 def read_env(path):
@@ -27,62 +28,49 @@ def read_env(path):
     return values
 
 
-def initialize():
-    if not (ROOT / ".env").exists():
-        raise RuntimeError("Create .env from .env.example before starting the local environment")
-    # Let Compose parse dotenv quoting/interpolation exactly as it will for the API.
-    config = json.dumps({"services": {"inspect": {"image": "dtest-agent:local-dev",
-                                                "env_file": [str(ROOT / ".env")]}}})
-    result = subprocess.run(["docker", "compose", "--project-directory", str(ROOT),
-                             "-f", "-", "config", "--format", "json"], input=config,
-                            capture_output=True, text=True, check=True)
-    source = json.loads(result.stdout)["services"]["inspect"]["environment"]
-    # Canonicalize old spellings before host overrides; never modify the user's .env.
+def initialize(profile="dev", config_path=None):
+    # Resolve once with exactly the same loader as app.py. No implicit .env read.
     sys.path.insert(0, str(ROOT / "src"))
-    from service_settings import ALIASES
-    source = dict(source)
-    for canonical, aliases in ALIASES.items():
-        present = [name for name in (canonical, *aliases) if name in source]
-        if len({source[name] for name in present}) > 1:
-            raise RuntimeError("Conflicting aliases for " + canonical)
-        if present:
-            source[canonical] = source[present[0]]
-        for alias in aliases:
-            source.pop(alias, None)
+    import yaml
+    from service_settings import load_settings
+    from service_runtime.configuration_files import write_private, yaml_document
+    service = load_settings(root=ROOT, profile=profile, config_path=config_path)
+    source = dict(service.inputs)
     previous = read_env(ENV_FILE)
     values = {key: previous.get(key, default) for key, default in
               read_env(ROOT / ".env.local.example").items() if key.startswith("LOCAL_")}
     values["LOCAL_POSTGRES_PASSWORD"] = previous.get("LOCAL_POSTGRES_PASSWORD") or secrets.token_hex(24)
-    keys = ["DATABASE_URL", "CHECKPOINT_DB_URI", "EW_DATABASE_URL", "WORKFLOW_DATABASE_URL"]
-    for key in keys:
-        fallback = {"EW_DATABASE_URL": source.get("DATABASE_URL"),
-                    "WORKFLOW_DATABASE_URL": source.get("EW_DATABASE_URL") or source.get("DATABASE_URL")}
-        value = source.get(key) or fallback.get(key)
-        if not value:
-            raise RuntimeError(key + " is required in .env")
+    targets = {"DATABASE_URL": service.api.database_url, "CHECKPOINT_DB_URI": service.agent.checkpoint_db_uri,
+               "EW_DATABASE_URL": service.worker.database_url, "WORKFLOW_DATABASE_URL": service.workflow_database_url}
+    for key, value in targets.items():
+        if value is None:
+            continue
         parsed = urlsplit(value)
-        if not parsed.username or not parsed.password or parsed.scheme not in {"postgresql", "postgresql+asyncpg", "postgresql+psycopg"}:
+        if not parsed.username or not parsed.password:
             raise RuntimeError(key + " must be a PostgreSQL URL with credentials")
         credentials = parsed.netloc.rsplit("@", 1)[0]
-        # Preserve credentials, database, query, scheme and port; replace only host.
-        authority = credentials + "@postgres" + (":" + str(parsed.port) if parsed.port else "")
-        values["LOCAL_" + key] = urlunsplit(parsed._replace(netloc=authority))
-    shared = source.get("EXECUTOR_SHARED_INPUT_ROOT", "/workspace/pv")
+        # Preserve role, DB and query. All Compose DB connections use internal port5432.
+        source[key] = urlunsplit(parsed._replace(netloc=credentials + "@postgres:5432"))
+    shared = str(service.agent.executor_shared_input_root)
     if not Path(shared).is_absolute():
         raise RuntimeError("EXECUTOR_SHARED_INPUT_ROOT must be absolute for the Docker bind mount")
-    result_root = source.get("EXECUTOR_SHARED_RESULT_ROOT", shared)
-    if result_root != shared:
+    if str(service.agent.executor_shared_result_root) != shared:
         raise RuntimeError("Configure separate Docker bind mounts when input/result roots differ")
     values["LOCAL_SHARED_INPUT_ROOT"] = shared
-    content = "# Generated canonical .env + local DB host overrides. Do not commit.\n"
-    # One generated file serves both Compose interpolation and env_file.
-    # Local infrastructure controls are preserved; service values always come from .env.
-    for key, value in {**source, **values}.items():
+    values["LOCAL_APP_ENV"] = service.profile
+    source.update(SERVER_HOST="0.0.0.0", SERVER_PORT=8000)
+    write_private(APP_CONFIG, "# Private resolved service settings for local Compose.\n" +
+                  yaml.safe_dump(yaml_document(source), allow_unicode=True, sort_keys=False), overwrite=True)
+    # The non-root container joins only this file's group; source profile stays0600.
+    # Host bind mounts preserve permissions, unlike the old env_file transport.
+    os.chmod(APP_CONFIG, 0o640)
+    values["LOCAL_CONFIG_GID"] = str(APP_CONFIG.stat().st_gid)
+    # Only Compose infrastructure variables remain in dotenv, never application settings.
+    content = "# Compose infrastructure only. Service values live in workspace/config.compose.yml.\n"
+    for key, value in values.items():
         content += key + "='" + str(value).replace("'", "\\'") + "'\n"
-    with ENV_FILE.open("w") as output:
-        os.chmod(ENV_FILE, 0o600)
-        output.write(content)
-    print("Synchronized canonical .env settings; only database hosts point to local PostgreSQL.")
+    write_private(ENV_FILE, content, overwrite=True)
+    print("Prepared private YAML from selected service configuration; local DB host override applied.")
 
 
 def compose(*args):
@@ -90,8 +78,9 @@ def compose(*args):
     revision = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
                               capture_output=True, text=True)
     digest = hashlib.sha256()
-    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py", "app.py"]]
-    sources.extend(ROOT.glob("config*.yml"))
+    sources = [ROOT / name for name in ["Dockerfile", "pyproject.toml", "uv.lock", "README.md", "cli.py", "run.py", "app.py", "scripts/configure.py", "scripts/migrate.py", "config.cicd.dev.yml", "config.diagnostic.yml"]]
+    sources.append(ROOT / "config.yml")
+    sources.extend(ROOT.glob("config.*.example.yml"))
     for directory in ["src", "migrations", "crud_migrations", "scripts/local"]:
         sources.extend(p for p in (ROOT / directory).rglob("*")
                        if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc")
@@ -141,13 +130,17 @@ def smoke():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["init", "up", "update", "down", "status", "logs", "smoke"])
+    parser.add_argument("--env", choices=["dev", "stg", "prd"], default="dev")
+    parser.add_argument("--config", type=Path)
     args = parser.parse_args()
-    initialize()
+    initialize(args.env, args.config)
     if args.action == "init":
         return
     if args.action in {"up", "update"}:
         compose("build", "api")
-        redis_host = urlsplit(read_env(ENV_FILE).get("REDIS_URL", "")).hostname
+        from service_settings import load_settings
+        local = load_settings(config_path=APP_CONFIG, environ={}, profile=args.env)
+        redis_host = urlsplit(local.api.redis_url).hostname
         if redis_host == "redis":
             compose("--profile", "local-redis", "up", "-d", "--wait", "postgres", "redis")
         else:

@@ -1,56 +1,153 @@
-# Only values under service belong to this application.
-# YAML values take precedence over environment variables.
+# 앱 동작 정책의 정본. 환경별 config.{dev|stg|prd}.yml이 항목별로 우선합니다.
+# 실제 연결 주소·자격증명은 환경별 파일에만 둡니다. 환경변수는 YAML 미지정 항목의 보조 입력입니다.
 service:
   runtime:
     app_name: DTest Agent API
-    server_host: 0.0.0.0
-    # server_port: 8000  # 기본값. 명시하면 SERVER_PORT 환경변수보다 우선한다.
+    api_v1_prefix: /api/v1
+    server_reload: false  # Worker 수명 때문에 reload 대신 프로세스를 재시작합니다.
+    agent_worker_enabled: true
+    event_worker_enabled: true
+    task_reconciler_enabled: true
+    agent_worker_concurrency: 1  # 프로세스당 사용자/Executor 재개 graph의 합계. 측정 후 조정합니다.
+    agent_worker_notify_enabled: true
+    agent_worker_poll_interval_seconds: 0.25  # LISTEN 미연결 fallback 주기, 초.
+    agent_worker_reconcile_interval_seconds: 5  # 알림 유실 보완, 초.
+    agent_worker_max_retries: 3
+    agent_worker_retry_backoff_seconds: 1
+    agent_worker_retry_max_backoff_seconds: 30
+    task_lease_seconds: 300
+    task_reconcile_interval_seconds: 30
+    task_cancel_poll_interval_seconds: 0.25
+    run_cleanup_timeout_seconds: 5
+    run_monitor_timeout_seconds: 3
+    shutdown_drain_seconds: 20
+    shutdown_timeout_seconds: 25
+    sse_poll_interval_seconds: 0.5
+    sse_reconcile_interval_seconds: 15
+    sse_max_connections: 1000
+    sse_heartbeat_seconds: 15
+    sse_event_batch_size: 100
+    llm_token_flush_interval_seconds: 0.2
+    llm_token_flush_characters: 256
+    llm_token_buffer_max_bytes: 262144
+    llm_token_buffer_max_items: 1024
+    llm_token_enqueue_timeout_seconds: 5
+    llm_token_write_timeout_seconds: 5
+  database:
+    database_pool_size: 10
+    database_max_overflow: 10  # CRUD pool 최대20. 다른 pool·replica 연결은 별도입니다.
+    database_pool_timeout_seconds: 30
+    database_pool_recycle_seconds: 300
+    database_prepared_statement_cache_size: 0  # 기존 opt-in 성능 profile은 별도로 유지합니다.
+    sql_echo: false
+    # EW_DATABASE_URL은 생략: DATABASE_URL에서 드라이버만 정규화합니다.
+    # WORKFLOW_DATABASE_URL은 생략: 같은 DB에서 파생합니다. 별도 대상이 필요한 경우만 명시합니다.
   checkpoint:
-    checkpoint_setup_on_start: false
-  agent: {}
-    # 프로젝트 메모리: 아래는 기본값 예시. 주입하려면 필요한 항목의 주석을 해제.
-    # YAML에 명시한 값이 환경변수보다 우선하며, 변경 후 프로세스 재시작 필요.
-    # agent_project_memory_mode: manual  # off/manual/auto_context; 기본 자동 쓰기 없음.
-    # agent_project_memory_max_chars: 16000  # 저장 Markdown 본문 문자 수; 출처 제외.
-    # agent_project_memory_patch_max_chars: 4000  # Agent 섹션 교체 본문/원문 인용 문자 수.
-    # agent_project_memory_max_updates: 4  # 한 번에 갱신할 최대 섹션 수(1~4).
-    # agent_project_memory_prompt_max_chars: 6000  # 모델에 넣는 참조 메시지 전체 문자 수.
-    # agent_project_memory_prompt_max_tokens: 4096  # UTF-8 byte 기반 보수적 토큰 추정; 정확한 모델 토큰 수 아님.
-    # 두 prompt 한도 중 하나가 0이면 Agent 읽기/자동 갱신 중단; 관리 API 유지.
-  executor: {}
-    # 세션 생성 기본 커널 및 허용 목록 예시. 실제 Executor/Target 등록과 일치시켜야 함.
-    # executor_runtime_profile: default  # 기존 미설정 기본값 ml 유지. 환경에 맞게 명시.
-    # executor_runtime_profiles: [default, "3102311"]  # 미설정 시 위 기본 profile만 허용.
-    # 생성 때 확정해 DB에 저장하며, 설정 변경은 이미 생성된 세션에 덮어쓰지 않음.
+    graph_checkpointer: postgres
+    checkpoint_setup_on_start: false  # migration/SDK setup은 사전 schema 준비 명령으로 수행합니다.
+    checkpoint_pool_min_size: 1
+    checkpoint_pool_max_size: 4
+    checkpoint_pool_timeout_seconds: 10
+    langgraph_strict_msgpack: true
+  llm:
+    model_provider: openai_compatible
+    model_temperature: 0.2
+    model_timeout_seconds: 60
+    model_max_retries: 0
+    model_structured_output_mode: prompt_json
+    # MODEL_ENABLE_THINKING은 모델별 지원 여부가 다르므로 환경별 파일에서 선택합니다.
+  agent:
+    max_plan_candidates: 5  # 추천+신규 계획 합계.
+    agent_discovery_max_rounds: 4
+    agent_history_message_limit: 40
+    agent_observation_max_chars: 16000
+    agent_max_operations: 64
+    agent_session_analysis_max_chars: 16000
+    agent_free_plan_enabled: true
+    agent_free_plan_require_approval: true
+    agent_max_plan_revisions: 5
+    agent_repair_level: 0  # MULTI 기본 실패 전달. Workflow/승인 정책을 통해 선택합니다.
+    agent_repair_level_limit: 4
+    agent_max_repair_attempts: 3
+    agent_project_memory_mode: manual
+    agent_project_memory_max_chars: 16000
+    agent_project_memory_patch_max_chars: 4000
+    agent_project_memory_max_updates: 4
+    agent_project_memory_prompt_max_chars: 6000
+    agent_project_memory_prompt_max_tokens: 4096  # UTF-8 byte 기반 보수적 추정. 두 한도 중0이면 읽기 중단.
+    analysis_datasets: {}  # 검증된 runtime 참조를 환경별로 등록. 예시 Tool에 맞춰 고정하지 않습니다.
+  executor:
+    executor_tls_verify: true
+    executor_executions_path: /api/v1/executions
+    executor_operations_path: /api/v1/executions/{execution_id}/operations
+    executor_execution_path: /api/v1/executions/{execution_id}
+    executor_result_path: /api/v1/executions/{execution_id}/result
+    executor_notebook_path: /api/v1/executions/{execution_id}/notebook
+    executor_finalize_path: /api/v1/executions/{execution_id}/finalize
+    executor_cancel_path: /api/v1/executions/{execution_id}/cancel
+    executor_artifacts_path: /api/v1/executions/{execution_id}/artifacts
+    # EXECUTOR_EVENTS_PATH는 EXECUTOR_EXECUTION_PATH + /events에서 파생합니다.
+    executor_source_type: INLINE
+    executor_report_source_type: INLINE
+    executor_result_read_mode: API
+    executor_report_append_to_notebook: true
+    executor_http_max_connections: 8
+    executor_http_connect_timeout_seconds: 5
+    executor_http_pool_timeout_seconds: 5
+    executor_http_max_response_bytes: 16777216
+    executor_timeout_seconds: 30  # HTTP 응답 대기, 실제 실행 기한과 별개입니다.
+    executor_operation_timeout_seconds: 300
+    executor_operation_wait_timeout_seconds: 300
+    data_mock: false
+  events:
+    ew_namespace: dtest-agent
+    ew_executor_event_stream: executor.events  # Executor 발행 Stream과 일치해야 합니다.
+    ew_ingress_concurrency: 4  # 수신/routing 병렬성. graph 자리는 runtime 한도입니다.
+    ew_pool_size: 8
+    ew_batch_size: 100
+    ew_poll_seconds: 0.2
+    ew_idle_poll_seconds: 2
+    ew_claim_idle_milliseconds: 30000
+    ew_lease_ttl_seconds: 60
+    ew_lease_renew_seconds: 1
+    ew_max_handler_attempts: 5
+    ew_shutdown_seconds: 25
+    ew_request_timeout_seconds: 10
+    ew_health_port: 0  # 내장 Worker는 공통 /service probe를 사용합니다.
+    # group은 namespace:ingress, consumer ID는 startup UUID로 생성합니다.
   auth:
-    # 사내 SDK는 폐쇄망에서 module:factory로 연결. 미설정 로그인은 503이며 헤더 우회는 없다.
-    # SSO_ADAPTER_FACTORY, SSO_PUBLIC_API_ORIGIN, SSO_FRONTEND_ORIGIN,
-    # SSO_ALLOWED_ORIGINS는 환경별 파일 또는 환경변수로 주입한다.
     sso_auto_register: true
-    sso_session_ttl_seconds: 1800  # 고정 30분. 요청으로 연장되지 않는다.
-    sso_redis_max_connections: 8  # 기존 Redis 서버 사용, Streams 연결풀과 별도.
-    sso_allowed_return_roots: ["/", "/projects"]
-
-  workflow_search: {}
-    # 검색 모델은 채팅 모델과 별개. 설정을 모두 제공해야 활성화됩니다.
-    # API·Agent가 동일한 DATABASE_URL/CRUD 풀과 이 설정을 공유합니다.
-    # workflow_embedding_base_url: https://embedding.example/v1  # /embeddings가 뒤에 붙습니다.
-    # workflow_embedding_model: actual-embedding-model
-    # workflow_embedding_dimensions: 1024  # 실제 모델 값; HNSW vector는 1~2000 지원.
-    # workflow_embedding_api_key: secret  # 실제 값은 환경별 secret으로 주입 권장.
-    # workflow_embedding_model_revision: default  # 가중치/차원 변경 때 버전 변경·재색인.
-    # workflow_embedding_timeout_seconds: 15  # 입장 대기+전체 batch HTTP의 공통 상한.
-    # workflow_embedding_concurrency: 2  # 프로세스당 임베딩 요청 한도; DB 연결 없이 대기.
-    # workflow_embedding_batch_size: 32  # 한 HTTP 요청의 문장 수.
-    # workflow_search_context_max_chars: 64000  # Agent에 전달할 후보 정의 문자 예산. 완전한 후보 단위로 생략.
-    # workflow_search_candidate_limit: 20  # Agent 적용 가능성 검토용 고유 Workflow 수.
-    # workflow_search_batch_size: 64  # 각 ANN 조회가 읽는 쿼리 후보 수.
-    # workflow_search_max_rounds: 8  # 이미 발견한 Workflow 제외 반복 상한.
-    # workflow_search_timeout_ms: 2000  # 임베딩 완료 후 DB 입장·검색·파일 읽기 합계.
-    # workflow_search_ef_search: 200  # HNSW 후보 탐색 폭, 정확한 전역 TOPK 보장 아님.
-    # workflow_search_max_scan_tuples: 20000  # pgvector iterative scan 예산, 엄격 row 상한 아님.
-    # workflow_search_scan_mem_multiplier: 2  # work_mem 대비 scan 메모리 배수.
-    # 추천+신규 UI 계획 합계는 MAX_PLAN_CANDIDATES(기본5), 검색 후보 수와 별개.
-    # WORKFLOW_RECOMMENDATION_ENABLED=false는 검색 중단; 등록·수정·색인은 유지.
-    # WORKFLOW_SIMILARITY_SCORE(기본0.93)는 cosine similarity 최소값, 모델별 검증 필요.
-    # migration 후 tools/provision_workflow_index.py 실행. DDL은 API 요청에서 수행하지 않음.
+    sso_session_ttl_seconds: 1800  # 고정30분, 요청으로 연장되지 않습니다.
+    sso_cookie_name: dtest_session
+    sso_cookie_samesite: lax
+    sso_redis_max_connections: 8
+    sso_redis_timeout_seconds: 3
+    sso_call_timeout_seconds: 10
+    sso_allowed_return_roots: [/demo, /projects, /]  # 플랫폼 frontend 경로가 다르면 조정합니다.
+  storage:
+    workflow_persistence_enabled: true
+    workflow_storage_root: var/workflows
+    mock_data_root: /workspace/pv
+    demo_artifacts_enabled: false
+    demo_artifacts_root: demo_artifacts
+  workflow_search:
+    workflow_recommendation_enabled: true  # 실제 embedding 미설정이면 후보 검색은 수행하지 않습니다.
+    workflow_similarity_score: 0.93  # 실제 모델 corpus로 검증해야 하는 threshold입니다.
+    max_workflow_revisions: 10
+    workflow_embedding_model_revision: default
+    workflow_embedding_timeout_seconds: 15
+    workflow_embedding_concurrency: 2
+    workflow_embedding_batch_size: 32
+    workflow_search_context_max_chars: 64000
+    workflow_search_candidate_limit: 20
+    workflow_search_batch_size: 64
+    workflow_search_max_rounds: 8
+    workflow_search_timeout_ms: 2000
+    workflow_search_ef_search: 200
+    workflow_search_max_scan_tuples: 20000
+    workflow_search_scan_mem_multiplier: 2
+    # embedding 주소·모델·차원은 환경별로 함께 지정합니다. 채팅 모델 값을 재사용하지 않습니다.
+  diagnostics:
+    phoenix_project_name: dtest
+    run_diagnostics_stall_seconds: 5
+    # PHOENIX_ENDPOINT/API_KEY, RUN_DIAGNOSTICS_DIR는 필요할 때 환경별로 지정합니다.

@@ -210,6 +210,7 @@ class ServiceSettings:
     diagnostics_dir: Path | None
     diagnostics_stall_seconds: float
     sources: Mapping[str, str]
+    inputs: Mapping[str, Any] = field(repr=False)  # Private file export only; never add to summary/API.
     workflow_search: WorkflowSearchSettings = field(default_factory=WorkflowSearchSettings)
 
     def summary(self) -> dict[str, Any]:
@@ -302,8 +303,8 @@ def load_settings(
             overlay(_flatten(_read_yaml(common)), "config.yml", True)
         if specific.is_file():
             overlay(_flatten(_read_yaml(specific)), f"config.{selected}.yml", True)
-        elif "APP_ENV" in env or profile is not None:
-            raise ConfigurationError(f"Missing selected config.{selected}.yml")
+        else:
+            raise ConfigurationError(f"Missing selected config.{selected}.yml; initialize it from config.{selected}.example.yml")
     # Environment selection is bootstrap input, not a value overridden by YAML.
     merged["APP_ENV"] = selected
     if selected in {"stg", "prd"}:
@@ -448,6 +449,7 @@ def load_settings(
         shutdown_timeout_seconds=shutdown, shutdown_drain_seconds=drain,
         diagnostics_dir=Path(merged["RUN_DIAGNOSTICS_DIR"]) if merged.get("RUN_DIAGNOSTICS_DIR") else None,
         diagnostics_stall_seconds=stall, sources=MappingProxyType(sources),
+        inputs=MappingProxyType(dict(merged)),
     )
 
 

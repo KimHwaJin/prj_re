@@ -49,92 +49,10 @@ spec:
           value: '[설정 값 변경 불가]'
         - name: REDIS_URL
           value: '[설정 값 변경 불가]'
-        - name: SERVER_HOST
-          value: 0.0.0.0
-        - name: SERVER_PORT
-          value: '5000'
-        - name: SERVER_RELOAD
-          value: 'false'
-        - name: AGENT_WORKER_ENABLED
-          value: 'true'
-        - name: TASK_RECONCILER_ENABLED
-          value: 'true'
-        - name: MODEL_PROVIDER
-          value: openai_compatible
         - name: MODEL_API_KEY
           value: '[설정 값 변경 불가]'
-        - name: MODEL_NAME
-          value: gpt-oss-120b
-        - name: API_BASE_URL
-          value: http://hcp.llm.skhynix.com/v1
-        - name: MODEL_TIMEOUT_SECONDS
-          value: '60'
-        - name: MODEL_MAX_RETRIES
-          value: '0'
-        - name: MODEL_STRUCTURED_OUTPUT_MODE
-          value: prompt_json
         - name: CHECKPOINT_DB_URI
           value: '[설정 값 변경 불가]'
-        - name: CHECKPOINT_SETUP_ON_START
-          value: 'false'
-        - name: LANGGRAPH_STRICT_MSGPACK
-          value: 'true'
-        - name: EXECUTOR_BASE_URL
-          value: http://detest-ai-agent-executor-basic-dev.api.hcpnd01.skhynix.com
-        - name: EXECUTOR_TLS_VERIFY
-          value: 'false'
-        - name: EXECUTOR_RUNTIME_PROFILE
-          value: default
-        - name: EXECUTOR_EXECUTIONS_PATH
-          value: /api/v1/executions
-        - name: EXECUTOR_OPERATIONS_PATH
-          value: /api/v1/executions/{execution_id}/operations
-        - name: EXECUTOR_EXECUTION_PATH
-          value: /api/v1/executions/{execution_id}
-        - name: EXECUTOR_RESULT_PATH
-          value: /api/v1/executions/{execution_id}/result
-        - name: EXECUTOR_NOTEBOOK_PATH
-          value: /api/v1/executions/{execution_id}/notebook
-        - name: EXECUTOR_FINALIZE_PATH
-          value: /api/v1/executions/{execution_id}/finalize
-        - name: EXECUTOR_CANCEL_PATH
-          value: /api/v1/executions/{execution_id}/cancel
-        - name: EXECUTOR_ARTIFACTS_PATH
-          value: /api/v1/executions/{execution_id}/artifacts
-        - name: EXECUTOR_SHARED_INPUT_ROOT
-          value: /workspace/shared
-        - name: EXECUTOR_RESULT_READ_MODE
-          value: MANIFEST
-        - name: EXECUTOR_SHARED_RESULT_ROOT
-          value: /workspace/shared
-        - name: DATA_MOCK
-          value: 'false'
-        - name: MOCK_DATA_ROOT
-          value: /workspace/pv
-        - name: EXECUTOR_SOURCE_TYPE
-          value: PATH
-        - name: EXECUTOR_REPORT_SOURCE_TYPE
-          value: PATH
-        - name: EXECUTOR_REPORT_APPEND_TO_NOTEBOOK
-          value: 'true'
-        - name: EXECUTOR_OPERATION_TIMEOUT_SECONDS
-          value: '300'
-        - name: EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS
-          value: '300'
-        - name: EXECUTOR_TIMEOUT_SECONDS
-          value: '30'
-        - name: EXECUTOR_SUBMIT_ENABLED
-          value: 'true'
-        - name: DEMO_ARTIFACTS_ENABLED
-          value: 'false'
-        - name: DEMO_ARTIFACTS_ROOT
-          value: demo_artifacts
-        - name: PHOENIX_PROJECT_NAME
-          value: dtest
-        - name: WORKFLOW_RECOMMENDATION_ENABLED
-          value: 'true'
-        - name: WORKFLOW_SIMILARITY_SCORE
-          value: '0.93'
         - name: PYTHONUTF8
           value: '1'
         - name: PYTHONIOENCODING
@@ -143,26 +61,8 @@ spec:
           value: /app/src:/app
         - name: EW_DATABASE_URL
           value: '[설정 값 변경 불가]'
-        - name: EW_NAMESPACE
-          value: dtest-agent
-        - name: EW_EXECUTOR_EVENT_STREAM
-          value: executor.events
-        - name: EW_INGRESS_CONCURRENCY
-          value: '4'
-        - name: EW_DISPATCH_CONCURRENCY
-          value: '4'
-        - name: EW_LEASE_RENEW_SECONDS
-          value: '10'
-        - name: EW_POOL_SIZE
-          value: '8'
-        - name: EW_BATCH_SIZE
-          value: '100'
-        - name: EW_HEALTH_PORT
-          value: '0'
         - name: APP_ENV
           value: dev
-        - name: EVENT_WORKER_ENABLED
-          value: 'true'
         livenessProbe:
           httpGet:
             path: /service/live

@@ -303,7 +303,7 @@ def test_actual_app_openapi_and_health_need_no_external_services(monkeypatch):
 
 def test_root_entrypoint_with_src_already_on_pythonpath():
     project_root = ROOT
-    result = subprocess.run([sys.executable, str(project_root / "app.py"), "--check-config"],
+    result = subprocess.run([sys.executable, str(project_root / "app.py"), "--config", str(ROOT / "config.diagnostic.yml"), "--check-config"],
                             cwd=project_root, env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
                             text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
@@ -339,6 +339,7 @@ async def test_all_owned_resources_close_when_one_cleanup_fails(monkeypatch):
     import api_service.agent_worker.api_bridge as bridge
     from api_service.services.agent_graph_service import runtime
 
+    configure(load_settings(config={}, environ={}))
     shutdown = AsyncMock(side_effect=RuntimeError("cleanup failed"))
     close_bridge, close_database = AsyncMock(), AsyncMock()
     monkeypatch.setattr(runtime, "shutdown", shutdown)

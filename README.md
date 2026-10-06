@@ -1,6 +1,6 @@
 # dtest-agent
 
-기동·환경 설정의 정본은 [단일 프로젝트 배포 안내](docs/deployment-configuration.md)다. `app.py` 한 프로세스 안에서 API·Agent·이벤트 수신을 함께 실행한다. [058 검증 기록](docs/improvements/058-deployment-config-unification.md)을 참고한다.
+설정 파일의 정본은 [YAML 앱 설정 안내](docs/application-configuration.md), 배포 구조는 [단일 프로젝트 배포 안내](docs/deployment-configuration.md)다. `app.py` 한 프로세스 안에서 API·Agent·이벤트 수신을 함께 실행한다. [058 검증 기록](docs/improvements/058-deployment-config-unification.md)을 참고한다.
 dtest 프로젝트 공유
 
 현재 리팩토링 작업 저장소는 [KimHwaJin/prj_re](https://github.com/KimHwaJin/prj_re)이고, 기준 브랜치는 `feature/refactor-base`다. [저장소·브랜치 작업 안내](docs/repository-workflow.md)를 따라 베이스에서 파생 브랜치를 만들고 작업한다. 이전 단계별 브랜치는 이력 확인용으로 보존한다.
@@ -23,16 +23,15 @@ Workflow 작업 영역은 [src/agent_service/agents/analysis/workflow/](src/agen
 
 ## 로컬 Docker 개발 환경
 
-API는 기존 `.env` 설정을 사용하되 DB URL의 host만 로컬 PostgreSQL 컨테이너로 바꾼다.
-DB 이름·계정·비밀번호와 Redis·모델·Executor 설정은 `.env`를 따른다.
+API는 공통+환경별 YAML을 읽고 DB URL의 host만 로컬 PostgreSQL 컨테이너로 바꾼 설정을 마운트한다. `.env.local`은 인프라 포트·비밀번호용이다. 실제 config.dev.yml을 먼저 준비한다.
 
 ```bash
-python3 scripts/local.py up
+uv run python scripts/local.py up --env dev
 ```
 
-테스트 화면: `http://127.0.0.1:18000/demo` (사용자 `local-dev`)
+테스트 화면: `http://127.0.0.1:18000/demo`
 
-코드 수정 후 `python3 scripts/local.py update`로 다시 빌드·반영한다.
+코드 수정 후 `uv run python scripts/local.py up --env devdate`로 다시 빌드·반영한다.
 DB 데이터는 유지된다. 상세 설정과 로그 확인은 [로컬 Docker 가이드](docs/local-docker.md)를 참고한다.
 
 ## LLM 없는 서비스 부하테스트
@@ -50,11 +49,13 @@ PostgreSQL 서버는 pgvector>=0.8.0이 필요합니다. 기존 PostgreSQL17 볼
 
 ```bash
 uv sync --frozen
-# DB schema를 준비한 뒤 실행. 아래 가이드의 migration/설정 절차를 따른다.
-uv run python app.py --env dev --local-env-file .env
+uv run python scripts/configure.py init --env dev
+# 생성한 config.dev.yml의 실제 연결값을 수정하고 DB·계정을 준비
+uv run python scripts/migrate.py --env dev
+uv run python app.py --env dev
 ```
 
-기본 접속 주소는 `http://127.0.0.1:8000/demo`다. `.env`는 명시한 옵션으로 읽으며 선택 YAML이 우선한다. 사내 SSO adapter가 없는 일반 서비스는 로그인503이며 테스트 로그인으로 자동 전환하지 않는다. [클론 후 로컬 설정·schema·화면 실행](docs/service-demo-console.md), [격리 진단 실행 방법](tools/test-console/README.md)을 참고한다.
+기본 접속 주소는 `http://127.0.0.1:8000/demo`다. 실제 연결·SSO는 config.dev.yml, 공통 정책은 config.yml에서 설정하며 `.env`는 필요 없다. 사내 SSO adapter가 없는 일반 서비스는 로그인503이며 테스트 로그인으로 자동 전환하지 않는다. [클론 후 로컬 설정·schema·화면 실행](docs/service-demo-console.md), [격리 진단 실행 방법](tools/test-console/README.md)을 참고한다.
 
 ## 현재 Agent 개발 확인
 

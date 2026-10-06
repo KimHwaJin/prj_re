@@ -32,20 +32,26 @@ def test_one_endpoint_accepts_legacy_spelling_and_config_overrides_env(canonical
         load_settings(config={}, environ={canonical: value, legacy: 'different'})
     assert load_settings(config={}, environ={canonical: value, legacy: value})
 
-@pytest.mark.parametrize('profile,port', [('dev', 8000), ('dev', 5000), ('stg', 5000), ('prd', 5000)])
-def test_shipped_profiles_do_not_mask_deployment_ports_or_executor_switch(profile, port):
-    env = {'APP_ENV': profile, 'SERVER_PORT': str(port),
-           'DATABASE_URL': 'postgresql+asyncpg://localhost/chat_app',
-           'CHECKPOINT_DB_URI': 'postgresql://localhost/agent',
-           'EXECUTOR_SUBMIT_ENABLED': 'true', 'EVENT_WORKER_ENABLED': 'true'}
-    settings = load_settings(environ=env, root=ROOT)
-    assert settings.api.server_port == port
+@pytest.mark.parametrize('profile', ['dev', 'stg', 'prd'])
+def test_private_yaml_profiles_define_ports_and_switches_without_dotenv(tmp_path, profile):
+    import shutil
+    from service_runtime.configuration_files import initialize_profile
+    shutil.copy(ROOT/'config.yml', tmp_path/'config.yml')
+    shutil.copy(ROOT/f'config.{profile}.example.yml', tmp_path/f'config.{profile}.example.yml')
+    initialize_profile(profile, root=tmp_path)
+    settings = load_settings(profile=profile, environ={}, root=tmp_path)
+    assert settings.api.server_port == 8000
     assert settings.api.agent_worker_enabled and settings.api.task_reconciler_enabled
-    assert settings.event_worker_enabled and settings.agent.executor_submit_enabled
+    assert settings.event_worker_enabled
+    assert settings.agent.executor_submit_enabled == (profile != 'dev')
     assert settings.worker.health_port == 0
-    # An explicit YAML decision still wins over deployment env.
-    explicit = load_settings(config={'SERVER_PORT': 8123, 'EVENT_WORKER_ENABLED': False}, environ=env)
-    assert explicit.api.server_port == 8123 and not explicit.event_worker_enabled
+    # Selected YAML, including false/zero, wins over env.
+    env = {'SERVER_PORT':'5000','EXECUTOR_SUBMIT_ENABLED':'true','MODEL_MAX_RETRIES':'8'}
+    effective = load_settings(profile=profile, environ=env, root=tmp_path)
+    assert effective.api.server_port == 8000
+    assert effective.agent.executor_submit_enabled == settings.agent.executor_submit_enabled
+    assert effective.agent.model_max_retries == 0
+
 
 def test_event_worker_default_tracks_agent_but_accepts_explicit_override():
     assert load_settings(config={}, environ={}).event_worker_enabled
@@ -113,36 +119,45 @@ def test_integrated_readiness_waits_for_consumer_then_tracks_its_health(monkeypa
         holder['publish'](None)
         assert client.get('/service/ready').status_code == 503
 
-def test_local_generation_has_one_canonical_env_and_keeps_source_unchanged(tmp_path, monkeypatch):
-    import json
+@pytest.mark.parametrize('profile', ['dev', 'prd'])
+def test_local_generation_has_one_private_yaml_and_infrastructure_only_env(tmp_path, monkeypatch, profile):
     import runpy
-    import subprocess
+    import shutil
     module = runpy.run_path(str(ROOT / 'scripts/local.py'))
     initialize = module['initialize']
-    monkeypatch.setitem(initialize.__globals__, 'ROOT', tmp_path)
-    monkeypatch.setitem(initialize.__globals__, 'ENV_FILE', tmp_path / '.env.local')
-    source_file = tmp_path / '.env'
-    source_file.write_text('source must stay unchanged\n')
-    (tmp_path / '.env.local.example').write_text('LOCAL_API_PORT=18000\n')
-    source = {'DATABASE_URL':'postgresql+asyncpg://u:pass@external:5432/chat_app',
-        'CHECKPOINT_DB_URI':'postgresql://u:pass@external:5432/agent',
-        'AGENT_CHECKPOINT_DATABASE_URL':'postgresql://u:pass@external:5432/agent',
-        'EW_DATABASE_URL':'postgresql://u:pass@external:5432/agent',
-        'REDIS_URL':'redis://external:6379/0','EW_REDIS_URL':'redis://external:6379/0',
-        'EXECUTOR_BASE_URL':'http://executor','EW_EXECUTOR_BASE_URL':'http://executor'}
-    monkeypatch.setattr(subprocess,'run',lambda *a,**k: subprocess.CompletedProcess(a,0,
-        json.dumps({'services':{'inspect':{'environment':source}}}),''))
-    initialize()
-    env = service_settings.read_local_env(tmp_path / '.env.local')
-    assert source_file.read_text() == 'source must stay unchanged\n'
-    assert env['LOCAL_DATABASE_URL'] == 'postgresql+asyncpg://u:pass@postgres:5432/chat_app'
-    assert env['LOCAL_EW_DATABASE_URL'] == 'postgresql://u:pass@postgres:5432/agent'
-    assert env['LOCAL_CHECKPOINT_DB_URI'] == 'postgresql://u:pass@postgres:5432/agent'
-    assert env['REDIS_URL'] == source['REDIS_URL']
-    assert not {'AGENT_CHECKPOINT_DATABASE_URL','EW_REDIS_URL','EW_EXECUTOR_BASE_URL'} & env.keys()
-    assert (tmp_path / '.env.local').stat().st_mode & 0o777 == 0o600
-    assert (ROOT/'scripts/local/init-databases.sql').is_file()
+    generated = tmp_path/'workspace/config.compose.yml'
+    for name,value in {'ROOT':tmp_path,'ENV_FILE':tmp_path/'.env.local','APP_CONFIG':generated}.items():
+        monkeypatch.setitem(initialize.__globals__, name, value)
+    source_file = tmp_path/f'config.{profile}.yml'
+    common = ROOT/'config.yml'
+    shutil.copy(common, tmp_path/'config.yml')
+    values = {'DATABASE_URL':'postgresql+asyncpg://u:pass@external:15432/chat_app',
+        'CHECKPOINT_DB_URI':'postgresql://u:pass@external:15432/agent',
+        'REDIS_URL':'redis://external:6379/0','EXECUTOR_BASE_URL':'http://executor',
+        'EXECUTOR_SHARED_INPUT_ROOT':'/workspace/shared','EXECUTOR_SHARED_RESULT_ROOT':'/workspace/shared'}
+    source_file.write_text(yaml.safe_dump({'service':values}))
+    before=source_file.read_bytes()
+    (tmp_path/'.env').write_text('DATABASE_URL=do-not-read\n')
+    (tmp_path/'.env.local.example').write_text('LOCAL_API_PORT=18000\n')
+    initialize(profile=profile)
+    env = service_settings.read_local_env(tmp_path/'.env.local')
+    assert source_file.read_bytes() == before
+    assert (tmp_path/'.env').read_text()=='DATABASE_URL=do-not-read\n'
+    assert all(key.startswith('LOCAL_') for key in env)
+    effective=load_settings(config_path=generated,environ={},profile=env["LOCAL_APP_ENV"])
+    assert effective.profile == profile
+    assert effective.agent.environment == profile
+    assert effective.api.database_url=='postgresql+asyncpg://u:pass@postgres:5432/chat_app'
+    assert effective.worker.database_url=='postgresql://u:pass@postgres:5432/chat_app'
+    assert effective.agent.checkpoint_db_uri=='postgresql://u:pass@postgres:5432/agent'
+    assert effective.api.redis_url==values['REDIS_URL']
+    assert effective.api.server_host=='0.0.0.0' and effective.api.server_port==8000
+    assert effective.agent.executor_source_type=='INLINE'
+    assert generated.stat().st_mode & 0o777 == 0o640
+    assert env["LOCAL_CONFIG_GID"] == str(generated.stat().st_gid)
+    assert (tmp_path/".env.local").stat().st_mode & 0o777 == 0o600
     assert 'CREATE DATABASE agent' in (ROOT/'scripts/local/init-databases.sql').read_text()
+
 
 def test_local_upgrade_drains_only_legacy_worker_in_same_project(monkeypatch):
     import runpy
@@ -185,9 +200,11 @@ def test_local_start_prepares_selected_infrastructure(tmp_path, monkeypatch, url
     module = runpy.run_path(str(ROOT / 'scripts/local.py'))
     main = module['main']
     env = tmp_path / '.env.local'
-    env.write_text('REDIS_URL=' + url + '\n')
+    env.write_text('LOCAL_API_PORT=18000\n')
+    private=tmp_path/'compose.yml'
+    private.write_text(yaml.safe_dump({'service':{'REDIS_URL':url}}))
     calls = []
-    for name, value in {'ENV_FILE':env, 'initialize':lambda: None,
+    for name, value in {'ENV_FILE':env, 'APP_CONFIG':private, 'initialize':lambda *args: None,
                         'compose':lambda *args: calls.append(args),
                         'retire_legacy_event_worker':lambda: None, 'smoke':lambda: None}.items():
         monkeypatch.setitem(main.__globals__, name, value)

@@ -38,7 +38,7 @@ def validate_local_targets():
 
 
 def provision_local_logins():
-    """Keep the existing local volume, adding the credentials selected by .env."""
+    """Keep the existing local volume, adding the credentials selected by the service YAML."""
     credentials = {}
     for url in resolved_targets().values():
         parsed = urlsplit(url)

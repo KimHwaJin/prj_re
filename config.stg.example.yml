@@ -1,0 +1,40 @@
+# stg 환경 연결 설정 예제. 실제 config.stg.yml은 Git/이미지에서 제외됩니다.
+# uv run python scripts/configure.py init --env stg 로 복사한 뒤 값을 수정하세요.
+# 이 파일의 service 값이 config.yml과 환경변수보다 우선합니다. ${...} 자동 확장은 없습니다.
+service:
+  runtime:
+    server_host: 0.0.0.0
+    server_port: 8000  # Executor가 같은 port면 Agent port를18110 등으로 변경합니다.
+  database:
+    database_url: postgresql+asyncpg://USER:PASSWORD@POSTGRES_HOST:5432/chat_app
+    redis_url: redis://:PASSWORD@REDIS_HOST:6379/0
+  checkpoint:
+    checkpoint_db_uri: postgresql://USER:PASSWORD@POSTGRES_HOST:5432/agent
+  llm:
+    model_name: YOUR_CHAT_MODEL
+    api_base_url: http://YOUR_MODEL_HOST/v1
+    model_api_key: YOUR_MODEL_KEY  # Secret env를 쓰려면 이 항목을 삭제하고 MODEL_API_KEY를 주입합니다.
+    # model_enable_thinking: false  # 지원하는 모델에서만 명시합니다.
+  executor:
+    executor_base_url: http://EXECUTOR_HOST:8080
+    executor_runtime_profile: default
+    executor_runtime_profiles: [default]  # 실제 Executor 허용 kernel 목록과 일치시킵니다.
+    executor_submit_enabled: true  # 배포 기본은 실제 제출. 제출 전 검증만 할 때 false로 바꾸세요.
+    executor_shared_input_root: /workspace/shared
+    executor_shared_result_root: /workspace/shared  # 로컬은 실제 Executor 공유 폴더의 절대 경로로 수정합니다.
+  auth:
+    sso_cookie_secure: true
+    sso_public_api_origin: https://YOUR_API_HOST
+    sso_frontend_origin: https://YOUR_FRONTEND_HOST
+    sso_adapter_factory: ''  # 사내 module:factory 연결. 미설정 로그인503, 인증 우회 없음.
+    sso_allowed_origins: []  # SDK/SSO에서 요구하는 origin을 등록합니다.
+    sso_namespace: dtest-agent:stg:sso
+  # workflow_search:
+  # 실제 embedding endpoint·모델·차원을 확인한 뒤 아래3개를 함께 지정합니다.
+  #   workflow_embedding_base_url: http://YOUR_EMBEDDING_HOST/v1
+  #   workflow_embedding_model: YOUR_EMBEDDING_MODEL
+  #   workflow_embedding_dimensions: 1024  # 예시 숫자입니다. 실제 모델 차원을 사용합니다.
+  #   workflow_embedding_api_key: YOUR_EMBEDDING_KEY
+  # diagnostics:
+  #   phoenix_endpoint: http://YOUR_PHOENIX_HOST:6006/v1/traces
+  #   phoenix_api_key: YOUR_PHOENIX_KEY

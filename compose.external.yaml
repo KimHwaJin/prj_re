@@ -5,23 +5,16 @@ services:
       context: .
     image: dtest-agent:local
     command: [python, app.py]
-    env_file:
-      - path: .env
-        required: false
+    # Match the host profile file group; grant that group read access before starting.
+    group_add:
+      - "${APP_CONFIG_GID:?Set to the group ID of the mounted profile YAML}"
     environment:
-      APP_ENV: stg
-      SERVER_PORT: "8000"
-      SERVER_RELOAD: "false"
-      AGENT_WORKER_ENABLED: "true"
-      TASK_RECONCILER_ENABLED: "true"
-      EVENT_WORKER_ENABLED: "true"
-      EW_HEALTH_PORT: "0"
-      CHECKPOINT_SETUP_ON_START: "false"
-      EXECUTOR_SHARED_INPUT_ROOT: /workspace/pv
+      APP_ENV: ${APP_ENV:-stg}
     ports:
       - "8000:8000"
     volumes:
-      - ${EXECUTOR_SHARED_INPUT_ROOT_HOST:-./var/executor-inputs}:/workspace/pv
+      - ./config.${APP_ENV:-stg}.yml:/app/config.${APP_ENV:-stg}.yml:ro
+      - ${EXECUTOR_SHARED_INPUT_ROOT_HOST:-./var/executor-inputs}:/workspace/shared
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/service/ready', timeout=3)"]
       interval: 10s

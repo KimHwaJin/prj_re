@@ -235,3 +235,8 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 ## 096 서비스 /demo에 기능 콘솔 통합
 
 일반 app.py의 기존 API·Worker·중앙 설정에 새 HTML을 연결하고 단일 패키지 파일로 통합했다. 테스트 로그인과 임시 DB는 별도 진단 옵션으로 유지한다. 실제 사내 SSO adapter와 운영 플랫폼 연결 검증은 계속 후속이다. HNSW 완전 중복 대표화·실제 embedding 평가 및 ML 의존성 용도 분리는 이 작업에서 구현하지 않았다.
+
+
+## 097 YAML 중심 설정 정리
+
+공통 정책과 환경별 연결값 식별·이전, profile init/legacy dotenv import, 동일 snapshot migration, Compose/Secret 마운트·CICD 수정값 이전을 구현했다. [현재 설정 안내](../application-configuration.md)를 따른다. 실제 개인 profile 작성과 기존 DB schema/데이터 이행·비루트 mount 권한·사내 배포·SSO adapter·실제 embedding/Executor 검증은 후속이며 자동 적용하지 않는다. feature/yaml-application-settings는 선행096 /demo를 포함한다. 베이스 통합은 별도다. 기존 ML 의존성 분리·HNSW 대표화·Agent 모델 호출 수·Dataset/Artifact 보류는 유지한다.

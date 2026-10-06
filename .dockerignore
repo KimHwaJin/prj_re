@@ -18,3 +18,10 @@ workspace
 demo_artifacts
 *.log
 .DS_Store
+
+# Real profile credentials must be mounted at runtime, never baked into images.
+config.dev.yml
+config.stg.yml
+config.prd.yml
+config.local.yml
+config.active.yml

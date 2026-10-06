@@ -28,7 +28,7 @@ def main():
     init_sql = ROOT / 'scripts/local/init-databases.sql'
     if not init_sql.is_file():
         raise RuntimeError('Local DB initialization SQL is missing')
-    env = {'APP_ENV':'dev', 'DATABASE_URL':'postgresql+asyncpg://dtest:smoke-local@postgres:5432/chat_app',
+    env = {'APP_ENV':'dev', 'SERVICE_CONFIG_FILE':'/app/config.diagnostic.yml', 'DATABASE_URL':'postgresql+asyncpg://dtest:smoke-local@postgres:5432/chat_app',
         'CHECKPOINT_DB_URI':'postgresql://dtest:smoke-local@postgres:5432/agent',
         'REDIS_URL':'redis://redis:6379/0', 'MODEL_PROVIDER':'mock', 'MODEL_NAME':'deployment-smoke',
         'EXECUTOR_BASE_URL':'http://unused-executor:8000', 'EXECUTOR_SUBMIT_ENABLED':'false',

@@ -32,6 +32,7 @@ COPY crud_migrations ./crud_migrations
 COPY alembic.ini alembic.crud.ini ./
 COPY mock_data ./mock_data
 COPY scripts/local ./scripts/local
+COPY scripts/migrate.py scripts/configure.py ./scripts/
 
 RUN mkdir -p /workspace/pv/data /app/var/workflows /app/workspace && \
     cp /app/mock_data/*.parquet /workspace/pv/data/ && \

@@ -4,22 +4,6 @@ metadata:
   name: dtest-agent-config
 data:
   APP_ENV: prd
-  SERVER_HOST: 0.0.0.0
-  SERVER_PORT: '8000'
-  SERVER_RELOAD: 'false'
-  AGENT_WORKER_ENABLED: 'true'
-  TASK_RECONCILER_ENABLED: 'true'
-  GRAPH_CHECKPOINTER: postgres
-  CHECKPOINT_SETUP_ON_START: 'false'
-  LANGGRAPH_STRICT_MSGPACK: 'true'
-  EXECUTOR_SHARED_INPUT_ROOT: /workspace/pv
-  EW_NAMESPACE: dtest-agent
-  EW_EXECUTOR_EVENT_STREAM: executor.events
-  EW_INGRESS_CONCURRENCY: '4'
-  EW_POOL_SIZE: '8'
-  EW_BATCH_SIZE: '100'
-  EW_HEALTH_PORT: '0'
-  EVENT_WORKER_ENABLED: 'true'
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,8 +37,6 @@ spec:
         envFrom:
         - configMapRef:
             name: dtest-agent-config
-        - secretRef:
-            name: dtest-agent-secrets
         ports:
         - name: http
           containerPort: 8000
@@ -83,6 +65,10 @@ spec:
           runAsUser: 10001
           runAsGroup: 10001
         volumeMounts:
+        - name: application-config
+          mountPath: /app/config.prd.yml
+          subPath: config.prd.yml
+          readOnly: true
         - name: executor-shared
           mountPath: /workspace/pv
         startupProbe:
@@ -93,6 +79,9 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 60
       volumes:
+      - name: application-config
+        secret:
+          secretName: dtest-agent-secrets
       - name: executor-shared
         persistentVolumeClaim:
           claimName: dtest-shared-pv

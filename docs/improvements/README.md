@@ -1,6 +1,6 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [096 일반 서비스 /demo에 기능 콘솔 통합](096-service-demo-console.md). app.py의 API·Worker·중앙 설정을 그대로 사용하며 새 HTML을 같은 서버에 연결했다. [실행 안내](../service-demo-console.md)를 따른다. HNSW 완전 중복 대표화와 실제 embedding 평가는 후속이며 [095 검증](095-workflow-hnsw-quality.md)에서 유지한 검색 설정을 변경하지 않는다.
+최신 작업: [097 앱 설정 YAML 이전](097-yaml-application-settings.md). 정식 key171개를 식별하고 공통 정책132개·환경별 연결20개를 YAML로 정리했다. init/import-env·동일 설정 migration·Compose/배포 마운트와 실행 문서를 갱신했다. [현재 설정 안내](../application-configuration.md)를 따른다. 선행096의 /demo를 포함하며 HNSW 대표화·실제 embedding 평가는 후속으로 유지한다.
 
 2026-10-03 리뷰의 1단계 배포·설정은 [058](058-deployment-config-unification.md), 2단계 Run 실행 경계는 [059](059-run-execution-boundaries.md), 3단계 DB 명령 원장·공통 Agent Worker는 [060](060-unified-agent-command-worker.md)에서 구현·격리 검증했다. 당시 미병합이던 현재 브랜치의 선행 이력은 2026-10-06 베이스에 통합했으며 미배포 상태는 유지한다. 깨우기/유휴 조회는 061, 통합 검증은 062에서 진행했다. 최신 저장 후보·복구 경계는 068과 후속 목록을 따른다. [구현 계획](../design/review-implementation-plan-2026-10-03.md), [후속 목록](backlog.md)을 따른다.
 
@@ -140,6 +140,7 @@
 | 094 | 다중 쿼리 등록·HNSW 추천·Agent 연결 | 구현·회귀800/관련PG27/HTML9/migration/wheel 완료 / 실제 모델 검증 후속·미병합·미푸시 | 2026-10-05 | [작업 기록](094-workflow-hnsw-retrieval.md) |
 | 095 | HNSW 누락·설정·DB 비용 검증 | 진단2646/추가960/검산4162 / 조회·생성 기본값 유지·대표화 후속·미병합·미푸시 | 2026-10-06 | [작업 기록](095-workflow-hnsw-quality.md) |
 | 096 | 일반 서비스 /demo에 새 HTML 콘솔 통합·단일 파일 배포 | 구현·Python15·Node10·wheel / 사내 SSO·실제 연계 재검증 후속 | 2026-10-06 | [096 기록](096-service-demo-console.md) |
+| 097 | 앱 설정 식별·공통/profile YAML 이전·init/import·동일 migration·배포 파일 | 구현·Python199·Node10·Compose parse·wheel / 실제 환경 적용 후속 | 2026-10-06 | [097 기록](097-yaml-application-settings.md) |
 
 다음 개선 항목은 해당 문제를 논의하고 작업 범위를 정할 때 추가한다. 기존 설계의 모든 항목을 이미 착수한 작업으로 등록하지 않는다.
 

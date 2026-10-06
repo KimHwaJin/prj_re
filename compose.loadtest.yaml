@@ -5,6 +5,7 @@ x-app: &app
   image: dtest-agent:loadtest
   environment:
     APP_ENV: dev
+    SERVICE_CONFIG_FILE: /app/config.diagnostic.yml
     MODEL_PROVIDER: mock
     MODEL_NAME: service-load-mock
     MODEL_MOCK_DELAY_MS: ${LOADTEST_MOCK_DELAY_MS:-0}
@@ -17,7 +18,7 @@ x-app: &app
     EXECUTOR_REPORT_SOURCE_TYPE: INLINE
     DATABASE_URL: postgresql+asyncpg://dtest:loadtest-local@postgres:5432/chat_app
     CHECKPOINT_DB_URI: &checkpoint postgresql://dtest:loadtest-local@postgres:5432/agent?sslmode=disable
-    EW_DATABASE_URL: *checkpoint
+    # Command ledger and event Inbox use the API database, not the checkpoint DB.
     GRAPH_CHECKPOINTER: postgres
     CHECKPOINT_SETUP_ON_START: "false"
     AGENT_WORKER_ENABLED: "true"

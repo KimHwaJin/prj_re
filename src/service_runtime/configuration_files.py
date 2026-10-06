@@ -1,0 +1,99 @@
+"""Private YAML initialization/import and Compose exports, using the central loader."""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import tempfile
+from typing import Any, Mapping
+
+import yaml
+
+from service_settings import ROOT, _flatten, _read_yaml, load_settings, read_local_env
+
+
+def plain(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, Mapping):
+        return {str(key): plain(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [plain(item) for item in value]
+    return value
+
+
+def setting_group(name: str) -> str:
+    name = name.upper()
+    if name.startswith("SSO_"):
+        return "auth"
+    if name.startswith("EW_"):
+        return "events"
+    if name.startswith("CHECKPOINT_") or name in {"GRAPH_CHECKPOINTER", "LANGGRAPH_STRICT_MSGPACK"}:
+        return "checkpoint"
+    if name.startswith("DATABASE_") or name in {"SQL_ECHO", "REDIS_URL"}:
+        return "database"
+    if name.startswith("EXECUTOR_") or name == "DATA_MOCK":
+        return "executor"
+    if name.startswith(("MODEL_", "LLM_")) or name in {"API_BASE_URL", "DEFAULT_MODEL"}:
+        return "llm"
+    if name.startswith("WORKFLOW_EMBEDDING_") or name.startswith("WORKFLOW_SEARCH_") or name in {"WORKFLOW_RECOMMENDATION_ENABLED", "WORKFLOW_SIMILARITY_SCORE", "MAX_WORKFLOW_REVISIONS"}:
+        return "workflow_search"
+    if name.startswith("PHOENIX_") or name.startswith("RUN_DIAGNOSTICS_"):
+        return "diagnostics"
+    if name in {"WORKFLOW_STORAGE_ROOT", "WORKFLOW_DATABASE_URL", "WORKFLOW_PERSISTENCE_ENABLED", "MOCK_DATA_ROOT", "DEMO_ARTIFACTS_ROOT", "DEMO_ARTIFACTS_ENABLED"}:
+        return "storage"
+    if (name.startswith("AGENT_") and not name.startswith("AGENT_WORKER_")) or name in {"MAX_PLAN_CANDIDATES", "ANALYSIS_DATASETS"}:
+        return "agent"
+    return "runtime"
+
+
+def yaml_document(values: Mapping[str, Any]) -> dict:
+    groups: dict[str, dict] = {}
+    for key, value in sorted(values.items()):
+        if key == "APP_ENV":
+            continue  # Environment selection is bootstrap input, never a YAML override.
+        groups.setdefault(setting_group(key), {})[key.lower()] = plain(value)
+    return {"service": groups}
+
+
+def write_private(path: Path, content: str, *, overwrite: bool = False) -> None:
+    """Do not truncate an existing credential file; replace atomically only on request."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(prefix=".config-", dir=path.parent)
+    candidate = Path(temporary)
+    try:
+        os.fchmod(handle, 0o600)
+        with os.fdopen(handle, "w", encoding="utf-8") as output:
+            output.write(content)
+        if overwrite:
+            os.replace(candidate, path)
+        else:
+            # Atomic create without replacing a file created concurrently.
+            os.link(candidate, path)
+    finally:
+        candidate.unlink(missing_ok=True)
+
+
+def initialize_profile(profile: str, *, root: Path = ROOT, source_env: Path | None = None,
+                       output: Path | None = None, overwrite: bool = False) -> Path:
+    if profile not in {"dev", "stg", "prd"}:
+        raise ValueError("Choose dev, stg or prd")
+    target = output or root / f"config.{profile}.yml"
+    template = root / f"config.{profile}.example.yml"
+    if source_env is None:
+        # Preserve explanatory comments in the normal copy path.
+        content = template.read_text(encoding="utf-8")
+        load_settings(config={**_flatten(_read_yaml(root / "config.yml")),
+                              **_flatten(_read_yaml(template))}, environ={}, profile=profile)
+    else:
+        # Legacy dotenv is imported once, explicitly; the source file is untouched.
+        # Env spelling/aliases/types are canonicalized and checked by the same loader.
+        common = _flatten(_read_yaml(root / "config.yml"))
+        base = _flatten(_read_yaml(template))
+        imported = load_settings(config={}, environ=read_local_env(source_env), profile=profile)
+        # Only explicit recognized legacy input overrides the target profile/defaults.
+        explicit = {key: value for key, value in imported.inputs.items()
+                    if imported.sources.get(key) == "environment" and key != "APP_ENV"}
+        settings = load_settings(config={**common, **base, **explicit}, environ={}, profile=profile)
+        content = "# Private YAML imported from legacy dotenv; source unchanged. Do not commit.\n" + yaml.safe_dump(yaml_document(settings.inputs), allow_unicode=True, sort_keys=False)
+    write_private(target, content, overwrite=overwrite)
+    return target

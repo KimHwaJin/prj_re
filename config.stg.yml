@@ -1,6 +1,0 @@
-# stg: 공통 config.yml에 이 파일을 덮어쓴다. YAML > env > 기본값.
-# Worker는 기본적으로 API와 같은 프로세스에서 시작한다.
-# 접수만 제공하는 환경은 agent_worker_enabled/event_worker_enabled를 false로 설정.
-# DB, Redis, 모델 자격증명 및 Executor 주소는 배포 환경변수로 주입한다.
-# stg/prd는 DATABASE_URL과 CHECKPOINT_DB_URI를 반드시 명시한다.
-service: {}

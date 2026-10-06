@@ -1,0 +1,3 @@
+# Explicit isolated fixture source. Never select this file for normal service deployment.
+# Benchmark controls are supplied by their own test harness; production YAML is not read.
+service: {}

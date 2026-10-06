@@ -2,67 +2,25 @@
 
 `app.py`가 API·공통 Agent Worker·Executor 이벤트 수신을 시작하고 `/demo`에서 같은 서버에 연결된 기능 테스트 HTML을 제공한다. HTML을 위해 별도 서버나 테스트용 JSON 설정을 만들지 않는다. 프론트 빌드와 Docker도 필수는 아니다. PostgreSQL·Redis·Executor는 기존 서버 또는 로컬 설치본에 연결한다.
 
-## 설정 파일
+## 설정 파일과 DB schema
 
-레포 루트의 `.env.example`을 `.env`로 복사한 뒤 환경에 맞게 수정한다. `.env`는 Git에서 제외된다. `--local-env-file .env`를 지정해야 읽는다. 아래 계정·비밀번호·DB 이름은 예시다.
-
-```dotenv
-APP_ENV=dev
-SERVER_PORT=8000
-DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@127.0.0.1:5432/chat_app
-CHECKPOINT_DB_URI=postgresql://USER:PASSWORD@127.0.0.1:5432/agent
-REDIS_URL=redis://127.0.0.1:6379/0
-EXECUTOR_BASE_URL=http://127.0.0.1:8001
-EXECUTOR_SHARED_RESULT_ROOT=/absolute/path/to/executor/shared_dir
-EXECUTOR_SOURCE_TYPE=INLINE
-EXECUTOR_REPORT_SOURCE_TYPE=INLINE
-EXECUTOR_RUNTIME_PROFILE=default
-EXECUTOR_SUBMIT_ENABLED=true
-MODEL_PROVIDER=openai_compatible
-MODEL_NAME=YOUR_MODEL
-API_BASE_URL=http://YOUR_MODEL_HOST/v1
-MODEL_API_KEY=YOUR_KEY
-MODEL_STRUCTURED_OUTPUT_MODE=prompt_json
-AGENT_WORKER_ENABLED=true
-EVENT_WORKER_ENABLED=true
-```
-
-Executor 예제8001은 Agent API8000과의 충돌을 피하기 위한 예시다. 실제 Executor가8000이면 `SERVER_PORT=18110`처럼 Agent 서비스 포트를 바꾸면 된다. Redis 비밀번호가 있으면 `redis://:PASSWORD@HOST:PORT/0`을 사용한다. 연결 주소의 특수문자가 포함된 계정/비밀번호는 URL 인코딩한다. 실행 커널과 공유 결과 폴더는 실제 Executor 설정에 맞춘다. Executor가 발행하는 Stream 이름도 `EW_EXECUTOR_EVENT_STREAM`과 일치시킨다.
-
-`config.dev.yml > config.yml > 환경변수 > 명시적 로컬 .env > 기본값` 순으로 항목별 해석한다. 예를 들어 공통 `config.yml`의 `checkpoint_setup_on_start: false`는 `.env`의 true보다 우선한다. 사전 schema 준비를 수행하거나 선택 YAML에서 명시적으로 변경한다. `--config`를 사용하면 지정한 파일 하나만 읽는다. [중앙 설정 정본](deployment-configuration.md)을 따른다.
-
-## DB schema와 실행
-
-DB 두 개는 미리 생성하고 계정 권한을 준비한다. 테스트 화면이 일반 서비스 DB를 자동 생성·삭제하거나 migration하지 않는다. 서버와 같은 설정으로 사전 migration을 수행한다.
+[앱 설정 가이드](application-configuration.md)의 common+profile YAML을 사용한다. `.env` 없이 시작할 수 있다. 계정·주소는 생성한 private `config.dev.yml`에서 수정한다.
 
 ```sh
 uv sync --frozen
-# SERVICE_CONFIG_FILE과 APP_ENV도 서버와 같은 값을 유지한다.
-uv run python - <<'PY'
-import asyncio
-from pathlib import Path
-from alembic import command
-from alembic.config import Config
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from service_settings import load_settings, configure
-
-settings = load_settings(profile="dev", dotenv_path=Path(".env"))
-configure(settings)
-for ini in ("alembic.crud.ini", "alembic.ini"):
-    command.upgrade(Config(ini), "head")
-
-async def checkpoint_setup():
-    async with AsyncPostgresSaver.from_conn_string(settings.agent.checkpoint_db_uri) as saver:
-        await saver.setup()
-
-asyncio.run(checkpoint_setup())
-PY
-
-uv run python app.py --env dev --local-env-file .env --check-config
-uv run python app.py --env dev --local-env-file .env
+uv run python scripts/configure.py init --env dev
+# config.dev.yml의 실제 연결값·SSO·공유 경로 수정
+uv run python app.py --env dev --check-config
+uv run python scripts/migrate.py --env dev --check-config
+uv run python scripts/migrate.py --env dev
+uv run python app.py --env dev
 ```
 
-Workflow 추천을 사용하려면 실제 embedding 모델·차원 설정과 모델 공간 HNSW index를 추가 준비한다. [등록·검색 계약](workflow-registration-and-search.md)을 따른다. 채팅 LLM 설정만으로 embedding 설정이 자동 완성되지 않는다.
+기존 `.env`가 있다면 init 대신 `uv run python scripts/configure.py import-env --env dev --input .env`로 한 번 이전한다. 원본은 보존하고 실제 profile은 Git/이미지에서 제외한다. 운영 DB의 migration은 배포 사전 단계에서 수행하며 화면이 DB를 자동 생성·삭제하지 않는다. DB 두 개와 계정 권한, pgvector extension은 미리 준비한다.
+
+`config.dev.yml > config.yml > env > 기본값` 순이다. `--config`는 지정 파일 하나만 읽으므로 전체 설정 파일용이다. dev 예제의 actual Executor 제출은 꺼져 있으므로 필요할 때 `executor_submit_enabled: true`로 변경한다. API8000과 Executor8001은 예제이며 실제 포트를 맞춘다. 공유 결과 폴더와 Redis event Stream도 실제 Executor와 맞춘다.
+
+Workflow 추천은 채팅 LLM과 별도로 embedding 모델·차원 및 HNSW index를 준비한다. [등록·검색 계약](workflow-registration-and-search.md)을 따른다.
 
 ## 화면과 로그인
 

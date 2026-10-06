@@ -1,6 +1,6 @@
 # 기동과 설정
 
-2026-10-03의 배포 정본·기본 활성값·예제·포트·전환 절차는 [058 통합 설정 안내](deployment-configuration.md)를 따른다. 아래는 초기 bootstrap의 설계 설명이며 갱신된 구현이 우선한다.
+현재 YAML 초기화·이전·실행은 [097 앱 설정 안내](application-configuration.md), 배포 구조·포트·전환 절차는 [통합 배포 안내](deployment-configuration.md)를 따른다. 아래는 bootstrap의 설계 설명이며 갱신된 구현이 우선한다.
 
 루트 `app.py`가 `src/service_bootstrap.py`를 호출한다. 설정은 `src/service_settings.py`에서 프로세스당 한 번 확정한다. 기존 `run.py`, `uvicorn main:app --app-dir src`도 같은 bootstrap을 사용한다. 025에서 API 패키지는 `src/api_service`로 이동했다. 루트 `app.py`는 그대로 진입점이며 기존 패키지 이름 충돌용 우회는 제거했다.
 
@@ -9,15 +9,17 @@
 ## 실행
 
 ```sh
-python app.py --check-config
+python scripts/configure.py init --env dev
+# config.dev.yml의 실제 연결값을 수정한 뒤 검증
+python app.py --env dev --check-config
 python app.py --env dev
-python app.py --env dev --local-env-file .env
+# 이전 dev dotenv 보조 입력은 필요할 때만 --local-env-file .env
 python app.py --config /mounted/config.yml
 ```
 
 `APP_ENV=dev|stg|prd` 또는 `--env`로 환경을 선택한다. `development/staging/production` 환경변수 값도 허용한다. 기본 포트는 8000이다. `--check-config`는 설정 출처와 Worker 활성 여부만 출력하고 서버나 외부 연결을 시작하지 않는다.
 
-기본 dev/stg/prd 예제는 활성값을 가리지 않으며 API와 Worker가 함께 실행된다. DB schema는 사전 준비한다. API만 실행하려면 세 Worker flag를 false로 지정한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
+공통 config.yml은 앱 정책을 명시하며 실제 profile은 example에서 초기화한다. 선택 profile이 없으면 시작 오류다. API와 Worker 활성값은 공통 YAML에 있고 dev 예제의 실제 Executor 제출은 꺼져 있다. DB schema는 사전 준비한다. API만 실행하려면 세 Worker flag를 false로 지정한다. Executor 이벤트 수신은 `event_worker_enabled`, 실제 제출은 `executor_submit_enabled`로 각각 지정한다. API 쓰기 요청까지 차단하는 읽기 전용 모드는 아니다.
 
 Docker 기본 CMD도 `python app.py`로 변경했다. 058에서 Compose·Kubernetes·CICD의 명시적 Uvicorn 명령과 별도 Worker 배포를 제거하고 app.py 한 프로세스로 통일했다. 이번 단계에서 기존 컨테이너를 재기동하거나 새 이미지를 배포하지 않았다. 013에서 프로세스별 제한된 Run 동시 실행을 구현했다. 최종 Pod의 프로세스 수와 배포 명령은 별도 적용·검증이 필요하다.
 
@@ -44,7 +46,7 @@ service:
     executor_submit_enabled: false
 ```
 
-`service` 아래 그룹은 runtime/database/checkpoint/llm/agent/executor/events/storage/diagnostics/auth이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
+`service` 아래 그룹은 runtime/database/checkpoint/llm/agent/executor/events/storage/diagnostics/auth/workflow_search이고, leaf key는 환경변수 이름과 같다(대소문자 무관). 플랫폼 YAML의 다른 최상위 설정은 그대로 둘 수 있다. `service` 안의 알 수 없는 key는 오류다. `service`가 없으면 문서 전체를 서비스 설정으로 해석한다. 상대 파일 경로는 기존 소비 코드의 해석을 유지하므로 배포 PV 경로에는 절대 경로를 사용한다.
 
 ## Run 동시 실행 수
 
@@ -57,7 +59,7 @@ service:
     agent_worker_concurrency: 4
 ```
 
-4는 설정 예시이며 운영 권장값을 확정한 것이 아니다. 환경변수로 조정하려면 선택되는 YAML의 해당 키를 생략한 뒤 `AGENT_WORKER_CONCURRENCY=4`를 주입하고 재시작한다. YAML에 1이 명시되어 있으면 환경변수 4보다 우선한다. `--check-config` 출력에서 해석된 값을 확인할 수 있다.
+4는 설정 예시이며 운영 권장값을 확정한 것이 아니다. 환경변수로 조정하려면 공통/환경 YAML 양쪽의 해당 키를 생략한 뒤 `AGENT_WORKER_CONCURRENCY=4`를 주입하고 재시작한다. YAML에 1이 명시되어 있으면 환경변수 4보다 우선한다. `--check-config` 출력에서 해석된 값을 확인할 수 있다.
 
 Run 실행기가 프로세스마다 활성화된 경우 최대 동시 호출 수는 대략 `프로세스별 설정 × API 프로세스 수 × Pod 수`다. Executor 이벤트 Worker의 실행량은 이 값에 포함되지 않는다. 따라서 이 설정은 전역 LLM/DB 사용량 제한이 아니다. DB 풀·LLM 한도와 실제 대기 시간/처리량을 함께 측정해 조절해야 한다. 기존 Docker 컨테이너 설정은 이번 작업에서 바꾸지 않았다.
 
