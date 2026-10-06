@@ -5,21 +5,21 @@ from uuid import uuid4, UUID
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
-import service_settings
+import dtest.settings.loader as service_settings
 from tests.api_service.test_planning_api_postgres import planning,test_config,submit,execute,read
-from api_service.runs.runtime import runtime as graph_runtime
-from api_service.runs.projection import synchronize_executor_completion
-from api_service.runs.graph_invocation import GraphInvocation
-from service_contracts.events import EventContext,ExecutorEvent
-from service_contracts.execution_repair import RepairInteractionEvent
-from agent_service.agents.analysis.planning.graph import build_planning_graph
-from agent_service.agents.analysis.tests.test_agentic_repair import make_runtime,PartialResultExecutor,approve
+from dtest.application.runs.runtime import runtime as graph_runtime
+from dtest.application.runs.projection import synchronize_executor_completion
+from dtest.application.runs.graph_invocation import GraphInvocation
+from dtest.contracts.events import EventContext,ExecutorEvent
+from dtest.contracts.execution_repair import RepairInteractionEvent
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+from tests.agent_service.test_agentic_repair import make_runtime,PartialResultExecutor,approve
 
 
 @pytest.mark.asyncio
 async def test_repair_admission_checksum_revision_restart_replay_and_public_projection(planning,tmp_path,monkeypatch):
     h=planning
-    import api_service.runs.projection as completion
+    import dtest.application.runs.projection as completion
     monkeypatch.setattr(completion,'get_session_factory',lambda:h.factory)
     settings=service_settings.get_settings()
     agent=replace(settings.agent,executor_submit_enabled=True,executor_source_type='INLINE',executor_shared_result_root=tmp_path)

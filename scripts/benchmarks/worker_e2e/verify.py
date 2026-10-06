@@ -59,8 +59,8 @@ def main(output):
     expected.update(('approval',50,repeat,'common','manual',False,'off') for repeat in (1,2,3))
     keys=[tuple(row[field] for field in ('scenario','users','repeat','architecture','memory_mode','followup','notify')) for row in rows]
     assert len(set(keys))==len(keys) and set(keys)==expected,'Missing or duplicate planned condition'
-    agent_files={name for name in sources['split'] if name.startswith('src/agent_service/')}
-    assert agent_files=={name for name in sources['common'] if name.startswith('src/agent_service/')}
+    agent_files={name for name in sources['split'] if name.startswith('src/dtest.agent_service/')}
+    assert agent_files=={name for name in sources['common'] if name.startswith('src/dtest.agent_service/')}
     assert all(sources['split'][name]==sources['common'][name] for name in agent_files)
     result={'assessment':'Share with caveats','raw_hashes_and_arithmetic_verified':True,
         'all_planned_trials_present':True,'trials':len(rows),'user_scenarios':count,

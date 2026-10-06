@@ -5,10 +5,10 @@ from uuid import uuid4
 
 import pytest
 
-from api_service.runs.project_context import load_project_snapshot
-from api_service.runs import runtime as service
-from api_service.runs.persistence import graph as projection
-from api_service.runs.graph_invocation import GraphInvocation
+from dtest.application.runs.project_context import load_project_snapshot
+from dtest.application.runs import runtime as service
+from dtest.application.runs.persistence import graph as projection
+from dtest.application.runs.graph_invocation import GraphInvocation
 
 
 def context_db(prompt, version, settings=None):
@@ -37,7 +37,7 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
     user_id, session_id, project_id, run_id = [uuid4() for _ in range(4)]
     db = context_db("server project prompt", 2)
     received = []
-    from api_service.runs.protocols import initial
+    from dtest.application.runs.protocols import initial
     saved = SimpleNamespace(values={}, tasks=(), next=())
     async def invoke(value, **kwargs):
         db.close.assert_awaited_once()
@@ -70,13 +70,13 @@ async def test_initial_boundary_loads_snapshot_and_passes_it_to_graph(monkeypatc
 async def test_project_context_helper_only_backfills_legacy_snapshot(monkeypatch, existing):
     user_id, session_id, run_id, project_id = [uuid4() for _ in range(4)]
     values = {"user_id": str(user_id), "session_id": str(session_id), "project_id": str(project_id)}
-    from service_runtime.model_selection import current_catalog
+    from dtest.contracts.model_selection import current_catalog
     values["model_selection"] = current_catalog().select().model_dump()
     if existing is not None:
         values["project_system_prompt"] = existing
     graph = SimpleNamespace(aget_state=AsyncMock(return_value=SimpleNamespace(values=values)), aupdate_state=AsyncMock())
     db = context_db("new prompt", 3)
-    from api_service.runs.project_context import ensure_project_snapshot
+    from dtest.application.runs.project_context import ensure_project_snapshot
     await ensure_project_snapshot(graph, {}, session_factory=lambda: db,
                                   user_id=user_id, session_id=session_id)
     if existing is None:

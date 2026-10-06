@@ -8,7 +8,7 @@ if SRC_ROOT in sys.path:
 sys.path.insert(0, SRC_ROOT)
 
 def main():
-    from service_bootstrap import main as launch
+    from dtest.bootstrap import main as launch
     launch()
 
 if __name__ == "__main__":

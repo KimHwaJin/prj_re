@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock
 
 import pytest
-import service_settings
-from api_service.runs.runtime import AgentGraphRuntime, GraphResourcesBusy
+import dtest.settings.loader as service_settings
+from dtest.application.runs.runtime import AgentGraphRuntime, GraphResourcesBusy
 
 
 @pytest.fixture(autouse=True)
@@ -202,9 +202,9 @@ async def test_event_loop_sharing_is_rejected(monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('error', [GraphResourcesBusy('live borrower'), asyncio.CancelledError()])
 async def test_service_does_not_close_other_pools_while_graph_still_owned(monkeypatch, error):
-    from service_bootstrap import _close_resources
-    import api_service.infrastructure.database as database
-    from api_service.runs.runtime import runtime
+    from dtest.bootstrap import _close_resources
+    import dtest.infrastructure.database.runtime as database
+    from dtest.application.runs.runtime import runtime
     monkeypatch.setattr(runtime, 'shutdown', AsyncMock(side_effect=error))
     close_database = AsyncMock()
     monkeypatch.setattr(database, 'close_database', close_database)
@@ -216,8 +216,8 @@ async def test_service_does_not_close_other_pools_while_graph_still_owned(monkey
 @pytest.mark.asyncio
 @pytest.mark.parametrize('fail', [False, True])
 async def test_event_ingress_never_builds_or_invokes_graph(monkeypatch, fail):
-    import api_service.workers.executor_events.main as entry
-    import api_service.runs.runtime as shared
+    import dtest.worker_service.executor_events.main as entry
+    import dtest.application.runs.runtime as shared
     opened = AsyncMock(side_effect=AssertionError('Ingress borrowed a graph'))
     monkeypatch.setattr(shared.runtime, 'open_graph', opened)
     calls = []
@@ -247,9 +247,9 @@ async def test_event_ingress_never_builds_or_invokes_graph(monkeypatch, fail):
 
 @pytest.mark.asyncio
 async def test_common_event_command_borrows_shared_graph(monkeypatch):
-    import api_service.workers.agent as worker
-    import api_service.runs.runtime as shared
-    import api_service.runs.graph_invocation as boundary
+    import dtest.worker_service.command_worker as worker
+    import dtest.application.runs.runtime as shared
+    import dtest.application.runs.graph_invocation as boundary
     from types import SimpleNamespace
     runtime = AgentGraphRuntime()
     graph = object()
@@ -272,7 +272,7 @@ async def test_common_event_command_borrows_shared_graph(monkeypatch):
 @pytest.mark.asyncio
 async def test_shared_pool_visible_in_every_run_trace_without_double_wrapping(monkeypatch, tmp_path):
     from dataclasses import replace
-    from service_runtime.diagnostics import observe_pool, run_trace
+    from dtest.infrastructure.observability.diagnostics import observe_pool, run_trace
     configured = service_settings.get_settings()
     monkeypatch.setattr(service_settings, '_snapshot', replace(configured, diagnostics_dir=tmp_path))
     class Pool:

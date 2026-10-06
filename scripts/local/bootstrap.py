@@ -9,13 +9,13 @@ import psycopg
 from psycopg import sql
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from service_settings import get_settings
+from dtest.settings.loader import get_settings
 
 
 def resolved_targets():
     settings = get_settings()
     return {
-        "DATABASE_URL": settings.api.database_url,
+        "DATABASE_URL": settings.database.database_url,
         "CHECKPOINT_DB_URI": settings.agent.checkpoint_db_uri,
         "EW_DATABASE_URL": settings.worker.database_url,
     }

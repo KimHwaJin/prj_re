@@ -13,18 +13,18 @@ from sqlalchemy.engine import make_url
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.runs.lifecycle import execution_health
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from api_service.models.task_model import TaskModel
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.runs.runtime import AgentGraphRuntime
-from api_service.runs.tasks import TaskService
-from api_service.utils import utc_now
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.lifecycle import execution_health
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.application.runs.runtime import AgentGraphRuntime
+from dtest.application.runs.tasks import TaskService
+from dtest.contracts.values import utc_now
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_user_identity_postgres import database_url, harness
 
@@ -43,7 +43,7 @@ def checkpoint_graph(saver):
 @pytest.mark.asyncio
 async def test_real_pool_reused_across_sessions_hitl_and_restarted_runtime(harness, monkeypatch):
     h = harness
-    url = make_url(service_settings.get_settings().api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    url = make_url(service_settings.get_settings().database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     created, pools = [], []
     runtime = AgentGraphRuntime()
     @asynccontextmanager
@@ -160,7 +160,7 @@ async def test_late_success_cannot_finish_new_owners_run(runtime, monkeypatch):
 async def test_heartbeat_uses_captured_token_after_owner_changes(runtime, monkeypatch):
     h = runtime
     configured = service_settings.get_settings()
-    monkeypatch.setattr(service_settings, '_snapshot', replace(configured, api=configured.api.model_copy(update={'task_lease_seconds': 3})))
+    monkeypatch.setattr(service_settings, '_snapshot', replace(configured, commands=configured.commands.model_copy(update={'task_lease_seconds': 3})))
     queued = await enqueue(h)
     item = await worker.claim_one()
     stopped = asyncio.Event()

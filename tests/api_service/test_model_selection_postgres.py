@@ -1,6 +1,6 @@
 """HTTP admission, queue retries, persistent HITL and Executor model continuity."""
-from agent_service.runtime.initial_request import record_initial_request
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from dtest.agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.user_resume import record_user_resume, user_interrupt
 
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -16,22 +16,22 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt
 from sqlalchemy import select, func
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.runtime as graphs
-import api_service.runs.projection as completion
-from service_runtime.model_selection import build_catalog, validate_checkpoint_selection
-import agent_service.agents.analysis.planning.runtime as runtime_module
-from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-from agent_service.context import AgentContext
-from agent_service.agents.analysis.tests.test_agent_middleware import response
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from api_service.runs.graph_invocation import GraphInvocation
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.task_model import TaskModel as Task
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.runtime as graphs
+import dtest.application.runs.projection as completion
+from dtest.contracts.model_selection import build_catalog, validate_checkpoint_selection
+import dtest.agent_service.agents.analysis.planning.runtime as runtime_module
+from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from dtest.agent_service.context import AgentContext
+from tests.agent_service.test_agent_middleware import response
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.application.runs.graph_invocation import GraphInvocation
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
 from tests.api_service.ownership_harness import run_test_event as run_event_owned
-from service_contracts.events import EventContext, ExecutorEvent
+from dtest.contracts.events import EventContext, ExecutorEvent
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, rows
 from tests.api_service.test_public_run_postgres import path, state, resume, execute, waiting

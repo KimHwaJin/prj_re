@@ -3,9 +3,9 @@
 import pytest
 from pydantic import ValidationError
 
-from api_service.schemas.session_schema import SessionCreate
-from service_contracts.session_settings import resolve_session_settings
-from service_settings import ConfigurationError, load_settings
+from dtest.contracts.resources.session_schema import SessionCreate
+from dtest.contracts.session_settings import resolve_session_settings
+from dtest.settings.loader import ConfigurationError, load_settings
 
 
 @pytest.mark.parametrize('settings', [{}, {'kernel_profile': None}])

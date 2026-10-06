@@ -66,10 +66,10 @@ def aggregate(stored):
 async def run_case(case, trial, directory, saver, metrics, dsn):
     import pytest
     from checkpoint_profile import capture
-    from agent_service.agents.analysis.tests import test_agentic_repair as fixture
-    from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
-    from service_contracts.events import EventContext, ExecutorEvent
-    from api_service.runs.graph_invocation import GraphInvocation
+    from tests.agent_service import test_agentic_repair as fixture
+    from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
+    from dtest.contracts.events import EventContext, ExecutorEvent
+    from dtest.application.runs.graph_invocation import GraphInvocation
     started_calls = len(metrics['checkpoint_calls'])
     output_reads = []
     original = fixture.make_runtime
@@ -120,7 +120,7 @@ async def run_case(case, trial, directory, saver, metrics, dsn):
         return result
 
     with pytest.MonkeyPatch.context() as patch:
-        from agent_service.agents.analysis.execution import nodes
+        from dtest.agent_service.agents.analysis.execution import nodes
         original_reader = nodes.read_operation_observations
         def measured_reader(*args):
             began = time.perf_counter()
@@ -197,7 +197,7 @@ async def run_case(case, trial, directory, saver, metrics, dsn):
 
 async def main_async(args, dsn):
     from checkpoint_profile import install
-    from agent_service.runtime.langgraph.checkpointer import create_checkpointer
+    from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
     metrics = {'checkpoint_calls': []}
     install(metrics, lambda: True)
     rows = []
@@ -219,8 +219,8 @@ async def main_async(args, dsn):
             assert item.checkpoint['channel_values']['final_response']['status'] == 'analysis_completed'
         assert saver.conn.get_stats()['pool_available'] == saver.conn.get_stats()['pool_size']
     source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    paths = ['src/agent_service/agents/analysis/planning/graph.py', 'src/agent_service/agents/analysis/execution/nodes.py',
-             'src/integrations/executor/observations.py', 'src/agent_service/runtime/langgraph/pooled_saver.py',
+    paths = ['src/dtest.agent_service/agents/analysis/planning/graph.py', 'src/dtest.agent_service/agents/analysis/execution/nodes.py',
+             'src/dtest/infrastructure/executor/observations.py', 'src/dtest.agent_service/runtime/langgraph/pooled_saver.py',
              'scripts/diagnostics/profile_checkpoint_growth.py']
     return {'scope': 'sequential local PG functional/storage microprobe; deterministic zero-delay model roles; Python Executor double; no HTTP/worker/real model throughput claim',
         'seed': 6504, 'repeats': args.repeats, 'source_commit': source,

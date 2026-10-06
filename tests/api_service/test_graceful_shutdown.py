@@ -12,11 +12,11 @@ import time
 
 import pytest
 
-from service_bootstrap import BackgroundRuntime
-from service_settings import load_settings, ConfigurationError
-from api_service.runs.lifecycle import execution_health
-from api_service.workers.executor_events.consumer import RedisStreamConsumer, RedisStreamConsumerConfig, HandlerResult, AckDecision
-from api_service.workers.executor_events.runtime import ExecutorWorker
+from dtest.bootstrap import BackgroundRuntime
+from dtest.settings.loader import load_settings, ConfigurationError
+from dtest.application.runs.lifecycle import execution_health
+from dtest.worker_service.executor_events.consumer import RedisStreamConsumer, RedisStreamConsumerConfig, HandlerResult, AckDecision
+from dtest.worker_service.executor_events.runtime import ExecutorWorker
 
 
 @pytest.fixture(autouse=True)
@@ -164,8 +164,8 @@ def test_root_server_real_sigterm_drains_before_resource_close(tmp_path,repeat):
     child.write_text('''import asyncio
 from pathlib import Path
 from fastapi import FastAPI,APIRouter
-from service_bootstrap import attach_service,build_server
-from service_settings import load_settings
+from dtest.bootstrap import attach_service,build_server
+from dtest.settings.loader import load_settings
 p=Path(__import__('sys').argv[1])
 def record(value):
     with p.open('a') as f: f.write(value+'\\n')

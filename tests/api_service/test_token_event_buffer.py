@@ -1,3 +1,4 @@
+from dtest.agent_service.runtime.callbacks import TokenCallbacks
 """Token producer/writer races, deadlines and LangChain callback backpressure."""
 import asyncio
 from unittest.mock import AsyncMock
@@ -8,11 +9,11 @@ import pytest_asyncio
 from pydantic import ValidationError
 from langchain_core.callbacks.manager import AsyncCallbackManagerForLLMRun
 
-import service_settings
-from config import Settings
-from api_service.runs.lifecycle import execution_health
-from api_service.runs import token_events as tokens
-from service_contracts.execution import ExecutionNeedsRecovery
+import dtest.settings.loader as service_settings
+from dtest.settings.api import ApiSettings
+from dtest.application.runs.lifecycle import execution_health
+from dtest.application.runs import token_events as tokens
+from dtest.contracts.execution import ExecutionNeedsRecovery
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -130,7 +131,7 @@ async def test_langchain_admission_timeout_propagates_and_stops_writer(monkeypat
         await asyncio.Event().wait()
     monkeypatch.setattr(b, '_append', append)
     b.start()
-    manager = AsyncCallbackManagerForLLMRun(run_id=uuid4(), handlers=[b], inheritable_handlers=[])
+    manager = AsyncCallbackManagerForLLMRun(run_id=uuid4(), handlers=[TokenCallbacks(b)], inheritable_handlers=[])
     await manager.on_llm_new_token('first')
     await entered.wait()
     with pytest.raises(tokens.TokenEventBufferError, match='admission timed out'):
@@ -247,7 +248,7 @@ async def test_closed_buffer_rejects_late_tokens_and_restart(monkeypatch):
 ])
 def test_invalid_buffer_settings_fail_at_startup(values):
     with pytest.raises(ValidationError):
-        Settings(**values)
+        ApiSettings(**values)
 
 
 def test_buffer_settings_follow_config_then_env_then_default():

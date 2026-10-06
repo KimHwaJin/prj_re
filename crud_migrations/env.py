@@ -7,15 +7,15 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from config import settings
-from api_service.models.model_base import Base
+from dtest.settings.loader import get_settings
+from dtest.infrastructure.database.models.model_base import Base
 
 # Register every mapped table on Base.metadata before autogenerate runs.
-import api_service.models  # noqa: F401,E402
+import dtest.infrastructure.database.models  # noqa: F401,E402
 
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+config.set_main_option("sqlalchemy.url", get_settings().database.database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

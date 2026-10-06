@@ -454,7 +454,7 @@ def freeze(state, catalog, repository_root):
             item = catalog['tools'][id]
             sources[id] = strip_tool_function(repository_root / item['source_file'], item['function_name'])
     import yaml
-    assets = repository_root / 'src/agent_service/agents/analysis/workflow'
+    assets = repository_root / 'src/dtest.agent_service/agents/analysis/workflow'
     skill_index = yaml.safe_load((assets / 'skills/skill_index.yaml').read_text())['skills']
     skill_sources = {}
     for id in {step['skill_id'] for step in active}:
@@ -640,7 +640,7 @@ def generate(repository_root, destination):
     document = workflow_contract.read(workflow_contract.CONTRACT / 'examples/quality-review.repository.json')
     catalog = workflow_contract.read(workflow_contract.CONTRACT / 'examples/repository-catalog.json')
     import yaml
-    skill_index = yaml.safe_load((repository_root / 'src/agent_service/agents/analysis/workflow/skills/skill_index.yaml').read_text())['skills']
+    skill_index = yaml.safe_load((repository_root / 'src/dtest.agent_service/agents/analysis/workflow/skills/skill_index.yaml').read_text())['skills']
     for id in catalog['skills']:
         catalog['skills'][id]['description'] = skill_index[id]['description']
     context = context_fixture()

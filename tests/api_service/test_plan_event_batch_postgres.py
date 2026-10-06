@@ -5,11 +5,11 @@ from uuid import UUID,uuid4
 
 import pytest
 from sqlalchemy import event,select,func
-from api_service.runs.logs import AgentRunLogService
-from api_service.runs.persistence.plans import persist_plan_events
-from api_service.models.agent_run_log_model import AgentRunLogModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.models.task_model import TaskModel
+from dtest.application.runs.logs import AgentRunLogService
+from dtest.application.runs.persistence.plans import persist_plan_events
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.infrastructure.database.models.task_model import TaskModel
 # Reuse the guarded real PostgreSQL/Worker/checkpoint fixture, never a live DB.
 from tests.api_service.test_planning_api_postgres import test_config,planning,submit,execute,read
 
@@ -23,7 +23,7 @@ async def test_public_event_batch_barrier_replay_and_partial_failure(planning,mo
     async with h.factory() as db:
         user=await db.scalar(select(TaskModel).where(TaskModel.task_id==task_id))
         session_id=user.session_id
-    from api_service.models.session_model import SessionModel
+    from dtest.infrastructure.database.models.session_model import SessionModel
     async with h.factory() as db:
         session=await db.get(SessionModel,session_id)
         context=SimpleNamespace(user_id=session.user_id,session_id=str(session_id))
@@ -72,12 +72,12 @@ async def test_public_event_batch_barrier_replay_and_partial_failure(planning,mo
 
 @pytest.mark.asyncio
 async def test_invocation_projection_commits_deltas_and_new_invocation_repairs_replay(planning):
-    from api_service.runs.persistence.graph import InvocationProjection
+    from dtest.application.runs.persistence.graph import InvocationProjection
     h=planning
     accepted=await submit(h,{'input':{'content':[{'type':'text','text':'품질 확인'}]}})
     await execute();waiting=await read(h,accepted.json()['run_id'])
     owner=UUID(waiting['resume_token']);task_id=UUID(waiting['task_id'])
-    from api_service.models.session_model import SessionModel
+    from dtest.infrastructure.database.models.session_model import SessionModel
     async with h.factory() as db:
         task=await db.get(TaskModel,task_id);session=await db.get(SessionModel,task.session_id)
     def public():

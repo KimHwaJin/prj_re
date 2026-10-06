@@ -2,9 +2,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 import pytest
 
-import api_service.runs.execution as execution
-import api_service.workers.agent as worker
-from api_service.models.enums import AgentRunStatus
+import dtest.application.runs.execution as execution
+import dtest.worker_service.command_worker as worker
+from dtest.contracts.enums import AgentRunStatus
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 

@@ -212,7 +212,7 @@ def verify_repository_catalog(catalog, repository_root, errors):
         return
     import yaml
 
-    asset_root = repository_root / "src/agent_service/agents/analysis/workflow"
+    asset_root = repository_root / "src/dtest.agent_service/agents/analysis/workflow"
     registry = yaml.safe_load((asset_root / "tools/tool_registry.yaml").read_text())["tools"]
     skills = yaml.safe_load((asset_root / "skills/skill_index.yaml").read_text())["skills"]
     for id, item in catalog["tools"].items():

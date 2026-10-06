@@ -555,7 +555,7 @@ def main():
     # Workflow 표준은 전용 Schema·주석 예제를 제공한다. 받은 원본은 수정하지 않는다.
     sources = sorted(p for p in (ROOT/'docs/contracts').rglob('*.json')
                      if 'workflow-standard' not in p.parts)
-    workflow_schema = ROOT/'src/service_contracts/resources/workflow-definition.schema.json'
+    workflow_schema = ROOT/'src/dtest.contracts/resources/workflow-definition.schema.json'
     schema_copy = ROOT/'docs/design/agentic-workflow-contract/workflow-definition.schema.json'
     workflow = json.loads(workflow_schema.read_text());original=strip_annotations(workflow)
     annotate_schema(workflow, ('WorkflowDefinition',))

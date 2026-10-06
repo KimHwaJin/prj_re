@@ -1,6 +1,6 @@
 """Model references, central config and concurrent real create_agent roles."""
-from api_service.runs.requests import request_digest
-from api_service.runs.policy import is_retryable
+from dtest.application.runs.requests import request_digest
+from dtest.application.runs.policy import is_retryable
 import asyncio
 from dataclasses import replace
 import json
@@ -11,14 +11,14 @@ import httpx
 import pytest
 from langchain_openai import ChatOpenAI
 
-import service_settings
-from agent_service.context import AgentContext
-from service_runtime.model_selection import ModelSelectionError, build_catalog, validate_checkpoint_selection
-import agent_service.agents.analysis.planning.runtime as runtime_module
-from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-from agent_service.agents.analysis.tests.test_agent_middleware import response, ROLES, role_payload
-from api_service.schemas.run_schema import RunCreate, RunResume
-from api_service.runs.graph_invocation import GraphInvocation
+import dtest.settings.loader as service_settings
+from dtest.agent_service.context import AgentContext
+from dtest.contracts.model_selection import ModelSelectionError, build_catalog, validate_checkpoint_selection
+import dtest.agent_service.agents.analysis.planning.runtime as runtime_module
+from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from tests.agent_service.test_agent_middleware import response, ROLES, role_payload
+from dtest.contracts.resources.run_schema import RunCreate, RunResume
+from dtest.application.runs.graph_invocation import GraphInvocation
 
 
 def configured(default="alpha", **extra):

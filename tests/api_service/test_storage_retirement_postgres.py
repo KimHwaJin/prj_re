@@ -10,10 +10,10 @@ from psycopg.types.json import Jsonb
 import pytest
 from sqlalchemy.engine import make_url
 
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.message_model import MessageModel
-from api_service.models.project_model import ProjectModel
-from api_service.models.enums import AgentRunStatus, MessageType
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.contracts.enums import AgentRunStatus, MessageType
 from tests.api_service.test_user_identity_postgres import database_url, harness, initialize, add_user, add_session
 
 ROOT = Path(__file__).resolve().parents[2]

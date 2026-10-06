@@ -14,19 +14,19 @@ import pytest_asyncio
 from fastapi import Depends, FastAPI, HTTPException
 from redis.exceptions import ConnectionError as RedisConnectionError
 
-import service_settings
-from api_service.api.dependencies import get_current_actor, get_current_user_id, get_stream_user_id
-from api_service.infrastructure.database import get_db
-from api_service.models.enums import DeleteYN, UserRole
-from api_service.repositories.user_repository import UserRepository
-from api_service.schemas.user_schema import UserRead
-from api_service.resources.users import UserService
-from service_auth.sso.adapter import SyncSsoAdapter, load_adapter
-from service_auth.sso.contracts import VerifiedEmployee
-from service_auth.sso.runtime import attach_sso
-from service_auth.sso.settings import SsoSettings
-from service_auth.sso.sessions import RedisSessions
-from service_bootstrap import create_app
+import dtest.settings.loader as service_settings
+from dtest.api_service.http.dependencies import get_current_actor, get_current_user_id, get_stream_user_id
+from dtest.infrastructure.database.runtime import get_db
+from dtest.contracts.enums import DeleteYN, UserRole
+from dtest.infrastructure.database.repositories.user_repository import UserRepository
+from dtest.contracts.resources.user_schema import UserRead
+from dtest.application.resources.users import UserService
+from dtest.infrastructure.sso.adapter import SyncSsoAdapter, load_adapter
+from dtest.contracts.auth import VerifiedEmployee
+from dtest.api_service.auth.runtime import attach_sso
+from dtest.settings.auth import SsoSettings
+from dtest.infrastructure.redis.login_sessions import RedisSessions
+from dtest.bootstrap import create_app
 
 
 class MemoryRedis:

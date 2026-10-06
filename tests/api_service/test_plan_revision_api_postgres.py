@@ -5,17 +5,17 @@ import json
 from uuid import uuid4
 
 import pytest
-import service_settings
+import dtest.settings.loader as service_settings
 from tests.api_service.test_planning_api_postgres import planning, test_config, submit, execute, read
-from api_service.runs.runtime import runtime as graph_runtime
-from agent_service.agents.analysis.tests.test_plan_revision import setup_revision, revision_reply, SOURCE
-from agent_service.agents.analysis.planning.graph import build_planning_graph
-from service_contracts.plan_interaction import ClarificationEvent, PlanningTransitionEvent
+from dtest.application.runs.runtime import runtime as graph_runtime
+from tests.agent_service.test_plan_revision import setup_revision, revision_reply, SOURCE
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+from dtest.contracts.plan_interaction import ClarificationEvent, PlanningTransitionEvent
 
 
 @pytest.mark.asyncio
 async def test_feedback_admission_stale_tokens_replay_question_restart_and_free_approval(planning,tmp_path,monkeypatch):
-    from agent_service.agents.analysis.planning.proposals import RevisionReply
+    from dtest.agent_service.agents.analysis.planning.proposals import RevisionReply
     h=planning
     question=RevisionReply(kind='clarification',message='어떤 변환 방법을 원하시나요?',plans=[])
     runtime,executor,unused,saver,config,unused_state,calls,resume=await setup_revision(tmp_path,

@@ -24,7 +24,7 @@ sys.path.insert(0,str(Path(a.source)/'src'))
 cfg=json.loads(Path(a.config).read_text())
 from sqlalchemy import event
 from sqlalchemy.engine import make_url
-from service_settings import load_settings
+from dtest.settings.loader import load_settings
 url=os.environ['DTEST_BENCH_DATABASE_URL']
 u=make_url(url)
 if u.database != 'identity_test' or u.host not in ('127.0.0.1', 'localhost'):
@@ -43,19 +43,19 @@ settings=load_settings(config={
  'WORKFLOW_PERSISTENCE_ENABLED':False,'GRAPH_CHECKPOINTER':'postgres',
  'SHUTDOWN_DRAIN_SECONDS':1,'SHUTDOWN_TIMEOUT_SECONDS':4,
 },environ={})
-from service_settings import configure
+from dtest.settings.loader import configure
 configure(settings)
-from service_bootstrap import create_app
+from dtest.bootstrap import create_app
 from app.core.database import get_engine,get_session_factory
 from app.services import agent_graph_service as gs
 from app.core.execution_lifecycle import execution_health
 from app.services.user_service import UserService
 from app.schemas.common.user_schema import UserCreate
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from agent_service.agents.analysis.graph import build_analysis_workflow_graph
-from agent_service.agents.analysis.dependencies import create_llm_dependencies
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.agent_service.agents.analysis.graph import build_analysis_workflow_graph
+from dtest.agent_service.agents.analysis.dependencies import create_llm_dependencies
 from app.services.workflow_persistence import NullWorkflowStore
-from agent_service.agents.analysis.testing.mock_dependencies import ScriptedAgent
+from dtest.agent_service.agents.analysis.testing.mock_dependencies import ScriptedAgent
 
 metrics={'active':False}
 kind=ContextVar('bench_kind',default='worker')

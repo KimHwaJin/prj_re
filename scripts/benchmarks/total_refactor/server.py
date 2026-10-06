@@ -9,7 +9,7 @@ p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p
 cfg=json.loads(a.config.read_text());sys.path.insert(0,str(a.source/'src'));sys.path.insert(1,str(a.source))
 legacy=cfg['label']=='before'
 if not legacy:
-    from service_settings import configure, load_settings
+    from dtest.settings.loader import configure, load_settings
     configure(load_settings(config=cfg['settings'],environ={}))
 from sqlalchemy import event,text
 from app.core.database import get_engine,get_session_factory
@@ -63,7 +63,7 @@ for operation in ('open','close'):
         return wrapped
     setattr(AsyncConnectionPool,operation,wrapper(original,operation))
 
-module=importlib.import_module('app.graphs.builders.build_analysis_workflow_graph' if legacy else 'agent_service.agents.analysis.graph')
+module=importlib.import_module('app.graphs.builders.build_analysis_workflow_graph' if legacy else 'dtest.agent_service.agents.analysis.graph')
 build=module.build_analysis_workflow_graph
 @wraps(build)
 def measured_build(*args,**kwargs):
@@ -106,10 +106,10 @@ async def model_async(self,*args,**kwargs):
 ChatOpenAI._generate=model_sync;ChatOpenAI._agenerate=model_async
 
 if legacy:
-    from main import app
+    from dtest.api_service.app import app
 else:
-    from service_bootstrap import create_app
-    from service_settings import get_settings
+    from dtest.bootstrap import create_app
+    from dtest.settings.loader import get_settings
     app=create_app(get_settings())
 
 @app.middleware('http')

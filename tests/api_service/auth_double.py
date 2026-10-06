@@ -8,12 +8,12 @@ import time
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 
-from api_service.models.enums import DeleteYN
-from api_service.models.user_model import UserModel
-from api_service.resources.identity import normalize_user_id
-from api_service.repositories.user_repository import UserRepository
-from service_auth.sso.dependencies import get_login_session
-from service_auth.sso.sessions import LoginSession
+from dtest.contracts.enums import DeleteYN
+from dtest.infrastructure.database.models.user_model import UserModel
+from dtest.contracts.identity import normalize_user_id
+from dtest.infrastructure.database.repositories.user_repository import UserRepository
+from dtest.api_service.auth.dependencies import get_login_session
+from dtest.infrastructure.redis.login_sessions import LoginSession
 
 
 async def session_for_public_id(db, public_id):

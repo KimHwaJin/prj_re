@@ -29,7 +29,7 @@ p.add_argument('--hold-owners',action='store_true',help='Diagnostic live CRUD ch
 p.add_argument('--cache-size',type=int,default=100);p.add_argument('--trial-index',type=int,default=1);p.add_argument('--memory-mode',choices=['manual','auto_context'],default='manual');p.add_argument('--followup',action='store_true');p.add_argument('--notify',choices=['on','off'],default='on');a=p.parse_args()
 from observation_scenarios import scenario
 SPEC=scenario(a.observation_profile)
-TOOLS=Path(__file__).resolve().parent;ROOT=a.source_root.resolve();CURRENT=(ROOT/'src/api_service/runs/commands/claim.py').exists()
+TOOLS=Path(__file__).resolve().parent;ROOT=a.source_root.resolve();CURRENT=(ROOT/'src/dtest/application/runs/commands/claim.py').exists()
 assert all(1<=n<=50 for n in a.users) and all(1<=n<=64 for n in a.concurrency)
 assert a.event_concurrency>=1 and a.event_pool>=2 and a.event_idle>=a.event_poll>0
 assert not a.real_executor or (a.users==[1] and a.executor_delay_ms==0 and a.hold_seconds==0)
@@ -117,7 +117,11 @@ async def trial(n,c,repeat):
   for name in ('EXECUTIONS','OPERATIONS','EXECUTION','RESULT','NOTEBOOK','FINALIZE','CANCEL','ARTIFACTS'):
    settings.pop('EXECUTOR_'+name+'_PATH')
  settings.pop('EW_EXECUTOR_BASE_URL')
- if CURRENT:settings.pop('EW_DISPATCH_CONCURRENCY')
+ if CURRENT:
+  settings['EXECUTOR_BASE_URL']=executor_origin.rstrip('/')
+  for key in list(settings):
+   if key.startswith('EXECUTOR_') and key.endswith('_PATH'):settings.pop(key)
+  settings.pop('EW_DISPATCH_CONCURRENCY')
  else:
   settings.update(WORKFLOW_DATABASE_URL=DSN,WORKFLOW_PERSISTENCE_ENABLED=False)
   settings.pop('AGENT_WORKER_NOTIFY_ENABLED');settings.pop('AGENT_WORKER_RECONCILE_INTERVAL_SECONDS')

@@ -9,7 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model_connection import load_model_env, model_host_alias
 from serve_test_console import arguments, prepare_settings, public_runtime
-from service_settings import load_settings
+from dtest.settings.loader import load_settings
 
 
 def local_config():

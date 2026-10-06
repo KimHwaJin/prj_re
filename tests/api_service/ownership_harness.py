@@ -8,17 +8,17 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from uuid import UUID, uuid4
 from sqlalchemy import or_, select
-from fastapi import HTTPException
-from api_service.infrastructure import database
-from api_service.models.enums import TaskStatus
-from api_service.models.task_model import TaskModel
-from api_service.models.session_model import SessionModel
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.resources import lifecycle
-from api_service.runs.lifecycle import execution_health
-from api_service.runs import ownership
-from service_contracts.events import DeferEvent
-from service_runtime.cleanup import protected_cleanup
+from dtest.contracts.errors import ApplicationError
+from dtest.infrastructure.database import runtime as database
+from dtest.contracts.enums import TaskStatus
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.application.resources import lifecycle
+from dtest.application.runs.lifecycle import execution_health
+from dtest.application.runs import ownership
+from dtest.contracts.events import DeferEvent
+from dtest.lifecycle import protected_cleanup
 
 class _HandoffPending(DeferEvent):
     """An API invocation is still committing/releasing this session."""
@@ -38,7 +38,7 @@ async def run_test_event(context, operation: Callable[[], Awaitable], *,
             if api_session is not None:
                 try:
                     await lifecycle.lock_session(db, api_session.user_id, owner.session_id)
-                except HTTPException as exc:
+                except ApplicationError as exc:
                     raise DeferEvent("API resources are inactive or changed during event admission") from exc
             # Standalone graph sessions without API resources still participate
             # in the existing persistent session ownership protocol.

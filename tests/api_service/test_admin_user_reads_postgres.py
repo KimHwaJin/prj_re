@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Admin User list/detail on guarded disposable PostgreSQL."""
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
@@ -6,13 +7,13 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import func, select
 
-from api_service.models.enums import DeleteYN, UserRole
-from api_service.models.user_model import UserModel as User
-from api_service.models.project_model import ProjectModel as Project
-from api_service.resources.sso_users import SsoUserDirectory
+from dtest.contracts.enums import DeleteYN, UserRole
+from dtest.infrastructure.database.models.user_model import UserModel as User
+from dtest.infrastructure.database.models.project_model import ProjectModel as Project
+from dtest.application.resources.sso_users import SsoUserDirectory
 from tests.api_service.test_user_identity_postgres import database_url, harness, initialize, add_user, headers
 from tests.api_service.test_read_queries_postgres import trace_reads
-from service_auth.sso.contracts import VerifiedEmployee
+from dtest.contracts.auth import VerifiedEmployee
 
 SUMMARY_FIELDS = {'user_id','user_name','role','is_active','created_at','updated_at','deleted_at'}
 
@@ -165,7 +166,7 @@ async def test_deleted_profile_read_does_not_reactivate_or_recreate_default_proj
     assert (await h.client.delete('/api/v1/users/user-a',headers=headers())).status_code==404
     assert (await h.client.post('/api/v1/users',headers=headers(),json={'user_id':'user-a','user_name':'Reuse'})).status_code==409
     directory=SsoUserDirectory(auto_register=True,session_factory=h.factory)
-    with pytest.raises(HTTPException) as error:
+    with pytest.raises((HTTPException, ApplicationError)) as error:
         await directory.bind(VerifiedEmployee('user-a','SSO Name'))
     assert error.value.status_code == 403
     assert await snapshot()==before

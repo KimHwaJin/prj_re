@@ -3,8 +3,8 @@
 Real API, queue claims, cancellation polling, heartbeat/recovery storage;
 graph execution is controlled locally. No LLM/Executor is contacted.
 """
-from api_service.runs import monitoring
-from api_service.runs.repository import lock_run_and_task
+from dtest.application.runs import monitoring
+from dtest.application.runs.repository import lock_run_and_task
 import asyncio
 from dataclasses import replace
 from datetime import timedelta
@@ -15,19 +15,19 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select, update
 
-import service_settings
-import api_service.infrastructure.database as database
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.tasks as tasks
-import api_service.runs.token_events as tokens
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.runs.lifecycle import execution_health
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_model import TaskModel
-from api_service.utils import utc_now
-from api_service.runs.tasks import TaskService
+import dtest.settings.loader as service_settings
+import dtest.infrastructure.database.runtime as database
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.tasks as tasks
+import dtest.application.runs.token_events as tokens
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.contracts.values import utc_now
+from dtest.application.runs.tasks import TaskService
 from tests.api_service.test_user_identity_postgres import database_url, harness, initialize, add_user, add_session, headers
 
 
@@ -35,7 +35,7 @@ from tests.api_service.test_user_identity_postgres import database_url, harness,
 async def runtime(harness, monkeypatch):
     h = harness
     configured = service_settings.get_settings()
-    monkeypatch.setattr(service_settings, '_snapshot', replace(configured, api=configured.api.model_copy(update={
+    monkeypatch.setattr(service_settings, '_snapshot', replace(configured, commands=configured.commands.model_copy(update={
         'run_cleanup_timeout_seconds': .15, 'run_monitor_timeout_seconds': 1,
         'task_cancel_poll_interval_seconds': .05, 'agent_worker_retry_backoff_seconds': 0,
     })))

@@ -4,9 +4,9 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 from psycopg_pool import PoolTimeout
 from redis.exceptions import ConnectionError
-from api_service.runs.commands.outcome import event_outcome
-from service_contracts.events import DeferEvent,IgnoreEvent,RejectEvent
-from service_contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs.commands.outcome import event_outcome
+from dtest.contracts.events import DeferEvent,IgnoreEvent,RejectEvent
+from dtest.contracts.execution import ExecutionNeedsRecovery
 
 @pytest.mark.parametrize('error,state,spent', [
     (None,'DONE',0),(DeferEvent('not ready'),'READY',0),
@@ -25,8 +25,8 @@ def test_business_retry_exhaustion_is_terminal_but_deferral_is_not():
 
 @pytest.mark.asyncio
 async def test_executor_ingress_does_not_construct_another_graph_dispatcher():
-    from service_settings import load_settings
-    from api_service.workers.executor_events.runtime import ExecutorWorker
+    from dtest.settings.loader import load_settings
+    from dtest.worker_service.executor_events.runtime import ExecutorWorker
     worker=ExecutorWorker(load_settings(config={},environ={}).worker,{'execution.completed'})
     try:
         assert len(worker.consumers)==1

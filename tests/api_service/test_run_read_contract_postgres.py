@@ -4,8 +4,8 @@ from uuid import UUID
 import pytest
 from sqlalchemy import select, update
 
-from api_service.models.enums import AgentRunStatus
-from api_service.models.agent_run_model import AgentRunModel as Run
+from dtest.contracts.enums import AgentRunStatus
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
 from tests.api_service.test_crud_guards_postgres import database_url, harness, runtime, resources, seed
 from tests.api_service.test_read_queries_postgres import trace_reads
 from tests.api_service.test_user_identity_postgres import headers

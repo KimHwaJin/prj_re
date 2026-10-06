@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select
 
-from api_service.models import AgentRunModel as Run, AgentRunLogModel as Log
+from dtest.infrastructure.database.models import AgentRunModel as Run, AgentRunLogModel as Log
 from tests.api_service.test_user_identity_postgres import (
     database_url, harness, initialize, add_user, add_session, headers,
 )

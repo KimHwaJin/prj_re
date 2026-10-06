@@ -1,7 +1,7 @@
 """Request metadata must not add a task boundary to a streaming response."""
 import asyncio
 import pytest
-from service_runtime.request_id import RequestIdMiddleware
+from dtest.api_service.middleware.request_id import RequestIdMiddleware
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('existing,header',[(None,None),(None,'caller-id'),('platform-id','caller-id')])

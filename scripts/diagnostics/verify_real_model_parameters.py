@@ -21,8 +21,8 @@ import uvicorn
 from cookie_auth import install_employee_fixture, sign_in, write_private_result
 from serve_test_console import temporary_database, command, ConsoleServer
 from verify_api_contract_flow import settings_for_test, migrate
-from service_bootstrap import create_app
-from service_settings import load_settings
+from dtest.bootstrap import create_app
+from dtest.settings.loader import load_settings
 
 from model_connection import load_model_env, model_host_alias
 
@@ -49,7 +49,7 @@ def arguments():
 
 def observe(report, active):
     # Observe the public middleware/HTTP entry points without fabricating output.
-    from agent_service.middleware.prompt_json import PromptJsonMiddleware
+    from dtest.agent_service.middleware.prompt_json import PromptJsonMiddleware
     old_model = PromptJsonMiddleware.awrap_model_call
     async def model(self, request, handler):
         async def measured(actual):
@@ -81,7 +81,7 @@ def observe(report, active):
         return await old_generate(self, messages, *args, **kwargs)
     BaseChatOpenAI._agenerate = generate
 
-    from integrations.executor.client import ExecutorClient
+    from dtest.infrastructure.executor.client import ExecutorClient
     old_http = ExecutorClient.request
     async def executor(self, method, url, payload=None):
         reply = await old_http(self, method, url, payload)
@@ -92,7 +92,7 @@ def observe(report, active):
         return reply
     ExecutorClient.request = executor
 
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
     old_role = PlanningRuntime.execution_role
     async def role(self, name, state, payload):
         item = {'scenario': active['name'], 'role': name,
@@ -134,8 +134,8 @@ async def verify(args, config, namespace, report):
                     raise AssertionError((path, response.status_code, response.text[:2000]))
                 return response.json() if response.content else None
             async def snapshot(sid):
-                from api_service.runs.runtime import runtime
-                from agent_config import build_langgraph_thread_id
+                from dtest.application.runs.runtime import runtime
+                from dtest.settings.agent import build_langgraph_thread_id
                 async with runtime.open_graph() as graph:
                     return (await graph.aget_state({'configurable': {'thread_id': build_langgraph_thread_id(sid)}})).values
             names = list(REQUESTS) if args.scenario == 'all' else [args.scenario]

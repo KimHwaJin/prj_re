@@ -9,5 +9,5 @@ sys.path.insert(0, SRC)
 
 
 if __name__ == "__main__":
-    from service_bootstrap import main
+    from dtest.bootstrap import main
     main()

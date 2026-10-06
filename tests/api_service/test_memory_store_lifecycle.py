@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 import pytest
 from langgraph.store.memory import InMemoryStore
-from api_service.infrastructure.memory_store import MemoryStoreRuntime, MemoryStoreBusy
+from dtest.infrastructure.memory.store import MemoryStoreRuntime, MemoryStoreBusy
 
 @pytest.mark.asyncio
 async def test_concurrent_store_borrows_initialize_once_and_shutdown_drains(monkeypatch):
@@ -32,7 +32,7 @@ async def test_concurrent_store_borrows_initialize_once_and_shutdown_drains(monk
 
 @pytest.mark.asyncio
 async def test_store_shutdown_timeout_keeps_pool_until_borrower_releases(monkeypatch):
-    import service_settings
+    import dtest.settings.loader as service_settings
     monkeypatch.setattr(service_settings,'get_settings',lambda:SimpleNamespace(shutdown_timeout_seconds=.01))
     runtime=MemoryStoreRuntime();runtime.store=InMemoryStore();runtime.stack=AsyncExitStack();closed=AsyncMock()
     runtime.stack.push_async_callback(closed)

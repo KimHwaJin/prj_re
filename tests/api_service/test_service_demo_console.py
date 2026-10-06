@@ -4,9 +4,9 @@ import re
 
 from fastapi.testclient import TestClient
 
-import service_settings
-from service_bootstrap import create_app
-from service_settings import load_settings
+import dtest.settings.loader as service_settings
+from dtest.bootstrap import create_app
+from dtest.settings.loader import load_settings
 
 
 def runtime_config(html):

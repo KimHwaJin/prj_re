@@ -15,9 +15,9 @@ async def test_observer_records_final_model_boundary_and_preserves_the_call(monk
     diagnostic=importlib.util.module_from_spec(spec)
     spec.loader.exec_module(diagnostic)
     from langchain_openai.chat_models.base import BaseChatOpenAI
-    from agent_service.middleware.prompt_json import PromptJsonMiddleware
-    from integrations.executor.client import ExecutorClient
-    from agent_service.agents.analysis.planning.runtime import PlanningRuntime
+    from dtest.agent_service.middleware.prompt_json import PromptJsonMiddleware
+    from dtest.infrastructure.executor.client import ExecutorClient
+    from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
     # observe is process-local in the CLI; restore all its hooks for this test.
     for cls,name in ((BaseChatOpenAI,'_agenerate'),(PromptJsonMiddleware,'awrap_model_call'),
                      (ExecutorClient,'request'),(PlanningRuntime,'execution_role')):

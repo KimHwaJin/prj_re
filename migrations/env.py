@@ -6,7 +6,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import Connection, make_url, pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
-from service_settings import get_settings
+from dtest.settings.loader import get_settings
 
 config = context.config
 if config.config_file_name:

@@ -6,8 +6,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from service_runtime.configuration_files import initialize_profile
-from service_settings import ConfigurationError
+from dtest.settings.files import initialize_profile
+from dtest.settings.loader import ConfigurationError
 
 
 def main():

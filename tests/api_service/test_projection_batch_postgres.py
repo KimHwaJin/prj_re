@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Default graph projection: real transaction/lock behavior and comparable costs."""
 import asyncio
 from uuid import UUID, uuid4
@@ -6,15 +7,15 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from api_service.models.agent_run_log_model import AgentRunLogModel
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.message_model import MessageModel
-from api_service.models.session_model import SessionModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.models.task_model import TaskModel
-from api_service.runs.persistence.graph import persist_graph_state
-from api_service.runs.task_events import TaskEventService
-from api_service.resources.messages import MessageService
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.application.runs.persistence.graph import persist_graph_state
+from dtest.application.runs.task_events import TaskEventService
+from dtest.application.resources.messages import MessageService
 from tests.api_service.test_projection_roundtrips_postgres import count_db, budget, uid
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
@@ -112,7 +113,7 @@ async def test_batch_validates_context_before_any_output(runtime, wrong):
         user_id = uuid4()
     else:
         state[wrong + '_id'] = str(uuid4())
-    with pytest.raises(HTTPException):
+    with pytest.raises((HTTPException, ApplicationError)):
         await persist_graph_state(state, user_id=user_id, session_factory=h.factory, agent_run_id=rid)
     assert await snapshot(h, rid) == before
 
@@ -162,7 +163,7 @@ async def test_readers_cannot_see_partial_result(runtime, monkeypatch):
 
 
 async def test_batch_and_single_log_writer_share_lock_order(runtime):
-    from api_service.runs.logs import AgentRunLogService
+    from dtest.application.runs.logs import AgentRunLogService
     h = runtime
     rid, state, user_id = await setup_state(h)
     args = dict(run_id=rid, agent_name='answer2', node='answer2', event='message_emitted',
@@ -188,9 +189,9 @@ async def test_batch_and_single_log_writer_share_lock_order(runtime):
 
 
 async def test_batch_context_cannot_survive_commit(runtime):
-    from api_service.runs.persistence.batch import GraphResultBatch
-    from api_service.runs.persistence.events import GraphPersistenceContext, GraphPersistenceCursor, extract_graph_events
-    from api_service.schemas.message_schema import MessageCreate
+    from dtest.application.runs.persistence.batch import GraphResultBatch
+    from dtest.application.runs.persistence.events import GraphPersistenceContext, GraphPersistenceCursor, extract_graph_events
+    from dtest.contracts.resources.message_schema import MessageCreate
     h = runtime
     rid, state, user_id = await setup_state(h)
     context = GraphPersistenceContext.from_state(state, user_id=user_id, agent_run_id=rid)

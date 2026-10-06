@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Opt-in real PostgreSQL tests. Use a DISPOSABLE identity_test database only.
 
 DTEST_IDENTITY_TEST_DATABASE_URL=postgresql+asyncpg://.../identity_test
@@ -21,19 +22,19 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-import service_settings
-from api_service.api.dependencies import Actor, get_current_user_id
-from api_service.infrastructure.database import get_db
-from api_service.models.enums import AgentRunStatus, DeleteYN, MessageType, TaskStatus, UserRole
-from api_service.models.user_model import UserModel
-from api_service.models.project_model import ProjectModel
-from api_service.models.session_model import SessionModel
-from api_service.models.message_model import MessageModel
-from api_service.models.task_model import TaskModel
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.schemas.user_schema import UserCreate
-from api_service.resources.users import UserService
-from service_bootstrap import create_app
+import dtest.settings.loader as service_settings
+from dtest.api_service.http.dependencies import Actor, get_current_user_id
+from dtest.infrastructure.database.runtime import get_db
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, MessageType, TaskStatus, UserRole
+from dtest.infrastructure.database.models.user_model import UserModel
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.contracts.resources.user_schema import UserCreate
+from dtest.application.resources.users import UserService
+from dtest.bootstrap import create_app
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -137,7 +138,7 @@ async def test_bootstrap_is_once_and_does_not_change_existing_identity(harness):
     async with h.factory() as db:
         assert await db.scalar(select(func.count()).select_from(UserModel)) == 1
         assert await db.scalar(select(func.count()).select_from(ProjectModel)) == 1
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises((HTTPException, ApplicationError)) as exc:
             await UserService.bootstrap_admin(db, UserCreate(user_id="other", user_name="Other", role="admin"))
         assert exc.value.status_code == 409
 
@@ -307,7 +308,7 @@ async def test_stale_actor_cannot_register_after_demotion(harness):
         stale = Actor(row.user_id, row.public_user_id, row.role)
     assert (await h.client.patch("/api/v1/users/admin-two", headers=headers(), json={"role": "user"})).status_code == 200
     async with h.factory() as db:
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises((HTTPException, ApplicationError)) as exc:
             await UserService.create(db, stale, UserCreate(user_id="forbidden", user_name="Forbidden"))
         assert exc.value.status_code == 403
 
@@ -353,7 +354,7 @@ async def test_header_maps_run_admission_to_internal_uuid_and_sse(harness, monke
         run.status = AgentRunStatus.SUCCESS
         await db.execute(update(TaskModel).where(TaskModel.task_id == run.task_id).values(status=TaskStatus.SUCCESS))
         await db.commit()
-    import api_service.api.v1.routes.runs as routes
+    import dtest.api_service.http.v1.routes.runs as routes
     monkeypatch.setattr(routes, "get_session_factory", lambda: h.factory)
     stream = await asyncio.wait_for(h.client.get(f"/api/v1/sessions/{session_id}/runs/{run_id}/stream",
                                                 headers=headers("user-a")), 5)
@@ -382,7 +383,7 @@ async def test_new_admission_waits_for_deletion_then_fails(harness):
             assert not entering.done()
             target.delete_yn = DeleteYN.Y
             await deleting.commit()
-            with pytest.raises(HTTPException) as exc:
+            with pytest.raises((HTTPException, ApplicationError)) as exc:
                 await asyncio.wait_for(entering, 5)
             assert exc.value.status_code == 401
         finally:
@@ -397,7 +398,7 @@ async def test_bootstrap_command_uses_selected_config_and_is_idempotent(harness,
     h = harness
     config = tmp_path / "bootstrap.yml"
     config.write_text('database_url: ' + database_url + "\n")
-    command = [sys.executable, "-m", "bootstrap_admin", "--config", str(config),
+    command = [sys.executable, "-m", "dtest.application.admin", "--config", str(config),
                "--user-id", "first-admin", "--user-name", "First Admin"]
     for _ in range(2):
         result = await asyncio.to_thread(subprocess.run, command, cwd=ROOT,

@@ -10,9 +10,9 @@ import sys
 import pytest
 import yaml
 
-import service_settings
-from service_runtime.configuration_files import initialize_profile, yaml_document, write_private
-from service_settings import ConfigurationError, load_settings
+import dtest.settings.loader as service_settings
+from dtest.settings.files import initialize_profile, yaml_document, write_private
+from dtest.settings.loader import ConfigurationError, load_settings
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -36,9 +36,9 @@ def test_profile_copy_is_private_and_same_db_targets_derive(profile_root,profile
     assert target.stat().st_mode & 0o777 == 0o600
     assert not (profile_root/'.env').exists()
     snapshot=load_settings(root=profile_root,profile=profile,environ={})
-    assert snapshot.worker.database_url==snapshot.api.database_url.replace('+asyncpg','')
+    assert snapshot.worker.database_url==snapshot.database.database_url.replace('+asyncpg','')
     assert snapshot.agent.checkpoint_db_uri==snapshot.agent.checkpoint_db_uri
-    assert snapshot.api.redis_url==snapshot.worker.redis_url
+    assert snapshot.redis.redis_url==snapshot.worker.redis_url
     assert snapshot.agent.executor_base_url==snapshot.worker.executor_base_url
     assert snapshot.agent.executor_source_type=='INLINE'
     assert snapshot.agent.max_plan_candidates==5
@@ -73,7 +73,7 @@ def test_legacy_dotenv_import_canonicalizes_and_preserves_false_zero_sources(pro
     assert source.read_bytes()==before
     assert snapshot.api.server_port==18110
     assert snapshot.agent.model_name=='legacy-model'
-    assert snapshot.api.redis_url=='redis://:import-secret@local:6379/2'
+    assert snapshot.redis.redis_url=='redis://:import-secret@local:6379/2'
     assert not snapshot.agent.executor_submit_enabled and snapshot.agent.model_max_retries==0
     text=target.read_text()
     assert 'ew_redis_url' not in text and 'llm_model_name' not in text and 'pythonutf8' not in text
@@ -150,7 +150,7 @@ def test_schema_launcher_uses_selected_targets_and_prepares_in_order(profile_roo
     write_private(target, yaml.safe_dump(yaml_document(snapshot.inputs)))
     steps = []
     def upgrade(config, revision):
-        assert service_settings.get_settings().api.database_url == snapshot.api.database_url
+        assert service_settings.get_settings().database.database_url == snapshot.database.database_url
         assert service_settings.get_settings().worker.database_url == snapshot.worker.database_url
         assert revision == 'head'
         steps.append(Path(config.config_file_name).name)
@@ -183,5 +183,5 @@ def test_secret_mount_and_container_tools_have_the_same_profile_contract():
     config = profile
     resolved = load_settings(config=config, environ={}, profile='prd')
     assert resolved.api.server_host == '0.0.0.0' and resolved.api.server_port == 8000
-    assert resolved.worker.database_url == resolved.api.database_url.replace('+asyncpg', '')
+    assert resolved.worker.database_url == resolved.database.database_url.replace('+asyncpg', '')
     assert 'scripts/migrate.py scripts/configure.py' in (ROOT / 'Dockerfile').read_text()

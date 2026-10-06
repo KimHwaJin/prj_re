@@ -1,19 +1,20 @@
+from dtest.container import container
 """Real token commits, task row contention, public cursor replay and Run completion."""
 import asyncio
 from uuid import UUID, uuid4
 
 import pytest
-import service_settings
+import dtest.settings.loader as service_settings
 from langchain_core.callbacks.manager import AsyncCallbackManagerForLLMRun
 from sqlalchemy import select
 
-from api_service.runs import token_events as tokens
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.task_model import TaskModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.runs.task_events import TaskEventService
-from service_contracts.execution import ExecutionNeedsRecovery
+from dtest.application.runs import token_events as tokens
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.task_model import TaskModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.application.runs.task_events import TaskEventService
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from tests.api_service.test_user_identity_postgres import database_url, harness
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows, worker, runs
 
@@ -26,7 +27,7 @@ async def test_worker_hides_internal_model_tokens_and_replays_terminal_event(run
         observed.extend(kwargs['callbacks'])
         for model_id, parts in zip(model_ids, [('가😀', ' tail'), ('다른', ' 모델')]):
             manager = AsyncCallbackManagerForLLMRun(run_id=model_id,
-                handlers=kwargs['callbacks'], inheritable_handlers=[])
+                handlers=container.callbacks(kwargs['callbacks']), inheritable_handlers=[])
             for part in parts:
                 await manager.on_llm_new_token(part)
         return {'routing_result': {'route': 'analysis'}}
@@ -130,7 +131,7 @@ async def test_worker_internal_tokens_never_invoke_failed_or_blocked_public_writ
     monkeypatch.setattr(tokens.LLMTokenEventBuffer, '_append', append)
     async def graph(**kwargs):
         manager = AsyncCallbackManagerForLLMRun(run_id=uuid4(),
-            handlers=kwargs['callbacks'], inheritable_handlers=[])
+            handlers=container.callbacks(kwargs['callbacks']), inheritable_handlers=[])
         try:
             await manager.on_llm_new_token('a')
             await manager.on_llm_new_token('b')

@@ -1,3 +1,4 @@
+from dtest.contracts.errors import ApplicationError
 """Real PostgreSQL LISTEN/NOTIFY, shared reads, replay and bounded resources."""
 import asyncio
 from contextlib import AsyncExitStack
@@ -10,13 +11,13 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import event, select, update
 
-from service_settings import get_settings
-from api_service.models.enums import AgentRunStatus, DeleteYN
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.session_model import SessionModel
-from api_service.models.user_model import UserModel
-from api_service.runs.streaming import RunStreamHub
-from api_service.runs.task_events import TaskEventService
+from dtest.settings.loader import get_settings
+from dtest.contracts.enums import AgentRunStatus, DeleteYN
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.user_model import UserModel
+from dtest.api_service.streaming import RunStreamHub
+from dtest.application.runs.task_events import TaskEventService
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue
 
@@ -146,7 +147,7 @@ async def test_deactivated_user_invalidates_cached_authorization(runtime):
         async with runtime.factory() as db:
             await db.execute(update(UserModel).where(UserModel.user_id==key[0]).values(delete_yn=DeleteYN.Y));await db.commit()
         await changed(entry,g)
-        with pytest.raises(HTTPException) as error:await hub.read(entry,0)
+        with pytest.raises((HTTPException, ApplicationError)) as error:await hub.read(entry,0)
         assert error.value.status_code==404
 
 
@@ -156,7 +157,7 @@ async def test_capacity_cache_bounds_and_shutdown_release(runtime):
     hub,key=await setup(runtime,sse_max_connections=1)
     hub.CACHE_PAGES=2
     async with hub.subscribe(*key) as entry:
-        with pytest.raises(HTTPException) as error:
+        with pytest.raises((HTTPException, ApplicationError)) as error:
             async with hub.subscribe(*key):pass
         assert error.value.status_code==503
         await asyncio.wait_for(hub.ready.wait(),3)
@@ -174,7 +175,7 @@ async def test_capacity_cache_bounds_and_shutdown_release(runtime):
 
 @pytest.mark.asyncio
 async def test_notification_during_read_is_not_lost(runtime,monkeypatch):
-    from api_service.runs.service import PublicRunService
+    from dtest.application.runs.service import PublicRunService
     hub,key=await setup(runtime)
     original=PublicRunService.snapshots
     async with hub.subscribe(*key) as entry:
@@ -210,7 +211,7 @@ async def test_other_process_commit_wakes_stream(runtime):
     async with hub.subscribe(*key) as entry:
         await asyncio.wait_for(hub.ready.wait(),3)
         _,g=await hub.read(entry,0)
-        dsn=make_url(hub.settings.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+        dsn=make_url(get_settings().database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
         code="import psycopg,sys; c=psycopg.connect(sys.argv[1]); c.execute(\"UPDATE agent_runs SET status='running' WHERE run_id=%s\",(sys.argv[2],)); c.commit(); c.close()"
         child=await asyncio.create_subprocess_exec(sys.executable,'-c',code,dsn,str(key[2]),stderr=asyncio.subprocess.PIPE)
         _,error=await child.communicate()
@@ -246,7 +247,7 @@ async def test_real_http_auth_and_idle_stream_release_single_connection(small_po
     hub=h.app.state.run_stream_hub
     hub.session_factory=h.factory
     sock=socket.socket();sock.bind(('127.0.0.1',0));sock.listen();sock.setblocking(False)
-    from service_bootstrap import build_server
+    from dtest.bootstrap import build_server
     server=build_server(h.app,get_settings())
     server.config.lifespan='off'
     server.config.log_level='error'

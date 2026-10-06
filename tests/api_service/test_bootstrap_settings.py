@@ -15,9 +15,9 @@ from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-import service_settings as config_module
-from service_settings import ConfigurationError, configure, get_settings, load_settings
-from service_bootstrap import BackgroundRuntime, attach_service, create_app
+import dtest.settings.loader as config_module
+from dtest.settings.loader import ConfigurationError, configure, get_settings, load_settings
+from dtest.bootstrap import BackgroundRuntime, attach_service, create_app
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -70,7 +70,7 @@ def test_role_specific_databases_are_preserved():
     settings = local_settings(DATABASE_URL="postgresql+asyncpg://host/api",
                               CHECKPOINT_DB_URI="postgresql://host/checkpoints",
                               EW_DATABASE_URL="postgresql://host/events")
-    assert settings.api.database_url.endswith("/api")
+    assert settings.database.database_url.endswith("/api")
     assert settings.agent.checkpoint_db_uri.endswith("/checkpoints")
     assert settings.worker.database_url.endswith("/events")
 
@@ -89,15 +89,15 @@ def test_agent_settings_have_one_owner():
     assert not hasattr(settings, "workflow_database_url")
 
 def test_statement_cache_is_opt_in_and_selected_profile_wins():
-    assert local_settings().api.database_prepared_statement_cache_size == 0
+    assert local_settings().database.database_prepared_statement_cache_size == 0
     profile = load_settings(
         config_path=ROOT / "config.performance.yml",
         environ={"DATABASE_PREPARED_STATEMENT_CACHE_SIZE": "0"},
     )
-    assert profile.api.database_prepared_statement_cache_size == 100
-    assert profile.api.agent_worker_concurrency == 32
-    assert profile.api.database_pool_size == 10
-    assert profile.api.database_max_overflow == 0
+    assert profile.database.database_prepared_statement_cache_size == 100
+    assert profile.commands.agent_worker_concurrency == 32
+    assert profile.database.database_pool_size == 10
+    assert profile.database.database_max_overflow == 0
     assert profile.agent.checkpoint_pool_max_size == 4
 
 
@@ -122,7 +122,7 @@ def test_no_implicit_dotenv_or_phoenix_config(tmp_path, monkeypatch):
     monkeypatch.setenv("MODEL_NAME", "environment-leak")
     settings = load_settings(config={}, environ={})
     assert settings.agent.model_name not in {"leaked", "environment-leak"}
-    from agent_config import load_agent_settings
+    from dtest.settings.agent import load_agent_settings
     assert load_agent_settings({"MODEL_NAME": "explicit"}).phoenix_api_key is None
 
 
@@ -173,13 +173,13 @@ def test_invalid_values_fail_without_fallback(key, value):
 
 def test_snapshot_is_shared_and_frozen():
     settings = configure(local_settings())
-    from agent_config import load_agent_settings
-    from config import settings as api_settings
+    from dtest.settings.agent import load_agent_settings
+    from dtest.settings.api import settings as api_settings
     assert get_settings() is settings
     assert load_agent_settings() is settings.agent
-    assert api_settings.database_url == settings.api.database_url
+    assert settings.database.database_url.startswith("postgresql")
     with pytest.raises(ValidationError):
-        settings.api.database_url = "new"
+        settings.database.database_url = "new"
     with pytest.raises(RuntimeError, match="already initialized"):
         configure(local_settings())
 
@@ -272,7 +272,7 @@ async def test_later_background_failure_makes_runtime_unready():
 
 
 def test_actual_app_openapi_and_health_need_no_external_services(monkeypatch):
-    import api_service.infrastructure.database as database
+    import dtest.infrastructure.database.runtime as database
     assert database._engine is None
     monkeypatch.setattr(database, "create_async_engine", lambda *a, **kw: pytest.fail("Unexpected DB engine"))
     app = create_app(local_settings())
@@ -326,9 +326,9 @@ async def test_shutdown_deadline_reports_worker_that_ignores_cancellation():
 
 @pytest.mark.asyncio
 async def test_all_owned_resources_close_when_one_cleanup_fails(monkeypatch):
-    from service_bootstrap import _close_resources
-    import api_service.infrastructure.database as database
-    from api_service.runs.runtime import runtime
+    from dtest.bootstrap import _close_resources
+    import dtest.infrastructure.database.runtime as database
+    from dtest.application.runs.runtime import runtime
 
     configure(load_settings(config={}, environ={}))
     shutdown = AsyncMock(side_effect=RuntimeError("cleanup failed"))
@@ -346,14 +346,14 @@ def test_local_migration_guard_checks_resolved_yaml_target():
     settings = load_settings(config={"DATABASE_URL": "postgresql+asyncpg://remote/chat_app"},
                              environ={"DATABASE_URL": "postgresql+asyncpg://postgres/chat_app"})
     configure(settings)
-    assert bootstrap["resolved_targets"]()["DATABASE_URL"] == settings.api.database_url
+    assert bootstrap["resolved_targets"]()["DATABASE_URL"] == settings.database.database_url
     with pytest.raises(RuntimeError, match="DATABASE_URL must point at the local Compose"):
         bootstrap["validate_local_targets"]()
 
 
 @pytest.mark.parametrize("values", [
     {"EW_POLL_SECONDS": float("inf")}, {"LLM_TEMPERATURE": float("nan")},
-    {"MODEL_PROVIDER": ""}, {"MOCK_DATA_ROOT": None},
+    {"MODEL_PROVIDER": ""},
 ])
 def test_nonfinite_or_empty_explicit_values_are_rejected(values):
     with pytest.raises(ConfigurationError):

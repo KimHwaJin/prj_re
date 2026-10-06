@@ -4,8 +4,8 @@ from pathlib import Path
 from uuid import uuid4
 from types import SimpleNamespace
 import httpx, pytest
-from integrations.executor.observations import read_operation_observations
-from service_contracts.events import ExecutorEvent
+from dtest.infrastructure.executor.observations import read_operation_observations
+from dtest.contracts.events import ExecutorEvent
 
 spec=importlib.util.spec_from_file_location('executor_fixture',Path(__file__).with_name('mock_executor.py'))
 fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)

@@ -30,7 +30,7 @@ def verify(folder, runner):
     )
     assert len(records) == expected, (len(records), expected)
     source = Path(
-        __import__("api_service.workflows.search.retrieval", fromlist=["x"]).__file__
+        __import__("dtest.infrastructure.workflow_search.retrieval", fromlist=["x"]).__file__
     )
     assert hashlib.sha256(source.read_bytes()).hexdigest() == env["source_sha256"]
     groups = defaultdict(list)

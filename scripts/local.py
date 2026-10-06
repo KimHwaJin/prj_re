@@ -32,15 +32,15 @@ def initialize(profile="local", config_path=None):
     # Resolve once with exactly the same loader as app.py. No implicit .env read.
     sys.path.insert(0, str(ROOT / "src"))
     import yaml
-    from service_settings import load_settings
-    from service_runtime.configuration_files import write_private, yaml_document
+    from dtest.settings.loader import load_settings
+    from dtest.settings.files import write_private, yaml_document
     service = load_settings(root=ROOT, profile=profile, config_path=config_path)
     source = dict(service.inputs)
     previous = read_env(ENV_FILE)
     values = {key: previous.get(key, default) for key, default in
               read_env(ROOT / ".env.local.example").items() if key.startswith("LOCAL_")}
     values["LOCAL_POSTGRES_PASSWORD"] = previous.get("LOCAL_POSTGRES_PASSWORD") or secrets.token_hex(24)
-    targets = {"DATABASE_URL": service.api.database_url, "CHECKPOINT_DB_URI": service.agent.checkpoint_db_uri,
+    targets = {"DATABASE_URL": service.database.database_url, "CHECKPOINT_DB_URI": service.agent.checkpoint_db_uri,
                "EW_DATABASE_URL": service.worker.database_url}
     for key, value in targets.items():
         if value is None:
@@ -138,9 +138,9 @@ def main():
         return
     if args.action in {"up", "update"}:
         compose("build", "api")
-        from service_settings import load_settings
+        from dtest.settings.loader import load_settings
         local = load_settings(config_path=APP_CONFIG, environ={}, profile=args.env)
-        redis_host = urlsplit(local.api.redis_url).hostname
+        redis_host = urlsplit(local.redis.redis_url).hostname
         if redis_host == "redis":
             compose("--profile", "local-redis", "up", "-d", "--wait", "postgres", "redis")
         else:

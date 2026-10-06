@@ -6,10 +6,10 @@ from uuid import uuid4
 
 import pytest
 
-from api_service.runs.graph_invocation import GraphInvocation
-from api_service.runs import monitoring
-from api_service.runs.errors import CancellationRequested
-from integrations.executor.client import (
+from dtest.application.runs.graph_invocation import GraphInvocation
+from dtest.application.runs import monitoring
+from dtest.application.runs.errors import CancellationRequested
+from dtest.infrastructure.executor.client import (
     ExecutorOutcomeUnknown, SubmissionEffects, current_submission_effects,
     submission_scope,
 )
@@ -78,7 +78,7 @@ async def test_cancel_after_nested_submission_is_not_safe_local_cancel(monkeypat
 
 @pytest.mark.asyncio
 async def test_stream_skips_old_input_echo_and_preserves_sync_durability(monkeypatch):
-    from api_service.runs.persistence import graph as projection
+    from dtest.application.runs.persistence import graph as projection
     saved = AsyncMock()
     monkeypatch.setattr(projection.InvocationProjection, "persist", saved)
     uid, rid = uuid4(), uuid4()
@@ -108,9 +108,9 @@ async def test_stream_skips_old_input_echo_and_preserves_sync_durability(monkeyp
 async def test_application_errors_keep_public_problem_contract(error_name, status):
     import httpx
     from fastapi import FastAPI
-    from api_service.api.problems import run_exception_handler
-    from api_service.runs import errors
-    from service_runtime.request_id import RequestIdMiddleware
+    from dtest.api_service.http.problems import run_exception_handler
+    from dtest.application.runs import errors
+    from dtest.api_service.middleware.request_id import RequestIdMiddleware
 
     app = FastAPI()
     app.add_middleware(RequestIdMiddleware)
@@ -130,8 +130,8 @@ async def test_application_errors_keep_public_problem_contract(error_name, statu
 
 @pytest.mark.asyncio
 async def test_execution_without_claim_cannot_open_database(monkeypatch):
-    from api_service.runs import execution
-    from service_contracts.execution import ExecutionNeedsRecovery
+    from dtest.application.runs import execution
+    from dtest.contracts.execution import ExecutionNeedsRecovery
 
     opened = []
     monkeypatch.setattr(execution, "get_session_factory", lambda: opened.append(True))
@@ -144,7 +144,7 @@ def test_run_application_modules_have_no_http_dependency():
     import ast
     from pathlib import Path
 
-    package = Path(__file__).resolve().parents[2] / "src/api_service/runs"
+    package = Path(__file__).resolve().parents[2] / "src/dtest/application/runs"
     # Transport/resource adapters were previously under services; application execution stays HTTP-free.
     adapters = {"service.py", "streaming.py", "diagnostics.py", "ownership.py", "runtime.py"}
     for source in package.rglob("*.py"):

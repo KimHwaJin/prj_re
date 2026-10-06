@@ -5,11 +5,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from api_service.models.enums import DeleteYN
-from api_service.models.project_model import ProjectModel as Project
-from api_service.models.session_model import SessionModel as Session
-from api_service.models.message_model import MessageModel as Message
-from api_service.runs.graph_invocation import GraphInvocation
+from dtest.contracts.enums import DeleteYN
+from dtest.infrastructure.database.models.project_model import ProjectModel as Project
+from dtest.infrastructure.database.models.session_model import SessionModel as Session
+from dtest.infrastructure.database.models.message_model import MessageModel as Message
+from dtest.application.runs.graph_invocation import GraphInvocation
 from tests.api_service.test_user_identity_postgres import database_url, harness, initialize, add_user, headers
 from tests.api_service.test_read_queries_postgres import trace_reads
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue

@@ -69,7 +69,7 @@ def _admit_legacy_work(conn, namespace):
 
 
 def upgrade():
-    from service_settings import get_settings
+    from dtest.settings.loader import get_settings
     _admit_legacy_work(op.get_bind(), get_settings().worker.namespace)
     op.execute("DROP VIEW workflow_adaptive_history_view")
     for name in ("ew_outbox", "ew_audit", "ew_commands", "workflow_adaptive_history", "workflow_executions", "workflow_catalog"):

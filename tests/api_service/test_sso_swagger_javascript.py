@@ -8,8 +8,8 @@ import subprocess
 import pytest
 from fastapi.testclient import TestClient
 
-import service_settings
-from service_bootstrap import create_app
+import dtest.settings.loader as service_settings
+from dtest.bootstrap import create_app
 
 
 def test_swagger_scripts_send_csrf_only_to_own_api(tmp_path,monkeypatch):

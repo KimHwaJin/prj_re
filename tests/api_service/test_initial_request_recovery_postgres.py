@@ -12,24 +12,24 @@ from sqlalchemy import select, func
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SQLAlchemyError
 
-import service_settings
-from agent_service.runtime.initial_request import record_initial_request
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from service_contracts.initial_request import InitialRequestState
-from service_contracts.user_resume import UserResumeState
-from service_contracts.execution import ExecutionNeedsRecovery
-from api_service.models.enums import AgentRunStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.task_event_model import TaskEventModel
-from api_service.models.session_execution_model import SessionExecutionModel
-from api_service.runs.task_events import TaskEventService
-from api_service.runs import runtime as graphs
-from api_service.runs.graph_invocation import GraphInvocation
-from api_service.runs.protocols import initial
-from api_service.runs.persistence import graph as projection
-import api_service.workers.agent as worker
+import dtest.settings.loader as service_settings
+from dtest.agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.contracts.initial_request import InitialRequestState
+from dtest.contracts.user_resume import UserResumeState
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.contracts.enums import AgentRunStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
+from dtest.application.runs.task_events import TaskEventService
+from dtest.application.runs import runtime as graphs
+from dtest.application.runs.graph_invocation import GraphInvocation
+from dtest.application.runs.protocols import initial
+from dtest.application.runs.persistence import graph as projection
+import dtest.worker_service.command_worker as worker
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_public_run_postgres import state, resume, execute, path
@@ -59,7 +59,7 @@ async def real_initial(runtime, monkeypatch):
     h = runtime
     settings = service_settings.get_settings()
     monkeypatch.setattr(service_settings, '_snapshot', replace(
-        settings, api=settings.api.model_copy(update={'agent_worker_max_retries': 1})))
+        settings, commands=settings.commands.model_copy(update={'agent_worker_max_retries': 1})))
     h.calls = {'entry': 0, 'model': 0, 'terminal': False, 'fail': None}
 
     @record_initial_request
@@ -88,7 +88,7 @@ async def real_initial(runtime, monkeypatch):
         b.add_edge('approval', END)
         return b.compile(checkpointer=saver)
 
-    dsn = make_url(settings.api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    dsn = make_url(settings.database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     @asynccontextmanager
     async def context():
         async with create_checkpointer(database_url=dsn, setup_on_start=True,
@@ -164,7 +164,7 @@ async def test_initial_retry_only_projects_after_runtime_restart(real_initial, m
     assert run.attempt_count == 2 and not task.recovery_required
     assert h.calls['entry'] == h.calls['model'] == 1
     if failure == 'log_event':
-        from api_service.models.agent_run_log_model import AgentRunLogModel
+        from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
         async with h.factory() as db:
             logs = list((await db.scalars(select(AgentRunLogModel).where(AgentRunLogModel.run_id == run.run_id))).all())
             events = list((await db.scalars(select(TaskEventModel).where(
@@ -203,7 +203,7 @@ async def test_uncertain_initial_never_repeats_entry_or_model(real_initial, monk
         if failure == 'budget':
             settings = service_settings.get_settings()
             monkeypatch.setattr(service_settings, '_snapshot', replace(settings,
-                api=settings.api.model_copy(update={'agent_worker_max_retries': 0})))
+                commands=settings.commands.model_copy(update={'agent_worker_max_retries': 0})))
     await execute()
     if failure not in ('legacy', 'budget'):
         if failure == 'receipt_mismatch':

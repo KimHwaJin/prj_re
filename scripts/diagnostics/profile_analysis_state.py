@@ -26,8 +26,8 @@ def reference_sources(revision):
     resolved = subprocess.check_output(['git', 'rev-parse', '--verify', revision + '^{commit}'], cwd=ROOT, text=True).strip()
     digests = {}
     for name, file in (
-        ('agent_service.agents.analysis.execution.nodes', 'src/agent_service/agents/analysis/execution/nodes.py'),
-        ('agent_service.agents.analysis.planning.graph', 'src/agent_service/agents/analysis/planning/graph.py'),
+        ('dtest.agent_service.agents.analysis.execution.nodes', 'src/dtest.agent_service/agents/analysis/execution/nodes.py'),
+        ('dtest.agent_service.agents.analysis.planning.graph', 'src/dtest.agent_service/agents/analysis/planning/graph.py'),
     ):
         importlib.import_module(name.rsplit('.', 1)[0])
         source = subprocess.check_output(['git', 'show', resolved + ':' + file], cwd=ROOT)
@@ -58,8 +58,8 @@ def state_evidence(state):
 
 async def profile(args, dsn):
     import pytest
-    from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-    from agent_service.agents.analysis.tests import test_agentic_execution as fixture
+    from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+    from tests.agent_service import test_agentic_execution as fixture
     from checkpoint_profile import capture
     with pytest.MonkeyPatch.context() as patch:
         async with create_checkpointer(dsn, setup_on_start=True, min_size=1, max_size=2) as saver:
@@ -123,8 +123,8 @@ def main():
         commit, digests = reference_sources(args.reference_revision)
     else:
         commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-        paths = ['src/agent_service/agents/analysis/planning/graph.py', 'src/agent_service/agents/analysis/execution/nodes.py',
-                 'src/agent_service/agents/analysis/state.py', 'src/agent_service/agents/analysis/planning/lifecycle.py']
+        paths = ['src/dtest.agent_service/agents/analysis/planning/graph.py', 'src/dtest.agent_service/agents/analysis/execution/nodes.py',
+                 'src/dtest.agent_service/agents/analysis/state.py', 'src/dtest.agent_service/agents/analysis/planning/lifecycle.py']
         digests = {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in paths}
     result = asyncio.run(profile(args, dsn))
     result['source'] = {'parent_or_reference_commit': commit, 'runtime_files_sha256': digests,

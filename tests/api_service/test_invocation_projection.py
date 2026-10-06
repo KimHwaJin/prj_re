@@ -3,7 +3,7 @@ from copy import deepcopy
 from uuid import uuid4
 from unittest.mock import AsyncMock
 import pytest
-import api_service.runs.persistence.graph as persistence
+import dtest.application.runs.persistence.graph as persistence
 
 
 def state():

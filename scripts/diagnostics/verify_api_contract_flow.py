@@ -25,8 +25,8 @@ import uvicorn
 import yaml
 
 from cookie_auth import configure_cookie_auth, install_employee_fixture, sign_in, write_private_result
-from service_settings import load_settings
-from service_bootstrap import create_app
+from dtest.settings.loader import load_settings
+from dtest.bootstrap import create_app
 
 ROOT = Path(__file__).resolve().parents[2]
 # Reuse the existing transport fixture; real create_agent and middleware still run.
@@ -106,7 +106,7 @@ async def verify(args):
     metrics = {'models': []}
     install_model_fixture({'model_delay_ms': 300}, metrics, lambda: True)
     # Observe actual HTTP calls. This wrapper does not fabricate Executor outcomes.
-    from integrations.executor.client import ExecutorClient
+    from dtest.infrastructure.executor.client import ExecutorClient
     request = ExecutorClient.request
     calls = []
     async def observe(self, method, url, payload=None):
@@ -337,7 +337,7 @@ async def verify(args):
     finally:
         server.should_exit=True
         await server_task
-        from agent_service.agents.analysis.planning import runtime
+        from dtest.agent_service.agents.analysis.planning import runtime
         for fixture_client in getattr(runtime, '_benchmark_fixture_clients', []):
             await fixture_client.aclose()
         ExecutorClient.request=request

@@ -8,8 +8,9 @@ import json
 from pathlib import Path
 import asyncpg
 from sqlalchemy.engine import make_url
-from agent_config import load_agent_settings
-from config import settings
+from dtest.settings.agent import load_agent_settings
+from dtest.settings.loader import get_settings
+from dtest.settings.api import settings
 
 
 def obj(value):
@@ -27,7 +28,7 @@ async def connect(url):
 
 async def main():
     agent = load_agent_settings()
-    urls = {'chat_app': settings.database_url, 'agent': agent.checkpoint_db_uri}
+    urls = {'chat_app': get_settings().database.database_url, 'agent': agent.checkpoint_db_uri}
     report = {'observed_at': datetime.now(timezone.utc).isoformat(), 'databases': {}, 'sessions': {}}
     conn = await connect(urls['chat_app'])
     try:

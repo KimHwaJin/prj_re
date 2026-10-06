@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.session_execution_model import SessionExecutionModel
-from service_bootstrap import BackgroundRuntime
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel
+from dtest.bootstrap import BackgroundRuntime
 from tests.api_service.test_user_identity_postgres import database_url,harness,add_session
 from tests.api_service.test_run_cleanup_postgres import runtime,enqueue,rows
 
@@ -33,7 +33,7 @@ async def owner(h,session_id):
 async def test_drain_finishes_active_runs_releases_owners_and_leaves_queue(runtime,monkeypatch,kind):
     h=runtime
     snapshot=service_settings.get_settings()
-    monkeypatch.setattr(service_settings,'_snapshot',replace(snapshot,api=snapshot.api.model_copy(update={
+    monkeypatch.setattr(service_settings,'_snapshot',replace(snapshot,commands=snapshot.commands.model_copy(update={
         'agent_worker_concurrency':2,'agent_worker_poll_interval_seconds':.05,
     })))
     sessions=[await add_session(h,h.user) for _ in range(3)]

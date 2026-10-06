@@ -2,8 +2,8 @@
 
 Uses the guarded disposable identity_test DB. No external LLM/Executor/Redis.
 """
-from agent_service.runtime.initial_request import record_initial_request
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from dtest.agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.user_resume import record_user_resume, user_interrupt
 
 import asyncio
 from contextlib import asynccontextmanager
@@ -18,20 +18,20 @@ from sqlalchemy.engine import make_url
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.runtime as graphs
-import api_service.runs.projection as completion
-import api_service.api.v1.routes.runs as routes
-from agent_service.runtime.langgraph.checkpointer import create_checkpointer
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.agent_run_log_model import AgentRunLogModel as Log
-from api_service.models.task_model import TaskModel as Task
-from api_service.runs.task_events import TaskEventService
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.runtime as graphs
+import dtest.application.runs.projection as completion
+import dtest.api_service.http.v1.routes.runs as routes
+from dtest.agent_service.runtime.langgraph.checkpointer import create_checkpointer
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel as Log
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
+from dtest.application.runs.task_events import TaskEventService
 from tests.api_service.ownership_harness import run_test_event as run_event_owned
-from service_contracts.events import EventContext, ExecutorEvent
-from api_service.models.enums import TaskStatus
+from dtest.contracts.events import EventContext, ExecutorEvent
+from dtest.contracts.enums import TaskStatus
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session, add_user
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 from tests.api_service.test_short_transactions_postgres import small_pool
@@ -257,7 +257,7 @@ async def test_real_checkpoint_two_hitl_restart_and_executor_projection(runtime,
         for a,b in [(START,'start'),('start','a'),('a','b'),('b','external'),('external',END)]:
             builder.add_edge(a,b)
         return builder.compile(checkpointer=saver)
-    dsn=make_url(service_settings.get_settings().api.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
+    dsn=make_url(service_settings.get_settings().database.database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     @asynccontextmanager
     async def graph_context():
         async with create_checkpointer(database_url=dsn,setup_on_start=True,min_size=1,max_size=2,timeout=2) as saver:
@@ -333,7 +333,7 @@ async def test_same_sse_survives_hitl_and_releases_single_db_connection(small_po
     monkeypatch.setattr(runs,'ainvoke_resume',AsyncMock(return_value={'routing_result':{'route':'analysis'}}))
     first=await enqueue(h); await execute()
     async with h.factory() as db:
-        from api_service.models.session_model import SessionModel
+        from dtest.infrastructure.database.models.session_model import SessionModel
         user_id=await db.scalar(select(SessionModel.user_id).where(SessionModel.session_id==UUID(h.session_id)))
         response=await routes.stream_run(SimpleNamespace(is_disconnected=AsyncMock(return_value=False)),
             UUID(h.session_id),UUID(first['run_id']),last_event_id=None,user_id=user_id,db=db)
@@ -362,7 +362,7 @@ async def test_same_sse_survives_hitl_and_releases_single_db_connection(small_po
 @pytest.mark.asyncio
 @pytest.mark.parametrize('old_status',['interrupted','running'])
 async def test_taskless_legacy_cancel_finishes_only_confirmed_paused_invocation(runtime, old_status):
-    from api_service.models.enums import AgentRunStatus
+    from dtest.contracts.enums import AgentRunStatus
     h=runtime
     async with h.factory() as db:
         run=Run(session_id=UUID(h.session_id),status=AgentRunStatus(old_status),idempotency_key='old-faq')
@@ -377,7 +377,7 @@ async def test_taskless_legacy_cancel_finishes_only_confirmed_paused_invocation(
 
 @pytest.mark.asyncio
 async def test_snapshot_reuse_keeps_fresh_rows_and_preserves_dirty_orm_objects(runtime):
-    from api_service.runs.service import PublicRunService
+    from dtest.application.runs.service import PublicRunService
     h = runtime
     first = await enqueue(h)
     second_session = await add_session(h, h.user)

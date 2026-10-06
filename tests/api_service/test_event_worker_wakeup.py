@@ -4,8 +4,8 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from api_service.workers.executor_events.consumer import AckDecision,HandlerResult,StreamMessage
-from api_service.workers.executor_events.runtime import ExecutorWorker,_WakeAfterCommit
+from dtest.worker_service.executor_events.consumer import AckDecision,HandlerResult,StreamMessage
+from dtest.worker_service.executor_events.runtime import ExecutorWorker,_WakeAfterCommit
 
 
 def runtime():
@@ -83,7 +83,7 @@ async def test_failure_keeps_backoff_even_with_continuous_notifications():
 
 
 def test_late_binding_signal_is_scoped_and_lifespan_owned():
-    from api_service.workers.executor_events.wakeup import binding_committed,binding_subscription
+    from dtest.infrastructure.database.binding_signals import binding_committed,binding_subscription
     wake=asyncio.Event();other=asyncio.Event()
     with binding_subscription('same-dsn','first',wake),binding_subscription('same-dsn','second',other):
         binding_committed('other-dsn','first');assert not wake.is_set()
@@ -94,8 +94,8 @@ def test_late_binding_signal_is_scoped_and_lifespan_owned():
 @pytest.mark.asyncio
 async def test_binding_notifies_only_after_database_commit_and_return():
     from contextlib import asynccontextmanager
-    from api_service.workers.executor_events.store import Store
-    from api_service.workers.executor_events.wakeup import binding_subscription
+    from dtest.infrastructure.database.event_store import Store
+    from dtest.infrastructure.database.binding_signals import binding_subscription
     wake=asyncio.Event();inside=[]
     class Connection:
         @asynccontextmanager

@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
-from service_settings import get_settings
+from dtest.settings.loader import get_settings
 
 
 async def main():

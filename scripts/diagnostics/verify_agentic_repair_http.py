@@ -24,12 +24,12 @@ from sqlalchemy.engine import make_url
 import uvicorn
 import yaml
 
-from service_settings import load_settings
-from service_bootstrap import create_app
-from api_service.runs.runtime import runtime as graph_runtime
-from agent_config import build_langgraph_thread_id
-from agent_service.agents.analysis.tests.test_agentic_repair import FixtureCatalog,document,correction,approve
-from agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
+from dtest.settings.loader import load_settings
+from dtest.bootstrap import create_app
+from dtest.application.runs.runtime import runtime as graph_runtime
+from dtest.settings.agent import build_langgraph_thread_id
+from tests.agent_service.test_agentic_repair import FixtureCatalog,document,correction,approve
+from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import reply_schema
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--settings-file',required=True,type=Path)
@@ -53,7 +53,7 @@ socket.getaddrinfo=lambda host,*a,**kw:original_dns(aliases.get(host,host),*a,**
 config.update(MODEL_PROVIDER='openai_compatible' if args.real else 'mock',PHOENIX_PROJECT_NAME=namespace,
     EXECUTOR_SUBMIT_ENABLED=True,EXECUTOR_BASE_URL=base,EXECUTOR_SOURCE_TYPE='INLINE',EXECUTOR_RUNTIME_PROFILE='default',
     EXECUTOR_OPERATION_TIMEOUT_SECONDS=120,EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS=180,
-    REDIS_URL='redis://127.0.0.1:6379/0',EW_NAMESPACE=namespace,EW_EXECUTOR_BASE_URL=base.rstrip('/')+'/api/v1',EW_HEALTH_PORT=0,
+    REDIS_URL='redis://127.0.0.1:6379/0',EW_NAMESPACE=namespace,EW_HEALTH_PORT=0,
     EW_CONCURRENCY=2,EW_POOL_SIZE=4,EW_POLL_SECONDS=.1,EW_IDLE_POLL_SECONDS=.2,
     EVENT_WORKER_ENABLED=True,AGENT_WORKER_ENABLED=True,AGENT_WORKER_CONCURRENCY=2,
     AGENT_WORKER_POLL_INTERVAL_SECONDS=.1,TASK_RECONCILER_ENABLED=False,CHECKPOINT_SETUP_ON_START=True,

@@ -1,5 +1,5 @@
 """Opt-in real API/Worker/PostgreSQL checkpoints; never submits Executor code."""
-from api_service.runs import monitoring
+from dtest.application.runs import monitoring
 import json
 import os
 from pathlib import Path
@@ -16,21 +16,21 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-import service_settings
-import api_service.infrastructure.database as database
-import api_service.workers.agent as worker
-import api_service.runs.execution as runs
-import api_service.runs.tasks as tasks
-import api_service.runs.token_events as tokens
-from api_service.runs.runtime import runtime as graph_runtime
-from api_service.infrastructure.database import get_db
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.message_model import MessageModel
-from api_service.models.task_event_model import TaskEventModel
+import dtest.settings.loader as service_settings
+import dtest.infrastructure.database.runtime as database
+import dtest.worker_service.command_worker as worker
+import dtest.application.runs.execution as runs
+import dtest.application.runs.tasks as tasks
+import dtest.application.runs.token_events as tokens
+from dtest.application.runs.runtime import runtime as graph_runtime
+from dtest.infrastructure.database.runtime import get_db
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.task_event_model import TaskEventModel
 from tests.api_service.test_user_identity_postgres import initialize, add_user, add_session, headers
-from service_bootstrap import create_app
-from service_contracts.plan_interaction import InteractionEvent
-from service_contracts.run_events import RunEvent
+from dtest.bootstrap import create_app
+from dtest.contracts.plan_interaction import InteractionEvent
+from dtest.contracts.run_events import RunEvent
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -66,7 +66,7 @@ async def planning(test_config, monkeypatch):
         'TASK_CANCEL_POLL_INTERVAL_SECONDS': .2, 'AGENT_WORKER_POLL_INTERVAL_SECONDS': .1,
         'ANALYSIS_DATASETS': {'default-nce': {'title': 'NCE', 'scope': 'GLOBAL',
             'runtime_path': '/workspace/pv/default_data/df_nce_long_format.parquet'}}}, environ={})
-    from api_service.workflows.search import runtime as workflow_runtime
+    from dtest.infrastructure.workflow_search import runtime as workflow_runtime
     monkeypatch.setattr(workflow_runtime, "_runtime", None)
     app = create_app(settings)
     for module in (database, worker, runs, tasks, tokens, monitoring):
@@ -77,7 +77,7 @@ async def planning(test_config, monkeypatch):
     app.dependency_overrides[get_db] = request_db
     from tests.api_service.auth_double import install_business_identity_double
     install_business_identity_double(app, factory)
-    from api_service.infrastructure.memory_store import runtime as store_runtime
+    from dtest.infrastructure.memory.store import runtime as store_runtime
     store_runtime.start()
     graph_runtime.start()
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://test') as client:

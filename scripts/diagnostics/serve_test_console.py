@@ -21,13 +21,13 @@ import tempfile
 import time
 from uuid import uuid4
 
-from api_service.web.console import render_console
+from dtest.api_service.web.console import render_console
 import uvicorn
 
 from cookie_auth import install_employee_fixture
 from verify_api_contract_flow import settings_for_test, migrate
-from service_settings import load_settings
-from service_bootstrap import create_app
+from dtest.settings.loader import load_settings
+from dtest.bootstrap import create_app
 from model_connection import load_model_env, validate_real_model, model_host_alias
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -108,7 +108,7 @@ async def serve(args, config, namespace):
     if args.test_login:
         install_employee_fixture(app, namespace)
         if args.fixture_admin:
-            from bootstrap_admin import bootstrap
+            from dtest.application.admin import bootstrap
             await bootstrap(namespace, 'Test console administrator')
     runtime = public_runtime(args, settings)
     # This runtime descriptor contains labels only, no credentials or endpoints.
@@ -125,7 +125,7 @@ async def serve(args, config, namespace):
         await server.serve()
     finally:
         if args.model=='fixture':
-            from agent_service.agents.analysis.planning import runtime as planning_runtime
+            from dtest.agent_service.agents.analysis.planning import runtime as planning_runtime
             for client in getattr(planning_runtime, '_benchmark_fixture_clients', []):
                 await client.aclose()
         if args.test_login:

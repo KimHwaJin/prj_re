@@ -5,22 +5,22 @@ from uuid import UUID, uuid4
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
-import service_settings
+import dtest.settings.loader as service_settings
 from tests.api_service.test_planning_api_postgres import planning, test_config, submit, execute, read
-from api_service.runs.runtime import runtime as graph_runtime
-from api_service.runs.projection import synchronize_executor_completion
-from api_service.runs.graph_invocation import GraphInvocation
-from service_contracts.events import EventContext, ExecutorEvent
-from service_contracts.plan_interaction import DecisionInteractionEvent
-from agent_service.agents.analysis.planning.graph import build_planning_graph
-from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-from agent_service.agents.analysis.tests.test_agentic_execution import LocalExecutor, Bindings
+from dtest.application.runs.runtime import runtime as graph_runtime
+from dtest.application.runs.projection import synchronize_executor_completion
+from dtest.application.runs.graph_invocation import GraphInvocation
+from dtest.contracts.events import EventContext, ExecutorEvent
+from dtest.contracts.plan_interaction import DecisionInteractionEvent
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from tests.agent_service.test_agentic_execution import LocalExecutor, Bindings
 
 
 @pytest.mark.asyncio
 async def test_decision_form_validation_does_not_consume_token_and_projects_terminal(planning, tmp_path, monkeypatch):
     h = planning
-    import api_service.runs.projection as completion
+    import dtest.application.runs.projection as completion
     monkeypatch.setattr(completion, "get_session_factory", lambda: h.factory)
     pd = pytest.importorskip('pandas')
     path = tmp_path/'data.parquet'

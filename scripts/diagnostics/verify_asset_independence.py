@@ -15,11 +15,11 @@ from uuid import uuid4
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from agent_service.agents.analysis.planning.graph import build_planning_graph
-from agent_service.agents.analysis.planning.runtime import PlanningRuntime
-from agent_service.agents.analysis.tests.asset_fixtures import assets
-from service_contracts.user_resume import resume_identity, resume_envelope
-from service_settings import load_settings
+from dtest.agent_service.agents.analysis.planning.graph import build_planning_graph
+from dtest.agent_service.agents.analysis.planning.runtime import PlanningRuntime
+from tests.agent_service.asset_fixtures import assets
+from dtest.contracts.user_resume import resume_identity, resume_envelope
+from dtest.settings.loader import load_settings
 from model_connection import load_model_env, model_host_alias
 from cookie_auth import write_private_result
 

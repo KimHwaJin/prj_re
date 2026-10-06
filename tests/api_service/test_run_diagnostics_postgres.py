@@ -5,13 +5,13 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select, update
 
-from api_service.models.enums import AgentRunStatus, DeleteYN, TaskStatus
-from api_service.models.agent_run_model import AgentRunModel as Run
-from api_service.models.project_model import ProjectModel as Project
-from api_service.models.session_model import SessionModel as Session
-from api_service.models.session_execution_model import SessionExecutionModel as Owner
-from api_service.models.task_model import TaskModel as Task
-from api_service.models.user_model import UserModel as User
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, TaskStatus
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel as Run
+from dtest.infrastructure.database.models.project_model import ProjectModel as Project
+from dtest.infrastructure.database.models.session_model import SessionModel as Session
+from dtest.infrastructure.database.models.session_execution_model import SessionExecutionModel as Owner
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
+from dtest.infrastructure.database.models.user_model import UserModel as User
 from tests.api_service.test_user_identity_postgres import database_url, harness, headers, add_session, add_user
 from tests.api_service.test_run_cleanup_postgres import runtime
 from tests.api_service.test_crud_guards_postgres import resources, seed

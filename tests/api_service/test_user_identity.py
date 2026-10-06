@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from api_service.models.enums import UserRole
-from api_service.schemas.user_schema import UserCreate, UserUpdate
+from dtest.contracts.enums import UserRole
+from dtest.contracts.resources.user_schema import UserCreate, UserUpdate
 
 
 def test_public_identity_and_display_name_are_distinct():
@@ -28,8 +28,8 @@ def test_patch_rejects_empty_null_or_identity_change(data):
 
 
 def test_every_user_api_documents_cookie_identity(monkeypatch):
-    import service_settings
-    from service_bootstrap import create_app
+    import dtest.settings.loader as service_settings
+    from dtest.bootstrap import create_app
     monkeypatch.setattr(service_settings, "_snapshot", None)
     app = create_app(service_settings.load_settings(config={"AGENT_WORKER_ENABLED": False,
         "TASK_RECONCILER_ENABLED": False}, environ={}))

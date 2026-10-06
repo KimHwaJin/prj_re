@@ -13,8 +13,8 @@ from uuid import uuid4
 import redis.asyncio as redis
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from service_contracts.executor import ExecutorRequestBody, ExecutorContinueRequestBody, ExecutorFinalizeRequestBody
-from service_contracts.events import ExecutorEvent
+from dtest.contracts.executor import ExecutorRequestBody, ExecutorContinueRequestBody, ExecutorFinalizeRequestBody
+from dtest.contracts.events import ExecutorEvent
 
 
 def logical_step(code):

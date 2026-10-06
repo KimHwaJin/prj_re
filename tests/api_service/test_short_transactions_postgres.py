@@ -14,25 +14,25 @@ import pytest
 import pytest_asyncio
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
-from agent_service.runtime.initial_request import record_initial_request
-from agent_service.runtime.user_resume import record_user_resume, user_interrupt
+from dtest.agent_service.runtime.initial_request import record_initial_request
+from dtest.agent_service.runtime.user_resume import record_user_resume, user_interrupt
 from sqlalchemy import event, select, text, update
 from sqlalchemy.exc import TimeoutError as PoolTimeout
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-import service_settings
-import api_service.workers.agent as worker
-import api_service.infrastructure.database as database
-from api_service.models.enums import AgentRunStatus, TaskStatus
-from api_service.runs.lifecycle import execution_health
-from api_service.models.project_model import ProjectModel
-from api_service.models.agent_run_model import AgentRunModel
-from api_service.models.message_model import MessageModel
-from api_service.models.session_model import SessionModel
-from api_service.models.agent_run_log_model import AgentRunLogModel
-from api_service.runs import runtime as graphs
-from api_service.runs.project_context import read_project_snapshot
-from api_service.runs.persistence.events import GraphPersistenceDispatcher, GraphPersistenceResult
+import dtest.settings.loader as service_settings
+import dtest.worker_service.command_worker as worker
+import dtest.infrastructure.database.runtime as database
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.application.runs.lifecycle import execution_health
+from dtest.infrastructure.database.models.project_model import ProjectModel
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.models.message_model import MessageModel
+from dtest.infrastructure.database.models.session_model import SessionModel
+from dtest.infrastructure.database.models.agent_run_log_model import AgentRunLogModel
+from dtest.application.runs import runtime as graphs
+from dtest.application.runs.project_context import read_project_snapshot
+from dtest.application.runs.persistence.events import GraphPersistenceDispatcher, GraphPersistenceResult
 from tests.api_service.test_user_identity_postgres import database_url, harness, add_session, headers
 from tests.api_service.test_run_cleanup_postgres import runtime, enqueue, rows
 
@@ -183,7 +183,7 @@ async def test_legacy_project_context_releases_snapshot_before_checkpoint_update
     async with h.factory() as db:
         session = await db.get(SessionModel, UUID(h.session_id))
         uid, pid = session.user_id, session.project_id
-    from service_runtime.model_selection import current_catalog
+    from dtest.contracts.model_selection import current_catalog
     values = {'session_id': h.session_id, 'project_id': str(pid),
               'model_selection': current_catalog().select().model_dump()}
     async def checkpoint_io(*args, **kwargs):
@@ -195,7 +195,7 @@ async def test_legacy_project_context_releases_snapshot_before_checkpoint_update
         aupdate_state=AsyncMock(side_effect=checkpoint_io),
         ainvoke=AsyncMock(side_effect=checkpoint_io),
     )
-    from api_service.runs.project_context import ensure_project_snapshot
+    from dtest.application.runs.project_context import ensure_project_snapshot
     await ensure_project_snapshot(graph, {}, user_id=uid, session_id=UUID(h.session_id),
                                   session_factory=h.factory)
     graph.aupdate_state.assert_awaited_once()
@@ -293,7 +293,7 @@ async def test_repeated_cancel_waits_for_projection_rollback_and_returns_connect
             await db.execute(update(ProjectModel).where(ProjectModel.project_id == pid).values(system_prompt='uncommitted'))
             writing.set()
             await asyncio.Event().wait()
-    from api_service.runs.persistence.graph import ainvoke_with_crud_message_persistence
+    from dtest.application.runs.persistence.graph import ainvoke_with_crud_message_persistence
     job = asyncio.create_task(ainvoke_with_crud_message_persistence(
         SimpleNamespace(ainvoke=AsyncMock(return_value={'session_id': h.session_id})), {},
         session_factory=factory, user_id=uid, config={}, dispatcher=Dispatcher(),
@@ -320,7 +320,7 @@ async def test_repeated_cancel_waits_for_projection_rollback_and_returns_connect
 async def test_dispatcher_fills_slots_without_retaining_connections(small_pool, monkeypatch, slots):
     h = small_pool
     settings = service_settings.get_settings()
-    monkeypatch.setattr(service_settings, '_snapshot', replace(settings, api=settings.api.model_copy(update={
+    monkeypatch.setattr(service_settings, '_snapshot', replace(settings, commands=settings.commands.model_copy(update={
         'agent_worker_concurrency': slots, 'agent_worker_poll_interval_seconds': .05,
     })))
     gate = SimpleNamespace(entered=[], count=slots, ready=asyncio.Event(), release=asyncio.Event())

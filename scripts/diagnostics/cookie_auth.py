@@ -4,7 +4,7 @@ Never installed in the service application or packaged wheel. The corporate SDK
 is unavailable outside the closed network; this fixture does not validate SSO.
 """
 from urllib.parse import urlparse
-from service_auth.sso.contracts import VerifiedEmployee
+from dtest.contracts.auth import VerifiedEmployee
 
 
 def configure_cookie_auth(config, namespace, port):
