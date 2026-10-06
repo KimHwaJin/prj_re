@@ -50,3 +50,41 @@ HTML은 Data Analytics의 portable report builder로 `artifact.json`에서 생�
 `verify.py`는 fixture 지문과 원본 수를 검사하고 NumPy 코사인 거리로 정확한 Workflow TOP5를 재계산한다. fixture 생성은 runner를 재사용하지만 거리 계산/순위/필터/개수/중복/집계는 별도로 검산한다. Recall@5와 ID 전체 순서 일치, 평균·p95·검색 횟수를 재계산하고 raw SHA256을 남긴다. p95는 작은 warm 순차 표본의 기술 통계이며 운영 SLA가 아니다.
 
 합성 테스트는 실제 한국어 의미 적합성, 모델/API/Executor E2E, 동시 부하를 검증하지 않는다. [완료 측정](../../../docs/reports/workflow-retrieval-2026-10-05/README.md)을 참고한다.
+
+
+## 095: 현재 서비스 검색 구현의 품질·비용 대조
+
+`quality.py`는 실제 `api_service.workflows.retrieval.WorkflowSearch`를 호출한다. 임베딩 HTTP 대신 고정 벡터를 공급하며, 테스트용 최소 검색 테이블과 불변 JSON 파일만 만든다. 등록 API·인증·Agent·Executor·실제 텍스트 정확도는 이 시험에 포함되지 않는다. 서비스 코드와 기본 설정은 변경하지 않는다. 정확한 전량 거리 계산은 오프라인 정답에만 쓰며 런타임 fallback을 추가하지 않는다.
+
+아래 전용 DB만 허용한다. 실행기는 **workflow_quality:53609의 workflows/workflow_embeddings 테이블을 삭제·재생성**한다. 기존 서비스 DB를 지정하지 않는다. 컨테이너는 앞선 093과 분리하고, 모든 측정은 같은 DB에서 순차 실행한다.
+
+```sh
+docker run --rm -d --name dtest-workflow-quality-095 --cpus 2 --memory 2g \
+  -p 127.0.0.1:53609:5432 \
+  -e POSTGRES_USER=quality -e POSTGRES_PASSWORD=quality-local-only \
+  -e POSTGRES_DB=workflow_quality pgvector/pgvector:0.8.6-pg17 \
+  postgres -c shared_preload_libraries=pg_stat_statements -c track_io_timing=on
+
+export WORKFLOW_QUALITY_TEST_DSN='host=127.0.0.1 port=53609 dbname=workflow_quality user=quality password=quality-local-only'
+# 준비 완료 후 실행. RESULT_DIR는 이전 증거를 덮어쓰지 않는 새 경로로 지정한다.
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/quality.py --output "$RESULT_DIR/m16" --index-m 16
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/verify_quality.py --results "$RESULT_DIR/m16"
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/quality.py --output "$RESULT_DIR/m32" --index-m 32
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/verify_quality.py --results "$RESULT_DIR/m32"
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/quality_boundary_probe.py --corpora "$RESULT_DIR/m32/corpora.json" --output "$RESULT_DIR/boundary-probe.json"
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/quality_probe.py --output "$RESULT_DIR/duplicate-probe.json"
+PYTHONPATH=src .venv/bin/python scripts/benchmarks/workflow_retrieval/verify_quality.py --duplicate-probe "$RESULT_DIR/duplicate-probe.json" --boundary-probe "$RESULT_DIR/boundary-probe.json" --probe-verification "$RESULT_DIR/probe-verification.json"
+docker stop dtest-workflow-quality-095
+```
+
+`--index-m`은 진단 DB의 인덱스만 다르게 생성하는 대조 옵션이다. 현재 운영 설정을 읽거나 변경하지 않는다. 서비스의 생성 설정은 여전히 m16/ef_construction128이며, 조회 설정은 중앙 WorkflowSearchSettings를 사용한다.
+
+기본은 인덱스 2회 독립 생성·요청 3회 반복이다. 3차원 동일 벡터50/100/500개와 768차원100 Workflow×50/500개 작은 차이의 벡터를 시험한다. HNSW 서버 그래프의 랜덤성은 seed로 고정하지 못하지만 벡터 데이터의 SHA와 순차 m16/m32 대조를 기록한다. 실제 서비스 조회의 ef/batch/rounds/scan/memory는 한 필드씩 비교하고, 고예산 프로필은 복합 대조로 별도 표시한다.
+
+`quality_probe.py`는 3차원 동일 벡터에 대해 인덱스 생성 전/후 삽입, 입력 순서, m16/m32, 조회 설정과 Workflow 제외 필터를 교차한다. 50/100/500/1000개를 비교하며 LIMIT5000은 전체2001행보다 커서 고정 반환 개수 탓을 분리한다. 원래 질문 이력을 삭제하는 구현은 아니며 완전히 같은 벡터의 축약은 진단 대조군만 제공한다.
+
+각 m에서 timed 순차1,323건과 EXPLAIN65개를 구분한다. 별도24요청 burst를 동시1/4/10, pool4/overflow0에서 비교한다. DB 실행 시간·공유 버퍼 hit/read·SQL 수는 pg_stat_statements로 측정한다. 이를 CPU 시간/CPU 사용률이나 지속 처리량으로 환산하지 않는다. `work_mem`과 후보/스캔 한도도 기록한다.
+
+`verify_quality.py`는 벡터 지문, NumPy 코사인 정답, Workflow 고유성/활성 필터/점수/Recall, 원본 개수/요약 통계/예산, 실제 HNSW 실행계획, 동시 SQL 수와 원본 SHA를 검산한다. [095 결과·한계](../../../docs/reports/workflow-hnsw-quality-2026-10-06/README.md)를 따른다.
+
+`quality_boundary_probe.py`는 m32 마지막768차원500개 데이터가 남아 있는 상태에서 boundary-2의 매우 큰 탐색 예산/직접 SQL을 별도 조사한다. 큰 자원 설정은 진단용이며 운영 권장값이 아니다. 모든 query profile에서 같은 품질을 가정하지 말고 각 요청의Recall을 함께 확인한다.

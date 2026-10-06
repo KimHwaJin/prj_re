@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "independent_checks": 1076,
+  "builds": 96,
+  "duplicate_observations": 960,
+  "boundary_observations": 12,
+  "sha256": {
+    "duplicate-probe.json": "3450e6ab5525cd812d04a38ef7c67654edc9470db21c7fed438ef0c78f8162bc",
+    "boundary-probe.json": "e399269a706e9d6de9bfe89ec88373c2565af130b7551632bcb69c7c2659aacd"
+  }
+}

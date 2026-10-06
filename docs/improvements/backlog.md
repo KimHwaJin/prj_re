@@ -221,3 +221,12 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 ## 094 이후 — 실제 임베딩 검증
 
 [등록·검색 계약](../workflow-registration-and-search.md)이 현재 구현 기준이다. 실제 embedding BASE_URL/MODEL/DIMENSIONS 제공 후 운영 후보 모델 공간의 index provision·기존 자산 쿼리 등록/재색인, 자연어 E2E/부분 요청 scope와 적용 가능성 평가, 중복/집중별 그룹 Recall·동시 부하·threshold/ef_search/scan memory/문맥 예산 튜닝을 진행한다. 동일 벡터500개의3개 그룹 중1개만 찾은 smoke 한계를 완료로 닫지 않는다. 전체 exact fallback은 사용자 HNSW 결정에 따라 넣지 않았다. 운영 서버/사내 모델/Executor는 이번 작업에서 변경하지 않았다.
+
+
+## 095 이후 — 검색 품질과 완전 중복 벡터 대표화
+
+[095](095-workflow-hnsw-quality.md)에서 현재 검색 구현과 생성·조회 설정을 검증했다. m32는 500개 완전 중복에는 효과가 있지만 1,000개와 768차원 경계 요청에서는 누락해 일괄 채택하지 않았다. current 설정은 유지한다. 반복 한도 확대는 이번 표본에서 상위5개 품질 증가 없이 비용만 늘렸다. [상세 근거](../reports/workflow-hnsw-quality-2026-10-06/README.md).
+
+다음 구현 후보는 같은 Workflow·모델 공간·search_revision에서 완전히 같은 벡터를 검색 대표 하나로 관리하는 체계다. 모든 user_queries와 벡터/버전 이력을 보존하고, 다른 Workflow나 근접 벡터는 합치지 않는다. 등록·수정·삭제·승격·복제·재색인과 늦은 게시의 원자성, 500/1,000개 중복·768차원 회귀를 검증해야 한다. 아직 구현하지 않았다. 생성 m/ef 설정을 외부화하려면 인덱스 정체성과 기존 valid 인덱스의 재구축 절차도 설계해야 한다.
+
+실제 embedding 주소·모델·차원과 현업 정답 corpus·중복 비율·threshold·동시 부하 검증은 필수 후속이다. 합성 current100%를 실무 정확도로 일반화하지 않는다. 모델 호출 수 최적화, Dataset Registry/Artifact·운영·Pod 성능·Gaia/SSO의 기존 후속은 유지한다. 서비스 코드·공개 계약·운영 설정 변경이나 머지·푸시·배포는 하지 않았다.

@@ -1,0 +1,53 @@
+{
+  "recorded_at": "2026-10-06T01:23:59.573514+00:00",
+  "postgres": "PostgreSQL 17.11 (Debian 17.11-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "pgvector": "0.8.6",
+  "work_mem": "4MB",
+  "seed": 9506,
+  "source_sha256": "f38dc13caf234b1ef9f7beaa93ea6ae2275cd12f14d9707ead9320b2e7479106",
+  "numpy": "2.4.6",
+  "pool_size": 4,
+  "max_overflow": 0,
+  "rebuilds": 2,
+  "repeats": 3,
+  "index_m": 32,
+  "ef_construction": 128,
+  "profiles": {
+    "current": {},
+    "ef40": {
+      "ef_search": 40
+    },
+    "ef500": {
+      "ef_search": 500
+    },
+    "ef1000": {
+      "ef_search": 1000
+    },
+    "scan100k": {
+      "max_scan_tuples": 100000
+    },
+    "memory4": {
+      "scan_mem_multiplier": 4
+    },
+    "batch2": {
+      "batch_size": 2
+    },
+    "batch256": {
+      "batch_size": 256
+    },
+    "rounds16": {
+      "max_rounds": 16
+    },
+    "budget_high": {
+      "ef_search": 1000,
+      "max_scan_tuples": 100000,
+      "scan_mem_multiplier": 4
+    }
+  },
+  "limitations": [
+    "Synthetic vectors; no embedding HTTP, text accuracy, Agent, Executor or end-user latency.",
+    "Exact global retrieval is offline evaluation only; runtime remains HNSW.",
+    "Sequential warm samples; percentiles are descriptive, not production guarantees.",
+    "Index build randomization is server-controlled; vector corpus is deterministic."
+  ]
+}

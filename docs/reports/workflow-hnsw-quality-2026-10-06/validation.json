@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "runtime_source_unchanged": true,
+  "regression": {
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsed_seconds": 9.537
+  },
+  "independent_checks": 4162,
+  "timed_sequential": 2646,
+  "burst_requests": 432,
+  "duplicate_sql_observations": 960,
+  "boundary_sql_observations": 12,
+  "static_checks": [
+    "ruff F",
+    "ruff format",
+    "compile",
+    "git diff --check"
+  ],
+  "evidence_sha256_verified": true,
+  "report_links_verified": true,
+  "temporary_container_removed": "dtest-workflow-quality-095",
+  "service_defaults_changed": false,
+  "merged": false,
+  "pushed": false,
+  "deployed": false
+}

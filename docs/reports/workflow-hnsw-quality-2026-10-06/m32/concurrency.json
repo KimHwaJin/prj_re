@@ -1,0 +1,8201 @@
+[
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "current",
+    "concurrency": 1,
+    "requests": 24,
+    "wall_ms": 1717.4068330787122,
+    "db_execution_ms": 997.050378,
+    "shared_hit_blocks": 1352145,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 82.14491698890924,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 82.05,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 65.99783315323293,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 65.88,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 72.20150018110871,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 72.09,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 71.97162485681474,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 71.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 90.36479191854596,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 90.32,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 77.41691707633436,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 77.37,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 21.86249988153577,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 21.83,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 79.07837512902915,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 79.03,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 83.98562506772578,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 83.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 75.71766711771488,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 75.67,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 65.72804204188287,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 65.69,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 72.57699989713728,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 72.53,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 66.03695801459253,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 66.0,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 70.60387497767806,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 70.56,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 14.400999993085861,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 14.37,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 77.5498750153929,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 77.5,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 85.47054114751518,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 85.34,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 118.25924995355308,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 118.06,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.31866694428027,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.04,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 84.1059167869389,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 83.79,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 71.30800001323223,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 71.26,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 74.16374981403351,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 74.1,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 13.01774987950921,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 12.99,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 79.78858286514878,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 79.75,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "current",
+    "concurrency": 4,
+    "requests": 24,
+    "wall_ms": 644.7131251916289,
+    "db_execution_ms": 1661.0112579999993,
+    "shared_hit_blocks": 1352245,
+    "shared_read_blocks": 5,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 79.64929100126028,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 79.6,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 174.9549580272287,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 174.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 172.6709168870002,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 172.62,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 172.95787506736815,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 172.93,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 103.35908411070704,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 103.32,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 103.0158749781549,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.98,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 16.9925419613719,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 16.96,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 119.6918748319149,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 119.66,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.03604088909924,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 109.99,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.95541687123477,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 104.93,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 96.75441705621779,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 96.7,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.23087514936924,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 104.17,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 108.66370797157288,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 108.63,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.90820896625519,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.88,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 18.577917013317347,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 18.55,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 119.95729198679328,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 119.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.96516609378159,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.91,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.17083298973739,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.15,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 106.67566698975861,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 106.63,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 107.27645782753825,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 107.22,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 106.61391611211002,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 106.59,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 103.57854189351201,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 103.52,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 13.547791866585612,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 13.52,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 118.25912515632808,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 118.22,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "current",
+    "concurrency": 10,
+    "requests": 24,
+    "wall_ms": 589.0302080661058,
+    "db_execution_ms": 1504.4380230000004,
+    "shared_hit_blocks": 1352145,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 133.00137501209974,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 132.9,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 128.67745803669095,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 128.61,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 132.61620793491602,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 132.59,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 135.50695800222456,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 135.46,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 231.12429212778807,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 231.08,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 232.132124947384,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 232.1,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 139.44791699759662,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 139.41,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 239.3577080219984,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 239.33,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 237.69529210403562,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 237.66,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 314.7500839550048,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 314.71,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 192.43737496435642,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 192.41,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 206.61891694180667,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 206.59,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 198.95824999548495,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 198.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 247.9848749935627,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 247.95,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 190.35591604188085,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 190.34,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 217.19833300448954,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 217.17,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 214.53441702760756,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 214.49,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 206.1245001386851,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 206.08,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 239.18383405543864,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 239.14,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 224.3464170023799,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 224.3,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 223.5170411877334,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 223.49,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 212.3377500101924,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 212.31,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 179.78495801799,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 179.75,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "current",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 249.07970894128084,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 248.98,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "ef500",
+    "concurrency": 1,
+    "requests": 24,
+    "wall_ms": 2012.1354998555034,
+    "db_execution_ms": 1106.7644610000004,
+    "shared_hit_blocks": 1457946,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 91.84416709467769,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 91.7,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 81.23770914971828,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 81.14,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 85.47641593031585,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 85.35,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 82.62879122048616,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 82.53,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 95.65700008533895,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 95.56,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.33370896801353,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.23,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 17.77770882472396,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 17.71,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.03208300098777,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 109.93,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 77.14004185982049,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 77.04,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 97.86787489429116,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 97.82,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 124.99937508255243,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 124.89,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 99.44020886905491,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 99.34,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.31758296303451,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 110.26,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.75662480853498,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.55,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 18.230540910735726,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 18.02,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 85.2205001283437,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 85.12,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 99.99804082326591,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 99.96,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 75.51583414897323,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 75.42,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 77.16924999840558,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 77.06,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 78.58625007793307,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 78.41,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 111.68716591782868,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 111.57,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 87.00341684743762,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 86.96,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 13.599541038274765,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 13.52,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 84.13987490348518,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 84.02,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "ef500",
+    "concurrency": 4,
+    "requests": 24,
+    "wall_ms": 593.726874794811,
+    "db_execution_ms": 1417.3372909999998,
+    "shared_hit_blocks": 1457946,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.3009590357542,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 104.28,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.59391700290143,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.56,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.47579084150493,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.43,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.16529201716185,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.14,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 116.46833294071257,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 116.43,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 75.49166679382324,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 75.45,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 17.635707976296544,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 17.61,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 120.90737489052117,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 120.87,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 105.09979212656617,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 105.07,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.44583408348262,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.41,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 97.5420840550214,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 97.5,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.61358306929469,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 104.57,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 118.02295804955065,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 117.99,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 94.93016707710922,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 94.89,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 25.239249924197793,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 25.21,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 109.70462509430945,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 109.67,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 85.93258308246732,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 85.84,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 94.60020787082613,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 94.55,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 90.20320908166468,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 90.16,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 113.71850012801588,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 113.67,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.55062501691282,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 110.51,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.56970913521945,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.54,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 13.008125126361847,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 12.98,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 113.26233297586441,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 113.22,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "ef500",
+    "concurrency": 10,
+    "requests": 24,
+    "wall_ms": 714.7263330407441,
+    "db_execution_ms": 1887.9320860000003,
+    "shared_hit_blocks": 1457946,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 109.92312501184642,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 109.88,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.09608302265406,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 110.07,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 108.24233386665583,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 108.2,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 110.4528340511024,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 110.42,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 261.8255000561476,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 261.78,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 236.33641609922051,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 236.29,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 116.22833297587931,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 116.2,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 256.3667921349406,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 256.33,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 254.10066707991064,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 254.04,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 345.65441589802504,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 345.61,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 270.5265840049833,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 270.49,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 261.07191597111523,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 261.03,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 319.16900002397597,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 319.13,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 409.18154106475413,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 409.13,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 305.812707869336,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 305.78,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 318.0992091074586,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 318.08,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 297.93720808811486,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 297.91,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 295.85495800711215,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 295.82,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 358.3637080155313,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 358.33,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 296.91845807246864,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 296.87,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 290.09716701693833,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 290.05,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 281.45449981093407,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 281.39,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 205.29374992474914,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 205.27,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "ef500",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 284.6952921245247,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 284.65,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "budget_high",
+    "concurrency": 1,
+    "requests": 24,
+    "wall_ms": 2078.968291869387,
+    "db_execution_ms": 1224.2552640000006,
+    "shared_hit_blocks": 1626225,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 102.91058314032853,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 102.78,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 100.62287491746247,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 100.58,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 80.75820794329047,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 80.66,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 101.31929093040526,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 101.12,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 89.16741702705622,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 89.03,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.95554190129042,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 104.83,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 17.01437495648861,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 16.95,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 113.9451670460403,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 113.81,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 82.69204199314117,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 82.49,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 88.76637509092689,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 88.58,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 75.97837503999472,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 75.67,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 76.5395830385387,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 76.26,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 97.0707091037184,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 96.95,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 105.07570905610919,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 105.03,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 11.431874940171838,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 11.41,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 97.36762498505414,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 97.32,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 82.45750004425645,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 82.32,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 95.038834027946,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 94.83,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 90.8794158603996,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 90.83,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 82.25620887242258,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 82.21,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 105.55512504652143,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 105.51,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 115.14920904301107,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 114.99,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 14.766207896173,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 14.73,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 144.49337497353554,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 144.44,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "budget_high",
+    "concurrency": 4,
+    "requests": 24,
+    "wall_ms": 896.0429159924388,
+    "db_execution_ms": 2293.464249000001,
+    "shared_hit_blocks": 1626225,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 174.88133301958442,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 174.85,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 173.67958393879235,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 173.63,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 174.7207920998335,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 174.7,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 174.29825011640787,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 174.27,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 188.69295809417963,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 188.65,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 189.9555418640375,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 189.92,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 41.74695792607963,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 41.71,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 197.25195807404816,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 197.21,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 146.75095793791115,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 146.71,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 176.5307921450585,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 176.48,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 176.76220810972154,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 176.73,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 176.41320801340044,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 176.38,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 169.0426249988377,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 169.01,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 103.75641589052975,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 103.72,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 17.999707954004407,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 17.97,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 117.7690839394927,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 117.72,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 96.2766669690609,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 96.23,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 104.45325006730855,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 104.41,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 112.75320802815259,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 112.71,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 106.76491679623723,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 106.64,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 124.05449990183115,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 124.01,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 120.11425010859966,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 120.09,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 27.24491711705923,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 27.22,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 143.94749980419874,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 143.84,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  },
+  {
+    "case": "varied-500-bulk-0",
+    "profile": "budget_high",
+    "concurrency": 10,
+    "requests": 24,
+    "wall_ms": 766.5734998881817,
+    "db_execution_ms": 1981.285374,
+    "shared_hit_blocks": 1626225,
+    "shared_read_blocks": 0,
+    "db_search_sql_calls": 198,
+    "observations": [
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 0,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 169.33949990198016,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 169.31,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 1,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 160.8710838481784,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 160.83,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 2,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 167.53458394668996,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 167.5,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 3,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 163.91787491738796,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 163.87,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 4,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 256.12245802767575,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 256.08,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 5,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 267.13554095476866,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 267.1,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 6,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 170.1334579847753,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 170.1,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 7,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 323.55904183350503,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 323.51,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 8,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 263.2699168752879,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 263.23,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 9,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 361.87649983912706,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 361.84,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 10,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 228.3225420396775,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 228.27,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 11,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 224.12691707722843,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 224.1,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 12,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 283.2478750497103,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 283.2,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 13,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 368.6791250947863,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 368.64,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 14,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 249.64562500827014,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 249.58,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 15,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 292.1892919111997,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 292.16,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-0",
+        "query_kind": "concentrated",
+        "repeat": 16,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 281.4884171821177,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 281.45,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-1",
+        "query_kind": "concentrated",
+        "repeat": 17,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 316.3395000156015,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 316.3,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-2",
+        "query_kind": "concentrated",
+        "repeat": 18,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 313.853541854769,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 313.81,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "concentrated-3",
+        "query_kind": "concentrated",
+        "repeat": 19,
+        "top_k": 5,
+        "target": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "returned": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 299.2497500963509,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 8,
+          "elapsed_ms": 299.21,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-0",
+        "query_kind": "boundary",
+        "repeat": 20,
+        "top_k": 5,
+        "target": [
+          40,
+          0,
+          1,
+          2,
+          6
+        ],
+        "returned": [
+          40,
+          0,
+          1,
+          2,
+          6,
+          5,
+          3,
+          4,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 285.9366671182215,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 285.9,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-1",
+        "query_kind": "boundary",
+        "repeat": 21,
+        "top_k": 5,
+        "target": [
+          21,
+          41,
+          0,
+          1,
+          2
+        ],
+        "returned": [
+          21,
+          41,
+          0,
+          1,
+          2,
+          4,
+          3,
+          5,
+          6
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 286.7465000599623,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 9,
+          "elapsed_ms": 286.71,
+          "reranked": true
+        },
+        "ordered_match": true
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-2",
+        "query_kind": "boundary",
+        "repeat": 22,
+        "top_k": 5,
+        "target": [
+          0,
+          42,
+          2,
+          3,
+          1
+        ],
+        "returned": [
+          42
+        ],
+        "recall": 0.2,
+        "elapsed_ms": 234.66366692446172,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "no_more_ann_candidates",
+          "rounds": 2,
+          "ann_rows": 64,
+          "distinct_candidates": 1,
+          "elapsed_ms": 234.63,
+          "reranked": true
+        },
+        "ordered_match": false
+      },
+      {
+        "case": "varied-500-bulk-0",
+        "profile": "budget_high",
+        "query_id": "boundary-3",
+        "query_kind": "boundary",
+        "repeat": 23,
+        "top_k": 5,
+        "target": [
+          43,
+          23,
+          0,
+          2,
+          1
+        ],
+        "returned": [
+          43,
+          23,
+          0,
+          2,
+          1,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "recall": 1.0,
+        "elapsed_ms": 313.431000104174,
+        "diagnostics": {
+          "mode": "hnsw",
+          "approximate": true,
+          "termination": "round_limit",
+          "rounds": 8,
+          "ann_rows": 512,
+          "distinct_candidates": 10,
+          "elapsed_ms": 313.32,
+          "reranked": true
+        },
+        "ordered_match": true
+      }
+    ]
+  }
+]

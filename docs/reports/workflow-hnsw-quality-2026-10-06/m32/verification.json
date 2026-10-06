@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "records": 1323,
+  "corpora": 17,
+  "plan_probes": 65,
+  "concurrency_batches": 9,
+  "independent_checks": 1543,
+  "file_sha256": {
+    "summary.json": "fe0068b16141455f65d917d08032540a586fc1484fc717139ed5dc8526e09a9e",
+    "concurrency.json": "19ad43dc50d420b90ef38c93c6c4bd6729f1f5ecf4262bc70784e53baceed571",
+    "corpora.json": "96dac61d828e7055605cd09137838ee6ce97b10a58432c2a408528a41c7cd965",
+    "results.jsonl": "15e0438d910f2b1a3ec279b31d73d7209e802fa00164c3800a5d171afd3ddfbc",
+    "plans.json": "33d70b333f7208599cba1d569b66e4b6ccc32a21f129d5cce2c719925d7beb35",
+    "environment.json": "e0d4702534d5bdf2e84f9bdc498bc661159f466375da2393d99345fd7de737dc"
+  },
+  "source_unchanged": true,
+  "limits": [
+    "Synthetic corpus validates search mechanics, not language or production quality.",
+    "A 24-request burst is not sustained-load capacity; DB execution time is not CPU time."
+  ]
+}
