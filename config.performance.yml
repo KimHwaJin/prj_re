@@ -1,39 +1,33 @@
 # Opt-in service throughput profile, measured on the local single-process service.
-# Merge this service block into the selected dev/stg/prd YAML, or select this file
+# Copy these flat keys into the selected local/dev/stg/prd YAML, or select this file
 # with SERVICE_CONFIG_FILE and supply the remaining DB/SSO/model/Executor settings.
 # Explicit YAML beats env. This file does not restart/deploy the running service.
-service:
-  runtime:
-    # Shared graph total: user start/resume + Executor events, per process.
-    # Additional Uvicorn workers/Pods multiply slots and DB pools.
-    agent_worker_concurrency: 32
-    # Preserve the default idle claim/cancel checks; no extra idle polling.
-    agent_worker_poll_interval_seconds: 0.25
-    task_cancel_poll_interval_seconds: 0.25
-    # Event-driven SSE reconciliation. 0.1 delivered sooner but cost more during bursts.
-    sse_poll_interval_seconds: 0.5
-    sse_reconcile_interval_seconds: 15
-  database:
-    database_pool_size: 10
-    database_max_overflow: 0  # Hard CRUD connection bound, even during a burst.
-    database_pool_timeout_seconds: 10
-    # Per physical CRUD connection; 0 disables. Tested against direct PostgreSQL.
-    database_prepared_statement_cache_size: 100
-  checkpoint:
-    checkpoint_pool_min_size: 1
-    checkpoint_pool_max_size: 4
-  auth:
-    # Short login queries wait within the bounded pool; do not multiply connections.
-    sso_redis_max_connections: 8
-    sso_redis_timeout_seconds: 3
-  events:
-    # Ingress/routing concurrency only. All graph calls share the runtime limit.
-    # Event Worker follows AGENT_WORKER_ENABLED by default; EVENT_WORKER_ENABLED
-    # can explicitly disable ingestion for an API-only measurement.
-    ew_ingress_concurrency: 4
-    # Each Event Worker and submission bridge has its OWN pool with this limit.
-    ew_pool_size: 4
-    # Periodic fallback for other Pods/restarts; local committed work also wakes
-    # router with a bounded 20ms coalescing window. Agent claim wakeup is stage 4.
-    ew_poll_seconds: 0.2
-    ew_idle_poll_seconds: 2
+# Shared graph total: user start/resume + Executor events, per process.
+# Additional Uvicorn workers/Pods multiply slots and DB pools.
+AGENT_WORKER_CONCURRENCY: 32
+# Preserve the default idle claim/cancel checks; no extra idle polling.
+AGENT_WORKER_POLL_INTERVAL_SECONDS: 0.25
+TASK_CANCEL_POLL_INTERVAL_SECONDS: 0.25
+# Event-driven SSE reconciliation. 0.1 delivered sooner but cost more during bursts.
+SSE_POLL_INTERVAL_SECONDS: 0.5
+SSE_RECONCILE_INTERVAL_SECONDS: 15
+DATABASE_POOL_SIZE: 10
+DATABASE_MAX_OVERFLOW: 0  # Hard CRUD connection bound, even during a burst.
+DATABASE_POOL_TIMEOUT_SECONDS: 10
+# Per physical CRUD connection; 0 disables. Tested against direct PostgreSQL.
+DATABASE_PREPARED_STATEMENT_CACHE_SIZE: 100
+CHECKPOINT_POOL_MIN_SIZE: 1
+CHECKPOINT_POOL_MAX_SIZE: 4
+# Short login queries wait within the bounded pool; do not multiply connections.
+SSO_REDIS_MAX_CONNECTIONS: 8
+SSO_REDIS_TIMEOUT_SECONDS: 3
+# Ingress/routing concurrency only. All graph calls share the runtime limit.
+# Event Worker follows AGENT_WORKER_ENABLED by default; EVENT_WORKER_ENABLED
+# can explicitly disable ingestion for an API-only measurement.
+EW_INGRESS_CONCURRENCY: 4
+# Each Event Worker and submission bridge has its OWN pool with this limit.
+EW_POOL_SIZE: 4
+# Periodic fallback for other Pods/restarts; local committed work also wakes
+# router with a bounded 20ms coalescing window. Agent claim wakeup is stage 4.
+EW_POLL_SECONDS: 0.2
+EW_IDLE_POLL_SECONDS: 2

@@ -314,7 +314,7 @@ def test_invalid_sso_configuration_rejected(fields):
 
 
 def test_central_sso_config_priority_and_profile_namespace():
-    settings=service_settings.load_settings(config={"service":{"auth":{"sso_session_ttl_seconds":600}}},
+    settings=service_settings.load_settings(config={'SSO_SESSION_TTL_SECONDS': 600},
         environ={"SSO_SESSION_TTL_SECONDS":"1200","SSO_ALLOWED_ORIGINS":"[\"https://sso.test\"]"})
     assert settings.sso.session_ttl_seconds==600 and settings.sso.allowed_origins==("https://sso.test",)
     assert settings.sources["SSO_SESSION_TTL_SECONDS"]=="config mapping"

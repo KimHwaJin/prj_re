@@ -55,7 +55,7 @@ assert 'default-nce' in config.get('ANALYSIS_DATASETS', {}), 'Declare trusted de
 import tempfile
 with tempfile.TemporaryDirectory(prefix='agentic-exec-migrations-') as directory:
     migration = Path(directory)/'config.yml'
-    migration.write_text(yaml.safe_dump({'service':config})); migration.chmod(0o600)
+    migration.write_text(yaml.safe_dump(config)); migration.chmod(0o600)
     for ini in ('alembic.crud.ini','alembic.ini'):
         outcome = subprocess.run([sys.executable,'-m','alembic','-c',ini,'upgrade','head'],cwd=root,
             env={**os.environ,'SERVICE_CONFIG_FILE':str(migration),'PYTHONPATH':str(root/'src')},capture_output=True,text=True)

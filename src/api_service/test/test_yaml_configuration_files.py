@@ -134,8 +134,7 @@ def test_cicd_yaml_moves_mutable_values_and_preserves_platform_contract():
     assert container['resources']['limits']['cpu']=='[설정 값 변경 불가]'
     assert len(pod['containers'])==1 and not pod.get('initContainers')
     config=yaml.safe_load((ROOT/'cicd/basic/dev/config.dev.example.yml').read_text())
-    flattened=service_settings._flatten(config)
-    settings=load_settings(config=flattened,environ={
+    settings=load_settings(config=config,environ={
         'DATABASE_URL':'postgresql+asyncpg://host/chat_app','CHECKPOINT_DB_URI':'postgresql://host/agent',
         'REDIS_URL':'redis://host:6379/0','MODEL_API_KEY':'secret','EW_DATABASE_URL':'postgresql://host/chat_app'})
     assert settings.api.server_port==5000 and settings.agent.model_name=='gpt-oss-120b'

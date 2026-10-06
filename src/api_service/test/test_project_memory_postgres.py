@@ -129,7 +129,7 @@ def migration(database_url,tmp_path,direction,revision):
     root=Path(__file__).resolve().parents[3]
     raw=make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     config=tmp_path/'migration.yml'
-    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+raw+'\n')
+    config.write_text('database_url: '+database_url+'\nCHECKPOINT_DB_URI: '+raw+'\n')
     env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'APP_ENV':'dev','PYTHONPATH':str(root/'src')}
     proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)
     assert proc.returncode==0,proc.stderr

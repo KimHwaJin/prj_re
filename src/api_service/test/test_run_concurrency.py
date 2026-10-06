@@ -149,6 +149,6 @@ def test_invalid_concurrency_rejected(value):
 def test_concurrency_configuration_precedence():
     assert service_settings.load_settings(config={}, environ={}).api.agent_worker_concurrency == 1
     assert service_settings.load_settings(config={}, environ={'AGENT_WORKER_CONCURRENCY':'4'}).api.agent_worker_concurrency == 4
-    s = service_settings.load_settings(config={'service': {'runtime': {'agent_worker_concurrency':2}}}, environ={'AGENT_WORKER_CONCURRENCY':'4'})
+    s = service_settings.load_settings(config={'AGENT_WORKER_CONCURRENCY': 2}, environ={'AGENT_WORKER_CONCURRENCY':'4'})
     assert s.api.agent_worker_concurrency == 2
     assert s.summary()['agent_worker_concurrency'] == 2

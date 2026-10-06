@@ -12,6 +12,9 @@ from service_settings import ROOT, _read_yaml, load_settings, read_local_env
 
 
 def plain(value: Any) -> Any:
+    from pydantic import SecretStr
+    if isinstance(value, SecretStr):
+        return value.get_secret_value()
     if isinstance(value, Path):
         return str(value)
     if isinstance(value, Mapping):
@@ -19,31 +22,6 @@ def plain(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [plain(item) for item in value]
     return value
-
-
-def setting_group(name: str) -> str:
-    name = name.upper()
-    if name.startswith("SSO_"):
-        return "auth"
-    if name.startswith("EW_"):
-        return "events"
-    if name.startswith("CHECKPOINT_") or name in {"GRAPH_CHECKPOINTER", "LANGGRAPH_STRICT_MSGPACK"}:
-        return "checkpoint"
-    if name.startswith("DATABASE_") or name in {"SQL_ECHO", "REDIS_URL"}:
-        return "database"
-    if name.startswith("EXECUTOR_") or name == "DATA_MOCK":
-        return "executor"
-    if name.startswith(("MODEL_", "LLM_")) or name in {"API_BASE_URL", "DEFAULT_MODEL"}:
-        return "llm"
-    if name.startswith("WORKFLOW_EMBEDDING_") or name.startswith("WORKFLOW_SEARCH_") or name in {"WORKFLOW_RECOMMENDATION_ENABLED", "WORKFLOW_SIMILARITY_SCORE", "MAX_WORKFLOW_REVISIONS"}:
-        return "workflow_search"
-    if name.startswith("PHOENIX_") or name.startswith("RUN_DIAGNOSTICS_"):
-        return "diagnostics"
-    if name in {"WORKFLOW_STORAGE_ROOT", "WORKFLOW_DATABASE_URL", "WORKFLOW_PERSISTENCE_ENABLED", "MOCK_DATA_ROOT", "DEMO_ARTIFACTS_ROOT", "DEMO_ARTIFACTS_ENABLED"}:
-        return "storage"
-    if (name.startswith("AGENT_") and not name.startswith("AGENT_WORKER_")) or name in {"MAX_PLAN_CANDIDATES", "ANALYSIS_DATASETS"}:
-        return "agent"
-    return "runtime"
 
 
 def yaml_document(values: Mapping[str, Any]) -> dict:

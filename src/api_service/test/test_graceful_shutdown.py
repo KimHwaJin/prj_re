@@ -86,7 +86,7 @@ def test_invalid_drain_settings_rejected(value):
 def test_drain_settings_precedence_and_zero():
     assert load_settings(config={},environ={}).shutdown_drain_seconds==20
     assert load_settings(config={},environ={'SHUTDOWN_DRAIN_SECONDS':'3'}).shutdown_drain_seconds==3
-    settings=load_settings(config={'service':{'runtime':{'shutdown_drain_seconds':0}}},
+    settings=load_settings(config={'SHUTDOWN_DRAIN_SECONDS': 0},
                            environ={'SHUTDOWN_DRAIN_SECONDS':'3'})
     assert settings.summary()['shutdown_drain_seconds']==0
 

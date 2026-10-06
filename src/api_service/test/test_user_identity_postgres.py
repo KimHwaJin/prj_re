@@ -47,7 +47,7 @@ def database_url(tmp_path_factory):
     assert url.database in {"identity_test", "agentic_regression_test"} and url.host in {"127.0.0.1", "localhost"}
     raw_url = url.set(drivername="postgresql").render_as_string(hide_password=False)
     config_path = tmp_path_factory.mktemp("identity-migrations") / "config.yml"
-    config_path.write_text("service:\n  database_url: " + value + "\n  checkpoint_db_uri: " + raw_url + "\n")
+    config_path.write_text('database_url: ' + value + "\nCHECKPOINT_DB_URI: " + raw_url + "\n")
     environment = {**os.environ, "SERVICE_CONFIG_FILE": str(config_path), "APP_ENV": "dev", "PYTHONPATH": str(ROOT / "src")}
     with psycopg.connect(raw_url, autocommit=True) as db:
         db.execute("DROP SCHEMA public CASCADE")
@@ -397,7 +397,7 @@ async def test_new_admission_waits_for_deletion_then_fails(harness):
 async def test_bootstrap_command_uses_selected_config_and_is_idempotent(harness, database_url, tmp_path):
     h = harness
     config = tmp_path / "bootstrap.yml"
-    config.write_text("service:\n  database_url: " + database_url + "\n")
+    config.write_text('database_url: ' + database_url + "\n")
     command = [sys.executable, "-m", "bootstrap_admin", "--config", str(config),
                "--user-id", "first-admin", "--user-name", "First Admin"]
     for _ in range(2):

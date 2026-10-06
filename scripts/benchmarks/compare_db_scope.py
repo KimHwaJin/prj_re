@@ -41,7 +41,7 @@ for label,ref in [('before',BEFORE),('after',AFTER)]:
         archive.unlink()
 # Migrations use only the explicitly selected scratch DB; no project .env.
 config=a.output/'migration.yml'
-config.write_text('service:\n  database_url: '+os.environ['DTEST_BENCH_DATABASE_URL']+'\n  checkpoint_db_uri: '+DSN+'\n')
+config.write_text('database_url: '+os.environ['DTEST_BENCH_DATABASE_URL']+'\nCHECKPOINT_DB_URI: '+DSN+'\n')
 env={**os.environ,'PYTHONPATH':str(SOURCES.resolve()/'after'/'src'),'SERVICE_CONFIG_FILE':str(config.resolve()),'APP_ENV':'dev','PYTHONDONTWRITEBYTECODE':'1'}
 with (a.output/'migration.log').open('w') as log:
     subprocess.run([PY,'-m','alembic','-c','alembic.crud.ini','upgrade','head'],cwd=SOURCES/'after',env=env,stdout=log,stderr=log,check=True)

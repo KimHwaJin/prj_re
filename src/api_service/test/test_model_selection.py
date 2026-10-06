@@ -30,8 +30,7 @@ def configured(default="alpha", **extra):
 
 def test_config_precedence_and_no_credential_in_pin_or_errors():
     spec={"model_name":"model-a", "api_base_url":"https://internal.example/v1", "api_key":"private-key"}
-    snapshot=service_settings.load_settings(config={"service":{"llm":{
-        "MODEL_CATALOG":{"alpha":spec},"DEFAULT_MODEL":"alpha"}}},
+    snapshot=service_settings.load_settings(config={'MODEL_CATALOG': {'alpha': spec}, 'DEFAULT_MODEL': 'alpha'},
         environ={"DEFAULT_MODEL":"wrong", "MODEL_CATALOG":"invalid-secret"})
     catalog=snapshot.agent.model_catalog
     pin=catalog.select().model_dump()

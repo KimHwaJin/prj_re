@@ -46,7 +46,7 @@ async def commands(runtime, tmp_path):
     h = runtime
     url = h.engine.url.render_as_string(hide_password=False)
     config = tmp_path/'events.yml'
-    config.write_text('service:\n  database_url: '+url+'\n  agent_worker_enabled: false\n  event_worker_enabled: false\n')
+    config.write_text('database_url: '+url+'\nAGENT_WORKER_ENABLED: false\nEVENT_WORKER_ENABLED: false\n')
     result = subprocess.run([sys.executable,'-m','alembic','-c','alembic.ini','upgrade','ew_0001'],
         cwd=ROOT, env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'PYTHONPATH':str(ROOT/'src')}, text=True,capture_output=True)
     assert result.returncode == 0, result.stderr

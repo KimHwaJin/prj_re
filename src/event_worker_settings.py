@@ -3,30 +3,30 @@ from __future__ import annotations
 from uuid import uuid4
 from string import Formatter
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class Settings(BaseModel):
     """Event Worker values, populated by the central service settings loader."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
+    model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
 
     # API와 동일한 Inbox·명령 원장·실행 연결 DB. 별도 체크포인트 DB와 구분한다.
     database_url: str
 
     # Executor 원본 이벤트를 수신할 Redis URL이다. 내부 graph 명령은 DB에 저장한다.
-    redis_url: str
+    redis_url: str = Field(validation_alias=AliasChoices("REDIS_URL", "EW_REDIS_URL"))
 
     # DB 행, Redis key와 기본 Stream 이름을 서비스별로 구분하는 값이다.
     namespace: str = Field(default="dtest-agent", min_length=1)
 
     # 이벤트 순번 누락 시 실행 이력을 조회할 Executor REST API 주소다.
-    executor_base_url: str = "http://localhost:8000/api/v1"
+    executor_base_url: str = Field(default="http://localhost:8000/api/v1", validation_alias=AliasChoices("EXECUTOR_BASE_URL", "EW_EXECUTOR_BASE_URL"))
 
     # 중앙 로더는 EXECUTOR_EXECUTION_PATH + /events에서 유도한다.
     # EXECUTOR_EVENTS_PATH로 별도 경로를 지정할 수 있다. standalone 기본은
     # 위 API-prefixed base에 결합할 상대 경로이며 앞의 /도 base prefix를 유지한다.
-    executor_events_path: str = "/executions/{execution_id}/events"
+    executor_events_path: str = Field(default="/executions/{execution_id}/events", validation_alias=AliasChoices("EXECUTOR_EVENTS_PATH", "EW_EXECUTOR_EVENTS_PATH"))
 
     # Executor가 원본 실행 이벤트를 발행하는 Redis Stream 이름이다.
     executor_event_stream: str = "executor.events"
@@ -40,7 +40,7 @@ class Settings(BaseModel):
     instance_id: str = Field(default_factory=lambda: str(uuid4()))
 
     # Executor 원본 이벤트 수신·routing 병렬성. graph 총한도와 별개다.
-    ingress_concurrency: int = Field(default=4, ge=1)
+    ingress_concurrency: int = Field(default=4, ge=1, validation_alias=AliasChoices("EW_INGRESS_CONCURRENCY", "EW_CONCURRENCY"))
 
     # Worker가 사용하는 PostgreSQL 비동기 연결 풀의 최대 크기다.
     pool_size: int = Field(default=8, ge=2)

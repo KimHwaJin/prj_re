@@ -15,7 +15,7 @@ def test_public_identity_backfill_preserves_existing_ids_and_rejects_cycles(data
     root=Path(__file__).resolve().parents[3]
     dsn=make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     config=tmp_path/'config.yml'
-    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+dsn+'\n')
+    config.write_text('database_url: '+database_url+'\nCHECKPOINT_DB_URI: '+dsn+'\n')
     env={**os.environ,'SERVICE_CONFIG_FILE':str(config),'APP_ENV':'dev','PYTHONPATH':str(root/'src')}
     def migrate(direction, revision, ok=True):
         proc=subprocess.run([sys.executable,'-m','alembic','-c','alembic.crud.ini',direction,revision],cwd=root,env=env,capture_output=True,text=True)

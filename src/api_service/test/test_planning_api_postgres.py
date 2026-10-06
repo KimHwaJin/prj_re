@@ -46,7 +46,7 @@ def test_config(tmp_path_factory):
     assert crud.host in {'127.0.0.1', 'localhost'} and checkpoint.host in {'127.0.0.1', 'localhost'}
     path = tmp_path_factory.mktemp('agentic-migrations')/'config.yml'
     import yaml
-    path.write_text(yaml.safe_dump({'service': settings}))
+    path.write_text(yaml.safe_dump(settings))
     result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.crud.ini', 'upgrade', 'head'],
         cwd=ROOT, env={**os.environ, 'SERVICE_CONFIG_FILE': str(path), 'PYTHONPATH': str(ROOT/'src')}, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr

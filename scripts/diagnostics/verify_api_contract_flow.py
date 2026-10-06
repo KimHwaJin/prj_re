@@ -76,7 +76,7 @@ def settings_for_test(values, namespace, port, *, model_fixture=True):
 def migrate(config):
     with tempfile.TemporaryDirectory(prefix='api-flow-migration-') as directory:
         path = Path(directory) / 'config.yml'
-        path.write_text(yaml.safe_dump({'service': config})); path.chmod(0o600)
+        path.write_text(yaml.safe_dump(config)); path.chmod(0o600)
         for ini in ('alembic.crud.ini', 'alembic.ini'):
             result = subprocess.run([sys.executable, '-m', 'alembic', '-c', ini, 'upgrade', 'head'],
                 cwd=ROOT, env={'PATH': os.environ.get('PATH',''), 'SERVICE_CONFIG_FILE': str(path), 'PYTHONPATH': str(ROOT/'src')},

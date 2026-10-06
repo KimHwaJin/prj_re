@@ -24,7 +24,7 @@ async def test_upgrade_pairs_occurrences_repairs_missing_and_preserves_history(r
     root = Path(__file__).resolve().parents[3]
     dsn = make_url(database_url).set(drivername='postgresql').render_as_string(hide_password=False)
     config = tmp_path/'config.yml'
-    config.write_text('service:\n  database_url: '+database_url+'\n  checkpoint_db_uri: '+dsn+'\n')
+    config.write_text('database_url: '+database_url+'\nCHECKPOINT_DB_URI: '+dsn+'\n')
     env = {**os.environ, 'SERVICE_CONFIG_FILE': str(config), 'APP_ENV': 'dev', 'PYTHONPATH': str(root/'src')}
     def migrate(direction, revision):
         proc = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.crud.ini', direction, revision],

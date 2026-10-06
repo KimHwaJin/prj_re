@@ -57,7 +57,7 @@ async def test_capacity_probe(runtime, monkeypatch, tmp_path, scenario, repeat):
     namespace = 'capacity-'+uuid4().hex
     raw_url = make_url(h.engine.url).set(drivername='postgresql').render_as_string(hide_password=False)
     migration = tmp_path/'event.yml'
-    migration.write_text('service:\n  database_url: '+raw_url+'\n  agent_worker_enabled: false\n  event_worker_enabled: false\n')
+    migration.write_text('database_url: '+raw_url+'\nAGENT_WORKER_ENABLED: false\nEVENT_WORKER_ENABLED: false\n')
     result = subprocess.run([sys.executable, '-m', 'alembic', '-c', 'alembic.ini', 'upgrade', 'ew_0001'],
         cwd=ROOT, env={**os.environ, 'SERVICE_CONFIG_FILE':str(migration), 'PYTHONPATH':str(ROOT/'src')},
         capture_output=True, text=True)

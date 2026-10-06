@@ -11,6 +11,7 @@ import yaml
 
 import service_settings
 from service_settings import ConfigurationError, load_settings
+from service_runtime.settings_migrations import REMOVED_SETTINGS, REMOVED_INFRASTRUCTURE_SETTINGS
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -136,7 +137,7 @@ def test_local_generation_has_one_private_yaml_and_infrastructure_only_env(tmp_p
         'REDIS_URL':'redis://external:6379/0','EXECUTOR_BASE_URL':'http://executor',
         'EXECUTOR_SHARED_INPUT_ROOT':'/workspace/shared','EXECUTOR_SHARED_RESULT_ROOT':'/workspace/shared',
         'EXECUTOR_SOURCE_TYPE':'INLINE'}
-    source_file.write_text(yaml.safe_dump({'service':values}))
+    source_file.write_text(yaml.safe_dump(values))
     before=source_file.read_bytes()
     (tmp_path/'.env').write_text('DATABASE_URL=do-not-read\n')
     (tmp_path/'.env.local.example').write_text('LOCAL_API_PORT=18000\n')
@@ -203,7 +204,7 @@ def test_local_start_prepares_selected_infrastructure(tmp_path, monkeypatch, url
     env = tmp_path / '.env.local'
     env.write_text('LOCAL_API_PORT=18000\n')
     private=tmp_path/'compose.yml'
-    private.write_text(yaml.safe_dump({'service':{'REDIS_URL':url}}))
+    private.write_text(yaml.safe_dump({'REDIS_URL': url}))
     calls = []
     for name, value in {'ENV_FILE':env, 'APP_CONFIG':private, 'initialize':lambda *args: None,
                         'compose':lambda *args: calls.append(args),
@@ -231,7 +232,7 @@ def test_active_command_worker_requires_same_database_without_exposing_credentia
         'AGENT_WORKER_ENABLED':False,'EVENT_WORKER_ENABLED':False}, environ={})
 
 
-@pytest.mark.parametrize('name', sorted(service_settings.REMOVED_SETTINGS))
+@pytest.mark.parametrize('name', sorted(REMOVED_SETTINGS))
 @pytest.mark.parametrize('source', ['config','env'])
 def test_removed_dispatch_settings_fail_with_migration_instructions(name,source):
     with pytest.raises(ConfigurationError,match='Removed service setting: '+name):
@@ -239,7 +240,7 @@ def test_removed_dispatch_settings_fail_with_migration_instructions(name,source)
             environ={name:'obsolete'} if source=='env' else {})
 
 
-@pytest.mark.parametrize('name', sorted(service_settings.REMOVED_INFRASTRUCTURE_SETTINGS))
+@pytest.mark.parametrize('name', sorted(REMOVED_INFRASTRUCTURE_SETTINGS))
 @pytest.mark.parametrize('source', ['config', 'env'])
 def test_removed_infrastructure_settings_fail_without_exposing_values(name, source):
     with pytest.raises(ConfigurationError, match='Removed infrastructure API setting: '+name) as error:

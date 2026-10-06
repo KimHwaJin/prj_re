@@ -24,8 +24,7 @@ def test_invalid_limits_do_not_fall_back(field,value):
 
 
 def test_config_wins_and_limits_can_be_raised_or_disabled():
-    settings=load_settings(config={'service':{'agent':{'agent_project_memory_max_chars':30000,
-        'agent_project_memory_patch_max_chars':6000,'agent_project_memory_prompt_max_tokens':0}}},
+    settings=load_settings(config={'AGENT_PROJECT_MEMORY_MAX_CHARS': 30000, 'AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS': 6000, 'AGENT_PROJECT_MEMORY_PROMPT_MAX_TOKENS': 0},
         environ={'AGENT_PROJECT_MEMORY_PATCH_MAX_CHARS':'100'})
     limits=MemoryLimits.from_settings(settings.agent)
     assert (limits.max_chars,limits.patch_max_chars,limits.prompt_max_tokens)==(30000,6000,0)
@@ -102,7 +101,7 @@ def test_configured_output_schema_limits_and_no_old_topic_key():
 
 def test_shipped_yaml_with_commented_agent_examples_loads_default_limits():
     from pathlib import Path
-    settings=load_settings(environ={},root=Path(__file__).resolve().parents[5])
+    settings=load_settings(environ={},config_path=Path(__file__).resolve().parents[5]/"config.example.yml")
     assert MemoryLimits.from_settings(settings.agent)==MemoryLimits()
 
 

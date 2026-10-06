@@ -73,11 +73,9 @@ def test_platform_security_setting_is_accepted_without_enabling_service_auth(tmp
     assert settings.api.server_port == 8000
 
 
-def test_flat_root_is_not_dropped_when_a_legacy_service_block_is_present():
-    settings = load_settings(config={"PORT": 5010, "PRIVATE_LLM_MODEL_NAME": "root",
-                            "service": {"agent": {"max_plan_candidates": 2}}}, environ={})
-    assert settings.api.server_port == 5010 and settings.agent.model_name == "root"
-    assert settings.agent.max_plan_candidates == 2
+def test_nested_settings_are_rejected_with_flat_migration_guidance():
+    with pytest.raises(ConfigurationError, match="flat uppercase YAML"):
+        load_settings(config={"PORT": 5010, "service": {"agent": {"max_plan_candidates": 2}}}, environ={})
 
 
 @pytest.mark.parametrize("values", [
@@ -123,7 +121,6 @@ def test_local_initialization_and_export_use_flat_template_names(tmp_path):
 
 def test_copy_block_contains_only_service_owned_settings():
     extra = yaml.safe_load((ROOT / "config.service.example.yml").read_text())
-    assert not service_settings.PLATFORM_ONLY_KEYS & extra.keys()
     assert not {"PORT", "PRIVATE_LLM_MODEL_NAME", "PRIVATE_LLM_ENDPOINT", "PRIVATE_LLM_API_KEY",
                 "RECURSION_LIMIT", "ACTIVE_MULTI_TURN", "SET_MAX_HISTORY", "ACTIVE_TRACE",
                 "PHOENIX_ENDPOINT", "PHOENIX_API_KEY"} & extra.keys()

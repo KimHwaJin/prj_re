@@ -1,6 +1,6 @@
 # 단일 YAML 앱 설정
 
-2026-10-06 / 098. API·Agent·Worker는 하나의 ServiceSettings snapshot을 사용한다. 설정 우선순위는 **선택한 YAML > 프로세스 환경변수 > 코드 기본값**이며 공통 파일 병합은 없다. 기존 097의 common+profile 규칙을 대체한다.
+2026-10-06 / 100. API·Agent·Worker는 하나의 ServiceSettings snapshot을 사용한다. 설정 우선순위는 **선택한 YAML > 프로세스 환경변수 > 코드 기본값**이며 공통 파일 병합은 없다. 기존 097의 common+profile 규칙을 대체한다.
 
 ## 파일 선택
 
@@ -17,7 +17,7 @@
 
 [config.service.example.yml](../config.service.example.yml)의 서비스 전용 블록을 기존 내부 config.dev.yml/config.stg.yml/config.prd.yml에 붙여넣는다. 별도 파일로 자동 include하지 않는다. 이 파일에는 기존 템플릿의 PORT, PRIVATE_LLM_*, RECURSION_LIMIT, ACTIVE_MULTI_TURN, SET_MAX_HISTORY, ACTIVE_TRACE, PHOENIX_ENDPOINT/API_KEY를 중복 선언하지 않았다.
 
-각 환경 파일 하나에 연결값과 정책을 모두 둔다. 키는 최상위 대문자다. false·0·빈 문자열도 명시한 YAML 값이며 env로 덮어쓰지 않는다. Secret env를 사용할 항목은 YAML에서 삭제한다. ${...} 치환·자동 dotenv 탐색·os.environ 변경은 없다. 기존 service/group mapping은 진단 fixture 호환용으로만 읽으며 새 예제·export는 평탄한 형식이다.
+각 환경 파일 하나에 연결값과 정책을 모두 둔다. 키는 최상위 대문자다. false·0·빈 문자열도 명시한 YAML 값이며 env로 덮어쓰지 않는다. Secret env를 사용할 항목은 YAML에서 삭제한다. ${...} 치환·자동 dotenv 탐색·os.environ 변경은 없다. service/group 중첩 구조는 더 이상 읽지 않는다. 진단·벤치마크·마이그레이션 도구도 같은 평탄한 형식을 사용하며, 이전 중첩 파일은 오류 메시지에 따라 최상위 키로 옮긴다.
 
 | 기존 템플릿 설정 | 우리 소비처 |
 |---|---|
@@ -29,7 +29,7 @@
 | ACTIVE_TRACE | standalone Phoenix 활성; 플랫폼 부착에서는 플랫폼 tracing 사용 |
 | PHOENIX_ENDPOINT / PHOENIX_API_KEY | standalone collector; 플랫폼에서는 템플릿이 초기화 |
 
-Gaia/Cube/API 출력 flags·DEFAULT_WORKFLOW·SERVICE_ID·A2A·S3·플랫폼 인증/관리자 키는 템플릿 소유로 유지하고 우리 인증·SSE·Workflow 추천에 연결하지 않는다. 알려진 플랫폼 키는 허용하지만 잘못 쓴 서비스 키, 중복 YAML 키, 충돌하는 별칭은 시작 오류다. 오류와 --check-config는 비밀값을 출력하지 않는다.
+Gaia/Cube/API 출력 flags·DEFAULT_WORKFLOW·SERVICE_ID·A2A·S3·플랫폼 인증/관리자 키는 템플릿 소유로 유지하고 우리 인증·SSE·Workflow 추천에 연결하지 않는다. 플랫폼 키 허용 목록은 없다. 모델에 선언된 우리 설정만 선택하고 나머지는 플랫폼 소유로 남긴다. `--check-config`의 `unused_config_keys`에 미사용 YAML 키 이름을 표시한다. 여기에 플랫폼 키가 나오는 것은 정상이며, 우리 설정이 잘못 적혀 이 목록에 나온 경우 해당 철자를 수정한다. 실제 소비 필드의 타입·범위 오류, 중복 YAML 키, 충돌하는 별칭은 시작 오류다. 오류와 --check-config는 비밀값을 출력하지 않는다.
 
 RECURSION_LIMIT은 한 graph invocation의 super-step 한도다. LLM 횟수·시간 제한·전체 Run 수명 제한이 아니다. HITL/Executor 대기 후 새 호출은 새 단계 예산을 받는다. 내부/외부 그래프 각각 설정 한도를 적용하며 계획 수정·복구·Operation 수 제한은 별도로 유지한다.
 
@@ -62,3 +62,20 @@ config.yml이 이미 있다면 init 없이 편집한다. 생성은 기존 파일
 DATABASE_URL은 CRUD·공통 명령/Inbox·Workflow 검색·프로젝트 Store 대상이다. EW_DATABASE_URL은 보통 생략해 같은 대상에서 파생하며 실행 활성 상태에서 다른 DB는 거절한다. CHECKPOINT_DB_URI는 LangGraph checkpoint 대상이다. DB 주소를 합쳐도 드라이버/수명별 pool을 같은 객체로 만들지는 않는다. REDIS_URL은 Executor Streams와 SSO에 함께 사용하되 namespace/key 영역을 구분한다. Executor 실행 kernel 및 PV 경로는 실제 Executor와 맞춘다.
 
 Embedding은 채팅 모델 설정을 재사용하지 않는다. WORKFLOW_EMBEDDING_BASE_URL/MODEL/DIMENSIONS를 함께 넣고 실제 corpus로 threshold·index를 검증한다. SSO SDK는 비공개이므로 SSO_ADAPTER_FACTORY를 사내에서 연결한다. 미설정은 로그인503이며 테스트 인증으로 바뀌지 않는다. 추가 설정 전체·삭제/별칭 목록은 [설정 분류표](application-settings-inventory.md)를 따른다.
+
+## 설정 코드의 책임
+
+| 파일 | 책임 |
+|---|---|
+| src/service_settings.py | 환경 선택, 소스 우선순위, 공통 값 전달, 프로세스 snapshot 설치 |
+| src/service_runtime/settings_sources.py | YAML/env 읽기, 모델 필드에서 별칭 추출, 타입 검증과 비밀값 없는 오류 |
+| src/service_runtime/settings_snapshot.py | API·Agent·Worker·SSO·검색 설정 객체와 안전한 진단 요약 |
+| src/service_runtime/runtime_settings.py | 앱 수명·진단·모델 목록 등의 타입·기본값 |
+| src/config.py | API 설정 필드·별칭·기본값·검증 |
+| src/agent_config.py | Agent 설정 필드·별칭·기본값·검증; 입력은 native typed value |
+| src/event_worker_settings.py | Executor 이벤트 Worker 필드·검증 |
+| src/service_auth/sso/settings.py | SSO 필드·검증 |
+| src/service_runtime/workflow_search_settings.py | 임베딩·HNSW 검색 필드·검증 |
+| src/service_runtime/settings_migrations.py | 폐기한 우리 설정에 대한 이행 오류 안내 |
+
+새 설정은 해당 모델에 필드를 선언하면 된다. `AGENT_KEYS`, `EXTRA_KEYS`, `GROUPS`, 플랫폼 허용 목록과 별도 별칭 테이블에 추가하는 과정은 없다. 기본 이름은 대문자 필드명이며 Worker·SSO·검색에는 해당 접두어를 붙인다. 특별한 키나 이전 이름은 그 필드의 `validation_alias`로 선언한다. 환경변수 컬렉션만 JSON으로 해석하고 YAML의 dict/list/bool/int는 문자열로 변환하지 않는다.

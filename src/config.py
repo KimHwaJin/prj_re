@@ -23,7 +23,7 @@ class Settings(BaseModel):
     database_prepared_statement_cache_size: int = Field(default=0, ge=0, le=1000)
     # run.py에서 사용하는 로컬 Uvicorn 설정입니다.
     server_host: str = "127.0.0.1"
-    server_port: int = 8000
+    server_port: int = Field(default=8000, validation_alias=AliasChoices("SERVER_PORT", "PORT"))
     # Agent 산출물 생성 중 개발 reloader가 Worker를 죽이지 않도록 기본은 단일 프로세스입니다.
     server_reload: bool = False
 
@@ -35,21 +35,21 @@ class Settings(BaseModel):
     llm_model_name: str = Field(
         # default="qwen38-27b-fp8",
         default="qwen38-27b-nvfp4",
-        validation_alias=AliasChoices("MODEL_NAME", "LLM_MODEL_NAME"),
+        validation_alias=AliasChoices("MODEL_NAME", "PRIVATE_LLM_MODEL_NAME", "LLM_MODEL_NAME"),
     )
     llm_api_base_url: str = Field(
         default="http://model.frodo.com/v1",
-        validation_alias=AliasChoices("API_BASE_URL", "LLM_API_BASE_URL"),
+        validation_alias=AliasChoices("API_BASE_URL", "PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"),
     )
     llm_api_key: str = Field(
         default="dummy",
-        validation_alias=AliasChoices("MODEL_API_KEY", "LLM_API_KEY"),
+        validation_alias=AliasChoices("MODEL_API_KEY", "PRIVATE_LLM_API_KEY", "LLM_API_KEY"),
     )
     llm_timeout_seconds: float = Field(
         default=60.0,
         validation_alias=AliasChoices("MODEL_TIMEOUT_SECONDS", "LLM_TIMEOUT_SECONDS"),
     )
-    llm_temperature: float = 0.2
+    llm_temperature: float = Field(default=0.2, validation_alias=AliasChoices("MODEL_TEMPERATURE", "LLM_TEMPERATURE"))
     llm_max_output_tokens: int = Field(
         default=8192,
         validation_alias=AliasChoices(
@@ -101,9 +101,7 @@ class Settings(BaseModel):
     run_monitor_timeout_seconds: float = 3.0
     # LangGraph HITL state를 API 재시작 뒤에도 재개하기 위한 비동기 PostgreSQL checkpoint입니다.
     graph_checkpointer: str = "postgres"
-    checkpoint_db_uri: str = (
-        "postgresql://postgres:1234@127.0.0.1:5432/chat_app?sslmode=disable"
-    )
+    checkpoint_db_uri: str = Field(default="postgresql://postgres:1234@127.0.0.1:5432/chat_app?sslmode=disable", validation_alias=AliasChoices("CHECKPOINT_DB_URI", "AGENT_CHECKPOINT_DATABASE_URL"))
     # E13: DB에는 이 root 기준 상대 경로만 저장해 서버 이동과 path traversal 방지를 돕습니다.
     workflow_storage_root: Path = Path("var/workflows")
     # SSE: fast disconnect checks, commit notifications, slow reconciliation.
@@ -127,7 +125,7 @@ class Settings(BaseModel):
         validation_alias="EXECUTOR_SHARED_INPUT_ROOT",
     )
     # SSO 로그인 세션과 Executor Streams의 공통 주소. 용도별 연결풀은 분리합니다.
-    redis_url: str = "redis://127.0.0.1:6379/0"
+    redis_url: str = Field(default="redis://127.0.0.1:6379/0", validation_alias=AliasChoices("REDIS_URL", "EW_REDIS_URL"))
     model_config = ConfigDict(populate_by_name=True, extra="forbid", frozen=True, allow_inf_nan=False)
 
     @model_validator(mode="after")

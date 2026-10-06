@@ -91,7 +91,7 @@ async def trial(n,c,repeat):
  env={k:v for k,v in os.environ.items() if k in ('PATH','HOME','TMPDIR','LANG','LC_ALL')}
  env.update(PYTHONPATH=str(ROOT/'src'),PYTHONDONTWRITEBYTECODE='1')
  with tempfile.TemporaryDirectory(prefix='service-perf-config-') as directory:
-  migration=Path(directory)/'config.yml';migration.write_text(yaml.safe_dump({'service':settings}));migration.chmod(0o600)
+  migration=Path(directory)/'config.yml';migration.write_text(yaml.safe_dump(settings));migration.chmod(0o600)
   with (folder/'migration.log').open('w') as f:
    for ini in ('alembic.crud.ini','alembic.ini'):
     subprocess.run([sys.executable,'-m','alembic','-c',ini,'upgrade','head'],cwd=ROOT,env={**env,'SERVICE_CONFIG_FILE':str(migration)},stdout=f,stderr=f,check=True)

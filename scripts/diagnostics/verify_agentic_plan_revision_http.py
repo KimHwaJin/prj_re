@@ -71,7 +71,7 @@ if config.get('MODEL_CATALOG'):
     config['MODEL_CATALOG']=entries
 root=Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='agentic-repair-migrations-') as temp:
-    path=Path(temp)/'config.yml';path.write_text(yaml.safe_dump({'service':config}));path.chmod(0o600)
+    path=Path(temp)/'config.yml';path.write_text(yaml.safe_dump(config));path.chmod(0o600)
     for ini in ('alembic.crud.ini','alembic.ini'):
         outcome=subprocess.run([sys.executable,'-m','alembic','-c',ini,'upgrade','head'],cwd=root,
             env={**os.environ,'SERVICE_CONFIG_FILE':str(path),'PYTHONPATH':str(root/'src')},capture_output=True,text=True)

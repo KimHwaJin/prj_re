@@ -6,15 +6,15 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
 class WorkflowSearchSettings(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
-    base_url: str | None = None
-    api_key: SecretStr = Field(default_factory=lambda: SecretStr(""))
-    model: str | None = None
-    model_revision: str = Field(default="default", min_length=1, max_length=100)
-    dimensions: int | None = Field(default=None, ge=1, le=2000)
-    embedding_timeout_seconds: float = Field(default=15, gt=0, le=120)
-    embedding_concurrency: int = Field(default=2, ge=1, le=32)
-    embedding_batch_size: int = Field(default=32, ge=1, le=256)
+    model_config = ConfigDict(populate_by_name=True, frozen=True, extra="forbid", allow_inf_nan=False)
+    base_url: str | None = Field(default=None, validation_alias="WORKFLOW_EMBEDDING_BASE_URL")
+    api_key: SecretStr = Field(default_factory=lambda: SecretStr(""), validation_alias="WORKFLOW_EMBEDDING_API_KEY")
+    model: str | None = Field(default=None, validation_alias="WORKFLOW_EMBEDDING_MODEL")
+    model_revision: str = Field(default="default", min_length=1, max_length=100, validation_alias="WORKFLOW_EMBEDDING_MODEL_REVISION")
+    dimensions: int | None = Field(default=None, ge=1, le=2000, validation_alias="WORKFLOW_EMBEDDING_DIMENSIONS")
+    embedding_timeout_seconds: float = Field(default=15, gt=0, le=120, validation_alias="WORKFLOW_EMBEDDING_TIMEOUT_SECONDS")
+    embedding_concurrency: int = Field(default=2, ge=1, le=32, validation_alias="WORKFLOW_EMBEDDING_CONCURRENCY")
+    embedding_batch_size: int = Field(default=32, ge=1, le=256, validation_alias="WORKFLOW_EMBEDDING_BATCH_SIZE")
     context_max_chars: int = Field(default=64000, ge=1000, le=256000)
     candidate_limit: int = Field(default=20, ge=1, le=100)
     batch_size: int = Field(default=64, ge=1, le=2048)
@@ -84,32 +84,3 @@ class WorkflowSearchSettings(BaseModel):
 
     def index_sql(self):
         return f"CREATE INDEX IF NOT EXISTS {self.index_name} ON workflow_embeddings USING hnsw ((vector_values::vector({self.dimensions})) vector_cosine_ops) WITH (m=16, ef_construction=128) WHERE {self.predicate}"
-
-
-SETTING_FIELDS = {
-    **{
-        "WORKFLOW_EMBEDDING_" + key.upper(): key
-        for key in ("base_url", "api_key", "model", "model_revision", "dimensions")
-    },
-    **{
-        "WORKFLOW_" + key.upper(): key
-        for key in (
-            "embedding_timeout_seconds",
-            "embedding_concurrency",
-            "embedding_batch_size",
-        )
-    },
-    **{
-        "WORKFLOW_SEARCH_" + key.upper(): key
-        for key in (
-            "context_max_chars",
-            "candidate_limit",
-            "batch_size",
-            "max_rounds",
-            "timeout_ms",
-            "ef_search",
-            "max_scan_tuples",
-            "scan_mem_multiplier",
-        )
-    },
-}

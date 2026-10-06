@@ -34,8 +34,7 @@ def local_settings(**values):
 def test_config_wins_per_field_and_preserves_false_zero(monkeypatch):
     monkeypatch.setenv("MODEL_NAME", "must-not-leak")
     settings = load_settings(
-        config={"service": {"llm": {"model_name": "yaml", "model_max_retries": 0},
-                            "executor": {"executor_submit_enabled": False}}},
+        config={'MODEL_NAME': 'yaml', 'MODEL_MAX_RETRIES': 0, 'EXECUTOR_SUBMIT_ENABLED': False},
         environ={"LLM_MODEL_NAME": "environment", "MODEL_MAX_RETRIES": "8",
                  "EXECUTOR_SUBMIT_ENABLED": "true", "MODEL_TIMEOUT_SECONDS": "42"},
     )
@@ -113,10 +112,11 @@ def test_statement_cache_invalid_config_cannot_fall_back(value):
                       environ={"DATABASE_PREPARED_STATEMENT_CACHE_SIZE": "100"})
 
 
-def test_unknown_yaml_key_fails_while_unrelated_environment_is_ignored():
-    with pytest.raises(ConfigurationError, match="Unknown service setting"):
-        load_settings(config={"service": {"llm": {"modle_name": "typo"}}}, environ={})
-    assert load_settings(config={}, environ={"UNRELATED_APP": "value"})
+def test_shared_yaml_reports_unused_keys_while_unrelated_environment_is_ignored():
+    settings = load_settings(config={"MODLE_NAME": "typo-private-value"}, environ={"UNRELATED_APP": "value"})
+    assert settings.unused_config_keys == ("MODLE_NAME",)
+    assert "typo-private-value" not in str(settings.summary())
+    assert "UNRELATED_APP" not in settings.unused_config_keys
 
 
 def test_no_implicit_dotenv_or_phoenix_config(tmp_path, monkeypatch):
@@ -142,8 +142,8 @@ def test_explicit_dotenv_does_not_mutate_environment(tmp_path, monkeypatch):
 
 
 def test_profile_selection_never_merges_local_file(tmp_path):
-    (tmp_path / "config.yml").write_text("service:\n  MODEL_NAME: common\n  MODEL_MAX_RETRIES: 7\n")
-    (tmp_path / "config.dev.yml").write_text("service:\n  MODEL_NAME: development\n")
+    (tmp_path / "config.yml").write_text('MODEL_NAME: common\nMODEL_MAX_RETRIES: 7\n')
+    (tmp_path / "config.dev.yml").write_text('MODEL_NAME: development\n')
     settings = load_settings(environ={"APP_ENV": "dev", "MODEL_NAME": "env"}, root=tmp_path)
     assert settings.agent.model_name == "development"
     assert settings.agent.model_max_retries == 0

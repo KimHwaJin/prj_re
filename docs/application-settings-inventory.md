@@ -1,6 +1,6 @@
 # 템플릿 설정 재사용·서비스 추가·제거 목록
 
-2026-10-06 / 098. 중앙 loader의 별칭을 제외한 소비 설정은 174개다. 기존40 메시지 제한은 제거하고 템플릿의 턴 정책으로 대체했다. 모든 실행에서 환경 파일 하나를 읽는다. 아래 그룹은 설명용이며 YAML 계층이 아니다.
+2026-10-06 / 100. 중앙 loader의 별칭을 제외한 소비 설정은 174개다. 기존40 메시지 제한은 제거하고 템플릿의 턴 정책으로 대체했다. 모든 실행에서 환경 파일 하나를 읽는다. 아래 그룹은 설명용이며 YAML 계층이 아니다.
 
 ## 템플릿에서 재사용: 10개
 
@@ -192,9 +192,9 @@
 
 ## 플랫폼 소유 유지
 
-다음 키는 삭제하거나 우리 역할/쿠키/SSE로 재해석하지 않는다. loader는 알려진 플랫폼 키를 허용하지만 snapshot 소비값에 넣지 않는다.
+다음 키는 삭제하거나 우리 역할/쿠키/SSE로 재해석하지 않는다. loader는 실제 소비 모델에 없는 값을 snapshot에 넣지 않으며 플랫폼 키를 별도 허용 목록으로 관리하지 않는다. 아래 목록은 설명용 예시일 뿐이다. 새 플랫폼 키나 예전 철자도 시작을 막지 않고 `unused_config_keys`에 이름만 표시한다.
 
-`A2A_AGENT_URL`, `A2A_STREAMING_ENABLED`, `API_OUTPUT_MARKDOWN`, `API_OUTPUT_STREAM`, `API_TOKEN`, `CUBE_BOT_EMP_ID`, `CUBE_BOT_TOKEN_ID`, `CUBE_OUTPUT_MARKDOWN`, `CUBE_OUTPUT_STREAM`, `DEFAULT_WORKFLOW`, `GAIA_API_SESSION_NAME`, `GAIA_CUBE_ROUTER_CALL_BACK`, `GAIA_OUTPUT_MARKDOWN`, `GAIA_OUTPUT_STREAM`, `IS_SECURITY_SERVICE`(기존 전달 철자 `IS_SECURITY_SERVCE`도 허용), `RERANKER_API_KEY`, `RERANKER_MODEL`, `S3_AWS_ACCESS`, `S3_AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`, `S3_ENDPOINT_URL`, `S3_FILE_GATEWAY_URL`, `S3_FILE_ROUTE_AUTH_REQUIRED`, `S3_FILE_ROUTE_PATH`, `S3_FILE_URL_ENABLED`, `S3_FULE_URL_EXPIRES_IN`, `S3_REGION_NAME`, `SECRET_KEY`, `SERVICE_ID`, `SYSTEM_ADMIN`
+`A2A_AGENT_URL`, `A2A_STREAMING_ENABLED`, `API_OUTPUT_MARKDOWN`, `API_OUTPUT_STREAM`, `API_TOKEN`, `CUBE_BOT_EMP_ID`, `CUBE_BOT_TOKEN_ID`, `CUBE_OUTPUT_MARKDOWN`, `CUBE_OUTPUT_STREAM`, `DEFAULT_WORKFLOW`, `GAIA_API_SESSION_NAME`, `GAIA_CUBE_ROUTER_CALL_BACK`, `GAIA_OUTPUT_MARKDOWN`, `GAIA_OUTPUT_STREAM`, `IS_SECURITY_SERVICE`(기존 전달 철자 `IS_SECURITY_SERVCE`도 허용), `RERANKER_API_KEY`, `RERANKER_MODEL`, `S3_AWS_ACCESS`, `S3_AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`, `S3_ENDPOINT_URL`, `S3_FILE_GATEWAY_URL`, `S3_FILE_ROUTE_AUTH_REQUIRED`, `S3_FILE_ROUTE_PATH`, `S3_FILE_URL_ENABLED`, `S3_FILE_URL_EXPIRES_IN`, `S3_REGION_NAME`, `SECRET_KEY`, `SERVICE_ID`, `SYSTEM_ADMIN`
 
 ## 제거·이행
 
@@ -203,8 +203,12 @@
 | AGENT_HISTORY_MESSAGE_LIMIT | 제거; 남아 있으면 시작 오류 | 메시지 수 대신 SET_MAX_HISTORY 턴 수 사용 |
 | config.cicd.dev.yml | 제거 | 같은 환경을 별도 이름의 profile로 관리하지 않음; CICD 환경 파일 예제는 cicd/basic/dev/config.dev.example.yml |
 | config.yml + 환경별 YAML 병합 | 제거 | config.yml은 로컬 전용, 환경별 파일은 독립 |
-| 신규 service/runtime/llm 등 YAML 계층 | 새 예제에서 제거 | 내부 템플릿과 동일한 최상위 대문자 포맷; 기존 진단 fixture만 호환 |
+| 신규 service/runtime/llm 등 YAML 계층 | 파서·진단 도구에서 제거 | 내부 템플릿과 동일한 최상위 대문자 포맷만 사용 |
 | SERVER_PORT/MODEL_NAME/API_BASE_URL/MODEL_API_KEY 추가 블록 | 중복 선언 제거 | 템플릿 PORT/PRIVATE_LLM_* 재사용; 기존 env는 호환 |
 | 플랫폼 app의 우리 Phoenix register/shutdown | 제거 | 플랫폼 lifecycle 소유권 보존 |
 
-기존 Redis graph dispatch·Jupyter 직접 접속·topic memory 제거 설정도 계속 오류다. 상세 목록은 src/service_settings.py의 REMOVED_SETTINGS·REMOVED_INFRASTRUCTURE_SETTINGS를 따른다. DB/Redis/Executor API·메모리 저장 schema·Run/SSE 공개 명세는 이번 설정 변경으로 바뀌지 않는다.
+기존 Redis graph dispatch·Jupyter 직접 접속·topic memory 제거 설정도 계속 오류다. 상세 목록은 src/service_runtime/settings_migrations.py의 폐기 설정 이행 검사를 따른다. DB/Redis/Executor API·메모리 저장 schema·Run/SSE 공개 명세는 이번 설정 변경으로 바뀌지 않는다.
+
+## 100 설정 구조 정리 추적
+
+AGENT_KEYS·EXTRA_KEYS·GROUPS·PLATFORM_ONLY_KEYS·중앙 ALIASES·별도 검색 SETTING_FIELDS를 제거했다. 실제 모델 필드 선언으로 소비 키와 별칭을 유도한다. Agent의 수동 문자열 파서를 타입·기본값·검증이 있는 dataclass로 교체했으며 기존 dataclasses.replace 기반 모델 선택/테스트도 유지한다. 신규 플랫폼 키와 오타 철자를 위해 코드나 허용 목록을 수정할 필요가 없다. 공개 예제의 IS_SECURITY_SERVICE·S3_FILE_URL_EXPIRES_IN 철자를 정정했다. 폐기한 우리 설정의 이행 안내만 별도 작은 모듈에 유지한다.

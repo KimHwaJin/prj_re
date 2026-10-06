@@ -119,7 +119,7 @@ def test_invalid_context_budget_is_rejected(value):
 
 def test_context_budget_yaml_precedence_and_disable():
     from service_settings import load_settings
-    assert load_settings(config={'service':{'agent':{'agent_session_analysis_max_chars':2048}}},
+    assert load_settings(config={'AGENT_SESSION_ANALYSIS_MAX_CHARS': 2048},
         environ={'AGENT_SESSION_ANALYSIS_MAX_CHARS':'32000'}).agent.agent_session_analysis_max_chars==2048
     assert load_settings(config={},environ={'AGENT_SESSION_ANALYSIS_MAX_CHARS':'0'}).agent.agent_session_analysis_max_chars==0
 

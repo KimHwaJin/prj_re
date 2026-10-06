@@ -176,7 +176,7 @@ def test_revision_action_strict_limits_wrong_screen_and_config_priority():
     assert validate_plan_revision(form,action,count=0,limit=5).feedback=='another method'
     for patch in [{'feedback':' '},{'revision':2},{'action':'answer_clarification'},{'code':SOURCE}]:
         with pytest.raises(ValueError):validate_plan_revision(form,{**action,**patch},count=0,limit=5)
-    settings=load_settings(config={'service':{'agent':{'agent_free_plan_require_approval':False,'agent_max_plan_revisions':3}}},
+    settings=load_settings(config={'AGENT_FREE_PLAN_REQUIRE_APPROVAL': False, 'AGENT_MAX_PLAN_REVISIONS': 3},
         environ={'AGENT_FREE_PLAN_REQUIRE_APPROVAL':'true'})
     assert settings.agent.agent_free_plan_require_approval is False and settings.agent.agent_max_plan_revisions==3
     with pytest.raises(ValueError):load_settings(config={'AGENT_MAX_PLAN_REVISIONS':0},environ={})

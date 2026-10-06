@@ -1,4 +1,4 @@
-"""Agent settings values and compatibility adapter for the central snapshot.
+"""Typed Agent settings and helpers for the central snapshot.
 
 Source loading belongs to service_settings. Explicit mappings support isolated
 graph tests without reading the process environment or local files.
@@ -6,11 +6,10 @@ graph tests without reading the process environment or local files.
 
 from __future__ import annotations
 
-import json
-
-from dataclasses import dataclass, field
+from pydantic.dataclasses import dataclass
+from pydantic import AliasChoices, ConfigDict, Field, field_validator, model_validator
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -68,8 +67,6 @@ TEST_DATA_SELECTION = {
 }
 
 
-
-
 def build_langgraph_thread_id(session_id: str) -> str:
     """Build the checkpoint thread key for one conversation session."""
     normalized_session_id = session_id.strip()
@@ -78,134 +75,157 @@ def build_langgraph_thread_id(session_id: str) -> str:
     return normalized_session_id
 
 
-
-
-def _as_bool(value: str | None, default: bool) -> bool:
-    if value is None:
-        return default
-    normalized = value.strip().lower()
-    if normalized in {"1", "true", "yes", "on"}:
-        return True
-    if normalized in {"0", "false", "no", "off"}:
-        return False
-    raise ValueError("Invalid boolean setting")
-
-
-def _as_optional_bool(value: str | None) -> bool | None:
-    """Parse an optional boolean whose absence means do not send an option."""
-    if value is None or not value.strip():
-        return None
-    normalized = value.strip().lower()
-    if normalized in {"1", "true", "yes", "on"}:
-        return True
-    if normalized in {"0", "false", "no", "off"}:
-        return False
-    raise ValueError(f"Invalid boolean value: {value!r}")
-
-
-@dataclass(frozen=True)
+@dataclass(frozen=True, config=ConfigDict(populate_by_name=True, extra="forbid", allow_inf_nan=False))
 class AgentSettings:
-    environment: str
-    model_provider: str
-    model_name: str
-    model_api_key: str | None
-    api_base_url: str | None
-    model_temperature: float
-    model_timeout_seconds: float
-    model_max_retries: int
-    model_enable_thinking: bool | None
-    checkpoint_db_uri: str
-    checkpoint_setup_on_start: bool
-    checkpoint_pool_min_size: int
-    checkpoint_pool_max_size: int
-    checkpoint_pool_timeout_seconds: float
-    strict_checkpoint_msgpack: bool
-    executor_base_url: str
-    executor_tls_verify: bool
-    executor_runtime_profile: str
-    executor_executions_path: str
-    executor_operations_path: str
-    executor_execution_path: str
-    executor_result_path: str
-    executor_notebook_path: str
-    executor_finalize_path: str
-    executor_cancel_path: str
-    executor_artifacts_path: str
-    executor_shared_input_root: Path
-    executor_result_read_mode: str
-    executor_shared_result_root: Path
-    data_mock: bool
-    executor_source_type: str
-    executor_report_source_type: str
-    executor_report_append_to_notebook: bool
-    executor_timeout_seconds: float
-    executor_operation_timeout_seconds: int
-    executor_operation_wait_timeout_seconds: int
-    executor_submit_enabled: bool
-    demo_artifacts_enabled: bool
-    demo_artifacts_root: Path
-    phoenix_endpoint: str | None
-    phoenix_project_name: str
-    phoenix_api_key: str | None
-    max_workflow_revisions: int
-    workflow_recommendation_enabled: bool
-    workflow_similarity_score: float
-    model_structured_output_mode: str
-    # Allowed session creation profiles; unset loader resolves to the default only.
-    # Keep in sync with Executor/Jupyter registration; no live request per session.
+    """Typed Agent values. Sources and shared defaults are resolved by the service loader."""
+
+    environment: str = Field(default="local", validation_alias="APP_ENV")
+    model_provider: Literal["mock", "openai_compatible"] = "openai_compatible"
+    model_name: str = Field(default="qwen38-27b-nvfp4", validation_alias=AliasChoices("MODEL_NAME", "PRIVATE_LLM_MODEL_NAME", "LLM_MODEL_NAME"))
+    model_api_key: str | None = Field(default=None, validation_alias=AliasChoices("MODEL_API_KEY", "PRIVATE_LLM_API_KEY", "LLM_API_KEY"), repr=False)
+    api_base_url: str | None = Field(default=None, validation_alias=AliasChoices("API_BASE_URL", "PRIVATE_LLM_ENDPOINT", "LLM_API_BASE_URL"))
+    model_temperature: float = Field(default=0.2, validation_alias=AliasChoices("MODEL_TEMPERATURE", "LLM_TEMPERATURE"))
+    model_timeout_seconds: float = Field(default=60, gt=0, validation_alias=AliasChoices("MODEL_TIMEOUT_SECONDS", "LLM_TIMEOUT_SECONDS"))
+    model_max_retries: int = Field(default=0, ge=0, validation_alias=AliasChoices("MODEL_MAX_RETRIES", "LLM_MAX_RETRIES"))
+    model_enable_thinking: bool | None = Field(default=None, validation_alias=AliasChoices("MODEL_ENABLE_THINKING", "LLM_ENABLE_THINKING"))
+    model_structured_output_mode: Literal["prompt_json", "provider_json_schema"] = Field(default="prompt_json", validation_alias=AliasChoices("MODEL_STRUCTURED_OUTPUT_MODE", "LLM_STRUCTURED_OUTPUT_MODE"))
+    model_mock_delay_ms: int = Field(default=0, ge=0, le=60000)
+    # Built from the shared MODEL_CATALOG after source validation; not a YAML field.
+    model_catalog: Any = Field(default=None, exclude=True, repr=False)
+
+    checkpoint_db_uri: str = Field(default="postgresql://postgres:1234@127.0.0.1:5432/chat_app?sslmode=disable", validation_alias=AliasChoices("CHECKPOINT_DB_URI", "AGENT_CHECKPOINT_DATABASE_URL"), repr=False)
+    checkpoint_setup_on_start: bool = True
+    checkpoint_pool_min_size: int = Field(default=1, ge=1)
+    checkpoint_pool_max_size: int = Field(default=4, ge=1)
+    checkpoint_pool_timeout_seconds: float = Field(default=10, gt=0)
+    strict_checkpoint_msgpack: bool = Field(default=True, validation_alias="LANGGRAPH_STRICT_MSGPACK")
+
+    executor_base_url: str = Field(default="http://executor:8080", validation_alias=AliasChoices("EXECUTOR_BASE_URL", "EW_EXECUTOR_BASE_URL"))
+    executor_tls_verify: bool = True
+    executor_runtime_profile: str = "ml"
+    # Omitted profiles resolve to the configured default; no live request per session.
     executor_runtime_profiles: tuple[str, ...] = ()
-    executor_http_max_connections: int = 8
-    executor_http_connect_timeout_seconds: float = 5
-    executor_http_pool_timeout_seconds: float = 5
-    executor_http_max_response_bytes: int = 16 * 1024 * 1024
-    model_mock_delay_ms: int = 0
-    model_catalog: Any = field(default=None, repr=False, compare=False)
-    # Maximum combined plan candidates; never generate filler alternatives.
-    max_plan_candidates: int = 5
-    # Metadata tool rounds per conversation call; synthesis follows this limit.
-    agent_discovery_max_rounds: int = 4
-    # Each graph invocation has its own step budget; wait time does not consume it.
-    recursion_limit: int = 100
-    # Previous completed request turns + current Run. HITL feedback stays in its Run.
+    executor_executions_path: str = Field(default="/api/v1/executions", validation_alias=AliasChoices("EXECUTOR_EXECUTIONS_PATH", "EXECUTOR_JOBS_PATH"))
+    executor_operations_path: str = "/api/v1/executions/{execution_id}/operations"
+    executor_execution_path: str = "/api/v1/executions/{execution_id}"
+    executor_result_path: str = "/api/v1/executions/{execution_id}/result"
+    executor_notebook_path: str = "/api/v1/executions/{execution_id}/notebook"
+    executor_finalize_path: str = "/api/v1/executions/{execution_id}/finalize"
+    executor_cancel_path: str = "/api/v1/executions/{execution_id}/cancel"
+    executor_artifacts_path: str = "/api/v1/executions/{execution_id}/artifacts"
+    executor_shared_input_root: Path = DEFAULT_EXECUTOR_SHARED_INPUT_ROOT
+    executor_shared_result_root: Path = Path("/workspace/pv")
+    executor_result_read_mode: Literal["API", "MANIFEST"] = "API"
+    executor_source_type: Literal["PATH", "INLINE"] = "PATH"
+    executor_report_source_type: Literal["PATH", "INLINE"] = "INLINE"
+    executor_report_append_to_notebook: bool = True
+    executor_timeout_seconds: float = Field(default=30, gt=0)
+    executor_operation_timeout_seconds: int = Field(default=600, gt=0)
+    executor_operation_wait_timeout_seconds: int = Field(default=600, ge=30)
+    executor_submit_enabled: bool = False
+    executor_http_max_connections: int = Field(default=8, ge=1)
+    executor_http_connect_timeout_seconds: float = Field(default=5, gt=0)
+    executor_http_pool_timeout_seconds: float = Field(default=5, gt=0)
+    executor_http_max_response_bytes: int = Field(default=16 * 1024 * 1024, ge=1)
+    data_mock: bool = False
+    demo_artifacts_enabled: bool = True
+    demo_artifacts_root: Path = PROJECT_ROOT / "demo_artifacts"
+
+    phoenix_endpoint: str | None = None
+    phoenix_project_name: str = "dtest-agent"
+    phoenix_api_key: str | None = Field(default=None, repr=False)
+    max_workflow_revisions: int = Field(default=10, ge=1)
+    workflow_recommendation_enabled: bool = True
+    workflow_similarity_score: float = Field(default=0.93, ge=0, le=1)
+    # Combined recommended/generated plan count. Never generate filler alternatives.
+    max_plan_candidates: int = Field(default=5, ge=1, le=20)
+    agent_discovery_max_rounds: int = Field(default=4, ge=1, le=12)
+    # Step budget per invocation, independent of waits and repair/operation limits.
+    recursion_limit: int = Field(default=100, ge=1)
     active_multi_turn: bool = True
-    set_max_history: int = 6
-    # Only standalone bootstrap owns Phoenix. Platform lifecycle owns its tracing.
+    # Previous public Run turns + current Run; same-Run HITL feedback stays together.
+    set_max_history: int = Field(default=6, ge=0, le=100)
     active_trace: bool = True
-    # Latest terminal analysis supplied to follow-up model calls, measured as serialized JSON chars.
-    # 0 disables it; full reports/results remain in Run/Executor records, independent of this excerpt.
+    # Serialized latest analysis excerpt; 0 disables injection, not durable results.
     agent_session_analysis_max_chars: int = 16000
-    # off=no read/write; manual=read plus explicit memory API; auto_context=extract current user background/preferences.
-    # Session data/results are never auto-shared; stale writes cannot reverse a reset.
-    agent_project_memory_mode: str = "manual"
-    # Stored Markdown chars; metadata is separate. No automatic eviction.
+    agent_project_memory_mode: Literal["off", "manual", "auto_context"] = "manual"
+    # Separate stored Markdown, patch, update and prompt budgets; no automatic eviction.
     agent_project_memory_max_chars: int = 16000
-    # Agent section replacement/quote chars; manual PUT uses max_chars.
     agent_project_memory_patch_max_chars: int = 4000
     agent_project_memory_max_updates: int = 4
-    # Complete memory reference message budget, separate from durable storage.
-    # UTF-8 bytes conservatively estimate tokens; 0 in either disables injection.
     agent_project_memory_prompt_max_chars: int = 6000
     agent_project_memory_prompt_max_tokens: int = 4096
-    # Trusted dataset IDs → Jupyter paths. Never populated from a request body.
-    analysis_datasets: dict = field(default_factory=dict, repr=False, compare=False)
-    # Text evidence supplied to the text-only model per Step; full output remains on Executor PV.
-    agent_observation_max_chars: int = 16000
-    # Safety bound for a MULTI plan; waiting never occupies an Agent execution slot.
-    agent_max_operations: int = 64
-    # Default repair authorization only when Workflow has no explicit repair policy.
-    # 0=off, 1=bindings, 2=failed Tool implementation, 3=registered replan + HITL, 4=execution-local code.
-    agent_repair_level: int = 0
-    # Service capability ceiling; HITL cannot grant a level above this limit.
-    agent_repair_level_limit: int = 4
-    # Run-wide accepted correction Operation budget; also default when level > 0.
-    agent_max_repair_attempts: int = 3
-    # Allow execution-local code only after the user requests a plan revision.
+    # Trusted dataset IDs -> Jupyter paths; never supplied by public request bodies.
+    analysis_datasets: dict[str, dict] = Field(default_factory=dict, repr=False)
+    agent_observation_max_chars: int = Field(default=16000, ge=1024, le=64000)
+    agent_max_operations: int = Field(default=64, ge=1, le=256)
+    # 0=off, 1=bindings, 2=tool fix, 3=registered replan, 4=execution-local code.
+    agent_repair_level: int = Field(default=0, ge=0, le=4)
+    agent_repair_level_limit: int = Field(default=4, ge=0, le=4)
+    agent_max_repair_attempts: int = Field(default=3, ge=0, le=10)
     agent_free_plan_enabled: bool = True
-    # False allows ONE complete free-code proposal to execute after notifying the user.
-    # Multiple candidates, unanswered questions and missing required inputs still require HITL.
     agent_free_plan_require_approval: bool = True
-    # User revision/clarification turns per Run, independent of model retries/repair attempts.
-    agent_max_plan_revisions: int = 5
+    agent_max_plan_revisions: int = Field(default=5, ge=1, le=20)
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def reject_boolean_numbers(cls, value, info):
+        if isinstance(value, bool) and cls.__pydantic_fields__[info.field_name].annotation in (int, float):
+            raise ValueError("Boolean is not a numeric setting")
+        return value
+
+    @field_validator("model_enable_thinking", "phoenix_endpoint", "phoenix_api_key", mode="before")
+    @classmethod
+    def empty_optional_value(cls, value):
+        return None if value == "" else value
+
+    @field_validator("executor_source_type", "executor_report_source_type", "executor_result_read_mode", mode="before")
+    @classmethod
+    def normalize_execution_mode(cls, value):
+        return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("demo_artifacts_root")
+    @classmethod
+    def resolve_demo_root(cls, value):
+        return value if value.is_absolute() else PROJECT_ROOT / value
+
+    @field_validator("executor_runtime_profiles", mode="before")
+    @classmethod
+    def explicit_profiles_are_nonempty(cls, value):
+        if not isinstance(value, (tuple, list)) or not value:
+            raise ValueError("Runtime profiles must be a nonempty list")
+        return value
+
+    @field_validator("analysis_datasets")
+    @classmethod
+    def validate_datasets(cls, value):
+        from service_contracts.datasets import DatasetDeclaration
+        if len(value) > 1000 or any(not key.strip() for key in value):
+            raise ValueError("Invalid dataset declarations")
+        return {key: DatasetDeclaration.model_validate(item).model_dump(exclude_none=True)
+                for key, item in value.items()}
+
+    @model_validator(mode="after")
+    def validate_policy(self):
+        from service_contracts.project_memory import MemoryLimits
+        from service_contracts.session_settings import KERNEL_PROFILE
+        KERNEL_PROFILE.validate_python(self.executor_runtime_profile)
+        profiles = self.executor_runtime_profiles
+        if not profiles:
+            profiles = (self.executor_runtime_profile,)
+            object.__setattr__(self, "executor_runtime_profiles", profiles)
+        for profile in profiles:
+            KERNEL_PROFILE.validate_python(profile)
+        if len(set(profiles)) != len(profiles) or self.executor_runtime_profile not in profiles:
+            raise ValueError("Runtime profiles must be distinct and include the default")
+        if self.checkpoint_pool_min_size > self.checkpoint_pool_max_size:
+            raise ValueError("Checkpoint pool min exceeds max")
+        if self.agent_repair_level > self.agent_repair_level_limit:
+            raise ValueError("Repair level exceeds service capability")
+        if self.agent_session_analysis_max_chars != 0 and not 2048 <= self.agent_session_analysis_max_chars <= 64000:
+            raise ValueError("Analysis context must be 0 or 2048..64000 chars")
+        MemoryLimits.from_settings(self)
+        return self
 
     @property
     def executor_executions_url(self) -> str:
@@ -247,268 +267,15 @@ class AgentSettings:
 
 
 def load_agent_settings(
-    environ: Mapping[str, str] | None = None,
+    environ: Mapping[str, Any] | None = None,
     *,
     dotenv_path: Path | None = None,
 ) -> AgentSettings:
     """Use the process snapshot, or parse an explicit isolated mapping for tests."""
+    from service_settings import get_settings, load_settings
     if environ is None and dotenv_path is None:
-        from service_settings import get_settings
         return get_settings().agent
-    if dotenv_path is not None:
-        from service_settings import read_local_env
-        env = read_local_env(dotenv_path)
-        env.update(environ or {})
-    else:
-        env = dict(environ)
-    return _agent_settings_from_mapping(env)
-
-
-def _agent_settings_from_mapping(env: Mapping[str, Any]) -> AgentSettings:
-    """Pure legacy value adapter; never reads environment, dotenv or YAML."""
-
-    for key, default in {
-        "EXECUTOR_HTTP_MAX_CONNECTIONS": 8,
-        "EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS": 5,
-        "EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS": 5,
-        "EXECUTOR_HTTP_MAX_RESPONSE_BYTES": 16 * 1024 * 1024,
-    }.items():
-        value = float(env.get(key, default))
-        if not 0 < value < float("inf"):
-            raise ValueError("Invalid Executor HTTP limit")
-
-    from service_contracts.session_settings import KERNEL_PROFILE
-    profile = KERNEL_PROFILE.validate_python(env.get("EXECUTOR_RUNTIME_PROFILE", "ml"))
-    profiles = env.get("EXECUTOR_RUNTIME_PROFILES")
-    if profiles is None:
-        profiles = (profile,)
-    else:
-        if isinstance(profiles, str):
-            profiles = json.loads(profiles)
-        if not isinstance(profiles, (list, tuple)) or not profiles:
-            raise ValueError("EXECUTOR_RUNTIME_PROFILES must be a nonempty JSON/YAML list")
-        profiles = tuple(KERNEL_PROFILE.validate_python(item) for item in profiles)
-        if len(set(profiles)) != len(profiles) or profile not in profiles:
-            raise ValueError("Runtime profiles must be distinct and include EXECUTOR_RUNTIME_PROFILE")
-
-    mock_delay_ms = int(env.get("MODEL_MOCK_DELAY_MS", "0"))
-    if not 0 <= mock_delay_ms <= 60000:
-        raise ValueError("MODEL_MOCK_DELAY_MS must be between 0 and 60000")
-
-    pool_min = int(env.get("CHECKPOINT_POOL_MIN_SIZE", "1"))
-    pool_max = int(env.get("CHECKPOINT_POOL_MAX_SIZE", "4"))
-    pool_timeout = float(env.get("CHECKPOINT_POOL_TIMEOUT_SECONDS", "10"))
-    if not 1 <= pool_min <= pool_max:
-        raise ValueError("Checkpoint pool requires 1 <= min_size <= max_size")
-    if not 0 < pool_timeout < float("inf"):
-        raise ValueError("Checkpoint pool timeout must be finite and positive")
-
-    phoenix_endpoint = env.get("PHOENIX_ENDPOINT") or None
-    phoenix_api_key = env.get("PHOENIX_API_KEY") or None
-    provider = env.get("MODEL_PROVIDER") or "openai_compatible"
-
-    demo_artifacts_root = Path(
-        env.get("DEMO_ARTIFACTS_ROOT", str(PROJECT_ROOT / "demo_artifacts"))
-    )
-    if not demo_artifacts_root.is_absolute():
-        demo_artifacts_root = PROJECT_ROOT / demo_artifacts_root
-    model_structured_output_mode = env.get(
-        "MODEL_STRUCTURED_OUTPUT_MODE", "prompt_json"
-    ).strip()
-    if model_structured_output_mode not in {
-        "prompt_json",
-        "provider_json_schema",
-    }:
-        raise ValueError(
-            "MODEL_STRUCTURED_OUTPUT_MODE must be 'prompt_json' or "
-            "'provider_json_schema'"
-        )
-
-    executor_source_type = env.get("EXECUTOR_SOURCE_TYPE", "PATH").strip().upper()
-    if executor_source_type not in {"PATH", "INLINE"}:
-        raise ValueError("EXECUTOR_SOURCE_TYPE must be 'PATH' or 'INLINE'")
-    executor_report_source_type = env.get(
-        "EXECUTOR_REPORT_SOURCE_TYPE", "INLINE"
-    ).strip().upper()
-    if executor_report_source_type not in {"PATH", "INLINE"}:
-        raise ValueError(
-            "EXECUTOR_REPORT_SOURCE_TYPE must be 'PATH' or 'INLINE'"
-        )
-    executor_result_read_mode = env.get(
-        "EXECUTOR_RESULT_READ_MODE", "API"
-    ).strip().upper()
-    if executor_result_read_mode not in {"API", "MANIFEST"}:
-        raise ValueError(
-            "EXECUTOR_RESULT_READ_MODE must be 'API' or 'MANIFEST'"
-        )
-
-    executor_operation_timeout_seconds = int(
-        env.get("EXECUTOR_OPERATION_TIMEOUT_SECONDS", "600")
-    )
-    executor_operation_wait_timeout_seconds = int(
-        env.get("EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS", "600")
-    )
-    if executor_operation_timeout_seconds <= 0:
-        raise ValueError("EXECUTOR_OPERATION_TIMEOUT_SECONDS must be greater than 0")
-    if executor_operation_wait_timeout_seconds < 30:
-        raise ValueError(
-            "EXECUTOR_OPERATION_WAIT_TIMEOUT_SECONDS must be at least 30"
-        )
-
-    from service_contracts.datasets import DatasetDeclaration
-    max_candidates = int(env.get('MAX_PLAN_CANDIDATES', '5'))
-    discovery_rounds = int(env.get('AGENT_DISCOVERY_MAX_ROUNDS', '4'))
-    history_limit = int(env.get('SET_MAX_HISTORY', '6'))
-    recursion_limit = int(env.get('RECURSION_LIMIT', '100'))
-    if not 0 <= history_limit <= 100 or recursion_limit < 1:
-        raise ValueError('SET_MAX_HISTORY must be 0..100 and RECURSION_LIMIT must be positive')
-    session_analysis_limit = int(env.get('AGENT_SESSION_ANALYSIS_MAX_CHARS', '16000'))
-    if session_analysis_limit != 0 and not 2048 <= session_analysis_limit <= 64000:
-        raise ValueError('AGENT_SESSION_ANALYSIS_MAX_CHARS must be 0 or 2048..64000')
-    memory_mode = env.get('AGENT_PROJECT_MEMORY_MODE', 'manual')
-    if memory_mode not in {'off','manual','auto_context'}:
-        raise ValueError('AGENT_PROJECT_MEMORY_MODE must be off, manual or auto_context')
-    from service_contracts.project_memory import MemoryLimits
-    memory_limits = MemoryLimits(**{name: int(env.get('AGENT_PROJECT_MEMORY_' + name.upper(), str(default)))
-        for name, default in vars(MemoryLimits()).items()})
-    observation_limit = int(env.get('AGENT_OBSERVATION_MAX_CHARS', '16000'))
-    max_operations = int(env.get('AGENT_MAX_OPERATIONS', '64'))
-    plan_revisions = int(env.get('AGENT_MAX_PLAN_REVISIONS', '5'))
-    if not 1 <= plan_revisions <= 20:
-        raise ValueError('AGENT_MAX_PLAN_REVISIONS must be 1..20')
-    repair_level = int(env.get('AGENT_REPAIR_LEVEL', '0'))
-    repair_limit = int(env.get('AGENT_REPAIR_LEVEL_LIMIT', '4'))
-    repair_attempts = int(env.get('AGENT_MAX_REPAIR_ATTEMPTS', '3'))
-    if not 0 <= repair_level <= repair_limit <= 4 or not 0 <= repair_attempts <= 10:
-        raise ValueError('Invalid Agent repair level/attempt limits')
-    if not 1024 <= observation_limit <= 64000 or not 1 <= max_operations <= 256:
-        raise ValueError('Invalid Agent observation/operation limits')
-    if not 1 <= max_candidates <= 20 or not 0 <= history_limit <= 100 or not 1 <= discovery_rounds <= 12:
-        raise ValueError('Invalid planning candidate/history limits')
-    datasets = json.loads(env.get('ANALYSIS_DATASETS', '{}'))
-    if not isinstance(datasets, dict) or len(datasets) > 1000 or any(not isinstance(key, str) or not key.strip() for key in datasets):
-        raise ValueError('Invalid ANALYSIS_DATASETS mapping')
-    datasets = {key: DatasetDeclaration.model_validate(value).model_dump(exclude_none=True)
-                for key, value in datasets.items()}
-    return AgentSettings(
-        max_plan_candidates=max_candidates, set_max_history=history_limit,
-        recursion_limit=recursion_limit,
-        active_multi_turn=_as_bool(env.get('ACTIVE_MULTI_TURN'), True),
-        active_trace=_as_bool(env.get('ACTIVE_TRACE'), True),
-        agent_session_analysis_max_chars=session_analysis_limit, agent_project_memory_mode=memory_mode,
-        **{'agent_project_memory_' + name: value for name, value in vars(memory_limits).items()},
-        agent_discovery_max_rounds=discovery_rounds,
-        analysis_datasets=datasets,
-        agent_observation_max_chars=observation_limit, agent_max_operations=max_operations,
-        agent_repair_level=repair_level,agent_repair_level_limit=repair_limit,agent_max_repair_attempts=repair_attempts,
-        agent_free_plan_enabled=_as_bool(env.get('AGENT_FREE_PLAN_ENABLED'),True),
-        agent_free_plan_require_approval=_as_bool(env.get('AGENT_FREE_PLAN_REQUIRE_APPROVAL'),True),
-        agent_max_plan_revisions=plan_revisions,
-        model_mock_delay_ms=mock_delay_ms,
-        environment=env.get("APP_ENV", "local"),
-        model_provider=provider,
-        model_name=env.get("MODEL_NAME"),
-        model_api_key=env.get("MODEL_API_KEY"),
-        api_base_url=env.get("API_BASE_URL"),
-        model_temperature=float(env.get("MODEL_TEMPERATURE", "0")),
-        model_timeout_seconds=float(env.get("MODEL_TIMEOUT_SECONDS", "60")),
-        model_max_retries=int(env.get("MODEL_MAX_RETRIES", "2")),
-        model_enable_thinking=_as_optional_bool(
-            env.get("MODEL_ENABLE_THINKING")
-        ),
-        checkpoint_db_uri=env.get(
-            "CHECKPOINT_DB_URI",
-            "postgresql://postgres:postgres@localhost:5432/dtest_agent?sslmode=disable",
-        ),
-        checkpoint_setup_on_start=_as_bool(
-            env.get("CHECKPOINT_SETUP_ON_START"), True
-        ),
-        checkpoint_pool_min_size=pool_min,
-        checkpoint_pool_max_size=pool_max,
-        checkpoint_pool_timeout_seconds=pool_timeout,
-        strict_checkpoint_msgpack=_as_bool(
-            env.get("LANGGRAPH_STRICT_MSGPACK"), True
-        ),
-        executor_base_url=env.get("EXECUTOR_BASE_URL", "http://executor:8080"),
-        executor_tls_verify=_as_bool(env.get("EXECUTOR_TLS_VERIFY"), True),
-        executor_runtime_profile=profile,
-        executor_runtime_profiles=profiles,
-        executor_executions_path=env.get(
-            "EXECUTOR_EXECUTIONS_PATH",
-            env.get("EXECUTOR_JOBS_PATH", "/api/v1/executions"),
-        ),
-        executor_operations_path=env.get(
-            "EXECUTOR_OPERATIONS_PATH",
-            "/api/v1/executions/{execution_id}/operations",
-        ),
-        executor_execution_path=env.get(
-            "EXECUTOR_EXECUTION_PATH",
-            "/api/v1/executions/{execution_id}",
-        ),
-        executor_result_path=env.get(
-            "EXECUTOR_RESULT_PATH",
-            "/api/v1/executions/{execution_id}/result",
-        ),
-        executor_notebook_path=env.get(
-            "EXECUTOR_NOTEBOOK_PATH",
-            "/api/v1/executions/{execution_id}/notebook",
-        ),
-        executor_finalize_path=env.get(
-            "EXECUTOR_FINALIZE_PATH",
-            "/api/v1/executions/{execution_id}/finalize",
-        ),
-        executor_cancel_path=env.get(
-            "EXECUTOR_CANCEL_PATH",
-            "/api/v1/executions/{execution_id}/cancel",
-        ),
-        executor_artifacts_path=env.get(
-            "EXECUTOR_ARTIFACTS_PATH",
-            "/api/v1/executions/{execution_id}/artifacts",
-        ),
-        executor_shared_input_root=Path(
-            env.get(
-                "EXECUTOR_SHARED_INPUT_ROOT",
-                str(DEFAULT_EXECUTOR_SHARED_INPUT_ROOT),
-            )
-        ),
-        executor_result_read_mode=executor_result_read_mode,
-        executor_shared_result_root=Path(
-            env.get("EXECUTOR_SHARED_RESULT_ROOT", "/workspace/pv")
-        ),
-        data_mock=_as_bool(env.get("DATA_MOCK"), False),
-        executor_source_type=executor_source_type,
-        executor_report_source_type=executor_report_source_type,
-        executor_report_append_to_notebook=_as_bool(
-            env.get("EXECUTOR_REPORT_APPEND_TO_NOTEBOOK"), True
-        ),
-        executor_http_max_connections=int(env.get("EXECUTOR_HTTP_MAX_CONNECTIONS", 8)),
-        executor_http_connect_timeout_seconds=float(env.get("EXECUTOR_HTTP_CONNECT_TIMEOUT_SECONDS", 5)),
-        executor_http_pool_timeout_seconds=float(env.get("EXECUTOR_HTTP_POOL_TIMEOUT_SECONDS", 5)),
-        executor_http_max_response_bytes=int(env.get("EXECUTOR_HTTP_MAX_RESPONSE_BYTES", 16 * 1024 * 1024)),
-        executor_timeout_seconds=float(env.get("EXECUTOR_TIMEOUT_SECONDS", "30")),
-        executor_operation_timeout_seconds=executor_operation_timeout_seconds,
-        executor_operation_wait_timeout_seconds=(
-            executor_operation_wait_timeout_seconds
-        ),
-        executor_submit_enabled=_as_bool(
-            env.get("EXECUTOR_SUBMIT_ENABLED"), True
-        ),
-        demo_artifacts_enabled=_as_bool(
-            env.get("DEMO_ARTIFACTS_ENABLED"), True
-        ),
-        demo_artifacts_root=demo_artifacts_root,
-        phoenix_endpoint=phoenix_endpoint,
-        phoenix_project_name=env.get("PHOENIX_PROJECT_NAME", "dtest-agent"),
-        phoenix_api_key=phoenix_api_key,
-        max_workflow_revisions=int(env.get("MAX_WORKFLOW_REVISIONS", "10")),
-        workflow_recommendation_enabled=_as_bool(
-            env.get("WORKFLOW_RECOMMENDATION_ENABLED"), True
-        ),
-        workflow_similarity_score=float(
-            env.get("WORKFLOW_SIMILARITY_SCORE", "0.93")
-        ),
-        model_structured_output_mode=model_structured_output_mode,
-    )
+    return load_settings(config={}, environ=environ or {}, dotenv_path=dotenv_path).agent
 
 
 __all__ = [

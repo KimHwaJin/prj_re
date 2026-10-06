@@ -47,8 +47,7 @@ def test_invalid_default_profile_fails_at_startup(value):
 
 
 def test_config_over_env_and_default_only_allowlist():
-    current = load_settings(config={'service': {'executor': {
-        'executor_runtime_profile': 'default', 'executor_runtime_profiles': ['default', '3102311']}}},
+    current = load_settings(config={'EXECUTOR_RUNTIME_PROFILE': 'default', 'EXECUTOR_RUNTIME_PROFILES': ['default', '3102311']},
         environ={'EXECUTOR_RUNTIME_PROFILE': 'ignored', 'EXECUTOR_RUNTIME_PROFILES': '["ignored"]'})
     assert current.agent.executor_runtime_profiles == ('default', '3102311')
     assert current.sources['EXECUTOR_RUNTIME_PROFILES'] == 'config mapping'
