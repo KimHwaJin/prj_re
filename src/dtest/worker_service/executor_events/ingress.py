@@ -76,7 +76,7 @@ class EventRouter:
                         )
                         response = await self.http.get(
                             ExecutorRoute.EVENTS.url(
-                                str(self.http.base_url), execution_id
+                                str(self.http.base_url), str(execution_id)
                             ),
                             params={
                                 "after_sequence": after,
