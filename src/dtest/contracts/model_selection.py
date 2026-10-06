@@ -3,11 +3,12 @@
 Only service_settings loads sources. Neither graph nodes nor resumes read env.
 """
 
+import json
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from hashlib import sha256
-import json
 from types import MappingProxyType
-from typing import Literal, Mapping
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
 

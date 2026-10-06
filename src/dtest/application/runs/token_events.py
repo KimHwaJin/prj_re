@@ -7,16 +7,15 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from uuid import UUID
 
-
-from dtest.settings.api import settings
+from dtest.application.runs.lifecycle import finish_observer
+from dtest.application.runs.task_events import TaskEventService
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.infrastructure.database.runtime import (
     get_session_factory,
     short_session,
 )
-from dtest.application.runs.lifecycle import finish_observer
-from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.lifecycle import protected_cleanup
-from dtest.application.runs.task_events import TaskEventService
+from dtest.settings.api import settings
 
 
 class TokenEventBufferError(ExecutionNeedsRecovery):

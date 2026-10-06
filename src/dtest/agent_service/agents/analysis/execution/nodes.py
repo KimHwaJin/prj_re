@@ -2,51 +2,51 @@
 
 from uuid import uuid4
 
-from dtest.agent_service.agents.analysis.state import NODE_INPUTS
-
 from langgraph.graph import END
-from dtest.contracts.plan_review import require
-from dtest.contracts.plan_interaction import DecisionInteractionData
-from dtest.contracts.executor import (
-    ExecutorRequestBody,
-    ExecutorContinueRequestBody,
-    ExecutorFinalizeRequestBody,
-    ExecutorCancelRequestBody,
-)
-from dtest.contracts.events import ExecutorEvent
-from dtest.contracts.execution_review import validate_decision_action
+
+from dtest.agent_service.agents.analysis.state import NODE_INPUTS
+from dtest.agent_service.middleware.prompt_json import StructuredResponseError
+from dtest.agent_service.runtime.analysis_scope import execution_scope
 from dtest.agent_service.runtime.blocking import run_sync
 from dtest.agent_service.runtime.executor_boundary import (
     ExecutorBoundaryNodes,
     receipt_update,
 )
+from dtest.agent_service.runtime.session_analysis import capture_analysis
 from dtest.agent_service.runtime.user_resume import (
-    user_interrupt,
     record_user_resume,
+    user_interrupt,
 )
-from dtest.agent_service.middleware.prompt_json import StructuredResponseError
+from dtest.contracts.events import ExecutorEvent
+from dtest.contracts.execution_review import validate_decision_action
+from dtest.contracts.executor import (
+    ExecutorCancelRequestBody,
+    ExecutorContinueRequestBody,
+    ExecutorFinalizeRequestBody,
+    ExecutorRequestBody,
+)
+from dtest.contracts.plan_interaction import DecisionInteractionData
+from dtest.contracts.plan_review import require
 from dtest.infrastructure.executor.client import (
-    submit_execution_start,
+    submit_execution_cancel,
     submit_execution_continue,
     submit_execution_finish,
-    submit_execution_cancel,
+    submit_execution_start,
 )
 from dtest.infrastructure.executor.observations import (
-    read_operation_observations,
     public_observations,
+    read_operation_observations,
 )
+
 from .compiler import (
-    ready_batch,
     compile_steps,
     materialize_steps,
+    ready_batch,
     validate_decisions,
-    verify_snapshot,
 )
-from .report import render_evidence_markdown
-from .repair_policy import effective_snapshot
 from .repair_nodes import RepairNodes
-from dtest.agent_service.runtime.session_analysis import capture_analysis
-from dtest.agent_service.runtime.analysis_scope import execution_scope
+from .repair_policy import effective_snapshot
+from .report import render_evidence_markdown
 
 
 class ExecutionNodes:

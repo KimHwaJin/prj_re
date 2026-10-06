@@ -6,17 +6,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 from uuid import UUID, uuid4
 
-from dtest.infrastructure.database.runtime import (
-    get_session_factory,
-    short_session,
-)
-from dtest.contracts.enums import AgentRunStatus, TaskStatus
 from dtest.application.runs.claim_context import (
     ExecutionClaim,
     current_execution_claim,
 )
-from dtest.application.runs.lifecycle import execution_health
-from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.application.runs.errors import (
     CancellationRequested,
     InvalidRunRequest,
@@ -24,7 +17,9 @@ from dtest.application.runs.errors import (
     RunExecutionFailed,
     RunUnavailable,
 )
+from dtest.application.runs.lifecycle import execution_health
 from dtest.application.runs.monitoring import run_cancellable
+from dtest.application.runs.persistence.recovery import GraphProjectionError
 from dtest.application.runs.policy import is_retryable, retry_delay_seconds
 from dtest.application.runs.projection import (
     TERMINAL_STATUSES,
@@ -38,25 +33,28 @@ from dtest.application.runs.repository import (
     lock_run_and_task,
     require_session,
 )
-from dtest.contracts.resources.run_schema import RunCreate
 from dtest.application.runs.runtime import (
     ainvoke_resume,
     ainvoke_user_turn,
     user_request_from_messages,
 )
-from dtest.application.runs.persistence.recovery import GraphProjectionError
-from dtest.contracts.values import utc_now
-from dtest.application.runs.token_events import LLMTokenEventBuffer
 from dtest.application.runs.task_events import TaskEventService
 from dtest.application.runs.tasks import TaskService
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
+from dtest.application.runs.token_events import LLMTokenEventBuffer
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
 from dtest.contracts.execution import (
     ExecutionNeedsRecovery,
     InvocationNeedsRecovery,
 )
+from dtest.contracts.resources.run_schema import RunCreate
+from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
+from dtest.infrastructure.database.runtime import (
+    get_session_factory,
+    short_session,
+)
 from dtest.infrastructure.observability.diagnostics import span
-
+from dtest.settings.loader import get_settings
 
 logger = logging.getLogger(__name__)
 

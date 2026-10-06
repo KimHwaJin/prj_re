@@ -223,10 +223,10 @@ def export(capture, output, supplements=()):
         if before.get(p) != after.get(p)
     }
     assert changed == {
-        "src/dtest.agent_service/agents/analysis/state.py",
-        "src/dtest.agent_service/agents/analysis/planning/graph.py",
-        "src/dtest.agent_service/agents/analysis/execution/nodes.py",
-        "src/dtest.agent_service/agents/analysis/execution/observation_state.py",
+        "src/dtest/agent_service/agents/analysis/state.py",
+        "src/dtest/agent_service/agents/analysis/planning/graph.py",
+        "src/dtest/agent_service/agents/analysis/execution/nodes.py",
+        "src/dtest/agent_service/agents/analysis/execution/observation_state.py",
     }
     fields = [
         "variant",

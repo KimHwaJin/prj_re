@@ -5,13 +5,14 @@ service API for integration tests; this helper only inspects local graph behavio
 """
 
 from uuid import uuid4
-from dtest.settings.agent import load_agent_settings
-from dtest.agent_service.agents.analysis.planning.runtime import (
-    PlanningRuntime,
-)
+
 from dtest.agent_service.agents.analysis.planning.graph import (
     build_planning_graph,
 )
+from dtest.agent_service.agents.analysis.planning.runtime import (
+    PlanningRuntime,
+)
+from dtest.settings.agent import load_agent_settings
 
 
 def local_runtime(*, delay_ms=0, executor=None, bindings=None):

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from dtest.contracts.enums import AgentRunStatus
 from dtest.contracts.resources.schema_base import ORMModel
 
 
@@ -35,26 +34,6 @@ class RunCreate(BaseModel):
         if (self.input is None) == (self.command is None):
             raise ValueError("Exactly one of input or command is required.")
         return self
-
-
-class RunResource(ORMModel):
-    id: UUID = Field(validation_alias="run_id")
-    # resume 요청으로 새 AgentRun row가 생겨도 실제 LangGraph thread는 최초 Run을 사용합니다.
-    checkpoint_run_id: UUID | None = None
-    task_id: UUID | None = None
-    session_id: UUID
-    status: AgentRunStatus
-    # services/agent_graph_service의 interrupt_payload()와 동일하게 복수 interrupt 배열을 노출합니다.
-    interrupt: list[dict[str, Any]] | None
-    failure: dict[str, Any] | None
-    attempt_count: int
-    next_attempt_at: datetime | None
-    cancel_reason: str | None
-    cancel_requested_at: datetime | None
-    created_at: datetime
-    updated_at: datetime
-    started_at: datetime | None
-    completed_at: datetime | None
 
 
 class RunCancel(BaseModel):

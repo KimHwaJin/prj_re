@@ -1,8 +1,8 @@
 """Explicit MODEL_PROVIDER=mock fixture, never a production model fallback."""
 
 import asyncio
-from importlib.resources import files
 import json
+from importlib.resources import files
 
 from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import (
     reply_schema,

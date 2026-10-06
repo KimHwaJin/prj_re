@@ -1,12 +1,13 @@
 """Per-process immutable assets and lazy, pinned model/Agent instances."""
 
 from dataclasses import replace
-from dtest.agent_service.runtime.conversation_history import history_for_prompt
+
 from dtest.agent_service.agents.analysis.agent_builders.conversation.agent import (
     build_agent,
 )
-from dtest.agent_service.runtime.model_factory import create_chat_model
 from dtest.agent_service.agents.analysis.planning.catalog import AssetCatalog
+from dtest.agent_service.runtime.conversation_history import history_for_prompt
+from dtest.agent_service.runtime.model_factory import create_chat_model
 from dtest.contracts.model_selection import build_catalog
 
 
@@ -104,7 +105,9 @@ class PlanningRuntime:
                 )
             if role == "repair":
                 import json
+
                 from langchain_core.messages import HumanMessage
+
                 from dtest.agent_service.agents.analysis.agent_builders.execution_repair.agent import (
                     build_agent,
                 )
@@ -213,13 +216,15 @@ class PlanningRuntime:
 
     async def revise(self, state, context, dataset_catalog):
         context = self.bind_context(state, context)
-        from dtest.contracts.plan_projection import plan_view
+        import json
+
+        from langchain_core.messages import HumanMessage
+
         from dtest.agent_service.agents.analysis.planning.proposals import (
             RevisionReply,
             validate_revision_reply,
         )
-        import json
-        from langchain_core.messages import HumanMessage
+        from dtest.contracts.plan_projection import plan_view
 
         selected = state["model_selection"]
         spec = self.models.resolve(selected)

@@ -11,9 +11,8 @@ import asyncio
 import logging
 from uuid import UUID
 
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
 from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.settings.loader import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +41,8 @@ class ExecutionHealth:
         task.add_done_callback(self.recorders.discard)
 
     async def _record(self, run_id, stage):
-        from dtest.infrastructure.database.runtime import get_session_factory
         from dtest.application.runs.tasks import TaskService
+        from dtest.infrastructure.database.runtime import get_session_factory
 
         try:
             async with asyncio.timeout(

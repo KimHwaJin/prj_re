@@ -1,23 +1,23 @@
 """One-time deployment command: PYTHONPATH=src python -m bootstrap_admin."""
 
 import argparse
-from pathlib import Path
 import asyncio
+from pathlib import Path
 
 from dtest.contracts.errors import ApplicationError
-
 from dtest.settings.loader import configure, load_settings
 
 
 async def bootstrap(user_id: str, user_name: str):
+    # Register all FK models before ORM use. This import has side effects.
+    import dtest.infrastructure.database.models  # noqa: F401
+    from dtest.application.resources.users import UserService
+    from dtest.contracts.enums import UserRole
+    from dtest.contracts.resources.user_schema import UserCreate
     from dtest.infrastructure.database.runtime import (
         close_database,
         get_session_factory,
     )
-    from dtest.contracts.enums import UserRole
-    from dtest.contracts.resources.user_schema import UserCreate
-    from dtest.application.resources.users import UserService
-    import dtest.infrastructure.database.models  # Register FK models before ORM use.
 
     payload = UserCreate(
         user_id=user_id, user_name=user_name, role=UserRole.ADMIN

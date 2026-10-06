@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from uuid import UUID, uuid4
-
 from datetime import datetime
 from typing import Any
+from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import VECTOR
-
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -20,7 +18,8 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dtest.infrastructure.database.models.model_base import (

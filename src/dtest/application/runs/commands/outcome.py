@@ -2,23 +2,23 @@
 
 from datetime import timedelta
 
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 from psycopg import Error as DatabaseError
 from psycopg_pool import PoolTimeout
 from redis.exceptions import RedisError
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
+from dtest.application.runs.commands.types import ClaimedEvent
 from dtest.contracts.enums import AgentRunStatus
+from dtest.contracts.events import DeferEvent, IgnoreEvent, RejectEvent
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.agent_command_model import (
     AgentCommandModel as Command,
 )
 from dtest.infrastructure.database.models.agent_run_model import (
     AgentRunModel as Run,
 )
-from dtest.application.runs.commands.types import ClaimedEvent
-from dtest.contracts.values import utc_now
-from dtest.contracts.execution import ExecutionNeedsRecovery
-from dtest.contracts.events import DeferEvent, IgnoreEvent, RejectEvent
 
 
 def event_outcome(

@@ -8,30 +8,29 @@ checkpoint fencing against an administrator forcibly replacing a live owner.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 import logging
 import os
 import socket
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from uuid import UUID, uuid4
 
 from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 
-from dtest.infrastructure.database import runtime as database
-from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.application.runs.lifecycle import (
     execution_health,
     observe_termination,
     wait_for_stop,
 )
-from dtest.lifecycle import protected_cleanup
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.contracts.values import utc_now
+from dtest.infrastructure.database import runtime as database
 from dtest.infrastructure.database.models.session_execution_model import (
     SessionExecutionModel as Owner,
 )
-from dtest.contracts.values import utc_now
+from dtest.lifecycle import protected_cleanup
 from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
 
 logger = logging.getLogger(__name__)
 PROCESS_ID = str(uuid4())

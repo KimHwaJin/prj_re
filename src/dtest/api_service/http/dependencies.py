@@ -1,21 +1,22 @@
-"""Cookie login identity; keep service roles, admission locks and SSE DB scope."""
+"Cookie login identity; keep service roles, admission locks and SSE DB scope."
 
-from dataclasses import dataclass
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtest.infrastructure.database.runtime import get_db
+from dtest.api_service.auth.dependencies import LoginDependency
+from dtest.contracts.actors import Actor
 from dtest.contracts.enums import UserRole
 from dtest.infrastructure.database.repositories.user_repository import (
     UserRepository,
 )
-from dtest.api_service.auth.dependencies import get_login_session
+from dtest.infrastructure.database.runtime import get_db
 from dtest.infrastructure.redis.login_sessions import LoginSession
 
-
-from dtest.contracts.actors import Actor
+DBSession = Annotated[AsyncSession, Depends(get_db)]
+StreamDBSession = Annotated[AsyncSession, Depends(get_db, scope="function")]
 
 
 async def _resolve_actor(
@@ -36,21 +37,24 @@ async def _resolve_actor(
 
 
 async def get_current_actor(
-    session: LoginSession = Depends(get_login_session),
-    db: AsyncSession = Depends(get_db),
+    session: LoginDependency,
+    db: DBSession,
 ) -> Actor:
     return await _resolve_actor(session, db)
 
 
-async def require_admin(actor: Actor = Depends(get_current_actor)) -> Actor:
+CurrentActor = Annotated[Actor, Depends(get_current_actor)]
+
+
+async def require_admin(actor: CurrentActor) -> Actor:
     if actor.role != UserRole.ADMIN:
         raise HTTPException(403, "Administrator role is required.")
     return actor
 
 
 async def get_current_user_id(
-    session: LoginSession = Depends(get_login_session),
-    db: AsyncSession = Depends(get_db),
+    session: LoginDependency,
+    db: DBSession,
 ) -> UUID:
     # Business requests share a user-row lock until their transaction ends.
     # Deletion takes an exclusive lock, so new admission cannot race past it.
@@ -59,8 +63,15 @@ async def get_current_user_id(
 
 
 async def get_stream_user_id(
-    session: LoginSession = Depends(get_login_session),
-    db: AsyncSession = Depends(get_db, scope="function"),
+    session: LoginDependency,
+    db: StreamDBSession,
 ) -> UUID:
-    """SSE authentication must release its nested DB dependency before streaming."""
+    """SSE authentication must release its nested DB dependency before
+    streaming.
+    """
     return (await _resolve_actor(session, db)).user_id
+
+
+AdminActor = Annotated[Actor, Depends(require_admin)]
+CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]
+StreamUserId = Annotated[UUID, Depends(get_stream_user_id, scope="function")]

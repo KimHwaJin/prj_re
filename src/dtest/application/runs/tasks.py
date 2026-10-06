@@ -6,21 +6,19 @@ from uuid import UUID, uuid4
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
-from dtest.infrastructure.database.runtime import get_session_factory
-from dtest.contracts.execution import ExecutionNeedsRecovery
-from dtest.application.runs.lifecycle import finish_observer, wait_for_stop
-from dtest.lifecycle import protected_cleanup
 from dtest.application.runs.claim_context import (
     ExecutionClaim,
     current_execution_claim,
 )
-from dtest.contracts.enums import TaskStatus
-from dtest.contracts.enums import AgentRunStatus
+from dtest.application.runs.lifecycle import finish_observer, wait_for_stop
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.task_model import TaskModel
-from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.lifecycle import protected_cleanup
+from dtest.settings.loader import get_settings
 
 
 class TaskService:

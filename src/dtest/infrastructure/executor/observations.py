@@ -3,11 +3,11 @@
 import hashlib
 import json
 
-from dtest.infrastructure.executor.manifest import (
-    _safe_resolve,
-    _verified_bytes,
-)
 from dtest.contracts.executor_manifest import StepResultManifest
+from dtest.infrastructure.file_storage.integrity import (
+    read_verified_bytes,
+    resolve_shared_path,
+)
 
 
 def _text_preview(path, representation, max_chars):
@@ -109,9 +109,9 @@ def read_operation_observations(settings, event, expected_steps):
             or not 0 <= ref["size_bytes"] <= 1024 * 1024
         ):
             raise ValueError("Unsupported or oversized Executor manifest")
-        path = _safe_resolve(root, ref["relative_path"])
+        path = resolve_shared_path(root, ref["relative_path"])
         manifest = StepResultManifest.model_validate_json(
-            _verified_bytes(
+            read_verified_bytes(
                 path,
                 expected_size=ref["size_bytes"],
                 expected_sha256=ref["checksum_sha256"],
@@ -143,7 +143,9 @@ def read_operation_observations(settings, event, expected_steps):
         for output in manifest.outputs:
             for rep in output.representations:
                 content = _text_preview(
-                    _safe_resolve(root, rep.relative_path), rep, max_chars
+                    resolve_shared_path(root, rep.relative_path),
+                    rep,
+                    max_chars,
                 )
                 if content is None:
                     continue

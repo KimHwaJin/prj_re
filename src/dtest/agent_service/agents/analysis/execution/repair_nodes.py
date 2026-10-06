@@ -7,24 +7,25 @@ reused after receipt replay; each accepted correction consumes one Run-wide atte
 from copy import deepcopy
 from uuid import uuid4
 
+from dtest.agent_service.middleware.prompt_json import StructuredResponseError
+from dtest.agent_service.runtime.executor_boundary import receipt_update
+from dtest.agent_service.runtime.user_resume import (
+    record_user_resume,
+    user_interrupt,
+)
+from dtest.contracts.events import ExecutorEvent
 from dtest.contracts.execution_repair import (
-    RepairResponse,
     RepairInteractionData,
+    RepairResponse,
     validate_repair_action,
 )
 from dtest.contracts.plan_review import require
-from dtest.contracts.events import ExecutorEvent
-from dtest.agent_service.runtime.user_resume import (
-    user_interrupt,
-    record_user_resume,
-)
-from dtest.agent_service.runtime.executor_boundary import receipt_update
-from dtest.agent_service.middleware.prompt_json import StructuredResponseError
+
 from .repair_policy import (
+    LEVELS,
     effective_snapshot,
     proposal_snapshot,
     verify_candidate,
-    LEVELS,
 )
 
 

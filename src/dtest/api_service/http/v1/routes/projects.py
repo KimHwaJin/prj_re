@@ -1,35 +1,37 @@
+from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import (
     APIRouter,
-    Depends,
     Header,
     HTTPException,
     Query,
     Response,
     status,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtest.api_service.http.dependencies import get_current_user_id
-from dtest.infrastructure.database.runtime import get_db
-from dtest.api_service.http.pagination import ListParams, list_params
-from dtest.contracts.resources.api_schema import Page
-from dtest.contracts.resources.project_schema import (
-    ProjectCreate,
-    ProjectUpdate,
-    ProjectSummary,
-    ProjectResource,
+from dtest.api_service.http.dependencies import (
+    CurrentUserId,
+    DBSession,
 )
+from dtest.api_service.http.pagination import (
+    ListQuery,
+)
+from dtest.application.resources.project_memory import ProjectMemoryPolicy
 from dtest.application.resources.project_queries import list_project_summaries
 from dtest.application.resources.projects import ProjectService
 from dtest.contracts.project_memory import MemoryConflict, MemoryLimit
+from dtest.contracts.resources.api_schema import Page
 from dtest.contracts.resources.project_memory_schema import (
     MemoryPut,
     MemoryResource,
 )
-from dtest.application.resources.project_memory import ProjectMemoryPolicy
-
+from dtest.contracts.resources.project_schema import (
+    ProjectCreate,
+    ProjectResource,
+    ProjectSummary,
+    ProjectUpdate,
+)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -40,8 +42,8 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 async def create_project(
     payload: ProjectCreate,
     response: Response,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     project = await ProjectService.create(db, user_id, payload)
     response.headers["Location"] = f"/api/v1/projects/{project.project_id}"
@@ -51,9 +53,9 @@ async def create_project(
 @router.get("", response_model=Page[ProjectSummary])
 async def list_projects(
     response: Response,
-    params: ListParams = Depends(list_params),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    params: ListQuery,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     response.headers["Cache-Control"] = "no-store"
     return await list_project_summaries(db, user_id, params)
@@ -63,8 +65,8 @@ async def list_projects(
 async def read_project(
     project_id: UUID,
     response: Response,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     response.headers["Cache-Control"] = "no-store"
     return ProjectResource.model_validate(
@@ -76,8 +78,8 @@ async def read_project(
 async def update_project(
     project_id: UUID,
     payload: ProjectUpdate,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     project = await ProjectService.update(db, user_id, project_id, payload)
     return ProjectResource.model_validate(project)
@@ -86,8 +88,8 @@ async def update_project(
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     await ProjectService.delete(db, user_id, project_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -99,8 +101,8 @@ async def delete_project(
 @router.get("/{project_id}/memory", response_model=MemoryResource)
 async def read_project_memory(
     project_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await ProjectMemoryPolicy(db=db).read(user_id, project_id)
 
@@ -132,11 +134,13 @@ async def write_memory(
 async def put_project_memory(
     project_id: UUID,
     payload: MemoryPut,
-    idempotency_key: str | None = Header(
-        default=None, min_length=1, max_length=100, alias="Idempotency-Key"
-    ),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    idempotency_key: Annotated[
+        str | None,
+        Header(min_length=1, max_length=100, alias="Idempotency-Key"),
+    ] = None,
+    *,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await write_memory(
         user_id,
@@ -151,12 +155,14 @@ async def put_project_memory(
 @router.delete("/{project_id}/memory", response_model=MemoryResource)
 async def delete_project_memory(
     project_id: UUID,
-    expected_version: int = Query(ge=0),
-    idempotency_key: str | None = Header(
-        default=None, min_length=1, max_length=100, alias="Idempotency-Key"
-    ),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    expected_version: Annotated[int, Query(ge=0)],
+    idempotency_key: Annotated[
+        str | None,
+        Header(min_length=1, max_length=100, alias="Idempotency-Key"),
+    ] = None,
+    *,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await write_memory(
         user_id, project_id, expected_version, idempotency_key, db=db

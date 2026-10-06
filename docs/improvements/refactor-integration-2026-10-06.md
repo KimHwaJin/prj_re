@@ -35,3 +35,21 @@
 - 원본 사용자 checkout은 변경하지 않는다. 별도 작업 checkout에서 파생 브랜치 커밋과 베이스 merge 이력을 남기고 두 브랜치를 force 없이 atomic push한다.
 
 세부 이동·삭제·설정 이행 방법은 [102](102-dtest-service-structure.md), [103](103-executor-api-route-contract.md)를 따른다.
+
+
+## 110 코드 품질·불필요한 코드·구조 정리
+
+`120c555`에서 `feature/code-quality-structure-cleanup`으로 작업했다.
+HTTP 의존성 별칭, application Run 제출·선택적 메시지 세션 생성, 파일 무결성
+공통 경계를 정리했다. 미사용 옛 manifest/호환 helper/응답 DTO와 과거 CRUD
+검토 스크립트를 제거했다. 등록 Skill·Tool·Workflow 실행 내용은 유지한다.
+운영 의존성에 있던 LangGraph CLI는 dev로 이동했고 lock 패키지는143→135다.
+
+분리된 PG/Redis 전체 회귀1,340통과/2skip, 새 파일/경계 검증을 포함한
+관련 검증54통과와 개발 패키지 없는 설치 wheel 스모크를 완료했다.
+Ruff3,500→3,079, ty772→759이며 새 진단은 없다. 전체796파일 포맷은 통과하고
+전체 lint/type 통과는 아직 아니다. [110 기록](110-code-quality-structure-cleanup.md).
+
+Artifact 제출/Workflow 검색 계약 삭제는 자동 승인 검토의 외부 계약 위험
+판정으로 유지했다. HNSW 추가 개선보다 코드 품질과 타입 경계 정리를 우선한다.
+운영 재배포나 사용자 DB migration은 수행하지 않았다.

@@ -4,39 +4,38 @@ No second state machine: one SQL snapshot combines the latest invocation and
 Task. Workers still claim invocation IDs; checkpoints keep their original IDs.
 """
 
-from dtest.application.runs.public_status import public_status
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.engine import Row
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from dtest.application.resources import lifecycle
 from dtest.application.runs.admission import enqueue
 from dtest.application.runs.cancellation import cancel_task
-from dtest.application.runs.requests import validate_replay
 from dtest.application.runs.projection import finish_run
-from dtest.application.runs.repository import require_session
 from dtest.application.runs.public_state_query import (
     PUBLIC_RUN_READ,
     PUBLIC_RUN_SNAPSHOTS,
     PUBLIC_RUN_SUMMARIES,
 )
-from uuid import UUID
-
-from dtest.contracts.errors import ApplicationError
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.engine import Row
-
+from dtest.application.runs.public_status import public_status
+from dtest.application.runs.repository import require_session
+from dtest.application.runs.requests import validate_replay
 from dtest.contracts.enums import AgentRunStatus
-from dtest.infrastructure.database.models.agent_run_model import (
-    AgentRunModel as Run,
-)
+from dtest.contracts.errors import ApplicationError
 from dtest.contracts.resources.run_schema import (
     PublicRunResource,
     PublicRunSummary,
+    RunCancel,
     RunCreate,
     RunResume,
     RunStart,
-    RunCancel,
 )
 from dtest.contracts.values import utc_now
-from dtest.application.resources import lifecycle
-
+from dtest.infrastructure.database.models.agent_run_model import (
+    AgentRunModel as Run,
+)
 
 TERMINAL = {"success", "error", "timeout", "canceled"}
 

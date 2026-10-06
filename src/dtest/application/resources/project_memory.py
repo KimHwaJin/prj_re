@@ -1,32 +1,27 @@
-from dtest.infrastructure.memory.documents import write_document
-
 """Owner-checked document CAS; model calls never hold a database connection."""
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+
 import hashlib
 import json
+from contextlib import asynccontextmanager
 from uuid import UUID
+
 from sqlalchemy import select
-from dtest.infrastructure.database.runtime import short_session
-from dtest.contracts.enums import DeleteYN
+
 from dtest.application.resources.lifecycle import lock_projects
+from dtest.contracts.enums import DeleteYN
 from dtest.contracts.memory_store import (
-    MEMORY_KEY,
-    memory_namespace,
-    receipt_namespace,
-    receipt_key,
     read_memory,
-    memory_document,
 )
 from dtest.contracts.project_memory import (
-    MemoryPatch,
+    MAX_STORAGE_CHARS,
+    MAX_UPDATE_SECTIONS,
     MemoryConflict,
     MemoryLimit,
     MemoryLimits,
-    MAX_STORAGE_CHARS,
-    MAX_UPDATE_SECTIONS,
-    replace_section,
+    MemoryPatch,
 )
+from dtest.infrastructure.database.runtime import short_session
+from dtest.infrastructure.memory.documents import write_document
 
 
 class ProjectMemoryPolicy:
@@ -182,11 +177,11 @@ class ProjectMemoryPolicy:
         claim = current_execution_claim.get()
         if source.get("kind") != "user_request" or claim is None:
             return
+        from dtest.application.runs.tasks import TaskService
         from dtest.infrastructure.database.models.agent_run_model import (
             AgentRunModel,
         )
         from dtest.infrastructure.database.models.task_model import TaskModel
-        from dtest.application.runs.tasks import TaskService
 
         row = (
             await db.execute(
@@ -232,11 +227,11 @@ class BoundMemoryPolicy:
         return await self.policy(store).read(self.user_id, self.project_id)
 
     async def require_source(self):
-        from dtest.infrastructure.database.models.session_model import (
-            SessionModel,
-        )
         from dtest.infrastructure.database.models.agent_run_model import (
             AgentRunModel,
+        )
+        from dtest.infrastructure.database.models.session_model import (
+            SessionModel,
         )
 
         async with self.service.session() as db:

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
+
 from dtest.contracts.enums import UserRole
 
 

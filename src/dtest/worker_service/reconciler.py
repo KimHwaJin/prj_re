@@ -5,10 +5,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
-from dtest.infrastructure.database.runtime import get_session_factory
 from dtest.application.runs.tasks import TaskService
+from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.settings.loader import get_settings
 
 
 async def reconcile_once() -> int:

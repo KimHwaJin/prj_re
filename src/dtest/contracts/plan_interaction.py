@@ -2,6 +2,7 @@
 
 from typing import Any, Literal
 from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 

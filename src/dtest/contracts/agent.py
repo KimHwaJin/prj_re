@@ -1,6 +1,6 @@
 """Agent command adapter installed by the composition root."""
 
-from typing import Callable
+from collections.abc import Callable
 
 _resume_factory: Callable | None = None
 

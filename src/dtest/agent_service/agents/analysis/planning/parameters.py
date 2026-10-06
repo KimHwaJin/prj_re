@@ -1,10 +1,11 @@
 """Read maintainer form policy and actual defaults without importing Tool code."""
 
 import ast
-from copy import deepcopy
 import json
+from copy import deepcopy
 
 from jsonschema_rs import Draft202012Validator
+
 from dtest.contracts.tool_parameters import ToolParameterControl
 from dtest.contracts.workflow_validation import check_value_schema
 

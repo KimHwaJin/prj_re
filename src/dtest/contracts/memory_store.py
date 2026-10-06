@@ -1,7 +1,7 @@
 """A single project document on the official LangGraph Store."""
 
 from hashlib import sha256
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 
 class MemoryStore(Protocol):

@@ -9,7 +9,6 @@ description = "LangGraph-based data analysis workflow agent"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "aiohttp>=3.10,<4.0",
     "alembic>=1.13,<2.0",
     "asyncpg>=0.29,<1.0",
     "arize-phoenix-otel==0.17.1",
@@ -17,10 +16,11 @@ dependencies = [
     "httpx>=0.28,<1.0",
     "jsonschema-rs==0.44.1",
     "langchain==1.3.17",
+    "langchain-core==1.6.1",
     "langchain-openai==1.6.0",
     "langgraph==1.2.11",
     "langgraph-checkpoint-postgres==3.1.2",
-    "langgraph-cli[inmem]==0.4.31",
+    "langsmith==0.11.2",
     "numpy==2.4.6",
     "openinference-instrumentation-langchain==0.1.70",
     "openinference-instrumentation-openai==0.1.54",
@@ -35,7 +35,6 @@ dependencies = [
     "psycopg[binary,pool]>=3.2,<4.0",
     "PyYAML==6.0.3",
     "redis>=5.3,<6.0",
-    "requests>=2.32,<3.0",
     "sqlalchemy[asyncio]>=2.0,<3.0",
     "uvicorn[standard]>=0.30,<1.0",
 ]
@@ -47,6 +46,8 @@ dtest-agent-api = "dtest.bootstrap:main"
 [dependency-groups]
 dev = [
     { include-group = "tool-validation" },
+    # Offline LangGraph Studio is a developer tool, not an API dependency.
+    "langgraph-cli[inmem]==0.4.31",
     "pytest>=8.4,<10.0",
     "pytest-asyncio>=1.4,<2.0",
     "ruff==0.16.10",
@@ -75,7 +76,7 @@ include = ["dtest*"]
 exclude = ["dtest.agent_service.agents.*.tests*"]
 
 [tool.setuptools.package-data]
-"dtest.api_service" = ["**/*.md", "**/*.yaml", "web/static/*.html"]
+"dtest.api_service" = ["**/*.md", "**/*.yaml", "web/static/*.html", "web/static/*.js"]
 "dtest.contracts" = ["resources/*.json"]
 "dtest.agent_service.agents.analysis" = ["agent_builders/*/*.md"]
 "dtest.agent_service.agents.analysis.planning" = ["fixtures/*.json"]

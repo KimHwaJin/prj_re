@@ -1,19 +1,19 @@
 """Pure plan editing rules. API validates before consuming a resume token."""
 
+import json
 from copy import deepcopy
 from hashlib import sha256
-import json
 from uuid import uuid4
 
 from jsonschema_rs import Draft202012Validator
 
 from dtest.contracts.plan_interaction import PlanAction
-from dtest.contracts.workflow_validation import validate, bindings
 from dtest.contracts.tool_parameters import (
-    materialize_defaults,
     editable_schema,
+    materialize_defaults,
     value_schema,
 )
+from dtest.contracts.workflow_validation import bindings, validate
 
 
 class PlanReviewError(ValueError):

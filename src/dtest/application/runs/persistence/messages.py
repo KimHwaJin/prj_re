@@ -11,7 +11,6 @@ boundary, then persists newly emitted graph messages after each graph step.
 from __future__ import annotations
 
 import json
-from inspect import signature
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -41,26 +40,6 @@ def _uuid_or_none(value: Any) -> UUID | None:
 
 def _require_uuid(state: AnalysisWorkflowState, key: str) -> UUID:
     return UUID(_require_str(state, key))
-
-
-def _model_fields(model_cls: Any) -> set[str]:
-    fields = getattr(model_cls, "model_fields", None)
-    if isinstance(fields, dict):
-        return set(fields)
-    fields = getattr(model_cls, "__fields__", None)
-    if isinstance(fields, dict):
-        return set(fields)
-    return set()
-
-
-def _message_create_payload_kwargs(
-    message_create_cls: Any,
-    data: dict[str, Any],
-) -> dict[str, Any]:
-    fields = _model_fields(message_create_cls)
-    if not fields:
-        return data
-    return {key: value for key, value in data.items() if key in fields}
 
 
 def _compact_value(value: Any) -> str:
@@ -372,20 +351,6 @@ async def _require_existing_session_for_message(
         )
 
 
-async def _call_message_create(
-    message_service: Any,
-    db: Any,
-    *,
-    user_id: UUID,
-    payload: Any,
-    session_id: UUID,
-) -> Any:
-    parameters = signature(message_service.create).parameters
-    if "session_id" in parameters:
-        return await message_service.create(db, user_id, payload, session_id)
-    return await message_service.create(db, user_id, payload)
-
-
 async def save_graph_message(
     db: Any,
     state: AnalysisWorkflowState,
@@ -403,13 +368,12 @@ async def save_graph_message(
 ) -> Any:
     """Save one graph message using ``MessageService.create``.
 
-    ``MessageService.create`` is expected to be a pure message insert service.
-    If that service still performs LLM generation, remove that behavior before
-    calling this from graph execution.
+    Uses the current MessageCreate contract and never creates a new session.
+    Existing session ownership is checked before a standalone insert.
     """
 
-    from dtest.contracts.resources.message_schema import MessageCreate
     from dtest.application.resources.messages import MessageService
+    from dtest.contracts.resources.message_schema import MessageCreate
 
     resolved_user_id = user_id or _require_str(state, "user_id")
     resolved_user_uuid = UUID(str(resolved_user_id))
@@ -426,13 +390,8 @@ async def save_graph_message(
         agent_run_id=agent_run_id,
         plan_id=plan_id,
     )
-    payload = MessageCreate(
-        **_message_create_payload_kwargs(MessageCreate, payload_data)
-    )
-    payload_session_id = getattr(payload, "session_id", None)
-    if payload_session_id is None and "session_id" in _model_fields(
-        MessageCreate
-    ):
+    payload = MessageCreate(**payload_data)
+    if payload.session_id is None:
         raise ValueError(
             "graph message persistence requires session_id; "
             f"state_session_id={state.get('session_id')!r}, "
@@ -447,15 +406,9 @@ async def save_graph_message(
             session_id=target_session_id,
             project_id=target_project_id,
         )
-        result = await _call_message_create(
-            MessageService,
-            db,
-            user_id=resolved_user_uuid,
-            payload=payload,
-            session_id=target_session_id,
-        )
-    result_session_id = getattr(result, "session_id", target_session_id)
-    result_session_created = bool(getattr(result, "session_created", False))
+        result = await MessageService.create(db, resolved_user_uuid, payload)
+    result_session_id = result.session_id
+    result_session_created = result.session_created
     if result_session_created or result_session_id != target_session_id:
         raise RuntimeError(
             "MessageService.create created or switched sessions during graph "
@@ -463,37 +416,6 @@ async def save_graph_message(
             f"session_created={result_session_created}"
         )
     return result
-
-
-async def save_new_graph_messages(
-    db: Any,
-    state: AnalysisWorkflowState,
-    saved_count: int = 0,
-    *,
-    user_id: str | UUID | None = None,
-    node: str = "graph_stream",
-    event: str = "message_emitted",
-    agent_message_type: str = DEFAULT_AGENT_MESSAGE_TYPE,
-) -> int:
-    """Save ``state["messages"][saved_count:]`` and return the new count."""
-
-    messages = state.get("messages") or []
-    if not isinstance(messages, list):
-        return saved_count
-    for index, message in enumerate(messages[saved_count:], start=saved_count):
-        if not isinstance(message, dict):
-            continue
-        await save_graph_message(
-            db,
-            state,
-            node=message.get("metadata", {}).get("node", node),
-            event=message.get("metadata", {}).get("event", event),
-            message=message,
-            index=index,
-            user_id=user_id,
-            agent_message_type=agent_message_type,
-        )
-    return len(messages)
 
 
 async def save_agent_run_log(
@@ -529,6 +451,5 @@ async def save_agent_run_log(
 __all__ = [
     "build_message_create_data",
     "save_graph_message",
-    "save_new_graph_messages",
     "save_agent_run_log",
 ]

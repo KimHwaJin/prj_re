@@ -5,9 +5,9 @@ are separate. Helpers validate a proposed contract, not the existence of a file.
 JSON Schema is exported for reuse without installing the Agent's dependencies.
 """
 
+import unicodedata
 from enum import Enum
 from pathlib import PurePosixPath
-import unicodedata
 from typing import Literal, Protocol
 from uuid import UUID
 

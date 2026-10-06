@@ -1,5 +1,12 @@
 """Create reusable agents through the same prompt/discovery/schema middleware."""
 
+import json
+
+from langchain.tools import tool
+
+from dtest.agent_service.agents.analysis.planning.proposals import (
+    RevisionReply,
+)
 from dtest.agent_service.factory import build_role_agent, json_output
 from dtest.agent_service.middleware import (
     ProjectPromptMiddleware,
@@ -8,13 +15,9 @@ from dtest.agent_service.middleware import (
 from dtest.agent_service.middleware.discovery import (
     MetadataDiscoveryMiddleware,
 )
-from dtest.agent_service.agents.analysis.planning.proposals import (
-    RevisionReply,
-)
 from dtest.contracts.workflow_validation import workflow_schema
+
 from .._prompts import load_prompt
-import json
-from langchain.tools import tool
 
 
 def build_agent(

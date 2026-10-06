@@ -1,17 +1,17 @@
 """Corporate employee to existing internal UUID; no automatic administrator privileges."""
 
-from dtest.contracts.errors import ApplicationError
 from pydantic import ValidationError
 
-from dtest.infrastructure.database.runtime import short_session
+from dtest.application.resources.users import UserService
+from dtest.contracts.auth import VerifiedEmployee
 from dtest.contracts.enums import DeleteYN, UserRole
+from dtest.contracts.errors import ApplicationError
 from dtest.contracts.identity import normalize_user_id
+from dtest.contracts.resources.user_schema import UserCreate
 from dtest.infrastructure.database.repositories.user_repository import (
     UserRepository,
 )
-from dtest.contracts.resources.user_schema import UserCreate
-from dtest.application.resources.users import UserService
-from dtest.contracts.auth import VerifiedEmployee
+from dtest.infrastructure.database.runtime import short_session
 
 
 class SsoUserDirectory:

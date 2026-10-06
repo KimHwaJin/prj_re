@@ -6,13 +6,14 @@ the check-config summary reports their names without logging their values.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, get_origin, get_args
+from typing import Any, get_args, get_origin
 
-from pydantic import TypeAdapter, ValidationError
 import yaml
+from pydantic import TypeAdapter, ValidationError
 
 
 class ConfigurationError(ValueError):

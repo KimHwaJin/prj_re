@@ -1,6 +1,7 @@
 """Transport-neutral retrieval result and Agent port; no service DB dependency."""
 
 from typing import Any, Literal, Protocol
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 

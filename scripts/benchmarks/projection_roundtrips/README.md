@@ -29,7 +29,7 @@ For focused query budgets and result compatibility, set `DTEST_IDENTITY_TEST_DAT
 
 ```sh
 PYTHONPATH=src DTEST_PROJECTION_REPORT=/tmp/after-queries.json python -m pytest \
-  src/api_service/test/test_projection_roundtrips_postgres.py -q
+  tests/api_service/test_projection_roundtrips_postgres.py -q
 ```
 
 To measure the baseline with the same probe, copy that test file to a directory outside either source package, use `--import-mode=importlib`, set `PYTHONPATH` to the archived baseline's `src`, and `DTEST_PROJECTION_MEASURE_ONLY=1`. Select `new_log_returns or message_response_keeps or link_graph_task_noop`. This bypasses only the new SQL budgets; stored-result/idempotency/conflict assertions remain active. Running from outside the repository prevents importing the worktree package instead of the selected baseline. The baseline fixture applies its own migrations to the scratch DB.

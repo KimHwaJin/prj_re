@@ -1,15 +1,16 @@
 """Shared create_agent construction and small domain-response conversion helpers."""
 
-from dataclasses import dataclass, replace
-from typing import Any, Callable, Sequence
 import json
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
+from typing import Any
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.structured_output import (
     ProviderStrategy,
     StructuredOutputValidationError,
 )
-from langchain.agents.middleware import AgentMiddleware
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel
 

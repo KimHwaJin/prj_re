@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
-from typing import Callable
+from collections.abc import Callable
 
-from dtest.worker_service.executor_events.event_types import EVENT_TYPES
-from dtest.worker_service.executor_events import ExecutorWorker
 from dtest.application.runs.lifecycle import execution_health
+from dtest.worker_service.executor_events import ExecutorWorker
+from dtest.worker_service.executor_events.event_types import EVENT_TYPES
 
 
 async def main(

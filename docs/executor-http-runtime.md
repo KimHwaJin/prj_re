@@ -106,7 +106,7 @@ submission_scope, API 상태 반영이 필요하면 기존 Run/이벤트 진입�
 클라이언트를 state/checkpoint에 저장하지 않는다. 노드의 외부 HTTP는 await하고,
 처리할 coroutine을 fire-and-forget으로 남기지 않는다.
 
-기존 동기 테스트 어댑터는 call_io가 소유권을 유지하는 스레드 경계로 연결한다.
+현재 서비스의 Executor 통신은 네이티브 비동기 HTTP client를 사용한다. 사용처가 사라진 동기 어댑터 호환 함수 `call_io`는 제거했다.
 실제 HTTP 구현은 native async이며 run_sync로 감싸지 않는다. 파일/PV staging,
 manifest 읽기, 기존 WorkflowStore 저장은 run_sync를 유지한다. 이 작업이 파일의
 원자적 쓰기나 DB 저장소 전체 비동기 전환까지 완료했다는 의미는 아니다.

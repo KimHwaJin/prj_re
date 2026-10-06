@@ -1,13 +1,13 @@
 """Project checkpointed public events atomically; no database access in nodes."""
 
-from dtest.application.runs.repository import attach_trigger_message
 from uuid import UUID
 
-from dtest.contracts.resources.message_schema import MessageCreate
-from dtest.application.runs.logs import AgentRunLogService
-from dtest.application.resources.messages import MessageService
 from dtest.application.resources import lifecycle as resource_lifecycle
+from dtest.application.resources.messages import MessageService
+from dtest.application.runs.logs import AgentRunLogService
 from dtest.application.runs.persistence.batch import GraphResultBatch
+from dtest.application.runs.repository import attach_trigger_message
+from dtest.contracts.resources.message_schema import MessageCreate
 
 
 async def persist_plan_events(db, state, context):

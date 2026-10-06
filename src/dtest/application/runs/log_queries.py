@@ -9,15 +9,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Bundle, aliased
 
-from dtest.contracts.pagination import ListParams
-from dtest.infrastructure.database.pagination import fetch_page
-from dtest.infrastructure.database.models import (
-    AgentRunLogModel as Log,
-    AgentRunModel as Run,
-)
 from dtest.application.runs.errors import RunNotFound
 from dtest.application.runs.repository import require_session
+from dtest.contracts.pagination import ListParams
 from dtest.contracts.resources.run_schema import AgentRunLogResource
+from dtest.infrastructure.database.models import (
+    AgentRunLogModel as Log,
+)
+from dtest.infrastructure.database.models import (
+    AgentRunModel as Run,
+)
+from dtest.infrastructure.database.pagination import fetch_page
 
 
 async def list_diagnostic_logs(

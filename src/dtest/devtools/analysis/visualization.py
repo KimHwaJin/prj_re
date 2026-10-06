@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 
 def graph_to_mermaid(compiled_graph: Any, *, with_styles: bool = True) -> str:
@@ -39,10 +40,10 @@ class _TopologyOnlyExecutor:
 
 def build_visualization_graph():
     """Show the complete current graph, including conditional MULTI/repair nodes."""
-    from dtest.devtools.analysis.runtime import local_runtime
     from dtest.agent_service.agents.analysis.planning.graph import (
         build_planning_graph,
     )
+    from dtest.devtools.analysis.runtime import local_runtime
 
     runtime = local_runtime(executor=_TopologyOnlyExecutor())
     return build_planning_graph(runtime, checkpointer=None)

@@ -1,15 +1,15 @@
 """Retry deadlines and namespace-filtered signals; durable claim stays separate."""
 
-from contextlib import asynccontextmanager
 import hashlib
+from contextlib import asynccontextmanager
 
 from sqlalchemy import func, select
 
-from dtest.infrastructure.database.runtime import short_session
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.agent_command_model import (
     AgentCommandModel as Command,
 )
-from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.runtime import short_session
 from dtest.infrastructure.database.signals import (
     COMMAND_CHANNEL,
     process_signals,

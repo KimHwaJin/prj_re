@@ -32,7 +32,10 @@ def problem_response(
     headers: Mapping[str, str] | None = None,
 ) -> JSONResponse:
     body: dict[str, object] = {
-        "type": f"https://api.example.com/problems/{error_code or error_code_for_status(status_code)}",
+        "type": (
+            "https://api.example.com/problems/"
+            f"{error_code or error_code_for_status(status_code)}"
+        ),
         "title": title,
         "status": status_code,
         "detail": detail,

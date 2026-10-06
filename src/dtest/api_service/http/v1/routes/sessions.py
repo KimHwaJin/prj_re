@@ -1,24 +1,23 @@
-from dtest.application.resources.session_queries import (
-    require_owned_session,
-    read_session_resource,
-    list_sessions,
-)
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Response, status
 
-from dtest.api_service.http.dependencies import get_current_user_id
-from dtest.infrastructure.database.runtime import get_db
-from dtest.contracts.pagination import ListParams
-from dtest.api_service.http.pagination import list_params
+from dtest.api_service.http.dependencies import (
+    CurrentUserId,
+    DBSession,
+)
+from dtest.api_service.http.pagination import ListQuery
+from dtest.application.resources.session_queries import (
+    list_sessions,
+    read_session_resource,
+    require_owned_session,
+)
+from dtest.application.resources.sessions import SessionService
 from dtest.contracts.resources.api_schema import Page, SessionResource
 from dtest.contracts.resources.session_schema import (
     SessionCreate,
     SessionUpdate,
 )
-from dtest.application.resources.sessions import SessionService
-
 
 router = APIRouter(tags=["sessions"])
 
@@ -32,8 +31,8 @@ async def create_session(
     project_id: UUID,
     payload: SessionCreate,
     response: Response,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     session = await SessionService.create(db, user_id, project_id, payload)
     response.headers["Location"] = f"/api/v1/sessions/{session.session_id}"
@@ -47,9 +46,9 @@ async def create_session(
 )
 async def list_project_sessions(
     project_id: UUID,
-    params: ListParams = Depends(list_params),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    params: ListQuery,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await list_sessions(db, user_id, project_id, params)
 
@@ -57,8 +56,8 @@ async def list_project_sessions(
 @router.get("/sessions/{session_id}", response_model=SessionResource)
 async def read_session(
     session_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await read_session_resource(db, user_id, session_id)
 
@@ -67,8 +66,8 @@ async def read_session(
 async def update_session(
     session_id: UUID,
     payload: SessionUpdate,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     session = await require_owned_session(db, user_id, session_id)
     updated = await SessionService.update(
@@ -84,8 +83,8 @@ async def update_session(
 )
 async def delete_session(
     session_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     session = await require_owned_session(db, user_id, session_id)
     await SessionService.delete(db, user_id, session.project_id, session_id)

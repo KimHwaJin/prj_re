@@ -1,8 +1,9 @@
 """Validate a pending decision form before admitting a user resume."""
 
+from jsonschema_rs import Draft202012Validator
+
 from dtest.contracts.plan_interaction import DecisionAction
 from dtest.contracts.plan_review import require
-from jsonschema_rs import Draft202012Validator
 
 
 def validate_decision_action(review, raw):

@@ -5,15 +5,15 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.runs.errors import RunConflict, RunNotFound
+from dtest.application.runs.tasks import TaskService
 from dtest.contracts.enums import AgentRunStatus
+from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.task_model import TaskModel
 from dtest.infrastructure.database.repositories.session_repository import (
     SessionRepository,
 )
-from dtest.application.runs.errors import RunConflict, RunNotFound
-from dtest.application.runs.tasks import TaskService
-from dtest.contracts.execution import ExecutionNeedsRecovery
 from dtest.infrastructure.observability.diagnostics import timed
 
 

@@ -1,6 +1,7 @@
 """Durable execution binding port and checkpoint fields."""
 
 from __future__ import annotations
+
 from typing import Any, Protocol, TypedDict
 from uuid import UUID
 

@@ -1,40 +1,38 @@
-from dtest.application.runs.queries import list_runs as list_session_runs
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import (
     APIRouter,
-    Depends,
     Header,
     HTTPException,
+    Query,
     Request,
     Response,
-    Query,
     status,
 )
 from fastapi.responses import StreamingResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from dtest.api_service.http.dependencies import (
-    get_current_user_id,
-    get_stream_user_id,
+    CurrentUserId,
+    DBSession,
+    StreamDBSession,
+    StreamUserId,
 )
-from dtest.infrastructure.database.runtime import get_db
-from dtest.contracts.pagination import ListParams
-from dtest.api_service.http.pagination import list_params
+from dtest.api_service.http.pagination import ListQuery
+from dtest.application.runs.log_queries import list_diagnostic_logs
+from dtest.application.runs.queries import list_runs as list_session_runs
+from dtest.application.runs.service import PublicRunService
+from dtest.application.runs.submission import submit_request
 from dtest.contracts.resources.api_schema import Page
 from dtest.contracts.resources.run_schema import (
     AgentRunLogResource,
-    RunCancel,
-    RunStart,
     PublicRunResource,
     PublicRunSummary,
-    RunResume,
+    RunCancel,
 )
 from dtest.contracts.run_request import RunRequest
-from dtest.application.runs.service import PublicRunService
-from dtest.application.runs.log_queries import list_diagnostic_logs
-from dtest.settings.api import settings
 from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.settings.api import settings
 
 router = APIRouter(tags=["runs"])
 
@@ -48,21 +46,13 @@ async def create_run(
     session_id: UUID,
     payload: RunRequest,
     response: Response,
-    idempotency_key: str | None = Header(
-        default=None, alias="Idempotency-Key"
-    ),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    idempotency_key: Annotated[
+        str | None, Header(alias="Idempotency-Key")
+    ] = None,
+    *,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
-    if not idempotency_key or not idempotency_key.strip():
-        raise HTTPException(
-            status_code=400, detail="Idempotency-Key is required."
-        )
-    if len(idempotency_key) > 255:
-        raise HTTPException(
-            status_code=422,
-            detail="Idempotency-Key must not exceed 255 characters.",
-        )
     run = await submit_request(
         db, user_id, session_id, payload, idempotency_key
     )
@@ -72,64 +62,19 @@ async def create_run(
     return run
 
 
-async def submit_request(db, user_id, session_id, payload, key):
-    if not key or not key.strip():
-        raise HTTPException(400, "Idempotency-Key is required.")
-    if len(key) > 255:
-        raise HTTPException(
-            422, "Idempotency-Key must not exceed 255 characters."
-        )
-    if payload.command is not None:
-        return await PublicRunService.resume(
-            db,
-            user_id,
-            session_id,
-            payload.run_id,
-            RunResume(
-                command=payload.command.model_dump(
-                    mode="json", exclude_unset=True
-                ),
-                resume_token=payload.resume_token,
-            ),
-            key,
-        )
-    if any(part.type != "text" for part in payload.input.content):
-        raise HTTPException(
-            422,
-            (
-                "Image/file input requires the future authorized "
-                "attachment service; text input is supported "
-                "now."
-            ),
-        )
-    text = "\n".join(part.text for part in payload.input.content).strip()
-    if not text:
-        raise HTTPException(422, "A non-blank user message is required.")
-    return await PublicRunService.create(
-        db,
-        user_id,
-        session_id,
-        RunStart(
-            input={"messages": [{"role": "user", "content": text}]},
-            main_model_name=payload.main_model_name,
-        ),
-        key,
-    )
-
-
 @router.post("/sessions/{session_id}/runs/stream")
 async def create_run_stream(
     request: Request,
     session_id: UUID,
     payload: RunRequest,
-    idempotency_key: str | None = Header(
-        default=None, alias="Idempotency-Key"
-    ),
-    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
-    user_id: UUID = Depends(get_stream_user_id, scope="function"),
-    db: AsyncSession = Depends(get_db, scope="function"),
+    idempotency_key: Annotated[
+        str | None, Header(alias="Idempotency-Key")
+    ] = None,
+    last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
+    *,
+    user_id: StreamUserId,
+    db: StreamDBSession,
 ):
-    # Validate the cursor before enqueueing; a malformed HTTP request has no side effects.
     sequence = parse_sequence(last_event_id)
     run = await submit_request(
         db, user_id, session_id, payload, idempotency_key
@@ -166,9 +111,9 @@ def parse_sequence(value):
 )
 async def list_runs(
     session_id: UUID,
-    params: ListParams = Depends(list_params),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    params: ListQuery,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await list_session_runs(db, user_id, session_id, params)
 
@@ -179,8 +124,8 @@ async def list_runs(
 async def read_run(
     session_id: UUID,
     run_id: UUID,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await PublicRunService.read(db, user_id, session_id, run_id)
 
@@ -193,38 +138,42 @@ async def read_run(
 async def list_run_logs(
     session_id: UUID,
     run_id: UUID,
-    params: ListParams = Depends(list_params),
-    agent_name: str | None = Query(
-        default=None,
-        min_length=1,
-        max_length=100,
-        description="Agent 이름 정확 일치",
-    ),
-    node: str | None = Query(
-        default=None,
-        min_length=1,
-        max_length=100,
-        description="그래프 노드 이름 정확 일치",
-    ),
-    event: str | None = Query(
-        default=None,
-        min_length=1,
-        max_length=100,
-        description="기록된 이벤트 이름 정확 일치",
-    ),
-    kind: str | None = Query(
-        default=None,
-        min_length=1,
-        max_length=50,
-        description="로그 분류 정확 일치",
-    ),
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    params: ListQuery,
+    agent_name: Annotated[
+        str | None,
+        Query(
+            min_length=1, max_length=100, description="Agent 이름 정확 일치"
+        ),
+    ] = None,
+    node: Annotated[
+        str | None,
+        Query(
+            min_length=1,
+            max_length=100,
+            description="그래프 노드 이름 정확 일치",
+        ),
+    ] = None,
+    event: Annotated[
+        str | None,
+        Query(
+            min_length=1,
+            max_length=100,
+            description="기록된 이벤트 이름 정확 일치",
+        ),
+    ] = None,
+    kind: Annotated[
+        str | None,
+        Query(min_length=1, max_length=50, description="로그 분류 정확 일치"),
+    ] = None,
+    *,
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     """소유한 Run의 구조화된 진단 기록을 페이지로 조회합니다.
 
-    프론트 진행/HITL/재접속은 SSE를 사용합니다. payload는 기록 종류별로
-    다르며, 로그 저장 시각 순서는 SSE sequence나 실행의 인과 순서가 아닙니다.
+    프론트 진행/HITL/재접속은 SSE를 사용합니다.
+    payload는 기록 종류별로 다르며, 로그 저장 시각 순서는
+    SSE sequence나 실행의 인과 순서가 아닙니다.
     """
     return await list_diagnostic_logs(
         db,
@@ -248,8 +197,8 @@ async def cancel_run(
     session_id: UUID,
     run_id: UUID,
     payload: RunCancel,
-    user_id: UUID = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
+    user_id: CurrentUserId,
+    db: DBSession,
 ):
     return await PublicRunService.cancel(
         db, user_id, session_id, run_id, payload
@@ -261,12 +210,14 @@ async def stream_run(
     request: Request,
     session_id: UUID,
     run_id: UUID,
-    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
-    # StreamingResponse가 열린 동안 인증/소유권 확인용 DB session을 붙잡지 않는다.
-    user_id: UUID = Depends(get_stream_user_id, scope="function"),
-    db: AsyncSession = Depends(get_db, scope="function"),
+    last_event_id: Annotated[str | None, Header(alias="Last-Event-ID")] = None,
+    *,
+    user_id: StreamUserId,
+    db: StreamDBSession,
 ):
-    """Replay durable events after Last-Event-ID, then wait for commit notifications."""
+    """Replay durable events after Last-Event-ID, then wait for commit
+    notifications.
+    """
 
     public = await PublicRunService.read(db, user_id, session_id, run_id)
     initial_sequence = parse_sequence(last_event_id)

@@ -1,6 +1,7 @@
 """Construct a configured model without importing analysis roles or graphs."""
 
 from typing import Any
+
 from dtest.settings.agent import AgentSettings
 
 

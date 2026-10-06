@@ -5,7 +5,14 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from dtest.infrastructure.database.runtime import get_session_factory
+from dtest.application.runs.repository import lock_run_and_task
+from dtest.application.runs.runtime import (
+    interrupt_payload,
+    run_status_from_state,
+)
+from dtest.application.runs.task_events import TaskEventService
+from dtest.application.runs.tasks import TaskService
+from dtest.application.workflows.service import WorkflowService
 from dtest.contracts.enums import (
     AgentRunStatus,
     DeleteYN,
@@ -13,23 +20,15 @@ from dtest.contracts.enums import (
     MessageType,
     TaskStatus,
 )
+from dtest.contracts.events import DeferEvent, EventContext
+from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.message_model import MessageModel
 from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.models.task_model import TaskModel
-from dtest.application.runs.repository import lock_run_and_task
-from dtest.application.runs.runtime import (
-    interrupt_payload,
-    run_status_from_state,
-)
-from dtest.contracts.values import utc_now
-from dtest.application.runs.task_events import TaskEventService
-from dtest.application.runs.tasks import TaskService
-from dtest.application.workflows.service import WorkflowService
-from dtest.contracts.events import DeferEvent, EventContext
-from dtest.contracts.execution import ExecutionNeedsRecovery
+from dtest.infrastructure.database.runtime import get_session_factory
 from dtest.infrastructure.observability.diagnostics import span
-
 
 TERMINAL_STATUSES = {
     AgentRunStatus.SUCCESS,

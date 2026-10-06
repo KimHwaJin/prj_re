@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Protocol
+
 from dtest.contracts.project_memory import MemoryLimits
 
 

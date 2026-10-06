@@ -1,19 +1,20 @@
 """Owner-scoped session reads and page projections."""
 
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from dtest.contracts.errors import ApplicationError
-from dtest.contracts.enums import DeleteYN
-from dtest.infrastructure.database.models import SessionModel
-from dtest.infrastructure.database.repositories.session_repository import (
-    SessionRepository,
-)
-from dtest.contracts.pagination import ListParams
-from dtest.infrastructure.database.pagination import fetch_page
-from dtest.application.resources.sessions import SessionService
+
 from dtest.application.resources.session_activity import (
     SESSION_QUERY,
     resource,
+)
+from dtest.application.resources.sessions import SessionService
+from dtest.contracts.enums import DeleteYN
+from dtest.contracts.errors import ApplicationError
+from dtest.infrastructure.database.models import SessionModel
+from dtest.infrastructure.database.pagination import fetch_page
+from dtest.infrastructure.database.repositories.session_repository import (
+    SessionRepository,
 )
 
 

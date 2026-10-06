@@ -5,17 +5,17 @@ import time
 from typing import Literal
 from urllib.parse import urlencode, urlsplit
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
-from redis.asyncio import Redis, BlockingConnectionPool
+from redis.asyncio import BlockingConnectionPool, Redis
 
-from dtest.infrastructure.sso.adapter import load_adapter
+from dtest.api_service.auth.dependencies import LoginDependency
 from dtest.contracts.auth import SsoAdapter, UserDirectory, VerifiedEmployee
-from .dependencies import get_login_session
 from dtest.infrastructure.redis.login_sessions import (
     LoginSession,
     RedisSessions,
 )
+from dtest.infrastructure.sso.adapter import load_adapter
 from dtest.settings.auth import SsoSettings, origin
 
 log = logging.getLogger(__name__)
@@ -108,8 +108,13 @@ class SsoRuntime:
                 raise HTTPException(
                     503, "SSO login origins are not configured."
                 )
+            api_origin = self.settings.public_api_origin
+            if api_origin is None:
+                raise HTTPException(
+                    503, "SSO public API origin is not configured."
+                )
             callback = (
-                self.settings.public_api_origin
+                api_origin
                 + self.api_prefix
                 + "/auth/login/sso?"
                 + urlencode({"return_to": return_to, "target": target})
@@ -170,17 +175,19 @@ class SsoRuntime:
         )
         if session is None:
             raise HTTPException(401, "A valid login session is required.")
-        if request.method not in {"GET", "HEAD", "OPTIONS"}:
-            if not csrf_token or not secrets.compare_digest(
+        if request.method not in {"GET", "HEAD", "OPTIONS"} and (
+            not csrf_token
+            or not secrets.compare_digest(
                 csrf_token.encode("utf-8"), session.csrf_token.encode("ascii")
-            ):
-                raise HTTPException(403, "A valid X-CSRF-Token is required.")
+            )
+        ):
+            raise HTTPException(403, "A valid X-CSRF-Token is required.")
         return session
 
     async def logout(
         self,
         request: Request,
-        session: LoginSession = Depends(get_login_session),
+        session: LoginDependency,
     ) -> Response:
         await self.sessions.revoke(
             request.cookies.get(self.settings.cookie_name, "")
@@ -231,7 +238,9 @@ def attach_sso(
     adapter=None,
     redis=None,
 ) -> SsoRuntime:
-    """Attach to an existing app. The caller owns lifetime and protects business routes explicitly."""
+    """Attach to an existing app. The caller owns lifetime and
+    protects business routes explicitly.
+    """
     if getattr(app.state, "sso", None) is not None:
         raise RuntimeError("SSO is already attached")
     adapter = adapter if adapter is not None else load_adapter(settings)

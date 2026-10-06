@@ -6,10 +6,10 @@ saw no binding. Other Pods/restarts are covered by the unchanged periodic scan.
 No extra PostgreSQL/Redis connection or published business event is created.
 """
 
+import asyncio
 from collections import defaultdict
 from contextlib import contextmanager
 from weakref import WeakSet
-import asyncio
 
 _subscribers: dict[tuple[str, str], WeakSet] = defaultdict(WeakSet)
 

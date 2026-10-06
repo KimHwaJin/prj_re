@@ -1,10 +1,20 @@
 from uuid import UUID
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dtest.application.resources import lifecycle
+from dtest.application.resources.cascade import (
+    soft_delete_messages_for_sessions,
+    soft_delete_sessions,
+)
 from dtest.contracts.enums import DeleteYN
+from dtest.contracts.errors import ApplicationError
+from dtest.contracts.resources.project_schema import (
+    ProjectCreate,
+    ProjectUpdate,
+)
+from dtest.contracts.values import normalize_name, utc_now
 from dtest.infrastructure.database.models.project_model import ProjectModel
 from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.repositories.project_repository import (
@@ -13,16 +23,6 @@ from dtest.infrastructure.database.repositories.project_repository import (
 from dtest.infrastructure.database.repositories.user_repository import (
     UserRepository,
 )
-from dtest.contracts.resources.project_schema import (
-    ProjectCreate,
-    ProjectUpdate,
-)
-from dtest.application.resources.cascade import (
-    soft_delete_messages_for_sessions,
-    soft_delete_sessions,
-)
-from dtest.contracts.values import normalize_name, utc_now
-from dtest.application.resources import lifecycle
 
 
 class ProjectService:
@@ -106,12 +106,13 @@ class ProjectService:
         payload: ProjectUpdate,
     ) -> ProjectModel:
         await lifecycle.lock_projects(db, user_id, [project_id])
-        project = await db.scalar(
+        result = await db.execute(
             select(ProjectModel)
             .where(ProjectModel.project_id == project_id)
             .with_for_update()
             .execution_options(populate_existing=True)
         )
+        project = result.scalar_one()
         if project.is_default and payload.project_name is not None:
             raise ApplicationError(
                 status_code=409,

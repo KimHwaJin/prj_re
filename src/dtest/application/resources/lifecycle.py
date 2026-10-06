@@ -8,26 +8,26 @@ Workers' persistent Task/session-execution rows protect the execution interval.
 
 from uuid import UUID
 
-from dtest.contracts.errors import ApplicationError
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from dtest.application.runs.public_status import TERMINAL_TASKS
 from dtest.contracts.enums import AgentRunStatus, DeleteYN
+from dtest.contracts.errors import ApplicationError
 from dtest.infrastructure.database.models.agent_command_model import (
     AgentCommandModel,
 )
 from dtest.infrastructure.database.models.agent_run_model import AgentRunModel
 from dtest.infrastructure.database.models.project_model import ProjectModel
-from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.models.session_execution_model import (
     SessionExecutionModel,
 )
+from dtest.infrastructure.database.models.session_model import SessionModel
 from dtest.infrastructure.database.models.task_model import TaskModel
 from dtest.infrastructure.database.repositories.user_repository import (
     UserRepository,
 )
-from dtest.application.runs.public_status import TERMINAL_TASKS
 
 
 async def lock_projects(

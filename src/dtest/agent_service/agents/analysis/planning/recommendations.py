@@ -1,13 +1,15 @@
 """Catalog references are resolved from this invocation's Tool messages only."""
 
-from copy import deepcopy
 import json
+from copy import deepcopy
 from typing import Annotated
+
 from langchain.tools import tool
-from langgraph.prebuilt import InjectedState
 from langchain_core.messages import HumanMessage, ToolMessage
-from dtest.contracts.workflow_standard import normalize
+from langgraph.prebuilt import InjectedState
+
 from dtest.contracts.plan_review import new_review
+from dtest.contracts.workflow_standard import normalize
 
 
 def workflow_search_tool(retriever, catalog, *, context_max_chars=64000):

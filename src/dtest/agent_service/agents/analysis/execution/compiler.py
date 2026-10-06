@@ -1,15 +1,14 @@
 """Compile only approved source and bindings; never run analysis in the Agent."""
 
 import ast
-from hashlib import sha256
 from copy import deepcopy
+from hashlib import sha256
 from pathlib import Path
 
 from jsonschema_rs import Draft202012Validator
 
 from dtest.contracts.plan_review import canonical, require
 from dtest.contracts.workflow_validation import bindings
-
 
 OBSERVATION_HELPER = """
 def _dtest_observe(value, depth=0):
@@ -310,7 +309,8 @@ def materialize_steps(root, steps):
         tmp = None
         try:
             # O_EXCL publishes exactly once; competing identical writers need no overwrite.
-            import os, tempfile
+            import os
+            import tempfile
 
             with tempfile.NamedTemporaryFile(
                 dir=path.parent, delete=False

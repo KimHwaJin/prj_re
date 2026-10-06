@@ -8,9 +8,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    model_validator,
     PrivateAttr,
     create_model,
+    model_validator,
 )
 
 from dtest.agent_service.factory import build_role_agent, json_output
@@ -24,22 +24,23 @@ from dtest.agent_service.middleware.discovery import (
 from dtest.agent_service.middleware.planning_contract import (
     PlanningContractMiddleware,
 )
-from dtest.contracts.project_memory import MemoryProposal, MemoryLimits
 from dtest.agent_service.middleware.project_memory import (
     ProjectMemoryMiddleware,
 )
 from dtest.agent_service.runtime.project_memory import (
-    validate_memory_proposals,
     extract_memory_changes,
+    validate_memory_proposals,
 )
 from dtest.contracts.plan_review import new_review
+from dtest.contracts.project_memory import MemoryLimits, MemoryProposal
 from dtest.contracts.workflow_validation import workflow_schema
-from .._prompts import load_prompt
+
 from ...execution.grounding import (
     AnswerGrounding,
-    grounded_message,
     compact_evidence_view,
+    grounded_message,
 )
+from .._prompts import load_prompt
 
 
 class Proposal(BaseModel):
@@ -205,8 +206,8 @@ def build_agent(
         workflow_search_enabled=workflow_retriever is not None,
     )
     from ...planning.recommendations import (
-        workflow_search_tool,
         resolve_recommendations,
+        workflow_search_tool,
     )
 
     tools = catalog.metadata_tools()

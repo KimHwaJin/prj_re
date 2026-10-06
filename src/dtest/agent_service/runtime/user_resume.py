@@ -7,12 +7,13 @@ A node that raises/interrupts again never emits a completion receipt.
 
 from __future__ import annotations
 
+import inspect
 from contextvars import ContextVar
 from functools import wraps
-import inspect
 from typing import Any
 
 from langgraph.types import interrupt
+
 from dtest.contracts.user_resume import (
     UserResumeNeedsRecovery,
     resume_identity,

@@ -7,10 +7,9 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from dtest.settings.loader import get_settings
-from dtest.settings.api import settings
-from dtest.infrastructure.observability.diagnostics import install_sql_timings
 
+from dtest.infrastructure.observability.diagnostics import install_sql_timings
+from dtest.settings.loader import get_settings
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None

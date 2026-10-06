@@ -8,12 +8,11 @@ from sqlalchemy.orm import Bundle
 
 from dtest.contracts.enums import DeleteYN
 from dtest.contracts.pagination import ListParams
-from dtest.infrastructure.database.pagination import fetch_page
+from dtest.contracts.resources.project_schema import ProjectSummary
 from dtest.infrastructure.database.models.project_model import (
     ProjectModel as Project,
 )
-from dtest.contracts.resources.project_schema import ProjectSummary
-
+from dtest.infrastructure.database.pagination import fetch_page
 
 PROJECT_SUMMARIES = select(
     Bundle(

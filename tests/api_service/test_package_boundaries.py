@@ -60,6 +60,14 @@ def imports(path):
                 "langchain",
             ),
         ),
+        (
+            "dtest/api_service/http/v1/routes",
+            (
+                "dtest.infrastructure.database.models",
+                "dtest.infrastructure.database.repositories",
+                "sqlalchemy",
+            ),
+        ),
         ("dtest/api_service", ("dtest.agent_service", "dtest.worker_service")),
     ],
 )

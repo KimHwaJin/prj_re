@@ -6,6 +6,7 @@ semantic equivalence validation or a Python sandbox.
 
 import ast
 from hashlib import sha256
+
 from dtest.contracts.plan_review import require
 
 

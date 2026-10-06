@@ -6,8 +6,14 @@ from uuid import UUID, uuid4
 from sqlalchemy import bindparam, or_, select
 from sqlalchemy.orm import aliased
 
-from dtest.contracts.enums import AgentRunStatus, TaskStatus
 from dtest.application.runs.claim_context import ExecutionClaim
+from dtest.application.runs.commands.types import ClaimedEvent, ClaimedRun
+from dtest.application.runs.ownership import SessionExecution, acquire
+from dtest.application.runs.tasks import TaskService
+from dtest.contracts.enums import AgentRunStatus, TaskStatus
+from dtest.contracts.events import EventContext, ExecutorEvent
+from dtest.contracts.resources.run_schema import RunCreate
+from dtest.contracts.values import utc_now
 from dtest.infrastructure.database.models.agent_command_model import (
     AgentCommandModel as Command,
 )
@@ -18,12 +24,6 @@ from dtest.infrastructure.database.models.session_execution_model import (
     SessionExecutionModel as Owner,
 )
 from dtest.infrastructure.database.models.task_model import TaskModel as Task
-from dtest.application.runs.commands.types import ClaimedEvent, ClaimedRun
-from dtest.contracts.resources.run_schema import RunCreate
-from dtest.contracts.values import utc_now
-from dtest.application.runs.ownership import SessionExecution, acquire
-from dtest.application.runs.tasks import TaskService
-from dtest.contracts.events import EventContext, ExecutorEvent
 
 
 def _claim_statement():

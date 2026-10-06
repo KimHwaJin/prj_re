@@ -1,6 +1,7 @@
 """Pure ASGI request ID propagation, including early SSE disconnects."""
 
 from uuid import uuid4
+
 from starlette.datastructures import Headers, MutableHeaders
 
 

@@ -3,36 +3,35 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 
-from dtest.agent_service.agents.analysis.state import (
-    PlanningState,
-    NODE_INPUTS,
-)
 from dtest.agent_service.agents.analysis.planning.lifecycle import (
     new_request_defaults,
 )
+from dtest.agent_service.agents.analysis.planning.proposals import (
+    validate_revision_reply,
+)
+from dtest.agent_service.agents.analysis.state import (
+    NODE_INPUTS,
+    PlanningState,
+)
 from dtest.agent_service.context import AgentContext
+from dtest.agent_service.middleware.prompt_json import StructuredResponseError
+from dtest.agent_service.runtime.conversation_history import append_history
+from dtest.agent_service.runtime.session_analysis import analysis_for_owner
 from dtest.agent_service.runtime.user_resume import (
     record_user_resume,
     user_interrupt,
 )
+from dtest.contracts.plan_interaction import validate_plan_revision
+from dtest.contracts.plan_projection import plan_view
 from dtest.contracts.plan_review import (
+    PlanReviewError,
+    freeze_approval,
     new_review,
     patch_review,
-    freeze_approval,
     visible_datasets,
-    PlanReviewError,
 )
-from dtest.contracts.plan_projection import plan_view
-from dtest.contracts.plan_interaction import validate_plan_revision
-from dtest.agent_service.agents.analysis.planning.proposals import (
-    validate_revision_reply,
-)
-from dtest.agent_service.middleware.prompt_json import StructuredResponseError
-from dtest.agent_service.runtime.session_analysis import analysis_for_owner
-from dtest.agent_service.runtime.conversation_history import append_history
-
 
 RUNTIME_VERSION = "agentic-planning-v1"
 

@@ -358,7 +358,7 @@ MULTI는 목표 실행 완료 후 Finalize와 terminal 확인으로 커널을 �
 
 ## 기존 Workflow CRUD와 1.3 형식
 
-현재 `/api/v1/workflows`는 이전 WorkflowDefinition을 검증한다. [legacy-1.3 구조 예제](contracts/workflow/legacy-1.3.json) · [필드 주석](contracts/workflow/legacy-1.3.jsonc)는 이 모델의 구조 설명용이며 신규 저작용 권장 규격이 아니다. schema_version wrapper가 있으면 document.workflow를 해석하며 raw definition도 받는다. 현재 service는 wrapper 버전을 WorkflowGeneratorOutput으로 엄격히 검증하지 않고 DB schema_version에 보관하므로 임의 버전 값으로 새 모델이 선택되는 것은 아니다.
+현재 `/api/v1/workflows`는 이전 WorkflowDefinition을 검증한다. [legacy-1.3 구조 예제](contracts/workflow/legacy-1.3.json) · [필드 주석](contracts/workflow/legacy-1.3.jsonc)는 이 모델의 구조 설명용이며 신규 저작용 권장 규격이 아니다. schema_version wrapper가 있으면 document.workflow를 해석하며 raw definition도 받는다. 현재 service는 wrapper 버전을 DB schema_version에 보관하므로 임의 버전 값으로 새 모델이 선택되는 것은 아니다.
 
 | API | 현재 동작 |
 |---|---|

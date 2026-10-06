@@ -1,4 +1,5 @@
 import math
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 

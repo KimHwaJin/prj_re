@@ -1,7 +1,8 @@
 """Trusted read-only dataset declarations; file access remains in Jupyter."""
 
-from typing import Literal
 from pathlib import PurePosixPath
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 

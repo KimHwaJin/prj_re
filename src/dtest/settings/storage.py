@@ -1,6 +1,7 @@
 """File storage owned by infrastructure, loaded with the service snapshot."""
 
 from pathlib import Path
+
 from pydantic import BaseModel, ConfigDict
 
 

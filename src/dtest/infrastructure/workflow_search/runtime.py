@@ -28,8 +28,8 @@ class WorkflowRuntime:
 def get_workflow_runtime():
     global _runtime
     if _runtime is None:
-        from dtest.settings.loader import get_settings
         from dtest.infrastructure.database.runtime import get_session_factory
+        from dtest.settings.loader import get_settings
 
         _runtime = WorkflowRuntime(get_settings(), get_session_factory())
     return _runtime

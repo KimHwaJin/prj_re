@@ -1,11 +1,13 @@
 """Pure Workflow structure and asset-reference validation; never runs Tools."""
 
-from functools import lru_cache
-from importlib.resources import files
 import json
 import keyword
-from .tool_bindings import binding_errors
+from functools import lru_cache
+from importlib.resources import files
+
 from jsonschema_rs import Draft202012Validator
+
+from .tool_bindings import binding_errors
 
 
 @lru_cache(maxsize=1)

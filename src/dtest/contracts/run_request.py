@@ -4,7 +4,8 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import Field, model_validator
-from dtest.contracts.plan_interaction import StrictModel, ResumeCommand
+
+from dtest.contracts.plan_interaction import ResumeCommand, StrictModel
 
 
 class TextContent(StrictModel):

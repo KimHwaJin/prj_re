@@ -285,7 +285,7 @@ def verify_repository_catalog(catalog, repository_root, errors):
     import yaml
 
     asset_root = (
-        repository_root / "src/dtest.agent_service/agents/analysis/workflow"
+        repository_root / "src/dtest/agent_service/agents/analysis/workflow"
     )
     registry = yaml.safe_load(
         (asset_root / "tools/tool_registry.yaml").read_text()

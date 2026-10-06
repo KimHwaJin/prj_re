@@ -1,13 +1,16 @@
 """Revision-safe embedding publication using only short CRUD sessions."""
 
 from hashlib import sha256
-from sqlalchemy import select, update, or_
+
+from sqlalchemy import or_, select, update
 from sqlalchemy.dialects.postgresql import insert
-from dtest.infrastructure.database.models.workflow_model import (
-    WorkflowModel,
-    WorkflowEmbeddingModel,
-)
+
 from dtest.contracts.values import utc_now
+from dtest.infrastructure.database.models.workflow_model import (
+    WorkflowEmbeddingModel,
+    WorkflowModel,
+)
+
 from .embedding import EmbeddingUnavailable, validate_vectors
 
 

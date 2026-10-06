@@ -9,28 +9,28 @@ from sqlalchemy import cast, func, or_, select, true, union
 from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlalchemy.orm import Bundle, aliased
 
-from dtest.contracts.enums import AgentRunStatus, DeleteYN, TaskStatus
-from dtest.infrastructure.database.models.agent_run_model import (
-    AgentRunModel as Run,
-)
-from dtest.infrastructure.database.models.agent_command_model import (
-    AgentCommandModel as Command,
-)
-from dtest.infrastructure.database.models.task_model import TaskModel as Task
-from dtest.infrastructure.database.models.session_model import (
-    SessionModel as Session,
-)
-from dtest.infrastructure.database.models.session_execution_model import (
-    SessionExecutionModel as Owner,
-)
-from dtest.application.runs.public_status import public_status, TERMINAL_TASKS
+from dtest.application.resources.lifecycle import unfinished_work_conditions
 from dtest.application.runs.errors import RunConflict
+from dtest.application.runs.public_status import TERMINAL_TASKS, public_status
+from dtest.contracts.enums import AgentRunStatus, DeleteYN, TaskStatus
 from dtest.contracts.resources.api_schema import SessionResource
 from dtest.contracts.resources.session_activity_schema import (
     SessionActiveRun,
     SessionAvailability,
 )
-from dtest.application.resources.lifecycle import unfinished_work_conditions
+from dtest.infrastructure.database.models.agent_command_model import (
+    AgentCommandModel as Command,
+)
+from dtest.infrastructure.database.models.agent_run_model import (
+    AgentRunModel as Run,
+)
+from dtest.infrastructure.database.models.session_execution_model import (
+    SessionExecutionModel as Owner,
+)
+from dtest.infrastructure.database.models.session_model import (
+    SessionModel as Session,
+)
+from dtest.infrastructure.database.models.task_model import TaskModel as Task
 
 
 def _projection():
