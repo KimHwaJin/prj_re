@@ -492,3 +492,44 @@ async def test_corrupt_session_is_not_treated_as_user_identity(sso):
         600,
     )
     assert (await sso.client.get("/api/v1/users/me")).status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_workflow_search_cookie_csrf_and_short_identity_scope(
+    sso, monkeypatch
+):
+    from unittest.mock import AsyncMock, Mock
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from dtest.application.workflows import queries
+    from dtest.infrastructure.database import runtime as database
+
+    h = sso
+    await login(h)
+    me = await h.client.get("/api/v1/users/me")
+    csrf = me.json()["csrf_token"]
+    h.users.lock_flags.clear()
+    db = AsyncMock(spec=AsyncSession)
+    factory = Mock(return_value=db)
+    monkeypatch.setattr(database, "get_session_factory", lambda: factory)
+
+    async def search(query):
+        db.close.assert_awaited_once()
+        return {"items": [], "diagnostics": {"termination": "disabled"}}
+
+    monkeypatch.setattr(queries, "search_workflows", search)
+    response = await h.client.post(
+        "/api/v1/workflows/search", json={"query": "analysis"}
+    )
+    assert response.status_code == 403
+    factory.assert_not_called()
+    response = await h.client.post(
+        "/api/v1/workflows/search",
+        json={"query": "analysis"},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert response.status_code == 200, response.text
+    assert h.users.lock_flags == [False]
+    factory.assert_called_once()
+    db.close.assert_awaited_once()
