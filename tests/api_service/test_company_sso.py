@@ -6,6 +6,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 import httpx
 import pytest
 from fastapi import Depends, FastAPI, Request
+from starlette.datastructures import QueryParams
 
 from dtest.api_service.auth.dependencies import get_login_session
 from dtest.api_service.auth.runtime import attach_sso
@@ -18,6 +19,7 @@ from dtest.infrastructure.sso.company import (
     create_adapter,
     verify_employee,
 )
+from dtest.infrastructure.sso.request import SdkQueryArgs
 from dtest.settings.auth import SsoSettings
 from tests.api_service.test_sso_auth import MemoryRedis
 
@@ -67,17 +69,19 @@ class SdkFactoryDouble:
         return sdk
 
 
-class StringUrlSdkDouble(SdkDouble):
+class FlaskRequestSdkDouble(SdkDouble):
     def __init__(self, sdk_request, return_url):
         # Simulate the SDK constructor reported by the user. A raw FastAPI
         # URL has no startswith method; the bridge must handle both paths.
         assert sdk_request.url.startswith(("http://", "https://"))
+        self.origin = sdk_request.args.to_dict().get("ORIGIN")
+        assert sdk_request.args.get("ORIGIN") == self.origin
         super().__init__(sdk_request, return_url)
 
 
-class StringUrlSdkFactory(SdkFactoryDouble):
+class FlaskRequestSdkFactory(SdkFactoryDouble):
     def __call__(self, request: Request, return_url: str | None) -> SdkDouble:
-        sdk = StringUrlSdkDouble(request, return_url)
+        sdk = FlaskRequestSdkDouble(request, return_url)
         self.instances.append(sdk)
         return sdk
 
@@ -200,7 +204,7 @@ async def test_login_round_trip_uses_string_url_sdk_and_keeps_profile_private(
     monkeypatch: pytest.MonkeyPatch,
 ):
     factory, users, redis = (
-        StringUrlSdkFactory(),
+        FlaskRequestSdkFactory(),
         UserDirectoryDouble(),
         MemoryRedis(),
     )
@@ -320,10 +324,10 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     )
     original_url = original.url
     with pytest.raises(AttributeError) as failure:
-        StringUrlSdkDouble(original, None)
+        FlaskRequestSdkDouble(original, None)
     assert failure.value.name == "startswith"
     assert failure.value.obj is original_url
-    factory = StringUrlSdkFactory()
+    factory = FlaskRequestSdkFactory()
     adapter = create_adapter(SsoSettings(), sdk_factory=factory)
     callback = "https://api.example.test/callback"
     if operation == "verify":
@@ -337,6 +341,7 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     else:
         await adapter.login_url(original, callback)
     sdk = factory.instances[0]
+    assert isinstance(sdk, FlaskRequestSdkDouble)
     assert sdk.request is not original
     assert sdk.request.url == str(original_url)
     assert sdk.request.headers is original.headers
@@ -344,8 +349,49 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     assert sdk.request.scope is original.scope
     assert sdk.request.method == "GET"
     assert sdk.request.query_params["ORIGIN"] == "https://evil.test"
+    assert sdk.origin == "https://evil.test"
     assert sdk.return_url == (None if operation == "verify" else callback)
     assert original.url is original_url
     assert not isinstance(original.url, str)
     if operation == "verify":
         assert sdk.checked == sdk.info_calls == ["company=valid"]
+
+
+@pytest.mark.parametrize(
+    ("query", "flat", "expected"),
+    [
+        ("", True, {}),
+        ("blank=&flag", True, {"blank": "", "flag": ""}),
+        (
+            "name=%ED%99%8D&next=%2Fdemo%3Fa%3D1",
+            True,
+            {"name": "홍", "next": "/demo?a=1"},
+        ),
+        ("tag=first&tag=second", True, {"tag": "first"}),
+        ("tag=first&tag=second", False, {"tag": ["first", "second"]}),
+    ],
+)
+def test_sdk_args_to_dict_preserves_flask_query_semantics(
+    query,
+    flat,
+    expected,
+):
+    params = QueryParams(query)
+    args = SdkQueryArgs(params)
+    assert args.to_dict(flat=flat) == expected
+    assert len(args) == len(params)
+    assert args.get("absent") is None
+    assert args.get("absent", "fallback") == "fallback"
+    assert "absent" not in args
+    with pytest.raises(KeyError):
+        args["absent"]
+    if "tag" in args:
+        assert args["tag"] == args.get("tag") == "first"
+        assert dict(args) == {"tag": "first"}
+        result = args.to_dict(flat=False)
+        values = result["tag"]
+        assert isinstance(values, list)
+        values.append("changed")
+        assert args.to_dict(flat=False) == {"tag": ["first", "second"]}
+        assert params.getlist("tag") == ["first", "second"]
+    assert params == QueryParams(query)

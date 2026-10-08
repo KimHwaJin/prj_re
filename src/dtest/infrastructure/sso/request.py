@@ -1,21 +1,58 @@
-"""Adapt only the confirmed URL string boundary of the corporate SDK."""
+"""Adapt the confirmed URL and query boundaries of the corporate SDK."""
 
+from collections.abc import Iterator, Mapping
 from typing import Any, cast
 
 from fastapi import Request
+from starlette.datastructures import QueryParams
+
+
+class SdkQueryArgs(Mapping[str, str]):
+    """Read-only Flask-style query access with first-value semantics.
+
+    Unlike Starlette's last-value lookup, Flask MultiDict selects the first
+    duplicate value. Copies returned by to_dict cannot change the request.
+    """
+
+    __slots__ = ("_values",)
+
+    def __init__(self, params: QueryParams):
+        self._values: dict[str, list[str]] = {}
+        for key, value in params.multi_items():
+            self._values.setdefault(key, []).append(value)
+
+    def __getitem__(self, key: str) -> str:
+        return self._values[key][0]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._values)
+
+    def __len__(self) -> int:
+        return len(self._values)
+
+    def to_dict(self, flat: bool = True) -> dict[str, str | list[str]]:
+        return {
+            key: values[0] if flat else list(values)
+            for key, values in self._values.items()
+        }
 
 
 class SdkRequestView:
-    """Expose a string URL to the SDK without modifying the ASGI request.
+    """Expose string URL and query args without modifying the ASGI request.
 
-    All other reads delegate to the original request. This is not a Flask
-    request/session implementation and does not override query parameters.
+    Other reads delegate to the original request. This does not implement
+    Flask session globals or override query parameters and callback URLs.
     """
 
-    __slots__ = ("_request",)
+    __slots__ = ("_args", "_request")
 
     def __init__(self, request: Request):
         self._request = request
+        self._args = SdkQueryArgs(request.query_params)
+
+    @property
+    def args(self) -> SdkQueryArgs:
+        return self._args
 
     @property
     def url(self) -> str:
