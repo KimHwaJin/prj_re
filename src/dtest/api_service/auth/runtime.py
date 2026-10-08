@@ -102,6 +102,37 @@ class SsoRuntime:
             )
             raise HTTPException(503, "Corporate SSO is unavailable.") from None
 
+    def _checked_login_url(self, url: object) -> str:
+        reason = "not_string"
+        if isinstance(url, str):
+            if not url:
+                reason = "empty"
+            elif "\\" in url or any(
+                ord(char) <= 32 or ord(char) == 127 for char in url
+            ):
+                reason = "unsafe_characters"
+            else:
+                try:
+                    parsed = urlsplit(url)
+                    base = f"{parsed.scheme}://{parsed.netloc}"
+                    origin(base)
+                except (ValueError, TypeError, AttributeError):
+                    reason = "invalid_origin"
+                else:
+                    if base in self.settings.allowed_origins:
+                        return url
+                    reason = "origin_not_allowed"
+        # Fixed reason codes and bounded type names only. The SDK URL may
+        # contain credentials, cookies or a ticket even when malformed.
+        log.warning(
+            "sso_login_url_rejected reason=%s value_type=%s",
+            reason,
+            _diagnostic_identifier(type(url).__name__),
+        )
+        raise HTTPException(
+            502, "Corporate SSO returned an invalid login URL."
+        ) from None
+
     def _ttl(self, employee: VerifiedEmployee) -> int:
         ttl = self.settings.session_ttl_seconds
         if employee.valid_until_epoch is not None:
@@ -138,21 +169,9 @@ class SsoRuntime:
                 + "/auth/login/sso?"
                 + urlencode({"return_to": return_to, "target": target})
             )
-            url = await self._sdk(self.adapter.login_url, request, callback)
-            try:
-                parsed = urlsplit(url)
-                base = f"{parsed.scheme}://{parsed.netloc}"
-                origin(base)
-                if (
-                    base not in self.settings.allowed_origins
-                    or "\\" in url
-                    or any(ord(c) <= 32 or ord(c) == 127 for c in url)
-                ):
-                    raise ValueError()
-            except (ValueError, TypeError, AttributeError):
-                raise HTTPException(
-                    502, "Corporate SSO returned an invalid login URL."
-                ) from None
+            url = self._checked_login_url(
+                await self._sdk(self.adapter.login_url, request, callback)
+            )
             return RedirectResponse(
                 url, status_code=302, headers={"Cache-Control": "no-store"}
             )

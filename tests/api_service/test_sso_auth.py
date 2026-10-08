@@ -597,3 +597,108 @@ async def test_sdk_diagnostics_handle_missing_and_untrusted_metadata(
     assert "x" * 129 not in caplog.text
     assert "private" not in response.text
     assert not sso.redis.data
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("url", "reason", "value_type"),
+    [
+        (None, "not_string", "NoneType"),
+        (
+            b"https://sso.example.test/?ticket=private-url-ticket",
+            "not_string",
+            "bytes",
+        ),
+        ("", "empty", "str"),
+        ("/login?ticket=private-url-ticket", "invalid_origin", "str"),
+        ("javascript:private-url-ticket", "invalid_origin", "str"),
+        (
+            "https://[broken/?ticket=private-url-ticket",
+            "invalid_origin",
+            "str",
+        ),
+        (
+            "https://sso.example.test:bad/?ticket=private-url-ticket",
+            "invalid_origin",
+            "str",
+        ),
+        (
+            "https://name:private-url-ticket@sso.example.test/login",
+            "invalid_origin",
+            "str",
+        ),
+        (
+            "https://other.example.test/?ticket=private-url-ticket",
+            "origin_not_allowed",
+            "str",
+        ),
+        (
+            "http://sso.example.test/?ticket=private-url-ticket",
+            "origin_not_allowed",
+            "str",
+        ),
+        (
+            "https://sso.example.test:443/?ticket=private-url-ticket",
+            "origin_not_allowed",
+            "str",
+        ),
+        (
+            "https://sso.example.test/?ticket=private-url-ticket space",
+            "unsafe_characters",
+            "str",
+        ),
+        (
+            "https://sso.example.test/\\?ticket=private-url-ticket",
+            "unsafe_characters",
+            "str",
+        ),
+        (
+            "https://sso.example.test/?ticket=private-url-ticket\x7f",
+            "unsafe_characters",
+            "str",
+        ),
+    ],
+)
+async def test_sdk_login_url_rejection_reason_without_private_url(
+    sso,
+    caplog,
+    url,
+    reason,
+    value_type,
+):
+    sso.adapter.employee = None
+    sso.adapter.url = url
+    with caplog.at_level("WARNING", logger="dtest.api_service.auth.runtime"):
+        response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 502
+    assert response.json()["detail"] == (
+        "Corporate SSO returned an invalid login URL."
+    )
+    assert (
+        f"sso_login_url_rejected reason={reason} value_type={value_type}"
+        in (caplog.text)
+    )
+    assert "private-url-ticket" not in caplog.text
+    assert "private-url-ticket" not in response.text
+    assert not response.headers.get("location")
+    assert not response.headers.get("set-cookie")
+    assert not sso.redis.data
+
+
+@pytest.mark.asyncio
+async def test_allowed_sdk_url_is_preserved_without_ticket_logging(
+    sso, caplog
+):
+    sso.adapter.employee = None
+    sso.adapter.url = (
+        "https://sso.example.test/login?ticket=private-url-ticket"
+        "&ORIGIN=https%3A%2F%2Fapi.example.test%2Fcallback"
+    )
+    with caplog.at_level("WARNING", logger="dtest.api_service.auth.runtime"):
+        response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 302
+    assert response.headers["location"] == sso.adapter.url
+    assert "sso_login_url_rejected" not in caplog.text
+    assert "private-url-ticket" not in caplog.text
+    assert not response.headers.get("set-cookie")
+    assert not sso.redis.data

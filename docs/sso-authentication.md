@@ -1,6 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-120 · 2026-10-08. 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
+121 · 2026-10-08. SDK 요청 호환과 로그인 URL 검증 거절 사유를 진단한다.
+확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
 동기 SDK용 요청 view가 URL 문자열, args/cookies의 to_dict, WSGI식 environ을
 제공한다. 나머지는 원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
 **폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
@@ -245,7 +246,7 @@ Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·�
 직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
 클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
 
-116 진단 및117~120 요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
+116~121 진단·요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
 company.py를 수정하지 않는다.
 0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
 로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.
@@ -263,6 +264,63 @@ uv run --no-sync app.py --env local
 --no-sync는 현재 가상환경의 패키지를 유지하는 실행 옵션이다. 누락 의존성을
 설치하거나 설정 오류를 해결하는 옵션은 아니다. 이번 변경에는 새 의존성이 없다.
 SDK 소스와 회사 인증 정보는 외부 저장소에 공유할 필요 없다.
+
+## SDK 로그인 URL의 502 진단
+
+`Corporate SSO returned an invalid login URL.`은 SDK 함수가 값을 반환한 뒤
+공통 runtime의 로그인 이동 주소 검증에서 거절됐다는 뜻이다. 직원 인증 성공이나
+회사 로그인 왕복 완료를 의미하지 않는다. 일반 COMMON-INTERNAL_ERROR 식별자는
+공통 오류 표현이며 실제 원인은 아래 사유 로그로 확인한다.
+
+예시:
+
+    sso_login_url_rejected reason=origin_not_allowed value_type=str
+
+| reason | 확인할 내용 |
+|---|---|
+| not_string | SDK.redirect_url이 str인지. None/bytes/URL 객체 등은 거절 |
+| empty | SDK 로그인 주소 생성/설정이 완료됐는지 |
+| invalid_origin | 절대 http/https URL인지, host/port가 유효한지, userinfo가 없는지 |
+| unsafe_characters | URL 원문에 공백·역슬래시·제어문자가 있는지. SDK 공식 URL 생성 확인 |
+| origin_not_allowed | SDK URL의 scheme://netloc와 SSO_ALLOWED_ORIGINS의 정확한 일치 |
+
+SDK URL이 `https://sso.example.internal/login?ticket=...`이라면:
+
+```yaml
+SSO_ALLOWED_ORIGINS:
+  - "https://sso.example.internal"
+```
+
+이 목록에는 회사 SSO **로그인 이동 대상**의 origin을 넣는다. 우리 서비스의
+SSO_PUBLIC_API_ORIGIN은 회사 로그인 후 돌아오는 API 주소, SSO_FRONTEND_ORIGIN은
+인증 완료 후의 UI 주소다. 세 값의 용도를 구분한다. SSO_ALLOWED_ORIGINS에
+/login 같은 경로나 끝 slash·query를 넣지 않는다. SDK URL에 포트가 있으면 해당
+포트까지 일치해야 한다. 현재 비교는 정확한 문자열이며 default port/host case를
+자동 정규화하지 않는다. URL 형식·미허용 대상 거절을 우회하지 않는다.
+
+로컬 HTTP API 예시(주소는 실제 환경에 맞게 변경):
+
+```yaml
+SSO_COOKIE_SECURE: false
+SSO_PUBLIC_API_ORIGIN: "http://localhost:5000"
+SSO_FRONTEND_ORIGIN: "http://localhost:5000"
+SSO_ALLOWED_ORIGINS:
+  - "http://sso.example.internal"
+```
+
+SDK가 http origin을 반환하면 allowlist도 http여야 한다. localhost/127.0.0.1도
+같은 문자열이 아니므로 브라우저 접근/API 복귀 주소를 일관되게 사용한다.
+
+URL의 redirect_uri가 단순 API root이면 이502 검증과는 별개로 회사 로그인 후
+서비스 세션이 발급되지 않을 수 있다. 복귀 주소는 `_create_sdk`에 전달되는
+서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target query)을 SDK의
+공식 복귀 주소 설정 방식으로 연결해야 한다. SDK client_id/허용 복귀 주소 등록
+규칙도 실제 회사 명세로 확인한다. 문자열을 이어 붙여 SDK URL을 변조하지 않는다.
+
+SDK의 반환 **타입**, 이동 origin과 허용 설정의 일치 여부만 확인하면 된다.
+SDK 전체 소스·쿠키·전체 redirect_url·ticket/query를 공유할 필요 없다. 로그에는
+고정 reason과 제한된 타입 이름만 기록하며 URL/허용 목록은 기록하지 않는다.
+HTTP502 detail과 인증 실패 시 Cookie/세션 미생성 정책을 유지한다.
 
 ## Redis 사용
 

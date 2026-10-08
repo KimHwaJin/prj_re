@@ -51,7 +51,10 @@ ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
 확인 대상이다. [120](120-sso-cookie-values-compat.md)에서 SDK가 to_dict를
 호출하는 두 대상(args/cookies)을 확인해 쿠키 매핑 호환을 추가했다. 원본 파싱
 결과·헤더와 내부망 의존성/SDK 연결 변경0을 유지하며105회귀를 검증했다.
-실제 사내 SSO 왕복은 폐쇄망 후속이다. 다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
+[121](121-sso-login-url-diagnostics.md)에서 SDK 반환 URL의502 거절 사유를
+안전한 reason/type으로 구분했다. 관련120회귀를 검증하고 허용 기준은 유지한다.
+실제 SDK URL/SSO_ALLOWED_ORIGINS 확인과 회사 로그인 왕복은 폐쇄망 후속이다.
+다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
 
 다음 순서:
 
