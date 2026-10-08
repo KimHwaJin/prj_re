@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md).
+최신 작업: [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md).
+SDK 오류 로그에 속성명·객체 타입을 추가하고 비밀값·임의 문자열은 제외했다.
+관련81회귀·전체 포맷 통과, 기존 lint/type 외 새 진단 없음.
+pyproject.toml·uv.lock·SDK 연결 company.py는 변경0이다.
+사용자 요청에 따라 베이스 병합·origin 게시하며 실제 내부망 오류 재확인은 별도다.
+
+선행 작업: [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md).
 사용자 보고 psycopg/binary3.3.6·pool3.3.3을 선언·lock에 반영했다. 구 호출과 새
 바이너리 조합의 keyword 오류 대조, 정상 실제 연결·psycopg2 공존·앱 초기화를
 확인했다. 관련102회귀·실제DB1회귀 통과. SQLSTATE로 schema/권한 오류를 구분한다.
@@ -267,3 +273,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md)
 
 - [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md)
+
+- [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md)
