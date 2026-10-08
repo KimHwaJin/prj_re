@@ -1,10 +1,14 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md).
-SDK 오류 로그에 속성명·객체 타입을 추가하고 비밀값·임의 문자열은 제외했다.
-관련81회귀·전체 포맷 통과, 기존 lint/type 외 새 진단 없음.
-pyproject.toml·uv.lock·SDK 연결 company.py는 변경0이다.
-사용자 요청에 따라 베이스 병합·origin 게시하며 실제 내부망 오류 재확인은 별도다.
+최신 작업: [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md).
+SSO(request) 생성자의 startswith/URL 오류를 재현하고 동기 SDK 호출에만
+문자열 URL view를 적용했다. 원본 요청·Cookie/query·서버 callback을 보존한다.
+관련83회귀·전체 포맷 통과. 새 lint/type 진단 없음, 기존 오류는 남아 있다.
+pyproject.toml·uv.lock·SDK 연결 company.py는 변경0이며 실제 SDK 확인은 별도다.
+
+선행 작업: [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md).
+SDK 오류 로그에 안전한 속성명·객체 타입을 추가하고 내부망 의존성을 보존했다.
+관련81회귀 검증 후 베이스3ac561c 및 파생 브랜치를 origin에 게시했다.
 
 선행 작업: [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md).
 사용자 보고 psycopg/binary3.3.6·pool3.3.3을 선언·lock에 반영했다. 구 호출과 새
@@ -275,3 +279,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md)
 
 - [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md)
+
+- [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md)

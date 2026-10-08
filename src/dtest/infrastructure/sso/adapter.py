@@ -8,6 +8,7 @@ from fastapi import HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
 from dtest.contracts.auth import SsoAdapter, VerifiedEmployee
+from dtest.infrastructure.sso.request import sdk_request
 from dtest.settings.auth import SsoSettings
 
 
@@ -22,7 +23,8 @@ class UnconfiguredAdapter:
 class SyncSsoAdapter:
     """Offload synchronous SDK calls. Configure the SDK's own network timeout too.
 
-    This does not emulate Flask request/session globals or determine the corporate protocol.
+    The SDK sees a string request.url; other request reads are delegated.
+    This does not emulate Flask session globals or determine the protocol.
     """
 
     def __init__(
@@ -34,10 +36,12 @@ class SyncSsoAdapter:
         self._login_url = login_url
 
     async def verify(self, request: Request) -> VerifiedEmployee | None:
-        return await run_in_threadpool(self._verify, request)
+        return await run_in_threadpool(self._verify, sdk_request(request))
 
     async def login_url(self, request: Request, return_url: str) -> str:
-        return await run_in_threadpool(self._login_url, request, return_url)
+        return await run_in_threadpool(
+            self._login_url, sdk_request(request), return_url
+        )
 
 
 def load_adapter(settings: SsoSettings) -> SsoAdapter:
