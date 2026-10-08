@@ -321,3 +321,11 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 SDK의 check_day_cookie 결과와 공식 callback/ticket 처리 계약을 확인한다.
 쿠키·토큰·SDK 소스는 공유받지 않는다. 회사 도메인 Cookie가 localhost로 전달될
 것을 가정하지 않는다. query가 제거되면 실제 복귀 주소 계약을 다시 확인한다.
+
+
+[124](124-sso-redirect-decision-diagnostics.md)에서 확인용 URL401과 실제 회사
+왕복을 구분했다. 각302의 목적지 분기·callback boolean·Cookie 헤더 유무만
+INFO 진단으로 추가하고132회귀를 확인했다. 실제 반복 위치를 확인해야 한다.
+회사 SSO 내부 반복이면 서비스 로그만으로 원인 확정이 불가능하다. 서비스의
+corporate_sso/False 반복이면 실제 복귀 주소에서 callback 표시 보존을 확인한다.
+회사 SDK·의존성3개 보호 파일은 변경0이며 프로토콜을 추측해 추가하지 않았다.

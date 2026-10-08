@@ -770,3 +770,37 @@ async def test_callback_sdk_error_remains_service_unavailable(sso, caplog):
     assert "sso_sdk_failed" in caplog.text
     assert "sso_callback_unverified" not in caplog.text
     assert "private-ticket-value" not in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("verified", [False, True])
+async def test_login_redirect_decision_logs_no_private_values(
+    sso, caplog, verified
+):
+    if not verified:
+        sso.adapter.employee = None
+    else:
+        sso.adapter.employee = VerifiedEmployee(
+            "private-employee-id", "private-employee-name"
+        )
+    sso.client.cookies.set("company", "private-cookie-value")
+    with caplog.at_level("INFO", logger="dtest.api_service.auth.runtime"):
+        response = await sso.client.get(
+            "/api/v1/auth/login/sso",
+            params={"ticket": "private-ticket-value"},
+        )
+    assert response.status_code == 302
+    destination = "application" if verified else "corporate_sso"
+    assert (
+        f"sso_login_redirect destination={destination} "
+        "callback=False cookie_header_present=True" in caplog.text
+    )
+    for private_value in (
+        "private-cookie-value",
+        "private-ticket-value",
+        "private-employee-id",
+        "private-employee-name",
+        response.headers["location"],
+        sso.settings.sso.public_api_origin,
+    ):
+        assert private_value not in caplog.text
