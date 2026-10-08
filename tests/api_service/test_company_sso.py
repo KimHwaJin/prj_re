@@ -13,7 +13,7 @@ from dtest.api_service.auth.runtime import attach_sso
 from dtest.contracts.auth import VerifiedEmployee
 from dtest.infrastructure.redis.login_sessions import LoginSession
 from dtest.infrastructure.sso import company
-from dtest.infrastructure.sso.adapter import load_adapter
+from dtest.infrastructure.sso.adapter import SyncSsoAdapter, load_adapter
 from dtest.infrastructure.sso.company import (
     build_login_url,
     create_adapter,
@@ -223,12 +223,14 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
     ],
 )
 async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
+    caplog,
     monkeypatch: pytest.MonkeyPatch,
     public_origin,
     frontend_origin,
     return_path,
     target,
 ):
+    caplog.set_level("INFO", logger="dtest.infrastructure.sso.adapter")
     factory, users, redis = (
         FlaskRequestSdkFactory(),
         UserDirectoryDouble(),
@@ -279,6 +281,8 @@ async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
         callback = parse_qs(urlsplit(response.headers["location"]).query)[
             "redirect_uri"
         ][0]
+        assert "sso_sdk_callback_binding redirect_uri=matches" in caplog.text
+        assert callback not in caplog.text
         assert callback.startswith(public_origin + "/api/v1/auth/login/sso?")
         assert "evil.test" not in callback
         assert parse_qs(urlsplit(callback).query) == {
@@ -690,3 +694,81 @@ async def test_sdk_login_url_binds_callback_and_preserves_original_query(
     assert verified.request.args.to_dict(flat=False) == (
         SdkQueryArgs(original_params).to_dict(flat=False)
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("query_mode", "expected_status"),
+    [
+        ("matches", "matches"),
+        ("original_request", "differs"),
+        ("empty", "differs"),
+        ("no_query", "missing"),
+        ("other_field", "missing"),
+        ("duplicates", "multiple"),
+        ("malformed_url", "unreadable"),
+        ("non_string", "unreadable"),
+    ],
+)
+async def test_sdk_callback_binding_is_diagnostic_only(
+    caplog, query_mode, expected_status
+):
+    original = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "scheme": "http",
+            "server": ("localhost", 5000),
+            "path": "/api/v1/auth/login/sso",
+            "headers": [],
+            "query_string": b"return_to=%2Fdemo&ticket=private-request-ticket",
+        }
+    )
+    callback = (
+        "http://localhost:5000/api/v1/auth/login/sso?"
+        "return_to=%2Fdemo&target=app&sso_callback=true"
+    )
+    queries = {
+        "matches": [("redirect_uri", callback)],
+        "original_request": [("redirect_uri", str(original.url))],
+        "empty": [("redirect_uri", "")],
+        "no_query": [],
+        "other_field": [("callback", callback)],
+        "duplicates": [("redirect_uri", callback), ("redirect_uri", "")],
+    }
+    if query_mode == "malformed_url":
+        url = "https://[malformed-private-host/login"
+    elif query_mode == "non_string":
+        url = None
+    else:
+        query = queries[query_mode]
+        if query_mode != "no_query":
+            query = query + [("ticket", "private-sdk-ticket")]
+        url = "https://private-sso.example.test/login"
+        if query:
+            url += "?" + urlencode(query)
+    seen = []
+
+    def build_url(request, return_url):
+        seen.append((request.args["ORIGIN"], return_url))
+        return url
+
+    adapter = SyncSsoAdapter(lambda request: None, build_url)
+    with caplog.at_level("INFO", logger="dtest.infrastructure.sso.adapter"):
+        result = await adapter.login_url(original, callback)
+    assert (
+        result == url
+    )  # Diagnostics must never rewrite or reject the SDK URL.
+    assert seen == [(callback, callback)]
+    assert (
+        f"sso_sdk_callback_binding redirect_uri={expected_status}"
+        in caplog.text
+    )
+    for private_value in (
+        callback,
+        "private-sso.example.test",
+        "private-request-ticket",
+        "private-sdk-ticket",
+        "malformed-private-host",
+    ):
+        assert private_value not in caplog.text

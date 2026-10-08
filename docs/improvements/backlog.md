@@ -329,3 +329,11 @@ INFO 진단으로 추가하고132회귀를 확인했다. 실제 반복 위치를
 회사 SSO 내부 반복이면 서비스 로그만으로 원인 확정이 불가능하다. 서비스의
 corporate_sso/False 반복이면 실제 복귀 주소에서 callback 표시 보존을 확인한다.
 회사 SDK·의존성3개 보호 파일은 변경0이며 프로토콜을 추측해 추가하지 않았다.
+
+
+[125](125-sso-sdk-callback-diagnostics.md)에서 SDK 반환 URL의 redirect_uri가
+서버 callback과 일치하는지 상태만 진단한다. 사용자 확인된 실제 회사 응답
+Location은 callback 표시 없는 최초 로그인 주소다. SDK 출력이 이미 다른지,
+회사 서버가 바꾸는지 아직 미확정이며 새 로그로 구분한다. query 필드가 없으면
+공식 SDK 계약을 확인한다. URL을 강제 재작성하거나 인증 우회하지 않는다.
+140회귀 검증, 회사 연결·pyproject·lock 변경0.

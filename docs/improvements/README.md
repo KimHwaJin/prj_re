@@ -1,6 +1,11 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [124 SSO302 이동 분기 진단](124-sso-redirect-decision-diagnostics.md).
+최신 작업: [125 SDK 복귀 주소 일치 진단](125-sso-sdk-callback-diagnostics.md).
+브라우저 query 확인이 어려워 SDK 출력의 redirect_uri를 서버 callback과 자동
+비교한다. 상태만 INFO로 남기며 SDK URL·의존성·private 연결은 변경하지 않는다.
+관련140회귀·전체 포맷 통과, 추가 lint/type 진단0. 실제 인증 실패 원인은 미확정이다.
+
+선행 작업: [124 SSO302 이동 분기 진단](124-sso-redirect-decision-diagnostics.md).
 확인용 URL401 이후 실제 로그인은 계속 반복된다는 사용자 보고에 따라 각302의
 목적지 분기·callback 표시·Cookie 유무만 INFO에 남긴다. 실제 URL/쿠키/토큰은
 기록하지 않는다. 관련132회귀·전체 포맷 통과, 새 lint/type 진단0. 원인은 미확정이다.
