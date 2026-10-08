@@ -81,6 +81,11 @@ class FlaskRequestSdkDouble(SdkDouble):
         self.cookies = sdk_request.cookies.to_dict()
         assert self.cookies == dict(sdk_request.cookies)
         super().__init__(sdk_request, return_url)
+        # Like the reported SDK, build from request.args rather than from
+        # the private factory's separate return_url argument.
+        self.redirect_url = "https://sso.example.test/login?" + urlencode(
+            {"redirect_uri": self.origin or sdk_request.url}
+        )
 
 
 class FlaskRequestSdkFactory(SdkFactoryDouble):
@@ -204,8 +209,25 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
 
 
 @pytest.mark.asyncio
-async def test_login_round_trip_uses_string_url_sdk_and_keeps_profile_private(
+@pytest.mark.parametrize(
+    ("public_origin", "frontend_origin", "return_path", "target"),
+    [
+        (
+            "https://api.example.test",
+            "https://ui.example.test",
+            "/projects",
+            "app",
+        ),
+        ("http://localhost:5000", "http://localhost:5000", "/demo", "app"),
+        ("http://localhost:5000", "http://localhost:5000", "/demo", "docs"),
+    ],
+)
+async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
     monkeypatch: pytest.MonkeyPatch,
+    public_origin,
+    frontend_origin,
+    return_path,
+    target,
 ):
     factory, users, redis = (
         FlaskRequestSdkFactory(),
@@ -215,10 +237,11 @@ async def test_login_round_trip_uses_string_url_sdk_and_keeps_profile_private(
     monkeypatch.setattr(company, "_create_sdk", factory)
     settings = SsoSettings(
         adapter_factory="dtest.infrastructure.sso.company:create_adapter",
-        public_api_origin="https://api.example.test",
-        frontend_origin="https://ui.example.test",
+        public_api_origin=public_origin,
+        frontend_origin=frontend_origin,
         allowed_origins=("https://sso.example.test",),
-        allowed_return_roots=("/", "/projects"),
+        allowed_return_roots=("/", "/projects", "/demo"),
+        cookie_secure=public_origin.startswith("https://"),
     )
     app = FastAPI()
     attach_sso(
@@ -240,29 +263,35 @@ async def test_login_round_trip_uses_string_url_sdk_and_keeps_profile_private(
 
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app),
-        base_url="https://api.example.test",
+        base_url=public_origin,
     ) as client:
         response = await client.get(
             "/api/v1/auth/login/sso",
-            params={"return_to": "/projects", "ORIGIN": "https://evil.test"},
+            params={
+                "return_to": return_path,
+                "target": target,
+                "ORIGIN": "https://evil.test",
+            },
         )
         assert response.status_code == 302
         assert not response.headers.get("set-cookie")
         assert not users.employees
         callback = parse_qs(urlsplit(response.headers["location"]).query)[
-            "callback"
+            "redirect_uri"
         ][0]
-        assert callback.startswith("https://api.example.test/")
+        assert callback.startswith(public_origin + "/api/v1/auth/login/sso?")
         assert "evil.test" not in callback
         assert parse_qs(urlsplit(callback).query) == {
-            "return_to": ["/projects"],
-            "target": ["app"],
+            "return_to": [return_path],
+            "target": [target],
         }
         client.cookies.set("company", "valid")
         response = await client.get(callback)
         assert response.status_code == 302
         assert response.headers["location"] == (
-            "https://ui.example.test/projects"
+            public_origin + "/docs"
+            if target == "docs"
+            else frontend_origin + return_path
         )
         assert "HttpOnly" in response.headers["set-cookie"]
         assert users.employees[0].email == EMPLOYEE[4]
@@ -355,7 +384,9 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     assert sdk.request.scope is original.scope
     assert sdk.request.method == "GET"
     assert sdk.request.query_params["ORIGIN"] == "https://evil.test"
-    assert sdk.origin == "https://evil.test"
+    assert sdk.origin == (
+        "https://evil.test" if operation == "verify" else callback
+    )
     assert sdk.peer == "192.0.2.10"
     assert sdk.request.environ["HTTP_COOKIE"] == "company=valid"
     assert sdk.cookies == original.cookies == {"company": "valid"}
@@ -600,3 +631,61 @@ def test_sdk_cookies_to_dict_reproduces_dict_error_and_adapts_both_methods():
     sdk = CookieSdk(SdkRequestView(original))
     assert sdk.args == {"ORIGIN": "/demo"}
     assert sdk.cookies == {"company": "valid"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "origin_args",
+    [
+        "",
+        "ORIGIN=https%3A%2F%2Fevil.test&",
+        "ORIGIN=https%3A%2F%2Fevil.test&ORIGIN=%2Fother&",
+        "ORIGIN=&",
+    ],
+)
+async def test_sdk_login_url_binds_callback_and_preserves_original_query(
+    origin_args,
+):
+    query = (origin_args + "tag=a&tag=b&value=%2B%25").encode()
+    original = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "scheme": "http",
+            "server": ("localhost", 5000),
+            "path": "/api/v1/auth/login/sso",
+            "headers": [(b"cookie", b"company=valid")],
+            "query_string": query,
+        }
+    )
+    callback = (
+        "http://localhost:5000/api/v1/auth/login/sso?"
+        "return_to=%2Fdemo&target=app"
+    )
+    original_params = original.query_params
+    factory = FlaskRequestSdkFactory()
+    adapter = create_adapter(SsoSettings(), sdk_factory=factory)
+    url = await adapter.login_url(original, callback)
+    assert parse_qs(urlsplit(url).query)["redirect_uri"] == [callback]
+    sdk = factory.instances[-1]
+    assert isinstance(sdk, FlaskRequestSdkDouble)
+    assert isinstance(sdk.request, SdkRequestView)
+    assert sdk.request.args.to_dict(flat=False)["ORIGIN"] == [callback]
+    assert sdk.request.args.to_dict(flat=False)["tag"] == ["a", "b"]
+    assert sdk.request.args["value"] == "+%"
+    assert sdk.return_url == callback
+    assert original.query_params is original_params
+    assert original.scope["query_string"] is query
+    assert original.query_params.getlist("ORIGIN") == (
+        QueryParams(query).getlist("ORIGIN")
+    )
+    assert original.headers["cookie"] == "company=valid"
+    assert sdk.request.cookies.to_dict() == original.cookies
+    await adapter.verify(original)
+    verified = factory.instances[-1]
+    assert isinstance(verified, FlaskRequestSdkDouble)
+    assert isinstance(verified.request, SdkRequestView)
+    assert verified.return_url is None
+    assert verified.request.args.to_dict(flat=False) == (
+        SdkQueryArgs(original_params).to_dict(flat=False)
+    )

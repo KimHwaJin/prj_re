@@ -23,8 +23,9 @@ class UnconfiguredAdapter:
 class SyncSsoAdapter:
     """Offload synchronous SDK calls. Configure the SDK's own network timeout too.
 
-    The SDK sees a string request.url; other request reads are delegated.
-    This does not emulate Flask session globals or determine the protocol.
+    The SDK sees string URL and Flask-style args/cookies/environ metadata.
+    Login URL creation binds the server return_url to SDK args ORIGIN.
+    Verification keeps the original args. No Flask session globals.
     """
 
     def __init__(
@@ -40,7 +41,7 @@ class SyncSsoAdapter:
 
     async def login_url(self, request: Request, return_url: str) -> str:
         return await run_in_threadpool(
-            self._login_url, sdk_request(request), return_url
+            self._login_url, sdk_request(request, return_url), return_url
         )
 
 
