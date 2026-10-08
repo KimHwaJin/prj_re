@@ -1,6 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-121 · 2026-10-08. SDK 요청 호환과 로그인 URL 검증 거절 사유를 진단한다.
+122 · 2026-10-08. SDK용 ORIGIN에 서버가 만든 로그인 복귀 URL을 연결한다.
+SDK 요청 호환과 로그인 URL 검증 거절 사유 진단을 유지한다.
 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
 동기 SDK용 요청 view가 URL 문자열, args/cookies의 to_dict, WSGI식 environ을
 제공한다. 나머지는 원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
@@ -63,8 +64,10 @@ FastAPI 라우터·다른 async 어댑터의 요청 객체는 바꾸지 않는�
 받는 값은 Request 인스턴스가 아니라 속성 조회를 위임하는 view다. 외부 SDK의
 속성 접근 계약을 연결하는 경계에서만 명시적으로 cast한다. SDK가 Request의
 실제 클래스 정체성을 요구하거나 다른 Flask 전용 속성을 요구하는지는 별도
-확인이 필요하다. Flask session·ORIGIN 변환은 추가하지 않는다.
-서버가 생성한 return_url은 기존대로 별도 인자다.
+확인이 필요하다. Flask session은 구현하지 않는다. 로그인 URL 생성 때만
+SDK용 args의 ORIGIN을 서버 return_url로 치환한다. 원본 ASGI query_params는
+바꾸지 않으며 직원 검증에서는 기존 args를 유지한다. 서버 return_url은
+private factory의 별도 인자로도 계속 전달한다.
 
 ### SDK의 request.args 호환
 
@@ -95,7 +98,7 @@ dict를 제공한다. 반환 dict/list를 수정해도 원래 쿠키/헤더는 �
 | 접근 | SDK용 제공 값 |
 |---|---|
 | request.url.startswith(...) | 문자열 URL |
-| request.args.to_dict() / get(...) | 쿼리 매핑·복사본 dict |
+| request.args.to_dict() / get(...) | 쿼리 매핑·복사본 dict. 로그인 URL 생성의 ORIGIN은 서버 callback |
 | request.cookies.to_dict() / get(...) | 기존 파싱 결과의 쿠키 매핑·복사본 dict |
 | request.environ["HTTP_HOST"] | 실제 Host 헤더 기반 메타데이터 사본 |
 | request.headers.get("cookie") | 원본 Starlette 헤더 조회, 전체 Cookie 문자열 유지 |
@@ -155,10 +158,13 @@ tuple 또는 list로 받는다. 사번·이름은 비어 있지 않은 문자열
 일반 사용자·기본 프로젝트 생성 정책을 따른다. Redis는 내부 UUID·CSRF·만료만 저장한다.
 
 로그인 URL 생성 시 서버가 만든 복귀 주소를 return_url로 별도 전달한다.
-원본 요청의 ORIGIN 등 query는 서비스가 가공하지 않는다. 폐쇄망 연결 함수는
-**return_url을 복귀 주소로 사용해야 하며 사용자 query로 대체하면 안 된다.**
-SDK의 redirect_url은 그대로 반환한다. common runtime이 이동 대상 origin을
-검증하고 프론트 복귀 경로도 검사한다.
+사용자가 설명한 SDK는 request.args.to_dict()의 ORIGIN을 읽는다. 공용
+SyncSsoAdapter.login_url이 sdk_request(request, return_url)을 만들며 SDK용
+args의 모든 기존 ORIGIN을 제거하고 서버 callback 하나만 넣는다. 원본 ASGI
+query_params와 다른 query의 값/중복은 보존하고, verify에서는 ORIGIN을 바꾸지 않는다.
+**SDK 복귀 주소는 서버가 만든 값이며 사용자 query로 대체하지 않는다.**
+SDK의 공식 redirect_url 생성을 그대로 사용한다. common runtime이 로그인
+이동 origin과 최종 프론트 복귀 경로를 검사한다.
 
 ```text
 GET /api/v1/auth/login/sso?return_to=/demo
@@ -176,6 +182,49 @@ GET /api/v1/auth/login/sso?return_to=/demo
 타임아웃도 공식 지원 방식으로 설정해야 한다. async deadline만으로 이미 실행 중인
 thread를 종료할 수 없다. 별도 callback/state/nonce 규칙, 회사 쿠키 만료·전역
 로그아웃 규칙은 사내 가이드대로 폐쇄망에서 확인한다.
+
+### return_url을 어디에 넣는가
+
+1. 로컬 config.yml의 SSO_PUBLIC_API_ORIGIN에 API origin만 설정한다.
+   예: http://localhost:5000. /api/v1/auth/login/sso 경로는 넣지 않는다.
+2. 로그인 API가 API_V1_PREFIX와 /auth/login/sso, return_to/target query를
+   결합해 callback 전체를 생성한다. 경로와 query를 하드코딩하지 않는다.
+3. SyncSsoAdapter.login_url이 SDK 요청 view의 args["ORIGIN"]에 callback을 넣는다.
+4. 폐쇄망 company.py의 _create_sdk는 기존 SSO(request)를 그대로 호출한다.
+   SDK 내부의 ORIGIN 처리·redirect_url 생성 기능이 이 값을 사용한다.
+
+예시 설정:
+
+```yaml
+SSO_PUBLIC_API_ORIGIN: "http://localhost:5000"
+SSO_FRONTEND_ORIGIN: "http://localhost:5000"
+SSO_COOKIE_SECURE: false
+SSO_ALLOWED_ORIGINS: ["http://sso.example.internal"]
+SSO_ALLOWED_RETURN_ROOTS: ["/", "/demo", "/projects"]
+```
+
+정상 API URL: /api/v1/auth/login/sso?return_to=%2Fdemo (등호가 있어야 한다).
+API 기본 prefix일 때 SDK용 ORIGIN은 다음 전체 주소다.
+
+    http://localhost:5000/api/v1/auth/login/sso?return_to=%2Fdemo&target=app
+
+SDK가 redirect_uri에 넣을 때 공식 방식으로 인코딩한다. SDK URL에 callback을
+문자열로 이어 붙이거나 먼저 임의로 quote하지 않는다. args.to_dict()는 사본이므로
+private factory에서 반환 dict 하나를 바꾸는 것만으로 Request가 바뀌지는 않는다.
+공용 request view의 ORIGIN 연결을 사용하고 내부 factory의 별도 URL 재작성은
+중복되지 않게 실제 코드/SDK 공식 계약을 확인한다.
+
+302 자체는 실패가 아니다. Location을 순서대로 확인한다.
+
+    로그인 API → 302 회사 SSO
+    회사 로그인 → API callback
+    API callback → 302 /demo + 서비스 로그인 Cookie
+    GET /api/v1/users/me → 200
+
+API가 계속 회사 SSO로만302를 반환한다면 회사 쿠키 검증/전달 여부를 확인해야 한다.
+공통 API를 fetch/Try it out으로 호출해 SSO 화면을 가져오기보다는 브라우저
+로그인 링크로 이동한다. client_id 및 허용 redirect_uri 등록 규칙은 사내 명세로
+확인하고, 실제 SDK가 완성한 redirect_uri가 위 callback인지 내부망에서 확인한다.
 
 ## 중앙 설정
 
@@ -246,7 +295,7 @@ Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·�
 직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
 클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
 
-116~121 진단·요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
+116~122 진단·요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
 company.py를 수정하지 않는다.
 0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
 로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.
@@ -313,8 +362,8 @@ SDK가 http origin을 반환하면 allowlist도 http여야 한다. localhost/127
 
 URL의 redirect_uri가 단순 API root이면 이502 검증과는 별개로 회사 로그인 후
 서비스 세션이 발급되지 않을 수 있다. 복귀 주소는 `_create_sdk`에 전달되는
-서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target query)을 SDK의
-공식 복귀 주소 설정 방식으로 연결해야 한다. SDK client_id/허용 복귀 주소 등록
+서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target query)을 사용해야
+한다. 122부터 공용 SDK 요청 args의 ORIGIN에 자동 연결한다. SDK client_id/허용 복귀 주소 등록
 규칙도 실제 회사 명세로 확인한다. 문자열을 이어 붙여 SDK URL을 변조하지 않는다.
 
 SDK의 반환 **타입**, 이동 origin과 허용 설정의 일치 여부만 확인하면 된다.

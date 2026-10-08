@@ -54,7 +54,11 @@ ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
 [121](121-sso-login-url-diagnostics.md)에서 SDK 반환 URL의502 거절 사유를
 안전한 reason/type으로 구분했다. 관련120회귀를 검증하고 허용 기준은 유지한다.
 실제 SDK URL/SSO_ALLOWED_ORIGINS 확인과 회사 로그인 왕복은 폐쇄망 후속이다.
-다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
+[122](122-sso-return-url-binding.md)에서 사용자가 설명한 SDK ORIGIN 입력에
+서버 callback을 연결했다. private factory의 SSO(request)만으로 복귀 주소가
+반영되며 직원 검증/원본 요청은 유지한다. 관련126회귀 검증. 실제 회사 SDK의
+redirect_uri·client 등록·Cookie 왕복은 폐쇄망 후속이다. 다른 Flask 전용 속성은
+근거 없이 추가하지 않는다.
 
 다음 순서:
 

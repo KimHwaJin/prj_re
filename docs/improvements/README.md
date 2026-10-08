@@ -1,9 +1,13 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [121 사내 SSO 로그인 URL502 진단](121-sso-login-url-diagnostics.md).
-반환 타입·형식·허용 origin 불일치를 reason으로 구분하고 URL/ticket은 기록하지
-않는다. 검증 기준은 유지했다. 관련120회귀·전체 포맷, 새 lint/type 진단 없음.
-의존성·company.py 변경0이다. 실제 거절 원인은 내부망 URL/설정 확인이 필요하다.
+최신 작업: [122 SDK ORIGIN에 서버 복귀 URL 연결](122-sso-return-url-binding.md).
+로그인 URL 생성 때만 SDK용 args ORIGIN을 서버 callback으로 치환한다. private
+SSO(request)·원본 요청·내부망 의존성을 보존한다. 관련126회귀·전체 포맷 검증.
+새 lint/type 오류 없음, 기존 오류는 남아 있다. 실제 회사 SSO 왕복은 별도다.
+
+선행 작업: [121 사내 SSO 로그인 URL502 진단](121-sso-login-url-diagnostics.md).
+URL 비노출 reason/type 진단을 추가하고 관련120회귀 후 베이스97266fd와
+파생 브랜치를 origin에 게시했다. URL 허용 기준은 유지한다.
 
 선행 작업: [120 사내 SSO cookies.to_dict 호환](120-sso-cookie-values-compat.md).
 확인된 args/cookies to_dict 호출을 지원하고 관련105회귀를 검증했다.
@@ -304,3 +308,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [120 사내 SSO cookies.to_dict 호환](120-sso-cookie-values-compat.md)
 
 - [121 사내 SSO 로그인 URL502 진단](121-sso-login-url-diagnostics.md)
+
+- [122 SDK ORIGIN에 서버 복귀 URL 연결](122-sso-return-url-binding.md)
