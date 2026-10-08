@@ -4,7 +4,7 @@
 
 - 기준: feature/refactor-base, 56ad2cb.
 - 작업: feature/workflow-search-db-scope.
-- 상태: 구현·검증 완료, 베이스 미병합·미푸시·서비스 미배포.
+- 상태: 구현·검증 완료. 2026-10-08 베이스 병합·origin 게시. 서비스 미배포.
 - 구현 커밋: 9c3408b (검색 인증·회귀·검증 기록).
 - 사용자 요청: 전체 구조 리뷰에 이어 다음 개선 작업 진행.
 
@@ -86,3 +86,10 @@ memory + EXECUTOR_SUBMIT_ENABLED=true를 받아들이면서 실행 노드를
 생성하지 않는 경로를 시작 시 검증할지 조립을 분리할지 확정해야 한다.
 그 뒤 DB 연결/데이터 경로 하드코딩, 과거 그래프 저장 경로, Container와
 Runtime 경계, Agent 정책·상태 타입 정리를 순차 진행한다.
+
+## 통합 기록 — 2026-10-08
+
+사용자 머지·푸시 요청에 따라 구현9c3408b와 검증 기록을
+feature/refactor-base에 병합한다. 베이스와 feature/workflow-search-db-scope를
+origin에 atomic push하며 원격 두 ref의 SHA를 로컬과 대조한다. 강제 push나
+기존 파생 브랜치 삭제, 실제 서버 재기동·배포는 수행하지 않는다.
