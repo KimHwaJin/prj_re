@@ -259,6 +259,20 @@ class AgentSettings:
         return self
 
 
+def validate_executor_checkpoint(settings: AgentSettings) -> None:
+    """Require durable service checkpoints for long Executor waits."""
+    from dtest.settings.sources import ConfigurationError
+
+    if (
+        settings.executor_submit_enabled
+        and settings.graph_checkpointer != "postgres"
+    ):
+        raise ConfigurationError(
+            "EXECUTOR_SUBMIT_ENABLED requires GRAPH_CHECKPOINTER=postgres "
+            "for durable Executor resume"
+        )
+
+
 def load_agent_settings(
     environ: Mapping[str, Any] | None = None,
     *,
@@ -278,4 +292,5 @@ __all__ = [
     "AgentSettings",
     "build_langgraph_thread_id",
     "load_agent_settings",
+    "validate_executor_checkpoint",
 ]

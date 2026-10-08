@@ -1,11 +1,14 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md).
-조회 인증을 짧은 세션에서 끝내고 임베딩 대기 전에 연결을 반환한다. 변경 API의
-사용자 공유 잠금과 SSO·CSRF는 유지한다. 관련61회귀를 통과했고 실제 단일 연결
-pool에서 이전 점유1개→변경0개 및 다른 SQL 실행을 확인했다. 전체 lint/type의
-기존 오류는 남아 있다. 2026-10-08 베이스에 병합하고 베이스·파생 브랜치를
-origin에 게시했다. 실제 서비스 배포는 별도다.
+최신 작업: [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md).
+서비스 Executor 제출은 postgres 체크포인트를 요구한다. memory + true는 설정
+읽기·설치·그래프 조립 경계에서 거절하며, Executor 자원 생성 조건을 별도로
+분리했다. 관련214회귀·전체 포맷을 검증했다. 기존 lint/type 오류는 남아 있으며
+새 진단은 없다. 미병합·미푸시·미배포 상태다.
+
+선행 작업: [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md).
+조회 인증 연결을 임베딩 대기 전에 반환하며 실제 단일 연결 pool의 점유1→0을
+확인했다. 관련61회귀 통과. 2026-10-08 베이스 병합·origin 게시, 서비스 미배포.
 
 선행 작업: [109 선택적 앱 시작 DB 초기화](109-optional-startup-db-init.md).
 DB_INIT_ON_START(기본 false)로 lifespan 초기화를 제어한다. 수동 명령과 공통 경로를
@@ -253,3 +256,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [112 오래된 문서·복제 테스트 정리](112-docs-test-cleanup.md)
 
 - [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md)
+
+- [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md)

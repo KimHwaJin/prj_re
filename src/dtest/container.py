@@ -9,7 +9,10 @@ from functools import lru_cache
 from typing import Any
 
 from dtest.infrastructure.observability.diagnostics import span
-from dtest.settings.agent import load_agent_settings
+from dtest.settings.agent import (
+    load_agent_settings,
+    validate_executor_checkpoint,
+)
 
 
 @lru_cache(maxsize=1)
@@ -67,6 +70,7 @@ class ServiceContainer:
             planning, agent_settings, kind = await asyncio.to_thread(
                 owner._load_graph_inputs
             )
+        validate_executor_checkpoint(agent_settings)
         from langgraph.checkpoint.memory import InMemorySaver
 
         from dtest.agent_service.agents.analysis.planning.graph import (
@@ -92,6 +96,7 @@ class ServiceContainer:
                 planning.store = await stack.enter_async_context(
                     store_runtime.open_store()
                 )
+            pools: list[tuple[object, str]] = []
             if kind == "postgres":
                 saver = await stack.enter_async_context(
                     create_checkpointer(
@@ -99,29 +104,29 @@ class ServiceContainer:
                         setup_on_start=agent_settings.checkpoint_setup_on_start,
                     )
                 )
-                pools = [(saver.conn, "checkpoint_pool")]
-                if agent_settings.executor_submit_enabled:
-                    from dtest.infrastructure.database.executor_bindings import (
-                        ApiWorkerBridge,
-                    )
-                    from dtest.infrastructure.executor.client import (
-                        ExecutorClient,
-                    )
-
-                    planning.executor = await stack.enter_async_context(
-                        ExecutorClient(agent_settings)
-                    )
-                    bridge = await stack.enter_async_context(
-                        ApiWorkerBridge(owner._worker_settings())
-                    )
-                    planning.bindings = bridge.bindings
-                    pools.append((bridge.pool, "bridge_pool"))
+                pools.append((saver.conn, "checkpoint_pool"))
             elif kind == "memory":
-                saver, pools = InMemorySaver(), []
+                saver = InMemorySaver()
             else:
                 raise RuntimeError(
                     "GRAPH_CHECKPOINTER must be postgres or memory"
                 )
+            if agent_settings.executor_submit_enabled:
+                from dtest.infrastructure.database.executor_bindings import (
+                    ApiWorkerBridge,
+                )
+                from dtest.infrastructure.executor.client import (
+                    ExecutorClient,
+                )
+
+                planning.executor = await stack.enter_async_context(
+                    ExecutorClient(agent_settings)
+                )
+                bridge = await stack.enter_async_context(
+                    ApiWorkerBridge(owner._worker_settings())
+                )
+                planning.bindings = bridge.bindings
+                pools.append((bridge.pool, "bridge_pool"))
             store_pool = getattr(planning.store, "conn", None)
             if store_pool is not None:
                 pools.append((store_pool, "memory_store_pool"))
