@@ -44,7 +44,9 @@ ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
 [117](117-sso-request-url-compat.md)에서 사용자가 확인한 startswith/URL 오류를
 재현하고 동기 SDK 경계에 문자열 URL view를 적용했다. 의존성·company.py 변경은
 없으며83회귀를 검증했다. 실제 SDK 전체 호환/회사 로그인 왕복은 폐쇄망에서
-재확인한다. 다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
+재확인한다. [118](118-sso-query-args-compat.md)에서 새 args/Request 로그에 따라 args/to_dict
+호환을 추가했다. 관련88회귀 검증, 내부망 의존성·SDK 연결은 변경0이다.
+다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
 
 다음 순서:
 

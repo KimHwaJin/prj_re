@@ -1,10 +1,13 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md).
-SSO(request) 생성자의 startswith/URL 오류를 재현하고 동기 SDK 호출에만
-문자열 URL view를 적용했다. 원본 요청·Cookie/query·서버 callback을 보존한다.
-관련83회귀·전체 포맷 통과. 새 lint/type 진단 없음, 기존 오류는 남아 있다.
-pyproject.toml·uv.lock·SDK 연결 company.py는 변경0이며 실제 SDK 확인은 별도다.
+최신 작업: [118 사내 SSO 쿼리 args 호환](118-sso-query-args-compat.md).
+SDK가 요구하는 args/to_dict를 query_params의 읽기 전용 view로 연결했다.
+중복 키·빈값·인코딩·원본 요청/서버 callback 보존을 검증했다. 관련88회귀 통과.
+기존 lint/type 외 새 오류 없음. 의존성·company.py 변경0, 실제 SDK 확인은 별도다.
+
+선행 작업: [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md).
+SSO(request)의 startswith/URL 오류에 동기 SDK 문자열 URL view를 적용했다.
+관련83회귀 후 베이스30fe3de·파생 브랜치를 origin에 게시했다.
 
 선행 작업: [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md).
 SDK 오류 로그에 안전한 속성명·객체 타입을 추가하고 내부망 의존성을 보존했다.
@@ -281,3 +284,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [116 SSO 속성 오류 진단](116-sso-error-diagnostics.md)
 
 - [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md)
+
+- [118 사내 SSO 쿼리 args 호환](118-sso-query-args-compat.md)
