@@ -68,6 +68,20 @@ class BackgroundRuntime:
                     task.get_name(),
                     type(error).__name__,
                 )
+                from dtest.infrastructure.database.failures import (
+                    database_failure,
+                )
+
+                failure = database_failure(error)
+                if failure is not None:
+                    log.error(
+                        "background_database_failure name=%s cause_type=%s "
+                        "sqlstate=%s recovery=%s",
+                        task.get_name(),
+                        failure.cause_type,
+                        failure.sqlstate or "unknown",
+                        failure.recovery,
+                    )
             elif self.started:
                 log.error("background_loop_exited name=%s", task.get_name())
 

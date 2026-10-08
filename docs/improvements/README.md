@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md).
+최신 작업: [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md).
+사용자 보고 psycopg/binary3.3.6·pool3.3.3을 선언·lock에 반영했다. 구 호출과 새
+바이너리 조합의 keyword 오류 대조, 정상 실제 연결·psycopg2 공존·앱 초기화를
+확인했다. 관련102회귀·실제DB1회귀 통과. SQLSTATE로 schema/권한 오류를 구분한다.
+사용자 Windows 실행 검증은 별도이며 미병합·미푸시·미배포 상태다.
+
+선행 작업: [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md).
 서비스 Executor 제출은 postgres 체크포인트를 요구한다. memory + true는 설정
 읽기·설치·그래프 조립 경계에서 거절하며, Executor 자원 생성 조건을 별도로
 분리했다. 관련214회귀·전체 포맷을 검증했다. 기존 lint/type 오류는 남아 있으며
@@ -258,3 +264,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md)
 
 - [114 Executor·체크포인트 설정 정합성](114-executor-checkpoint-validation.md)
+
+- [115 Windows PostgreSQL 드라이버 정합성](115-windows-postgres-driver-alignment.md)

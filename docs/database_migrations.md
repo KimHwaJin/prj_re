@@ -84,3 +84,46 @@ FROM agent_commands WHERE state IN ('FAILED', 'RECOVERY') ORDER BY updated_at DE
 ```
 
 101에서 실제 삭제·기존 업무 데이터 보존·대기 명령 이관은 별도로 만든 로컬 테스트 PostgreSQL에서 검증했다. 기존 서비스 DB에 자동 적용하거나 기존 컨테이너를 재기동한 작업은 아니다.
+
+## Windows 드라이버 연결 오류 — 2026-10-08
+
+현재 pyproject.toml·uv.lock은 psycopg/psycopg-binary 3.3.6,
+psycopg-pool 3.3.3을 사용한다. psycopg2-binary는 별도 모듈이며 이 서비스의
+의존성으로 추가하지 않는다. 같은 환경에 존재하는 것만으로 충돌하지 않는다.
+
+`connect() takes no keyword arguments`는 테이블 미준비와 별개다.
+3.3.6 내부 연결 generator는 timeout 키워드가 없고 Python 호출부도 그에 맞는다.
+이전 Python 파일과 새 바이너리 함수를 조합하면 이 메시지가 재현된다.
+설치 메타데이터 버전만 같아도 실제 로드 파일이 정상인지까지 보장하지 않는다.
+정상 3.3.6/3.3.3에서 별도 PostgreSQL 풀 연결과 앱 초기화를 검증했다.
+Windows 사용자 환경의 실제 파일 혼합 여부는 아직 확정되지 않았다.
+
+소스 반영 후 앱을 종료하고, 프로젝트 루트에서 재설치한다.
+
+```powershell
+uv sync --locked --reinstall-package psycopg --reinstall-package psycopg-binary --reinstall-package psycopg-pool
+uv run python -c "import psycopg, psycopg_binary, psycopg_pool; print(psycopg.__version__, psycopg_binary.__version__, psycopg_pool.__version__); print(psycopg.__file__); print(psycopg_binary.__file__)"
+uv run app.py --env local
+```
+
+출력 버전은 3.3.6 / 3.3.6 / 3.3.3이어야 한다. 패키지는 해당 사내 환경에서
+사용하는 패키지 저장소·wheel을 통해 설치한다. 이전 프로세스를 반드시 종료하고
+새 프로세스에서 실행한다. 드라이버 내부 함수를 monkeypatch하지 않는다.
+
+ProgrammingError가 남으면 background_database_failure의 sqlstate를 확인한다.
+
+| SQLSTATE | 의미 | 확인/조치 |
+| --- | --- | --- |
+| 42P01 | 테이블 없음 | 선택 DB·schema가 올바른지 확인 후 migration 적용 |
+| 42703 | 컬럼 없음 | 코드와 선택 DB의 migration 버전 확인 |
+| 42501 | 권한 부족 | 해당 계정의 DB·schema·테이블 권한 확인 |
+| 42601 | SQL 문법 오류 | 실행 SQL과 지원 DB 규격 확인 |
+
+새 DB에 migration을 적용하려면 위 수동 scripts/migrate.py를 사용하거나,
+config.yml의 DB_INIT_ON_START를 true로 설정한다. YAML에 false가 있으면 환경변수
+true가 우선하지 않는다. 초기화는 기본 false 정책을 유지하며 기존 migration을
+적용한다. 다른 DB·잘못된 schema를 바라보는 문제는 드라이버 재설치로 해결되지 않는다.
+
+진단 로그는 원인 예외 타입·SQLSTATE·조치 힌트만 기록하고 SQL·파라미터·접속
+문자열·원문 예외 메시지는 기록하지 않는다. PoolTimeout은 연결 준비 실패의
+후속 증상일 수 있으므로 앞서 나온 psycopg.pool 경고를 함께 확인한다.
