@@ -250,3 +250,15 @@ PYTHONPATH=src python -m dtest.application.admin \
 직원 필드 추가 이력은 [105](improvements/105-company-sso-adapter.md),
 기존 세션 정책은 [045 작업 기록](improvements/045-sso-authentication.md)을 참고한다.
 브라우저 회사 SSO 왕복·회사 쿠키 정책·실제 SDK의 직원 정보 검증은 폐쇄망에서 남아 있다.
+
+
+## 외부 대기를 포함하는 조회의 인증 DB 수명
+
+Workflow 검색은 ReadUserId를 사용한다. 로그인 쿠키·CSRF·활성 사용자 검사를
+통과한 뒤 인증용 짧은 DB 세션을 닫고 임베딩 요청을 시작한다. 검색 자체가
+데이터를 바꾸지 않으므로 사용자 공유 잠금을 유지하지 않는다.
+
+이 권한은 접수 시점의 snapshot이며 검색 중 비활성화된 계정의 이미 시작된
+읽기는 끝날 수 있다. 변경 API에는 이 의존성을 사용하지 않는다. CurrentUserId는
+사용자 삭제와 변경 접수의 경합을 막는 기존 공유 잠금을 유지한다. 자세한 변경과
+실제 단일 연결 pool 검증은 [113 작업 기록](improvements/113-workflow-search-db-scope.md)을 따른다.

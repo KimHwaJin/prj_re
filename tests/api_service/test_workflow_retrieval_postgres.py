@@ -467,3 +467,61 @@ async def test_model_space_switch_preserves_prior_vectors(search_context):
         await db.commit()
     result = await h.search_runtime.search.search("search")
     assert len(result.items) == 1
+
+
+@pytest.mark.asyncio
+async def test_search_releases_identity_connection_before_embedding(
+    search_context, monkeypatch
+):
+    from typing import cast
+
+    from sqlalchemy.pool import AsyncAdaptedQueuePool
+
+    from dtest.infrastructure.database import runtime as database
+
+    h = search_context
+    engine = create_async_engine(
+        h.factory.kw["bind"].url,
+        pool_size=1,
+        max_overflow=0,
+    )
+    pool = cast(AsyncAdaptedQueuePool, engine.pool)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    monkeypatch.setattr(database, "get_session_factory", lambda: factory)
+    monkeypatch.delitem(h.app.dependency_overrides, database.get_db)
+    entered, release = asyncio.Event(), asyncio.Event()
+    original_embed = h.embedding.embed
+
+    async def blocked_embed(texts):
+        entered.set()
+        await release.wait()
+        return await original_embed(texts)
+
+    monkeypatch.setattr(h.embedding, "embed", blocked_embed)
+    request = asyncio.create_task(
+        h.client.post(
+            "/api/v1/workflows/search",
+            headers=headers(h.user["user_id"]),
+            json={"query": "search"},
+        )
+    )
+    try:
+        await asyncio.wait_for(entered.wait(), 2)
+        assert pool.checkedout() == 0
+
+        async def other_query():
+            async with factory() as db:
+                return await db.scalar(text("SELECT 1"))
+
+        assert await asyncio.wait_for(other_query(), 1) == 1
+        assert not request.done()
+        release.set()
+        response = await asyncio.wait_for(request, 5)
+        assert response.status_code == 200, response.text
+        assert pool.checkedout() == 0
+    finally:
+        release.set()
+        if not request.done():
+            request.cancel()
+        await asyncio.gather(request, return_exceptions=True)
+        await engine.dispose()

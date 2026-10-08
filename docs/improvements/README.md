@@ -1,6 +1,13 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [109 선택적 앱 시작 DB 초기화](109-optional-startup-db-init.md).
+최신 작업: [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md).
+조회 인증을 짧은 세션에서 끝내고 임베딩 대기 전에 연결을 반환한다. 변경 API의
+사용자 공유 잠금과 SSO·CSRF는 유지한다. 관련61회귀를 통과했고 실제 단일 연결
+pool에서 이전 점유1개→변경0개 및 다른 SQL 실행을 확인했다. 전체 lint/type의
+기존 오류는 남아 있다. 2026-10-08 베이스에 병합하고 베이스·파생 브랜치를
+origin에 게시했다. 실제 서비스 배포는 별도다.
+
+선행 작업: [109 선택적 앱 시작 DB 초기화](109-optional-startup-db-init.md).
 DB_INIT_ON_START(기본 false)로 lifespan 초기화를 제어한다. 수동 명령과 공통 경로를
 사용하고 동시 시작 잠금·실패 시 미기동·앱 로그 유지를 반영했다. 격리 PostgreSQL의
 동시 앱 시작·데이터 보존을 포함한 148회귀 및 추가 수동 초기화를 검증했다.
@@ -244,3 +251,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 
 - [111 남은 미사용 계약 선언 삭제](111-unused-contract-declarations.md)
 - [112 오래된 문서·복제 테스트 정리](112-docs-test-cleanup.md)
+
+- [113 Workflow 검색 인증 DB 수명 분리](113-workflow-search-db-scope.md)

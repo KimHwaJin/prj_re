@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, Response, status
 from dtest.api_service.http.dependencies import (
     CurrentUserId,
     DBSession,
+    ReadUserId,
 )
 from dtest.api_service.http.pagination import ListQuery
 from dtest.application.workflows import queries
@@ -60,7 +61,7 @@ async def list_workflows(
 @router.post("/search", response_model=WorkflowSearchResult)
 async def search_workflows(
     payload: WorkflowSearchRequest,
-    user_id: CurrentUserId,
+    user_id: ReadUserId,
 ):
     return await queries.search_workflows(payload.query)
 
