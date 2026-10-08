@@ -41,7 +41,10 @@ ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
 [116](116-sso-error-diagnostics.md)에서 SSO AttributeError의 안전한 속성/객체
 타입 진단을 추가했다. 내부망에서 변경한 dependency/SDK 연결 파일은 수정하지
 않았다. 관련81회귀 통과, 사용자 요청으로 베이스 통합·origin 게시.
-실제 내부망 SDK의 누락 속성 확인과 FastAPI 호환 수정은 새 로그를 받은 뒤 진행한다.
+[117](117-sso-request-url-compat.md)에서 사용자가 확인한 startswith/URL 오류를
+재현하고 동기 SDK 경계에 문자열 URL view를 적용했다. 의존성·company.py 변경은
+없으며83회귀를 검증했다. 실제 SDK 전체 호환/회사 로그인 왕복은 폐쇄망에서
+재확인한다. 다른 Flask 전용 속성은 근거 없이 추가하지 않는다.
 
 다음 순서:
 

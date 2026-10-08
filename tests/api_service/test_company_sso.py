@@ -67,6 +67,21 @@ class SdkFactoryDouble:
         return sdk
 
 
+class StringUrlSdkDouble(SdkDouble):
+    def __init__(self, sdk_request, return_url):
+        # Simulate the SDK constructor reported by the user. A raw FastAPI
+        # URL has no startswith method; the bridge must handle both paths.
+        assert sdk_request.url.startswith(("http://", "https://"))
+        super().__init__(sdk_request, return_url)
+
+
+class StringUrlSdkFactory(SdkFactoryDouble):
+    def __call__(self, request: Request, return_url: str | None) -> SdkDouble:
+        sdk = StringUrlSdkDouble(request, return_url)
+        self.instances.append(sdk)
+        return sdk
+
+
 class UserDirectoryDouble:
     def __init__(self):
         self.employees: list[VerifiedEmployee] = []
@@ -181,11 +196,11 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
 
 
 @pytest.mark.asyncio
-async def test_login_round_trip_uses_company_factory_and_keeps_profile_private(
+async def test_login_round_trip_uses_string_url_sdk_and_keeps_profile_private(
     monkeypatch: pytest.MonkeyPatch,
 ):
     factory, users, redis = (
-        SdkFactoryDouble(),
+        StringUrlSdkFactory(),
         UserDirectoryDouble(),
         MemoryRedis(),
     )
@@ -287,3 +302,50 @@ async def test_sdk_failure_is_sanitized_and_never_registers_or_sets_cookie(
         assert response.json() == {"detail": "Corporate SSO is unavailable."}
         assert not response.headers.get("set-cookie")
         assert not users.employees
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("operation", ["verify", "login_url"])
+async def test_sdk_string_url_keeps_original_request_and_callback(operation):
+    original = Request(
+        {
+            "type": "http",
+            "scheme": "https",
+            "server": ("api.example.test", 443),
+            "method": "GET",
+            "path": "/api/v1/auth/login/sso",
+            "headers": [(b"cookie", b"company=valid")],
+            "query_string": b"ORIGIN=https%3A%2F%2Fevil.test&other=value",
+        }
+    )
+    original_url = original.url
+    with pytest.raises(AttributeError) as failure:
+        StringUrlSdkDouble(original, None)
+    assert failure.value.name == "startswith"
+    assert failure.value.obj is original_url
+    factory = StringUrlSdkFactory()
+    adapter = create_adapter(SsoSettings(), sdk_factory=factory)
+    callback = "https://api.example.test/callback"
+    if operation == "verify":
+        assert await adapter.verify(original) == VerifiedEmployee(
+            "000123",
+            "홍길동",
+            english_name=EMPLOYEE[2],
+            department=EMPLOYEE[3],
+            email=EMPLOYEE[4],
+        )
+    else:
+        await adapter.login_url(original, callback)
+    sdk = factory.instances[0]
+    assert sdk.request is not original
+    assert sdk.request.url == str(original_url)
+    assert sdk.request.headers is original.headers
+    assert sdk.request.query_params is original.query_params
+    assert sdk.request.scope is original.scope
+    assert sdk.request.method == "GET"
+    assert sdk.request.query_params["ORIGIN"] == "https://evil.test"
+    assert sdk.return_url == (None if operation == "verify" else callback)
+    assert original.url is original_url
+    assert not isinstance(original.url, str)
+    if operation == "verify":
+        assert sdk.checked == sdk.info_calls == ["company=valid"]

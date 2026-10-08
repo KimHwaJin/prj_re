@@ -1,7 +1,8 @@
 # SSO 적용과 다른 서비스 재사용
 
-106 · 2026-10-06. 사내 SDK 내부 요청 형태를 흉내 내던 코드를 제거했다.
-원본 FastAPI 요청·서버 복귀 URL 전달, 쿠키 검증·직원 정보 조회를 구현했다. SDK 소스는 포함하지 않는다.
+117 · 2026-10-08. 사내 SDK 생성자의 URL 문자열 요구를 확인해 동기 SDK
+호출 경계에 요청 view를 추가했다. URL만 문자열로 제공하고 나머지 속성은
+원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
 **폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
 실제 회사 로그인 왕복은 폐쇄망 검증 대상이다.
 
@@ -44,15 +45,23 @@ def _create_sdk(request: Request, return_url: str | None = None) -> CompanySdk:
 
 | 입력 | 의미 |
 |---|---|
-| request | 원본 FastAPI Request. Cookie 헤더·query 등은 변경하지 않음 |
+| request | SyncSsoAdapter가 제공하는 요청 view. url은 문자열, 다른 속성은 원본 Request에 위임 |
 | return_url=None | 직원 검증용 생성. 복귀 URL 생성 요청이 아님 |
 | return_url=서버 URL | 로그인 URL 생성용. common runtime이 만든 신뢰할 복귀 주소 |
 
-서비스는 SDK 내부의 args/to_dict/Flask 요청 형식을 재구현하지 않는다.
-SsoArgs·SsoRequest는 삭제했다. SDK가 FastAPI 요청을 직접 받는지, 생성·복귀
-주소 설정에 어떤 공식 API를 쓰는지는 폐쇄망의 실제 지원 방식으로 연결한다.
-**원본 Request를 전달한다고 SDK가 바로 지원한다는 뜻은 아니다.**
-SDK가 지원하지 않는다면 사내 공식 FastAPI 연동 방법이 필요하다.
+사용자는 `SSO(request)`에서 `attribute=startswith object_type=URL`을 보고했다.
+FastAPI의 request.url은 Starlette URL 객체이므로 문자열 전용 startswith가 없다.
+`src/dtest/infrastructure/sso/request.py`의 SdkRequestView가 url만 str로 제공한다.
+SyncSsoAdapter가 직원 검증·로그인 URL 생성 모두에 이 view를 전달하므로
+폐쇄망 `_create_sdk`의 `sso = SSO(request)` 코드는 그대로 사용한다.
+FastAPI 라우터·다른 async 어댑터의 요청 객체는 바꾸지 않는다.
+
+기존 private factory의 Request 타입 주석은 호환을 위해 유지하며, 런타임에
+받는 값은 Request 인스턴스가 아니라 속성 조회를 위임하는 view다. 외부 SDK의
+속성 접근 계약을 연결하는 경계에서만 명시적으로 cast한다. SDK가 Request의
+실제 클래스 정체성을 요구하거나 다른 Flask 전용 속성을 요구하는지는 별도
+확인이 필요하다. args/to_dict·Flask session·ORIGIN 변환은 추측해 추가하지 않는다.
+서버가 생성한 return_url은 기존대로 별도 인자다.
 
 직원 확인은 원본 Cookie 헤더 → `check_day_cookie(cookie)` → 검증 성공 시에만
 `get_sso_info(cookie)` 순서다. 반환값은 Flask 예시의 대입 순서와 같은 다섯 값의
@@ -166,7 +175,8 @@ Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·�
 직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
 클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
 
-이번 변경은 pyproject.toml·uv.lock·SDK 연결 company.py를 수정하지 않는다.
+116 진단 및117 URL 호환 변경은 pyproject.toml·uv.lock·SDK 연결
+company.py를 수정하지 않는다.
 0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
 로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.
 더 오래된 기준에서 업데이트할 때 과거 dependency 변경이나 다른 개발자의
