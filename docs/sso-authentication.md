@@ -1,6 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-124 · 2026-10-08. 각 로그인302의 목적지 분기·callback 표시·Cookie 헤더 유무를 진단한다.
+125 · 2026-10-08. SDK가 만든 redirect_uri와 서버 복귀 주소의 일치 여부도 진단한다.
+각 로그인302의 목적지 분기·callback 표시·Cookie 헤더 유무를 진단한다.
 미인증 callback의 반복302는401로 멈춘다.
 SDK용 ORIGIN에 서버가 만든 로그인 복귀 URL을 연결한다.
 SDK 요청 호환과 로그인 URL 검증 거절 사유 진단을 유지한다.
@@ -266,6 +267,29 @@ Cookie Domain은 전송 대상 호스트를 제한하며, 회사 서버가 무�
 
 확인용 URL에 sso_callback=true를 직접 넣어401을 확인한 것만으로는 실제 회사
 왕복을 검증한 것이 아니다. /demo 로그인 버튼으로 실제 왕복을 확인해야 한다.
+
+### SDK 출력의 복귀 주소 진단
+
+SyncSsoAdapter는 확인된 사내 SDK의 로그인 URL query `redirect_uri`를 읽어
+서버가 전달한 return_url과 비교한다. query decoding은 표준 URL parser로
+한 번만 수행한다. 값은 출력하지 않고 앱 터미널에 상태만 INFO로 남긴다.
+
+```text
+sso_sdk_callback_binding redirect_uri=matches
+```
+
+| 상태 | 의미 / 다음 확인 |
+|---|---|
+| matches | SDK가 반환한 redirect_uri가 서버 callback과 정확히 일치. 회사 응답 Location이 달라진다면 회사 복귀 주소 처리·중간 리다이렉트 확인 |
+| differs | 값 하나가 있지만 서버 callback과 다름. private factory에서 받은 return_url/SDK args ORIGIN의 반영과 공식 SDK URL 생성 규칙 확인 |
+| missing | 반환 URL query에 redirect_uri가 없음. 다른 필드·POST·별도 처리인지 SDK 공식 계약 확인. URL 전체에 query가 없다는 뜻은 아님 |
+| multiple | redirect_uri가 여러 개라 단일 복귀 주소로 비교하지 않음. SDK 공식 규격 확인 |
+| unreadable | 반환 타입이 문자열이 아니거나 URL을 파싱할 수 없음. 기존 runtime의 URL 검증 결과와 함께 확인 |
+
+differs는 정확한 문자열 비교 결과이며 무조건 잘못된 주소라는 판정은 아니다.
+SDK가 추가 query를 붙인 경우도 여기에 해당할 수 있다. 이것은 진단 전용이며
+SDK URL을 수정·재인코딩·거절하지 않는다. 다른 query 이름을 쓰는 SDK도 기존
+동작을 유지한다. 인증 성공·쿠키 전달·회사 서버 수용 여부는 별도 검증 대상이다.
 
 이 변경은 미인증 callback의 재시도를 멈추는 것이며 실제 인증 실패 원인 자체를
 해결했다는 뜻은 아니다. 회사 SSO가 callback query를 제거하거나 다른 주소로
