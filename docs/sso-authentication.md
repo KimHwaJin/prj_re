@@ -1,8 +1,8 @@
 # SSO 적용과 다른 서비스 재사용
 
-118 · 2026-10-08. 사내 SDK 생성자의 URL 문자열·args 요구를 확인해
-동기 SDK 호출 경계에 요청 view를 적용했다. url은 문자열, args는 query_params의
-읽기 전용 호환 view로 제공하고 나머지 속성은 원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
+119 · 2026-10-08. 사내 SDK 생성자의 URL 문자열·args·environ 요구에 맞춰
+동기 SDK 호출 경계에 요청 view를 적용했다. url은 문자열, args는 쿼리 호환 객체,
+environ은 WSGI식 요청 메타데이터 사본이다. 나머지는 원본 요청으로 위임한다. SDK 소스는 포함하지 않는다.
 **폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
 실제 회사 로그인 왕복은 폐쇄망 검증 대상이다.
 
@@ -45,14 +45,15 @@ def _create_sdk(request: Request, return_url: str | None = None) -> CompanySdk:
 
 | 입력 | 의미 |
 |---|---|
-| request | SyncSsoAdapter 요청 view. url은 문자열, args는 쿼리 호환 객체, 나머지는 원본 Request에 위임 |
+| request | SyncSsoAdapter 요청 view. url·args·environ을 호환하고 나머지는 원본 Request에 위임 |
 | return_url=None | 직원 검증용 생성. 복귀 URL 생성 요청이 아님 |
 | return_url=서버 URL | 로그인 URL 생성용. common runtime이 만든 신뢰할 복귀 주소 |
 
 사용자는 `SSO(request)`에서 `attribute=startswith object_type=URL`을 보고했다.
 FastAPI의 request.url은 Starlette URL 객체이므로 문자열 전용 startswith가 없다.
 `src/dtest/infrastructure/sso/request.py`의 SdkRequestView가 url을 str로 제공한다.
-이후 사용자가 보고한 `attribute=args object_type=Request`에 맞춰 args도 제공한다.
+이후 `attribute=args object_type=Request`와 `attribute=environ` 로그에 따라
+args와 environ도 제공한다.
 SyncSsoAdapter가 직원 검증·로그인 URL 생성 모두에 이 view를 전달하므로
 폐쇄망 `_create_sdk`의 `sso = SSO(request)` 코드는 그대로 사용한다.
 FastAPI 라우터·다른 async 어댑터의 요청 객체는 바꾸지 않는다.
@@ -74,6 +75,36 @@ SdkQueryArgs로 연결한다. get, 키 조회, in, 반복과 to_dict(flat=True/F
 반환 dict/list를 수정해도 원본 요청과 다른 조회 결과는 바뀌지 않는다.
 args는 읽기 전용이며 Flask 전체 Request/MultiDict 구현은 아니다.
 SDK가 요구하는 다른 속성이 확인되면 추가 경계를 별도로 검토한다.
+
+### SDK의 request.environ 호환
+
+`src/dtest/infrastructure/sso/environ.py`가 ASGI scope/headers를 WSGI식 요청
+메타데이터로 변환한다. SdkRequestView.environ은 SDK에 전달할 요청별 dict 사본이다.
+SDK가 사본을 바꿔도 원본 ASGI scope/headers나 다른 요청에 반영되지 않는다.
+
+| environ 키 | 원천 / 의미 |
+|---|---|
+| REQUEST_METHOD | scope.method |
+| SCRIPT_NAME / PATH_INFO | root_path / mount prefix를 제외한 path. WSGI UTF-8→Latin-1 표현 |
+| QUERY_STRING | 원본 query_string 바이트의 Latin-1 표현; 재인코딩·순서 변경 없음 |
+| SERVER_PROTOCOL | scope.http_version 기반 HTTP 버전 |
+| SERVER_NAME / SERVER_PORT | scope.server. 정보가 없으면 빈 문자열, Unix socket의 None port도 빈 문자열 |
+| REMOTE_ADDR / REMOTE_PORT | scope.client. 정보가 없으면 해당 키 생략 |
+| wsgi.url_scheme | scope.scheme |
+| HTTP_HOST / HTTP_USER_AGENT / HTTP_COOKIE 등 | 헤더명을 대문자·밑줄로 변환한 HTTP_* 키 |
+| CONTENT_TYPE / CONTENT_LENGTH | HTTP_ 접두사 없이 제공하는 예외 헤더 |
+
+중복 Cookie는 `; `로, 다른 중복 헤더는 `,`로 연결한다. header bytes는 Latin-1로
+보존한다. forwarded 헤더는 HTTP_* 메타데이터로 전달하되, 이 어댑터에서
+REMOTE_ADDR나 scheme을 덮어쓰지 않는다. 프록시 신뢰 처리는 ASGI 서버가 맡는다.
+
+이는 전체 WSGI 서버가 아니다. wsgi.input/errors·Flask session·OS 환경변수·
+ASGI scope 내부 상태는 복제하지 않으며 요청 본문을 소비하지 않는다.
+SDK가 추가 environ 키를 요구하면 그 키와 공식 계약을 확인해 별도로 반영한다.
+실제 SDK가 읽는 키는 폐쇄망에서 확인해야 하며 전체 SDK 호환이 검증된 것은 아니다.
+
+매핑 기준: [ASGI HTTP 명세](https://asgi.readthedocs.io/en/stable/specs/www.html),
+[WSGI PEP3333](https://peps.python.org/pep-3333/).
 
 직원 확인은 원본 Cookie 헤더 → `check_day_cookie(cookie)` → 검증 성공 시에만
 `get_sso_info(cookie)` 순서다. 반환값은 Flask 예시의 대입 순서와 같은 다섯 값의
@@ -187,7 +218,7 @@ Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·�
 직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
 클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
 
-116 진단 및117/118 요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
+116 진단 및117/118/119 요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
 company.py를 수정하지 않는다.
 0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
 로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.

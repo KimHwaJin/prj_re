@@ -1,10 +1,12 @@
-"""Adapt the confirmed URL and query boundaries of the corporate SDK."""
+"""Adapt confirmed Flask request attributes for the corporate SDK."""
 
 from collections.abc import Iterator, Mapping
 from typing import Any, cast
 
 from fastapi import Request
 from starlette.datastructures import QueryParams
+
+from dtest.infrastructure.sso.environ import request_environ
 
 
 class SdkQueryArgs(Mapping[str, str]):
@@ -38,17 +40,22 @@ class SdkQueryArgs(Mapping[str, str]):
 
 
 class SdkRequestView:
-    """Expose string URL and query args without modifying the ASGI request.
+    """Expose SDK request metadata without modifying the ASGI request.
 
-    Other reads delegate to the original request. This does not implement
-    Flask session globals or override query parameters and callback URLs.
+    URL, query args and environ are adapted. Other reads delegate to the
+    original request. Flask session globals and callback URLs are unchanged.
     """
 
-    __slots__ = ("_args", "_request")
+    __slots__ = ("_args", "_environ", "_request")
 
     def __init__(self, request: Request):
         self._request = request
         self._args = SdkQueryArgs(request.query_params)
+        self._environ = request_environ(request)
+
+    @property
+    def environ(self) -> dict[str, str]:
+        return self._environ
 
     @property
     def args(self) -> SdkQueryArgs:

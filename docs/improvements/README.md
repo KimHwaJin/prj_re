@@ -1,9 +1,13 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [118 사내 SSO 쿼리 args 호환](118-sso-query-args-compat.md).
-SDK가 요구하는 args/to_dict를 query_params의 읽기 전용 view로 연결했다.
-중복 키·빈값·인코딩·원본 요청/서버 callback 보존을 검증했다. 관련88회귀 통과.
-기존 lint/type 외 새 오류 없음. 의존성·company.py 변경0, 실제 SDK 확인은 별도다.
+최신 작업: [119 사내 SSO environ 호환](119-sso-environ-compat.md).
+SDK의 environ 읽기에 ASGI 요청 메타데이터 사본을 제공한다. IP·헤더·경로와
+프록시/본문/원본 요청 보존을 검증했다. 관련98회귀 통과. 실제 SDK 왕복은 별도다.
+전체 포맷·새 lint/type 오류 없음. 의존성·company.py 변경0을 유지한다.
+
+선행 작업: [118 사내 SSO 쿼리 args 호환](118-sso-query-args-compat.md).
+args/to_dict를 쿼리 view로 연결하고 관련88회귀 후 베이스b14ba2d 및 파생을
+origin에 게시했다. 원본 요청·서버 callback·내부망 의존성을 보존했다.
 
 선행 작업: [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md).
 SSO(request)의 startswith/URL 오류에 동기 SDK 문자열 URL view를 적용했다.
@@ -286,3 +290,5 @@ SsoArgs·SsoRequest를 삭제하고 원본 FastAPI 요청·서버 복귀 URL을 
 - [117 사내 SSO 요청 URL 문자열 호환](117-sso-request-url-compat.md)
 
 - [118 사내 SSO 쿼리 args 호환](118-sso-query-args-compat.md)
+
+- [119 사내 SSO environ 호환](119-sso-environ-compat.md)

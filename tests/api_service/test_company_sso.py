@@ -19,7 +19,7 @@ from dtest.infrastructure.sso.company import (
     create_adapter,
     verify_employee,
 )
-from dtest.infrastructure.sso.request import SdkQueryArgs
+from dtest.infrastructure.sso.request import SdkQueryArgs, SdkRequestView
 from dtest.settings.auth import SsoSettings
 from tests.api_service.test_sso_auth import MemoryRedis
 
@@ -76,6 +76,8 @@ class FlaskRequestSdkDouble(SdkDouble):
         assert sdk_request.url.startswith(("http://", "https://"))
         self.origin = sdk_request.args.to_dict().get("ORIGIN")
         assert sdk_request.args.get("ORIGIN") == self.origin
+        self.peer = sdk_request.environ.get("REMOTE_ADDR")
+        assert sdk_request.environ["REQUEST_METHOD"] == "GET"
         super().__init__(sdk_request, return_url)
 
 
@@ -316,6 +318,7 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
             "type": "http",
             "scheme": "https",
             "server": ("api.example.test", 443),
+            "client": ("192.0.2.10", 12345),
             "method": "GET",
             "path": "/api/v1/auth/login/sso",
             "headers": [(b"cookie", b"company=valid")],
@@ -343,6 +346,7 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     sdk = factory.instances[0]
     assert isinstance(sdk, FlaskRequestSdkDouble)
     assert sdk.request is not original
+    assert isinstance(sdk.request, SdkRequestView)
     assert sdk.request.url == str(original_url)
     assert sdk.request.headers is original.headers
     assert sdk.request.query_params is original.query_params
@@ -350,6 +354,8 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     assert sdk.request.method == "GET"
     assert sdk.request.query_params["ORIGIN"] == "https://evil.test"
     assert sdk.origin == "https://evil.test"
+    assert sdk.peer == "192.0.2.10"
+    assert sdk.request.environ["HTTP_COOKIE"] == "company=valid"
     assert sdk.return_url == (None if operation == "verify" else callback)
     assert original.url is original_url
     assert not isinstance(original.url, str)
@@ -395,3 +401,132 @@ def test_sdk_args_to_dict_preserves_flask_query_semantics(
         assert args.to_dict(flat=False) == {"tag": ["first", "second"]}
         assert params.getlist("tag") == ["first", "second"]
     assert params == QueryParams(query)
+
+
+@pytest.mark.parametrize(
+    ("server", "client"),
+    [
+        (("api.example.test", 5000), ("192.0.2.20", 12345)),
+        (("::1", 5000), ("2001:db8::1", 12345)),
+        (("/tmp/service.sock", None), None),
+        (None, None),
+    ],
+)
+def test_sdk_environ_uses_scope_peer_and_request_metadata(server, client):
+    original = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "scheme": "https",
+            "http_version": "2",
+            "server": server,
+            "client": client,
+            "root_path": "/service",
+            "path": "/service/auth/login",
+            "query_string": b"ORIGIN=%2Fdemo&tag=a&tag=b",
+            "headers": [
+                (b"host", b"public.example.test:8443"),
+                (b"user-agent", b"test-agent"),
+                (b"cookie", b"company=valid"),
+                (b"content-type", b"application/json"),
+                (b"content-length", b"123"),
+                (b"x-forwarded-for", b"203.0.113.99"),
+                (b"x-forwarded-proto", b"http"),
+            ],
+        }
+    )
+    view = SdkRequestView(original)
+    env = view.environ
+    assert env is view.environ
+    assert env["REQUEST_METHOD"] == "GET"
+    assert env["SCRIPT_NAME"] == "/service"
+    assert env["PATH_INFO"] == "/auth/login"
+    assert env["QUERY_STRING"] == "ORIGIN=%2Fdemo&tag=a&tag=b"
+    assert env["SERVER_PROTOCOL"] == "HTTP/2"
+    assert env["SERVER_NAME"] == (server[0] if server else "")
+    assert env["SERVER_PORT"] == (
+        str(server[1]) if server and server[1] is not None else ""
+    )
+    assert env["HTTP_HOST"] == "public.example.test:8443"
+    assert env["HTTP_USER_AGENT"] == "test-agent"
+    assert env["HTTP_COOKIE"] == "company=valid"
+    assert env["CONTENT_TYPE"] == "application/json"
+    assert env["CONTENT_LENGTH"] == "123"
+    assert "HTTP_CONTENT_TYPE" not in env
+    assert "HTTP_CONTENT_LENGTH" not in env
+    assert env["wsgi.url_scheme"] == "https"
+    if client:
+        assert env["REMOTE_ADDR"] == client[0]
+        assert env["REMOTE_PORT"] == str(client[1])
+    else:
+        assert "REMOTE_ADDR" not in env
+        assert "REMOTE_PORT" not in env
+    assert env["HTTP_X_FORWARDED_FOR"] == "203.0.113.99"
+    assert "wsgi.input" not in env and "wsgi.errors" not in env
+    assert "scope" not in env and "PATH" not in env
+    env["HTTP_COOKIE"] = "changed-in-sdk-only"
+    assert original.headers["cookie"] == "company=valid"
+    assert SdkRequestView(original).environ["HTTP_COOKIE"] == "company=valid"
+
+
+@pytest.mark.parametrize(
+    ("root", "path", "expected"),
+    [
+        ("", "/login", "/login"),
+        ("/service", "/login", "/login"),
+        ("/service", "/services/login", "/services/login"),
+        ("/service", "/service", ""),
+        ("/service", "/service/로그인", "/로그인"),
+    ],
+)
+def test_sdk_environ_path_mapping_and_header_bytes(root, path, expected):
+    view = SdkRequestView(
+        Request(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": path,
+                "root_path": root,
+                "query_string": b"name=%ED%99%8D",
+                "headers": [
+                    (b"Cookie", b"first=a"),
+                    (b"cookie", b"second=b"),
+                    (b"x-test", b"one"),
+                    (b"x-test", b"two"),
+                    (b"x-byte", b"\xff"),
+                ],
+            }
+        )
+    )
+    assert view.environ["SCRIPT_NAME"] == root
+    assert (
+        view.environ["PATH_INFO"].encode("latin-1").decode("utf-8") == expected
+    )
+    assert view.environ["HTTP_COOKIE"] == "first=a; second=b"
+    assert view.environ["HTTP_X_TEST"] == "one,two"
+    assert view.environ["HTTP_X_BYTE"] == "ÿ"
+
+
+@pytest.mark.asyncio
+async def test_sdk_environ_never_consumes_asgi_body():
+    calls = []
+
+    async def receive():
+        calls.append("body-read")
+        return {"type": "http.request", "body": b"original-body"}
+
+    original = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/login",
+            "headers": [],
+            "query_string": b"",
+        },
+        receive=receive,
+    )
+    view = SdkRequestView(original)
+    assert view.environ["REQUEST_METHOD"] == "GET"
+    assert calls == []
+    assert await original.body() == b"original-body"
+    assert calls == ["body-read"]
