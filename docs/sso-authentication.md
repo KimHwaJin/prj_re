@@ -146,6 +146,44 @@ HTTP 로컬은 명시적으로 SSO_COOKIE_SECURE=false를 쓰고 __Host- 이름�
 SameSite=None은 Secure가 필수다. 다른 사이트의 프론트 배포는 쿠키·CORS 정책 확인이 필요하다.
 Swagger는 API와 같은 origin의 페이지를 사용한다. 앱은 여기에 CORS origin을 임의 추가하지 않는다.
 
+## SDK 속성 오류 진단과 내부망 환경 보존
+
+116 · 2026-10-08. `sso_sdk_failed`는 예외 타입 외에 누락된 속성명과
+실패한 객체의 타입명을 기록한다.
+
+```text
+sso_sdk_failed error_type=AttributeError attribute=args object_type=Request
+```
+
+이 예시는 SDK가 Request.args에 접근한 경우의 진단 형식이다. 실제 SDK가
+Flask 요청을 요구한다고 확정한 결과는 아니다. `redirect_url`/SDK 타입이면
+생성 결과·속성 계약을, `NoneType`이면 앞 단계의 반환값을 확인한다.
+이 로그는 인증 실패의 근본 원인을 자동으로 수정하지 않는다.
+
+Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·타입명은
+최대128자 identifier만 허용하며 누락·부적합 값은 unknown이다. 예외 원문,
+객체 repr, Cookie 헤더, 직원 정보, redirect URL은 기록하지 않는다.
+직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
+클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
+
+이번 변경은 pyproject.toml·uv.lock·SDK 연결 company.py를 수정하지 않는다.
+0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
+로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.
+더 오래된 기준에서 업데이트할 때 과거 dependency 변경이나 다른 개발자의
+변경과 충돌하지 않는다고 보장하지 않는다.
+
+기존 내부망 환경이 준비돼 있다면 앱 종료 후 코드를 받고 자동 sync 없이
+다시 실행할 수 있다.
+
+```powershell
+git pull --ff-only
+uv run --no-sync app.py --env local
+```
+
+--no-sync는 현재 가상환경의 패키지를 유지하는 실행 옵션이다. 누락 의존성을
+설치하거나 설정 오류를 해결하는 옵션은 아니다. 이번 변경에는 새 의존성이 없다.
+SDK 소스와 회사 인증 정보는 외부 저장소에 공유할 필요 없다.
+
 ## Redis 사용
 
 기존 REDIS_URL의 서버와 DB를 함께 사용한다. 로그인 키는

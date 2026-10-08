@@ -533,3 +533,67 @@ async def test_workflow_search_cookie_csrf_and_short_identity_scope(
     assert h.users.lock_flags == [False]
     factory.assert_called_once()
     db.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("attribute", ["args", "to_dict"])
+async def test_sdk_attribute_error_logs_names_without_private_values(
+    sso, caplog, attribute
+):
+    from starlette.requests import Request
+
+    request = Request(
+        {"type": "http", "headers": [(b"cookie", b"private-cookie")]}
+    )
+    try:
+        getattr(request, attribute)
+    except AttributeError as error:
+        sso.adapter.error = error
+    with caplog.at_level("WARNING", logger="dtest.api_service.auth.runtime"):
+        response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 503
+    assert (
+        f"error_type=AttributeError attribute={attribute} object_type=Request"
+        in caplog.text
+    )
+    assert "private-cookie" not in caplog.text
+    assert f"attribute={attribute}" not in response.text
+    assert not sso.redis.data
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error,attribute,object_type",
+    [
+        (
+            AttributeError("private-error", name="redirect_url", obj=None),
+            "redirect_url",
+            "NoneType",
+        ),
+        (AttributeError("private-error"), "unknown", "NoneType"),
+        (
+            AttributeError("private-error", name="private\nCookie=value"),
+            "unknown",
+            "NoneType",
+        ),
+        (
+            AttributeError("private-error", name="x" * 129),
+            "unknown",
+            "NoneType",
+        ),
+        (RuntimeError("private-error"), "unknown", "unknown"),
+    ],
+)
+async def test_sdk_diagnostics_handle_missing_and_untrusted_metadata(
+    sso, caplog, error, attribute, object_type
+):
+    sso.adapter.error = error
+    with caplog.at_level("WARNING", logger="dtest.api_service.auth.runtime"):
+        response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 503
+    assert f"attribute={attribute} object_type={object_type}" in caplog.text
+    assert "private" not in caplog.text
+    assert "Cookie=value" not in caplog.text
+    assert "x" * 129 not in caplog.text
+    assert "private" not in response.text
+    assert not sso.redis.data

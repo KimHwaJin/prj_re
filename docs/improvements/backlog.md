@@ -38,6 +38,11 @@ origin에 게시했다. 서비스 미배포 상태다.
 ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
 2026-10-08 베이스 통합·origin 게시, 서비스 미배포.
 
+[116](116-sso-error-diagnostics.md)에서 SSO AttributeError의 안전한 속성/객체
+타입 진단을 추가했다. 내부망에서 변경한 dependency/SDK 연결 파일은 수정하지
+않았다. 관련81회귀 통과, 사용자 요청으로 베이스 통합·origin 게시.
+실제 내부망 SDK의 누락 속성 확인과 FastAPI 호환 수정은 새 로그를 받은 뒤 진행한다.
+
 다음 순서:
 
 1. DB 연결 옵션·Executor 데이터 경로의 하드코딩 정리.

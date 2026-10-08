@@ -21,6 +21,13 @@ from dtest.settings.auth import SsoSettings, origin
 log = logging.getLogger(__name__)
 
 
+def _diagnostic_identifier(value: object) -> str:
+    """Bound names only; arbitrary SDK values must not become log payloads."""
+    if isinstance(value, str) and len(value) <= 128 and value.isidentifier():
+        return value
+    return "unknown"
+
+
 class SsoRuntime:
     def __init__(
         self,
@@ -80,7 +87,19 @@ class SsoRuntime:
         except HTTPException:
             raise
         except Exception as exc:
-            log.warning("sso_sdk_failed error_type=%s", type(exc).__name__)
+            attribute = getattr(exc, "name", None)
+            failed_object = getattr(exc, "obj", None)
+            object_type = (
+                type(failed_object).__name__
+                if isinstance(exc, AttributeError)
+                else None
+            )
+            log.warning(
+                "sso_sdk_failed error_type=%s attribute=%s object_type=%s",
+                type(exc).__name__,
+                _diagnostic_identifier(attribute),
+                _diagnostic_identifier(object_type),
+            )
             raise HTTPException(503, "Corporate SSO is unavailable.") from None
 
     def _ttl(self, employee: VerifiedEmployee) -> int:
