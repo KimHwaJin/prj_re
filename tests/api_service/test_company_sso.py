@@ -78,6 +78,8 @@ class FlaskRequestSdkDouble(SdkDouble):
         assert sdk_request.args.get("ORIGIN") == self.origin
         self.peer = sdk_request.environ.get("REMOTE_ADDR")
         assert sdk_request.environ["REQUEST_METHOD"] == "GET"
+        self.cookies = sdk_request.cookies.to_dict()
+        assert self.cookies == dict(sdk_request.cookies)
         super().__init__(sdk_request, return_url)
 
 
@@ -356,6 +358,7 @@ async def test_sdk_string_url_keeps_original_request_and_callback(operation):
     assert sdk.origin == "https://evil.test"
     assert sdk.peer == "192.0.2.10"
     assert sdk.request.environ["HTTP_COOKIE"] == "company=valid"
+    assert sdk.cookies == original.cookies == {"company": "valid"}
     assert sdk.return_url == (None if operation == "verify" else callback)
     assert original.url is original_url
     assert not isinstance(original.url, str)
@@ -530,3 +533,70 @@ async def test_sdk_environ_never_consumes_asgi_body():
     assert calls == []
     assert await original.body() == b"original-body"
     assert calls == ["body-read"]
+
+
+@pytest.mark.parametrize(
+    "cookie",
+    [
+        None,
+        "",
+        "company=valid",
+        "token=a%2Fb%25c; name=hello+world",
+        'company="quoted=value"; session=local',
+        "company=first; company=second",
+    ],
+)
+def test_sdk_cookies_to_dict_preserves_parsed_values_and_isolates_copies(
+    cookie,
+):
+    original = request(cookie=cookie)
+    original_cookies = original.cookies
+    original_header = original.headers.get("cookie")
+    view = SdkRequestView(original)
+    assert view.cookies.to_dict() == original_cookies
+    assert dict(view.cookies) == original_cookies
+    assert len(view.cookies) == len(original_cookies)
+    assert view.cookies.get("absent", "fallback") == "fallback"
+    assert "absent" not in view.cookies
+    with pytest.raises(KeyError):
+        view.cookies["absent"]
+    for key, value in original_cookies.items():
+        assert view.cookies[key] == view.cookies.get(key) == value
+    if "token" in original_cookies:
+        assert view.cookies["token"] == "a%2Fb%25c"
+        assert view.cookies["name"] == "hello+world"
+    flat = view.cookies.to_dict()
+    flat["company"] = "modified-in-sdk"
+    assert view.cookies.to_dict() == original_cookies
+    grouped = view.cookies.to_dict(flat=False)
+    assert grouped == {key: [value] for key, value in original_cookies.items()}
+    if grouped:
+        key = next(iter(grouped))
+        values = grouped[key]
+        assert isinstance(values, list)
+        values.append("modified-in-sdk")
+        assert view.cookies.to_dict() == original_cookies
+    assert original.cookies is original_cookies
+    assert original.headers.get("cookie") == original_header
+    assert SdkRequestView(original).cookies.to_dict() == original_cookies
+
+
+def test_sdk_cookies_to_dict_reproduces_dict_error_and_adapts_both_methods():
+    class CookieSdk:
+        def __init__(self, sdk_request):
+            self.args = sdk_request.args.to_dict()
+            self.cookies = sdk_request.cookies.to_dict()
+
+    original = request("ORIGIN=%2Fdemo", cookie="company=valid")
+
+    class UnadaptedCookiesRequest:
+        args = SdkQueryArgs(original.query_params)
+        cookies = original.cookies
+
+    with pytest.raises(AttributeError) as failure:
+        CookieSdk(UnadaptedCookiesRequest())
+    assert failure.value.name == "to_dict"
+    assert failure.value.obj is original.cookies
+    sdk = CookieSdk(SdkRequestView(original))
+    assert sdk.args == {"ORIGIN": "/demo"}
+    assert sdk.cookies == {"company": "valid"}
