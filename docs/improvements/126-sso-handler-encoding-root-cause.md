@@ -1,5 +1,9 @@
 # 126 — SDK handler 복귀 주소 인코딩 원인 정정
 
+> 후속 결정: 사용자는 사내 SDK 수정이 불가능하다고 확인했다. SDK 수정안 대신
+> [127](127-sso-queryless-callback.md)의 query 없는 service callback으로 대응한다.
+> 아래 인코딩 원인 재현은 유지하되 SDK 수정 요청을 현재 실행 방안으로 보지 않는다.
+
 ## 기준과 사용자 확인
 
 - 기준: feature/refactor-base, b3a2538.

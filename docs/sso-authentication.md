@@ -1,8 +1,8 @@
 # SSO 적용과 다른 서비스 재사용
 
-126 · 2026-10-08. 사내 SDK handler 요청의 URL 파라미터 인코딩 누락을 재현했다.
-401/200에서 redirect_url 의미가 다르므로125의 직접 비교 진단은 제거했다.
-로그인302 분기·Cookie 헤더 유무 진단과 미인증 callback401 가드는 유지한다.
+127 · 2026-10-08. 사내 SDK를 수정하지 않고 query 없는 전용 callback을 사용한다.
+복귀 경로/대상은 기존 Redis에 기본5분·1회 사용 context로 저장한다.
+로그인302 분기·Cookie 헤더 유무 진단과 직원 검증은 유지한다.
 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
 동기 SDK용 요청 view가 URL 문자열, args/cookies의 to_dict, WSGI식 environ을
 제공한다. 나머지는 원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
@@ -13,8 +13,9 @@
 
 | API | 동작 |
 |---|---|
-| GET /api/v1/auth/login/sso | SDK 인증 확인 → 최초 미인증은302 SSO 이동 / 복귀 미인증은401 / 인증된 직원은 쿠키 발급·302 프론트 이동 |
+| GET /api/v1/auth/login/sso | 로그인 시작. 미인증이면 Redis 복귀 context 생성·302 SSO 이동, 인증 직원이면 쿠키 발급·302 프론트 이동 |
 | GET /api/v1/auth/login/sso?target=docs | 같은 로그인 후 서버가 정한 Swagger 주소로 이동. 임의 URL 없음 |
+| GET /api/v1/auth/login/sso/callback/{flow_id} | 회사 SSO 복귀. Redis context 단일 사용 후 직원 검증. 미인증401, 만료/미존재/재사용400 |
 | POST /api/v1/auth/logout | 쿠키·CSRF 검사 후 해당 서비스의 세션과 쿠키 폐기. 204 |
 | GET /api/v1/users/me | 기존 사용자 정보 + csrf_token + login_expires_at. Cache-Control: no-store |
 
@@ -169,31 +170,30 @@ SDK의 공식 redirect_url 생성을 그대로 사용한다. common runtime이 �
 
 ```text
 GET /api/v1/auth/login/sso?return_to=/demo
-  → 회사 Cookie 없거나 검증 false: SDK.redirect_url로 302
-    서버 복귀 주소=https://api.example.internal/api/v1/auth/login/sso
-           ?return_to=%2Fdemo&target=app&sso_callback=true
-  → 회사 로그인 후 서버 복귀 주소로 이동: 회사 Cookie 검증, 직원 5개 값 조회
-  → 사용자 연결/최초 등록, Redis 로그인 세션, HttpOnly 쿠키 발급
-  → 설정된 프론트 /demo로 302
+  → 회사 Cookie 없거나 검증 false: Redis에 복귀 경로/대상 저장
+  → SDK용 ORIGIN=https://api.example.internal/api/v1/auth/login/sso/callback/{flow_id}
+  → SDK가 만든 회사 로그인 주소로302
+  → 회사 로그인 후 위 callback으로 이동
+  → Redis context를 원자적으로 꺼내고 삭제
+  → 직원 검증 성공: 사용자 연결/등록 → 서비스 세션·쿠키 →302 /demo
+  → 직원 미검증:401. 다시 회사 SSO로 보내지 않음
 ```
 
-미인증만 None이고 SDK 장애·잘못된 성공 응답은 공통 runtime에서 503으로 처리한다.
-예외 메시지·회사 쿠키·직원 값을 응답이나 로그에 기록하지 않는다.
-동기 SDK는 SyncSsoAdapter가 thread pool에서 실행한다. SDK 자체의 연결/읽기
-타임아웃도 공식 지원 방식으로 설정해야 한다. async deadline만으로 이미 실행 중인
-thread를 종료할 수 없다. 별도 callback/state/nonce 규칙, 회사 쿠키 만료·전역
-로그아웃 규칙은 사내 가이드대로 폐쇄망에서 확인한다.
+미인증만 None이고 SDK 예외는503, 잘못된 직원 계약/이동 URL은502다.
+예외 원문·회사 Cookie·직원 값을 응답이나 로그에 기록하지 않는다.
+동기 SDK는 thread pool에서 실행한다. SDK 자체의 연결/읽기 timeout도
+공식 지원 방식으로 설정해야 한다. async deadline이 실행 중인 thread를
+종료하는 것은 아니다. SDK 자체 인증 규칙은 사내 계약을 따른다.
 
 ### return_url을 어디에 넣는가
 
 1. 로컬 config.yml의 SSO_PUBLIC_API_ORIGIN에 API origin만 설정한다.
-   예: http://localhost:5000. /api/v1/auth/login/sso 경로는 넣지 않는다.
-2. 로그인 API가 API_V1_PREFIX와 /auth/login/sso, return_to/target query
-   및 sso_callback=true를 결합해 callback 전체를 생성한다. 별도 복귀 URL을
-   config에 직접 입력하지 않는다.
-3. SyncSsoAdapter.login_url이 SDK 요청 view의 args["ORIGIN"]에 callback을 넣는다.
+   예: http://localhost:5000. callback 경로나 임시키를 입력하지 않는다.
+2. 로그인 API가 API_V1_PREFIX와 /auth/login/sso/callback/{flow_id}를 결합한다.
+   서버가 생성한43자 난수 flow_id를 사용하며 callback에 query/fragment가 없다.
+3. SDK 요청 view의 args ORIGIN에 이 callback을 넣는다. 사용자 ORIGIN은 대체한다.
 4. 폐쇄망 company.py의 _create_sdk는 기존 SSO(request)를 그대로 호출한다.
-   SDK 내부의 ORIGIN 처리·redirect_url 생성 기능이 이 값을 사용한다.
+   **사내 SDK 내부 코드를 수정하거나 URL 인코딩을 패치하지 않는다.**
 
 예시 설정:
 
@@ -203,129 +203,92 @@ SSO_FRONTEND_ORIGIN: "http://localhost:5000"
 SSO_COOKIE_SECURE: false
 SSO_ALLOWED_ORIGINS: ["http://sso.example.internal"]
 SSO_ALLOWED_RETURN_ROOTS: ["/", "/demo", "/projects"]
+SSO_LOGIN_FLOW_TTL_SECONDS: 300
 ```
 
-정상 API URL: /api/v1/auth/login/sso?return_to=%2Fdemo (등호가 있어야 한다).
-API 기본 prefix일 때 SDK용 ORIGIN은 다음 전체 주소다.
+브라우저가 시작하는 URL은 /api/v1/auth/login/sso?return_to=%2Fdemo 그대로다.
+SDK가 받을 ORIGIN은 다음 형태이며 {flow_id}는 설명용 자리표시자다.
 
-    http://localhost:5000/api/v1/auth/login/sso?return_to=%2Fdemo&target=app&sso_callback=true
+    http://localhost:5000/api/v1/auth/login/sso/callback/{flow_id}
 
-SDK가 redirect_uri에 넣을 때 공식 방식으로 인코딩한다. SDK URL에 callback을
-문자열로 이어 붙이거나 먼저 임의로 quote하지 않는다. args.to_dict()는 사본이므로
-private factory에서 반환 dict 하나를 바꾸는 것만으로 Request가 바뀌지는 않는다.
-공용 request view의 ORIGIN 연결을 사용하고 내부 factory의 별도 URL 재작성은
-중복되지 않게 실제 코드/SDK 공식 계약을 확인한다.
+프론트는 flow_id를 생성하거나 별도 설정하지 않는다. 회사 SSO가 이동시켜주는
+주소를 그대로 방문한다. SDK가 ORIGIN에서 query를 제대로 인코딩하지 않아도
+callback 값 자체에 ?/&가 없으므로 return_to/target 누락이 생기지 않는다.
+return_to에 query가 있거나 docs로 돌아가야 하는 정보는 Redis에 보존한다.
 
-302 자체는 실패가 아니다. Location을 순서대로 확인한다.
+### 임시 복귀 정보와 로그인 세션은 별개
 
-    로그인 API → 302 회사 SSO
-    회사 로그인 → API callback
-    API callback → 302 /demo + 서비스 로그인 Cookie
-    GET /api/v1/users/me → 200
+Redis string key는 `{namespace}:flow:{flow_id의 SHA-256}`이다. 값에는
+return_to/target/expires_at만 저장한다. TTL은 SSO_LOGIN_FLOW_TTL_SECONDS로
+기본300초,60~1800초다. 기존 로그인 Redis client/pool을 공유한다.
+회사 Cookie·직원 정보·역할은 저장하지 않는다.
 
-123부터 callback에서 SDK가 직원을 검증하지 못하면 다시 SSO로 이동하지 않고
-HTTP401로 끝낸다. 생성된 복귀 URL의 sso_callback=true가 최초 요청과 복귀 요청을
-구분한다. 이 표시는 인증 증명·OAuth state가 아니며, 사용자가 직접 붙여도
-SDK 인증을 우회하거나 세션을 발급받지 못한다. 정상 SDK 검증 성공은 계속302다.
+callback은 Lua GET+DEL로 복귀 정보를 원자적으로 한 번만 꺼낸다. EVAL 권한이
+필요하며 GETDEL을 요구하지 않는다. 모든 API 인스턴스가 같은 Redis와 namespace를
+사용하면 다른 인스턴스로 돌아와도 처리할 수 있다. 새로운 Worker·DB 테이블은 없다.
 
-로그는 uv run app.py --env local을 실행한 **앱 터미널**에서 확인한다.
-Uvicorn의 GET ...302 줄은 접속 로그이며 아래 항목은 auth runtime의 분기 로그다.
-기본 앱 진입점은 INFO 이상을 출력한다. 플랫폼 별도 로거를 쓰면
-`dtest.api_service.auth.runtime`의 INFO가 필터링되지 않는지 확인한다.
+미존재/만료/재사용은 SDK 호출 전에400으로 끝낸다. Redis 장애/잘못된 record는503,
+유효 context가 있지만 직원 미검증이면401이다. SDK 장애 후에도 이미 소비한
+context는 재사용하지 않으므로 로그인 버튼으로 새로 시작한다. callback query의
+return_to/target은 저장값을 덮어쓰지 못하며 복귀 경로는 다시 검증한다.
+
+flow_id는 복귀 context 식별자이며 인증 증명이 아니다. SDK 직원 검증을 통과해야
+사용자 등록·서비스 세션 발급이 이루어진다. 인증서버가 요구하는 OAuth state/nonce
+계약을 대신한다는 뜻이 아니다. 로그인 context 만료는 기존 로그인 세션 만료나
+Agent Run/HITL 상태 보존과 별개다.
+
+### SDK의401/200 처리와 URL 허용
+
+사용자가 확인한 사내 SDK는 handler401에서 응답의 회사 로그인 url을,
+handler200에서 __target_url을 redirect_url로 반환한다. 서버가 전달한 callback과
+SDK redirect_uri를 항상 직접 비교한125 진단은126에서 제거했다.
+
+SDK가 서버 생성 callback을 정확히 그대로 반환하면 그 주소로302를 허용한다.
+임의의 다른 API URL은 이 예외로 허용하지 않는다. SDK의 다른 이동 주소는 기존
+SSO_ALLOWED_ORIGINS 검사를 유지한다. callback으로 이동한 것만으로 인증된 것이
+아니며 복귀 API에서 직원 검증을 계속 수행한다.
+
+126에서 handler의 `?URL={target}`와 requests params 호출에 인코딩 누락이
+있음을 PreparedRequest로 재현했다. SDK를 수정할 수 없다는 사용자 제약에 따라
+127은 **서비스의 query 없는 callback+Redis context**로 대응한다.
+기존 SDK의 URL 생성·HTTP 요청·응답 해석은 바꾸지 않고 실제 인코딩 누락을
+흉내 낸 SDK double에서도 callback 주소 보존과 최종 UI 이동을 확인했다.
+실제 사내 SDK·서버의 인증 성공은 폐쇄망에서 검증해야 한다.
+
+### 앱 로그와 실제 확인 순서
+
+로그는 uv run app.py --env local을 실행한 앱 터미널에서 확인한다. 기본 진입점은
+INFO 이상을 출력한다. 플랫폼 로거를 쓰면 auth runtime의 INFO 필터를 확인한다.
 
 ```text
 sso_login_redirect destination=corporate_sso callback=False cookie_header_present=False
+sso_login_redirect destination=service_callback callback=False cookie_header_present=False
 sso_login_redirect destination=application callback=True cookie_header_present=True
 sso_callback_unverified cookie_header_present=False
 ```
 
-- corporate_sso: SDK 직원 검증이 None이며 회사 SSO로302를 보냄. 최초 로그인에는
-  정상이다. 실제 회사 왕복 후에도 이 줄만 반복되면 callback 표시가 보존되지 않는
-  경로인지 Network에서 확인한다. 이 로그 하나로 SDK의 문제를 확정하지 않는다.
-- application: SDK 직원 검증과 서비스 세션 발급이 끝났고 프론트 또는 docs로302를
-  보냄. 이후 반복은 실제 목적지·쿠키 저장 및 인증 조회를 확인한다.
-- callback=True/False: 서비스가 해석한 sso_callback boolean이다. 인증 증명이 아니다.
-- callback_unverified: 표시가 유지된 복귀에서 미인증이라401로 멈춤.
+- corporate_sso: 직원 미검증, SDK가 만든 회사 로그인 주소로 이동.
+- service_callback: SDK가 이번에 생성한 callback을 그대로 반환하여 그 주소로 이동.
+- application: 직원 검증·서비스 세션 발급 후 UI/docs로 이동.
+- callback_unverified: 유효 복귀 context를 소비했지만 직원 미검증이라401로 끝남.
+- cookie_header_present=False: Cookie 헤더가 없거나 비었음. 현재 company adapter는
+  이때 직원 검증 SDK를 호출하지 않고 None을 반환한다.
+- True: 어떤 Cookie 헤더가 있음. 회사 Cookie의 존재/유효성을 보장하지는 않는다.
 
-아래 Cookie 헤더 유무 설명은 미인증 callback에 적용한다.
+/query의 sso_callback=true를 직접 넣은 과거 확인용 URL은 미인증401 가드로
+유지하지만 새 로그인에 사용하지 않는다. 실제 복귀는 전용 path로 구분한다.
+로그에는 URL·flow_id·Cookie/토큰 값을 추가하지 않는다. 일반 서버의 접속 로그는
+별도이므로 브라우저 주소/접속 로그의 임시키를 외부로 공유하지 않는다.
 
-- False: 복귀 요청의 Cookie 헤더가 없거나 비었다. 현재 company adapter는 이때
-  SDK 검증 없이 None을 반환한다. 회사 쿠키 전달 또는 공식 callback 처리 규칙을 확인한다.
-- True: 어떤 Cookie 헤더는 있다. 회사 쿠키가 있다는 뜻이나 유효하다는 뜻은 아니다.
-  현재 company adapter의 check_day_cookie 결과와 SDK의 공식 복귀 처리를 확인한다.
-- sso_sdk_failed: SDK 호출 예외다. 미인증 None과 다르며 HTTP503으로 끝난다.
-
-브라우저 Network의 Preserve log로 호스트/경로·상태코드와 callback의 Cookie
-헤더 유무만 확인한다. 회사 쿠키 값·ticket·전체 redirect_url을 공유하지 않는다.
-회사 도메인의 쿠키가 localhost에 그대로 전달되는 것으로 가정하면 안 된다.
-Cookie Domain은 전송 대상 호스트를 제한하며, 회사 서버가 무관한 localhost
-도메인의 쿠키를 직접 설정할 수는 없다. SDK가 공식적으로 ticket을 처리하거나
-로컬용 쿠키를 만드는 절차가 있다면 그 계약에 맞춰 연결해야 한다.
+업데이트 후 /demo 로그인 버튼으로 실제 회사 왕복을 진행한다. 회사에서 돌아오는
+경로가 /api/v1/auth/login/sso/callback/{flow_id}인지 확인한다. 성공하면 /demo로
+302 뒤 users/me200이다.401이면 반복 이동은 멈췄지만 직원 검증이 남은 것이다.
+이때 Cookie 헤더 유무와 공식 SDK의 callback/ticket/Cookie 처리 계약을 확인한다.
+회사 도메인의 Cookie가 localhost로 자동 전달되는 것으로 가정하지 않는다.
 참고: [MDN Cookie Domain](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#domain).
-
-확인용 URL에 sso_callback=true를 직접 넣어401을 확인한 것만으로는 실제 회사
-왕복을 검증한 것이 아니다. /demo 로그인 버튼으로 실제 왕복을 확인해야 한다.
-
-### 확인된 SDK 흐름과 복귀 주소 인코딩
-
-사용자가 확인한 사내 SDK는 args의 ORIGIN이 있으면 __target_url로 그대로 사용하고,
-없으면 protocol과 HTTP_HOST를 기본 target으로 사용한다. handler API 호출의
-응답이401이면 redirect_url은 응답 JSON의 url(회사 로그인 이동 주소),200이면
-uuid를 저장하고 redirect_url은 __target_url(복귀 주소)이다.
-따라서 SDK redirect_url의 redirect_uri를 최종 callback과 직접 비교한125의
-진단만으로 오류를 판정할 수 없다. 이 비교 코드·로그와 전용 테스트는126에서
-삭제했다. sso_login_redirect의 실제302 분기 로그는 유지한다.
-
-사용자는 handler URL을 `...?URL={target}` 문자열로 만든 뒤 requests.get에
-params/cookies/headers를 별도로 전달한다고 확인했다. requests의 params는
-이미 문자열에 넣은 URL 값 내부의 &를 보호하지 않는다. target의 target=app과
-sso_callback=true가 handler API의 별도 파라미터로 분리되며, URL 값에는
-return_to만 남는 현상을 PreparedRequest로 재현했다. 실제 네트워크 요청은 하지 않았다.
-
-**수정 위치는 폐쇄망 사내 SDK의 handler 요청 생성부다.** 외부 레포에는 그 SDK
-소스가 없으므로 여기서 수정·배포했다고 주장하지 않는다. SDK 수정이 가능하면
-다음처럼 URL 값도 requests의 params로 전달한다. 아래는 params가 dict/None인
-경우이며 실제 SDK의 기존 params 타입·값은 유지해야 한다. 주소는 예시다.
-
-```python
-sso_handler_url = (
-    f"{self.__protocol}workplace.example.internal/api/common/v1/auth/sso"
-)
-sso_params = dict(params or {})
-sso_params["URL"] = self.__target_url
-response = requests.get(
-    sso_handler_url,
-    params=sso_params,
-    cookies=cookiesDict,
-    headers=custom_headers,
-)
-```
-
-기존 params 전달 형태를 그대로 유지해야 한다면 handler URL의 URL 값만
-urlencode로 인코딩하고 기존 requests 호출을 유지할 수도 있다.
-
-```python
-from urllib.parse import urlencode
-
-sso_handler_url = (
-    f"{self.__protocol}workplace.example.internal"
-    "/api/common/v1/auth/sso?" + urlencode({"URL": self.__target_url})
-)
-```
-
-두 방식은 대안이며 동시에 적용하지 않는다. ORIGIN/__target_url 자체를 미리
-quote해서 의미를 바꾸거나 응답의 로그인 URL을 임의로 재작성하지 않는다.
-SDK 수정 후 실제 handler가 받은 URL에 return_to/target/sso_callback이 모두
-남고 우리 callback에 표시가 유지되는지 확인한다. 직원 검증·Cookie 전달·
-users/me200은 별도 폐쇄망 검증이며, 주소 인코딩 재현만으로 인증 성공을 보장하지 않는다.
-
-이 변경은 미인증 callback의 재시도를 멈추는 것이며 실제 인증 실패 원인 자체를
-해결했다는 뜻은 아니다. 회사 SSO가 callback query를 제거하거나 다른 주소로
-보내면 이 표시도 사라진다. 그 경우 실제 Location과 공식 허용 복귀 주소를
-확인해야 한다. 이 표시를 회사 인증 프로토콜의 nonce/state 대신 사용하지 않는다.
-공통 API를 fetch/Try it out으로 호출해 SSO 화면을 가져오기보다는 브라우저
-로그인 링크로 이동한다. client_id 및 허용 redirect_uri 등록 규칙은 사내 명세로
-확인하고, 실제 SDK가 완성한 redirect_uri가 위 callback인지 내부망에서 확인한다.
+400이면 만료/재사용 여부를 확인하고 새 로그인으로 시작한다.503이면 저장소나
+SDK 가용성을 확인한다. 회사 등록 client_id/허용 복귀 경로 규칙도 실제 명세에
+맞춰 확인한다. SDK 소스·Cookie·전체 URL·ticket을 공유받지 않는다.
 
 ## 중앙 설정
 
@@ -343,6 +306,7 @@ SSO_COOKIE_NAME: __Host-dtest_session
 SSO_COOKIE_SECURE: true
 SSO_COOKIE_SAMESITE: lax
 SSO_SESSION_TTL_SECONDS: 1800
+SSO_LOGIN_FLOW_TTL_SECONDS: 300
 SSO_AUTO_REGISTER: true
 SSO_ALLOWED_RETURN_ROOTS: ["/", "/demo", "/projects"]
 SSO_REDIS_MAX_CONNECTIONS: 8
@@ -351,7 +315,8 @@ SSO_CALL_TIMEOUT_SECONDS: 10
 ```
 
 SDK 생성 코드가 미구현이면 위 factory를 선택해도 실제 로그인은 503이다.
-환경변수는 새로 추가하지 않았다. 서비스 세션을 위해 Flask SECRET_KEY나
+기존 설정에 SSO_LOGIN_FLOW_TTL_SECONDS를 추가했다. 기본값300으로 생략 가능하다.
+서비스 세션을 위해 Flask SECRET_KEY나
 Flask SessionMiddleware를 추가할 필요는 없다.
 
 환경변수는 같은 이름의 대문자다. 목록은 env에서 JSON 배열을 사용한다.
@@ -366,6 +331,7 @@ origin은 scheme://host[:port]이고 경로를 넣지 않는다. 공개 API pref
 | SSO_ALLOWED_ORIGINS | 빈 목록. SDK 로그인 이동 대상 allowlist |
 | SSO_COOKIE_NAME / SSO_COOKIE_SECURE / SSO_COOKIE_SAMESITE | dtest_session / true / lax. 서비스마다 쿠키 이름 분리 |
 | SSO_SESSION_TTL_SECONDS | 고정 1800초, 60~86400. 요청할 때 연장하지 않음 |
+| SSO_LOGIN_FLOW_TTL_SECONDS | 복귀 정보300초, 60~1800. 단일 사용. 로그인 세션/Run 만료와 별개 |
 | SSO_AUTO_REGISTER | true. 일반 사용자+기본 프로젝트 생성, 관리자 자동 부여 없음 |
 | SSO_ALLOWED_RETURN_ROOTS | 코드 기본 ["/"], 공통 YAML ["/", "/projects"]. 프론트 복귀 경로 제한 |
 | SSO_REDIS_MAX_CONNECTIONS | 8, 1~128. Streams와 별도 로그인 연결풀 |
@@ -463,8 +429,8 @@ SDK가 http origin을 반환하면 allowlist도 http여야 한다. localhost/127
 
 URL의 redirect_uri가 단순 API root이면 이502 검증과는 별개로 회사 로그인 후
 서비스 세션이 발급되지 않을 수 있다. 복귀 주소는 `_create_sdk`에 전달되는
-서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target/sso_callback query)을 사용해야
-한다. 122부터 공용 SDK 요청 args의 ORIGIN에 자동 연결한다. SDK client_id/허용 복귀 주소 등록
+서버 return_url(기본 /api/v1/auth/login/sso/callback/{flow_id}, query 없음)을
+사용해야 한다. 122부터 공용 SDK 요청 args의 ORIGIN에 자동 연결한다. SDK client_id/허용 복귀 주소 등록
 규칙도 실제 회사 명세로 확인한다. 문자열을 이어 붙여 SDK URL을 변조하지 않는다.
 
 SDK의 반환 **타입**, 이동 origin과 허용 설정의 일치 여부만 확인하면 된다.
@@ -478,8 +444,8 @@ HTTP502 detail과 인증 실패 시 Cookie/세션 미생성 정책을 유지한�
 `{namespace}:login:{SID의 SHA-256}`이고 string 값에는 내부 User ID·CSRF 값·만료 시각만
 저장한다. 회사 쿠키, 직원 이름/부서/이메일, 역할, 분석 데이터는 저장하지 않는다.
 브라우저 쿠키는 암호학적 난수 SID이며 HttpOnly, Path=/, 설정된 Secure/SameSite를 사용한다.
-로그인 때 SID를 새로 만들고 이전 SID를 폐기한다. 로그인 키에만 TTL을 부여하고 로그아웃은
-해당 key만 지운다. FLUSHDB, Stream 그룹/ACK 수정, 공유 Stream TTL 설정은 하지 않는다.
+로그인 때 SID를 새로 만들고 이전 SID를 폐기한다. 로그인 키에는 세션 TTL, 복귀 정보 키에는 flow TTL을 부여한다. 로그아웃은
+해당 로그인 세션 key만 지운다. FLUSHDB, Stream 그룹/ACK 수정, 공유 Stream TTL 설정은 하지 않는다.
 
 각 API process당 로그인 Redis client/pool을 한 번 구성하고 lifespan에서 종료한다.
 Streams의 BLOCK 연결이 로그인 연결풀을 점유하지 않으며, 같은 서비스의 모든 Pod는 같은
@@ -572,7 +538,8 @@ PYTHONPATH=src python -m dtest.application.admin \
 과거 업무 회귀는 test-only dependency override로 기존 테스트 신원을 재현하며 wheel에 포함되지 않는다.
 새 SSO 검증은 그 override를 제거하고 실제 쿠키 경계를 사용한다. 회사 SDK만 test double이다.
 
-최신 변경·검증은 [106 작업 기록](improvements/106-sso-sdk-boundary.md),
+최신 callback 변경·검증은 [127 작업 기록](improvements/127-sso-queryless-callback.md),
+SDK 경계 정리는 [106 작업 기록](improvements/106-sso-sdk-boundary.md),
 직원 필드 추가 이력은 [105](improvements/105-company-sso-adapter.md),
 기존 세션 정책은 [045 작업 기록](improvements/045-sso-authentication.md)을 참고한다.
 브라우저 회사 SSO 왕복·회사 쿠키 정책·실제 SDK의 직원 정보 검증은 폐쇄망에서 남아 있다.

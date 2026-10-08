@@ -132,7 +132,7 @@ DATABASE_URL과 CHECKPOINT_DB_URI가 가리키는 실제 host/port, 해당 Postg
 
 DATABASE_URL은 CRUD·공통 명령/Inbox·Workflow 검색·프로젝트 Store 대상이다. EW_DATABASE_URL은 보통 생략해 같은 대상에서 파생하며 실행 활성 상태에서 다른 DB는 거절한다. CHECKPOINT_DB_URI는 LangGraph checkpoint 대상이다. DB 주소를 합쳐도 드라이버/수명별 pool을 같은 객체로 만들지는 않는다. REDIS_URL은 Executor Streams와 SSO에 함께 사용하되 namespace/key 영역을 구분한다. Executor 실행 kernel 및 PV 경로는 실제 Executor와 맞춘다.
 
-Embedding은 채팅 모델 설정을 재사용하지 않는다. WORKFLOW_EMBEDDING_BASE_URL/MODEL/DIMENSIONS를 함께 넣고 실제 corpus로 threshold·index를 검증한다. SSO SDK는 비공개이므로 SSO_ADAPTER_FACTORY를 사내에서 연결한다. 미설정은 로그인503이며 테스트 인증으로 바뀌지 않는다. 추가 설정 전체·삭제/별칭 목록은 [설정 분류표](application-settings-inventory.md)를 따른다.
+Embedding은 채팅 모델 설정을 재사용하지 않는다. WORKFLOW_EMBEDDING_BASE_URL/MODEL/DIMENSIONS를 함께 넣고 실제 corpus로 threshold·index를 검증한다. SSO SDK는 비공개이므로 SSO_ADAPTER_FACTORY를 사내에서 연결한다. SDK 수정 없이 query 없는 callback을 쓰며 기존 Redis의 단일 사용 복귀 context TTL은 SSO_LOGIN_FLOW_TTL_SECONDS(기본300초)다. 미설정은 로그인503이며 테스트 인증으로 바뀌지 않는다. 추가 설정 전체·삭제/별칭 목록은 [설정 분류표](application-settings-inventory.md)를 따른다.
 
 ## 설정 코드의 책임
 

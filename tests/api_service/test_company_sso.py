@@ -95,6 +95,29 @@ class FlaskRequestSdkFactory(SdkFactoryDouble):
         return sdk
 
 
+class UnencodedHandlerSdkDouble(FlaskRequestSdkDouble):
+    """Mirror the SDK's reported handler URL bug without modifying the SDK."""
+
+    def __init__(self, request, return_url):
+        super().__init__(request, return_url)
+        handler = (
+            "https://workplace.example.test/api/common/v1/auth/sso?URL="
+            + (self.origin or request.url)
+            + "&client_id=test"
+        )
+        self.handler_target = parse_qs(urlsplit(handler).query)["URL"][0]
+        self.redirect_url = "https://sso.example.test/login?" + urlencode(
+            {"redirect_uri": self.handler_target}
+        )
+
+
+class UnencodedHandlerSdkFactory(SdkFactoryDouble):
+    def __call__(self, request, return_url):
+        sdk = UnencodedHandlerSdkDouble(request, return_url)
+        self.instances.append(sdk)
+        return sdk
+
+
 class UserDirectoryDouble:
     def __init__(self):
         self.employees: list[VerifiedEmployee] = []
@@ -209,6 +232,7 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("raw_handler", [False, True])
 @pytest.mark.parametrize(
     ("public_origin", "frontend_origin", "return_path", "target"),
     [
@@ -224,13 +248,16 @@ def test_login_url_preserves_sdk_query_and_encoded_callback():
 )
 async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
     monkeypatch: pytest.MonkeyPatch,
+    raw_handler,
     public_origin,
     frontend_origin,
     return_path,
     target,
 ):
     factory, users, redis = (
-        FlaskRequestSdkFactory(),
+        UnencodedHandlerSdkFactory()
+        if raw_handler
+        else FlaskRequestSdkFactory(),
         UserDirectoryDouble(),
         MemoryRedis(),
     )
@@ -279,13 +306,15 @@ async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
         callback = parse_qs(urlsplit(response.headers["location"]).query)[
             "redirect_uri"
         ][0]
-        assert callback.startswith(public_origin + "/api/v1/auth/login/sso?")
+        assert callback.startswith(
+            public_origin + "/api/v1/auth/login/sso/callback/"
+        )
         assert "evil.test" not in callback
-        assert parse_qs(urlsplit(callback).query) == {
-            "return_to": [return_path],
-            "target": [target],
-            "sso_callback": ["true"],
-        }
+        assert not urlsplit(callback).query
+        if raw_handler:
+            sdk = factory.instances[0]
+            assert isinstance(sdk, UnencodedHandlerSdkDouble)
+            assert sdk.handler_target == callback
         client.cookies.set("company", "valid")
         response = await client.get(callback)
         assert response.status_code == 302

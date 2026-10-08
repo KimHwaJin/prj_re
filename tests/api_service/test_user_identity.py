@@ -74,7 +74,10 @@ def test_every_user_api_documents_cookie_identity(monkeypatch):
         if path.startswith("/api/v1/"):
             for method, operation in operations.items():
                 if method in {"get", "post", "patch", "delete", "put"}:
-                    if path == "/api/v1/auth/login/sso":
+                    if path in {
+                        "/api/v1/auth/login/sso",
+                        "/api/v1/auth/login/sso/callback/{flow_id}",
+                    }:
                         assert not operation.get("security")
                     else:
                         assert operation["security"] == [
