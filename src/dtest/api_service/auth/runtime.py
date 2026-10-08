@@ -3,7 +3,7 @@ import logging
 import secrets
 import time
 from typing import Literal
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -11,6 +11,7 @@ from redis.asyncio import BlockingConnectionPool, Redis
 
 from dtest.api_service.auth.dependencies import LoginDependency
 from dtest.contracts.auth import SsoAdapter, UserDirectory, VerifiedEmployee
+from dtest.infrastructure.redis.login_flows import RedisLoginFlows
 from dtest.infrastructure.redis.login_sessions import (
     LoginSession,
     RedisSessions,
@@ -35,6 +36,7 @@ class SsoRuntime:
         adapter: SsoAdapter,
         users: UserDirectory,
         sessions: RedisSessions,
+        flows: RedisLoginFlows,
         *,
         api_prefix: str,
         docs_path: str,
@@ -46,6 +48,7 @@ class SsoRuntime:
             users,
             sessions,
         )
+        self.flows = flows
         self.api_prefix, self.docs_path = api_prefix, docs_path
         self._owned_redis = owned_redis
 
@@ -102,7 +105,17 @@ class SsoRuntime:
             )
             raise HTTPException(503, "Corporate SSO is unavailable.") from None
 
-    def _checked_login_url(self, url: object) -> str:
+    def _checked_login_url(
+        self, url: object, *, callback_url: str | None = None
+    ) -> str:
+        # The SDK can return the exact server-generated callback after its
+        # own handler succeeds. This is not proof of employee identity.
+        if (
+            isinstance(url, str)
+            and callback_url is not None
+            and url == callback_url
+        ):
+            return callback_url
         reason = "not_string"
         if isinstance(url, str):
             if not url:
@@ -176,24 +189,27 @@ class SsoRuntime:
                 raise HTTPException(
                     503, "SSO public API origin is not configured."
                 )
+            flow_id = secrets.token_urlsafe(32)
             callback = (
                 api_origin
                 + self.api_prefix
-                + "/auth/login/sso?"
-                + urlencode(
-                    {
-                        "return_to": return_to,
-                        "target": target,
-                        "sso_callback": "true",
-                    }
-                )
+                + "/auth/login/sso/callback/"
+                + flow_id
             )
             url = self._checked_login_url(
-                await self._sdk(self.adapter.login_url, request, callback)
+                await self._sdk(self.adapter.login_url, request, callback),
+                callback_url=callback,
+            )
+            await self.flows.create(
+                flow_id,
+                return_to,
+                target,
+                self.settings.login_flow_ttl_seconds,
             )
             log.info(
-                "sso_login_redirect destination=corporate_sso "
+                "sso_login_redirect destination=%s "
                 "callback=%s cookie_header_present=%s",
+                "service_callback" if url == callback else "corporate_sso",
                 sso_callback,
                 bool(request.headers.get("cookie")),
             )
@@ -235,6 +251,23 @@ class SsoRuntime:
             bool(request.headers.get("cookie")),
         )
         return response
+
+    async def callback(self, request: Request, flow_id: str) -> Response:
+        flow = await self.flows.consume(flow_id)
+        if flow is None:
+            raise HTTPException(
+                400,
+                "SSO login flow is invalid, expired or already used. "
+                "Start login again.",
+                headers={"Cache-Control": "no-store"},
+            )
+        # Never trust return_to/target query overrides or the flow as identity.
+        return await self.login(
+            request,
+            return_to=flow.return_to,
+            target=flow.target,
+            sso_callback=True,
+        )
 
     async def authenticate(
         self, request: Request, csrf_token: str | None
@@ -287,6 +320,16 @@ class SsoRuntime:
             ),
         )
         router.add_api_route(
+            "/login/sso/callback/{flow_id}",
+            self.callback,
+            methods=["GET"],
+            status_code=302,
+            description=(
+                "SSO return endpoint with single-use Redis context; the "
+                "SDK receives a callback URL without query parameters."
+            ),
+        )
+        router.add_api_route(
             "/logout", self.logout, methods=["POST"], status_code=204
         )
         return router
@@ -334,6 +377,7 @@ def attach_sso(
         adapter,
         users,
         RedisSessions(redis, settings.namespace),
+        RedisLoginFlows(redis, settings.namespace),
         api_prefix=api_prefix,
         docs_path=docs_path,
         owned_redis=owned,

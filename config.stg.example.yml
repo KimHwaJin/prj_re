@@ -196,6 +196,8 @@ EW_HEALTH_PORT: 0
 SSO_AUTO_REGISTER: true
 # 고정30분, 요청으로 연장되지 않습니다.
 SSO_SESSION_TTL_SECONDS: 1800
+# 로그인 복귀 정보의 유효시간(초). 로그인 세션/Run 만료와 별개, 1회 사용.
+SSO_LOGIN_FLOW_TTL_SECONDS: 300
 SSO_COOKIE_NAME: dtest_session
 SSO_COOKIE_SAMESITE: lax
 SSO_REDIS_MAX_CONNECTIONS: 8

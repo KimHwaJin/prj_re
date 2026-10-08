@@ -1,6 +1,11 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [126 SDK handler 복귀 주소 인코딩 원인 정정](126-sso-handler-encoding-root-cause.md).
+최신 작업: [127 SDK 수정 없는 SSO 복귀 처리](127-sso-queryless-callback.md).
+query 없는 전용 callback과 Redis 기본5분·단일 사용 복귀 context를 구현했다.
+SDK의 인코딩 누락을 그대로 재현한 double에서도 왕복이 정상이다.209회귀와
+실제 Redis7회귀 통과, 전체 포맷·추가 lint/type 진단0. 회사 인증 성공은 폐쇄망 검증 대상.
+
+선행 작업: [126 SDK handler 복귀 주소 인코딩 원인 정정](126-sso-handler-encoding-root-cause.md).
 사용자가 확인한 SDK handler 문자열·requests 호출로 callback query 분리를
 PreparedRequest에서 재현했다. URL 값을 params로 전달하는 SDK 수정안을 기록한다.
 SDK 소스는 폐쇄망에 있어 미수정이다.125의 직접 비교 진단은401/200 계약에

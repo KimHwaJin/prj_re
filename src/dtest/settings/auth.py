@@ -40,6 +40,8 @@ class SsoSettings(BaseModel):
     cookie_secure: bool = True
     cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     session_ttl_seconds: int = Field(default=1800, ge=60, le=86400)
+    # Login return context only; not the authenticated session or Run lifetime.
+    login_flow_ttl_seconds: int = Field(default=300, ge=60, le=1800)
     auto_register: bool = (
         True  # 최초 직원은 일반 사용자+기본 프로젝트. 관리자 자동 부여 없음.
     )

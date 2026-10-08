@@ -144,6 +144,7 @@
 | SSO_COOKIE_SAMESITE | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |
 | SSO_COOKIE_SECURE | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |
 | SSO_FRONTEND_ORIGIN | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |
+| SSO_LOGIN_FLOW_TTL_SECONDS | 서비스 추가(예제 명시) | SDK 복귀 context의 만료300초·단일 사용. 로그인 세션/Run과 별개 |
 | SSO_NAMESPACE | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |
 | SSO_PUBLIC_API_ORIGIN | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |
 | SSO_REDIS_MAX_CONNECTIONS | 서비스 추가(예제 명시) | SSO 쿠키·Redis 로그인 세션·사내 SDK adapter |

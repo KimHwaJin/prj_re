@@ -346,3 +346,11 @@ URL 값을 params로 전달하거나 urlencode를 적용해야 한다. 실제 SD
 폐쇄망에만 있어 미수정이며 사용자가 적용하거나 SDK 관리자 반영이 필요하다.
 우리 공개 레포의 company.py·pyproject·lock은 보존한다. SDK 수정 후 callback
 표시·쿠키 검증·users/me200을 확인한다. 실제 인증 성공은 미확정이다.
+
+
+[127](127-sso-queryless-callback.md)에서 SDK 수정 불가 제약을 반영했다. SDK에
+query 없는 callback/{flow_id}를 주고 기존 Redis에 return_to/target을 저장한다.
+기본300초·원자적 단일 사용이며 다른 API 인스턴스로 복귀해도 처리한다.
+SDK의 정확한 callback 반환도 허용하지만 직원 검증을 대체하지 않는다.
+209회귀·실제 Redis7회귀 통과, 회사 SDK/서버 인증 성공은 폐쇄망에서 확인한다.
+company.py·pyproject·lock 변경0이다. SDK 수정 요청은 현재 방안에서 제외한다.

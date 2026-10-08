@@ -3,6 +3,7 @@ from dtest.contracts.errors import ApplicationError
 """Opt-in real LOCAL Redis tests; create/delete only a random test namespace, never flush."""
 import asyncio
 import os
+import secrets
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -96,9 +97,10 @@ async def test_owned_login_pool_waits_with_bounded_capacity_and_timeout(
 ):
     """A burst waits for capacity; exhausted deadlines still fail closed."""
     from fastapi import FastAPI, HTTPException
+    from redis.asyncio import BlockingConnectionPool
+
     from dtest.api_service.auth.runtime import attach_sso
     from dtest.settings.auth import SsoSettings
-    from redis.asyncio import BlockingConnectionPool
 
     login, streams, store, namespace, cleanup = redis_pair
     runtime = attach_sso(
@@ -142,3 +144,132 @@ async def test_owned_login_pool_waits_with_bounded_capacity_and_timeout(
         assert not pool._in_use_connections and all(
             not c.is_connected for c in pool._available_connections
         )
+
+
+@pytest.mark.asyncio
+async def test_real_flow_is_shared_and_consumed_once_across_clients(
+    redis_pair,
+):
+    from dtest.infrastructure.redis.login_flows import RedisLoginFlows
+
+    login, streams, _, namespace, cleanup = redis_pair
+    first = RedisLoginFlows(login, namespace)
+    second = RedisLoginFlows(streams, namespace)
+    token = secrets.token_urlsafe(32)
+    await first.create(token, "/projects?tab=a&sort=b", "app", 60)
+    key = first._key(token)
+    assert key is not None
+    cleanup.append(key)
+    assert token not in key and 0 < await login.ttl(key) <= 60
+    outcomes = await asyncio.gather(
+        first.consume(token), second.consume(token)
+    )
+    assert sum(outcome is not None for outcome in outcomes) == 1
+    flow = next(outcome for outcome in outcomes if outcome is not None)
+    assert flow.return_to == "/projects?tab=a&sort=b" and flow.target == "app"
+    assert await login.exists(key) == 0
+
+
+@pytest.mark.asyncio
+async def test_real_flow_expires_without_a_callback(redis_pair):
+    from dtest.infrastructure.redis.login_flows import RedisLoginFlows
+
+    login, _, _, namespace, cleanup = redis_pair
+    store = RedisLoginFlows(login, namespace)
+    token = secrets.token_urlsafe(32)
+    await store.create(token, "/", "docs", 1)
+    key = store._key(token)
+    assert key is not None
+    cleanup.append(key)
+    await asyncio.sleep(1.1)
+    assert await login.exists(key) == 0
+    assert await store.consume(token) is None
+
+
+@pytest.mark.asyncio
+async def test_real_flow_and_login_with_same_token_do_not_collide(redis_pair):
+    from dtest.infrastructure.redis.login_flows import RedisLoginFlows
+
+    login, _, sessions, namespace, cleanup = redis_pair
+    flows = RedisLoginFlows(login, namespace)
+    sid, expected = await sessions.create("flow-user", 60)
+    await flows.create(sid, "/", "app", 60)
+    cleanup.extend([sessions._key(sid), flows._key(sid)])
+    flow = await flows.consume(sid)
+    assert flow is not None and flow.return_to == "/"
+    assert await sessions.read(sid) == expected
+
+
+@pytest.mark.asyncio
+async def test_real_flow_callback_can_land_on_another_api_instance(redis_pair):
+    import httpx
+    from fastapi import FastAPI
+
+    from dtest.api_service.auth.runtime import attach_sso
+    from dtest.settings.auth import SsoSettings
+    from tests.api_service.test_sso_auth import CorporateDouble, UserDouble
+
+    login, streams, _, namespace, cleanup = redis_pair
+    settings = SsoSettings(
+        public_api_origin="http://api.example.test",
+        frontend_origin="http://ui.example.test",
+        allowed_origins=("https://sso.example.test",),
+        allowed_return_roots=("/projects",),
+        namespace=namespace,
+        cookie_secure=False,
+    )
+    api_origin = settings.public_api_origin
+    assert api_origin is not None
+    users = UserDouble()
+    first_sdk, second_sdk = CorporateDouble(), CorporateDouble()
+    first_sdk.employee = None
+    first_app, second_app = FastAPI(), FastAPI()
+    first = attach_sso(
+        first_app,
+        settings=settings,
+        users=users,
+        adapter=first_sdk,
+        redis=login,
+        redis_url="redis://unused",
+        api_prefix="/api/v1",
+        docs_path="/docs",
+    )
+    second = attach_sso(
+        second_app,
+        settings=settings,
+        users=users,
+        adapter=second_sdk,
+        redis=streams,
+        redis_url="redis://unused",
+        api_prefix="/api/v1",
+        docs_path="/docs",
+    )
+    async with (
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=first_app),
+            base_url=api_origin,
+        ) as start,
+        httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=second_app),
+            base_url=api_origin,
+        ) as complete,
+    ):
+        response = await start.get(
+            "/api/v1/auth/login/sso", params={"return_to": "/projects"}
+        )
+        assert response.status_code == 302
+        callback = first_sdk.callback
+        assert isinstance(callback, str)
+        token = urlsplit(callback).path.rsplit("/", 1)[1]
+        cleanup.append(first.flows._key(token))
+        response = await complete.get(callback)
+        assert response.status_code == 302
+        assert (
+            response.headers["location"] == "http://ui.example.test/projects"
+        )
+        sid = complete.cookies[settings.cookie_name]
+        cleanup.append(second.sessions._key(sid))
+        session = await first.sessions.read(sid)
+        assert session is not None and session.user_id == str(users.id)
+        assert await first.flows.consume(token) is None
+        assert (await complete.get(callback)).status_code == 400

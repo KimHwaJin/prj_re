@@ -8,7 +8,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import UUID, uuid4
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import urlsplit
 
 import httpx
 import pytest
@@ -33,6 +33,7 @@ from dtest.infrastructure.sso.adapter import SyncSsoAdapter, load_adapter
 from dtest.contracts.auth import VerifiedEmployee
 from dtest.api_service.auth.runtime import attach_sso
 from dtest.settings.auth import SsoSettings
+from dtest.infrastructure.redis.login_flows import RedisLoginFlows
 from dtest.infrastructure.redis.login_sessions import RedisSessions
 from dtest.bootstrap import create_app
 
@@ -59,6 +60,24 @@ class MemoryRedis:
         value = self.data.get(key)
         return value[0].encode() if value and value[1] > self.now else None
 
+    async def execute_command(self, *args):
+        command, *values = args
+        if command == "SET":
+            key, value, expiration, ttl, mode = values
+            assert expiration == "EX" and mode == "NX"
+            return await self.set(key, value, ex=ttl, nx=True)
+        if command == "EVAL":
+            script, numkeys, key = values
+            return await self.eval(script, numkeys, key)
+        raise AssertionError("Unexpected command")
+
+    async def eval(self, script, numkeys, key):
+        assert numkeys == 1
+        if self.fail:
+            raise RedisConnectionError("private-url-with-secret")
+        value = self.data.pop(key, None)
+        return value[0].encode() if value and value[1] > self.now else None
+
     async def delete(self, key):
         if self.fail:
             raise RedisConnectionError("private-url-with-secret")
@@ -67,7 +86,9 @@ class MemoryRedis:
 
 class CorporateDouble:
     def __init__(self):
-        self.employee = VerifiedEmployee("000123", "홍길동")
+        self.employee: VerifiedEmployee | None = VerifiedEmployee(
+            "000123", "홍길동"
+        )
         self.url = "https://sso.example.test/login"
         self.callback = None
         self.error = None
@@ -132,6 +153,7 @@ async def sso(monkeypatch):
     app = create_app(settings)
     redis, adapter, users = MemoryRedis(), CorporateDouble(), UserDouble()
     app.state.sso.sessions = RedisSessions(redis, settings.sso.namespace)
+    app.state.sso.flows = RedisLoginFlows(redis, settings.sso.namespace)
     app.state.sso.adapter, app.state.sso.users = adapter, users
     db_closes = []
 
@@ -237,17 +259,14 @@ async def test_sdk_redirect_and_docs_return_target(sso):
     assert response.headers["location"] == sso.adapter.url
     callback = urlsplit(sso.adapter.callback)
     assert callback.netloc == "api.example.test"
-    assert callback.path == "/api/v1/auth/login/sso"
-    assert parse_qs(callback.query) == {
-        "return_to": ["/"],
-        "target": ["docs"],
-        "sso_callback": ["true"],
-    }
-    assert "set-cookie" not in response.headers and not sso.redis.data
+    assert callback.path.startswith("/api/v1/auth/login/sso/callback/")
+    assert not callback.query and not callback.fragment
+    assert "set-cookie" not in response.headers
+    assert len(sso.redis.data) == 1
     sso.adapter.employee = VerifiedEmployee("000123", "홍길동")
-    assert (await login(sso, target="docs")).headers[
-        "location"
-    ] == "https://api.example.test/docs"
+    response = await sso.client.get(sso.adapter.callback)
+    assert response.headers["location"] == "https://api.example.test/docs"
+    assert len(sso.redis.data) == 1  # Consumed flow replaced by login session.
 
 
 @pytest.mark.parametrize(
@@ -706,7 +725,8 @@ async def test_allowed_sdk_url_is_preserved_without_ticket_logging(
     assert "sso_login_url_rejected" not in caplog.text
     assert "private-url-ticket" not in caplog.text
     assert not response.headers.get("set-cookie")
-    assert not sso.redis.data
+    assert len(sso.redis.data) == 1
+    assert all(":flow:" in key for key in sso.redis.data)
 
 
 @pytest.mark.asyncio
@@ -804,3 +824,116 @@ async def test_login_redirect_decision_logs_no_private_values(
         sso.settings.sso.public_api_origin,
     ):
         assert private_value not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_callback_query_cannot_replace_stored_return_target(sso):
+    sso.adapter.employee = None
+    await login(sso, return_to="/projects?view=a&sort=b")
+    callback = sso.adapter.callback
+    sso.adapter.employee = VerifiedEmployee("000123", "홍길동")
+    response = await sso.client.get(
+        callback,
+        params={"return_to": "https://evil.test", "target": "docs"},
+    )
+    assert response.status_code == 302
+    assert response.headers["location"] == (
+        "https://ui.example.test/projects?view=a&sort=b"
+    )
+    assert (await sso.client.get("/api/v1/users/me")).status_code == 200
+    replay = await sso.client.get(callback)
+    assert replay.status_code == 400
+    assert "location" not in replay.headers
+    assert "set-cookie" not in replay.headers
+    assert len(sso.redis.data) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["missing", "expired", "invalid"])
+async def test_unknown_or_expired_flow_never_calls_sdk(sso, kind):
+    sso.adapter.employee = None
+    if kind == "expired":
+        await login(sso)
+        callback = sso.adapter.callback
+        sso.redis.now = sso.settings.sso.login_flow_ttl_seconds
+    else:
+        token = "x" * 43 if kind == "missing" else "invalid"
+        callback = "/api/v1/auth/login/sso/callback/" + token
+    sso.adapter.error = RuntimeError("SDK must not be called")
+    response = await sso.client.get(callback)
+    assert response.status_code == 400
+    assert response.headers["cache-control"] == "no-store"
+    assert "location" not in response.headers
+    assert "set-cookie" not in response.headers
+
+
+@pytest.mark.asyncio
+async def test_flow_store_outage_prevents_sso_redirect(sso):
+    sso.adapter.employee = None
+    sso.redis.fail = True
+    response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 503
+    assert "private-url" not in response.text
+    assert "location" not in response.headers
+    assert not sso.redis.data
+
+
+@pytest.mark.asyncio
+async def test_callback_store_outage_does_not_consume_flow_or_verify(sso):
+    sso.adapter.employee = None
+    await login(sso)
+    callback = sso.adapter.callback
+    sso.adapter.error = RuntimeError("SDK must not be called")
+    sso.redis.fail = True
+    response = await sso.client.get(callback)
+    assert response.status_code == 503
+    assert "private-url" not in response.text
+    assert len(sso.redis.data) == 1
+    sso.redis.fail = False
+    sso.adapter.error = None
+    sso.adapter.employee = VerifiedEmployee("000123", "홍길동")
+    assert (await sso.client.get(callback)).status_code == 302
+
+
+@pytest.mark.asyncio
+async def test_sdk_returning_generated_callback_never_grants_identity(sso):
+    sso.adapter.employee = None
+
+    async def direct_return(request, return_url):
+        sso.adapter.callback = return_url
+        return return_url
+
+    sso.adapter.login_url = direct_return
+    response = await login(sso)
+    assert response.headers["location"] == sso.adapter.callback
+    assert "set-cookie" not in response.headers
+    callback = await sso.client.get(response.headers["location"])
+    assert callback.status_code == 401
+    assert "location" not in callback.headers
+    assert not sso.redis.data
+    assert (await sso.client.get("/api/v1/users/me")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_other_service_urls_are_not_allowed_as_sdk_callback(sso):
+    sso.adapter.employee = None
+    sso.adapter.url = "https://api.example.test/demo"
+    response = await sso.client.get("/api/v1/auth/login/sso")
+    assert response.status_code == 502
+    assert "location" not in response.headers
+    assert not sso.redis.data
+
+
+def test_login_flow_ttl_uses_central_settings_priority():
+    settings = service_settings.load_settings(
+        config={"SSO_LOGIN_FLOW_TTL_SECONDS": 120},
+        environ={"SSO_LOGIN_FLOW_TTL_SECONDS": "600"},
+    )
+    assert settings.sso.login_flow_ttl_seconds == 120
+    assert settings.sources["SSO_LOGIN_FLOW_TTL_SECONDS"] == "config mapping"
+
+
+@pytest.mark.parametrize("ttl", [0, 59, 1801, True])
+def test_invalid_login_flow_ttl_is_rejected(ttl):
+    with pytest.raises(ValueError):
+        SsoSettings(login_flow_ttl_seconds=ttl)
