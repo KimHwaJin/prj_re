@@ -1,6 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-122 · 2026-10-08. SDK용 ORIGIN에 서버가 만든 로그인 복귀 URL을 연결한다.
+123 · 2026-10-08. 미인증 callback의 반복302를 멈추고 Cookie 헤더 유무만 진단한다.
+SDK용 ORIGIN에 서버가 만든 로그인 복귀 URL을 연결한다.
 SDK 요청 호환과 로그인 URL 검증 거절 사유 진단을 유지한다.
 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
 동기 SDK용 요청 view가 URL 문자열, args/cookies의 to_dict, WSGI식 environ을
@@ -12,7 +13,7 @@ SDK 요청 호환과 로그인 URL 검증 거절 사유 진단을 유지한다.
 
 | API | 동작 |
 |---|---|
-| GET /api/v1/auth/login/sso | SDK 인증 확인 → 미인증 SSO 이동 / 인증된 직원 매핑·쿠키 발급·프론트 이동. 302 |
+| GET /api/v1/auth/login/sso | SDK 인증 확인 → 최초 미인증은302 SSO 이동 / 복귀 미인증은401 / 인증된 직원은 쿠키 발급·302 프론트 이동 |
 | GET /api/v1/auth/login/sso?target=docs | 같은 로그인 후 서버가 정한 Swagger 주소로 이동. 임의 URL 없음 |
 | POST /api/v1/auth/logout | 쿠키·CSRF 검사 후 해당 서비스의 세션과 쿠키 폐기. 204 |
 | GET /api/v1/users/me | 기존 사용자 정보 + csrf_token + login_expires_at. Cache-Control: no-store |
@@ -170,7 +171,7 @@ SDK의 공식 redirect_url 생성을 그대로 사용한다. common runtime이 �
 GET /api/v1/auth/login/sso?return_to=/demo
   → 회사 Cookie 없거나 검증 false: SDK.redirect_url로 302
     서버 복귀 주소=https://api.example.internal/api/v1/auth/login/sso
-           ?return_to=%2Fdemo&target=app
+           ?return_to=%2Fdemo&target=app&sso_callback=true
   → 회사 로그인 후 서버 복귀 주소로 이동: 회사 Cookie 검증, 직원 5개 값 조회
   → 사용자 연결/최초 등록, Redis 로그인 세션, HttpOnly 쿠키 발급
   → 설정된 프론트 /demo로 302
@@ -187,8 +188,9 @@ thread를 종료할 수 없다. 별도 callback/state/nonce 규칙, 회사 쿠�
 
 1. 로컬 config.yml의 SSO_PUBLIC_API_ORIGIN에 API origin만 설정한다.
    예: http://localhost:5000. /api/v1/auth/login/sso 경로는 넣지 않는다.
-2. 로그인 API가 API_V1_PREFIX와 /auth/login/sso, return_to/target query를
-   결합해 callback 전체를 생성한다. 경로와 query를 하드코딩하지 않는다.
+2. 로그인 API가 API_V1_PREFIX와 /auth/login/sso, return_to/target query
+   및 sso_callback=true를 결합해 callback 전체를 생성한다. 별도 복귀 URL을
+   config에 직접 입력하지 않는다.
 3. SyncSsoAdapter.login_url이 SDK 요청 view의 args["ORIGIN"]에 callback을 넣는다.
 4. 폐쇄망 company.py의 _create_sdk는 기존 SSO(request)를 그대로 호출한다.
    SDK 내부의 ORIGIN 처리·redirect_url 생성 기능이 이 값을 사용한다.
@@ -206,7 +208,7 @@ SSO_ALLOWED_RETURN_ROOTS: ["/", "/demo", "/projects"]
 정상 API URL: /api/v1/auth/login/sso?return_to=%2Fdemo (등호가 있어야 한다).
 API 기본 prefix일 때 SDK용 ORIGIN은 다음 전체 주소다.
 
-    http://localhost:5000/api/v1/auth/login/sso?return_to=%2Fdemo&target=app
+    http://localhost:5000/api/v1/auth/login/sso?return_to=%2Fdemo&target=app&sso_callback=true
 
 SDK가 redirect_uri에 넣을 때 공식 방식으로 인코딩한다. SDK URL에 callback을
 문자열로 이어 붙이거나 먼저 임의로 quote하지 않는다. args.to_dict()는 사본이므로
@@ -221,7 +223,35 @@ private factory에서 반환 dict 하나를 바꾸는 것만으로 Request가 �
     API callback → 302 /demo + 서비스 로그인 Cookie
     GET /api/v1/users/me → 200
 
-API가 계속 회사 SSO로만302를 반환한다면 회사 쿠키 검증/전달 여부를 확인해야 한다.
+123부터 callback에서 SDK가 직원을 검증하지 못하면 다시 SSO로 이동하지 않고
+HTTP401로 끝낸다. 생성된 복귀 URL의 sso_callback=true가 최초 요청과 복귀 요청을
+구분한다. 이 표시는 인증 증명·OAuth state가 아니며, 사용자가 직접 붙여도
+SDK 인증을 우회하거나 세션을 발급받지 못한다. 정상 SDK 검증 성공은 계속302다.
+
+로그 예시:
+
+```text
+sso_callback_unverified cookie_header_present=False
+```
+
+- False: 복귀 요청의 Cookie 헤더가 없거나 비었다. 현재 company adapter는 이때
+  SDK 검증 없이 None을 반환한다. 회사 쿠키 전달 또는 공식 callback 처리 규칙을 확인한다.
+- True: 어떤 Cookie 헤더는 있다. 회사 쿠키가 있다는 뜻이나 유효하다는 뜻은 아니다.
+  현재 company adapter의 check_day_cookie 결과와 SDK의 공식 복귀 처리를 확인한다.
+- sso_sdk_failed: SDK 호출 예외다. 미인증 None과 다르며 HTTP503으로 끝난다.
+
+브라우저 Network의 Preserve log로 호스트/경로·상태코드와 callback의 Cookie
+헤더 유무만 확인한다. 회사 쿠키 값·ticket·전체 redirect_url을 공유하지 않는다.
+회사 도메인의 쿠키가 localhost에 그대로 전달되는 것으로 가정하면 안 된다.
+Cookie Domain은 전송 대상 호스트를 제한하며, 회사 서버가 무관한 localhost
+도메인의 쿠키를 직접 설정할 수는 없다. SDK가 공식적으로 ticket을 처리하거나
+로컬용 쿠키를 만드는 절차가 있다면 그 계약에 맞춰 연결해야 한다.
+참고: [MDN Cookie Domain](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#domain).
+
+이 변경은 미인증 callback의 재시도를 멈추는 것이며 실제 인증 실패 원인 자체를
+해결했다는 뜻은 아니다. 회사 SSO가 callback query를 제거하거나 다른 주소로
+보내면 이 표시도 사라진다. 그 경우 실제 Location과 공식 허용 복귀 주소를
+확인해야 한다. 이 표시를 회사 인증 프로토콜의 nonce/state 대신 사용하지 않는다.
 공통 API를 fetch/Try it out으로 호출해 SSO 화면을 가져오기보다는 브라우저
 로그인 링크로 이동한다. client_id 및 허용 redirect_uri 등록 규칙은 사내 명세로
 확인하고, 실제 SDK가 완성한 redirect_uri가 위 callback인지 내부망에서 확인한다.
@@ -362,7 +392,7 @@ SDK가 http origin을 반환하면 allowlist도 http여야 한다. localhost/127
 
 URL의 redirect_uri가 단순 API root이면 이502 검증과는 별개로 회사 로그인 후
 서비스 세션이 발급되지 않을 수 있다. 복귀 주소는 `_create_sdk`에 전달되는
-서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target query)을 사용해야
+서버 return_url(기본 /api/v1/auth/login/sso 및 return_to/target/sso_callback query)을 사용해야
 한다. 122부터 공용 SDK 요청 args의 ORIGIN에 자동 연결한다. SDK client_id/허용 복귀 주소 등록
 규칙도 실제 회사 명세로 확인한다. 문자열을 이어 붙여 SDK URL을 변조하지 않는다.
 

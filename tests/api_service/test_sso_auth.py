@@ -8,6 +8,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import UUID, uuid4
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 import pytest
@@ -234,10 +235,14 @@ async def test_sdk_redirect_and_docs_return_target(sso):
     sso.adapter.employee = None
     response = await login(sso, target="docs")
     assert response.headers["location"] == sso.adapter.url
-    assert (
-        sso.adapter.callback
-        == "https://api.example.test/api/v1/auth/login/sso?return_to=%2F&target=docs"
-    )
+    callback = urlsplit(sso.adapter.callback)
+    assert callback.netloc == "api.example.test"
+    assert callback.path == "/api/v1/auth/login/sso"
+    assert parse_qs(callback.query) == {
+        "return_to": ["/"],
+        "target": ["docs"],
+        "sso_callback": ["true"],
+    }
     assert "set-cookie" not in response.headers and not sso.redis.data
     sso.adapter.employee = VerifiedEmployee("000123", "홍길동")
     assert (await login(sso, target="docs")).headers[
@@ -702,3 +707,66 @@ async def test_allowed_sdk_url_is_preserved_without_ticket_logging(
     assert "private-url-ticket" not in caplog.text
     assert not response.headers.get("set-cookie")
     assert not sso.redis.data
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("with_cookie", [False, True])
+async def test_unverified_callback_stops_redirect_loop(
+    sso, caplog, monkeypatch, with_cookie
+):
+    sso.adapter.employee = None
+    bindings = []
+
+    async def bind(employee):
+        bindings.append(employee)
+        return str(sso.users.id)
+
+    monkeypatch.setattr(sso.users, "bind", bind)
+    response = await login(sso, target="docs")
+    callback = sso.adapter.callback
+    assert response.headers["location"] == sso.adapter.url
+    if with_cookie:
+        sso.client.cookies.set("unrelated", "private-cookie-value")
+    # Following the server callback must not restart the same SSO round trip.
+    sso.adapter.callback = None
+    with caplog.at_level("WARNING"):
+        response = await sso.client.get(callback)
+    assert response.status_code == 401
+    assert "location" not in response.headers
+    assert "set-cookie" not in response.headers
+    assert response.headers["cache-control"] == "no-store"
+    assert not bindings and not sso.redis.data
+    assert sso.adapter.callback is None
+    assert (
+        f"sso_callback_unverified cookie_header_present={with_cookie}"
+        in caplog.text
+    )
+    assert "private-cookie-value" not in caplog.text
+    assert callback not in caplog.text
+    assert sso.adapter.url not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_callback_marker_does_not_bypass_sdk_verification(sso):
+    sso.adapter.employee = None
+    response = await sso.client.get(
+        "/api/v1/auth/login/sso", params={"sso_callback": "true"}
+    )
+    assert response.status_code == 401
+    assert not sso.redis.data
+    assert (await sso.client.get("/api/v1/users/me")).status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_callback_sdk_error_remains_service_unavailable(sso, caplog):
+    sso.adapter.error = ValueError("private-ticket-value")
+    with caplog.at_level("WARNING"):
+        response = await sso.client.get(
+            "/api/v1/auth/login/sso", params={"sso_callback": "true"}
+        )
+    assert response.status_code == 503
+    assert "location" not in response.headers
+    assert not sso.redis.data
+    assert "sso_sdk_failed" in caplog.text
+    assert "sso_callback_unverified" not in caplog.text
+    assert "private-ticket-value" not in caplog.text
