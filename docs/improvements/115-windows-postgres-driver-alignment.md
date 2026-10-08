@@ -4,7 +4,8 @@
 
 - 기준: feature/executor-checkpoint-validation, 728fba8.
 - 작업: feature/windows-postgres-driver-alignment.
-- 상태: 구현·격리 검증 완료. 미병합·미푸시·미배포.
+- 구현 커밋: ea94f23 (의존성·lock·진단·회귀·기록).
+- 상태: 구현·격리 검증 완료. 2026-10-08 베이스 통합·origin 게시. 서비스 미배포.
 - 사용자 환경: psycopg/psycopg-binary 3.3.6, pool 3.3.3,
   psycopg2-binary 2.9.13. Windows에서 연결 keyword 오류와 Worker 실패 보고.
 
@@ -72,3 +73,11 @@ startup109_driver_checkpoint는 이번 작업 전용 새 DB다.
 --reinstall-package 명령으로 실제 설치 파일을 정렬하고 프로세스를 재시작한다.
 새 SQLSTATE로 남아 있는 오류를 구분한다. 114 설정 정책은 그대로다.
 예정된 DB 연결 옵션·데이터 경로 하드코딩 정리를 다음 작업으로 유지한다.
+
+## 통합 기록 — 2026-10-08
+
+사용자 머지·푸시 요청에 따라 114의 bc9ee9e/728fba8 및 이번 구현 ea94f23을
+feature/refactor-base에 통합한다. 베이스와 feature/executor-checkpoint-validation,
+feature/windows-postgres-driver-alignment를 origin에 atomic push하고 세 원격
+ref의 SHA를 로컬과 대조한다. 서비스 재시작·배포는 별도이며 사용자 Windows의
+실제 설치 재정렬과 ProgrammingError의 SQLSTATE 확인은 남아 있다.

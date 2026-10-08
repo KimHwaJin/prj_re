@@ -5,7 +5,7 @@
 - 기준: feature/refactor-base, cd86b48.
 - 작업: feature/executor-checkpoint-validation.
 - 구현 커밋: bc9ee9e (설정 검증·서비스 조립·회귀·변경 기록).
-- 상태: 구현·관련 검증 완료. 미병합·미푸시·미배포.
+- 상태: 구현·관련 검증 완료. 2026-10-08 베이스 통합·origin 게시. 서비스 미배포.
 - 요청: 전체 리뷰의 다음 개선 작업 진행.
 
 ## 문제와 원인
@@ -106,3 +106,9 @@ DB 연결 옵션과 Executor 데이터 경로의 하드코딩을 정리한다. C
 LISTEN 연결의 SSL 정책을 함께 검토하고, 노드 안의 고정 Jupyter 데이터 경로를
 기존 경로 계산·설정 경계로 옮긴다. 데이터 등록 API 실연계나 모델 호출 수
 최적화의 보류 결정은 변경하지 않는다.
+
+## 통합 기록 — 2026-10-08
+
+사용자 요청에 따라 후속115와 함께 feature/refactor-base에 통합한다.
+feature/executor-checkpoint-validation의 구현 이력도 origin에 보존한다.
+실제 서비스 재기동·배포는 수행하지 않는다. [115 통합 기록](115-windows-postgres-driver-alignment.md)을 따른다.

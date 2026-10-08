@@ -29,12 +29,14 @@ Artifact DTO3개·Workflow/Dataset Protocol2개를 제거했다. 실제 HTTP 제
 [114](114-executor-checkpoint-validation.md)에서 Executor 제출에는 postgres
 체크포인트를 요구하도록 설정 읽기·설치·그래프 조립 경계를 검증했다.
 관련214회귀·전체 포맷 통과, 기존 lint/type 외 새 진단 없음.
-개발 도구의 직접 인메모리 그래프는 유지한다. 미병합·미푸시·미배포 상태다.
+개발 도구의 직접 인메모리 그래프는 유지한다. 2026-10-08 베이스에 통합하고
+origin에 게시했다. 서비스 미배포 상태다.
 
 [115](115-windows-postgres-driver-alignment.md)는 Windows 실행 오류 요청에 따라
 보고된 드라이버 버전으로 lock을 정렬하고 SQLSTATE 진단을 보강했다.
 관련102회귀·실제DB 초기화1회귀 통과. 사용자 Windows의 설치 파일 혼합 여부와
 ProgrammingError 원인 확정은 재설치·새 로그 확인 후 진행한다.
+2026-10-08 베이스 통합·origin 게시, 서비스 미배포.
 
 다음 순서:
 
