@@ -1,5 +1,9 @@
 # 125 — SDK 복귀 주소 일치 진단
 
+> 126에서 정정·삭제됨. 실제 SDK는401일 때 회사 로그인 URL,200일 때 최종
+> target을 redirect_url로 반환한다. 이 진단의 직접 비교만으로 오류를 판단할
+> 수 없다. 현재 원인과 SDK 수정안은 [126](126-sso-handler-encoding-root-cause.md)을 따른다.
+
 ## 기준과 확인한 사실
 
 - 기준: feature/refactor-base, 2e1070f.

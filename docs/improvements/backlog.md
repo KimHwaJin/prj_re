@@ -337,3 +337,12 @@ Location은 callback 표시 없는 최초 로그인 주소다. SDK 출력이 이
 회사 서버가 바꾸는지 아직 미확정이며 새 로그로 구분한다. query 필드가 없으면
 공식 SDK 계약을 확인한다. URL을 강제 재작성하거나 인증 우회하지 않는다.
 140회귀 검증, 회사 연결·pyproject·lock 변경0.
+
+
+[126](126-sso-handler-encoding-root-cause.md)에서 실제 SDK401/200 계약을 확인해
+125의 비교 진단 및 전용8개 테스트를 제거했다. handler 문자열의 URL 값 내부
+&가 query를 분리하는 현상을 requests PreparedRequest로 재현했다. SDK에서
+URL 값을 params로 전달하거나 urlencode를 적용해야 한다. 실제 SDK 소스는
+폐쇄망에만 있어 미수정이며 사용자가 적용하거나 SDK 관리자 반영이 필요하다.
+우리 공개 레포의 company.py·pyproject·lock은 보존한다. SDK 수정 후 callback
+표시·쿠키 검증·users/me200을 확인한다. 실제 인증 성공은 미확정이다.
