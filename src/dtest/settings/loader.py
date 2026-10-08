@@ -63,7 +63,10 @@ def load_settings(
     Passing `config={}` disables all YAML discovery. Passing `environ={}`
     disables process environment. Neither source ever auto-loads .env.
     """
-    from dtest.settings.agent import AgentSettings
+    from dtest.settings.agent import (
+        AgentSettings,
+        validate_executor_checkpoint,
+    )
     from dtest.settings.api import ApiSettings as APISettings
     from dtest.settings.auth import SsoSettings
     from dtest.settings.database import DatabaseSettings
@@ -181,6 +184,7 @@ def load_settings(
         merged.setdefault(key, value)
         sources.setdefault(key, "default")
     agent = agent_binding.validate(agent_binding.inputs(merged))
+    validate_executor_checkpoint(agent)
     runtime = runtime_binding.validate(runtime_binding.inputs(merged))
     if "MODEL_CATALOG" in merged and merged["MODEL_CATALOG"] is None:
         raise ConfigurationError("MODEL_CATALOG must be a non-empty mapping")
@@ -315,6 +319,9 @@ def get_settings() -> ServiceSettings:
 
 def configure(settings: ServiceSettings) -> ServiceSettings:
     """Install before importing consumers; changing a running process is rejected."""
+    from dtest.settings.agent import validate_executor_checkpoint
+
+    validate_executor_checkpoint(settings.agent)
     global _snapshot
     with _lock:
         if _snapshot is not None and _snapshot is not settings:

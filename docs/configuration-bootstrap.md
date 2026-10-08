@@ -55,6 +55,33 @@ YAML의 명시적 false/0은 유지한다. YAML에 값이 있으면 같은 환�
 전역 os.environ을 수정하지 않는다. 명시적인 `--local-env-file`은 local/dev의
 이전 dotenv 이행용이며 실제 앱 설정의 정본은 선택한 YAML이다.
 
+## 체크포인트와 Executor 제출
+
+서비스에서 EXECUTOR_SUBMIT_ENABLED=true이면 GRAPH_CHECKPOINTER=postgres가
+필수다. memory와 true를 함께 설정하면 아래 ConfigurationError로 시작을
+거절한다. --check-config에서도 같은 검증을 수행한다.
+
+```text
+EXECUTOR_SUBMIT_ENABLED requires GRAPH_CHECKPOINTER=postgres
+for durable Executor resume
+```
+
+실제 메시지는 한 줄이다. YAML·환경변수 우선순위와 타입 변환을 적용한 최종
+설정을 검증하며 잘못된 YAML 조합을 환경변수로 대체하지 않는다. 설정 오류가
+나면 DB 초기화·Worker 시작·Executor 클라이언트 생성 전에 기동을 중단한다.
+
+| GRAPH_CHECKPOINTER | EXECUTOR_SUBMIT_ENABLED | 동작 |
+| --- | --- | --- |
+| memory | false | 프로세스 내 계획·승인 검토용 |
+| postgres | false | 영속 계획·승인 검토, Executor 제출 제외 |
+| postgres | true | 영속 실행·Executor 결과 재개 |
+| memory | true | 설정 오류로 거절 |
+
+memory는 프로세스 종료 시 상태가 사라지는 개발용이다. 서비스 설정의 이 조건은
+LLM이 mock인지와 무관하다. 개발 도구·단위 테스트가 직접 조립하는 인메모리
+그래프와 주입된 Executor double은 유지한다. 해당 테스트는 서비스의 장기 실행
+재개 보장을 검증하는 운영 경로가 아니다.
+
 ## DB 준비
 
 `DATABASE_URL`은 CRUD·명령 원장·Workflow·LangGraph 프로젝트 Store의 DB다.

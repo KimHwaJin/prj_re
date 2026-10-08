@@ -114,6 +114,7 @@ DATABASE_URL: postgresql+asyncpg://USER:PASSWORD@POSTGRES_HOST:5432/chat_app
 REDIS_URL: redis://:PASSWORD@REDIS_HOST:6379/0
 
 # checkpoint
+# Executor 제출을 켜면 postgres가 필수이며 memory 조합은 거절합니다.
 GRAPH_CHECKPOINTER: postgres
 # 전체 schema는 수동 migrate.py 또는 DB_INIT_ON_START로 준비합니다.
 CHECKPOINT_SETUP_ON_START: false
