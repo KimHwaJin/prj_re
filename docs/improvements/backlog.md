@@ -354,3 +354,13 @@ query 없는 callback/{flow_id}를 주고 기존 Redis에 return_to/target을 �
 SDK의 정확한 callback 반환도 허용하지만 직원 검증을 대체하지 않는다.
 209회귀·실제 Redis7회귀 통과, 회사 SDK/서버 인증 성공은 폐쇄망에서 확인한다.
 company.py·pyproject·lock 변경0이다. SDK 수정 요청은 현재 방안에서 제외한다.
+
+## 2026-10-08 — SSO 독립 이식본
+
+[128](128-standalone-sso-export.md)에서 사용자 결정에 따라 기존 서비스는
+유지하고 standalone/sso만 별도 제공했다. wheel·독립 예제·설정/API 가이드·
+추출 기준 기록이 준비됐다. dtest 없는 환경68회귀·실제 Redis4회귀 및 기존
+서비스209회귀 통과. 다른 서비스의 SDK 생성·UserDirectory.bind·권한·CORS·
+lifespan 연결과 실제 폐쇄망 인증 성공 확인은 적용 서비스에서 수행한다.
+양쪽은 자동 동기화하지 않으며 SSO 보안/프로토콜 수정은 반영 여부를 함께
+검토한다. 현재 dtest의 공통 패키지 전환이나 사내 SDK 수정은 작업 범위가 아니다.

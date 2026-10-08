@@ -555,3 +555,13 @@ Workflow 검색은 ReadUserId를 사용한다. 로그인 쿠키·CSRF·활성 �
 읽기는 끝날 수 있다. 변경 API에는 이 의존성을 사용하지 않는다. CurrentUserId는
 사용자 삭제와 변경 접수의 경합을 막는 기존 공유 잠금을 유지한다. 자세한 변경과
 실제 단일 연결 pool 검증은 [113 작업 기록](improvements/113-workflow-search-db-scope.md)을 따른다.
+
+
+## 다른 FastAPI에 이식할 독립 프로젝트
+
+현재 dtest 구현을 유지하면서 별도로 추출한 프로젝트는
+[standalone/sso](../standalone/sso/README.md)다. 이 폴더만 복사하거나 wheel을
+설치한다. dtest·Agent·Worker·DB 모델을 가져가지 않는다. SDK 생성과 사용자
+연결 정책은 각 서비스가 주입하며 사내 SDK 소스는 포함하지 않는다.
+현재 서비스는 이 패키지를 사용하지 않으며 양쪽 코드는 자동 동기화되지 않는다.
+추출 기준과 이식본의 차이는 [SOURCE](../standalone/sso/SOURCE.md)에 기록한다.
