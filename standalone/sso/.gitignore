@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[codz]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+uv.lock
+config.private.json
