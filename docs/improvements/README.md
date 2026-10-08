@@ -1,6 +1,12 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [125 SDK 복귀 주소 일치 진단](125-sso-sdk-callback-diagnostics.md).
+최신 작업: [126 SDK handler 복귀 주소 인코딩 원인 정정](126-sso-handler-encoding-root-cause.md).
+사용자가 확인한 SDK handler 문자열·requests 호출로 callback query 분리를
+PreparedRequest에서 재현했다. URL 값을 params로 전달하는 SDK 수정안을 기록한다.
+SDK 소스는 폐쇄망에 있어 미수정이다.125의 직접 비교 진단은401/200 계약에
+맞지 않아 삭제했다. 관련132회귀·포맷 통과, 추가 lint/type 진단0.
+
+선행 작업: [125 SDK 복귀 주소 일치 진단](125-sso-sdk-callback-diagnostics.md).
 브라우저 query 확인이 어려워 SDK 출력의 redirect_uri를 서버 callback과 자동
 비교한다. 상태만 INFO로 남기며 SDK URL·의존성·private 연결은 변경하지 않는다.
 관련140회귀·전체 포맷 통과, 추가 lint/type 진단0. 실제 인증 실패 원인은 미확정이다.

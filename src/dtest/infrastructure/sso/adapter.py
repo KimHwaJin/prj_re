@@ -2,9 +2,7 @@
 
 import importlib
 import inspect
-import logging
 from collections.abc import Callable
-from urllib.parse import parse_qs, urlsplit
 
 from fastapi import HTTPException, Request
 from starlette.concurrency import run_in_threadpool
@@ -12,29 +10,6 @@ from starlette.concurrency import run_in_threadpool
 from dtest.contracts.auth import SsoAdapter, VerifiedEmployee
 from dtest.infrastructure.sso.request import sdk_request
 from dtest.settings.auth import SsoSettings
-
-log = logging.getLogger(__name__)
-
-
-def _callback_binding(login_url: object, return_url: str) -> str:
-    """Diagnose the observed SDK's redirect_uri without exposing any URL.
-
-    This is diagnostic only: SDKs using other fields report missing, and
-    different does not imply an invalid URL or failed authentication.
-    """
-    if not isinstance(login_url, str):
-        return "unreadable"
-    try:
-        values = parse_qs(
-            urlsplit(login_url).query, keep_blank_values=True
-        ).get("redirect_uri", [])
-    except ValueError:
-        return "unreadable"
-    if not values:
-        return "missing"
-    if len(values) != 1:
-        return "multiple"
-    return "matches" if values[0] == return_url else "differs"
 
 
 class UnconfiguredAdapter:
@@ -65,14 +40,9 @@ class SyncSsoAdapter:
         return await run_in_threadpool(self._verify, sdk_request(request))
 
     async def login_url(self, request: Request, return_url: str) -> str:
-        url = await run_in_threadpool(
+        return await run_in_threadpool(
             self._login_url, sdk_request(request, return_url), return_url
         )
-        log.info(
-            "sso_sdk_callback_binding redirect_uri=%s",
-            _callback_binding(url, return_url),
-        )
-        return url
 
 
 def load_adapter(settings: SsoSettings) -> SsoAdapter:
