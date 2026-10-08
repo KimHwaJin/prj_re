@@ -4,6 +4,7 @@
 
 - 기준: feature/refactor-base, cd86b48.
 - 작업: feature/executor-checkpoint-validation.
+- 구현 커밋: bc9ee9e (설정 검증·서비스 조립·회귀·변경 기록).
 - 상태: 구현·관련 검증 완료. 미병합·미푸시·미배포.
 - 요청: 전체 리뷰의 다음 개선 작업 진행.
 
