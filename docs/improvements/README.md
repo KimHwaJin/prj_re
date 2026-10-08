@@ -1,6 +1,11 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [122 SDK ORIGIN에 서버 복귀 URL 연결](122-sso-return-url-binding.md).
+최신 작업: [123 SSO 미인증 callback 반복 이동 차단](123-sso-callback-loop-guard.md).
+미인증 최초302→복귀302의 같은 SSO 이동을 double로 재현했다. callback 표시에
+따라 복귀 미인증은401로 멈추고 Cookie 헤더 유무만 진단한다. 정상 왕복 포함
+130회귀·전체 포맷 통과, 새 lint/type 진단 없음. 실제 인증 실패 원인은 미확정이다.
+
+선행 작업: [122 SDK ORIGIN에 서버 복귀 URL 연결](122-sso-return-url-binding.md).
 로그인 URL 생성 때만 SDK용 args ORIGIN을 서버 callback으로 치환한다. private
 SSO(request)·원본 요청·내부망 의존성을 보존한다. 관련126회귀·전체 포맷 검증.
 새 lint/type 오류 없음, 기존 오류는 남아 있다. 실제 회사 SSO 왕복은 별도다.

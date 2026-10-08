@@ -284,6 +284,7 @@ async def test_login_round_trip_uses_sdk_origin_and_keeps_profile_private(
         assert parse_qs(urlsplit(callback).query) == {
             "return_to": [return_path],
             "target": [target],
+            "sso_callback": ["true"],
         }
         client.cookies.set("company", "valid")
         response = await client.get(callback)

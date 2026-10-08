@@ -150,10 +150,23 @@ class SsoRuntime:
         request: Request,
         return_to: str = "/",
         target: Literal["app", "docs"] = "app",
+        sso_callback: bool = False,
     ) -> Response:
         destination = self._destination(return_to, target)
         employee = await self._sdk(self.adapter.verify, request)
         if employee is None:
+            # A callback marker only stops retries; it never proves identity.
+            if sso_callback:
+                log.warning(
+                    "sso_callback_unverified cookie_header_present=%s",
+                    bool(request.headers.get("cookie")),
+                )
+                raise HTTPException(
+                    401,
+                    "Corporate SSO callback could not verify the employee. "
+                    "Check the SDK callback and corporate cookie settings.",
+                    headers={"Cache-Control": "no-store"},
+                )
             if not self.settings.allowed_origins:
                 raise HTTPException(
                     503, "SSO login origins are not configured."
@@ -167,7 +180,13 @@ class SsoRuntime:
                 api_origin
                 + self.api_prefix
                 + "/auth/login/sso?"
-                + urlencode({"return_to": return_to, "target": target})
+                + urlencode(
+                    {
+                        "return_to": return_to,
+                        "target": target,
+                        "sso_callback": "true",
+                    }
+                )
             )
             url = self._checked_login_url(
                 await self._sdk(self.adapter.login_url, request, callback)

@@ -309,3 +309,15 @@ HTML의 구조·출처는 검증했으나 Chrome 시각 검증은 시간 초과�
 ## 097 YAML 중심 설정 정리
 
 공통 정책과 환경별 연결값 식별·이전, profile init/legacy dotenv import, 동일 snapshot migration, Compose/Secret 마운트·CICD 수정값 이전을 구현했다. [현재 설정 안내](../application-configuration.md)를 따른다. 실제 개인 profile 작성과 기존 DB schema/데이터 이행·비루트 mount 권한·사내 배포·SSO adapter·실제 embedding/Executor 검증은 후속이며 자동 적용하지 않는다. feature/yaml-application-settings는 선행096 /demo를 포함한다. 2026-10-06에 구현5fc444b까지 feature/refactor-base에 통합했으며 실제 배포는 별도다. 기존 ML 의존성 분리·HNSW 대표화·Agent 모델 호출 수·Dataset/Artifact 보류는 유지한다.
+
+
+## 2026-10-08 SSO 반복 이동 진단
+
+[123](123-sso-callback-loop-guard.md)에서 미인증 callback이 다시 회사 SSO로
+302를 보내는 경로를 double로 재현하고 차단했다. 최초 이동은302, callback
+미인증은401, SDK 예외는503으로 구분한다. Cookie 헤더 유무만 기록한다.
+관련130회귀 통과, 회사 SDK·pyproject·lock 변경0. 폐쇄망 실제 인증 실패 원인은
+아직 미확정이다. 사용자 Network의 반복 호스트/경로 및 Cookie 헤더 유무,
+SDK의 check_day_cookie 결과와 공식 callback/ticket 처리 계약을 확인한다.
+쿠키·토큰·SDK 소스는 공유받지 않는다. 회사 도메인 Cookie가 localhost로 전달될
+것을 가정하지 않는다. query가 제거되면 실제 복귀 주소 계약을 다시 확인한다.
