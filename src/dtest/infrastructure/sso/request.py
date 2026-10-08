@@ -1,6 +1,6 @@
 """Adapt confirmed Flask request attributes for the corporate SDK."""
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Any, cast
 
 from fastapi import Request
@@ -9,18 +9,18 @@ from starlette.datastructures import QueryParams
 from dtest.infrastructure.sso.environ import request_environ
 
 
-class SdkQueryArgs(Mapping[str, str]):
-    """Read-only Flask-style query access with first-value semantics.
+class SdkRequestValues(Mapping[str, str]):
+    """Read-only SDK values with first-value lookup and copied to_dict output.
 
-    Unlike Starlette's last-value lookup, Flask MultiDict selects the first
-    duplicate value. Copies returned by to_dict cannot change the request.
+    Query arguments and parsed cookies share this small mapping contract.
+    This does not implement the entire Flask MultiDict interface.
     """
 
     __slots__ = ("_values",)
 
-    def __init__(self, params: QueryParams):
+    def __init__(self, items: Iterable[tuple[str, str]]):
         self._values: dict[str, list[str]] = {}
-        for key, value in params.multi_items():
+        for key, value in items:
             self._values.setdefault(key, []).append(value)
 
     def __getitem__(self, key: str) -> str:
@@ -39,19 +39,42 @@ class SdkQueryArgs(Mapping[str, str]):
         }
 
 
+class SdkQueryArgs(SdkRequestValues):
+    """Keep every query value; single lookup selects the first duplicate."""
+
+    __slots__ = ()
+
+    def __init__(self, params: QueryParams):
+        super().__init__(params.multi_items())
+
+
+class SdkCookies(SdkRequestValues):
+    """Keep Starlette's parsed cookie values without parsing them again."""
+
+    __slots__ = ()
+
+    def __init__(self, cookies: Mapping[str, str]):
+        super().__init__(cookies.items())
+
+
 class SdkRequestView:
     """Expose SDK request metadata without modifying the ASGI request.
 
-    URL, query args and environ are adapted. Other reads delegate to the
-    original request. Flask session globals and callback URLs are unchanged.
+    URL, query args, cookies and environ are adapted. Other reads delegate
+    to the original request. Session globals and callback URLs are unchanged.
     """
 
-    __slots__ = ("_args", "_environ", "_request")
+    __slots__ = ("_args", "_cookies", "_environ", "_request")
 
     def __init__(self, request: Request):
         self._request = request
         self._args = SdkQueryArgs(request.query_params)
+        self._cookies = SdkCookies(request.cookies)
         self._environ = request_environ(request)
+
+    @property
+    def cookies(self) -> SdkCookies:
+        return self._cookies
 
     @property
     def environ(self) -> dict[str, str]:

@@ -1,8 +1,8 @@
 # SSO 적용과 다른 서비스 재사용
 
-119 · 2026-10-08. 사내 SDK 생성자의 URL 문자열·args·environ 요구에 맞춰
-동기 SDK 호출 경계에 요청 view를 적용했다. url은 문자열, args는 쿼리 호환 객체,
-environ은 WSGI식 요청 메타데이터 사본이다. 나머지는 원본 요청으로 위임한다. SDK 소스는 포함하지 않는다.
+120 · 2026-10-08. 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
+동기 SDK용 요청 view가 URL 문자열, args/cookies의 to_dict, WSGI식 environ을
+제공한다. 나머지는 원본 FastAPI 요청으로 위임한다. SDK 소스는 포함하지 않는다.
 **폐쇄망에서는 생성 함수 한 곳의 실제 import/생성을 채우고 SDK를 설치해야 한다.**
 실제 회사 로그인 왕복은 폐쇄망 검증 대상이다.
 
@@ -45,7 +45,7 @@ def _create_sdk(request: Request, return_url: str | None = None) -> CompanySdk:
 
 | 입력 | 의미 |
 |---|---|
-| request | SyncSsoAdapter 요청 view. url·args·environ을 호환하고 나머지는 원본 Request에 위임 |
+| request | SyncSsoAdapter 요청 view. url·args·cookies·environ을 호환하고 나머지는 원본 Request에 위임 |
 | return_url=None | 직원 검증용 생성. 복귀 URL 생성 요청이 아님 |
 | return_url=서버 URL | 로그인 URL 생성용. common runtime이 만든 신뢰할 복귀 주소 |
 
@@ -75,6 +75,33 @@ SdkQueryArgs로 연결한다. get, 키 조회, in, 반복과 to_dict(flat=True/F
 반환 dict/list를 수정해도 원본 요청과 다른 조회 결과는 바뀌지 않는다.
 args는 읽기 전용이며 Flask 전체 Request/MultiDict 구현은 아니다.
 SDK가 요구하는 다른 속성이 확인되면 추가 경계를 별도로 검토한다.
+
+### SDK의 request.cookies.to_dict 호환
+
+사용자 확인에 따라 SDK의 to_dict 호출 대상은 args와 cookies다. FastAPI의
+request.cookies는 일반 dict이므로 직접 to_dict를 호출하면 AttributeError가
+발생한다. SdkRequestView.cookies는 SdkCookies라는 읽기 전용 매핑을 제공한다.
+SdkQueryArgs와 SdkCookies는 공통 SdkRequestValues의 get/키 조회/in/반복 및
+복사본 to_dict(flat=True/False)를 공유한다.
+
+쿠키는 원본 Request.cookies의 파싱된 값을 복사하며 재파싱·URL decoding을 하지
+않는다. 빈 쿠키, 따옴표, %·+를 포함한 값, 중복 쿠키의 Starlette 파싱 결과를
+그대로 보존한다. flat=True는 dict[str, str], flat=False는 값별 새 list를 가진
+dict를 제공한다. 반환 dict/list를 수정해도 원래 쿠키/헤더는 바뀌지 않는다.
+
+확인된 SDK 접근 계약:
+
+| 접근 | SDK용 제공 값 |
+|---|---|
+| request.url.startswith(...) | 문자열 URL |
+| request.args.to_dict() / get(...) | 쿼리 매핑·복사본 dict |
+| request.cookies.to_dict() / get(...) | 기존 파싱 결과의 쿠키 매핑·복사본 dict |
+| request.environ["HTTP_HOST"] | 실제 Host 헤더 기반 메타데이터 사본 |
+| request.headers.get("cookie") | 원본 Starlette 헤더 조회, 전체 Cookie 문자열 유지 |
+
+이 표는 확인된 SDK 입력 범위다. 전체 Flask Request/MultiDict·세션·WSGI 서버를
+구현했다는 뜻은 아니다. SDK import/생성 및 공식 복귀 주소 설정은 company.py의
+기존 폐쇄망 연결을 유지한다. 실제 회사 인증 왕복은 내부망에서 검증한다.
 
 ### SDK의 request.environ 호환
 
@@ -218,7 +245,7 @@ Python AttributeError의 name/obj 메타데이터를 사용한다. 속성명·�
 직접 raise한 AttributeError는 속성 정보가 없어서 unknown일 수 있다.
 클라이언트 응답은 기존503 Corporate SSO is unavailable을 유지한다.
 
-116 진단 및117/118/119 요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
+116 진단 및117~120 요청 호환 변경은 pyproject.toml·uv.lock·SDK 연결
 company.py를 수정하지 않는다.
 0a522a2 이후 이번 업데이트만 받는 경우 두 의존성 파일의 원격 변경은0이다.
 로컬 내부망 의존성을 되돌리거나 skip-worktree/강제 checkout을 설정하지 않는다.
