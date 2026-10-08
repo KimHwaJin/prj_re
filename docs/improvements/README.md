@@ -1,6 +1,11 @@
 # 실행 구조 개선 작업 기록
 
-최신 작업: [123 SSO 미인증 callback 반복 이동 차단](123-sso-callback-loop-guard.md).
+최신 작업: [124 SSO302 이동 분기 진단](124-sso-redirect-decision-diagnostics.md).
+확인용 URL401 이후 실제 로그인은 계속 반복된다는 사용자 보고에 따라 각302의
+목적지 분기·callback 표시·Cookie 유무만 INFO에 남긴다. 실제 URL/쿠키/토큰은
+기록하지 않는다. 관련132회귀·전체 포맷 통과, 새 lint/type 진단0. 원인은 미확정이다.
+
+선행 작업: [123 SSO 미인증 callback 반복 이동 차단](123-sso-callback-loop-guard.md).
 미인증 최초302→복귀302의 같은 SSO 이동을 double로 재현했다. callback 표시에
 따라 복귀 미인증은401로 멈추고 Cookie 헤더 유무만 진단한다. 정상 왕복 포함
 130회귀·전체 포맷 통과, 새 lint/type 진단 없음. 실제 인증 실패 원인은 미확정이다.

@@ -191,6 +191,12 @@ class SsoRuntime:
             url = self._checked_login_url(
                 await self._sdk(self.adapter.login_url, request, callback)
             )
+            log.info(
+                "sso_login_redirect destination=corporate_sso "
+                "callback=%s cookie_header_present=%s",
+                sso_callback,
+                bool(request.headers.get("cookie")),
+            )
             return RedirectResponse(
                 url, status_code=302, headers={"Cache-Control": "no-store"}
             )
@@ -221,6 +227,12 @@ class SsoRuntime:
             secure=self.settings.cookie_secure,
             httponly=True,
             samesite=self.settings.cookie_samesite,
+        )
+        log.info(
+            "sso_login_redirect destination=application "
+            "callback=%s cookie_header_present=%s",
+            sso_callback,
+            bool(request.headers.get("cookie")),
         )
         return response
 

@@ -1,6 +1,7 @@
 # SSO 적용과 다른 서비스 재사용
 
-123 · 2026-10-08. 미인증 callback의 반복302를 멈추고 Cookie 헤더 유무만 진단한다.
+124 · 2026-10-08. 각 로그인302의 목적지 분기·callback 표시·Cookie 헤더 유무를 진단한다.
+미인증 callback의 반복302는401로 멈춘다.
 SDK용 ORIGIN에 서버가 만든 로그인 복귀 URL을 연결한다.
 SDK 요청 호환과 로그인 URL 검증 거절 사유 진단을 유지한다.
 확인된 사내 SDK 요청 접근은 url·args·cookies·environ이다.
@@ -228,11 +229,26 @@ HTTP401로 끝낸다. 생성된 복귀 URL의 sso_callback=true가 최초 요청
 구분한다. 이 표시는 인증 증명·OAuth state가 아니며, 사용자가 직접 붙여도
 SDK 인증을 우회하거나 세션을 발급받지 못한다. 정상 SDK 검증 성공은 계속302다.
 
-로그 예시:
+로그는 uv run app.py --env local을 실행한 **앱 터미널**에서 확인한다.
+Uvicorn의 GET ...302 줄은 접속 로그이며 아래 항목은 auth runtime의 분기 로그다.
+기본 앱 진입점은 INFO 이상을 출력한다. 플랫폼 별도 로거를 쓰면
+`dtest.api_service.auth.runtime`의 INFO가 필터링되지 않는지 확인한다.
 
 ```text
+sso_login_redirect destination=corporate_sso callback=False cookie_header_present=False
+sso_login_redirect destination=application callback=True cookie_header_present=True
 sso_callback_unverified cookie_header_present=False
 ```
+
+- corporate_sso: SDK 직원 검증이 None이며 회사 SSO로302를 보냄. 최초 로그인에는
+  정상이다. 실제 회사 왕복 후에도 이 줄만 반복되면 callback 표시가 보존되지 않는
+  경로인지 Network에서 확인한다. 이 로그 하나로 SDK의 문제를 확정하지 않는다.
+- application: SDK 직원 검증과 서비스 세션 발급이 끝났고 프론트 또는 docs로302를
+  보냄. 이후 반복은 실제 목적지·쿠키 저장 및 인증 조회를 확인한다.
+- callback=True/False: 서비스가 해석한 sso_callback boolean이다. 인증 증명이 아니다.
+- callback_unverified: 표시가 유지된 복귀에서 미인증이라401로 멈춤.
+
+아래 Cookie 헤더 유무 설명은 미인증 callback에 적용한다.
 
 - False: 복귀 요청의 Cookie 헤더가 없거나 비었다. 현재 company adapter는 이때
   SDK 검증 없이 None을 반환한다. 회사 쿠키 전달 또는 공식 callback 처리 규칙을 확인한다.
@@ -247,6 +263,9 @@ Cookie Domain은 전송 대상 호스트를 제한하며, 회사 서버가 무�
 도메인의 쿠키를 직접 설정할 수는 없다. SDK가 공식적으로 ticket을 처리하거나
 로컬용 쿠키를 만드는 절차가 있다면 그 계약에 맞춰 연결해야 한다.
 참고: [MDN Cookie Domain](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#domain).
+
+확인용 URL에 sso_callback=true를 직접 넣어401을 확인한 것만으로는 실제 회사
+왕복을 검증한 것이 아니다. /demo 로그인 버튼으로 실제 왕복을 확인해야 한다.
 
 이 변경은 미인증 callback의 재시도를 멈추는 것이며 실제 인증 실패 원인 자체를
 해결했다는 뜻은 아니다. 회사 SSO가 callback query를 제거하거나 다른 주소로
